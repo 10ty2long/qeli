@@ -28,6 +28,30 @@ async function main() {
     assert(!('onJsonEdit' in model)); assert(!('jsonText' in model));
     await model.switchView('json'); assert.equal(model.view, 'form');
   });
+  await check('manual IPv6 preserves NDP across route switches and saves the chosen mode', async () => {
+    let sent;
+    const { model, html } = component('config.html', 'configPage', {
+      apiFetch: async (url, opts) => { sent = JSON.parse(opts.body); return { ok: true, revision: 'r2' }; },
+    });
+    assert(html.includes('<option value="manual">manual</option>'));
+    const routing = { mode: 'route', ndp_proxy: 'required', ndp_proxy_interface: 'ens3' };
+    model.cfg = { profiles: [{ tun: { ip_mode: 'dual' }, routing: { ipv6: routing } }] };
+    model.loaded = true; model.revision = 'r1';
+    model._original = JSON.stringify(model.cfg);
+    routing.mode = 'manual'; model.onIpv6RoutingModeChange(0);
+    assert.equal(routing.ndp_proxy, 'required'); assert.equal(routing.ndp_proxy_interface, 'ens3');
+    await model.save(); assert.equal(sent.config.profiles[0].routing.ipv6.mode, 'manual');
+    assert.equal(sent.config.profiles[0].routing.ipv6.ndp_proxy, 'required');
+    routing.mode = 'route'; model.onIpv6RoutingModeChange(0); assert.equal(routing.ndp_proxy, 'required');
+    for (const mode of ['off', 'nat66']) {
+      routing.mode = mode; routing.ndp_proxy = 'required'; routing.ndp_proxy_interface = 'ens3';
+      model.onIpv6RoutingModeChange(0);
+      assert.equal(routing.ndp_proxy, 'off'); assert.equal(routing.ndp_proxy_interface, '');
+    }
+    routing.mode = 'manual'; routing.ndp_proxy = 'required';
+    model.cfg.profiles[0].tun.ip_mode = 'ipv4'; model.onIpModeChange(0);
+    assert.equal(routing.mode, 'off'); assert.equal(routing.ndp_proxy, 'off');
+  });
   await check('failed load is visible and blocks writes', async () => {
     let writes = 0;
     const { model, events } = component('config.html', 'configPage', {

@@ -497,10 +497,13 @@ pub fn validate_ipv6_profile(profile: &ProfileConfig) -> Result<Option<Ipv6PoolS
         ));
     }
     if profile.routing.ipv6.ndp_proxy != Ipv6NdpProxyMode::Off
-        && profile.routing.ipv6.mode != Ipv6RoutingMode::Route
+        && !matches!(
+            profile.routing.ipv6.mode,
+            Ipv6RoutingMode::Route | Ipv6RoutingMode::Manual
+        )
     {
         return Err(format!(
-            "routing.ipv6.ndp_proxy = {} requires routing.ipv6.mode = route; NDP proxy publishes source-preserving IPv6 addresses and must not be combined with off or NAT66",
+            "routing.ipv6.ndp_proxy = {} requires routing.ipv6.mode = route or manual; NDP proxy publishes source-preserving IPv6 addresses and must not be combined with off or NAT66",
             profile.routing.ipv6.ndp_proxy
         ));
     }
@@ -841,15 +844,37 @@ mod ipv6_config_tests {
     }
 
     #[test]
-    fn ndp_proxy_requires_source_preserving_ipv6_route_mode() {
-        let mut profile = dual_profile();
-        profile.routing.ipv6.ndp_proxy = Ipv6NdpProxyMode::Required;
-        assert!(validate_ipv6_profile(&profile)
-            .unwrap_err()
-            .contains("requires routing.ipv6.mode = route"));
+    fn ndp_proxy_accepts_route_or_manual_but_not_off_nat66_or_ipv4() {
+        for ndp in [Ipv6NdpProxyMode::Auto, Ipv6NdpProxyMode::Required] {
+            let mut profile = dual_profile();
+            profile.routing.ipv6.ndp_proxy = ndp;
+            for mode in [Ipv6RoutingMode::Off, Ipv6RoutingMode::Nat66] {
+                profile.routing.ipv6.mode = mode;
+                assert!(validate_ipv6_profile(&profile)
+                    .unwrap_err()
+                    .contains("requires routing.ipv6.mode = route or manual"));
+            }
+            for mode in [Ipv6RoutingMode::Route, Ipv6RoutingMode::Manual] {
+                profile.routing.ipv6.mode = mode;
+                assert!(validate_ipv6_profile(&profile).is_ok());
+            }
+            profile.tun.ip_mode = IpMode::Ipv4;
+            assert!(validate_ipv6_profile(&profile)
+                .unwrap_err()
+                .contains("requires tun.ip_mode"));
+        }
+    }
 
-        profile.routing.ipv6.mode = Ipv6RoutingMode::Route;
+    #[test]
+    fn manual_ipv6_still_validates_tunnel_address_and_mtu() {
+        let mut profile = dual_profile();
+        profile.routing.ipv6.mode = Ipv6RoutingMode::Manual;
         assert!(validate_ipv6_profile(&profile).is_ok());
+        profile.tun.mtu = 1200;
+        assert!(validate_ipv6_profile(&profile).is_err());
+        profile.tun.mtu = 1400;
+        profile.tun.ipv6_address = Some("not-an-address".into());
+        assert!(validate_ipv6_profile(&profile).is_err());
     }
 }
 
@@ -1110,6 +1135,9 @@ pub struct NatConfig {
 pub enum Ipv6RoutingMode {
     #[default]
     Off,
+    /// Administrator owns IPv6 firewall, forwarding and uplink routing. Qeli still owns
+    /// the tunnel, authenticated client routes and any explicitly enabled NDP responder.
+    Manual,
     Route,
     Nat66,
 }
@@ -1118,6 +1146,7 @@ impl std::fmt::Display for Ipv6RoutingMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             Self::Off => "off",
+            Self::Manual => "manual",
             Self::Route => "route",
             Self::Nat66 => "nat66",
         })
@@ -1130,9 +1159,12 @@ impl std::str::FromStr for Ipv6RoutingMode {
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value.trim().to_ascii_lowercase().as_str() {
             "off" => Ok(Self::Off),
+            "manual" => Ok(Self::Manual),
             "route" => Ok(Self::Route),
             "nat66" => Ok(Self::Nat66),
-            _ => Err(format!("expected one of off, route, nat66; got '{value}'")),
+            _ => Err(format!(
+                "expected one of off, manual, route, nat66; got '{value}'"
+            )),
         }
     }
 }

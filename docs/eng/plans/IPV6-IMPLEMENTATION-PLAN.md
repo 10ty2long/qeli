@@ -93,7 +93,7 @@ dns.upstream = 1.1.1.1, 2606:4700:4700::1111
 Allowed values:
 
 - `tun.ip_mode = ipv4|dual|ipv6`, defaulting to `ipv4`;
-- `routing.ipv6.mode = off|route|nat66`;
+- `routing.ipv6.mode = off|manual|route|nat66`;
 - `ipv6 = auto|required|off` in the client `[qeli]` section.
 
 The panel and installer may offer `auto`, but must inspect the environment once and persist
@@ -272,17 +272,22 @@ table/explicit mechanism or it will hijack the server's uplink.
 
 `routing.ipv6.mode` has strict semantics:
 
-- `off` — IPv6 only inside the profile/LAN, no Internet egress;
+- `off` — block IPv6 transit between the profile TUN and other interfaces in both directions;
+- `manual` — administrator-managed IPv6 firewall/forwarding, optional session-aware NDP;
 - `route` — a bidirectionally routed GUA/prefix without NAT;
 - `nat66` — ULA/GUA through an explicit IPv6 uplink and stateful NAT66.
 
-All three modes require `ip6tables`. `off` is not an absence of policy: it inserts and
+The managed modes (`off`, `route`, `nat66`) require `ip6tables`; `manual` does not. `off` is not an absence of policy: it inserts and
 verifies profile-tagged non-TUN drops in both directions so the profile cannot inherit
 forwarding from another active profile or a host-wide administrator setting. `route` follows
 the profile's connected and authenticated dynamic kernel routes bidirectionally, including
 server LAN and IPv6 `client_subnet` transit; `nat66` admits only related/established WAN replies.
 
-Linux setup enables IPv6 forwarding, family-correct FORWARD/NAT rules, MSS clamp, and
+In `manual`, Qeli installs no IPv6 firewall/DNS rules and does not change forwarding/RA;
+the administrator also owns profile isolation and any DNS port-53 redirection.
+NDP `auto`/`required` is allowed only in `route`/`manual`; it stays off in `off`/`nat66`.
+
+For `route`/`nat66`, Linux setup enables IPv6 forwarding, family-correct FORWARD/NAT rules, MSS clamp, and
 mandatory ICMPv6 including Packet Too Big. If the uplink learns its route through RA/SLAAC,
 enabling forwarding must not disable RA reception: apply `accept_ra=2` narrowly to that
 uplink and restore its previous value later. Original values are journaled atomically before
@@ -436,7 +441,7 @@ larger release matrix below.
 
 The matrix contains outer4/inner4, outer4/inner6, outer6/inner4, outer6/inner6, dual and
 IPv6-only physical networks; TCP/UDP/QUIC; every obfuscation/Quick Start mode; full/split;
-AAAA and IPv6 upstream DNS; ACL/isolation/`client_subnet`; routed/NAT66; MTU 1280;
+AAAA and IPv6 upstream DNS; ACL/isolation/`client_subnet`; off/manual/route/NAT66; transitions to manual with previous-rule cleanup; NDP auto/required; MTU 1280;
 outer IPv4 MTU 576; asymmetric PMTU; reconnect/persist/roaming; kill switch and leak tests.
 
 Packet captures must prove no outer IP fragmentation of Qeli UDP data, no IPv4/IPv6/DNS

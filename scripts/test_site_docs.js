@@ -88,7 +88,7 @@ for (const locale of ['ru', 'en']) {
   assert.equal(cards.length, [...hub.matchAll(/data-search=/g)].length);
   assert(cards.length > 0);
   const ui = run('', locale, cards);
-  for (const q of ['ndp', 'NDP proxy', 'ndp_proxy', 'routing.ipv6.ndp_proxy_interface', 'static_ipv6']) {
+  for (const q of ['ndp', 'NDP proxy', 'ndp_proxy', 'routing.ipv6.ndp_proxy_interface', 'static_ipv6', 'manual', 'firewalld']) {
     assert(ui.search(q).some(c => c.href.endsWith('/docs/ipv6/')), locale + ': ' + q);
   }
   assert.equal(ui.search('no_such_qeli_parameter').length, 0);

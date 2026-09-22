@@ -2589,7 +2589,7 @@ it is not a promise of universal unclassifiability.
 
 ## Inner IPv4/IPv6 addressing
 
-Step-by-step dual-stack, IPv6-only, NAT66, routed GUA, Quick Start and verification
+Step-by-step dual-stack, IPv6-only, NAT66, routed GUA, `manual`, NDP proxy, Quick Start and verification
 workflows are collected in the separate [IPv6 guide](IPV6.md).
 
 The outer listener family and inner tunnel family are independent. A profile reached over
@@ -2615,14 +2615,17 @@ broadcast/multicast are not distributed between qeli sessions. IPv6 requires `tu
 In `tun.ip_mode = ipv6`, the legacy IPv4 shadow fields `tun.address`, `pool.cidr`, and
 `dns.listen` are not parsed or used. `routing.nat.enabled` is NAT44 and is rejected in this
 mode; `routing.forward_private` is also IPv4-only. Configure IPv6 egress explicitly through
-`routing.ipv6.mode = route` or `nat66`.
+`routing.ipv6.mode = route` or `nat66`, or use `manual` for administrator-managed IPv6.
 Conversely, an IPv4-only profile preserves dormant `tun.ipv6_address` and `pool.ipv6.*` values
 without validating them. They become active and are checked after switching to `dual`/`ipv6`.
 `routing.ipv6.mode` and `routing.ipv6.ndp_proxy` are operational switches rather than dormant
 address fields, so they must remain `off` in an IPv4-only profile.
 
-Every profile carrying inner IPv6 requires `ip6tables`, including
-`routing.ipv6.mode = off`. In `off`, qeli installs a verified per-profile drop for packets
+Managed IPv6 modes (`off`, `route`, `nat66`) require `ip6tables`.
+`manual` leaves IPv6 firewall, forwarding and RA settings to the administrator, including
+DNS INPUT access and any port-53 redirect; it does not require `ip6tables`. Tunnel addresses
+and authenticated client routes remain managed by Qeli.
+In `off`, qeli installs a verified per-profile drop for packets
 entering or leaving that TUN through any other interface, so an isolated profile cannot
 inherit host-wide forwarding enabled by a sibling profile in either direction. `route` permits
 source-preserving forwarding between the TUN and networks selected by the profile's kernel
@@ -2632,7 +2635,7 @@ routes (WAN, server LAN, its pool and authenticated dynamic IPv6 `client_subnet`
 empty `routing.ipv6.interface` enables forwarding without `accept_ra`; when an uplink is found
 or explicitly configured, qeli also leases `accept_ra=2` so enabling forwarding preserves SLAAC.
 `nat66` always requires a detected or explicit uplink.
-For an on-link prefix that the upstream resolves through Neighbor Discovery, `route` can enable
+For an on-link prefix that the upstream resolves through Neighbor Discovery, `route` and `manual` can enable
 the session-aware NDP proxy. It answers only for exact live-session IPv6 leases and their
 non-default IPv6 `client_subnet` ownership, without relaying multicast to clients. `auto`
 allows startup without the responder after a warning, while `required` fails closed. See
@@ -2645,18 +2648,19 @@ An optional in-tunnel DNS proxy: the server hands clients its own resolver and
 (optionally) filters domains. Disabled (default) — clients keep their own resolvers
 and the server pushes no DNS. Per-profile.
 
-Enabling the proxy requires `iptables` for IPv4 and `ip6tables` for each active IPv6
-listener. qeli inserts narrow `INPUT` permits for the exact TUN, client pool, address and
+Enabling the proxy requires `iptables` for IPv4 and `ip6tables` for each managed IPv6
+listener. With `routing.ipv6.mode = manual`, IPv6 INPUT and any port-53 redirect are
+administrator-managed and do not require `ip6tables`. For other listeners, qeli inserts narrow `INPUT` permits for the exact TUN, client pool, address and
 port, verifies them, and falls back only when the built-in `INPUT` chain is otherwise empty
 and its policy is exactly `ACCEPT`; missing tooling, `DROP`, any explicit rule/jump, or an
 unreadable chain fails profile startup.
 
 | Key | Default | Purpose |
 |---|---|---|
-| `dns.enabled` | `false` | enable the in-tunnel DNS proxy (requires the firewall CLI for every active listener family) |
+| `dns.enabled` | `false` | enable the in-tunnel DNS proxy (requires the firewall CLI except for IPv6 listeners in `manual`) |
 | `dns.listen` | `10.9.0.1` | listen address (usually the tun IP) |
 | `dns.listen_ipv6` | — | IPv6 listener; required with `dns.enabled` in `dual`/`ipv6` and must equal `tun.ipv6_address` |
-| `dns.port` | `53` | the port the **server-side proxy** listens on. Clients are still told 53, and qeli redirects 53 to this port; a non-53 port requires `iptables` for IPv4 and `ip6tables` for IPv6 |
+| `dns.port` | `53` | the port the **server-side proxy** listens on. Clients are still told 53, and qeli redirects 53 to this port; a non-53 port requires `iptables` for IPv4 and `ip6tables` for managed IPv6; in `manual`, the administrator provides IPv6 redirection |
 | `dns.upstream` | `1.1.1.1, 8.8.8.8` | unique IP-literal upstream resolvers (comma-separated), maximum 16 |
 | `dns.upstream_protocol` | `udp` | `udp` \| `tcp`. `tcp` really does force TCP to the upstream, and a UDP answer that comes back TRUNCATED is retried over TCP either way. ⚠️ **`tls` (DoT) is REJECTED at config load** — the server refuses to start rather than silently sending plaintext UDP while the config says DoT |
 | `dns.cache_size` | `1000` | record cache size; `0` disables caching, maximum 10000 entries |
@@ -2737,10 +2741,10 @@ Server-side routing for the profile (client-side routing keys are in the "Client
 | `routing.forward_private` | `true` | forward IPv4 private (RFC1918) networks behind the server to clients; inactive in IPv6-only mode |
 | `routing.nat.enabled` | `false` | IPv4 NAT44/MASQUERADE for client Internet traffic; rejected in IPv6-only mode |
 | `routing.nat.interface` | `eth0` | NAT egress interface (auto-detected when left at default) |
-| `routing.ipv6.mode` | `off` | IPv6 egress: fail-closed isolated `off`, bidirectional source-preserving `route`, or stateful `nat66`; every IPv6 profile requires `ip6tables`, including `off` |
-| `routing.ipv6.interface` | — | IPv6 uplink; empty = detect it from the IPv6 default route when present. Required by `nat66`, optional for LAN-only `route` |
-| `routing.ipv6.ndp_proxy` | `off` | upstream NDP responder: `off`, best-effort `auto`, or fail-closed `required`; valid only with `routing.ipv6.mode = route` |
-| `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink for NDP; empty = reuse the effective IPv6 interface |
+| `routing.ipv6.mode` | `off` | `off` — block IPv6 transit; `manual` — administrator-owned external routing/firewall/forwarding (0.8.2); `route` — forward with client addresses; `nat66` — forward with MASQUERADE. All modes except `manual` require `ip6tables`; [details](IPV6.md#manual) |
+| `routing.ipv6.interface` | — | IPv6 uplink; empty = IPv6 default route when present. Required by `nat66`, optional for LAN-only `route`. In `manual`, supplies the default NDP uplink and hook metadata without configuring routing/firewall |
+| `routing.ipv6.ndp_proxy` | `off` | Upstream NDP responder: `off`, best-effort `auto`, or mandatory `required`; enabled only with `routing.ipv6.mode = route` or `manual`. Egress `off`/`nat66` requires `ndp_proxy = off`; `required` does not verify packet delivery |
+| `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink for NDP; empty = reuse the effective/configured IPv6 interface or discover the IPv6 uplink, including in `manual` |
 | `route` | — | repeatable: a route advertised to clients, `<cidr> [gateway=<ip>] [metric=<n>]`; maximum 256 |
 | `routing.post_up` | — | command run after this profile's TUN+NAT are up (Linux, root). **File-only** (panel/API never write it — RCE guard). Env includes `QELI_PROFILE`, `QELI_TUN`, explicit `QELI_POOL_IPV4`/`QELI_POOL_IPV6`, actual `QELI_WAN_IPV4`/`QELI_WAN_IPV6`, `QELI_BIND_PORT`; legacy `QELI_POOL`/`QELI_WAN` select the profile's primary family |
 | `routing.post_down` | — | command run on a clean profile/server stop (mirrors `routing.post_up`; a crash doesn't run it) |

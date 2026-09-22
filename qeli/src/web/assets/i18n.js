@@ -350,8 +350,10 @@
       'Always assign a specific IPv6 address to a username':
         'Всегда назначать пользователю определённый IPv6-адрес',
       'IPv6 forwarding / NAT66': 'Маршрутизация IPv6 / NAT66',
-      'route preserves client source addresses; nat66 masquerades them on the selected IPv6 uplink':
-        'route сохраняет исходные адреса клиентов; nat66 маскарадует их на выбранном IPv6-интерфейсе',
+      'off blocks IPv6 transit; manual leaves the IPv6 firewall and forwarding to you; route preserves client addresses; nat66 masquerades them':
+        'off блокирует IPv6-транзит; manual оставляет IPv6 firewall и forwarding вам; route сохраняет адреса клиентов; nat66 маскарадует их',
+      'Manual IPv6 also leaves DNS firewall access and port 53 redirection to you. IPv4 settings are independent.':
+        'В ручном режиме IPv6 доступ к DNS через firewall и перенаправление порта 53 также настраиваете вы. Настройки IPv4 независимы.',
       'Upstream IPv6 NDP proxy': 'Внешний IPv6 NDP proxy',
       'Answer only for active client IPv6 addresses and client_subnet prefixes; needed when the provider treats the delegated prefix as on-link':
         'Отвечает только за IPv6-адреса активных клиентов и префиксы client_subnet; нужен, когда провайдер считает делегированный префикс on-link',

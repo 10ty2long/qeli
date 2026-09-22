@@ -8,7 +8,7 @@ A detailed, practical guide: how to enable debug logging, how to read the log by
 connection stage, what every server and client (Windows / macOS / Android) error
 means, and how to fix it. All strings are verbatim as they appear in the log.
 
-> For the dedicated inner/outer IPv6, NAT66/route, PMTU, DNS and leak checklist, see the
+> For the dedicated inner/outer IPv6, `off/manual/route/nat66`, NDP proxy, PMTU, DNS and leak checklist, see the
 > [IPv6 guide](IPV6.md).
 
 > Error strings in the code are **in English** (that's how they print). Each one

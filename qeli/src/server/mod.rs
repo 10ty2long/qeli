@@ -1656,7 +1656,7 @@ pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
         }
         if p.tun.ip_mode == crate::config::server::IpMode::Ipv6 && p.routing.nat.enabled {
             anyhow::bail!(
-                "profile '{}': routing.nat.enabled controls IPv4 NAT44 and cannot be enabled when tun.ip_mode = ipv6; use routing.ipv6.mode = route or nat66",
+                "profile '{}': routing.nat.enabled controls IPv4 NAT44 and cannot be enabled when tun.ip_mode = ipv6; use routing.ipv6.mode = manual, route or nat66",
                 p.name
             );
         }
@@ -2758,6 +2758,7 @@ pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
                     );
                 }
                 if p.tun.ip_mode != crate::config::server::IpMode::Ipv4
+                    && p.routing.ipv6.mode != crate::config::server::Ipv6RoutingMode::Manual
                     && nat::ip6tables_path().is_none()
                 {
                     anyhow::bail!(
@@ -5170,41 +5171,18 @@ async fn run_profile_generation(
             wan_ipv6 = wan;
         }
     }
+    if pcfg.routing.ipv6.mode == crate::config::server::Ipv6RoutingMode::Manual {
+        log::info!("Profile '{}': manual IPv6; firewall, forwarding, accept_ra and external routing are administrator-managed", name);
+    }
     let ndp_proxy = if pcfg.routing.ipv6.ndp_proxy == crate::config::server::Ipv6NdpProxyMode::Off {
         None
     } else {
-        let configured = pcfg.routing.ipv6.ndp_proxy_interface.trim();
-        let interface = if configured.is_empty() {
-            wan_ipv6.trim()
-        } else {
-            configured
-        };
-        let result = if interface.is_empty() {
-            Err(anyhow::anyhow!(
-                "no IPv6 uplink was detected; set routing.ipv6.ndp_proxy_interface explicitly"
-            ))
-        } else {
-            ndp_proxy::NdpProxy::bind(interface)
-        };
-        match result {
-            Ok(proxy) => Some(proxy),
-            Err(error)
-                if pcfg.routing.ipv6.ndp_proxy
-                    == crate::config::server::Ipv6NdpProxyMode::Auto =>
-            {
-                log::warn!(
-                    "Profile '{}': IPv6 NDP proxy auto mode is unavailable: {} — continuing without it",
-                    name,
-                    error
-                );
-                None
-            }
-            Err(error) => anyhow::bail!(
-                "profile '{}': routing.ipv6.ndp_proxy = required but the responder could not start: {}",
-                name,
-                error
-            ),
-        }
+        let interface = nat::resolve_ndp_interface(
+            &pcfg.routing.ipv6.ndp_proxy_interface,
+            &wan_ipv6,
+            &pcfg.routing.ipv6.interface,
+        );
+        ndp_proxy::start(&name, pcfg.routing.ipv6.ndp_proxy, interface.as_deref())?
     };
 
     let hook_env = ProfileHookEnv::new(&pcfg, wan_ipv4, wan_ipv6);
@@ -6161,40 +6139,17 @@ async fn run_profile_generation(
         } else {
             pcfg.pool.cidr.as_str()
         };
-        // A resolver bound to the profile TUN address is local server traffic: packets hit
-        // filter/INPUT, not FORWARD. Install a narrowly scoped permit before advertising the
-        // resolver so hosts with INPUT DROP cannot create a connected-but-DNS-dead tunnel.
-        let primary_dns_input = nat::enable_dns_input(
+        // A manual IPv6 profile leaves DNS INPUT/REDIRECT rules to the administrator
+        // too. Managed IPv6 and IPv4 still require verified access before advertising DNS.
+        if let Some(lease) = nat::setup_dns_firewall(
             &name,
             &ifname,
             primary_dns_pool,
             &primary_dns_cfg.listen,
             primary_dns_cfg.port,
-        )
-        .map_err(|error| anyhow::anyhow!("profile '{}': {error}", name))?;
-        teardown.dns_input_leases.push(primary_dns_input);
-
-        // Bridge 53 -> dns.port inside the tunnel when the proxy listens somewhere else, so
-        // clients can keep using the only port their platform can express. No-op on 53.
-        //
-        // The result is CHECKED. Ignoring it defeated the point of returning it: without the
-        // rule, clients reach 53 and nothing is there, yet the profile came up and kept
-        // handing them that address as their resolver — the exact silent black hole the
-        // redirect exists to prevent. Validation already demands iptables for a non-default
-        // port, so a failure here means the rule was genuinely refused; fail the profile
-        // rather than serve DNS that cannot work. (Audit 2026-08-01, §2.)
-        if !nat::enable_dns_redirect(
-            &name,
-            &ifname,
-            &primary_dns_cfg.listen,
-            primary_dns_cfg.port,
-        ) {
-            anyhow::bail!(
-                "profile '{}': dns.port = {} but the 53 -> {} redirect could not be installed,                  so every client would be pushed a resolver it cannot reach. Fix iptables, or                  set dns.port = 53.",
-                name,
-                pcfg.dns.port,
-                pcfg.dns.port
-            );
+            pcfg.routing.ipv6.mode,
+        )? {
+            teardown.dns_input_leases.push(lease);
         }
 
         let dns_state = state.clone();
@@ -6279,20 +6234,15 @@ async fn run_profile_generation(
                 pcfg.dns.listen_ipv6.clone().ok_or_else(|| {
                     anyhow::anyhow!("profile '{}': missing dns.listen_ipv6", name)
                 })?;
-            let ipv6_dns_input = nat::enable_dns_input(
+            if let Some(lease) = nat::setup_dns_firewall(
                 &name,
                 &ifname,
                 &pcfg.pool.ipv6.cidr,
                 &listen_ipv6,
                 pcfg.dns.port,
-            )?;
-            teardown.dns_input_leases.push(ipv6_dns_input);
-            if !nat::enable_dns_redirect(&name, &ifname, &listen_ipv6, pcfg.dns.port) {
-                anyhow::bail!(
-                    "profile '{}': IPv6 DNS redirect on {} could not be installed",
-                    name,
-                    listen_ipv6
-                );
+                pcfg.routing.ipv6.mode,
+            )? {
+                teardown.dns_input_leases.push(lease);
             }
             let mut ipv6_dns_cfg = pcfg.dns.clone();
             ipv6_dns_cfg.listen = listen_ipv6.clone();

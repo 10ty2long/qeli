@@ -105,7 +105,18 @@ generation до начала packet flow.
 
 ## 4. Выход IPv6 с сервера
 
-`routing.ipv6.mode` имеет три режима:
+`routing.ipv6.mode` имеет четыре режима:
+
+| Режим | Ответственность Qeli | `routing.ipv6.ndp_proxy` |
+|---|---|---|
+| `off` | Блокирует IPv6-транзит между TUN профиля и другими интерфейсами в обоих направлениях | Только `off` |
+| `manual` | Оставляет внешнюю маршрутизацию, firewall и forwarding администратору; сохраняет управление туннелем и клиентскими маршрутами | `off`, `auto`, `required` |
+| `route` | Настраивает пересылку с сохранением исходных IPv6-адресов клиентов | `off`, `auto`, `required` |
+| `nat66` | Настраивает пересылку и NAT66 (MASQUERADE) через IPv6 uplink | Только `off` |
+
+`manual` добавлен в ветке разработки **0.8.2**; бинарник **0.8.1** этого значения не
+понимает. Значение по умолчанию при отсутствии ключа — `off`; шаблоны и Quick Start
+могут явно задавать `nat66`. IPv4-only профиль требует `off` для обоих ключей.
 
 ### `nat66`
 
@@ -120,6 +131,56 @@ routing.ipv6.interface =
 
 Пустой interface означает автоопределение IPv6 uplink. Если оно неоднозначно, укажите
 например `routing.ipv6.interface = ens18`.
+
+### `manual`
+
+Используйте этот режим, когда IPv6-маршрутизацией и firewall управляет администратор
+через firewalld, native nftables или другой инструмент. Qeli создаёт туннель, назначает
+его адреса и connected/аутентифицированные клиентские маршруты, а также может запускать
+NDP responder. Он не устанавливает IPv6-правила FORWARD, NAT66, MSS, DNS INPUT и DNS
+REDIRECT и не арендует sysctl forwarding/`accept_ra`. Для этого IPv6-режима `ip6tables`
+не требуется. В dual-stack профиле настройки IPv4 NAT, маршрутизации и DNS независимы.
+
+Фрагмент существующего `[profile:<name>]` с `tun.ip_mode = dual` или `ipv6`, уже
+заданными `tun.ipv6_address` и `pool.ipv6.cidr`:
+
+```ini
+routing.ipv6.mode = manual
+routing.ipv6.interface = ens3
+routing.ipv6.ndp_proxy = required
+routing.ipv6.ndp_proxy_interface = ens3
+```
+
+Администратор обеспечивает IPv6 forwarding, обратный маршрут, firewall (включая
+изоляцию профилей и ICMPv6) и необходимые uplink-настройки RA. Для встроенного DNS
+разрешите UDP и TCP INPUT на адрес туннеля. При `dns.port != 53` также самостоятельно
+настройте IPv6-перенаправление порта 53 либо используйте порт 53.
+Проверки адресов, MTU, коллизий и ограничения аутентифицированных сессий сохраняются.
+
+При перезапуске перед `manual` удаляются правила с меткой прежнего профиля Qeli и
+освобождаются его старые sysctl-аренды; правила администратора не удаляются. Настройте
+sysctl хоста независимо: не полагайтесь на то, что другой управляемый профиль сохранит
+forwarding включённым. NDP `required` по-прежнему отклоняет запуск, если responder не
+смог привязаться к интерфейсу; он не проверяет работоспособность ручной маршрутизации
+и firewall. Для routed prefix без Neighbor Discovery допустим `manual` с `ndp_proxy = off`.
+
+#### Переход на ручное управление
+
+1. Проверьте `qeli --version`: нужна сборка 0.8.2 с поддержкой `manual`.
+2. Подготовьте постоянные настройки IPv6 forwarding, обратной маршрутизации, firewall,
+   ICMPv6 и DNS в используемом менеджере хоста. При RA/SLAAC сохраните приём RA на uplink.
+3. В INI профиля замените `routing.ipv6.mode` на `manual`. Если upstream выполняет NDP
+   для клиентских адресов, укажите `ndp_proxy = required` и его интерфейс; при обычном
+   маршрутизируемом префиксе оставьте `ndp_proxy = off`.
+4. Выполните `qeli check-config --config /etc/qeli/server.conf`, затем примените
+   конфигурацию с перезапуском. Из панели используйте `Apply & Restart`.
+5. После перезапуска проверьте настройки forwarding/RA хоста, доступ клиента к нужным
+   IPv6-сетям и DNS по UDP/TCP. Для NDP проверьте ответ на адрес подключённого клиента
+   со стороны uplink; успешный запуск responder сам по себе не доказывает доставку трафика.
+
+Переход `route` ↔ `manual` сохраняет настройки NDP. При выборе `off` или `nat66` в форме
+панель выключает NDP и очищает его интерфейс. При редактировании INI установите
+`routing.ipv6.ndp_proxy = off` самостоятельно: несовместимое сочетание отклоняется.
 
 ### `route`
 
@@ -164,7 +225,7 @@ routing.ipv6.ndp_proxy_interface = ens3
 Пустой `routing.ipv6.ndp_proxy_interface` использует фактический uplink из
 `routing.ipv6.interface`/IPv6 default route. Поддерживается Ethernet-совместимый Linux
 интерфейс; qeli-сервер обычно уже запущен от root. Режим допустим только с source-preserving
-`route`, не с `off` или NAT66. На время работы responder включает для своего packet socket
+`route` или ручным `manual`, не с `off` или NAT66. На время работы responder включает для своего packet socket
 `PACKET_MR_ALLMULTI`, чтобы NIC принимал solicited-node multicast для клиентских `/128`, не
 назначенных WAN-интерфейсу. Это не включает постоянный `IFF_ALLMULTI` на интерфейсе и не
 пересылает multicast в VPN.
@@ -529,14 +590,16 @@ Quick Start предлагает `auto`, `ipv4`, `dual`, `ipv6`.
   конкретный режим и ручные настройки; явный выбор режима намеренно переключает и
   нормализует весь egress-контракт.
 
-Quick Start обещает именно Internet IPv6. Для routed GUA или изолированного `off`
-используйте Config/Raw INI и ручную инфраструктуру.
+Quick Start создаёт Internet IPv6 через `nat66`. Для `route`, `manual` или изолированного
+`off` настройте профиль через Config (форма или INI) и подготовьте соответствующую
+инфраструктуру. Режим `manual` выбирается в Config, а не в Quick Start.
 
 ## 10. Требования и предварительная проверка хоста
 
 ```bash
 ip -6 addr show scope global
 ip -6 route show default
+# Только для управляемых off/route/nat66; manual использует firewall администратора.
 command -v ip6tables
 sudo ip6tables -S
 ```
@@ -620,7 +683,10 @@ Windows и macOS показывают `ipv6 = auto|required|off` и оба ис�
 | Симптом | Причина | Что проверить |
 |---|---|---|
 | Quick Start `auto` создал IPv4 | нет публичного GUA/default route либо `ip6tables` | `ip -6 addr`, `ip -6 route`, `command -v ip6tables` |
-| явный dual/IPv6 отклонён | Quick Start не может обещать Internet IPv6 | текст preflight; исправить WAN/firewall или настроить `route/off` вручную |
+| явный dual/IPv6 отклонён | Quick Start не может обещать Internet IPv6 | текст preflight; исправить WAN/firewall или настроить `route/manual/off` вручную |
+| `manual` не распознаётся | установлен бинарник без поддержки нового режима | `qeli --version`; используйте сборку 0.8.2 с поддержкой `manual` |
+| NDP в `manual` отвечает, но трафик не проходит | ручная маршрутизация или firewall не готовы | forwarding/RA, обратный маршрут, FORWARD и ICMPv6; `required` проверяет запуск responder |
+| В `manual` DNS доступен на нестандартном порту, но клиент не получает ответ | клиент обращается к порту 53 | INPUT UDP/TCP и собственное перенаправление 53 на `dns.port` либо `dns.port = 53` |
 | `ipv6=required` не подключается | профиль IPv4-only, старый сервер, MTU <1280 или неполный adapter | версия обеих сторон, лог capabilities, MTU |
 | адрес есть, Интернета нет | нет NAT66 или обратного маршрута | `routing.ipv6.mode`, WAN interface, upstream route |
 | route работает только в одну сторону | upstream не знает VPN `/64` | добавить обратный маршрут к `pool.ipv6.cidr` |

@@ -278,6 +278,22 @@ pub(crate) fn resolve_wan_ipv6(configured_iface: &str) -> Option<String> {
     }
 }
 
+/// Select NDP's link independently from firewall setup. A dedicated interface wins,
+/// then the effective/configured routing uplink, then read-only route discovery.
+pub(crate) fn resolve_ndp_interface(
+    dedicated: &str,
+    effective_wan: &str,
+    configured_wan: &str,
+) -> Option<String> {
+    if !dedicated.trim().is_empty() {
+        Some(dedicated.trim().to_string())
+    } else if !effective_wan.trim().is_empty() {
+        Some(effective_wan.trim().to_string())
+    } else {
+        resolve_wan_ipv6(configured_wan)
+    }
+}
+
 /// One iptables rule we manage. `essential = false` rules (FORWARD ACCEPT) may be
 /// omitted only when the built-in FORWARD chain is verified as empty with policy ACCEPT.
 struct Rule {
@@ -592,6 +608,9 @@ fn ipv6_rules(
     mss: i32,
     mode: crate::config::server::Ipv6RoutingMode,
 ) -> Vec<Rule> {
+    if mode == crate::config::server::Ipv6RoutingMode::Manual {
+        return Vec::new();
+    }
     let comment = tag(profile);
     let annotate = |mut rule: Vec<String>| {
         rule.extend([
@@ -764,6 +783,12 @@ pub fn setup_ipv6(
     peer_tuns: &[String],
     mtu: i32,
 ) -> anyhow::Result<Option<String>> {
+    // run_profile has already removed this profile's old rules/sysctl leases through
+    // cleanup(), including route/NAT66 -> manual transitions. Do not require a firewall
+    // binary, install even DROP rules, or acquire router sysctls for an unmanaged profile.
+    if mode == crate::config::server::Ipv6RoutingMode::Manual {
+        return Ok(resolve_wan_ipv6(configured_iface));
+    }
     let _firewall_guard = firewall_program_lock()
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -1147,6 +1172,31 @@ pub(crate) fn enable_dns_input(
     })
 }
 
+/// DNS follows the same IPv6 firewall ownership as transit. In manual mode the
+/// administrator permits INPUT and, for a nonstandard dns.port, redirects port 53.
+/// IPv4 DNS keeps its existing independently configured behavior in dual-stack profiles.
+pub(crate) fn setup_dns_firewall(
+    profile: &str,
+    tun: &str,
+    pool_cidr: &str,
+    listen: &str,
+    port: u16,
+    ipv6_mode: crate::config::server::Ipv6RoutingMode,
+) -> anyhow::Result<Option<DnsInputLease>> {
+    let ipv6 = listen.parse::<std::net::IpAddr>()?.is_ipv6();
+    if ipv6 && ipv6_mode == crate::config::server::Ipv6RoutingMode::Manual {
+        log::info!("Profile '{profile}': IPv6 DNS {listen}:{port} uses administrator-managed INPUT and port-53 delivery");
+        return Ok(None);
+    }
+    let lease = enable_dns_input(profile, tun, pool_cidr, listen, port)?;
+    if !enable_dns_redirect(profile, tun, listen, port) {
+        anyhow::bail!(
+            "profile '{profile}': DNS port 53 -> {port} redirect on {listen} could not be installed; fix the firewall or set dns.port = 53"
+        );
+    }
+    Ok(Some(lease))
+}
+
 /// Pure L3 routing WITHOUT NAT (`routing.forward_private`): enable `net.ipv4.ip_forward`
 /// and permit forwarding to/from the tunnel, so the server routes TRANSIT traffic between
 /// the tunnel and its own networks with the real source IPs preserved (site-to-site) —
@@ -1492,6 +1542,14 @@ fn rule_comment(line: &str) -> Option<String> {
 /// The comment is our own tag — no wire input — but we still match the parsed token, not a
 /// raw substring, so one profile name can never be a prefix of another's rules. (M1)
 fn cleanup_matching(path: &str, needle: &str, exact: bool) {
+    cleanup_matching_with(needle, exact, |args| ipt(path, args));
+}
+
+fn cleanup_matching_with(
+    needle: &str,
+    exact: bool,
+    mut run: impl FnMut(&[&str]) -> std::io::Result<std::process::Output>,
+) {
     for (table, chain) in [
         ("nat", "POSTROUTING"),
         // `nat/PREROUTING` holds the `dns.port` REDIRECT installed by `enable_dns_redirect`,
@@ -1513,7 +1571,7 @@ fn cleanup_matching(path: &str, needle: &str, exact: bool) {
         // one exact rule, so no arbitrary cap is needed. The former limit of 64 became
         // incorrect once cross-profile isolation legitimately created two rules per peer.
         loop {
-            let out = match ipt(path, &["-t", table, "-S", chain]) {
+            let out = match run(&["-t", table, "-S", chain]) {
                 Ok(o) if o.status.success() => o,
                 _ => break,
             };
@@ -1540,10 +1598,7 @@ fn cleanup_matching(path: &str, needle: &str, exact: bool) {
             let mut args: Vec<String> = vec!["-t".into(), table.into(), "-D".into(), chain.into()];
             args.extend(spec);
             let argv: Vec<&str> = args.iter().map(String::as_str).collect();
-            if ipt(path, &argv)
-                .map(|o| !o.status.success())
-                .unwrap_or(true)
-            {
+            if run(&argv).map(|o| !o.status.success()).unwrap_or(true) {
                 break; // delete failed — don't loop forever
             }
         }
@@ -1566,6 +1621,173 @@ mod tests {
                 .map(String::as_str)
                 .eq(expected.iter().copied())
         })
+    }
+
+    #[test]
+    fn switching_to_manual_removes_only_the_previous_profiles_rules() {
+        #[cfg(unix)]
+        use std::os::unix::process::ExitStatusExt;
+        #[cfg(windows)]
+        use std::os::windows::process::ExitStatusExt;
+        for previous in [
+            Ipv6RoutingMode::Off,
+            Ipv6RoutingMode::Route,
+            Ipv6RoutingMode::Nat66,
+        ] {
+            let mut rules = if previous == Ipv6RoutingMode::Off {
+                ipv6_off_rules("edge", "vpn0")
+            } else {
+                ipv6_rules(
+                    "edge",
+                    "ens3",
+                    "vpn0",
+                    "2001:db8:42::/64",
+                    &[],
+                    1340,
+                    previous,
+                )
+            };
+            // Include old DNS state, another profile with a prefix-sharing name, and an
+            // administrator rule. Only exact ownership may be removed during the switch.
+            rules.push(super::Rule {
+                table: "filter",
+                chain: "INPUT",
+                args: dns_input_rule(
+                    "edge",
+                    "vpn0",
+                    "2001:db8:42::/64",
+                    "2001:db8:42::1",
+                    53,
+                    "udp",
+                ),
+                essential: true,
+            });
+            rules.push(super::Rule {
+                table: "filter",
+                chain: "FORWARD",
+                args: vec![
+                    "-m".into(),
+                    "comment".into(),
+                    "--comment".into(),
+                    "qeli-nat:edge2".into(),
+                    "-j".into(),
+                    "ACCEPT".into(),
+                ],
+                essential: true,
+            });
+            rules.push(super::Rule {
+                table: "filter",
+                chain: "FORWARD",
+                args: vec![
+                    "-m".into(),
+                    "comment".into(),
+                    "--comment".into(),
+                    "administrator".into(),
+                    "-j".into(),
+                    "ACCEPT".into(),
+                ],
+                essential: true,
+            });
+            super::cleanup_matching_with(&tag("edge"), true, |args| {
+                let mut stdout = String::new();
+                match args[2] {
+                    "-S" => {
+                        for rule in rules
+                            .iter()
+                            .filter(|rule| rule.table == args[1] && rule.chain == args[3])
+                        {
+                            stdout.push_str(&format!(
+                                "-A {} {}\n",
+                                rule.chain,
+                                rule.args.join(" ")
+                            ));
+                        }
+                    }
+                    "-D" => {
+                        let index = rules
+                            .iter()
+                            .position(|rule| {
+                                rule.table == args[1]
+                                    && rule.chain == args[3]
+                                    && rule
+                                        .args
+                                        .iter()
+                                        .map(String::as_str)
+                                        .eq(args[4..].iter().copied())
+                            })
+                            .unwrap();
+                        rules.remove(index);
+                    }
+                    _ => panic!("cleanup must never install a rule"),
+                }
+                Ok(std::process::Output {
+                    status: std::process::ExitStatus::from_raw(0),
+                    stdout: stdout.into_bytes(),
+                    stderr: Vec::new(),
+                })
+            });
+            assert_eq!(rules.len(), 2, "{previous}");
+            assert!(rules[0].args.iter().any(|arg| arg == "qeli-nat:edge2"));
+            assert!(rules[1].args.iter().any(|arg| arg == "administrator"));
+        }
+    }
+
+    #[test]
+    fn manual_ipv6_and_dns_do_not_require_host_firewall_or_sysctls() {
+        // The explicit link needs no command or host interface. A managed mode would
+        // attempt ip6tables/sysctl before returning and fail on an unprivileged runner.
+        assert_eq!(
+            super::setup_ipv6(
+                "manual-test",
+                Ipv6RoutingMode::Manual,
+                "fixture-uplink",
+                "2001:db8:42::/64",
+                "fixture-tun",
+                &[],
+                1400
+            )
+            .unwrap()
+            .as_deref(),
+            Some("fixture-uplink")
+        );
+        for port in [53, 5353] {
+            assert!(super::setup_dns_firewall(
+                "manual-test",
+                "fixture-tun",
+                "2001:db8:42::/64",
+                "2001:db8:42::1",
+                port,
+                Ipv6RoutingMode::Manual
+            )
+            .unwrap()
+            .is_none());
+        }
+        assert!(ipv6_rules(
+            "manual-test",
+            "fixture-uplink",
+            "fixture-tun",
+            "2001:db8:42::/64",
+            &["sibling-tun".into()],
+            1340,
+            Ipv6RoutingMode::Manual
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn ndp_interface_selection_is_independent_from_managed_egress() {
+        assert_eq!(
+            super::resolve_ndp_interface(" ens3 ", "ens4", "eth0").as_deref(),
+            Some("ens3")
+        );
+        assert_eq!(
+            super::resolve_ndp_interface("", "ens4", "eth0").as_deref(),
+            Some("ens4")
+        );
+        assert_eq!(
+            super::resolve_ndp_interface("", "", " eth0 ").as_deref(),
+            Some("eth0")
+        );
     }
 
     #[test]

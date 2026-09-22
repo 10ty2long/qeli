@@ -25,7 +25,7 @@ Practical installation, configuration and operations guides.
 | [CONFIG.md](manuals/CONFIG.md) | Complete flat-INI server and client configuration reference |
 | [OPERATIONS.md](manuals/OPERATIONS.md) | Compatibility, upgrades, rollback, backup and firewall operations |
 | [PANEL.md](manuals/PANEL.md) | Web panel installation and use |
-| [IPV6.md](manuals/IPV6.md) | IPv4/IPv6/dual-stack setup, NAT66, routing and diagnostics |
+| [IPV6.md](manuals/IPV6.md) | IPv4/IPv6/dual-stack setup, `off/manual/route/nat66`, NDP proxy and diagnostics |
 | [OBFUSCATION.md](manuals/OBFUSCATION.md) | Recordizer setup, masking-layer compatibility and tuning profiles |
 | [TROUBLESHOOTING.md](manuals/TROUBLESHOOTING.md) | Connection diagnostics and error reference |
 | [KEENETIC-DEPLOY.md](manuals/KEENETIC-DEPLOY.md) | Step-by-step client deployment on Keenetic |

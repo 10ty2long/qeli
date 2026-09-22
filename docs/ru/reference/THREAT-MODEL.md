@@ -139,6 +139,10 @@ Roaming сохраняет одну аутентифицированную VPN-�
   PTB может снизить throughput. Probe и PMTU state должны быть привязаны к path/family/source.
 - **NAT66 и routed GUA.** NAT66 скрывает адреса, но не заменяет firewall; routed GUA делает
   клиентские адреса глобально маршрутизируемыми и требует явной upstream routing/ACL policy.
+- **Ручное управление IPv6.** В `routing.ipv6.mode = manual` внешняя маршрутизация,
+  forwarding, firewall, изоляция профилей, ICMPv6 и доступ к DNS зависят от политики
+  администратора. Ограничения аутентифицированных сессий сохраняются; NDP `required`
+  проверяет запуск responder, но не корректность ручной политики или доставку трафика.
 - **Persist TUN.** Повторное использование интерфейса допустимо только при полном совпадении
   fingerprint NetworkPlan (семейства, адреса, маршруты, DNS, MTU и leak policy).
 

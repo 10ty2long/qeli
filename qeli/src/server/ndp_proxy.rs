@@ -39,6 +39,43 @@ pub(crate) struct NdpProxy {
     mac: [u8; 6],
 }
 
+/// Keep the responder's startup requirement independent from firewall ownership.
+pub(crate) fn start(
+    profile: &str,
+    mode: crate::config::server::Ipv6NdpProxyMode,
+    interface: Option<&str>,
+) -> anyhow::Result<Option<NdpProxy>> {
+    start_with(profile, mode, interface, NdpProxy::bind)
+}
+
+fn start_with<T>(
+    profile: &str,
+    mode: crate::config::server::Ipv6NdpProxyMode,
+    interface: Option<&str>,
+    bind: impl FnOnce(&str) -> anyhow::Result<T>,
+) -> anyhow::Result<Option<T>> {
+    use crate::config::server::Ipv6NdpProxyMode;
+    if mode == Ipv6NdpProxyMode::Off {
+        return Ok(None);
+    }
+    let result = interface
+        .filter(|name| !name.trim().is_empty())
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "no IPv6 uplink was detected; set routing.ipv6.ndp_proxy_interface explicitly"
+            )
+        })
+        .and_then(bind);
+    match result {
+        Ok(proxy) => Ok(Some(proxy)),
+        Err(error) if mode == Ipv6NdpProxyMode::Auto => {
+            log::warn!("Profile '{profile}': IPv6 NDP proxy auto mode is unavailable: {error} — continuing without it");
+            Ok(None)
+        }
+        Err(error) => anyhow::bail!("profile '{profile}': routing.ipv6.ndp_proxy = required but the responder could not start: {error}"),
+    }
+}
+
 impl NdpProxy {
     pub(crate) fn bind(interface: &str) -> anyhow::Result<Self> {
         let interface = interface.trim();
@@ -524,6 +561,47 @@ impl NdpRateLimiter {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn required_ndp_refuses_missing_links_and_bind_failures_in_any_routing_mode() {
+        use crate::config::server::Ipv6NdpProxyMode::{Auto, Off, Required};
+        let missing =
+            start_with::<()>("manual", Required, None, |_| panic!("no link to bind")).unwrap_err();
+        assert!(missing
+            .to_string()
+            .contains("set routing.ipv6.ndp_proxy_interface"));
+        let refused = start_with::<()>("manual", Required, Some("ens3"), |_| {
+            anyhow::bail!("fixture bind failure")
+        })
+        .unwrap_err();
+        assert!(refused
+            .to_string()
+            .contains("required but the responder could not start"));
+        assert!(refused.to_string().contains("fixture bind failure"));
+        assert!(
+            start_with::<()>("manual", Auto, Some("ens3"), |_| anyhow::bail!(
+                "fixture bind failure"
+            ))
+            .unwrap()
+            .is_none()
+        );
+        assert!(start_with::<()>("manual", Off, Some("ens3"), |_| panic!(
+            "disabled responder"
+        ))
+        .unwrap()
+        .is_none());
+        assert_eq!(
+            start_with(
+                "manual",
+                Required,
+                Some("ens3"),
+                |link| Ok(link.to_string())
+            )
+            .unwrap()
+            .as_deref(),
+            Some("ens3")
+        );
+    }
 
     fn solicitation(source: Ipv6Addr, target: Ipv6Addr, include_slla: bool) -> Vec<u8> {
         let source_mac = [0x02, 0x11, 0x22, 0x33, 0x44, 0x55];

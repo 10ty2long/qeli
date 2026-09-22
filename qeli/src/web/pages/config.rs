@@ -62,7 +62,9 @@ mod tests {
         assert!(CONFIG_PAGE.contains("routing.ipv6.ndp_proxy"));
         assert!(CONFIG_PAGE.contains("routing.ipv6.ndp_proxy_interface"));
         assert!(CONFIG_PAGE.contains("<option value=\"required\">required</option>"));
-        assert!(CONFIG_PAGE.contains("routing.ipv6.mode !== 'route'"));
+        assert!(CONFIG_PAGE.contains("onIpv6RoutingModeChange(activeTab)"));
+        assert!(CONFIG_PAGE.contains("['route', 'manual'].includes"));
+        assert!(CONFIG_PAGE.contains("<option value=\"manual\">manual</option>"));
         assert!(CONFIG_PAGE.contains("ipv6: { ndp_proxy: 'off', ndp_proxy_interface: '' }"));
     }
 }

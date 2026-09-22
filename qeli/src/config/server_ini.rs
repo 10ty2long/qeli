@@ -1508,20 +1508,33 @@ routing.ipv6.interface = ens3
 routing.ipv6.ndp_proxy = required
 routing.ipv6.ndp_proxy_interface = ens3
 "#;
-        let original = crate::config::parse_server_config(source).unwrap();
-        let profile = &original.profiles[0];
-        assert_eq!(profile.routing.ipv6.ndp_proxy, Ipv6NdpProxyMode::Required);
-        assert_eq!(profile.routing.ipv6.ndp_proxy_interface, "ens3");
-        crate::config::server::validate_ipv6_profile(profile).unwrap();
+        for mode in ["route", "manual"] {
+            let original = crate::config::parse_server_config(
+                &source.replace("mode = route", &format!("mode = {mode}")),
+            )
+            .unwrap();
+            let profile = &original.profiles[0];
+            assert_eq!(profile.routing.ipv6.ndp_proxy, Ipv6NdpProxyMode::Required);
+            assert_eq!(profile.routing.ipv6.ndp_proxy_interface, "ens3");
+            crate::config::server::validate_ipv6_profile(profile).unwrap();
 
-        let serialized = original.to_ini_string();
-        assert!(serialized.contains("routing.ipv6.ndp_proxy = required"));
-        assert!(serialized.contains("routing.ipv6.ndp_proxy_interface = ens3"));
-        let reparsed = crate::config::parse_server_config(&serialized).unwrap();
-        assert_eq!(
-            serde_json::to_value(&original).unwrap(),
-            serde_json::to_value(&reparsed).unwrap()
-        );
+            assert_eq!(profile.routing.ipv6.mode.to_string(), mode);
+            let api_json = serde_json::to_value(&original).unwrap();
+            let from_api: ServerConfig = serde_json::from_value(api_json).unwrap();
+            assert_eq!(
+                from_api.profiles[0].routing.ipv6.mode,
+                profile.routing.ipv6.mode
+            );
+            let serialized = original.to_ini_string();
+            assert!(serialized.contains(&format!("routing.ipv6.mode = {mode}")));
+            assert!(serialized.contains("routing.ipv6.ndp_proxy = required"));
+            assert!(serialized.contains("routing.ipv6.ndp_proxy_interface = ens3"));
+            let reparsed = crate::config::parse_server_config(&serialized).unwrap();
+            assert_eq!(
+                serde_json::to_value(&original).unwrap(),
+                serde_json::to_value(&reparsed).unwrap()
+            );
+        }
     }
 
     #[test]

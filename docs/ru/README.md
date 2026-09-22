@@ -202,7 +202,7 @@ sudo /usr/bin/qeli client --config /etc/qeli/client.conf
 
 - **[GETTING-STARTED.md](manuals/GETTING-STARTED.md)** — установка и начало работы, пошагово.
 - **[CONFIG.md](manuals/CONFIG.md)** — конфигурация (flat-INI), все параметры.
-- **[IPV6.md](manuals/IPV6.md)** — полная настройка dual-stack/IPv6-only, NAT66/route и диагностика.
+- **[IPV6.md](manuals/IPV6.md)** — полная настройка dual-stack/IPv6-only, `off/manual/route/nat66`, NDP proxy и диагностика.
 - **[CLIENT-CONFIG-MATRIX.md](reference/CLIENT-CONFIG-MATRIX.md)** — актуальные 80 ключей по клиентам и история рефакторинга.
 - **[TROUBLESHOOTING.md](manuals/TROUBLESHOOTING.md)** — диагностика и справочник по ошибкам.
 - **[PANEL.md](manuals/PANEL.md)** — веб-панель: установка и использование.

@@ -205,7 +205,7 @@ Most used:
 
 - **[GETTING-STARTED.md](manuals/GETTING-STARTED.md)** — install and first run, step by step.
 - **[CONFIG.md](manuals/CONFIG.md)** — configuration (flat-INI), every parameter.
-- **[IPV6.md](manuals/IPV6.md)** — complete dual-stack/IPv6-only, NAT66/route setup and troubleshooting.
+- **[IPV6.md](manuals/IPV6.md)** — complete dual-stack/IPv6-only, `off/manual/route/nat66`, NDP proxy setup and troubleshooting.
 - **[CLIENT-CONFIG-MATRIX.md](reference/CLIENT-CONFIG-MATRIX.md)** — the current 80 client keys and refactor history.
 - **[TROUBLESHOOTING.md](manuals/TROUBLESHOOTING.md)** — diagnostics and error reference.
 - **[PANEL.md](manuals/PANEL.md)** — web panel: installation and usage.

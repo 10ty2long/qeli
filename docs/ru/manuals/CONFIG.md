@@ -2550,7 +2550,7 @@ Recordizer убирает связь «один IP-пакет = одна qeli-з
 
 ## Внутренняя IPv4/IPv6-адресация
 
-Пошаговые сценарии dual-stack, IPv6-only, NAT66, routed GUA, Quick Start и проверки
+Пошаговые сценарии dual-stack, IPv6-only, NAT66, routed GUA, `manual`, NDP proxy, Quick Start и проверки
 собраны отдельно в [руководстве по IPv6](IPV6.md).
 
 Семейство внешнего listener и семейство внутри туннеля независимы. Профиль, доступный по
@@ -2576,14 +2576,17 @@ Ethernet-мост: VLAN, STP, LLDP, неизвестные EtherType и прои
 При `tun.ip_mode = ipv6` устаревшие IPv4 shadow-поля `tun.address`, `pool.cidr` и
 `dns.listen` не разбираются и не используются. `routing.nat.enabled` управляет NAT44 и в
 этом режиме отвергается; `routing.forward_private` тоже относится только к IPv4. IPv6-egress
-задаётся явно через `routing.ipv6.mode = route` или `nat66`.
+задаётся явно через `routing.ipv6.mode = route` или `nat66`; для ручной настройки используется `manual`.
 Обратно, IPv4-only профиль сохраняет неактивные `tun.ipv6_address` и `pool.ipv6.*`, не
 валидируя их до переключения на `dual`/`ipv6`. Но `routing.ipv6.mode` и
 `routing.ipv6.ndp_proxy` — рабочие переключатели, а не запасные адресные поля, поэтому в
 IPv4-only профиле они должны оставаться `off`.
 
-Для любого профиля с внутренним IPv6 нужен `ip6tables`, в том числе при
-`routing.ipv6.mode = off`. В режиме `off` qeli ставит проверенный per-profile DROP для
+Управляемые IPv6-режимы (`off`, `route`, `nat66`) требуют `ip6tables`.
+`manual` оставляет IPv6 firewall, forwarding и RA администратору, включая DNS INPUT и
+перенаправление порта 53; `ip6tables` не требуется. Адреса туннеля и аутентифицированные
+клиентские маршруты по-прежнему настраивает Qeli.
+В режиме `off` qeli ставит проверенный per-profile DROP для
 пакетов, которые входят в этот TUN или покидают его через другой интерфейс: изолированный
 профиль не сможет унаследовать host-wide forwarding от соседнего профиля ни в одном направлении.
 `route` разрешает source-preserving forwarding между TUN и сетями, выбранными kernel routes
@@ -2593,7 +2596,7 @@ IPv4-only профиле они должны оставаться `off`.
 `routing.ipv6.interface` включает forwarding без `accept_ra`; если uplink найден или указан
 явно, qeli дополнительно арендует `accept_ra=2`, чтобы forwarding не уничтожил SLAAC.
 Для `nat66` найденный или явно заданный uplink обязателен.
-Для on-link префикса, который upstream разрешает через Neighbor Discovery, режим `route`
+Для on-link префикса, который upstream разрешает через Neighbor Discovery, режим `route` или `manual`
 может включить session-aware NDP proxy. Он отвечает только за точные IPv6 живых сессий и
 за их non-default IPv6 `client_subnet`, не пересылая multicast клиентам. `auto` допускает
 старт без responder с предупреждением, `required` работает fail-closed. Подробная схема,
@@ -2605,18 +2608,19 @@ IPv4-only профиле они должны оставаться `off`.
 фильтрует домены. Выключен (дефолт) — клиенты держат свои резолверы, сервер DNS не
 пушит. Per-profile.
 
-Для включённого прокси требуется `iptables` для IPv4 и `ip6tables` для каждого активного
-IPv6-listener. qeli ставит узкие разрешения `INPUT` для точных TUN, client pool, адреса и
+Для включённого прокси требуется `iptables` для IPv4 и `ip6tables` для управляемых
+IPv6-listener. При `routing.ipv6.mode = manual` IPv6 INPUT и перенаправление порта 53
+настраивает администратор, поэтому `ip6tables` не требуется. Для остальных listeners qeli ставит узкие разрешения `INPUT` для точных TUN, client pool, адреса и
 порта, проверяет их и допускает fallback только при пустой встроенной цепочке с политикой
 `INPUT ACCEPT`; отсутствие инструмента, `DROP`, любое явное правило/jump или непрочитанная
 цепочка прерывают запуск профиля.
 
 | Ключ | Дефолт | Назначение |
 |---|---|---|
-| `dns.enabled` | `false` | включить внутренний DNS-прокси (нужен firewall CLI для каждого активного семейства listener) |
+| `dns.enabled` | `false` | включить внутренний DNS-прокси (нужен firewall CLI, кроме IPv6-listener в режиме `manual`) |
 | `dns.listen` | `10.9.0.1` | адрес прослушивания (обычно tun-IP) |
 | `dns.listen_ipv6` | — | IPv6 listener; обязателен при `dns.enabled` в `dual`/`ipv6` и должен совпадать с `tun.ipv6_address` |
-| `dns.port` | `53` | порт **серверного прокси**. Клиентам всегда сообщается 53, а qeli перенаправляет его на этот порт; нестандартный порт требует `iptables` для IPv4 и `ip6tables` для IPv6 |
+| `dns.port` | `53` | порт **серверного прокси**. Клиентам всегда сообщается 53, а qeli перенаправляет его на этот порт; нестандартный порт требует `iptables` для IPv4 и `ip6tables` для управляемого IPv6; в `manual` IPv6-перенаправление настраивает администратор |
 | `dns.upstream` | `1.1.1.1, 8.8.8.8` | уникальные IP-адреса апстрим-резолверов (через запятую), максимум 16 |
 | `dns.upstream_protocol` | `udp` | `udp` \| `tcp`. `tcp` действительно принудительно ходит к апстриму по TCP, а усечённый (TC) UDP-ответ в любом случае перезапрашивается по TCP. ⚠️ **`tls` (DoT) ОТВЕРГАЕТСЯ при загрузке конфига** — сервер не стартует, вместо того чтобы молча слать открытый UDP, пока конфиг заявляет DoT |
 | `dns.cache_size` | `1000` | размер кэша записей; `0` отключает кэш, максимум 10000 записей |
@@ -2696,10 +2700,10 @@ IPv6-listener. qeli ставит узкие разрешения `INPUT` для 
 | `routing.forward_private` | `true` | форвардить клиентам приватные IPv4-сети (RFC1918) за сервером; не действует в IPv6-only |
 | `routing.nat.enabled` | `false` | IPv4 NAT44/MASQUERADE клиентского трафика в интернет; отвергается в IPv6-only |
 | `routing.nat.interface` | `eth0` | egress-интерфейс для NAT (автоопределение при дефолте) |
-| `routing.ipv6.mode` | `off` | IPv6 egress: fail-closed изоляция `off`, двунаправленный source-preserving `route` или stateful `nat66`; для любого IPv6-профиля нужен `ip6tables`, включая `off` |
-| `routing.ipv6.interface` | — | IPv6 uplink; пусто = определить по IPv6 default route, если он есть. Обязателен для `nat66`, необязателен для LAN-only `route` |
-| `routing.ipv6.ndp_proxy` | `off` | upstream NDP responder: `off`, best-effort `auto` или fail-closed `required`; только для `routing.ipv6.mode = route` |
-| `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink для NDP; пусто = использовать фактически выбранный IPv6 interface |
+| `routing.ipv6.mode` | `off` | `off` — блокировать IPv6-транзит; `manual` — внешняя маршрутизация/firewall/forwarding администратора (0.8.2); `route` — пересылка с адресами клиентов; `nat66` — пересылка с MASQUERADE. `ip6tables` нужен всем режимам, кроме `manual`; [подробности](IPV6.md#manual) |
+| `routing.ipv6.interface` | — | IPv6 uplink; пусто = IPv6 default route, если он есть. Обязателен для `nat66`, необязателен для LAN-only `route`. В `manual` задаёт uplink для NDP по умолчанию и hooks, но не настраивает маршрутизацию/firewall |
+| `routing.ipv6.ndp_proxy` | `off` | Upstream NDP responder: `off`, best-effort `auto` или обязательный `required`; включается только при `routing.ipv6.mode = route` или `manual`. При `off`/`nat66` требуется `ndp_proxy = off`; `required` не проверяет доставку трафика |
+| `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink для NDP; пусто = использовать выбранный/заданный IPv6 interface либо определить uplink, в том числе в `manual` |
 | `route` | — | повторяемый: раздаваемый клиентам маршрут `<cidr> [gateway=<ip>] [metric=<n>]`; максимум 256 |
 | `routing.post_up` | — | команда после поднятия TUN+NAT профиля (Linux, root). **Только из доверенного файла** (панель/API не пишут — RCE-гейт). Env включает `QELI_PROFILE`, `QELI_TUN`, явные `QELI_POOL_IPV4`/`QELI_POOL_IPV6`, фактические `QELI_WAN_IPV4`/`QELI_WAN_IPV6`, `QELI_BIND_PORT`; старые `QELI_POOL`/`QELI_WAN` выбирают основное семейство профиля |
 | `routing.post_down` | — | команда при чистой остановке профиля/сервера (зеркало `routing.post_up`; краш не выполняет) |

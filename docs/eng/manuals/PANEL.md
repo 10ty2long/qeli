@@ -359,17 +359,18 @@ The modes are independent — each gets its own interface, subnet and port — s
 several at once is the recommended production layout (a client connects on whichever port
 gets through its network).
 
-The complete selection rules, routed GUA, NAT66/off, client `ipv6=auto|required|off`, and
+The complete selection rules, routed GUA, `off/manual/route/nat66`, NDP proxy, client `ipv6=auto|required|off`, and
 leak verification are documented in the [IPv6 guide](IPV6.md).
 
 ### Config
+
 - **Top tabs** — `Global` + one per profile (+ add). A profile's settings are
   **all on one page** (no inner tabs); a **sticky jump nav** (Bind / TUN / Pool /
   Routing / DNS / DHCP / Obfuscation / Performance) is pinned under the header.
 - **Profile** — an `enabled` toggle and sections with **every** field: transport/
   bind/identity path, TUN (including `ip_mode`, IPv4/IPv6 gateways, MTU and multi-queue
   `queues`), separate IPv4/IPv6 pools, exclusions and reservations, routing with NAT44 +
-  `off|route|nat66` + pushed routes, dual-family DNS + blocklist,
+  `off|manual|route|nat66` + pushed routes, dual-family DNS + blocklist,
   DHCP (TAP only — see below),
   obfuscation (mode/cipher/fronting, TLS masking + SNI pool, REALITY +
   `handrolled`/`peek`, padding, heartbeat, fragmentation, the automatic Reality/H2 carrier (no user switch), traffic-norm,
@@ -378,13 +379,21 @@ leak verification are documented in the [IPv6 guide](IPV6.md).
 - **Global** — Authentication (incl. `bind_static_to_session` H-1), Web UI (TLS,
   allowlist, public_host, admin password), Logging, **Server identity keys**
   (show each profile's pinned key + **Rotate**).
+- **Administrator-managed IPv6 (0.8.2):** in Config, select a profile with `tun.ip_mode = dual`
+  or `ipv6`, then Routing → `IPv6 forwarding / NAT66` → `manual`.
+  `Upstream IPv6 NDP proxy` offers `off`, `auto`, `required`; for an on-link prefix,
+  specify the upstream Ethernet interface. Switching `route` ↔ `manual` preserves NDP;
+  choosing `off` or `nat66` disables NDP and clears its interface. Prepare host firewall,
+  forwarding, RA and DNS, then use `Apply & Restart`. `Save to Disk` only saves the
+  configuration for the next restart. See the [manual section](IPV6.md#manual) for
+  responsibilities and an INI example.
 - **Saving:** `Save to Disk` (writes the config, applied on next restart) or
-  `Apply & Restart` (save + restart now). `Form` / `JSON` / `Raw INI` views (raw
+  `Apply & Restart` (save + restart now). `Form` / `INI` views (raw
   saves verbatim — comments preserved).
 - **Safe editing:** all views share a revision of the exact INI bytes (comments included).
   A save refuses to overwrite a newer panel-tab or hand edit, and switching raw/structured,
   Reload or leaving the page warns before discarding unsaved work. Before confirmation the
-  panel lists changed JSON paths or raw line numbers. Every changing panel write creates a
+  panel lists changed field paths or raw line numbers. Every changing panel write creates a
   private rollback snapshot in `/etc/qeli/.config-history` (`0700` directory, `0600` files;
   newest ten retained); **History** validates and restores one while first preserving the
   current file as another snapshot. A restart is still required for data-plane changes.
@@ -440,11 +449,12 @@ save that touched any of them says so: apply it with a FULL restart.
   socket the panel falls back to the worker restart on its own and says so.
 
 ### Raw INI config editor
-The third view on the Config page (`GET`/`PUT /api/config/raw`) shows the config **file
-verbatim** and writes back exactly the text you submit — **comments and formatting are
-preserved**. The `Form` and `JSON` views go through parse-and-reserialize, so
-hand-written comments in the file are lost on save; edit a comment-heavy config in Raw
-INI (or directly on the server).
+
+The `INI` view on the Config page (`GET`/`PUT /api/config/raw`) shows the config **file
+verbatim** and writes back the submitted text — **comments and formatting are preserved**.
+`Form` parses the configuration and serializes it back to INI, so hand-written comments
+are lost on that save; edit a comment-heavy config in the `INI` view or directly on the
+server. Both views save configuration only as INI.
 
 > **Secrets are masked in this view (since 0.7.13).** The values of `password_hash`,
 > `password_enc` and `password` are served as `<unchanged>` — the editor used to show them

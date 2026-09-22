@@ -142,6 +142,10 @@ It improves continuity; it does not make the old and new paths unlinkable.
   PTB can reduce throughput. Probe and PMTU state must bind to path, family, and source.
 - **NAT66 and routed GUA.** NAT66 hides addresses but is not a firewall; routed GUA makes
   client addresses globally routable and requires explicit upstream routing and ACL policy.
+- **Administrator-managed IPv6.** With `routing.ipv6.mode = manual`, external routing,
+  forwarding, firewall, profile isolation, ICMPv6 and DNS access depend on administrator
+  policy. Authenticated session restrictions remain; NDP `required` checks responder
+  startup, not the correctness of manual policy or packet delivery.
 - **Persistent TUN.** Interface reuse is safe only when the full NetworkPlan fingerprint
   matches: families, addresses, routes, DNS, MTU, and leak policy.
 

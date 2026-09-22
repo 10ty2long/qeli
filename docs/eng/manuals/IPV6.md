@@ -104,7 +104,18 @@ or reject it before packet flow starts.
 
 ## 4. IPv6 egress from the server
 
-`routing.ipv6.mode` has three values.
+`routing.ipv6.mode` has four values.
+
+| Mode | Qeli responsibility | `routing.ipv6.ndp_proxy` |
+|---|---|---|
+| `off` | Blocks IPv6 transit between the profile TUN and other interfaces in both directions | `off` only |
+| `manual` | Leaves external routing, firewall and forwarding to the administrator; still manages the tunnel and client routes | `off`, `auto`, `required` |
+| `route` | Configures forwarding while preserving clients' source IPv6 addresses | `off`, `auto`, `required` |
+| `nat66` | Configures forwarding and NAT66 (MASQUERADE) through the IPv6 uplink | `off` only |
+
+`manual` was added in the **0.8.2** development tree; **0.8.1** binaries do not recognize
+this value. Omitting the key defaults to `off`; templates and Quick Start may explicitly
+select `nat66`. An IPv4-only profile requires `off` for both keys.
 
 ### `nat66`
 
@@ -119,6 +130,56 @@ routing.ipv6.interface =
 
 An empty interface means automatic IPv6 uplink detection. Set, for example,
 `routing.ipv6.interface = ens18` if detection is ambiguous.
+
+### `manual`
+
+Use this mode when firewalld, native nftables, or another administrator-managed setup
+owns IPv6 routing and firewall policy. Qeli creates the tunnel, configures its addresses
+and connected/authenticated client routes, and can run the NDP responder. It does not
+install IPv6 FORWARD, NAT66, MSS, DNS INPUT or DNS REDIRECT rules, and does not acquire
+forwarding/`accept_ra` sysctl leases. `ip6tables` is not required for this IPv6 mode.
+IPv4 NAT, routing and DNS settings remain independent in a dual-stack profile.
+
+Fragment of an existing `[profile:<name>]` with `tun.ip_mode = dual` or `ipv6`, and
+`tun.ipv6_address` and `pool.ipv6.cidr` already configured:
+
+```ini
+routing.ipv6.mode = manual
+routing.ipv6.interface = ens3
+routing.ipv6.ndp_proxy = required
+routing.ipv6.ndp_proxy_interface = ens3
+```
+
+The administrator must provide IPv6 forwarding, the return path, firewall policy
+(including profile isolation and ICMPv6), and any RA settings required by the uplink.
+For the built-in DNS resolver, permit UDP and TCP INPUT to its tunnel address. With
+`dns.port != 53`, also arrange IPv6 port-53 redirection yourself, or use port 53.
+Existing address/MTU/collision checks and authenticated session restrictions still apply.
+
+A restart removes rules tagged for the previous Qeli profile and releases its old sysctl
+leases before starting `manual`; administrator rules are not removed. Configure host
+sysctls independently rather than relying on another managed profile to keep forwarding
+on. NDP `required` still refuses startup if the responder cannot bind; it does not verify
+that the administrator's routing/firewall setup can deliver packets. A routed prefix
+that needs no Neighbor Discovery can use `ndp_proxy = off` with `manual` too.
+
+#### Switching to administrator-managed IPv6
+
+1. Check `qeli --version`: use a 0.8.2 build that supports `manual`.
+2. Prepare persistent IPv6 forwarding, return routes, firewall, ICMPv6 and DNS policy in
+   the host's configuration manager. Preserve uplink RA reception when using RA/SLAAC.
+3. Change the profile's INI `routing.ipv6.mode` to `manual`. If the upstream uses NDP for
+   client addresses, set `ndp_proxy = required` and its interface; for an ordinary routed
+   prefix, leave `ndp_proxy = off`.
+4. Run `qeli check-config --config /etc/qeli/server.conf`, then apply the configuration
+   with a restart. In the panel, use `Apply & Restart`.
+5. After restart, check host forwarding/RA settings, client access to the intended IPv6
+   networks and DNS over UDP/TCP. For NDP, verify an uplink response for a connected
+   client's address; a successfully bound responder alone does not prove packet delivery.
+
+Switching `route` ↔ `manual` preserves NDP settings. Selecting `off` or `nat66` in the
+form disables NDP and clears its interface. When editing INI, set
+`routing.ipv6.ndp_proxy = off` yourself: incompatible combinations are rejected.
 
 ### `route`
 
@@ -163,7 +224,7 @@ routing.ipv6.ndp_proxy_interface = ens3
 An empty `routing.ipv6.ndp_proxy_interface` reuses the effective uplink from
 `routing.ipv6.interface`/the IPv6 default route. The link must be Ethernet-compatible and the
 Linux server normally already runs as root. NDP proxy is valid only with source-preserving
-`route`, never with `off` or NAT66. While active, the responder joins `PACKET_MR_ALLMULTI` on
+`route` or administrator-managed `manual`, not with `off` or NAT66. While active, the responder joins `PACKET_MR_ALLMULTI` on
 its packet socket so that the NIC accepts solicited-node multicast for client `/128`s which are
 not assigned to the WAN interface. This does not set persistent `IFF_ALLMULTI` on the interface
 or relay multicast into the VPN.
@@ -523,14 +584,16 @@ Quick Start offers `auto`, `ipv4`, `dual`, and `ipv6`.
   manual settings; an explicit mode selection intentionally switches and normalizes the
   complete egress contract.
 
-Quick Start promises Internet IPv6. Use Config/Raw INI and manual infrastructure for routed
-GUA or an isolated `off` deployment.
+Quick Start creates Internet IPv6 through `nat66`. Configure `route`, `manual` or isolated
+`off` through Config (Form or INI), and prepare the corresponding infrastructure. Select
+`manual` in Config, not in Quick Start.
 
 ## 10. Host prerequisites and preflight
 
 ```bash
 ip -6 addr show scope global
 ip -6 route show default
+# Managed off/route/nat66 only; manual uses the administrator-managed firewall.
 command -v ip6tables
 sudo ip6tables -S
 ```
@@ -614,7 +677,10 @@ exceptions, not general connectivity switches.
 | Symptom | Likely cause | Check |
 |---|---|---|
 | Quick Start `auto` created IPv4 | no public GUA/default route or no `ip6tables` | `ip -6 addr`, `ip -6 route`, `command -v ip6tables` |
-| explicit dual/IPv6 was refused | Quick Start cannot promise Internet IPv6 | preflight message; repair WAN/firewall or configure `route/off` manually |
+| explicit dual/IPv6 was refused | Quick Start cannot promise Internet IPv6 | preflight message; repair WAN/firewall or configure `route/manual/off` manually |
+| `manual` is not recognized | installed binary does not support the new mode | `qeli --version`; use a 0.8.2 build that supports `manual` |
+| NDP responds in `manual`, but traffic fails | manual routing or firewall is incomplete | forwarding/RA, return routes, FORWARD and ICMPv6; `required` checks responder startup |
+| DNS works on a custom port in `manual`, but clients get no answer | clients query port 53 | UDP/TCP INPUT and administrator-provided 53-to-`dns.port` redirection, or `dns.port = 53` |
 | `ipv6=required` cannot connect | IPv4-only profile, legacy server, MTU <1280, or incomplete adapter | versions, capability log, MTU |
 | address exists but Internet does not | missing NAT66 or return route | `routing.ipv6.mode`, WAN interface, upstream route |
 | routed mode works one way | upstream lacks the VPN `/64` route | add a return route for `pool.ipv6.cidr` |

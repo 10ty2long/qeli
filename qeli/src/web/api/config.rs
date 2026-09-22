@@ -834,7 +834,7 @@ fn configure_quickstart_ip_mode(
     }
     if !host_has_native_ipv6_egress(host) {
         return Err(
-            "this host has no observed global IPv6 address on an IPv6 default-route interface; Quick Start cannot promise Internet IPv6 (use IPv4, or configure routed/off IPv6 manually)"
+            "this host has no observed global IPv6 address on an IPv6 default-route interface; Quick Start cannot promise Internet IPv6 (use IPv4, or configure route/manual/off IPv6 in Configuration)"
                 .into(),
         );
     }
