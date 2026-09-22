@@ -2847,4 +2847,45 @@ mod tests {
             "the OPT record's flags must not be decremented"
         );
     }
+    #[tokio::test]
+    async fn profile_shutdown_releases_pending_upstream_socket() {
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let addr = upstream.local_addr().unwrap();
+        let tasks = crate::profile_tasks::ProfileTasks::new("pending-upstream");
+        tasks.spawn(async move {
+            let cfg = Arc::new(DnsConfig {
+                upstream_protocol: "udp".into(),
+                timeout_secs: 30,
+                ..Default::default()
+            });
+            let _ = resolve_with_upstreams(
+                new_cache(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                compile_blocklist(&[]),
+                &query(None),
+                &[addr],
+            )
+            .await;
+        });
+        let mut buf = [0; 512];
+        let (_, source) =
+            tokio::time::timeout(Duration::from_secs(5), upstream.recv_from(&mut buf))
+                .await
+                .unwrap()
+                .unwrap();
+        // Match the resolver's wildcard bind. Some hosts allow a specific-address bind
+        // alongside a wildcard UDP socket, so binding `source` would not test ownership.
+        let wildcard = SocketAddr::from(([0, 0, 0, 0], source.port()));
+        assert!(
+            UdpSocket::bind(wildcard).await.is_err(),
+            "query must own its upstream socket"
+        );
+        tokio::time::timeout(Duration::from_secs(5), tasks.shutdown())
+            .await
+            .unwrap();
+        let _rebound = UdpSocket::bind(wildcard)
+            .await
+            .expect("upstream socket leaked after shutdown");
+    }
 }

@@ -148,7 +148,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 11 | REALITY, TLS 1.3 и HTTP/2 | H07–H08 | TODO |
 | 12 | Транспорты и wire-маскировка | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding и shaping | H02, H07–H08 | TODO |
-| 14 | Supervisor, workers и профили | H02–H03, H08 | TODO |
+| 14 | Supervisor, workers и профили | H02–H03, H08 | IN_PROGRESS |
 | 15 | Сессии, IP-пулы и лимиты | H01, H03–H04, H08 | TODO |
 | 16 | ACL, push routes и site-to-site | H03–H04, H06 | TODO |
 | 17 | IPv4 NAT, forwarding и sysctl | H02, H04, H08 | TODO |
@@ -423,7 +423,7 @@ Off/prefer/required и legacy peer; batch/reassembly caps, flush deadlines, canc
 
 ### 14. Supervisor, workers и профили
 
-**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/rename профиля, hook failure и умерший control client. Lock order, backoff, watchdog и tasks. Cleanup идемпотентен, ошибка одного профиля не затрагивает соседний.
 
@@ -435,7 +435,14 @@ Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/renam
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Владение задачами, 23 сентября 2026:**
+[проход Q14/Q19](../reports/AUDIT-Q14-Q19-LIFECYCLE.md) исправляет Q14-F001–F002:
+ожидание служб после ранней ошибки запуска и барьер конкурентного/отменённого
+shutdown. 7 task-ownership тестов, включая гонку 1024 ресурсов; DNS-слушатели
+проверены через loopback. Linux E2E TUN/firewall, forced wrapper cancellation,
+watch/control, hooks и restart/reload ещё открыты.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -546,6 +553,14 @@ TTL всех возвращаемых секций, структуру расп�
 и новый OPT при обычном cache hit. 51 DNS-тест, включая IPv6 loopback UDP/TCP;
 783 Rust-теста суммарно — PASS. Linux lifecycle, длительная нагрузка/RSS,
 семантика DNSSEC/RRset, внешняя совместимость и OS DNS apply/rollback остаются открытыми.
+
+**DNS-слушатели и cleanup, 23 сентября 2026:**
+[проход Q14/Q19](../reports/AUDIT-Q14-Q19-LIFECYCLE.md): production UDP/TCP listeners
+доступны host-тестам; удалён неиспользуемый ServerState. 7 listener + 52 resolver
+теста: IPv4/IPv6, persistent/pipelined TCP, deadline, предел 512 соединений,
+отмена запросов и повторное занятие портов. 798 Rust-тестов суммарно — PASS.
+Общий lifecycle исправлен в Q14-F001–F002; реальный Linux runtime и длительная
+нагрузка остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 

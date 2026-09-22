@@ -143,7 +143,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 11 | REALITY, TLS 1.3 and HTTP/2 | H07–H08 | TODO |
 | 12 | Transports and wire camouflage | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding and shaping | H02, H07–H08 | TODO |
-| 14 | Supervisor, workers and profiles | H02–H03, H08 | TODO |
+| 14 | Supervisor, workers and profiles | H02–H03, H08 | IN_PROGRESS |
 | 15 | Sessions, IP pools and limits | H01, H03–H04, H08 | TODO |
 | 16 | ACL, pushed routes and site-to-site | H03–H04, H06 | TODO |
 | 17 | IPv4 NAT, forwarding and sysctls | H02, H04, H08 | TODO |
@@ -418,7 +418,7 @@ Off/prefer/required and legacy peers; batch/reassembly caps, flush deadlines, ca
 
 ### 14. Supervisor, workers and profiles
 
-**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, occupied bind/TUN, profile deletion/rename, hook failures and dead control clients. Lock ordering, backoff, watchdogs and task ownership. Cleanup is idempotent and isolated between profiles.
 
@@ -430,7 +430,14 @@ Start/stop/reload/crash/respawn, occupied bind/TUN, profile deletion/rename, hoo
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Task ownership, 23 September 2026:**
+[Q14/Q19 pass](../reports/AUDIT-Q14-Q19-LIFECYCLE.md) fixes Q14-F001–F002: joining
+services after early startup errors and a concurrent/cancelled shutdown barrier.
+Seven task-ownership tests include a race over 1,024 resources; actual DNS listeners
+are exercised over loopback. Linux TUN/firewall E2E, forced wrapper cancellation,
+watch/control, hooks and restart/reload remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -539,6 +546,14 @@ extended RCODE during truncation, and uncached EDNS options with fresh OPT on
 ordinary cache hits. 51 DNS tests including IPv6 loopback UDP/TCP; 783 Rust tests
 in total — PASS. Linux lifecycle, sustained load/RSS, DNSSEC/RRset semantics,
 external interoperability and OS DNS apply/rollback remain open.
+
+**DNS listeners and cleanup, 23 September 2026:**
+[Q14/Q19 pass](../reports/AUDIT-Q14-Q19-LIFECYCLE.md): production UDP/TCP listeners
+are host-testable and no longer take an unused ServerState. Seven listener plus
+52 resolver tests cover IPv4/IPv6, persistent/pipelined TCP, deadlines, the
+512-connection limit, cancellation and port rebinding. 798 Rust tests overall
+pass. Shared lifecycle fixes are Q14-F001–F002; real Linux runtime and sustained
+load remain open.
 
 ### 20. DHCP and lease lifecycle
 

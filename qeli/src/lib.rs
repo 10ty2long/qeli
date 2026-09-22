@@ -22,6 +22,16 @@ pub mod util;
 #[path = "server/dns/resolver.rs"]
 mod dns_resolver;
 
+// Profile ownership is platform-neutral and exercised without privileged network setup.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/tasks.rs"]
+mod profile_tasks;
+
+// Compile the actual listeners in host tests too; Linux already includes them via server.
+#[cfg(all(test, not(all(target_os = "linux", feature = "server"))))]
+#[path = "server/dns.rs"]
+mod dns_listeners;
+
 // One cross-process ownership journal for every Linux component that changes host-wide
 // forwarding sysctls. The full daemon can run server profiles and panel-managed outbound
 // clients at the same time, so separate server/client snapshots would race on teardown.

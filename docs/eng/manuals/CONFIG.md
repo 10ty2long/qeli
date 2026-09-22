@@ -2790,6 +2790,18 @@ RDATA size and structure are checked for common records: IN A/AAAA,
 NS/CNAME/PTR/DNAME, MX, IN SRV, SOA and TXT. Unknown formats remain opaque bytes.
 These checks do not establish RRset semantic correctness or DNSSEC authenticity.
 
+Each UDP listener allows up to 512 concurrent queries; each TCP listener allows
+up to 512 connections, including idle connections. IPv4 and IPv6 have independent
+limits: a dual profile has four separate bounds. At capacity, UDP queries are
+dropped and excess TCP connections are closed. For TCP, `dns.timeout_secs` bounds
+each length-prefix read, body read and response write; an active persistent
+connection can remain open longer than that duration.
+
+On an ordinary stop or startup error, the profile closes child-task admission,
+aborts and joins DNS/other services, listeners and queries, then removes its
+network resources. An occupied additional DNS bind also cleans up services
+already started for that profile. Other profiles continue serving.
+
 When `dns.enabled = false`, proxy-only fields (`listen`, `listen_ipv6`, `port`, `upstream`,
 `upstream_protocol`, cache, timeout and blocklist) are dormant and preserved without validation;
 they are validated again when the proxy is enabled. `dns.push_servers` is intentionally independent:

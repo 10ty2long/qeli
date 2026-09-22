@@ -1,11 +1,11 @@
-//! Linux profile DNS listeners. Packet parsing, cache policy and upstream exchanges
+//! Profile DNS listeners. Packet parsing, cache policy and upstream exchanges
 //! live in the portable resolver engine so host tests exercise the production code.
 
 use crate::config::server::DnsConfig;
 use crate::dns_resolver::{apply_udp_size_limit, resolve};
 pub(crate) use crate::dns_resolver::{compile_blocklist, new_cache};
 pub use crate::dns_resolver::{DnsBlocklist, DnsCache};
-use crate::server::ServerState;
+use crate::profile_tasks::ProfileTasks;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -14,7 +14,7 @@ use std::time::Duration;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-/// Upper bound on in-flight query TASKS. The permit is taken in the accept loop
+/// Upper bound per listener: UDP query tasks or persistent TCP connection tasks. The permit is taken in the accept loop
 /// BEFORE spawning (see the loop below), so a flood is bounded by refusing to
 /// start work rather than by parking an unbounded number of started tasks.
 const MAX_INFLIGHT: usize = 512;
@@ -68,7 +68,7 @@ pub(crate) async fn run_dns_proxy_tcp(
     cache: DnsCache,
     pref: Arc<AtomicUsize>,
     blocklist: DnsBlocklist,
-    tasks: super::ProfileTasks,
+    tasks: ProfileTasks,
 ) -> anyhow::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -153,13 +153,12 @@ pub(crate) async fn run_dns_proxy_tcp(
 }
 
 pub(crate) async fn run_dns_proxy(
-    _state: Arc<ServerState>,
     dns_cfg: DnsConfig,
     bound: UdpSocket,
     cache: DnsCache,
     pref: Arc<AtomicUsize>,
     blocklist: DnsBlocklist,
-    tasks: super::ProfileTasks,
+    tasks: ProfileTasks,
 ) -> anyhow::Result<()> {
     let bind_addr = crate::util::join_host_port(&dns_cfg.listen, dns_cfg.port);
     // Shared listen socket: query tasks send their answers back through it.
@@ -248,4 +247,309 @@ async fn handle_query(
         return;
     };
     let _ = socket.send_to(&out, src).await;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::profile_tasks::ProfileServices;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpStream;
+    use tokio::time::timeout;
+
+    const DEADLINE: Duration = Duration::from_secs(5);
+
+    struct Proxy {
+        addr: SocketAddr,
+        cfg: DnsConfig,
+        cache: DnsCache,
+        tasks: ProfileTasks,
+        services: ProfileServices,
+    }
+
+    impl Proxy {
+        async fn start(listen: &str, upstream: Vec<String>, timeout_secs: u64) -> Self {
+            let mut cfg = DnsConfig {
+                enabled: true,
+                listen: listen.into(),
+                upstream,
+                upstream_protocol: "udp".into(),
+                timeout_secs,
+                cache_size: 128,
+                blocklist: vec!["blocked.test".into()],
+                ..Default::default()
+            };
+            let udp = bind_dns_proxy(&cfg).await.unwrap();
+            let addr = udp.local_addr().unwrap();
+            cfg.port = addr.port();
+            let tcp = bind_dns_proxy_tcp(&cfg).await.unwrap();
+            let cache = new_cache();
+            let preference = Arc::new(AtomicUsize::new(0));
+            let blocklist = compile_blocklist(&cfg.blocklist);
+            let tasks = ProfileTasks::new("dns-test");
+            let mut services = ProfileServices::default();
+            services.services.spawn(run_dns_proxy(
+                cfg.clone(),
+                udp,
+                cache.clone(),
+                preference.clone(),
+                blocklist.clone(),
+                tasks.clone(),
+            ));
+            services.services.spawn(run_dns_proxy_tcp(
+                cfg.clone(),
+                tcp,
+                cache.clone(),
+                preference,
+                blocklist,
+                tasks.clone(),
+            ));
+            Self {
+                addr,
+                cfg,
+                cache,
+                tasks,
+                services,
+            }
+        }
+
+        async fn stop(&mut self) {
+            timeout(DEADLINE, self.services.shutdown(&self.tasks))
+                .await
+                .unwrap();
+        }
+
+        async fn assert_rebind(&self) {
+            let _udp = bind_dns_proxy(&self.cfg)
+                .await
+                .expect("UDP port still owned after shutdown");
+            let _tcp = bind_dns_proxy_tcp(&self.cfg)
+                .await
+                .expect("TCP port still owned after shutdown");
+        }
+    }
+
+    impl Drop for Proxy {
+        fn drop(&mut self) {
+            // Tests also clean up on assertion failure; Drop cannot await the final joins.
+            self.tasks.abort_all();
+        }
+    }
+
+    fn query(id: u16, name: &str) -> Vec<u8> {
+        let mut msg = vec![0u8; 12];
+        msg[..2].copy_from_slice(&id.to_be_bytes());
+        msg[2] = 1;
+        msg[5] = 1;
+        for label in name.split('.') {
+            msg.push(label.len() as u8);
+            msg.extend_from_slice(label.as_bytes());
+        }
+        msg.extend_from_slice(&[0, 0, 1, 0, 1]);
+        msg
+    }
+
+    fn framed(query: &[u8]) -> Vec<u8> {
+        let mut frame = (query.len() as u16).to_be_bytes().to_vec();
+        frame.extend_from_slice(query);
+        frame
+    }
+
+    async fn read_answer(stream: &mut TcpStream) -> Vec<u8> {
+        timeout(DEADLINE, async {
+            let n = stream.read_u16().await.unwrap();
+            let mut answer = vec![0; n as usize];
+            stream.read_exact(&mut answer).await.unwrap();
+            answer
+        })
+        .await
+        .unwrap()
+    }
+
+    fn assert_blocked(answer: &[u8], id: u16) {
+        assert!(answer.len() >= 12);
+        assert_eq!(&answer[..2], &id.to_be_bytes());
+        assert_ne!(answer[2] & 0x80, 0);
+        assert_eq!(answer[3] & 0x0f, 3);
+    }
+
+    async fn udp_answer(proxy: &Proxy, id: u16) {
+        let listen = if proxy.addr.is_ipv4() {
+            "127.0.0.1:0"
+        } else {
+            "[::1]:0"
+        };
+        let client = UdpSocket::bind(listen).await.unwrap();
+        client
+            .send_to(&query(id, "blocked.test"), proxy.addr)
+            .await
+            .unwrap();
+        let mut answer = [0; 512];
+        let (n, src) = timeout(DEADLINE, client.recv_from(&mut answer))
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(src, proxy.addr);
+        assert_blocked(&answer[..n], id);
+    }
+
+    async fn assert_closed(stream: &mut TcpStream) {
+        let mut byte = [0];
+        match timeout(DEADLINE, stream.read(&mut byte)).await.unwrap() {
+            Ok(0) => {}
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted
+                ) => {}
+            other => panic!("expected closed TCP connection, got {other:?}"),
+        }
+    }
+
+    async fn exercise_listeners(listen: &str) {
+        let mut proxy = Proxy::start(listen, vec![], 30).await;
+        udp_answer(&proxy, 11).await;
+        let mut client = TcpStream::connect(proxy.addr).await.unwrap();
+        // Two pipelined questions, followed by another exchange on the same connection.
+        let mut batch = framed(&query(12, "blocked.test"));
+        batch.extend(framed(&query(13, "blocked.test")));
+        client.write_all(&batch).await.unwrap();
+        assert_blocked(&read_answer(&mut client).await, 12);
+        assert_blocked(&read_answer(&mut client).await, 13);
+        client
+            .write_all(&framed(&query(14, "blocked.test")))
+            .await
+            .unwrap();
+        assert_blocked(&read_answer(&mut client).await, 14);
+        proxy.stop().await;
+        assert_closed(&mut client).await;
+        drop(client);
+        proxy.assert_rebind().await;
+    }
+
+    #[tokio::test]
+    async fn ipv4_udp_and_persistent_tcp_stop_and_rebind() {
+        exercise_listeners("127.0.0.1").await;
+    }
+
+    #[tokio::test]
+    async fn ipv6_udp_and_persistent_tcp_stop_and_rebind() {
+        exercise_listeners("::1").await;
+    }
+
+    #[tokio::test]
+    async fn stop_cancels_pending_queries_and_preserves_sibling_profile() {
+        let mut proxy = Proxy::start("127.0.0.1", vec![], 30).await;
+        let mut sibling = Proxy::start("127.0.0.1", vec![], 30).await;
+        let client = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        // Park real query tasks on the shared cache lock without using a public upstream.
+        // Each blocked query owns a cache Arc and the listener socket until it is dropped.
+        let cache = proxy.cache.clone();
+        let cache_lock = cache.write().await;
+        let baseline = Arc::strong_count(&cache);
+        for id in 0..32 {
+            client
+                .send_to(&query(id, "pending.test"), proxy.addr)
+                .await
+                .unwrap();
+        }
+        timeout(DEADLINE, async {
+            while Arc::strong_count(&cache) < baseline + 32 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let mut tcp = TcpStream::connect(proxy.addr).await.unwrap();
+        tcp.write_all(&framed(&query(40, "blocked.test")))
+            .await
+            .unwrap();
+        assert_blocked(&read_answer(&mut tcp).await, 40);
+        tcp.write_all(&[0, 32, 1]).await.unwrap(); // incomplete next body
+        proxy.stop().await;
+        assert_eq!(
+            Arc::strong_count(&cache),
+            2,
+            "query tasks still retain the cache"
+        );
+        drop(cache_lock);
+        assert_closed(&mut tcp).await;
+        drop(tcp);
+        proxy.assert_rebind().await;
+        udp_answer(&sibling, 41).await;
+        sibling.stop().await;
+    }
+
+    #[tokio::test]
+    async fn partial_tcp_prefix_and_body_expire_without_stopping_listener() {
+        let mut proxy = Proxy::start("127.0.0.1", vec![], 1).await;
+        let mut prefix = TcpStream::connect(proxy.addr).await.unwrap();
+        let mut body = TcpStream::connect(proxy.addr).await.unwrap();
+        prefix.write_all(&[0]).await.unwrap();
+        body.write_all(&[0, 32, 1]).await.unwrap();
+        tokio::join!(assert_closed(&mut prefix), assert_closed(&mut body));
+        udp_answer(&proxy, 50).await;
+        let mut healthy = TcpStream::connect(proxy.addr).await.unwrap();
+        healthy
+            .write_all(&framed(&query(51, "blocked.test")))
+            .await
+            .unwrap();
+        assert_blocked(&read_answer(&mut healthy).await, 51);
+        proxy.stop().await;
+    }
+
+    #[tokio::test]
+    async fn failed_additional_bind_then_cleanup_releases_primary_listeners() {
+        let mut proxy = Proxy::start("127.0.0.1", vec![], 30).await;
+        udp_answer(&proxy, 60).await; // primary services are already running
+                                      // Model a subsequent startup bind failure through the real binding functions.
+        assert!(bind_dns_proxy_tcp(&proxy.cfg).await.is_err());
+        assert!(bind_dns_proxy(&proxy.cfg).await.is_err());
+        proxy.stop().await;
+        proxy.assert_rebind().await;
+    }
+
+    #[tokio::test]
+    async fn malformed_tcp_frame_does_not_take_down_other_connections() {
+        let mut proxy = Proxy::start("127.0.0.1", vec![], 30).await;
+        let mut bad = TcpStream::connect(proxy.addr).await.unwrap();
+        bad.write_all(&[0, 11]).await.unwrap();
+        assert_closed(&mut bad).await;
+        let mut healthy = TcpStream::connect(proxy.addr).await.unwrap();
+        healthy
+            .write_all(&framed(&query(70, "blocked.test")))
+            .await
+            .unwrap();
+        assert_blocked(&read_answer(&mut healthy).await, 70);
+        proxy.stop().await;
+    }
+
+    #[tokio::test]
+    async fn tcp_capacity_is_bounded_and_recovers_after_disconnect() {
+        let mut proxy = Proxy::start("127.0.0.1", vec![], 30).await;
+        let mut connections = Vec::new();
+        for id in 0..MAX_INFLIGHT {
+            let mut client = TcpStream::connect(proxy.addr).await.unwrap();
+            client
+                .write_all(&framed(&query(id as u16, "blocked.test")))
+                .await
+                .unwrap();
+            assert_blocked(&read_answer(&mut client).await, id as u16);
+            connections.push(client);
+        }
+        let mut refused = TcpStream::connect(proxy.addr).await.unwrap();
+        assert_closed(&mut refused).await;
+        // The live connections, not queries within one connection, consume permits.
+        let mut released = connections.pop().unwrap();
+        released.shutdown().await.unwrap();
+        assert_closed(&mut released).await;
+        let mut replacement = TcpStream::connect(proxy.addr).await.unwrap();
+        replacement
+            .write_all(&framed(&query(80, "blocked.test")))
+            .await
+            .unwrap();
+        assert_blocked(&read_answer(&mut replacement).await, 80);
+        proxy.stop().await;
+        assert_closed(&mut replacement).await;
+    }
 }

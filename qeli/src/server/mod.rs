@@ -3,6 +3,7 @@ pub mod client_manager;
 pub mod control;
 pub mod dhcp;
 pub mod dns;
+pub(crate) use crate::profile_tasks::{ProfileServices, ProfileTasks};
 pub mod handler;
 pub mod metrics;
 pub mod nat;
@@ -4594,95 +4595,6 @@ struct QueueThreads {
     tids: Arc<std::sync::Mutex<Vec<libc::pthread_t>>>,
 }
 
-/// Every asynchronous task owned by one profile generation.
-///
-/// Dropping a Tokio `JoinHandle` detaches its task. Profiles restart in-process, so all
-/// nested service/session tasks must instead be closed as one generation: shutdown rejects
-/// new children, aborts the existing ones and joins them before system resources are removed.
-#[derive(Clone)]
-pub(crate) struct ProfileTasks {
-    profile: Arc<str>,
-    inner: Arc<std::sync::Mutex<ProfileTasksInner>>,
-}
-
-struct ProfileTasksInner {
-    stopping: bool,
-    handles: Vec<tokio::task::JoinHandle<()>>,
-}
-
-impl ProfileTasks {
-    fn new(profile: &str) -> Self {
-        Self {
-            profile: Arc::from(profile),
-            inner: Arc::new(std::sync::Mutex::new(ProfileTasksInner {
-                stopping: false,
-                handles: Vec::new(),
-            })),
-        }
-    }
-
-    pub(crate) fn spawn<F>(&self, future: F) -> bool
-    where
-        F: std::future::Future<Output = ()> + Send + 'static,
-    {
-        let mut inner = self
-            .inner
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        if inner.stopping {
-            return false;
-        }
-        // Completed tasks no longer own resources. Reap their handles so a busy DNS profile
-        // does not retain one allocation for every query until the next restart.
-        let mut index = 0;
-        while index < inner.handles.len() {
-            if inner.handles[index].is_finished() {
-                inner.handles.swap_remove(index);
-            } else {
-                index += 1;
-            }
-        }
-        inner.handles.push(tokio::spawn(future));
-        true
-    }
-
-    fn abort_all(&self) {
-        let mut inner = self
-            .inner
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        inner.stopping = true;
-        for handle in &inner.handles {
-            handle.abort();
-        }
-    }
-
-    async fn shutdown(&self) {
-        let handles = {
-            let mut inner = self
-                .inner
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            inner.stopping = true;
-            for handle in &inner.handles {
-                handle.abort();
-            }
-            std::mem::take(&mut inner.handles)
-        };
-        for handle in handles {
-            if let Err(error) = handle.await {
-                if !error.is_cancelled() {
-                    log::error!(
-                        "Profile '{}': child task failed during teardown: {}",
-                        self.profile,
-                        error
-                    );
-                }
-            }
-        }
-    }
-}
-
 async fn wait_for_profile_shutdown(shutdown: &mut tokio::sync::watch::Receiver<bool>) {
     if *shutdown.borrow() {
         return;
@@ -4961,9 +4873,17 @@ async fn run_profile(
         registered_profile: None,
     };
 
-    let result =
-        run_profile_generation(state, pcfg, &mut teardown, tasks.clone(), &mut shutdown).await;
-    tasks.shutdown().await;
+    let mut services = ProfileServices::default();
+    let result = run_profile_generation(
+        state,
+        pcfg,
+        &mut teardown,
+        tasks.clone(),
+        &mut shutdown,
+        &mut services,
+    )
+    .await;
+    services.shutdown(&tasks).await;
     teardown.unregister().await;
     drop(teardown);
     result
@@ -4975,9 +4895,13 @@ async fn run_profile_generation(
     teardown: &mut ProfileTeardown,
     tasks: ProfileTasks,
     shutdown: &mut tokio::sync::watch::Receiver<bool>,
+    services: &mut ProfileServices,
 ) -> anyhow::Result<()> {
     let name = pcfg.name.clone();
-    let mut service_set = tokio::task::JoinSet::new();
+    let ProfileServices {
+        services: service_set,
+        listeners: listener_set,
+    } = services;
 
     // Setup TUN interface(s). With tun.queues>1 we open several IFF_MULTI_QUEUE fds
     // attached to ONE device; the kernel RSS-spreads packets across them so the data
@@ -6148,7 +6072,6 @@ async fn run_profile_generation(
             teardown.dns_input_leases.push(lease);
         }
 
-        let dns_state = state.clone();
         let dns_cfg = primary_dns_cfg.clone();
         let name_dns = name.clone();
         let dns_listen = crate::util::join_host_port(&primary_dns_cfg.listen, primary_dns_cfg.port);
@@ -6214,7 +6137,6 @@ async fn run_profile_generation(
         let blocklist_udp = dns_blocklist.clone();
         service_set.spawn(async move {
             dns::run_dns_proxy(
-                dns_state,
                 dns_cfg,
                 dns_socket,
                 cache_udp,
@@ -6257,12 +6179,10 @@ async fn run_profile_generation(
                         .map_err(|error| anyhow::anyhow!("{label} failed: {error}"))
                 });
             }
-            let dns_state = state.clone();
             let dns_tasks = tasks.clone();
             let label = format!("profile '{name}' IPv6 DNS proxy (UDP) on {listen_ipv6}");
             service_set.spawn(async move {
                 dns::run_dns_proxy(
-                    dns_state,
                     ipv6_dns_cfg,
                     udp,
                     dns_cache,
@@ -6401,7 +6321,6 @@ async fn run_profile_generation(
     let decoy_refused = Arc::new(std::sync::atomic::AtomicU64::new(0));
     // A JoinSet, not a Vec of handles: these are awaited CONCURRENTLY below. See the join
     // loop for why awaiting them in order hid bind failures.
-    let mut listener_set = tokio::task::JoinSet::new();
     let udp_worker_count = if matches!(primary_transport, TransportProtocol::Udp) {
         listeners
             .len()
@@ -6744,13 +6663,8 @@ async fn run_profile_generation(
             None => "no listeners were started at all".to_string(),
         }),
     };
-    // Stop the survivors explicitly rather than relying on the JoinSet's drop: their accept
-    // loops would otherwise keep taking connections for a profile that is being torn down,
-    // and a client could complete a handshake against a pool that is about to disappear.
-    listener_set.abort_all();
-    while listener_set.join_next().await.is_some() {}
-    service_set.abort_all();
-    while service_set.join_next().await.is_some() {}
+    // The outer wrapper stops and joins listeners, services and their children on every
+    // return path, including startup errors that never reach this select.
     let Some(why) = why else {
         return Ok(());
     };
@@ -6807,42 +6721,6 @@ mod tests {
             0o600
         );
         let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[tokio::test]
-    async fn profile_tasks_abort_join_and_close_admission() {
-        struct DropSignal(Option<tokio::sync::oneshot::Sender<()>>);
-        impl Drop for DropSignal {
-            fn drop(&mut self) {
-                if let Some(sender) = self.0.take() {
-                    let _ = sender.send(());
-                }
-            }
-        }
-
-        let tasks = ProfileTasks::new("test");
-        let (dropped_tx, dropped_rx) = tokio::sync::oneshot::channel();
-        let (started_tx, started_rx) = tokio::sync::oneshot::channel();
-        assert!(tasks.spawn(async move {
-            let _signal = DropSignal(Some(dropped_tx));
-            let _ = started_tx.send(());
-            std::future::pending::<()>().await;
-        }));
-        assert!(
-            started_rx.await.is_ok(),
-            "child task must start before shutdown"
-        );
-
-        tasks.shutdown().await;
-
-        assert!(
-            dropped_rx.await.is_ok(),
-            "aborted child future must be dropped"
-        );
-        assert!(
-            !tasks.spawn(async {}),
-            "a closed generation must reject late child tasks"
-        );
     }
 
     fn ip(s: &str) -> IpAddr {
