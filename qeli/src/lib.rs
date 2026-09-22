@@ -27,6 +27,15 @@ mod dns_resolver;
 #[path = "server/tasks.rs"]
 mod profile_tasks;
 
+// Process ownership/retry logic is tested with isolated child processes on the host.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/supervisor.rs"]
+mod server_supervisor;
+
+#[cfg(test)]
+#[path = "server/dns/test_support.rs"]
+mod dns_test_support;
+
 // Compile the actual listeners in host tests too; Linux already includes them via server.
 #[cfg(all(test, not(all(target_os = "linux", feature = "server"))))]
 #[path = "server/dns.rs"]

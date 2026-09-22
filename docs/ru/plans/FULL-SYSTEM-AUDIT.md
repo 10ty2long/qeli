@@ -423,7 +423,7 @@ Off/prefer/required и legacy peer; batch/reassembly caps, flush deadlines, canc
 
 ### 14. Supervisor, workers и профили
 
-**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/rename профиля, hook failure и умерший control client. Lock order, backoff, watchdog и tasks. Cleanup идемпотентен, ошибка одного профиля не затрагивает соседний.
 
@@ -443,6 +443,14 @@ Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/renam
 shutdown. 7 task-ownership тестов, включая гонку 1024 ресурсов; DNS-слушатели
 проверены через loopback. Linux E2E TUN/firewall, forced wrapper cancellation,
 watch/control, hooks и restart/reload ещё открыты.
+
+**Supervisor и управляющие события, 23 сентября 2026:**
+[продолжение Q14](../reports/AUDIT-Q14-SUPERVISOR.md) исправляет Q14-F003–F007:
+stop во время ошибок spawn, владение Child/PID, 60-секундный grace deadline,
+очередь Restart/Reload и раннюю установку обработчиков сигналов. 13 поведенческих
+тестов и дочерний fixture; 812 Rust-тестов суммарно — PASS. Проверены реальные
+изолированные host-процессы, не Linux worker с TUN. Control socket, hooks,
+Unix-сигналы и rollback на Linux остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 

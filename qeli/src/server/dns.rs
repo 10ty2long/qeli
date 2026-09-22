@@ -279,10 +279,12 @@ mod tests {
                 blocklist: vec!["blocked.test".into()],
                 ..Default::default()
             };
-            let udp = bind_dns_proxy(&cfg).await.unwrap();
+            let (tcp, udp) =
+                crate::dns_test_support::bind_pair(&crate::util::join_host_port(listen, 0))
+                    .await
+                    .unwrap();
             let addr = udp.local_addr().unwrap();
             cfg.port = addr.port();
-            let tcp = bind_dns_proxy_tcp(&cfg).await.unwrap();
             let cache = new_cache();
             let preference = Arc::new(AtomicUsize::new(0));
             let blocklist = compile_blocklist(&cfg.blocklist);

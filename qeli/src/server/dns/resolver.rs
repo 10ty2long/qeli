@@ -1499,7 +1499,8 @@ mod tests {
             test_upstream(Some(with_opt(response(&[30], true), 0, 0, 0, &[])), None).await;
         let cfg = Arc::new(DnsConfig {
             upstream_protocol: "udp".into(),
-            timeout_secs: 1,
+            // This checks response/cache contents, not timing; allow headroom for parallel tests.
+            timeout_secs: 5,
             ..serde_json::from_str("{}").unwrap()
         });
         let answer = resolve_with_upstreams(
@@ -2271,9 +2272,8 @@ mod tests {
         tcp: Option<Vec<u8>>,
     ) -> TestUpstream {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
-        let listener = tokio::net::TcpListener::bind(bind).await.unwrap();
+        let (listener, socket) = crate::dns_test_support::bind_pair(bind).await.unwrap();
         let address = listener.local_addr().unwrap();
-        let socket = UdpSocket::bind(address).await.unwrap();
         let task = tokio::spawn(async move {
             if let Some(mut reply) = udp {
                 let mut input = vec![0; 65535];

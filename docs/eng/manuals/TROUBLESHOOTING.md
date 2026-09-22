@@ -184,7 +184,25 @@ child **data-plane worker** (`qeli _worker`). Two important consequences:
   Profile 'fake-tls' listening on 0.0.0.0:443 (TCP)
   ```
   If the worker dies at startup (config validation), the supervisor logs
-  `supervisor: worker exited after Ns — respawning in Ns` and respawns with backoff.
+  `supervisor: worker stopped unexpectedly — respawning in Ns` and respawns with backoff.
+
+Repeated spawn failures and unexpected exits use delays of 1, 2, 4, 8, 16 and then
+at most 30 seconds. A generation that ran for at least 30 seconds resets the delay.
+SIGINT/SIGTERM remain active during retry. Exit status is logged separately, and
+the worker PID metric is cleared while no new process exists.
+
+For an **internal** worker restart (`POST /api/server/restart`), the new process
+reads configuration after the old one exits, without crash backoff. Restart wakes
+a pending retry; old queued commands coalesce. ReloadUsers preserves connections
+in an active worker; while it is absent or terminating, the next generation reads
+the updated users instead.
+
+A worker gets 60 seconds to stop gracefully, then the supervisor requests SIGKILL
+and waits for exit. Repeated Restart does not extend this deadline. The message
+`worker did not stop within 60s — killing and reaping it` means forced termination:
+post_down may not have run and complete firewall rollback is not guaranteed.
+The next worker clears stale NAT rules during startup. The 60 seconds bounds the
+grace period, not an uninterruptible kernel wait after SIGKILL.
 
 ### 2.2 The stages of one connection (by log)
 

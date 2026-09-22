@@ -418,7 +418,7 @@ Off/prefer/required and legacy peers; batch/reassembly caps, flush deadlines, ca
 
 ### 14. Supervisor, workers and profiles
 
-**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, occupied bind/TUN, profile deletion/rename, hook failures and dead control clients. Lock ordering, backoff, watchdogs and task ownership. Cleanup is idempotent and isolated between profiles.
 
@@ -438,6 +438,14 @@ services after early startup errors and a concurrent/cancelled shutdown barrier.
 Seven task-ownership tests include a race over 1,024 resources; actual DNS listeners
 are exercised over loopback. Linux TUN/firewall E2E, forced wrapper cancellation,
 watch/control, hooks and restart/reload remain open.
+
+**Supervisor and control events, 23 September 2026:**
+[Q14 follow-up](../reports/AUDIT-Q14-SUPERVISOR.md) fixes Q14-F003–F007: stop during
+spawn failures, Child/PID ownership, a 60-second grace deadline, Restart/Reload
+queuing and early signal installation. Thirteen behavioral tests plus a child
+fixture; 812 Rust tests overall pass. Tests use real isolated host processes,
+not the Linux TUN worker. Control sockets, hooks, Unix signals and Linux rollback
+remain open.
 
 ### 15. Sessions, IP pools and limits
 

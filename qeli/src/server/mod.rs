@@ -22,6 +22,7 @@ use crate::config::server::{ProfileConfig, ServerConfig};
 use crate::config::users::UsersDb;
 use crate::crypto::StaticKeypair;
 use crate::server::handler::SessionShared;
+use crate::server_supervisor::wait_for_shutdown as wait_for_profile_shutdown;
 use crate::transport::tcp::{set_tcp_buffers, set_tcp_keepalive};
 use crate::transport::TransportProtocol;
 use crate::transport_core::buffer_pool::{BufferPool, PooledBuffer};
@@ -1020,15 +1021,7 @@ impl FailedAuthTracker {
     }
 }
 
-/// Command the web panel (in the supervisor) sends to the supervisor loop to
-/// act on the data-plane worker child process.
-#[derive(Debug, Clone, Copy)]
-pub enum WorkerCmd {
-    /// Restart the worker (SIGTERM + respawn) — applies profile/config changes.
-    Restart,
-    /// SIGHUP the worker to hot-reload users / brute-force thresholds.
-    ReloadUsers,
-}
+pub use crate::server_supervisor::WorkerCmd;
 
 /// Shared server state (auth, users, identity key, profile registry).
 ///
@@ -3397,6 +3390,14 @@ fn reject_bad_config_values(bad: &[String]) -> anyhow::Result<()> {
 }
 
 pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
+    // Install handlers before creating control/profile tasks or changing host networking.
+    use tokio::signal::unix::{signal, SignalKind};
+    let mut sighup = signal(SignalKind::hangup())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGHUP handler: {}", e))?;
+    let mut sigterm = signal(SignalKind::terminate())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
+    let mut sigint = signal(SignalKind::interrupt())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGINT handler: {}", e))?;
     let config_content = std::fs::read_to_string(cfg_path)?;
     let (config, bad_values): (ServerConfig, Vec<String>) =
         crate::config::parse_server_config_reporting(&config_content)?;
@@ -3599,13 +3600,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     tokio::spawn(crate::trace::watch());
 
-    // SIGHUP hot-reloads users.
-    use tokio::signal::unix::{signal, SignalKind};
-    let mut sighup = signal(SignalKind::hangup())
-        .map_err(|e| anyhow::anyhow!("failed to install SIGHUP handler: {}", e))?;
-    let mut sigterm = signal(SignalKind::terminate())
-        .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
-
     let mut via_signal = false;
     let mut fatal_reason: Option<String> = None;
     loop {
@@ -3627,7 +3621,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                 fatal_reason = Some(reason);
                 break;
             },
-            _ = tokio::signal::ctrl_c() => {
+            _ = sigint.recv() => {
                 log::info!("Received SIGINT, stopping server...");
                 via_signal = true;
                 break;
@@ -3994,6 +3988,12 @@ async fn usage_sweep(state: Arc<ServerState>) {
 }
 
 pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
+    // Install both signal handlers before the panel, outbound clients or worker exist.
+    use tokio::signal::unix::{signal, SignalKind};
+    let mut sigterm = signal(SignalKind::terminate())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
+    let mut sigint = signal(SignalKind::interrupt())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGINT handler: {}", e))?;
     // Validate the config parses and has at least one profile before starting.
     let config_content = std::fs::read_to_string(cfg_path)?;
     let (config, bad_values): (ServerConfig, Vec<String>) =
@@ -4151,122 +4151,57 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
             .spawn()
     };
 
-    // systemd stops/restarts us with SIGTERM (not SIGINT), so handle both — else
-    // the worker child would be orphaned and clash with the next supervisor's worker.
-    use tokio::signal::unix::{signal, SignalKind};
-    let mut sigterm = signal(SignalKind::terminate())
-        .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
-
-    let mut stopping = false;
-    // Exponential backoff (capped) for a crash-looping worker, so a worker that
-    // dies instantly on every start can't thrash iptables/TUN once per second.
-    // Reset once an instance has run long enough to look healthy (see exit arm).
-    let mut backoff_secs = 1u64;
-    'supervise: loop {
-        let mut child = match spawn_worker() {
-            Ok(c) => c,
-            Err(e) => {
-                log::error!("supervisor: failed to spawn worker: {e} — retry in 2s");
-                tokio::time::sleep(Duration::from_secs(2)).await;
-                continue 'supervise;
-            }
-        };
-        let pid = child.id().map(|p| p as i32).unwrap_or(0);
-        state
-            .metrics
-            .worker_pid
-            .store(pid, std::sync::atomic::Ordering::Relaxed);
-        log::info!("supervisor: data-plane worker started (pid {pid})");
-        let started = std::time::Instant::now();
-
-        // Watch for the worker's exit without borrowing `child` in the select.
-        let (exit_tx, mut exit_rx) = tokio::sync::oneshot::channel();
-        tokio::spawn(async move {
-            let _ = exit_tx.send(child.wait().await);
-        });
-
-        loop {
+    let result = crate::server_supervisor::supervise(
+        spawn_worker,
+        signal_worker,
+        |pid| {
+            state.metrics.worker_pid.store(
+                pid.unwrap_or(0) as i32,
+                std::sync::atomic::Ordering::Relaxed,
+            )
+        },
+        &mut worker_rx,
+        async {
             tokio::select! {
-                _ = &mut exit_rx => {
-                    if stopping {
-                        break 'supervise;
-                    }
-                    // A worker that ran long enough is healthy — reset the backoff so
-                    // an ordinary restart doesn't inherit an escalated delay. A worker
-                    // that died fast keeps escalating (capped) to avoid a respawn storm.
-                    let ran = started.elapsed();
-                    if ran >= Duration::from_secs(30) {
-                        backoff_secs = 1;
-                    }
-                    log::warn!(
-                        "supervisor: worker exited after {}s — respawning in {}s",
-                        ran.as_secs(),
-                        backoff_secs
-                    );
-                    // Sleep the backoff, but stay responsive to a stop signal. A worker
-                    // that crash-loops — e.g. its bind port is already in use — would
-                    // otherwise spend all its time in this non-interruptible sleep, so
-                    // Ctrl+C / SIGTERM were never handled and the operator had to
-                    // `kill -9` the supervisor (issue #69). The worker has already
-                    // exited here, so a signal just tears the supervisor down cleanly.
-                    tokio::select! {
-                        _ = tokio::time::sleep(Duration::from_secs(backoff_secs)) => {}
-                        _ = tokio::signal::ctrl_c() => {
-                            log::info!("supervisor: SIGINT during worker backoff — stopping");
-                            break 'supervise;
-                        }
-                        _ = sigterm.recv() => {
-                            log::info!("supervisor: SIGTERM during worker backoff — stopping");
-                            break 'supervise;
-                        }
-                    }
-                    backoff_secs = (backoff_secs * 2).min(30);
-                    continue 'supervise;
-                }
-                cmd = worker_rx.recv() => match cmd {
-                    Some(WorkerCmd::Restart) => {
-                        log::info!("supervisor: restarting worker (apply config)");
-                        signal_pid(pid, libc::SIGTERM);
-                        // The exit watcher will fire and respawn a fresh worker.
-                    }
-                    Some(WorkerCmd::ReloadUsers) => {
-                        log::info!("supervisor: SIGHUP worker (reload users)");
-                        signal_pid(pid, libc::SIGHUP); // same worker keeps running
-                    }
-                    None => {
-                        stopping = true;
-                        signal_pid(pid, libc::SIGTERM);
-                    }
-                },
-                _ = tokio::signal::ctrl_c() => {
-                    log::info!("supervisor: SIGINT — stopping worker");
-                    stopping = true;
-                    signal_pid(pid, libc::SIGTERM);
-                }
-                _ = sigterm.recv() => {
-                    log::info!("supervisor: SIGTERM — stopping worker");
-                    stopping = true;
-                    signal_pid(pid, libc::SIGTERM);
-                }
+                _ = sigint.recv() => {},
+                _ = sigterm.recv() => {},
             }
-        }
-    }
+        },
+        crate::server_supervisor::SupervisorPolicy::default(),
+    )
+    .await;
 
     // Tear down any panel-managed outbound client tunnels (SIGTERM each so it
     // restores DNS/routes before exit).
     state.client_manager.shutdown_all().await;
 
     log::info!("Supervisor shutdown complete");
-    Ok(())
+    result.map_err(Into::into)
 }
 
-/// Best-effort `kill(pid, sig)` — used by the supervisor to drive the worker.
-fn signal_pid(pid: i32, sig: i32) {
-    if pid > 0 {
-        unsafe {
-            libc::kill(pid, sig);
+/// Signal only a still-owned, unreaped child. `try_wait` makes an already exited
+/// worker a no-op; no detached task can recycle this PID while it is being used here.
+fn signal_worker(
+    child: &mut tokio::process::Child,
+    signal: crate::server_supervisor::WorkerSignal,
+) -> std::io::Result<()> {
+    if child.try_wait()?.is_some() {
+        return Ok(());
+    }
+    let Some(pid) = child.id() else {
+        return Ok(());
+    };
+    let signal = match signal {
+        crate::server_supervisor::WorkerSignal::Stop => libc::SIGTERM,
+        crate::server_supervisor::WorkerSignal::ReloadUsers => libc::SIGHUP,
+    };
+    if unsafe { libc::kill(pid as i32, signal) } == -1 {
+        let error = std::io::Error::last_os_error();
+        if error.raw_os_error() != Some(libc::ESRCH) {
+            return Err(error);
         }
     }
+    Ok(())
 }
 
 /// Handle SIGHUP: re-read the config file from disk and hot-reload everything
@@ -4593,17 +4528,6 @@ struct QueueThreads {
     /// Late registration is expected and handled — see `ProfileTeardown::drop`.
     #[cfg(target_os = "linux")]
     tids: Arc<std::sync::Mutex<Vec<libc::pthread_t>>>,
-}
-
-async fn wait_for_profile_shutdown(shutdown: &mut tokio::sync::watch::Receiver<bool>) {
-    if *shutdown.borrow() {
-        return;
-    }
-    while shutdown.changed().await.is_ok() {
-        if *shutdown.borrow() {
-            return;
-        }
-    }
 }
 
 /// Undoes everything `run_profile` created on the host, however it leaves.
