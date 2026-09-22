@@ -2,8 +2,8 @@
 //! live in the portable resolver engine so host tests exercise the production code.
 
 use crate::config::server::DnsConfig;
-pub(crate) use crate::dns_resolver::compile_blocklist;
 use crate::dns_resolver::{apply_udp_size_limit, resolve};
+pub(crate) use crate::dns_resolver::{compile_blocklist, new_cache};
 pub use crate::dns_resolver::{DnsBlocklist, DnsCache};
 use crate::server::ServerState;
 use std::collections::HashSet;
@@ -172,7 +172,7 @@ pub(crate) async fn run_dns_proxy(
     let dropped = Arc::new(AtomicU64::new(0));
     // The full UDP payload maximum, not a guess at what clients "should" send. `recv_from`
     // discards whatever does not fit, silently, so any bound below 65535 turns a legal
-    // datagram — a DNS UPDATE, a large TSIG, an EDNS0 query from a client that advertised
+    // datagram — a large TSIG or an EDNS0 query from a client that advertised
     // room for it — into a truncated message forwarded upstream as if it were whole. This is
     // ONE buffer for the whole accept loop, so the ceiling costs 64 KiB per profile, once.
     // (Audit 2026-08-01, §10.)
@@ -244,6 +244,8 @@ async fn handle_query(
         return;
     };
     // Only the UDP path has a size limit to respect; over TCP the answer goes out whole.
-    let out = apply_udp_size_limit(&query, resp);
+    let Some(out) = apply_udp_size_limit(&query, resp) else {
+        return;
+    };
     let _ = socket.send_to(&out, src).await;
 }

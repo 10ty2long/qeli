@@ -6184,7 +6184,7 @@ async fn run_profile_generation(
         // ONE cache, blocklist and upstream-preference shared by both transports AND both
         // listener families: duplicate state doubles upstream traffic and lets the same name
         // answer differently depending on whether the client reached the IPv4 or IPv6 listener.
-        let dns_cache: dns::DnsCache = Arc::new(RwLock::new(std::collections::HashMap::new()));
+        let dns_cache = dns::new_cache();
         let dns_pref = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let dns_blocklist = dns::compile_blocklist(&pcfg.dns.blocklist);
         {

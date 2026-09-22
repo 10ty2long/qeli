@@ -525,6 +525,13 @@ after TCP TC. One production engine is tested locally: 22 DNS tests with UDP/TCP
 remain open; the overall section is not complete.
 
 
+**Cache and signed exchanges, 23 September 2026:**
+[Q19 follow-up](../reports/AUDIT-Q19-DNS-CACHE.md) closes Q19-F007–F010: a 16 MiB
+per-profile packet budget, byte-preserving uncached TSIG/SIG(0) relay, and request
+header/opcode checks. The legacy panel lab script no longer opens SSH on import. 36 DNS tests, 768 Rust tests overall — PASS. Real Linux
+lifecycle, sustained concurrent load/RSS, advanced EDNS/RDATA and external signed
+interoperability remain open; section 19 stays **IN_PROGRESS**.
+
 ### 20. DHCP and lease lifecycle
 
 **Source:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.

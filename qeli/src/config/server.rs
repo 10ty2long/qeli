@@ -1271,6 +1271,8 @@ pub struct DnsConfig {
     pub upstream: Vec<String>,
     #[serde(default = "default_upstream_proto")]
     pub upstream_protocol: String,
+    /// Maximum cached exchanges (0 disables caching). The shared per-profile store
+    /// independently caps retained query and response bytes at 16 MiB.
     #[serde(default = "default_dns_cache")]
     pub cache_size: usize,
     #[serde(default = "default_dns_timeout")]

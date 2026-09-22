@@ -54,3 +54,5 @@ Remaining: actual Linux start/stop and ProfileTasks cancellation, load/cache byt
 TSIG/SIG(0), EDNS and RDATA semantics, unusual requests, IPv6 upstream and an external
 packet-capture lab. OS DNS apply/rollback from the previous pass also remains open.
 No overall DNS PASS or release-ready status is claimed.
+
+[Follow-up: cache memory and signed exchanges](AUDIT-Q19-DNS-CACHE.md) records the next pass; the remaining list above describes this report's baseline.

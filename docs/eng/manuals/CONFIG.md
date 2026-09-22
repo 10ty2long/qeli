@@ -2738,7 +2738,7 @@ unreadable chain fails profile startup.
 | `dns.port` | `53` | the port the **server-side proxy** listens on. Clients are still told 53, and qeli redirects 53 to this port; a non-53 port requires `iptables` for IPv4 and `ip6tables` for managed IPv6; in `manual`, the administrator provides IPv6 redirection |
 | `dns.upstream` | `1.1.1.1, 8.8.8.8` | unique IP-literal upstream resolvers (comma-separated), maximum 16 |
 | `dns.upstream_protocol` | `udp` | `udp` \| `tcp`. `tcp` really does force TCP to the upstream, and a UDP answer that comes back TRUNCATED is retried over TCP either way. ⚠️ **`tls` (DoT) is REJECTED at config load** — the server refuses to start rather than silently sending plaintext UDP while the config says DoT |
-| `dns.cache_size` | `1000` | record cache size; `0` disables caching, maximum 10000 entries |
+| `dns.cache_size` | `1000` | maximum cached exchanges; `0` disables caching, at most 10000 entries and 16 MiB of retained query/response bytes per profile |
 | `dns.timeout_secs` | `5` | one total deadline across all upstream attempts, 1–300 seconds |
 | `dns.blocklist` | `[]` | ASCII/punycode domains answered with `NXDOMAIN` (the name and all subdomains); no `*` wildcard, maximum 10000 unique names |
 | `dns.push_servers` | `[]` | hand clients IPv4/IPv6 resolvers **without** running the proxy. Empty = the active proxy listeners when `dns.enabled`, else nothing. Every address is strict-IP-validated and must belong to an active inner family |
@@ -2749,6 +2749,24 @@ a negative response is not cached. Cached record TTLs are reduced by entry age.
 Truncated responses (TC) are not cached. If TCP retry also returns TC, the proxy
 tries the next upstream within the total `dns.timeout_secs` deadline; that response
 is retained only as a last resort when no complete answer is available.
+
+The byte limit is independent of `dns.cache_size` and shared by IPv4/IPv6 and
+UDP/TCP listeners within one profile. Under pressure expired entries are removed
+first, then a batch of entries is evicted. The 16 MiB limit covers retained packet
+payloads, not map metadata, in-flight buffers or the process's total memory.
+
+TSIG and SIG(0) exchanges bypass the cache. Allowed signed requests and their upstream
+replies are relayed unchanged; Qeli does not validate keys or generate signatures.
+An oversized signed UDP reply is dropped because Qeli cannot sign a shortened
+replacement: use TCP or advertise enough space with EDNS. A signed reply to an
+unsigned request is rejected and another upstream is tried; ordinary requests
+continue to use random upstream IDs. DNSSEC RRSIG records are distinct from
+transaction signatures; this is not DNSSEC validation. Blocklist decisions still
+apply, and locally generated errors/NXDOMAIN are unsigned.
+
+The proxy handles opcode QUERY. Other opcodes (including UPDATE/NOTIFY) receive
+NOTIMP. Incoming responses are ignored. QUERY with more than one question receives
+a header-only FORMERR; zero-question exchanges such as DNS COOKIE remain allowed.
 
 When `dns.enabled = false`, proxy-only fields (`listen`, `listen_ipv6`, `port`, `upstream`,
 `upstream_protocol`, cache, timeout and blocklist) are dormant and preserved without validation;

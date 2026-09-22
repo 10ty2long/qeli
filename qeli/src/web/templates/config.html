@@ -938,8 +938,8 @@
               </div>
               <div>
                 <label class="field-label">Cache size</label>
-                <p class="field-desc">Number of DNS entries to cache</p>
-                <input class="inp" type="number" min="0" x-model.number="cfg.profiles[activeTab].dns.cache_size" @input="markDirty()">
+                <p class="field-desc">0 disables caching; up to 10000 entries and 16 MiB of cached packets per profile</p>
+                <input class="inp" type="number" min="0" max="10000" x-model.number="cfg.profiles[activeTab].dns.cache_size" @input="markDirty()">
               </div>
               <div>
                 <label class="field-label">Timeout (seconds)</label>

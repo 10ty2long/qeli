@@ -9,14 +9,25 @@ use std::time::{Duration, Instant};
 use tokio::net::UdpSocket;
 use tokio::sync::RwLock;
 
-/// (response_bytes, inserted_at, ttl), keyed by the txid-normalised query.
-///
-/// The TTL is PER ENTRY, taken from the record itself (S-14). It used to be one global
-/// `dns.timeout_secs` for everything, which is not a caching policy at all: a record the
-/// zone says is valid for 5 s was served stale for the whole timeout, and a record valid
-/// for a day was re-queried just as often. `timeout_secs` is a network timeout; reusing it
-/// as a cache lifetime conflated two unrelated settings.
-pub type DnsCache = Arc<RwLock<HashMap<Vec<u8>, (Vec<u8>, Instant, Duration)>>>;
+/// Per-profile cache. Boxed slices retain exactly their length, so the packet-byte
+/// accounting includes both normalised queries and responses without hidden Vec capacity.
+/// Entry metadata and in-flight network buffers are outside this payload budget.
+#[derive(Default)]
+pub struct DnsCacheStore {
+    entries: HashMap<Box<[u8]>, CachedResponse>,
+    payload_bytes: usize,
+}
+
+// Response payload, insertion time, and its record-derived lifetime.
+type CachedResponse = (Box<[u8]>, Instant, Duration);
+
+pub type DnsCache = Arc<RwLock<DnsCacheStore>>;
+
+pub(crate) fn new_cache() -> DnsCache {
+    Arc::new(RwLock::new(DnsCacheStore::default()))
+}
+
+const MAX_CACHE_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
 pub type DnsBlocklist = Arc<HashSet<String>>;
 
 /// Ceiling on a record-derived cache lifetime. Short authoritative TTLs are honoured exactly;
@@ -298,6 +309,9 @@ fn response_cache_ttl(msg: &[u8]) -> Option<Duration> {
     if !dns_message_is_complete(msg) || msg[2] & 0x02 != 0 {
         return None; // TC is a retry instruction, never a reusable answer.
     }
+    if has_transaction_signature(msg)? {
+        return None; // TSIG and SIG(0) authenticate an exchange, not a reusable RRset.
+    }
     // Cache only successful and standard negative outcomes. SERVFAIL, REFUSED,
     // FORMERR and other transient/policy errors must be retried upstream on the next query,
     // not amplified to every client for `dns.timeout_secs`.
@@ -422,9 +436,19 @@ async fn resolve_with_upstreams(
     query: &[u8],
     upstreams: &[SocketAddr],
 ) -> Option<Vec<u8>> {
+    if query.len() < 12 || query[2] & 0x80 != 0 {
+        return None; // Ignore responses sent to the recursive query listener.
+    }
+    if query[2] & 0x78 != 0 {
+        return Some(query_error_response(query, 4)); // NOTIMP: QUERY only.
+    }
+    if u16::from_be_bytes([query[4], query[5]]) > 1 {
+        return Some(query_error_response(query, 1)); // RFC 9619: FORMERR.
+    }
     if !dns_message_is_complete(query) {
         return None;
     }
+    let signed_query = has_transaction_signature(query)?;
     let query = query.to_vec();
     let query_txid = [query[0], query[1]];
 
@@ -442,19 +466,23 @@ async fn resolve_with_upstreams(
         cfg.timeout_secs
             .clamp(1, crate::config::server::DNS_MAX_TIMEOUT_SECS),
     );
-    let cached = {
+    let cache_enabled = !signed_query && cfg.cache_size != 0;
+    let cached = if cache_enabled {
         let cache_read = cache.read().await;
         cache_read
-            .get(&cache_key)
+            .entries
+            .get(cache_key.as_slice())
             .and_then(|(resp, time, entry_ttl)| {
                 // Per-entry lifetime from the record, not the global network timeout. (S-14)
                 let age = time.elapsed();
                 if age < *entry_ttl {
-                    Some((resp.clone(), age.as_secs()))
+                    Some((resp.to_vec(), age.as_secs()))
                 } else {
                     None
                 }
             })
+    } else {
+        None
     };
     if let Some((mut response, age_secs)) = cached {
         if response.len() >= 2 {
@@ -499,7 +527,11 @@ async fn resolve_with_upstreams(
     // (below) closes the birthday variant where an attacker sprays answers for a name it
     // did not ask about. The client's txid is put back before the answer is cached or
     // returned. (Audit 2026-08-04, M-10.)
-    let upstream_txid: [u8; 2] = {
+    // Transaction signatures cover message bytes. A transparent forwarder leaves
+    // signed exchanges unchanged and never shares them through the ordinary cache.
+    let upstream_txid: [u8; 2] = if signed_query {
+        query_txid
+    } else {
         let mut t = [0u8; 2];
         rand::Rng::fill_bytes(&mut rand::rng(), &mut t);
         t
@@ -539,8 +571,7 @@ async fn resolve_with_upstreams(
             if let Some(full) = query_tcp(&upstream_addr, &query, attempt_timeout).await {
                 // Same anti-spoof check as the UDP path (TCP is connection-bound, so
                 // the source is implicitly the resolver we dialled).
-                if response_matches(&full, upstream_txid, &query) && dns_message_is_complete(&full)
-                {
+                if response_is_forwardable(&full, upstream_txid, &query) {
                     if response_is_retryable_error(&full) {
                         last_upstream_error = Some(full);
                         continue;
@@ -624,9 +655,7 @@ async fn resolve_with_upstreams(
                         let tcp_budget =
                             attempt_deadline.saturating_duration_since(tokio::time::Instant::now());
                         if let Some(full) = query_tcp(&upstream_addr, &query, tcp_budget).await {
-                            if response_matches(&full, upstream_txid, &query)
-                                && dns_message_is_complete(&full)
-                            {
+                            if response_is_forwardable(&full, upstream_txid, &query) {
                                 if response_is_retryable_error(&full) {
                                     last_upstream_error = Some(full);
                                     break;
@@ -644,13 +673,15 @@ async fn resolve_with_upstreams(
                         // An exact buffer fill without TC may have been cut mid-record and is
                         // never safe to forward. An explicit TC response is structurally useful:
                         // keep it only as a last resort so the downstream client can retry TCP.
-                        if truncated && dns_message_is_complete(&resp_buf[..m]) {
+                        if truncated
+                            && response_is_forwardable(&resp_buf[..m], upstream_txid, &query)
+                        {
                             truncated_fallback = Some(resp_buf[..m].to_vec());
                         }
                         break;
                     }
-                    if !dns_message_is_complete(&resp_buf[..m]) {
-                        break; // corrupt framing: try another resolver
+                    if !response_is_forwardable(&resp_buf[..m], upstream_txid, &query) {
+                        break; // corrupt framing or unsolicited signature: try another resolver
                     }
                     if response_is_retryable_error(&resp_buf[..m]) {
                         // Return the last real DNS error if every resolver fails, but first
@@ -692,6 +723,9 @@ async fn resolve_with_upstreams(
         // things like round-robin load balancing, where caching defeats the point. Negative
         // NXDOMAIN/NODATA responses use RFC 2308's min(SOA TTL, SOA.MINIMUM); without a valid
         // authority SOA they are not reusable. (S-14)
+        if !cache_enabled {
+            return Some(resp);
+        }
         let Some(entry_ttl) = response_cache_ttl(&resp) else {
             return Some(resp);
         };
@@ -699,32 +733,76 @@ async fn resolve_with_upstreams(
         let cache_limit = cfg
             .cache_size
             .min(crate::config::server::DNS_MAX_CACHE_ENTRIES);
-        if cache_limit == 0 {
-            return Some(resp);
-        }
         let mut cache_write = cache.write().await;
-        if cache_write.len() >= cache_limit {
-            // Drop expired entries first (cheap win). If the cache is still full of
-            // FRESH entries, evict a batch of arbitrary keys so we make real room —
-            // otherwise every insert at steady-state saturation would re-scan the
-            // whole map (O(n)) and free nothing, stalling all DNS tasks. Batching
-            // amortizes the scan over ~cache_size/10 inserts.
-            let now = Instant::now();
-            cache_write.retain(|_, (_, time, entry_ttl)| now.duration_since(*time) < *entry_ttl);
-            if cache_write.len() >= cache_limit {
-                let evict = (cache_limit / 10).max(1);
-                let victims: Vec<_> = cache_write.keys().take(evict).cloned().collect();
-                for k in victims {
-                    cache_write.remove(&k);
-                }
-            }
-        }
-        if cache_write.len() < cache_limit {
-            cache_write.insert(cache_key, (resp.clone(), Instant::now(), entry_ttl));
-        }
+        insert_cache_entry(
+            &mut cache_write,
+            cache_key,
+            resp.clone(),
+            entry_ttl,
+            cache_limit,
+        );
         return Some(resp);
     }
     None
+}
+
+// Account for retained queries as well as answers. Evict in batches under pressure
+// to amortise full-map scans, without cloning potentially large victim keys.
+fn insert_cache_entry(
+    cache: &mut DnsCacheStore,
+    cache_key: Vec<u8>,
+    resp: Vec<u8>,
+    entry_ttl: Duration,
+    cache_limit: usize,
+) {
+    let cache_limit = cache_limit.min(crate::config::server::DNS_MAX_CACHE_ENTRIES);
+    let incoming = cache_key.len().saturating_add(resp.len());
+    if cache_limit == 0 || incoming > MAX_CACHE_PAYLOAD_BYTES || entry_ttl.is_zero() {
+        return;
+    }
+    if let Some((key, (value, _, _))) = cache.entries.remove_entry(cache_key.as_slice()) {
+        cache.payload_bytes -= key.len() + value.len();
+    }
+    if cache.entries.len() >= cache_limit
+        || cache.payload_bytes + incoming > MAX_CACHE_PAYLOAD_BYTES
+    {
+        let now = Instant::now();
+        cache.entries.retain(|key, (value, inserted, ttl)| {
+            if now.duration_since(*inserted) < *ttl {
+                true
+            } else {
+                cache.payload_bytes -= key.len() + value.len();
+                false
+            }
+        });
+        let count_pressure = cache.entries.len() >= cache_limit;
+        let byte_pressure = cache.payload_bytes + incoming > MAX_CACHE_PAYLOAD_BYTES;
+        let target_count = if count_pressure {
+            cache_limit.saturating_sub((cache_limit / 10).max(1))
+        } else {
+            cache.entries.len()
+        };
+        let target_bytes = if byte_pressure {
+            (MAX_CACHE_PAYLOAD_BYTES - incoming).min(MAX_CACHE_PAYLOAD_BYTES * 9 / 10)
+        } else {
+            cache.payload_bytes
+        };
+        let mut remaining_count = cache.entries.len();
+        cache.entries.retain(|key, (value, _, _)| {
+            if remaining_count > target_count || cache.payload_bytes > target_bytes {
+                remaining_count -= 1;
+                cache.payload_bytes -= key.len() + value.len();
+                false
+            } else {
+                true
+            }
+        });
+    }
+    cache.payload_bytes += incoming;
+    cache.entries.insert(
+        cache_key.into_boxed_slice(),
+        (resp.into_boxed_slice(), Instant::now(), entry_ttl),
+    );
 }
 
 /// How large a reply the UPSTREAM may legitimately send us, which is what the client asked
@@ -805,6 +883,58 @@ fn additional_section_start(msg: &[u8]) -> Option<usize> {
     Some(pos)
 }
 
+/// Detect transaction authentication without validating its keys or MAC. RRSIG
+/// (46) and legacy SIG covering an RRset are distinct from SIG(0) (24, covered=0).
+fn has_transaction_signature(msg: &[u8]) -> Option<bool> {
+    let mut pos = additional_section_start(msg)?;
+    let arcount = u16::from_be_bytes([msg[10], msg[11]]);
+    for _ in 0..arcount {
+        let after_name = skip_name(msg, pos)?;
+        let header_end = after_name.checked_add(10).filter(|end| *end <= msg.len())?;
+        let rtype = u16::from_be_bytes([msg[after_name], msg[after_name + 1]]);
+        let rdlen = usize::from(u16::from_be_bytes([
+            msg[after_name + 8],
+            msg[after_name + 9],
+        ]));
+        pos = header_end
+            .checked_add(rdlen)
+            .filter(|end| *end <= msg.len())?;
+        if rtype == 250 {
+            return Some(true);
+        }
+        if rtype == 24 {
+            if rdlen < 2 {
+                return None;
+            }
+            if msg[header_end..header_end + 2] == [0, 0] {
+                return Some(true);
+            }
+        }
+    }
+    Some(false)
+}
+
+/// Unsigned requests use a random upstream ID. An unsolicited signed response
+/// cannot be relayed with the client's ID without changing authenticated bytes.
+fn response_is_forwardable(resp: &[u8], txid: [u8; 2], query: &[u8]) -> bool {
+    response_matches(resp, txid, query)
+        && dns_message_is_complete(resp)
+        && match has_transaction_signature(resp) {
+            Some(false) => true,
+            Some(true) => has_transaction_signature(query) == Some(true),
+            None => false,
+        }
+}
+
+/// Header-only errors do not reflect unvalidated questions or client-supplied RRs.
+fn query_error_response(query: &[u8], rcode: u8) -> Vec<u8> {
+    let mut response = vec![0; 12];
+    response[..2].copy_from_slice(&query[..2]);
+    response[2] = 0x80 | (query[2] & 0x79); // QR, opcode and RD
+    response[3] = 0x80 | (query[3] & 0x10) | rcode; // RA and CD; never AD
+    response
+}
+
 /// Extended DNS RCODE from the single well-formed OPT pseudo-record, or zero when EDNS is
 /// absent. Multiple OPT records and a non-root OPT owner name are malformed and reject cache
 /// admission. The ordinary low four RCODE bits live in the base header.
@@ -831,8 +961,9 @@ fn dns_extended_rcode(msg: &[u8]) -> Option<u8> {
     Some(extended.unwrap_or(0))
 }
 
-/// Cut a UDP reply down to what the client said it can take, setting TC so it knows to ask
-/// again over TCP.
+/// Fit an unsigned UDP reply to the advertised size, setting TC for TCP retry.
+/// A signed reply that does not fit is dropped: without its key we cannot create
+/// an authenticated replacement. Signed clients need TCP or sufficient EDNS space.
 ///
 /// This proxy used to forward the answer WHOLE however large it was, because setting TC without
 /// a TCP listener would have sent the client to a port where nothing answers — a working lookup
@@ -841,10 +972,15 @@ fn dns_extended_rcode(msg: &[u8]) -> Option<u8> {
 /// The truncated message is header + question with all three record counts zeroed, not the
 /// original bytes cut short: chopping mid-record leaves counts promising records that are not
 /// there, which a resolver reads as a malformed message rather than as "retry over TCP".
-pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Vec<u8> {
+pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Option<Vec<u8>> {
     let limit = advertised_udp_size(query);
     if resp.len() <= limit {
-        return resp;
+        return Some(resp);
+    }
+    if has_transaction_signature(&resp)? {
+        // We have no key to sign a shorter replacement. Require TCP or a large
+        // enough EDNS advertisement rather than stripping authentication.
+        return None;
     }
     // Question section only; if it cannot be located, fall back to a bare header.
     let q_end = question_section_end(query).unwrap_or(12).min(query.len());
@@ -869,7 +1005,7 @@ pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Vec<u8> {
     out[6..8].copy_from_slice(&0u16.to_be_bytes()); // ANCOUNT
     out[8..10].copy_from_slice(&0u16.to_be_bytes()); // NSCOUNT
     out[10..12].copy_from_slice(&0u16.to_be_bytes()); // ARCOUNT (the OPT is dropped with it)
-    out
+    Some(out)
 }
 
 /// Offset just past the question section.
@@ -884,7 +1020,7 @@ fn response_matches(resp: &[u8], txid: [u8; 2], query: &[u8]) -> bool {
         return false;
     }
     // QR bit must be set — a reply, not a reflected query.
-    if resp[2] & 0x80 == 0 {
+    if resp[2] & 0x80 == 0 || query.len() < 12 || resp[2] & 0x78 != query[2] & 0x78 {
         return false;
     }
     match (question_section_end(query), question_section_end(resp)) {
@@ -977,6 +1113,423 @@ mod tests {
     //! an upstream reply is untrusted input — so the cases that matter are the malformed
     //! ones: it must return None, never panic or loop.
     use super::*;
+
+    fn with_transaction_signature(mut msg: Vec<u8>, rtype: u16) -> Vec<u8> {
+        let mut data = Vec::new();
+        if rtype == 250 {
+            data.extend_from_slice(b"\x0bhmac-sha256\0");
+            data.extend_from_slice(&[0, 0, 0, 0, 0, 1, 0, 60, 0, 32]);
+            data.extend_from_slice(&[0x5a; 32]); // opaque MAC: relay tests do not verify keys
+            data.extend_from_slice(&msg[..2]); // Original ID
+            data.extend_from_slice(&[0, 0, 0, 0]); // error and other length
+        } else {
+            data.extend_from_slice(&[0, 0, 8, 0]); // SIG type covered=0, algorithm, labels
+            data.extend_from_slice(&[0; 12]); // original TTL, expiration, inception
+            data.extend_from_slice(&[0, 1, 0]); // key tag and root signer
+            data.extend_from_slice(&[0x5a; 32]); // opaque signature
+        }
+        let additional = u16::from_be_bytes([msg[10], msg[11]]) + 1;
+        msg[10..12].copy_from_slice(&additional.to_be_bytes());
+        msg.push(0);
+        msg.extend_from_slice(&rtype.to_be_bytes());
+        msg.extend_from_slice(&255u16.to_be_bytes());
+        msg.extend_from_slice(&[0; 4]);
+        msg.extend_from_slice(&u16::try_from(data.len()).unwrap().to_be_bytes());
+        msg.extend_from_slice(&data);
+        msg
+    }
+
+    #[test]
+    fn audit_transaction_signatures_are_never_reusable_cache_entries() {
+        for rtype in [250, 24] {
+            let signed = with_transaction_signature(response(&[60], true), rtype);
+            assert!(dns_message_is_complete(&signed));
+            assert_eq!(
+                response_cache_ttl(&signed),
+                None,
+                "type {rtype} is transaction-specific"
+            );
+        }
+    }
+
+    #[test]
+    fn audit_large_dns_cache_has_a_byte_budget_not_only_an_entry_count() {
+        let mut cache = DnsCacheStore::default();
+        for n in 0..1000u32 {
+            insert_cache_entry(
+                &mut cache,
+                n.to_be_bytes().to_vec(),
+                vec![0; 40_000],
+                Duration::from_secs(60),
+                1000,
+            );
+        }
+        let bytes: usize = cache
+            .entries
+            .iter()
+            .map(|(k, (v, _, _))| k.len() + v.len())
+            .sum();
+        assert!(
+            bytes <= 16 * 1024 * 1024,
+            "retained {bytes} bytes in {} entries",
+            cache.entries.len()
+        );
+    }
+
+    #[tokio::test]
+    async fn audit_multiple_questions_get_formerr_before_upstream_or_blocklist() {
+        let mut request = query(None);
+        request[5] = 2;
+        request.extend_from_within(12..);
+        let cfg = Arc::new(DnsConfig {
+            upstream: Vec::new(),
+            ..serde_json::from_str("{}").unwrap()
+        });
+        let answer = resolve(
+            new_cache(),
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request,
+        )
+        .await;
+        let answer = answer.expect("malformed QUERY needs FORMERR, not upstream timeout");
+        assert_eq!(answer[3] & 15, 1);
+        assert_eq!(answer.len(), 12);
+        assert_eq!(&answer[..2], &request[..2]);
+    }
+
+    #[tokio::test]
+    async fn audit_resolver_ignores_incoming_responses() {
+        let request = response(&[60], true);
+        let cfg = Arc::new(DnsConfig {
+            upstream: Vec::new(),
+            ..serde_json::from_str("{}").unwrap()
+        });
+        assert!(resolve(
+            new_cache(),
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            compile_blocklist(&["example.com".into()]),
+            &request
+        )
+        .await
+        .is_none());
+    }
+
+    #[tokio::test]
+    async fn audit_signed_requests_reach_upstream_byte_for_byte() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        for rtype in [250, 24] {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let address = listener.local_addr().unwrap();
+            let (sent, received) = tokio::sync::oneshot::channel();
+            let request = with_transaction_signature(query(None), rtype);
+            let mut reply = with_transaction_signature(response(&[60], true), rtype);
+            reply[..2].copy_from_slice(&request[..2]);
+            let expected_reply = reply.clone();
+            let task = tokio::spawn(async move {
+                let (mut stream, _) = listener.accept().await.unwrap();
+                let length = stream.read_u16().await.unwrap();
+                let mut input = vec![0; usize::from(length)];
+                stream.read_exact(&mut input).await.unwrap();
+                reply[..2].copy_from_slice(&input[..2]);
+                sent.send(input).unwrap();
+                stream
+                    .write_u16(u16::try_from(reply.len()).unwrap())
+                    .await
+                    .unwrap();
+                stream.write_all(&reply).await.unwrap();
+            });
+            let _upstream = TestUpstream { address, task };
+            let cfg = Arc::new(DnsConfig {
+                upstream_protocol: "tcp".into(),
+                cache_size: 8,
+                timeout_secs: 1,
+                ..serde_json::from_str("{}").unwrap()
+            });
+            let cache: DnsCache = new_cache();
+            let answer = resolve_with_upstreams(
+                cache.clone(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                Arc::new(HashSet::new()),
+                &request,
+                &[address],
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                received.await.unwrap(),
+                request,
+                "signed request changed for type {rtype}"
+            );
+            assert_eq!(answer, expected_reply);
+            assert_eq!(cache.read().await.entries.len(), 0);
+        }
+    }
+
+    fn assert_cache_budget(cache: &DnsCacheStore, entry_limit: usize) {
+        let actual: usize = cache
+            .entries
+            .iter()
+            .map(|(key, (value, _, _))| key.len() + value.len())
+            .sum();
+        assert_eq!(cache.payload_bytes, actual);
+        assert!(actual <= MAX_CACHE_PAYLOAD_BYTES);
+        assert!(cache.entries.len() <= entry_limit);
+    }
+
+    #[test]
+    fn cache_accounts_for_large_keys_replacement_and_rejected_entries() {
+        let mut cache = DnsCacheStore::default();
+        let ttl = Duration::from_secs(60);
+        let key = vec![7; MAX_CACHE_PAYLOAD_BYTES - 1];
+        insert_cache_entry(&mut cache, key.clone(), vec![1], ttl, 2);
+        assert_eq!(cache.payload_bytes, MAX_CACHE_PAYLOAD_BYTES);
+        // Oversized replacement must leave the existing usable entry intact.
+        insert_cache_entry(&mut cache, key.clone(), vec![1, 2], ttl, 2);
+        assert_eq!(cache.entries.get(key.as_slice()).unwrap().0.as_ref(), &[1]);
+        insert_cache_entry(&mut cache, key, Vec::new(), ttl, 2);
+        assert_eq!(cache.payload_bytes, MAX_CACHE_PAYLOAD_BYTES - 1);
+        insert_cache_entry(&mut cache, vec![8], Vec::new(), ttl, 2);
+        assert_eq!(cache.entries.len(), 2);
+        assert_cache_budget(&cache, 2);
+        insert_cache_entry(&mut cache, vec![9], vec![0; 128], ttl, 2);
+        assert_cache_budget(&cache, 2);
+        assert!(cache.entries.contains_key(&[9][..]));
+        let before = (cache.entries.len(), cache.payload_bytes);
+        insert_cache_entry(&mut cache, vec![10], vec![1], ttl, 0);
+        insert_cache_entry(&mut cache, vec![10], vec![1], Duration::ZERO, 2);
+        assert_eq!((cache.entries.len(), cache.payload_bytes), before);
+    }
+
+    #[test]
+    fn cache_expires_before_eviction_and_honours_small_entry_limits() {
+        let mut cache = DnsCacheStore::default();
+        let ttl = Duration::from_secs(60);
+        insert_cache_entry(&mut cache, vec![1], vec![0; 100], ttl, 2);
+        insert_cache_entry(&mut cache, vec![2], vec![0; 100], ttl, 2);
+        cache.entries.get_mut(&[1][..]).unwrap().1 = Instant::now() - Duration::from_secs(61);
+        insert_cache_entry(&mut cache, vec![3], vec![0; 100], ttl, 2);
+        assert!(!cache.entries.contains_key(&[1][..]));
+        assert!(cache.entries.contains_key(&[2][..]));
+        assert_cache_budget(&cache, 2);
+        for limit in [1, 2, 10] {
+            for key in 0..64 {
+                insert_cache_entry(&mut cache, vec![key], vec![key; 100], ttl, limit);
+                assert_cache_budget(&cache, limit);
+                assert!(cache.entries.contains_key(&[key][..]));
+            }
+        }
+    }
+
+    #[test]
+    fn signature_detection_distinguishes_rrset_signatures_and_rejects_short_sig() {
+        for rtype in [24, 46] {
+            let mut signed = with_transaction_signature(response(&[60], true), rtype);
+            let header = skip_name(&signed, additional_section_start(&signed).unwrap()).unwrap();
+            signed[header + 11] = 1; // covers A, not the transaction
+            assert_eq!(has_transaction_signature(&signed), Some(false));
+            assert_eq!(response_cache_ttl(&signed), Some(Duration::from_secs(60)));
+        }
+        let mut malformed = with_transaction_signature(response(&[60], true), 24);
+        let header = skip_name(&malformed, additional_section_start(&malformed).unwrap()).unwrap();
+        malformed[header + 8..header + 10].copy_from_slice(&1u16.to_be_bytes());
+        malformed.truncate(header + 11);
+        assert_eq!(has_transaction_signature(&malformed), None);
+        assert_eq!(response_cache_ttl(&malformed), None);
+        for cut in 0..malformed.len() {
+            let _ = has_transaction_signature(&malformed[..cut]);
+        }
+    }
+
+    #[test]
+    fn signed_udp_responses_are_unchanged_or_dropped_never_locally_truncated() {
+        for rtype in [250, 24] {
+            let signed = with_transaction_signature(response(&[60; 40], true), rtype);
+            assert!(signed.len() > 512);
+            assert_eq!(apply_udp_size_limit(&query(None), signed.clone()), None);
+            assert_eq!(
+                apply_udp_size_limit(&query(Some(4096)), signed.clone()),
+                Some(signed)
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn signed_udp_requests_and_responses_bypass_even_a_preexisting_cache_entry() {
+        for rtype in [250, 24] {
+            let request = with_transaction_signature(query(None), rtype);
+            let socket = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+            let address = socket.local_addr().unwrap();
+            let mut reply = with_transaction_signature(response(&[60], true), rtype);
+            reply[..2].copy_from_slice(&request[..2]);
+            let expected_reply = reply.clone();
+            let (sent, received) = tokio::sync::oneshot::channel();
+            let task = tokio::spawn(async move {
+                let mut input = vec![0; 65535];
+                let (length, peer) = socket.recv_from(&mut input).await.unwrap();
+                input.truncate(length);
+                sent.send(input).unwrap();
+                socket.send_to(&reply, peer).await.unwrap();
+            });
+            let _upstream = TestUpstream { address, task };
+            let cache = new_cache();
+            let mut key = request.clone();
+            key[..2].fill(0);
+            insert_cache_entry(
+                &mut *cache.write().await,
+                key.clone(),
+                response(&[1234], true),
+                Duration::from_secs(60),
+                8,
+            );
+            let cfg = Arc::new(DnsConfig {
+                upstream_protocol: "udp".into(),
+                timeout_secs: 1,
+                ..serde_json::from_str("{}").unwrap()
+            });
+            let answer = resolve_with_upstreams(
+                cache.clone(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                Arc::new(HashSet::new()),
+                &request,
+                &[address],
+            )
+            .await
+            .unwrap();
+            assert_eq!(received.await.unwrap(), request);
+            assert_eq!(answer, expected_reply);
+            assert_eq!(
+                answer_min_ttl(&cache.read().await.entries.get(key.as_slice()).unwrap().0),
+                Some(1234)
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn unsolicited_transaction_signatures_try_the_next_upstream() {
+        for force_tcp in [false, true] {
+            for rtype in [250, 24] {
+                let signed = with_transaction_signature(response(&[900], true), rtype);
+                let first = test_upstream(
+                    (!force_tcp).then(|| signed.clone()),
+                    force_tcp.then_some(signed),
+                )
+                .await;
+                let good = response(&[60], true);
+                let second = test_upstream(
+                    (!force_tcp).then(|| good.clone()),
+                    force_tcp.then_some(good),
+                )
+                .await;
+                let cfg = Arc::new(DnsConfig {
+                    upstream_protocol: if force_tcp { "tcp" } else { "udp" }.into(),
+                    timeout_secs: 2,
+                    ..serde_json::from_str("{}").unwrap()
+                });
+                let pref = Arc::new(AtomicUsize::new(0));
+                let answer = resolve_with_upstreams(
+                    new_cache(),
+                    cfg,
+                    pref.clone(),
+                    Arc::new(HashSet::new()),
+                    &query(None),
+                    &[first.address, second.address],
+                )
+                .await
+                .unwrap();
+                assert_eq!(answer_min_ttl(&answer), Some(60));
+                assert_eq!(pref.load(Ordering::Relaxed), 1);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn zero_question_cookie_exchange_is_forwarded() {
+        let mut request = query(Some(1232));
+        let question_end = question_section_end(&request).unwrap();
+        request.drain(12..question_end);
+        request[5] = 0;
+        // EDNS COOKIE: code=10, length=8, opaque client cookie.
+        request[21..23].copy_from_slice(&12u16.to_be_bytes());
+        request.extend_from_slice(&[0, 10, 0, 8, 1, 2, 3, 4, 5, 6, 7, 8]);
+        let mut reply = request.clone();
+        reply[2] |= 0x80;
+        let upstream = test_upstream(Some(reply.clone()), None).await;
+        let cfg = Arc::new(DnsConfig {
+            upstream_protocol: "udp".into(),
+            timeout_secs: 1,
+            ..serde_json::from_str("{}").unwrap()
+        });
+        let answer = resolve_with_upstreams(
+            new_cache(),
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request,
+            &[upstream.address],
+        )
+        .await
+        .unwrap();
+        assert_eq!(answer, reply);
+        assert_eq!(response_cache_ttl(&answer), None);
+    }
+
+    #[tokio::test]
+    async fn unsupported_opcodes_get_notimp_and_never_blocklist_nxdomain() {
+        for opcode in [1, 2, 4, 5, 6, 15] {
+            let mut request = query(None);
+            request[2] = opcode << 3;
+            let cfg = Arc::new(DnsConfig {
+                upstream: Vec::new(),
+                ..serde_json::from_str("{}").unwrap()
+            });
+            let reply = resolve(
+                new_cache(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                compile_blocklist(&["example.com".into()]),
+                &request,
+            )
+            .await
+            .unwrap();
+            assert_eq!(reply[3] & 15, 4);
+            assert_eq!(reply[2] & 0x78, opcode << 3);
+            assert_eq!(reply.len(), 12);
+        }
+    }
+
+    #[tokio::test]
+    async fn cache_size_zero_bypasses_existing_entries() {
+        let cache = new_cache();
+        let request = query(None);
+        let mut key = request.clone();
+        key[..2].fill(0);
+        insert_cache_entry(
+            &mut *cache.write().await,
+            key,
+            response(&[60], true),
+            Duration::from_secs(60),
+            8,
+        );
+        let cfg = Arc::new(DnsConfig {
+            upstream: Vec::new(),
+            cache_size: 0,
+            ..serde_json::from_str("{}").unwrap()
+        });
+        assert!(resolve(
+            cache,
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request
+        )
+        .await
+        .is_none());
+    }
 
     fn cname_response(ttl: u32) -> Vec<u8> {
         let mut msg = response(&[], false);
@@ -1085,20 +1638,26 @@ mod tests {
             upstream: Vec::new(),
             ..serde_json::from_str("{}").unwrap()
         });
-        let cache: DnsCache = Arc::new(RwLock::new(HashMap::new()));
+        let cache: DnsCache = new_cache();
         let pref = Arc::new(AtomicUsize::new(0));
         let mut request = query(None);
         request[..2].copy_from_slice(&[0x12, 0x34]);
         let mut key = request.clone();
         key[..2].fill(0);
-        cache.write().await.insert(
+        insert_cache_entry(
+            &mut *cache.write().await,
             key.clone(),
-            (
-                response(&[60], true),
-                Instant::now() - Duration::from_secs(10),
-                Duration::from_secs(60),
-            ),
+            response(&[60], true),
+            Duration::from_secs(60),
+            1000,
         );
+        cache
+            .write()
+            .await
+            .entries
+            .get_mut(key.as_slice())
+            .unwrap()
+            .1 = Instant::now() - Duration::from_secs(10);
         let hit = resolve(
             cache.clone(),
             cfg.clone(),
@@ -1120,7 +1679,13 @@ mod tests {
         .await
         .unwrap();
         assert_eq!(blocked[3] & 15, 3);
-        cache.write().await.get_mut(&key).unwrap().1 = Instant::now() - Duration::from_secs(61);
+        cache
+            .write()
+            .await
+            .entries
+            .get_mut(key.as_slice())
+            .unwrap()
+            .1 = Instant::now() - Duration::from_secs(61);
         assert!(
             resolve(cache, cfg, pref, Arc::new(HashSet::new()), &request)
                 .await
@@ -1184,7 +1749,7 @@ mod tests {
             cache_size: 8,
             ..serde_json::from_str("{}").unwrap()
         });
-        let cache: DnsCache = Arc::new(RwLock::new(HashMap::new()));
+        let cache: DnsCache = new_cache();
         let pref = Arc::new(AtomicUsize::new(0));
         let mut request = query(None);
         request[..2].copy_from_slice(&[0x12, 0x34]);
@@ -1210,7 +1775,7 @@ mod tests {
         assert_eq!(&answer[..2], &[0x12, 0x34]);
         assert_eq!(&answer[2..], &good[2..]);
         assert_eq!(pref.load(Ordering::Relaxed), 1);
-        assert_eq!(cache.read().await.len(), 1);
+        assert_eq!(cache.read().await.entries.len(), 1);
     }
 
     #[tokio::test]
@@ -1232,7 +1797,7 @@ mod tests {
             upstream_protocol: "udp".into(),
             ..serde_json::from_str("{}").unwrap()
         });
-        let cache: DnsCache = Arc::new(RwLock::new(HashMap::new()));
+        let cache: DnsCache = new_cache();
         let pref = Arc::new(AtomicUsize::new(0));
         let answer = tokio::time::timeout(
             Duration::from_secs(3),
@@ -1298,6 +1863,9 @@ mod tests {
         let mut wrong_txid = good.clone();
         wrong_txid[0] = 0x00;
         assert!(!response_matches(&wrong_txid, txid, &query));
+        let mut wrong_opcode = good.clone();
+        wrong_opcode[2] |= 0x28; // UPDATE reply cannot satisfy an ordinary QUERY.
+        assert!(!response_matches(&wrong_opcode, txid, &query));
 
         // Right txid, DIFFERENT question — the birthday-spray case the question match
         // exists to stop.
@@ -1504,8 +2072,7 @@ mod tests {
         let qname = 12;
         runaway[qname] = 0xFF;
         assert_eq!(answer_min_ttl(&runaway), None);
-        // Compression pointer loop: must terminate (the pointer is not followed, so this
-        // is really a check that a pointer always ends the name walk).
+        // A compression pointer loop must terminate without panicking.
         let mut looped = response(&[300], true);
         looped[12] = 0xC0;
         looped[13] = 0x0C;
@@ -1587,12 +2154,12 @@ mod tests {
         // Fits: byte-for-byte the same object comes back.
         let small = response(&[300], true);
         assert!(small.len() <= 512);
-        assert_eq!(apply_udp_size_limit(&q, small.clone()), small);
+        assert_eq!(apply_udp_size_limit(&q, small.clone()).unwrap(), small);
 
         // Does not fit: 40 A-records is well past 512 bytes.
         let big = response(&[300; 40], true);
         assert!(big.len() > 512);
-        let out = apply_udp_size_limit(&q, big);
+        let out = apply_udp_size_limit(&q, big).unwrap();
         assert!(
             out.len() <= 512,
             "the reply must fit what the client advertised"
@@ -1620,7 +2187,7 @@ mod tests {
         let big = response(&[300; 40], true);
         let roomy = query(Some(4096));
         assert!(big.len() <= 4096);
-        assert_eq!(apply_udp_size_limit(&roomy, big.clone()), big);
+        assert_eq!(apply_udp_size_limit(&roomy, big.clone()).unwrap(), big);
     }
 
     /// The truncated reply must carry the ANSWER's flags, not the query's.
@@ -1637,7 +2204,7 @@ mod tests {
         big[2] = 0x85; // QR + AA + RD
         big[3] = 0x83; // RA + NXDOMAIN (rcode 3)
 
-        let out = apply_udp_size_limit(&q, big);
+        let out = apply_udp_size_limit(&q, big).unwrap();
         assert_eq!(out[3] & 0x0F, 3, "NXDOMAIN must survive truncation");
         assert_eq!(out[3] & 0x80, 0x80, "RA must survive");
         assert_eq!(out[2] & 0x04, 0x04, "AA must survive");
