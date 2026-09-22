@@ -532,6 +532,14 @@ header/opcode checks. The legacy panel lab script no longer opens SSH on import.
 lifecycle, sustained concurrent load/RSS, advanced EDNS/RDATA and external signed
 interoperability remain open; section 19 stays **IN_PROGRESS**.
 
+**EDNS/RDATA, 23 September 2026:**
+[Next Q19 pass](../reports/AUDIT-Q19-DNS-EDNS.md) fixes Q19-F011–F015: TTL across
+all replayed sections, common RDATA framing, OPT/TLV validation and BADVERS,
+extended RCODE during truncation, and uncached EDNS options with fresh OPT on
+ordinary cache hits. 51 DNS tests including IPv6 loopback UDP/TCP; 783 Rust tests
+in total — PASS. Linux lifecycle, sustained load/RSS, DNSSEC/RRset semantics,
+external interoperability and OS DNS apply/rollback remain open.
+
 ### 20. DHCP and lease lifecycle
 
 **Source:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.

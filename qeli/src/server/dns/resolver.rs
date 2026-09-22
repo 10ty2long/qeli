@@ -78,52 +78,89 @@ fn skip_name(msg: &[u8], pos: usize) -> Option<usize> {
     walk_name(msg, pos, |_| {})
 }
 
-/// Validate the framing of every declared DNS section. A response can have a perfectly
-/// readable ANSWER TTL while its last RDATA, authority or additional record is truncated;
-/// such a datagram must not be forwarded as a complete answer or become a reusable
-/// cache entry.
-fn dns_message_is_complete(msg: &[u8]) -> bool {
-    if msg.len() < 12 {
-        return false;
-    }
-    let qdcount = u16::from_be_bytes([msg[4], msg[5]]) as usize;
-    let counts = [
-        u16::from_be_bytes([msg[6], msg[7]]) as usize,
-        u16::from_be_bytes([msg[8], msg[9]]) as usize,
-        u16::from_be_bytes([msg[10], msg[11]]) as usize,
-    ];
-    let mut pos = 12usize;
-    for _ in 0..qdcount {
-        let Some(next) = skip_name(msg, pos)
-            .and_then(|after_name| after_name.checked_add(4))
-            .filter(|end| *end <= msg.len())
-        else {
-            return false;
-        };
-        pos = next;
-    }
-    for count in counts {
+/// Bounded RR walk used by framing, RDATA, TTL and EDNS policy. Unknown RDATA
+/// remains opaque; offsets never change while a message is being examined.
+struct DnsRecord {
+    section: usize, // 0=ANSWER, 1=AUTHORITY, 2=ADDITIONAL
+    start: usize,
+    data: usize,
+    end: usize,
+    rtype: u16,
+    class: u16,
+    ttl: u32,
+}
+
+fn walk_records(msg: &[u8], mut visit: impl FnMut(DnsRecord) -> Option<()>) -> Option<()> {
+    let mut pos = question_section_end(msg)?;
+    for (section, offset) in [6, 8, 10].into_iter().enumerate() {
+        let count = u16::from_be_bytes([msg[offset], msg[offset + 1]]);
         for _ in 0..count {
-            let Some(after_name) = skip_name(msg, pos) else {
-                return false;
-            };
-            let Some(header_end) = after_name.checked_add(10).filter(|end| *end <= msg.len())
-            else {
-                return false;
-            };
-            let rdlen = u16::from_be_bytes([msg[after_name + 8], msg[after_name + 9]]) as usize;
-            let Some(next) = header_end
-                .checked_add(rdlen)
-                .filter(|end| *end <= msg.len())
-            else {
-                return false;
-            };
-            pos = next;
+            let header = skip_name(msg, pos)?;
+            let data = header.checked_add(10).filter(|end| *end <= msg.len())?;
+            let len = usize::from(u16::from_be_bytes([msg[header + 8], msg[header + 9]]));
+            let end = data.checked_add(len).filter(|end| *end <= msg.len())?;
+            visit(DnsRecord {
+                section,
+                start: pos,
+                data,
+                end,
+                rtype: u16::from_be_bytes([msg[header], msg[header + 1]]),
+                class: u16::from_be_bytes([msg[header + 2], msg[header + 3]]),
+                ttl: u32::from_be_bytes([
+                    msg[header + 4],
+                    msg[header + 5],
+                    msg[header + 6],
+                    msg[header + 7],
+                ]),
+            })?;
+            pos = end;
         }
     }
-    // DNS padding belongs inside an OPT RDATA. Bytes outside the counted sections are
-    // unframed trailing data and are not safe to replay from a shared cache.
-    pos == msg.len()
+    (pos == msg.len()).then_some(()) // No unframed bytes after the counted sections.
+}
+
+/// Validate common RDATA without rewriting it. Unknown types and class-specific
+/// formats remain transparent (RFC 3597); this is not full DNSSEC/RRset validation.
+fn validate_record_data(msg: &[u8], rr: &DnsRecord) -> Option<()> {
+    let len = rr.end - rr.data;
+    let name_end = |start| skip_name(msg, start).filter(|end| *end <= rr.end);
+    let valid = match (rr.rtype, rr.class) {
+        (1, 1) => len == 4, // IN A; other classes can use a different wire format.
+        (28, 1) => len == 16,
+        (2 | 5 | 12 | 39, _) => name_end(rr.data) == Some(rr.end), // NS/CNAME/PTR/DNAME
+        (15, _) => len >= 3 && name_end(rr.data + 2) == Some(rr.end), // MX
+        (33, 1) => len >= 7 && name_end(rr.data + 6) == Some(rr.end), // SRV
+        (6, _) => {
+            let rname = name_end(rr.data)?;
+            let numeric = name_end(rname)?;
+            numeric.checked_add(20) == Some(rr.end)
+        }
+        (16, _) => {
+            let mut pos = rr.data;
+            while pos < rr.end {
+                pos = pos.checked_add(1 + usize::from(msg[pos]))?;
+                if pos > rr.end {
+                    return None;
+                }
+            }
+            len != 0 // One or more character strings; a zero-length string is legal.
+        }
+        _ => true,
+    };
+    valid.then_some(())
+}
+
+fn dns_message_is_complete(msg: &[u8]) -> bool {
+    walk_records(msg, |rr| validate_record_data(msg, &rr)).is_some()
+}
+
+/// RFC 2181 section 8: the high TTL bit means zero, not an enormous lifetime.
+fn effective_ttl(value: u32) -> u32 {
+    if value & 0x8000_0000 != 0 {
+        0
+    } else {
+        value
+    }
 }
 
 /// Subtract `age` seconds from every resource record's TTL, in place, saturating at zero.
@@ -174,48 +211,26 @@ fn decrement_ttls(msg: &mut [u8], age: u32) {
             if rtype != 41 {
                 let t = after_name + 4;
                 let ttl = u32::from_be_bytes([msg[t], msg[t + 1], msg[t + 2], msg[t + 3]]);
-                msg[t..t + 4].copy_from_slice(&ttl.saturating_sub(age).to_be_bytes());
+                msg[t..t + 4]
+                    .copy_from_slice(&effective_ttl(ttl).saturating_sub(age).to_be_bytes());
             }
             pos = record_end;
         }
     }
 }
 
-/// Smallest TTL across the ANSWER section, or `None` when the message carries no answers
-/// (NXDOMAIN / NODATA) or is malformed.
-///
-/// Walks names rather than assuming a fixed offset: DNS names are label sequences that may
-/// end in a compression pointer, so the record header is not at a predictable position.
-/// Only the ANSWER section is read — the OPT pseudo-record in ADDITIONAL stores extended
-/// flags in its TTL field, so including it would produce a nonsense lifetime.
-fn answer_min_ttl(msg: &[u8]) -> Option<u32> {
-    if msg.len() < 12 {
-        return None;
-    }
-    let qdcount = u16::from_be_bytes([msg[4], msg[5]]) as usize;
-    let ancount = u16::from_be_bytes([msg[6], msg[7]]) as usize;
-    if ancount == 0 {
-        return None;
-    }
-    let mut pos = 12;
-    for _ in 0..qdcount {
-        pos = skip_name(msg, pos)?.checked_add(4)?; // QTYPE + QCLASS
-    }
-    let mut min = u32::MAX;
-    for _ in 0..ancount {
-        pos = skip_name(msg, pos)?;
-        if pos.checked_add(10)? > msg.len() {
-            return None;
+/// A whole-message cache must expire when ANY replayed RR expires, including
+/// authority and glue. OPT's pseudo-TTL is metadata and never contributes.
+fn record_min_ttl(msg: &[u8]) -> Option<u32> {
+    let mut minimum = None;
+    walk_records(msg, |rr| {
+        if rr.rtype != 41 {
+            let ttl = effective_ttl(rr.ttl);
+            minimum = Some(minimum.map_or(ttl, |current: u32| current.min(ttl)));
         }
-        let ttl = u32::from_be_bytes([msg[pos + 4], msg[pos + 5], msg[pos + 6], msg[pos + 7]]);
-        let rdlen = u16::from_be_bytes([msg[pos + 8], msg[pos + 9]]) as usize;
-        min = min.min(ttl);
-        pos = pos
-            .checked_add(10)?
-            .checked_add(rdlen)
-            .filter(|end| *end <= msg.len())?;
-    }
-    Some(min)
+        Some(())
+    })?;
+    minimum
 }
 
 /// RFC 2308 negative-cache lifetime from an SOA in the AUTHORITY section:
@@ -309,6 +324,12 @@ fn response_cache_ttl(msg: &[u8]) -> Option<Duration> {
     if !dns_message_is_complete(msg) || msg[2] & 0x02 != 0 {
         return None; // TC is a retry instruction, never a reusable answer.
     }
+    if edns(msg)
+        .ok()?
+        .is_some_and(|opt| opt.has_options || opt.version != 0)
+    {
+        return None; // Per-exchange options and unsupported versions are not reusable.
+    }
     if has_transaction_signature(msg)? {
         return None; // TSIG and SIG(0) authenticate an exchange, not a reusable RRset.
     }
@@ -319,14 +340,14 @@ fn response_cache_ttl(msg: &[u8]) -> Option<Duration> {
     if (rcode != 0 && rcode != 3) || dns_extended_rcode(msg)? != 0 {
         return None;
     }
-    let answer_ttl = answer_min_ttl(msg);
+    let message_ttl = record_min_ttl(msg);
     let is_negative = rcode == 3 || !answer_contains_question_type(msg)?;
     let negative_ttl = if is_negative {
         Some(negative_cache_ttl(msg)?)
     } else {
         None
     };
-    let seconds = match (answer_ttl, negative_ttl) {
+    let seconds = match (message_ttl, negative_ttl) {
         // Both NXDOMAIN and NOERROR/NODATA may carry an alias chain in ANSWER.
         (Some(answer), Some(negative)) => answer.min(negative),
         (Some(answer), None) => answer,
@@ -448,6 +469,13 @@ async fn resolve_with_upstreams(
     if !dns_message_is_complete(query) {
         return None;
     }
+    let query_opt = match edns(query) {
+        Ok(opt) => opt,
+        Err(()) => return Some(query_error_response(query, 1)),
+    };
+    if query_opt.is_some_and(|opt| opt.version != 0) {
+        return Some(query_error_response(query, 16)); // BADVERS, with EDNS(0) metadata.
+    }
     let signed_query = has_transaction_signature(query)?;
     let query = query.to_vec();
     let query_txid = [query[0], query[1]];
@@ -466,7 +494,8 @@ async fn resolve_with_upstreams(
         cfg.timeout_secs
             .clamp(1, crate::config::server::DNS_MAX_TIMEOUT_SECS),
     );
-    let cache_enabled = !signed_query && cfg.cache_size != 0;
+    let cache_enabled =
+        !signed_query && cfg.cache_size != 0 && query_opt.is_none_or(|opt| !opt.has_options);
     let cached = if cache_enabled {
         let cache_read = cache.read().await;
         cache_read
@@ -498,6 +527,9 @@ async fn resolve_with_upstreams(
         // 2181 §5.2: a cached record is served with the remaining lifetime, not the original.
         // (Audit 2026-08-01, §10.)
         decrement_ttls(&mut response, age_secs.min(u32::MAX as u64) as u32);
+        if let Some(opt) = query_opt {
+            append_edns(&mut response, opt.payload, 0, 0, opt.flags & 0x8000);
+        }
         return Some(response);
     }
 
@@ -711,10 +743,8 @@ async fn resolve_with_upstreams(
         }
     }
     if let Some(mut resp) = response {
-        // Put the CLIENT's transaction ID back — everything above spoke to the upstream
-        // under a freshly randomised one. Done before the cache insert so a cache hit and a
-        // fresh answer are byte-identical apart from the txid the hit path rewrites anyway.
-        // (Audit 2026-08-04, M-10.)
+        // Restore the ordinary query's client ID. Signed exchanges already use
+        // that same ID throughout, so these assignments preserve their bytes.
         resp[0] = query_txid[0];
         resp[1] = query_txid[1];
 
@@ -730,6 +760,9 @@ async fn resolve_with_upstreams(
             return Some(resp);
         };
 
+        let Some(stored_response) = cache_response_bytes(&resp, query_opt) else {
+            return Some(resp);
+        };
         let cache_limit = cfg
             .cache_size
             .min(crate::config::server::DNS_MAX_CACHE_ENTRIES);
@@ -737,7 +770,7 @@ async fn resolve_with_upstreams(
         insert_cache_entry(
             &mut cache_write,
             cache_key,
-            resp.clone(),
+            stored_response,
             entry_ttl,
             cache_limit,
         );
@@ -812,46 +845,13 @@ fn upstream_buf_size(query: &[u8]) -> usize {
     advertised_udp_size(query).clamp(4096, 65_535)
 }
 
-/// The UDP payload size the client said it can accept: its EDNS0 OPT record, or the 512-byte
-/// floor from RFC 1035 §4.2.1 when it sent no OPT at all.
+/// The EDNS advertisement belongs to the current exchange; malformed messages
+/// never get to negotiate a larger receive buffer.
 fn advertised_udp_size(query: &[u8]) -> usize {
-    const FLOOR: usize = 512;
-    // OPT lives in the ADDITIONAL section, and its CLASS field carries the payload size
-    // (RFC 6891 §6.1.2) rather than a class. Walking there means stepping over every earlier
-    // section, so a malformed query simply falls back to the floor.
-    let Some(pos) = additional_section_start(query) else {
-        return FLOOR;
-    };
-    let arcount = u16::from_be_bytes([query[10], query[11]]) as usize;
-    let mut pos = pos;
-    for _ in 0..arcount {
-        // An OPT record's NAME is always root (a single 0 byte), but skip_name handles the
-        // general case and keeps this honest against a compressed pointer.
-        let after_name = match skip_name(query, pos) {
-            Some(p) => p,
-            None => return FLOOR,
-        };
-        if after_name + 10 > query.len() {
-            return FLOOR;
-        }
-        let rtype = u16::from_be_bytes([query[after_name], query[after_name + 1]]);
-        let class = u16::from_be_bytes([query[after_name + 2], query[after_name + 3]]);
-        let rdlen = u16::from_be_bytes([query[after_name + 8], query[after_name + 9]]) as usize;
-        let Some(record_end) = after_name
-            .checked_add(10)
-            .and_then(|header_end| header_end.checked_add(rdlen))
-            .filter(|end| *end <= query.len())
-        else {
-            return FLOOR;
-        };
-        if rtype == 41 && query.get(pos) == Some(&0) {
-            // Clamp: a peer may advertise anything, and a UDP datagram cannot exceed 65535
-            // however large a number it writes here.
-            return (class as usize).clamp(FLOOR, 65_535);
-        }
-        pos = record_end;
-    }
-    FLOOR
+    edns(query)
+        .ok()
+        .flatten()
+        .map_or(512, |opt| usize::from(opt.payload).max(512))
 }
 
 /// Offset of the first ADDITIONAL record, stepping over the question, answer and authority
@@ -917,48 +917,125 @@ fn has_transaction_signature(msg: &[u8]) -> Option<bool> {
 /// Unsigned requests use a random upstream ID. An unsolicited signed response
 /// cannot be relayed with the client's ID without changing authenticated bytes.
 fn response_is_forwardable(resp: &[u8], txid: [u8; 2], query: &[u8]) -> bool {
-    response_matches(resp, txid, query)
-        && dns_message_is_complete(resp)
-        && match has_transaction_signature(resp) {
-            Some(false) => true,
-            Some(true) => has_transaction_signature(query) == Some(true),
-            None => false,
-        }
+    if !response_matches(resp, txid, query) || !dns_message_is_complete(resp) {
+        return false;
+    }
+    let (Ok(query_opt), Ok(response_opt)) = (edns(query), edns(resp)) else {
+        return false;
+    };
+    if response_opt.is_some_and(|opt| opt.version != 0 || query_opt.is_none()) {
+        return false;
+    }
+    match has_transaction_signature(resp) {
+        Some(false) => true,
+        Some(true) => has_transaction_signature(query) == Some(true),
+        None => false,
+    }
 }
 
-/// Header-only errors do not reflect unvalidated questions or client-supplied RRs.
-fn query_error_response(query: &[u8], rcode: u8) -> Vec<u8> {
+/// Local errors contain a header plus supported EDNS metadata when the OPT is
+/// valid. Unvalidated questions, request RRs and option payloads are not reflected.
+fn query_error_response(query: &[u8], rcode: u16) -> Vec<u8> {
     let mut response = vec![0; 12];
     response[..2].copy_from_slice(&query[..2]);
     response[2] = 0x80 | (query[2] & 0x79); // QR, opcode and RD
-    response[3] = 0x80 | (query[3] & 0x10) | rcode; // RA and CD; never AD
+    response[3] = 0x80 | (query[3] & 0x10) | (rcode as u8 & 15); // RA and CD; never AD
+    if let Ok(Some(opt)) = edns(query) {
+        append_edns(
+            &mut response,
+            opt.payload,
+            (rcode >> 4) as u8,
+            0,
+            opt.flags & 0x8000,
+        );
+    }
     response
 }
 
-/// Extended DNS RCODE from the single well-formed OPT pseudo-record, or zero when EDNS is
-/// absent. Multiple OPT records and a non-root OPT owner name are malformed and reject cache
-/// admission. The ordinary low four RCODE bits live in the base header.
-fn dns_extended_rcode(msg: &[u8]) -> Option<u8> {
-    let mut pos = additional_section_start(msg)?;
-    let arcount = u16::from_be_bytes([msg[10], msg[11]]) as usize;
-    let mut extended = None;
-    for _ in 0..arcount {
-        let name_start = pos;
-        let after_name = skip_name(msg, pos)?;
-        let header_end = after_name.checked_add(10).filter(|end| *end <= msg.len())?;
-        let rtype = u16::from_be_bytes([msg[after_name], msg[after_name + 1]]);
-        let rdlen = u16::from_be_bytes([msg[after_name + 8], msg[after_name + 9]]) as usize;
-        pos = header_end
-            .checked_add(rdlen)
-            .filter(|end| *end <= msg.len())?;
-        if rtype == 41 {
-            if msg.get(name_start) != Some(&0) || extended.is_some() {
-                return None;
-            }
-            extended = Some(msg[after_name + 4]);
+#[derive(Clone, Copy)]
+struct Edns {
+    start: usize,
+    end: usize,
+    payload: u16,
+    extended_rcode: u8,
+    version: u8,
+    flags: u16,
+    has_options: bool,
+}
+
+/// Parse the single additional-section OPT and bound each option's TLV. Unknown
+/// option codes are legal and relayed unchanged. Their semantics are not inferred.
+fn edns(msg: &[u8]) -> Result<Option<Edns>, ()> {
+    let mut opt = None;
+    walk_records(msg, |rr| {
+        if rr.rtype != 41 {
+            return Some(());
         }
+        if opt.is_some() || rr.section != 2 || msg[rr.start] != 0 || rr.data != rr.start + 11 {
+            return None;
+        }
+        let version = ((rr.ttl >> 16) & 0xff) as u8;
+        // Only EDNS(0)'s option format is known. Other versions get BADVERS.
+        if version == 0 {
+            let mut pos = rr.data;
+            while pos < rr.end {
+                let header_end = pos.checked_add(4).filter(|end| *end <= rr.end)?;
+                let len = usize::from(u16::from_be_bytes([msg[pos + 2], msg[pos + 3]]));
+                pos = header_end.checked_add(len).filter(|end| *end <= rr.end)?;
+            }
+        }
+        opt = Some(Edns {
+            start: rr.start,
+            end: rr.end,
+            payload: rr.class,
+            extended_rcode: (rr.ttl >> 24) as u8,
+            version,
+            flags: rr.ttl as u16,
+            has_options: rr.data != rr.end,
+        });
+        Some(())
+    })
+    .ok_or(())?;
+    Ok(opt)
+}
+
+fn dns_extended_rcode(msg: &[u8]) -> Option<u8> {
+    Some(edns(msg).ok()?.map_or(0, |opt| opt.extended_rcode))
+}
+
+/// Construct only the supported EDNS metadata; never echo client options into a
+/// synthetic reply. Local errors and cached answers negotiate EDNS afresh.
+fn append_edns(msg: &mut Vec<u8>, payload: u16, rcode: u8, version: u8, flags: u16) {
+    msg.extend_from_slice(&[0, 0, 41]);
+    msg.extend_from_slice(&payload.max(512).to_be_bytes());
+    msg.extend_from_slice(&[rcode, version]);
+    msg.extend_from_slice(&flags.to_be_bytes());
+    msg.extend_from_slice(&[0, 0]);
+    let count = u16::from_be_bytes([msg[10], msg[11]]) + 1;
+    msg[10..12].copy_from_slice(&count.to_be_bytes());
+}
+
+/// Strip a terminal empty OPT before storage. Removing an OPT in the middle
+/// would invalidate later compression offsets, so those responses bypass cache.
+fn cache_response_bytes(msg: &[u8], query_opt: Option<Edns>) -> Option<Vec<u8>> {
+    let response_opt = edns(msg).ok()?;
+    match (query_opt, response_opt) {
+        (None, None) => Some(msg.to_vec()),
+        (Some(query), Some(reply))
+            if !query.has_options
+                && !reply.has_options
+                && reply.end == msg.len()
+                && reply.version == 0
+                && reply.extended_rcode == 0
+                && reply.flags == query.flags & 0x8000 =>
+        {
+            let mut stored = msg[..reply.start].to_vec();
+            let count = u16::from_be_bytes([stored[10], stored[11]]) - 1;
+            stored[10..12].copy_from_slice(&count.to_be_bytes());
+            Some(stored)
+        }
+        _ => None,
     }
-    Some(extended.unwrap_or(0))
 }
 
 /// Fit an unsigned UDP reply to the advertised size, setting TC for TCP retry.
@@ -969,10 +1046,17 @@ fn dns_extended_rcode(msg: &[u8]) -> Option<u8> {
 /// a TCP listener would have sent the client to a port where nothing answers — a working lookup
 /// turned into a failing one. Now that the listener exists, TC means what it says.
 ///
-/// The truncated message is header + question with all three record counts zeroed, not the
-/// original bytes cut short: chopping mid-record leaves counts promising records that are not
-/// there, which a resolver reads as a malformed message rather than as "retry over TCP".
+/// The replacement contains the header, question and, for EDNS peers, a fresh
+/// OPT carrying the extended RCODE/version/flags. Answer and authority counts
+/// become zero; optional TLVs are omitted. No RR is chopped mid-record.
 pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Option<Vec<u8>> {
+    // resolve can intentionally return a header-only FORMERR for an invalid OPT.
+    // Use the legacy size floor in that case so the UDP listener can deliver it.
+    let query_opt = edns(query).ok().flatten();
+    let response_opt = edns(&resp).ok()?;
+    if query_opt.is_none() && response_opt.is_some() {
+        return None; // A non-EDNS peer cannot interpret an unsolicited extended RCODE.
+    }
     let limit = advertised_udp_size(query);
     if resp.len() <= limit {
         return Some(resp);
@@ -982,8 +1066,8 @@ pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Option<Vec<u8
         // enough EDNS advertisement rather than stripping authentication.
         return None;
     }
-    // Question section only; if it cannot be located, fall back to a bare header.
-    let q_end = question_section_end(query).unwrap_or(12).min(query.len());
+    // Keep the validated question so the downstream client can match its retry.
+    let q_end = question_section_end(query)?;
     let mut out = Vec::with_capacity(q_end);
     out.extend_from_slice(&query[..q_end]);
     // The FLAGS come from the real answer, not from the query.
@@ -1004,7 +1088,13 @@ pub(crate) fn apply_udp_size_limit(query: &[u8], resp: Vec<u8>) -> Option<Vec<u8
                     // truncated reply to its outstanding query by it.
     out[6..8].copy_from_slice(&0u16.to_be_bytes()); // ANCOUNT
     out[8..10].copy_from_slice(&0u16.to_be_bytes()); // NSCOUNT
-    out[10..12].copy_from_slice(&0u16.to_be_bytes()); // ARCOUNT (the OPT is dropped with it)
+    out[10..12].copy_from_slice(&0u16.to_be_bytes()); // ARCOUNT
+    if let Some(query_opt) = query_opt {
+        let extended = response_opt.map_or(0, |opt| opt.extended_rcode);
+        let version = response_opt.map_or(0, |opt| opt.version);
+        let flags = response_opt.map_or(query_opt.flags & 0x8000, |opt| opt.flags);
+        append_edns(&mut out, query_opt.payload, extended, version, flags);
+    }
     Some(out)
 }
 
@@ -1062,6 +1152,9 @@ fn blocked_response(query: &[u8]) -> Option<Vec<u8>> {
     response[6..8].copy_from_slice(&0u16.to_be_bytes());
     response[8..10].copy_from_slice(&0u16.to_be_bytes());
     response[10..12].copy_from_slice(&0u16.to_be_bytes());
+    if let Some(opt) = edns(query).ok()? {
+        append_edns(&mut response, opt.payload, 0, 0, opt.flags & 0x8000);
+    }
     Some(response)
 }
 
@@ -1113,6 +1206,463 @@ mod tests {
     //! an upstream reply is untrusted input — so the cases that matter are the malformed
     //! ones: it must return None, never panic or loop.
     use super::*;
+
+    fn typed_response(rtype: u16, class: u16, data: &[u8]) -> Vec<u8> {
+        let mut msg = response(&[], true);
+        let question_end = question_section_end(&msg).unwrap();
+        msg[question_end - 4..question_end - 2].copy_from_slice(&rtype.to_be_bytes());
+        msg[question_end - 2..question_end].copy_from_slice(&class.to_be_bytes());
+        msg[7] = 1;
+        msg.extend_from_slice(&[0xc0, 12]);
+        msg.extend_from_slice(&rtype.to_be_bytes());
+        msg.extend_from_slice(&class.to_be_bytes());
+        msg.extend_from_slice(&60u32.to_be_bytes());
+        msg.extend_from_slice(&u16::try_from(data.len()).unwrap().to_be_bytes());
+        msg.extend_from_slice(data);
+        msg
+    }
+
+    #[test]
+    fn rdata_validation_accepts_known_records_and_preserves_unknown_types() {
+        for (rtype, data) in [
+            (1, vec![192, 0, 2, 1]),
+            (28, vec![0; 16]),
+            (2, vec![0xc0, 12]),
+            (5, vec![0xc0, 12]),
+            (12, vec![0]),
+            (39, vec![0]),
+            (15, vec![0, 10, 0xc0, 12]),
+            (33, vec![0, 1, 0, 2, 0, 53, 0]),
+            (16, vec![0, 3, b'a', b'b', b'c']),
+            (65000, vec![0xff, 0xc0, 0x0c]),
+            (65001, vec![]),
+        ] {
+            let msg = typed_response(rtype, 1, &data);
+            assert!(dns_message_is_complete(&msg), "type {rtype}");
+            assert_eq!(response_cache_ttl(&msg), Some(Duration::from_secs(60)));
+        }
+        // An A RR in an unknown class need not have the IN class's four-byte format.
+        assert!(dns_message_is_complete(&typed_response(1, 65000, &[0xff])));
+        assert!(dns_message_is_complete(&with_soa(
+            response(&[60], true),
+            60,
+            30
+        )));
+        for (rtype, data) in [
+            (1, vec![0; 3]),
+            (28, vec![0; 15]),
+            (2, vec![]),
+            (5, vec![0xc0, 0]),
+            (12, vec![0, 0]),
+            (39, vec![3, b'a']),
+            (15, vec![0, 10]),
+            (33, vec![0; 6]),
+            (16, vec![]),
+            (16, vec![4, b'a']),
+            (6, vec![0; 21]),
+        ] {
+            let msg = typed_response(rtype, 1, &data);
+            assert!(!dns_message_is_complete(&msg), "type {rtype}");
+            assert_eq!(response_cache_ttl(&msg), None);
+        }
+        let mut cycle = typed_response(5, 1, &[0xc0, 12]);
+        let data_at = cycle.len() - 2;
+        cycle[data_at + 1] = u8::try_from(data_at).unwrap();
+        assert!(!dns_message_is_complete(&cycle));
+    }
+
+    #[tokio::test]
+    async fn local_edns_errors_and_blocklist_replies_negotiate_without_echoing_options() {
+        let cfg = Arc::new(DnsConfig {
+            upstream: Vec::new(),
+            ..serde_json::from_str("{}").unwrap()
+        });
+        for version in [0, 1] {
+            let request = with_opt(query(None), 0, version, 0x8000, &[0xfd, 0xe8, 0, 1, 42]);
+            let answer = resolve(
+                new_cache(),
+                cfg.clone(),
+                Arc::new(AtomicUsize::new(0)),
+                compile_blocklist(&["example.com".into()]),
+                &request,
+            )
+            .await
+            .unwrap();
+            let opt = edns(&answer).unwrap().unwrap();
+            assert_eq!(opt.version, 0);
+            assert_eq!(opt.flags, 0x8000);
+            assert!(!opt.has_options);
+            assert_eq!(
+                u16::from(opt.extended_rcode) * 16 + u16::from(answer[3] & 15),
+                if version == 0 { 3 } else { 16 }
+            );
+            assert!(dns_message_is_complete(&answer));
+        }
+    }
+
+    #[tokio::test]
+    async fn cached_edns_answers_store_no_opt_and_rebuild_metadata_per_exchange() {
+        let mut request = query(Some(1232));
+        let opt_at = additional_section_start(&request).unwrap();
+        request[opt_at + 7] = 0x80; // DO
+        let reply = with_opt(response(&[60], true), 0, 0, 0x8000, &[]);
+        let upstream = test_upstream(Some(reply), None).await;
+        let cfg = Arc::new(DnsConfig {
+            upstream_protocol: "udp".into(),
+            timeout_secs: 1,
+            ..serde_json::from_str("{}").unwrap()
+        });
+        let cache = new_cache();
+        let first = resolve_with_upstreams(
+            cache.clone(),
+            cfg.clone(),
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request,
+            &[upstream.address],
+        )
+        .await
+        .unwrap();
+        assert!(edns(&first).unwrap().is_some());
+        let mut key = request.clone();
+        key[..2].fill(0);
+        {
+            let mut store = cache.write().await;
+            let entry = store.entries.get_mut(key.as_slice()).unwrap();
+            assert!(edns(&entry.0).unwrap().is_none(), "OPT must not be stored");
+            entry.1 = Instant::now() - Duration::from_secs(10);
+        }
+        request[..2].copy_from_slice(&[0x12, 0x34]);
+        let second = resolve_with_upstreams(
+            cache.clone(),
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request,
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(&second[..2], &[0x12, 0x34]);
+        assert!(record_min_ttl(&second).unwrap() <= 50);
+        let opt = edns(&second).unwrap().unwrap();
+        assert_eq!(
+            (opt.payload, opt.version, opt.flags, opt.has_options),
+            (1232, 0, 0x8000, false)
+        );
+        assert!(dns_message_is_complete(&second));
+        assert_cache_budget(&*cache.read().await, 1000);
+    }
+
+    #[tokio::test]
+    async fn unknown_edns_options_are_forwarded_without_cache_reuse() {
+        // Unknown options are opaque; only their outer TLV length is interpreted.
+        let options = [0xfd, 0xe8, 0, 3, 0xff, 0xc0, 12];
+        let request = with_opt(query(None), 0, 0, 0, &options);
+        let cfg = Arc::new(DnsConfig {
+            upstream_protocol: "tcp".into(),
+            timeout_secs: 1,
+            ..serde_json::from_str("{}").unwrap()
+        });
+        let cache = new_cache();
+        for ttl in [60, 30] {
+            let reply = with_opt(response(&[ttl], true), 0, 0, 0, &options);
+            let upstream = test_upstream(None, Some(reply.clone())).await;
+            let answer = resolve_with_upstreams(
+                cache.clone(),
+                cfg.clone(),
+                Arc::new(AtomicUsize::new(0)),
+                Arc::new(HashSet::new()),
+                &request,
+                &[upstream.address],
+            )
+            .await
+            .unwrap();
+            assert_eq!(&answer[2..], &reply[2..]);
+            assert!(cache.read().await.entries.is_empty());
+        }
+    }
+
+    #[test]
+    fn edns_cache_exclusions_preserve_offsets_and_negotiation() {
+        let request = query(Some(1232));
+        let query_opt = edns(&request).unwrap();
+        let ordinary = with_opt(response(&[60], true), 0, 0, 0, &[]);
+        let nonterminal = with_extra_a(ordinary.clone(), 10, 30);
+        assert!(dns_message_is_complete(&nonterminal));
+        assert!(response_is_forwardable(
+            &nonterminal,
+            [nonterminal[0], nonterminal[1]],
+            &request
+        ));
+        assert!(cache_response_bytes(&nonterminal, query_opt).is_none());
+        assert!(cache_response_bytes(&response(&[60], true), query_opt).is_none()); // legacy upstream
+        assert!(cache_response_bytes(&ordinary, None).is_none()); // unsolicited OPT
+        let opt = with_opt(response(&[60], true), 0, 0, 0x8000, &[]);
+        assert_eq!(record_min_ttl(&opt), Some(60), "OPT flags are not a TTL");
+        for offset in [8, 10] {
+            assert_eq!(
+                response_cache_ttl(&with_extra_a(response(&[60], true), offset, 0x8000_0001)),
+                None
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn malformed_edns_or_rdata_upstream_replies_fail_over_on_udp_and_tcp() {
+        let duplicate = with_opt(with_opt(response(&[60], true), 0, 0, 0, &[]), 0, 0, 0, &[]);
+        let short_option = with_opt(response(&[60], true), 0, 0, 0, &[0, 10, 0, 8, 1]);
+        let mut misplaced = with_opt(response(&[60], true), 0, 0, 0, &[]);
+        misplaced[7] = 2;
+        misplaced[11] = 0;
+        let version = with_opt(response(&[60], true), 0, 1, 0, &[]);
+        let invalid_a = typed_response(1, 1, &[192, 0, 2]);
+        for force_tcp in [false, true] {
+            for bad in [&duplicate, &short_option, &misplaced, &version, &invalid_a] {
+                let first = test_upstream(
+                    (!force_tcp).then(|| bad.clone()),
+                    force_tcp.then(|| bad.clone()),
+                )
+                .await;
+                let good = with_opt(response(&[30], true), 0, 0, 0, &[]);
+                let second = test_upstream(
+                    (!force_tcp).then(|| good.clone()),
+                    force_tcp.then_some(good),
+                )
+                .await;
+                let cfg = Arc::new(DnsConfig {
+                    upstream_protocol: if force_tcp { "tcp" } else { "udp" }.into(),
+                    timeout_secs: 2,
+                    ..serde_json::from_str("{}").unwrap()
+                });
+                let pref = Arc::new(AtomicUsize::new(0));
+                let answer = resolve_with_upstreams(
+                    new_cache(),
+                    cfg,
+                    pref.clone(),
+                    Arc::new(HashSet::new()),
+                    &query(Some(1232)),
+                    &[first.address, second.address],
+                )
+                .await
+                .unwrap();
+                assert_eq!(record_min_ttl(&answer), Some(30));
+                assert_eq!(pref.load(Ordering::Relaxed), 1);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn ipv6_upstreams_support_udp_and_tcp_with_edns() {
+        for force_tcp in [false, true] {
+            let reply = with_opt(response(&[60], true), 0, 0, 0, &[]);
+            let upstream = test_upstream_at(
+                "[::1]:0",
+                (!force_tcp).then(|| reply.clone()),
+                force_tcp.then_some(reply),
+            )
+            .await;
+            let cfg = Arc::new(DnsConfig {
+                upstream_protocol: if force_tcp { "tcp" } else { "udp" }.into(),
+                timeout_secs: 1,
+                ..serde_json::from_str("{}").unwrap()
+            });
+            let answer = resolve_with_upstreams(
+                new_cache(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                Arc::new(HashSet::new()),
+                &query(Some(1232)),
+                &[upstream.address],
+            )
+            .await
+            .unwrap();
+            assert_eq!(record_min_ttl(&answer), Some(60));
+            assert!(edns(&answer).unwrap().is_some());
+        }
+    }
+
+    #[tokio::test]
+    async fn edns_options_bypass_existing_cache_even_when_upstream_omits_options() {
+        let request = with_opt(query(None), 0, 0, 0, &[0xfd, 0xe8, 0, 0]);
+        let cache = new_cache();
+        let mut key = request.clone();
+        key[..2].fill(0);
+        insert_cache_entry(
+            &mut *cache.write().await,
+            key.clone(),
+            response(&[300], true),
+            Duration::from_secs(300),
+            8,
+        );
+        let upstream =
+            test_upstream(Some(with_opt(response(&[30], true), 0, 0, 0, &[])), None).await;
+        let cfg = Arc::new(DnsConfig {
+            upstream_protocol: "udp".into(),
+            timeout_secs: 1,
+            ..serde_json::from_str("{}").unwrap()
+        });
+        let answer = resolve_with_upstreams(
+            cache.clone(),
+            cfg,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(HashSet::new()),
+            &request,
+            &[upstream.address],
+        )
+        .await
+        .unwrap();
+        assert_eq!(record_min_ttl(&answer), Some(30));
+        assert_eq!(
+            record_min_ttl(&cache.read().await.entries.get(key.as_slice()).unwrap().0),
+            Some(300)
+        );
+    }
+
+    #[test]
+    fn dns_record_and_edns_parsers_handle_truncations_and_byte_mutations() {
+        let corpus = [
+            response(&[60], true),
+            cname_response(60),
+            with_soa(response(&[60], true), 30, 5),
+            with_opt(
+                response(&[60], true),
+                1,
+                0,
+                0x8000,
+                &[0xfd, 0xe8, 0, 3, 1, 2, 3],
+            ),
+        ];
+        let request = query(Some(512));
+        let check = |msg: &[u8]| {
+            let _ = dns_message_is_complete(msg);
+            let _ = response_cache_ttl(msg);
+            let _ = edns(msg);
+            let _ = advertised_udp_size(msg);
+            let _ = apply_udp_size_limit(&request, msg.to_vec());
+        };
+        for full in corpus {
+            for cut in 0..=full.len() {
+                check(&full[..cut]);
+            }
+            for pos in 0..full.len() {
+                for value in [0, 1, 63, 192, 255] {
+                    let mut mutated = full.clone();
+                    mutated[pos] = value;
+                    check(&mutated);
+                }
+            }
+        }
+    }
+
+    fn with_opt(
+        mut msg: Vec<u8>,
+        extended: u8,
+        version: u8,
+        flags: u16,
+        options: &[u8],
+    ) -> Vec<u8> {
+        let count = u16::from_be_bytes([msg[10], msg[11]]) + 1;
+        msg[10..12].copy_from_slice(&count.to_be_bytes());
+        msg.extend_from_slice(&[0, 0, 41, 4, 208, extended, version]); // root, OPT, 1232 bytes
+        msg.extend_from_slice(&flags.to_be_bytes());
+        msg.extend_from_slice(&u16::try_from(options.len()).unwrap().to_be_bytes());
+        msg.extend_from_slice(options);
+        msg
+    }
+
+    fn with_extra_a(mut msg: Vec<u8>, count_offset: usize, ttl: u32) -> Vec<u8> {
+        let count = u16::from_be_bytes([msg[count_offset], msg[count_offset + 1]]) + 1;
+        msg[count_offset..count_offset + 2].copy_from_slice(&count.to_be_bytes());
+        msg.extend_from_slice(&[0xc0, 12, 0, 1, 0, 1]);
+        msg.extend_from_slice(&ttl.to_be_bytes());
+        msg.extend_from_slice(&[0, 4, 192, 0, 2, 1]);
+        msg
+    }
+
+    #[test]
+    fn audit_whole_message_cache_obeys_authority_and_additional_ttls() {
+        for section in [8, 10] {
+            for ttl in [0, 1, 5] {
+                let answer = with_extra_a(response(&[300], true), section, ttl);
+                assert_eq!(
+                    response_cache_ttl(&answer),
+                    (ttl > 0).then(|| Duration::from_secs(u64::from(ttl)))
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn audit_high_bit_ttl_is_not_cacheable() {
+        for ttl in [0x8000_0000, 0xffff_ffff] {
+            assert_eq!(response_cache_ttl(&response(&[ttl], true)), None);
+        }
+    }
+
+    #[tokio::test]
+    async fn audit_malformed_edns_requests_get_formerr() {
+        let duplicate = with_opt(query(Some(1232)), 0, 0, 0, &[]);
+        let short_option = with_opt(query(None), 0, 0, 0, &[0, 10, 0, 8, 1]);
+        let mut non_root = query(Some(1232));
+        let start = additional_section_start(&non_root).unwrap();
+        non_root.splice(start..start + 1, [0xc0, 12]);
+        for request in [duplicate, short_option, non_root] {
+            let cfg = Arc::new(DnsConfig {
+                upstream: Vec::new(),
+                ..serde_json::from_str("{}").unwrap()
+            });
+            let answer = resolve(
+                new_cache(),
+                cfg,
+                Arc::new(AtomicUsize::new(0)),
+                Arc::new(HashSet::new()),
+                &request,
+            )
+            .await
+            .expect("invalid OPT must get FORMERR before upstream");
+            assert_eq!(answer[3] & 15, 1);
+            assert!(
+                apply_udp_size_limit(&request, answer).is_some(),
+                "UDP must deliver local FORMERR even when the request OPT is invalid"
+            );
+        }
+    }
+
+    #[test]
+    fn audit_truncation_keeps_extended_error_code() {
+        let request = query(Some(512));
+        let reply = with_opt(response(&[60; 40], true), 1, 0, 0x8000, &[]);
+        let truncated = apply_udp_size_limit(&request, reply).unwrap();
+        assert_eq!(
+            dns_extended_rcode(&truncated),
+            Some(1),
+            "BADVERS must not turn into NOERROR"
+        );
+        assert!(truncated.len() <= 512);
+    }
+
+    #[test]
+    fn audit_structurally_framed_bad_rdata_is_not_forwardable() {
+        for rtype in [1u16, 28, 5, 16] {
+            let mut answer = response(&[], true);
+            answer[7] = 1;
+            answer.extend_from_slice(&[0xc0, 12]);
+            answer.extend_from_slice(&rtype.to_be_bytes());
+            answer.extend_from_slice(&[0, 1, 0, 0, 0, 60, 0, 1, 0xff]);
+            assert!(
+                !dns_message_is_complete(&answer),
+                "bad RDATA for type {rtype} accepted"
+            );
+        }
+    }
+
+    #[test]
+    fn audit_edns_exchange_options_are_not_cached() {
+        let cookie = [0, 10, 0, 8, 1, 2, 3, 4, 5, 6, 7, 8];
+        let reply = with_opt(response(&[60], true), 0, 0, 0, &cookie);
+        assert_eq!(response_cache_ttl(&reply), None);
+    }
 
     fn with_transaction_signature(mut msg: Vec<u8>, rtype: u16) -> Vec<u8> {
         let mut data = Vec::new();
@@ -1224,8 +1774,14 @@ mod tests {
             let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
             let address = listener.local_addr().unwrap();
             let (sent, received) = tokio::sync::oneshot::channel();
-            let request = with_transaction_signature(query(None), rtype);
-            let mut reply = with_transaction_signature(response(&[60], true), rtype);
+            let request = with_transaction_signature(
+                with_opt(query(None), 0, 0, 0, &[0xfd, 0xe8, 0, 1, 42]),
+                rtype,
+            );
+            let mut reply = with_transaction_signature(
+                with_opt(response(&[60], true), 0, 0, 0, &[0xfd, 0xe8, 0, 1, 42]),
+                rtype,
+            );
             reply[..2].copy_from_slice(&request[..2]);
             let expected_reply = reply.clone();
             let task = tokio::spawn(async move {
@@ -1330,6 +1886,7 @@ mod tests {
             let mut signed = with_transaction_signature(response(&[60], true), rtype);
             let header = skip_name(&signed, additional_section_start(&signed).unwrap()).unwrap();
             signed[header + 11] = 1; // covers A, not the transaction
+            signed[header + 4..header + 8].copy_from_slice(&60u32.to_be_bytes());
             assert_eq!(has_transaction_signature(&signed), Some(false));
             assert_eq!(response_cache_ttl(&signed), Some(Duration::from_secs(60)));
         }
@@ -1403,7 +1960,7 @@ mod tests {
             assert_eq!(received.await.unwrap(), request);
             assert_eq!(answer, expected_reply);
             assert_eq!(
-                answer_min_ttl(&cache.read().await.entries.get(key.as_slice()).unwrap().0),
+                record_min_ttl(&cache.read().await.entries.get(key.as_slice()).unwrap().0),
                 Some(1234)
             );
         }
@@ -1441,7 +1998,7 @@ mod tests {
                 )
                 .await
                 .unwrap();
-                assert_eq!(answer_min_ttl(&answer), Some(60));
+                assert_eq!(record_min_ttl(&answer), Some(60));
                 assert_eq!(pref.load(Ordering::Relaxed), 1);
             }
         }
@@ -1668,7 +2225,7 @@ mod tests {
         .await
         .unwrap();
         assert_eq!(&hit[..2], &[0x12, 0x34]);
-        assert!(answer_min_ttl(&hit).is_some_and(|ttl| ttl <= 50));
+        assert!(record_min_ttl(&hit).is_some_and(|ttl| ttl <= 50));
         let blocked = resolve(
             cache.clone(),
             cfg.clone(),
@@ -1705,8 +2262,16 @@ mod tests {
     }
 
     async fn test_upstream(udp: Option<Vec<u8>>, tcp: Option<Vec<u8>>) -> TestUpstream {
+        test_upstream_at("127.0.0.1:0", udp, tcp).await
+    }
+
+    async fn test_upstream_at(
+        bind: &str,
+        udp: Option<Vec<u8>>,
+        tcp: Option<Vec<u8>>,
+    ) -> TestUpstream {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let listener = tokio::net::TcpListener::bind(bind).await.unwrap();
         let address = listener.local_addr().unwrap();
         let socket = UdpSocket::bind(address).await.unwrap();
         let task = tokio::spawn(async move {
@@ -1972,9 +2537,9 @@ mod tests {
     }
 
     #[test]
-    fn reads_the_smallest_answer_ttl() {
-        assert_eq!(answer_min_ttl(&response(&[300], false)), Some(300));
-        assert_eq!(answer_min_ttl(&response(&[300, 60, 900], false)), Some(60));
+    fn reads_the_smallest_record_ttl() {
+        assert_eq!(record_min_ttl(&response(&[300], false)), Some(300));
+        assert_eq!(record_min_ttl(&response(&[300, 60, 900], false)), Some(60));
     }
 
     #[test]
@@ -2047,13 +2612,13 @@ mod tests {
     #[test]
     fn follows_compressed_names() {
         // The common real-world shape: answers point back at the question's name.
-        assert_eq!(answer_min_ttl(&response(&[120, 45], true)), Some(45));
+        assert_eq!(record_min_ttl(&response(&[120, 45], true)), Some(45));
     }
 
     #[test]
-    fn no_answers_yields_none() {
+    fn no_records_yields_none() {
         // NXDOMAIN / NODATA — nothing to derive a lifetime from.
-        assert_eq!(answer_min_ttl(&response(&[], false)), None);
+        assert_eq!(record_min_ttl(&response(&[], false)), None);
     }
 
     #[test]
@@ -2061,30 +2626,30 @@ mod tests {
         // Truncated at every possible length: each must be rejected, not crash.
         let full = response(&[300, 60], true);
         for cut in 0..full.len() {
-            let _ = answer_min_ttl(&full[..cut]);
+            let _ = record_min_ttl(&full[..cut]);
         }
         // Header claims answers that are not there.
         let mut lying = response(&[300], false);
         lying[7] = 200;
-        assert_eq!(answer_min_ttl(&lying), None);
+        assert_eq!(record_min_ttl(&lying), None);
         // A name length that runs past the buffer.
         let mut runaway = response(&[300], false);
         let qname = 12;
         runaway[qname] = 0xFF;
-        assert_eq!(answer_min_ttl(&runaway), None);
+        assert_eq!(record_min_ttl(&runaway), None);
         // A compression pointer loop must terminate without panicking.
         let mut looped = response(&[300], true);
         looped[12] = 0xC0;
         looped[13] = 0x0C;
-        let _ = answer_min_ttl(&looped);
-        assert_eq!(answer_min_ttl(&[]), None);
-        assert_eq!(answer_min_ttl(&[0u8; 11]), None);
+        let _ = record_min_ttl(&looped);
+        assert_eq!(record_min_ttl(&[]), None);
+        assert_eq!(record_min_ttl(&[0u8; 11]), None);
     }
 
     #[test]
     fn ttl_zero_is_distinguishable() {
         // Some(0) must survive to the caller so it can skip caching entirely.
-        assert_eq!(answer_min_ttl(&response(&[0], false)), Some(0));
+        assert_eq!(record_min_ttl(&response(&[0], false)), Some(0));
     }
 
     /// A query with no OPT record, and one advertising `payload` bytes via EDNS0.
@@ -2173,7 +2738,7 @@ mod tests {
             1,
             "the question is carried, so QDCOUNT stays 1"
         );
-        for (label, off) in [("ANCOUNT", 6), ("NSCOUNT", 8), ("ARCOUNT", 10)] {
+        for (label, off) in [("ANCOUNT", 6), ("NSCOUNT", 8)] {
             assert_eq!(
                 u16::from_be_bytes([out[off], out[off + 1]]),
                 0,
@@ -2181,7 +2746,10 @@ mod tests {
             );
         }
         // The question section itself survives intact, so a resolver can match the reply.
-        assert_eq!(&out[12..], &q[12..12 + (out.len() - 12)]);
+        let question_end = question_section_end(&q).unwrap();
+        assert_eq!(&out[12..question_end], &q[12..question_end]);
+        assert_eq!(out[11], 1, "EDNS metadata survives truncation");
+        assert!(edns(&out).unwrap().is_some());
 
         // A client that advertised room for it gets the whole thing instead.
         let big = response(&[300; 40], true);

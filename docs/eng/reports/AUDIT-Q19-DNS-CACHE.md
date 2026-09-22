@@ -75,3 +75,5 @@ Real Linux listener start/stop, ProfileTasks cancellation, sustained concurrent
 load/RSS and multi-profile budgets, IPv6 upstream, advanced EDNS/RDATA semantics,
 external authenticated DNS and OS DNS apply/rollback remain open. No full DNS PASS,
 release certification or new performance benchmark is claimed.
+
+[Follow-up: EDNS, RDATA and TTL](AUDIT-Q19-DNS-EDNS.md) adds IPv6 upstream coverage and further cache/packet fixes. The remaining list above records this report's baseline.

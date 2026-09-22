@@ -2743,7 +2743,10 @@ unreadable chain fails profile startup.
 | `dns.blocklist` | `[]` | ASCII/punycode domains answered with `NXDOMAIN` (the name and all subdomains); no `*` wildcard, maximum 10000 unique names |
 | `dns.push_servers` | `[]` | hand clients IPv4/IPv6 resolvers **without** running the proxy. Empty = the active proxy listeners when `dns.enabled`, else nothing. Every address is strict-IP-validated and must belong to an active inner family |
 
-The cache stores whole responses. NXDOMAIN and NODATA, including a CNAME chain,
+The cache stores response DNS records together, without the control OPT record.
+Its lifetime cannot exceed the smallest TTL across ANSWER, AUTHORITY and ADDITIONAL;
+a TTL with the high bit set is treated as zero and prevents caching.
+NXDOMAIN and NODATA, including a CNAME chain,
 are bounded by the negative SOA lifetime and alias TTL; without a suitable SOA,
 a negative response is not cached. Cached record TTLs are reduced by entry age.
 Truncated responses (TC) are not cached. If TCP retry also returns TC, the proxy
@@ -2766,7 +2769,26 @@ apply, and locally generated errors/NXDOMAIN are unsigned.
 
 The proxy handles opcode QUERY. Other opcodes (including UPDATE/NOTIFY) receive
 NOTIMP. Incoming responses are ignored. QUERY with more than one question receives
-a header-only FORMERR; zero-question exchanges such as DNS COOKIE remain allowed.
+FORMERR without client questions/records, with a fresh OPT for valid EDNS;
+zero-question exchanges such as DNS COOKIE remain allowed.
+
+EDNS(0) is supported. Duplicate OPT, a non-root owner, OPT outside ADDITIONAL
+and malformed option lengths receive FORMERR; other EDNS versions receive BADVERS.
+Malformed upstream replies are rejected and the next resolver is tried.
+A shortened ordinary UDP reply retains the extended error code and EDNS fields,
+but omits option payloads: TC instructs the client to fetch the full reply over TCP.
+
+An exchange carrying nonempty EDNS options in its query or response, including
+COOKIE, ECS, NSID and PADDING, bypasses caching. Unknown options are relayed without
+interpretation when their lengths are valid. Ordinary queries with an empty OPT
+can cache DNS records: a terminal empty response OPT is removed before storage
+and rebuilt on a cache hit. Responses with OPT in the middle of ADDITIONAL or
+without matching EDNS negotiation are forwarded without caching; an unsolicited
+OPT in a reply to a non-EDNS request is rejected.
+
+RDATA size and structure are checked for common records: IN A/AAAA,
+NS/CNAME/PTR/DNAME, MX, IN SRV, SOA and TXT. Unknown formats remain opaque bytes.
+These checks do not establish RRset semantic correctness or DNSSEC authenticity.
 
 When `dns.enabled = false`, proxy-only fields (`listen`, `listen_ipv6`, `port`, `upstream`,
 `upstream_protocol`, cache, timeout and blocklist) are dormant and preserved without validation;

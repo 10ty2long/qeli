@@ -539,6 +539,14 @@ DNS proxy/cache, реальные OS apply/rollback и конкурентный 
 расширенные EDNS/RDATA и внешний стенд подписанных обменов остаются открытыми;
 раздел 19 сохраняет статус **IN_PROGRESS**.
 
+**EDNS/RDATA, 23 сентября 2026:**
+[Следующий проход Q19](../reports/AUDIT-Q19-DNS-EDNS.md) закрывает Q19-F011–F015:
+TTL всех возвращаемых секций, структуру распространённых RDATA, проверку OPT/TLV
+и BADVERS, сохранение расширенного RCODE при усечении, обход кеша для EDNS-опций
+и новый OPT при обычном cache hit. 51 DNS-тест, включая IPv6 loopback UDP/TCP;
+783 Rust-теста суммарно — PASS. Linux lifecycle, длительная нагрузка/RSS,
+семантика DNSSEC/RRset, внешняя совместимость и OS DNS apply/rollback остаются открытыми.
+
 ### 20. DHCP и lease lifecycle
 
 **Код:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.
