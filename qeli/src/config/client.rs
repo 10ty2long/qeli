@@ -234,8 +234,8 @@ pub struct ClientRoutingConfig {
     #[serde(default = "default_routing_mode")]
     pub mode: String,
     /// Route ALL client traffic through the tunnel (install a default route via
-    /// the tun). Use this to make the client a full-tunnel VPN. Default false:
-    /// only the tunnel subnet + explicit `include` routes go through the tunnel.
+    /// the tun). The shared client baseline defaults this to true. Set
+    /// `gateway = false` to capture only the tunnel subnet and `include` routes.
     #[serde(default = "default_false")]
     pub add_default_gateway: bool,
     #[serde(default)]
@@ -525,7 +525,9 @@ fn baseline() -> ClientConfig {
         "performance":{},
         "logging":{}
     }"#;
-    serde_json::from_str(SKELETON).expect("baseline client config skeleton is valid")
+    let mut cfg = serde_json::from_str(SKELETON).expect("baseline client config skeleton is valid");
+    super::editor::apply_client_defaults(&mut cfg);
+    cfg
 }
 
 #[cfg(test)]
@@ -574,6 +576,14 @@ impl ClientConfig {
         // Rust. They must cross the native boundary now rather than becoming GUI ghost keys.
         cfg.server.connection_timeout_secs =
             q.parse_or("timeout", cfg.server.connection_timeout_secs);
+        // The same policy fields drive the headless reconnect loop and GUI adapters.
+        cfg.server.reconnect.enabled = q.bool_or("reconnect", cfg.server.reconnect.enabled);
+        cfg.server.reconnect.max_retries =
+            q.parse_or("reconnect_retries", cfg.server.reconnect.max_retries);
+        cfg.server.reconnect.base_delay_secs =
+            q.parse_or("reconnect_base_delay", cfg.server.reconnect.base_delay_secs);
+        cfg.server.reconnect.max_delay_secs =
+            q.parse_or("reconnect_max_delay", cfg.server.reconnect.max_delay_secs);
         cfg.server.local_address = q
             .get("local")
             .map(str::trim)
@@ -608,16 +618,11 @@ impl ClientConfig {
             .get("password_command")
             .filter(|p| !p.is_empty())
             .map(str::to_string);
-        // An ALL-ZERO key means TOFU, exactly as the shipped `client.conf` documents it
-        // ("Empty / all-zero = TOFU"). Only the empty string was filtered here, so the zeros
-        // became a real pin and `verify_server_key` compared the server's actual key against
-        // them — every copy of the shipped example failed its first connect with
-        // "SERVER KEY MISMATCH — possible MITM attack!", which is both wrong and the most
-        // alarming way to be wrong. The C# port has always read it this way.
-        // (Audit 2026-08-03, P2.)
+        // Only the documented 32-byte all-zero placeholder means TOFU. A short or
+        // oversized zero string is a malformed pin and must reach validation intact.
         cfg.auth.server_public_key = q
             .get("key")
-            .filter(|k| !k.is_empty() && k.chars().any(|c| c != '0'))
+            .filter(|k| !k.is_empty() && !(k.len() == 64 && k.bytes().all(|b| b == b'0')))
             .map(str::to_string);
         // H-1: bind the session keys to the server's static identity. ON by default
         // (baseline already true); requires a pinned `key`. Set `bind_static = false`
@@ -759,7 +764,7 @@ impl ClientConfig {
         // она для телефонов):
         //   gateway = true → full-tunnel: весь трафик в VPN (клиент ставит default
         //     через tun; в паре с NAT на роутере это заворачивает весь LAN). Дефолт
-        //     off (split-tunnel — только подсеть туннеля).
+        //     true; для split-tunnel явно задайте gateway = false.
         //   dns = off → НЕ управлять резолвером хоста: на роутере /etc/resolv.conf
         //     принадлежит прошивке (ndnsproxy/dnsmasq). dns.rs делает early-return
         //     при mode != "tunnel". Дефолт "tunnel" и требует активный per-link
@@ -1064,6 +1069,10 @@ impl ClientConfig {
             {
                 anyhow::bail!("'key' must be 64 hex digits and not all zero, got '{key}'");
             }
+        }
+
+        if !super::share::supported_endpoint_host(&self.server.address) {
+            anyhow::bail!("'server' host must be an IP address or ASCII DNS hostname");
         }
 
         // Parsed as u16, so 0 slipped through: a port nothing can ever connect to. The panel
@@ -1489,6 +1498,27 @@ impl ClientConfig {
         if self.server.connection_timeout_secs != default_conn_timeout() {
             q.set("timeout", self.server.connection_timeout_secs.to_string());
         }
+        if !self.server.reconnect.enabled {
+            q.set("reconnect", "false");
+        }
+        if self.server.reconnect.max_retries != default_max_retries_inf() {
+            q.set(
+                "reconnect_retries",
+                self.server.reconnect.max_retries.to_string(),
+            );
+        }
+        if self.server.reconnect.base_delay_secs != default_reconnect_base() {
+            q.set(
+                "reconnect_base_delay",
+                self.server.reconnect.base_delay_secs.to_string(),
+            );
+        }
+        if self.server.reconnect.max_delay_secs != default_reconnect_max() {
+            q.set(
+                "reconnect_max_delay",
+                self.server.reconnect.max_delay_secs.to_string(),
+            );
+        }
         if let Some(address) = self.server.local_address.as_deref() {
             q.set("local", address);
         }
@@ -1725,7 +1755,7 @@ impl ClientConfig {
 
 /// Split `host:port` (IPv4 / hostname, or a bracketed IPv6 literal `[2001:db8::1]:443`).
 /// Returns an error if the port is missing or not a `u16`.
-fn split_host_port(s: &str) -> anyhow::Result<(String, u16)> {
+pub(crate) fn split_host_port(s: &str) -> anyhow::Result<(String, u16)> {
     // A bracketed IPv6 authority must be split on `]:`, not the last `:`, or the address's
     // own colons break the parse. And a BARE IPv6 (`2001:db8::1`, no brackets, no port)
     // used to silently misparse as host=`2001:db8:`, port=`1` — reject it with a clear
@@ -1757,6 +1787,9 @@ fn split_host_port(s: &str) -> anyhow::Result<(String, u16)> {
             "'server' looks like a bare IPv6 address — wrap it as [host]:port: '{}'",
             s
         );
+    }
+    if !super::share::supported_endpoint_host(host) {
+        anyhow::bail!("'server' host must be an IP address or ASCII DNS hostname");
     }
     let port: u16 = port
         .parse()
@@ -2366,7 +2399,7 @@ sni    = www.cloudflare.com
             &IniDoc::parse("[qeli]\nserver = h:443\nuser = u\npass = p\n").unwrap(),
         )
         .unwrap();
-        assert!(!d.routing.add_default_gateway);
+        assert!(d.routing.add_default_gateway);
         assert_eq!(d.dns.mode, "tunnel");
     }
 
@@ -2479,8 +2512,10 @@ sni    = www.cloudflare.com
 
         for pin in ["local = 192.0.2.10", "lport = 41000"] {
             let text = format!("[qeli]\nserver = h:443\nroaming = required\n{pin}\n");
-            let parsed = crate::config::parse_client_config_strict(&text).unwrap();
-            let error = parsed.validate().unwrap_err().to_string();
+            let error = crate::config::parse_client_config_strict(&text)
+                .and_then(|cfg| cfg.validate())
+                .unwrap_err()
+                .to_string();
             assert!(error.contains("pin the carrier socket"), "{error}");
         }
     }
@@ -2692,6 +2727,10 @@ password_command = echo pw
 keepalive = 45
 tcp_nodelay = false
 timeout = 47
+reconnect = false
+reconnect_retries = 7
+reconnect_base_delay = 3
+reconnect_max_delay = 25
 local = 192.0.2.10
 lport = 34567
 recv_buffer_size = 8388608
@@ -2770,6 +2809,10 @@ file = /tmp/client.log
             "keepalive = 45",
             "tcp_nodelay = false",
             "timeout = 47",
+            "reconnect = false",
+            "reconnect_retries = 7",
+            "reconnect_base_delay = 3",
+            "reconnect_max_delay = 25",
             "local = 192.0.2.10",
             "lport = 34567",
             "recv_buffer_size = 8388608",
@@ -2881,8 +2924,8 @@ mod panel_ini_conformance {
     }
     #[test]
     fn automatic_device_edits_use_the_canonical_section_grammar() {
-        for header in ["[qeli]", "[ qeli ]", "[qeli ]"] {
-            for dev in ["", "dev=\n", "dev=\"\"\n"] {
+        for header in ["[qeli]", "[ qeli ]", "[qeli ]", "[QeLi]", "\u{feff}[QELI]"] {
+            for dev in ["", "dev=\n", "dev=\"\"\n", "DEV=\n"] {
                 let raw = format!("{header}\n# retain comment\nserver=fixture.invalid:443\n{dev}[logging]\nlevel=info\n");
                 let changed =
                     crate::config::set_section_keys(&raw, "qeli", &[("dev", "vpn42".into())]);
@@ -2890,9 +2933,11 @@ mod panel_ini_conformance {
                 assert_eq!(config.tun.name, "vpn42");
                 assert!(changed.contains("# retain comment"));
                 assert_eq!(
-                    crate::config::format::IniDoc::parse(&changed)
+                    crate::config::format::IniDoc::parse(changed.trim_start_matches('\u{feff}'))
                         .unwrap()
-                        .sections_of("qeli")
+                        .sections
+                        .iter()
+                        .filter(|s| s.kind.eq_ignore_ascii_case("qeli"))
                         .count(),
                     1
                 );

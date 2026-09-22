@@ -13,8 +13,11 @@ Configs are **text flat-INI**. Structure:
   `bind.port`, `tun.address`, `obf.tls.reality_proxy.enabled`, `perf.connection.max_clients`.
 - Users/groups are `[user:<name>]` / `[group:<name>]` sections (inline in the
   server config, or in a separate `auth.users_file` file).
-- Repeatable keys: `route = <cidr> gateway=<ip> metric=<n>`, `pool.exclude`,
-  `pool.reservation.<user> = <ip>`.
+- Repeatable keys: `route = <cidr> gateway=<ip> metric=<n>` and `listen`.
+  Lists (`pool.exclude`, `dns.upstream`, and others) accept comma-separated values
+  or repeated lines of the same key, preserving their order.
+- `pool.reservation.<user>`, `pool.ipv6.reservation.<user>`, and `metadata.<key>` are
+  maps: a suffix is required and each full key may occur only once.
 - The client config is a single `[qeli]` section (plus an optional `[logging]`); the same
   thing is expanded from a `qeli://` link on QR import. The full client key reference and the
   "which client supports what" matrix live in
@@ -34,7 +37,44 @@ In the INI editor, `<unchanged>` preserves a secret. If the original value canno
 saving fails and a new value must be entered explicitly.
 
 
+Global `[auth]`, `[web]`, and `[logging]` sections may occur at most once and must
+not have a `:<name>` suffix. Unknown sections are rejected, including empty ones.
+Duplicate scalar keys, unknown keys, and malformed values are rejected at startup,
+on reload, and when saving through the panel/CLI. A rejected reload keeps the running
+configuration; rewriting must not silently remove an invalid entry.
+Known retired keys remain exempt only within their documented section scopes.
+
+A `route` requires a valid CIDR; `gateway` must be an IP of the same address family,
+and `metric` an integer in `0..=4294967295`. Unknown or duplicate options and malformed
+numbers are errors. For profile routes, the final `desc=` option consumes the remaining
+description text; user routes do not support `desc`. Invalid members of the numeric
+`obf.traffic_normalization.round_sizes` list are also rejected instead of being dropped.
+INI comments occupy a separate line starting with `#` or `;`; comments after a value
+are not supported.
+
+Control characters in INI are rejected with a line number instead of being removed on save.
+LF/CRLF line endings, tabs between record components and tabs inside values are supported;
+tabs inside key/section names are rejected. Double quotes preserve significant whitespace
+and tabs at the edges of a value. `logging.level` under `[qeli]` is an unknown key: use
+`level` under `[logging]`.
+
+Legacy client `dns = <IP list>` is migrated only when the DNS fields are unambiguous and
+free of errors. Duplicate `dns` or malformed `dns_servers` remains invalid after opening
+and saving a form. A BOM before client INI or `qeli://` is accepted; it never relaxes link
+validation. Unsupported controls in `qeli://`, including percent-encoded ones, are rejected
+before INI conversion: an endpoint, transport or server key cannot change through character
+removal. This also applies to panel imports.
+
 ### What a `qeli://` link carries
+
+Links with duplicate known parameters are rejected: a second `key=` cannot clear
+the first pin. `quic`/`awg` accept case-insensitive `true`, `false`, `1`, `0`.
+Malformed numbers and type overflow are errors, not requests to use defaults.
+Percent encoding and UTF-8 must be valid; encode a literal `%` as `%25`, while `+`
+remains a plus. Unknown parameters remain ignored for forward compatibility.
+AWG defaults to `jmin=40`, `jmax=300`; `jc` is capped at 128, sizes at 1400, and
+`jmin > jmax` becomes `jmin = jmax` on every client. The existing fallback from a
+numeric MTU outside the supported range to auto is preserved.
 
 A link carries the address, credentials, handshake parameters, and an explicitly selected
 portable session-roaming policy. Routes, DNS, and other local settings are deliberately absent;
@@ -47,6 +87,13 @@ qeli://<user>:<pass>@<host>:<port>?<parameters>#<label>
 Server endpoints may use IPv4, IPv6, or a hostname with A and/or AAAA records. A literal IPv6
 address is bracketed in both INI and links: `server = [2001:db8::10]:443` and
 `qeli://user:pass@[2001:db8::10]:443?...`. Bare IPv6 plus a port is rejected as ambiguous.
+INI and URI use one host check: whitespace, URL delimiters and empty DNS labels are
+invalid. Internationalized domains use ASCII/Punycode; `localhost`, local names containing
+`_` and a trailing DNS root dot are retained. A malformed endpoint can remain in an INI
+draft but cannot activate or export to a link. Editing another field never repairs its
+port automatically. The panel uses the same client contract for saves and automatic
+`dev` assignment: BOM and `[QELI]`/`DEV` case variants are supported, and original INI
+comments are retained. Panel restrictions on shell commands and unsafe paths remain separate.
 
 | In the link | INI key | When it appears | Meaning |
 |---|---|---|---|
@@ -79,10 +126,9 @@ from 0.7.13 on**. In 0.7.12 Android keeps the alias as the literal `mode` value:
 profile imports without an error and then never connects, so hand Android users on 0.7.12
 links with `proto` and `mode` spelled out separately.
 
-> **The table is exhaustive: four independent parsers (Rust/Kotlin/C#/Swift) serve five
-> applications because the shared C# layer powers both Windows and macOS. The reference is
-> `config/share.rs`; the other implementations are checked against it by the fixtures in
-> `conformance/qeli-links.json`.
+> **The table is exhaustive.** Five clients use the same Rust INI/URI implementation
+> through ABI 1.16; C#, Kotlin and Swift retain generated data projections.
+> `config/share.rs` and `conformance/qeli-links.json` define the shared URI contract.
 >
 > **`bind_static` and `mtu_probe` are deliberately NOT in the link.** They are local device
 > policy rather than a property of the server, and the link by definition carries only what
@@ -550,11 +596,26 @@ An empty `dns` = the client keeps its own resolvers. The default `dns.listen` (`
 pushed **only** when the in-tunnel proxy actually runs — otherwise it resolves nowhere and would
 black-hole the client's DNS.
 
-> ⚠️ **Starting with 0.7.15 no client invents a public DNS resolver.** With no `dns_servers`
-> in the profile and nothing pushed, Windows, macOS, Android, iOS and the Rust CLI leave the
-> system resolvers untouched and log a warning. This avoids silently sending queries to a
-> third party, but the host resolver must remain reachable through a full tunnel. To guarantee
-> DNS inside the tunnel, set `dns_servers` explicitly or enable server-side DNS push.
+> **Clients never invent public DNS resolvers.** With `dns = tunnel`, the shared plan
+> selects the profile's `dns_servers`, then the server push. Without a resolver, a split
+> tunnel leaves system DNS unchanged, while a full tunnel refuses to connect. Configure
+> `dns_servers`, enable server DNS push, or use `dns = off` / `system` when the platform
+> deliberately manages DNS itself.
+
+Legacy IPv4 push (`dns`/`dns_port`) and the v2 `dns_servers` array use the same validation.
+A selected resolver must be an IP address in an active tunnel family; up to eight resolvers
+and nonzero ports are accepted. A malformed selected push fails connection setup instead
+of silently falling back to host DNS. Explicit client `dns_servers` override the push;
+`dns = off` / `system` disables its application.
+
+The shared plan adds a tunnel `/32` or `/128` route for every resolver, including split
+mode and DNS outside the VPN subnet. Broad route exclusions preserve that DNS host route;
+an exact DNS host exclusion is rejected as contradictory. In Linux `dev_attach` mode,
+the external interface owner is responsible for routes, including DNS reachability.
+
+CIDR exclusions are subtracted as a union, independently of order and duplicates. The
+256-route limit applies to the final set; temporary fragmentation caused by an early
+narrow exclusion must not reject a plan when a later exclusion removes those pieces.
 
 ### Routes (`route`) in detail
 
@@ -1188,12 +1249,16 @@ bind_static = true
 ```
 **WIRE-BREAKING**: a server with H-1 only admits clients that also run H-1 and have
 pinned the key — enable it in lockstep on the server and all clients. The client
-**must** pin the key (`key`); an unpinned / TOFU client (all-zero `key`) must set
+**must** pin the key (`key`); an unpinned / TOFU client (empty `key` or exactly 64 zeros) must set
 `bind_static = false` explicitly, otherwise the connection fails with a clear error.
 To interoperate with a legacy 0.7.0 fleet during a staged upgrade, set `false` on both
 sides. A separate HKDF salt rules out silent bound↔unbound interop: a flag mismatch
 yields different keys and an honest failure, not a silent downgrade. Details —
 [AUDIT-2026-06-12.md](../archive/audits/AUDIT-2026-06-12.md).
+
+`key` contains exactly 64 hex characters. The only nonempty TOFU placeholder is
+64 zeros; `0`, 63 or 65 zeros are errors, not a request to disable pinning.
+The rule is identical for INI and `qeli://`.
 
 ## Per-profile user authorization (interface isolation)
 
@@ -1465,18 +1530,18 @@ failed roam.
 
 | Key | Default | CLI | Win | mac | And | iOS | Purpose |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
-| `dev` | `vpn0` | ✓ | ✓ | — | — | — | interface name (mac: `utun` is kernel-assigned; Android: VpnService) |
+| `dev` | CLI: `vpn0`; Win: profile name | ✓ | ✓ | — | — | — | explicit interface name; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
 | `device_type` | `tun` | ✓ | — | — | — | — | Linux interface kind: `tun` (L3) or `tap` (local L2 emulation); non-Linux clients preserve the key but reject TAP at connect time |
 | `dev_attach` | `false` | ✓ | — | — | — | — | attach to a pre-existing interface (don't create one) |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
 | `mtu_probe` | `true` | ✓\* | ✓\* | ✓\* | ✓\* | ✓\* | active path-MTU probe — **UDP with `mtu=0` only** |
-| `gateway` | \* | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel. Default: split on CLI, full in every GUI; `gateway=false` = split. The GUI→Rust boundary always makes the value explicit |
+| `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel; common CLI/GUI default `true`; `gateway=false` explicitly selects split tunnel |
 | `route_local` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | pull IPv4 RFC1918 into the tunnel; does not alter IPv6 policy |
 | `include` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list forced **into** the tunnel (Android — split-tunnel only) |
 | `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list carved **out** of the tunnel (Android — API 33+ only) |
 | `route_file` | — | — | ✓ | ✓ | — | — | split routes from a file (on the CLI use `include`/`exclude`) |
 | `dns` | `tunnel` | ✓ | ✓ | ✓ | ✓ | ✓ | DNS mode: `tunnel` / `off` / `system`. `system` is an accepted spelling of `off`: both mean “leave the device resolver alone”. Android/iOS still import legacy `dns = 1.1.1.1, 8.8.8.8`, but save it canonically as `dns_servers` |
-| `dns_servers` | — | ✓ | ✓ | ✓ | ✓ | ✓ | comma-separated IPv4/IPv6 resolvers under `dns = tunnel`. **Override the server push**. Each address must be reachable in the negotiated inner family. If empty with no push, host resolvers remain untouched with a warning; no third-party public DNS is silently injected |
+| `dns_servers` | — | ✓ | ✓ | ✓ | ✓ | ✓ | comma-separated IPv4/IPv6 resolvers under `dns = tunnel`. **Override the server push**. Each address must be reachable in the negotiated inner family. At most 8 resolvers, each with a protected tunnel host route. With no resolver, split mode keeps host DNS; full mode refuses connection |
 | `kill_switch` | `false` | ✓ | ✓ | ✓ | ✓\* | —\* | fail-closed firewall (iptables / WFP / pf; Android — verified system Always-on VPN lockdown) |
 | `ipv6` | `auto` | ✓ | ✓ | ✓ | ✓ | ✓ | inner IPv6 policy: `auto` negotiates it, `required` refuses downgrade, `off` requests IPv4 only |
 | `allow_ipv6_leak` / `allow_ipv4_leak` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | explicit escape hatches for the family absent from an IPv4-only/IPv6-only full tunnel |
@@ -1501,16 +1566,16 @@ failed roam.
 
 | Key | Default | CLI | Win | mac | And | iOS | Purpose |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
-| `name` | — | — | ✓ | ✓ | ✓ | —\* | profile display label (GUI) |
+| `name` | — | — | ✓ | ✓ | —\* | —\* | desktop profile name; mobile preserves the INI field but uses its own profile metadata. A `qeli://` fragment supplies an import label |
 | `autostart` | `false` | ✓\* | — | — | — | — | auto-connect when the supervisor/panel starts (GUIs use their own OS autostart) |
 | `apps_mode` / `apps` | `all` / — | — | ✓ | ✓ | ✓ | —\* | per-app split tunnel. `include` tunnels only listed apps; `exclude` tunnels everything except them. Windows entries are full `.exe` paths, macOS entries are code-signing identifiers (normally bundle IDs), Android entries are package names. iOS preserves but cannot apply them without MDM `NEAppRule` |
-| `reconnect` · `reconnect_retries` · `reconnect_base_delay` · `reconnect_max_delay` | — | — | ✓ | ✓ | ✓ | ✓ | lifecycle and backoff stay in the GUIs; CLI uses its built-in reconnect loop |
+| `reconnect` · `reconnect_retries` · `reconnect_base_delay` · `reconnect_max_delay` | `true` / `-1` / `1` / `60` | ✓ | ✓ | ✓ | ✓ | ✓ | shared retry-loop settings; delays are seconds, `-1` is unlimited; the core checks the retry budget and calculates delays; OS events stay in the client |
 | `timeout` | `30` | ✓ | ✓ | ✓ | ✓ | ✓ | one connection-attempt timeout; after transport migration the shared Rust core parses and applies it |
 
 **Desktop per-app details.** With `apps_mode = all`, Windows keeps its native Wintun
 zero-copy path and macOS keeps its ordinary global utun routes/DNS. `include` or `exclude`
 changes only platform packet/flow ownership: the selected TCP, UDP and DNS traffic still enters
-the same ABI 1.15 Rust transport (compatibility floor 1.11) and uses the same server push, crypto and reconnect logic.
+the same ABI 1.16 Rust transport (compatibility floor 1.16) and uses the same server push, crypto and reconnect logic.
 On Windows, a configured/pushed tunnel resolver is intentionally tunnel-wide in per-app mode:
 DNS commonly belongs to the shared system resolver process rather than the originating app, so
 trying to classify it by that process leaks selected applications' queries. IPv4 DNS can use an
@@ -1538,22 +1603,23 @@ first A record as authoritative for an IPv6-only profile.
 | Key | Default | CLI | Win | mac | And | iOS | Purpose |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
 | `padding` · `padding_min` · `padding_max` | on / `0` / `255` | ✓ | ✓ | ✓ | ✓ | ✓ | record padding; the maximum is strictly bounded by the wire format |
-| `heartbeat` · `heartbeat_interval` · `heartbeat_size` · `heartbeat_jitter` | on / `15000` / `16` / `5000` | ✓ | ✓ | ✓ | ✓ | ✓ | cover heartbeat and its interval/size/jitter |
+| `heartbeat` · `heartbeat_interval` · `heartbeat_size` · `heartbeat_jitter` | on / `15000` / `16` / `2000` | ✓ | ✓ | ✓ | ✓ | ✓ | cover heartbeat and its interval/size/jitter |
 | `shaping` · `shaping_gap_mean` · `shaping_gap_min` · `shaping_gap_max` · `shaping_budget` | off / profile defaults | ✓ | ✓ | ✓ | ✓ | ✓ | shaping enablement and timing/budget envelope |
 | `shaping_min_size` · `shaping_max_size` · `shaping_stealth` · `shaping_stealth_mbps` | profile defaults | ✓ | ✓ | ✓ | ✓ | ✓ | cover-record sizes and stealth rate |
 
 Local values apply when the server did not push the corresponding setting. An authenticated
 server push still wins and is reported in every client's complete `NetworkPlan` log.
 
-**The `[logging]` section** (`level`, `file`, `time_format`): **applied by the CLI only**. The
-GUI clients keep their own log level in their settings (the app's time format is a separate UI
-option), but Android and iOS do **read and write the section back** — otherwise editing a
-router `client.conf` on the phone would silently strip it. Windows/macOS do not parse it.
+**The `[logging]` section** (`level`, `file`, `time_format`) is recognized by the shared
+parser and preserved by every editor. The CLI applies all three fields. Windows/macOS use
+`level` for service/daemon profiles; the GUI can supply its application log preference.
+Desktop preserves `file` and `time_format` without applying them. Android/iOS preserve
+the section while their own application preferences control logging.
 
-**Footnotes.** `mtu_probe` applies only to UDP with `mtu=0`. `gateway`'s default differs by
-platform (split on CLI, full tunnel in every GUI). On Android: `include` is honored only
-in split-tunnel and `exclude` only on Android 13+ (API 33). `quic` on Android is enabled via
-`mode = udp-quic`. `dev_node`/`metric` are parsed and round-tripped by mac but **not applied**
+**Footnotes.** `mtu_probe` applies only to UDP with `mtu=0`. `gateway` defaults to `true` on all clients; use `false` for split tunnel. On Android: `include` is honored only
+in split tunnel; `exclude` works before API 33 through CIDR subtraction and on API 33+
+through `excludeRoute`. QUIC masking uses `proto=udp`, `mode=fake-tls`, `quic=true`;
+`mode=udp-quic` remains a legacy import spelling. `dev_node`/`metric` are parsed and round-tripped by mac but **not applied**
 (Wintun/Windows-specific). `autostart` is read by the panel/supervisor; the `qeli client`
 runtime ignores it.
 
@@ -1669,7 +1735,7 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `exit_node` (default `false`) | **mirror of `gateway_nat`.** `gateway_nat` masquerades a LAN behind the client INTO the tunnel; `exit_node` masquerades traffic that arrived FROM the tunnel out the physical WAN — so other clients reach the internet under THIS host's IP (e.g. behind a grey/NAT'd line). See "Exit node (`exit_node`)" below. Linux/router-only |
 | `dev = <name>` + `dev_attach = true` | **attach to a pre-existing** interface instead of creating one. `dev` is literal: qeli does not rename TAP devices. The existing kind must match `device_type`, it must use `IFF_NO_PI`, and qeli detects its single/multi-queue mode automatically. qeli only opens it for packet IO: it does **not** create, address, route, or delete it — an external manager (router firmware, your own script) owns all of that. The assigned tunnel IP is written to `$QELI_TUNIP_FILE` (if set in the environment) so the external script can bring up the address/routes itself |
 | `post_up` / `post_down` | standalone Linux client lifecycle commands. A committed NetworkPlan supplies `$1=ifname`, `$2=gateway`, the full versioned `QELI_*` environment and temporary JSON (`QELI_CONTEXT_FILE`); `post_down` gets the stop reason and latest plan. **SECURITY:** trusted file-only config; panel/API never write them |
-| `dns` | client DNS mode. `tunnel` (default) = route DNS through the tunnel: the client **rewrites `/etc/resolv.conf`** (Linux) to the tunnel resolver to prevent DNS leaks. `off` = **leave the system resolver untouched**, use the host's DNS as-is (for routers and any Linux host that already has DNS configured and shouldn't have `resolv.conf` touched). File-only; emitted to INI only when `!= tunnel` |
+| `dns` | client DNS mode. On Linux, `tunnel` applies per-interface DNS through `systemd-resolved`; it does not overwrite `/etc/resolv.conf`. Installing a requested resolver fails if resolved is not the active system resolver. Deleting the tunnel interface removes its DNS; clean shutdown also explicitly reverts it. `off` / `system` leaves DNS to the platform. File-only; emitted to INI only when `!= tunnel` |
 | `autostart` | auto-connect this profile when the supervisor/panel starts (accepts `true`/`1`/`yes`/`on`). Read by the **panel client-manager**; ignored by the client runtime itself. Emitted to INI only when `true` |
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
@@ -1677,22 +1743,31 @@ On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 safely; add that exact prefix to `exclude`. Android 13+ uses `excludeRoute`; older versions
 build complete route complements for both IPv4 and IPv6.
 
-**Auto-reconnect** is on by default (there are no separate keys in flat-INI `[qeli]`
-— the defaults apply: exponential backoff, 1 s base, cap 60s, infinite retries). A client
-left on while the server is unreachable (even a day+) keeps retrying and **reconnects as
-soon as the server returns**.
+**Auto-reconnect** defaults on and is controlled by `[qeli]` on every client:
+`reconnect=true`, `reconnect_retries=-1`, `reconnect_base_delay=1`,
+`reconnect_max_delay=60`. Delays are seconds. Rust owns the retry budget and delay policy;
+clients supply connection state and OS events.
 
-> **Resume-from-sleep and network changes no longer escalate the backoff** (desktop, since
-> 0.7.13). The backoff exists so we do not hammer a server that is down, but an attempt that
-> failed into a network that is **not up yet** (Wi-Fi reassociating, DHCP pending) says
-> nothing about the server. Such attempts used to count like any other, so a handful burned
-> while the network came up left the client asleep for 16–32 s **after** it became usable.
-> For 30 s after a resume or a network change the attempt counter is now capped — retries
-> happen at least every ~4 s at the default base — so the tunnel comes back as soon as the
-> network is ready. The full backoff still applies where it is meant to: when the server
-> really is down. The cap also means sleep-window attempts cannot exhaust `max_retries` (when
-> set above that cap), and exhausting `max_retries` tears down the TUN and routes — so a long
-> sleep used to be able to drop traffic outside the tunnel.
+- `reconnect=false` prevents every automatic restart, including after a stable session.
+- `reconnect_retries=-1` permits unlimited retries. `N >= 0` permits N retries after an
+  initial unstable attempt: with `N=2`, three consecutive failures stop the loop.
+- The counter resets after **30 seconds actually connected** or a deliberate restart of
+  an established session for a network change. DNS, handshake, teardown and offline waiting
+  do not establish stability. A short connected session still consumes the failure budget.
+- `reconnect_retries=0` refuses a retry after an unstable attempt; it still permits recovery
+  after a stable session or a deliberate network-change cycle. Use `reconnect=false` to
+  prohibit all automatic recovery.
+- Backoff uses `base × min(2^(attempt−1), 100)`, bounded by the configured maximum
+  (at least 1 second), with 80–100% jitter. All clients also maintain a **1.5 second minimum
+  between attempt starts**, including deliberate cycles.
+
+During the desktop's 30-second network-settling window, or without a physical address,
+the delay exponent is capped at attempt 3 (up to 4 seconds at the default base). This
+**does not cap the failure counter**: a finite retry limit remains effective. Mobile
+clients park while no usable carrier exists; waiting does not consume attempts. Carrier
+restoration skips the stale backoff but retains the accumulated failures and the minimum
+start-to-start interval. Disabled or exhausted loops stop before waiting for a carrier.
+With the default unlimited budget, a client left running retries until the server returns.
 
 A dead server on an idle tunnel is detected via **authenticated RX-liveness**. Raw UDP
 datagrams do not refresh the timer: only a record that passed framing, length and AEAD
@@ -2961,3 +3036,12 @@ For diagnostics, `level: "info"` with a set `file` is the minimum sufficient.
 > packet sizes and timings (never payload) into a ring buffer; it dumps on `SIGUSR1`. Use
 > it when DPI is cutting the tunnel and you need to see what actually goes on the wire. A
 > walkthrough is in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
+## Shared client profile processing (ABI 1.16)
+
+INI, links, validation and defaults now have one Rust owner across clients. Draft export
+preserves errors for repair; connection and URI export require valid profiles. Common
+defaults are `gateway=true`, padding `0..255`, `heartbeat_jitter=2000` ms. Set
+`gateway=false` explicitly to retain an older CLI split tunnel. Files remain INI.
+See [shared client configuration](../plans/CLIENT-CONFIG-CORE.md) for migration, platform
+constraints and build instructions.

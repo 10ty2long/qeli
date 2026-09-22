@@ -95,9 +95,6 @@ pub struct ServerConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProfileConfig {
-    // NB: scalar fields are declared BEFORE sub-table fields so TOML
-    // serialization (web "save config") stays valid — TOML requires all values
-    // to precede any table within the same table.
     #[serde(default = "default_profile_name")]
     pub name: String,
     /// Path to this profile's server identity (static X25519) private key.

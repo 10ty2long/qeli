@@ -10,15 +10,14 @@ multipath, автоматический fallback и обработку конф�
 
 Легенда статуса: ⬜ не начато · 🟦 в работе · ✅ сделано · 🧪 ждёт сборки/e2e.
 
-**Статус инициативы: ✅ рефакторинг исходников завершён.** Все production-клиенты используют
-общее транспортное Rust-ядро; текущее исходное API — additive ABI 1.15. ABI 1.15 добавляет
-типизированные серверные события `NOTICE`/`KICK` и capability `MANAGEMENT_EVENTS`, не меняя
-фиксированный event header и число экспортов. Закоммиченные Android `.so`, Windows `.dll` и macOS
-`.dylib` теперь являются независимо пересобранным и побайтно совпавшим набором ABI 1.15 для 0.8.1.
-Их SHA, экспорты и provenance прошли native-core gates; финальные приложения также прошли доступные
-build, signing и platform-проверки. Из физических acceptance gates остаются
-administrator Wintun full-tunnel, живой macOS utun и physical-device iOS/Xcode.
-Составлено 2026-07-30; статус native cores актуализирован 2026-09-10.
+**Текущее состояние (2026-09-22): исходники используют ABI 1.16.** К общему transport
+добавлен чистый API конфигурации `qeli_config_request` и Android `ConfigCore` JNI. Импорт,
+редактор, проверка, экспорт и переносимые политики теперь принадлежат Rust;
+[границы и миграция](../plans/CLIENT-CONFIG-CORE.md). Минимальная версия новых адаптеров — 1.16.
+Закоммиченные релизные `.so`/`.dll`/`.dylib` относятся к предыдущей пересборке ABI 1.15:
+после этого изменения необходимы новые A/B evidence и provenance. Dev/CI собирают ядро из
+текущих исходников. Apple build/test, финальные пакеты и физические acceptance gates остаются
+обязательными перед выпуском; прежние успешные проверки не удостоверяют новую версию.
 **Правило доставки Reality/H2.** Актуальный H2 carrier режима `reality-tls` принадлежит этому
 общему Rust-ядру, а не платформенному UI-коду. Платформа получает его только после пересборки
 native `.so`/`.dll`/`.dylib` либо XCFramework из обновлённых исходников, упаковки в приложение
@@ -230,7 +229,7 @@ kill-switch-бага в 0.7.14 — ровно из этой области).
 обязательный для FFI контракт `panic = "unwind"`.
 
 ```text
-qeli_client_abi_version()                                      -> 0x0001000F
+qeli_client_abi_version()                                      -> 0x00010010
 qeli_client_core_capabilities()                                -> bitmask
 qeli_client_udp_probe(config, len, timeout_ms, *latency_ms)     -> rc  // ABI 1.8
 qeli_client_new(config, len, platform_caps, queue_cap, *handle) -> rc
@@ -489,7 +488,7 @@ qeli_client_tun_pull(handle, generation, buf, cap, lens, lens_cap, *n, *bytes) -
 |---|---|---|
 | TC-1.1 | Спроектировать и зафиксировать C-ABI (§5), включая таксономию ошибок и формат событий | ✅ ABI 1.0 freeze-review: version/capability negotiation, расширяемые output structs, ownership/concurrency, panic и event/JSON contracts закреплены header и тестами |
 | TC-1.2 | Data-plane путь **без аллокаций на пакет**: буферы вызывающей стороны, никаких `Box::into_raw` на горячем пути | ✅ Все active paths используют bounded reusable pools/caller buffers. macOS payload проходит по fd, Windows uplink удерживает Wintun ring packet до RAII-release, а downlink копируется из bounded Rust pool прямо в send ring. Managed per-packet allocation/copy на desktop нет |
-| TC-1.3 | Обработка конфигурации целиком в ядре: приём flat-INI и `qeli://` | ✅ все production transports проходят strict Rust parser; платформенные модели остаются UI/editor validation |
+| TC-1.3 | Обработка конфигурации целиком в ядре: приём flat-INI и `qeli://` | ✅ все production transports проходят strict Rust parser; платформенные модели — генерируемые проекции; editor validation использует ABI 1.16 |
 | TC-1.4 | План маршрутов/DNS как **событие** ядра, а не действие | ✅ Linux/Android/Windows/macOS/iOS используют канонический plan и обязательный generation ACK |
 
 **Критерий приёмки:** Rust-клиент на Linux работает **через новый API** (а не мимо него),
@@ -608,7 +607,7 @@ budget. Platform adapter применяет/отклоняет весь `Network
 
 | ID | Пункт |
 |---|---|
-| TC-4.1 | Матрица whole-client кросс-сборок проходит для Android arm64/x86_64, Windows x64 и macOS universal2. Source ABI 1.12 расширил gate до 22 client exports и 21 Android JNI export; ABI 1.13–1.15 добавляют capability/event/path-result semantics без изменения этих чисел. Артефакты ABI 1.15 для 0.8.1 прошли независимые побайтно идентичные A/B-сборки. Базовый compatibility floor iOS остаётся ABI 1.11, а fail-closed path transactions вместе с `PATH_REFRESH` требуют 1.14; `build_native.sh` по умолчанию включает `transport-core-ffi experimental-roaming`. Feature Clippy для `aarch64-apple-ios` зелёный, но реальный device+simulator XCFramework/Xcode build требует macOS |
+| TC-4.1 | Матрица whole-client кросс-сборок проходит для Android arm64/x86_64, Windows x64 и macOS universal2. Source ABI 1.12 расширил gate до 22 client exports и 21 Android JNI export; ABI 1.13–1.15 добавляют capability/event/path-result semantics без изменения этих чисел. Артефакты ABI 1.15 для 0.8.1 прошли независимые побайтно идентичные A/B-сборки. Текущий iOS adapter требует ABI 1.16 для документного сервиса, а fail-closed path transactions вместе с `PATH_REFRESH` требуют 1.14; `build_native.sh` по умолчанию включает `transport-core-ffi experimental-roaming`. Feature Clippy для `aarch64-apple-ios` зелёный, но реальный device+simulator XCFramework/Xcode build требует macOS |
 | TC-4.2 | ✅ Все четыре библиотеки прошли живые побайтно идентичные A/B-сборки на лабах `.10`/`.11`; общий mock-tested harness выполняет ограниченный source sync, preflight точных targets и проверенный atomic pull. Закреплены Rust 1.97.0, Zig 0.13.0, cargo-zigbuild 0.23.0, GNU ld 2.44, apple-codesign 0.29.0, NDK 26.3.11579264 и cargo-ndk 4.1.2. macOS до детерминированной ad-hoc подписи нормализует install name, content-derived UUID и недопустимый нестабильный GOT-index Zig; SHA256, экспорты и provenance работают как fail-closed gates |
 | TC-4.3 | ✅ Свежесть conformance-векторов + release-mode Rust/C# бенчи TC-0.3 входят в Linux/Windows/macOS CI |
 

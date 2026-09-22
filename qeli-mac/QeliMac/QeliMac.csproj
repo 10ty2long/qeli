@@ -19,6 +19,7 @@
     <RootNamespace>QeliMac</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Version>0.8.2</Version>
+    <QeliNativeCorePath Condition="'$(QeliNativeCorePath)' == ''">$(MSBuildProjectDirectory)/native/libqeli.dylib</QeliNativeCorePath>
     <!-- The runtime identifier is supplied on publish (osx-arm64 / osx-x64). -->
     <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     <!-- Avalonia's compiled-XAML + trimming-friendly settings. -->
@@ -63,13 +64,13 @@
                       Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
   </ItemGroup>
 
-  <!-- Native whole-client Rust core (current ABI 1.15 with compatibility floor 1.11,
+  <!-- Native whole-client Rust core (configuration + transport ABI 1.16,
        plus realtls C ABI). A
        universal (arm64+x86_64) dylib cross-built by build_dylib.sh, copied next
        to QeliMac so DllImport("qeli") resolves it inside the .app bundle. The
        Condition lets the project build for dev before the dylib is produced. -->
-  <ItemGroup Condition="Exists('native/libqeli.dylib')">
-    <Content Include="native/libqeli.dylib">
+  <ItemGroup Condition="Exists('$(QeliNativeCorePath)')">
+    <Content Include="$(QeliNativeCorePath)">
       <Link>libqeli.dylib</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -17,6 +17,10 @@ val keystoreProps = Properties().apply {
 }
 
 android {
+    // Fresh CI/development output replaces, rather than supplements, committed jniLibs.
+    providers.environmentVariable("QELI_NATIVE_JNI_DIR").orNull?.let { nativeDir ->
+        sourceSets.getByName("main").jniLibs.setSrcDirs(listOf(nativeDir))
+    }
     namespace = "com.qeli"
     compileSdk = 37
 
@@ -109,4 +113,21 @@ dependencies {
     testImplementation("org.json:json:20260814")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
+}
+
+// Shared fixtures live outside this Gradle project. Declare them so edits to the
+// cross-language contract cannot reuse an old successful JVM test result.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    inputs.dir(rootProject.layout.projectDirectory.dir("../conformance"))
+        .withPropertyName("sharedConformanceFixtures")
+        .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+}
+
+// JVM tests must execute the production Rust editor, never a second parser or a mock.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    val hostCore = providers.environmentVariable("QELI_CONFIG_NATIVE_LIBRARY")
+    if (hostCore.isPresent) {
+        inputs.file(hostCore).withPropertyName("hostConfigCore")
+        systemProperty("qeli.config.nativeLibrary", hostCore.get())
+    }
 }

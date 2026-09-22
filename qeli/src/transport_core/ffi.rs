@@ -993,6 +993,50 @@ fn ffi_guard(operation: impl FnOnce() -> i32) -> i32 {
     catch_unwind(AssertUnwindSafe(operation)).unwrap_or(ErrorCode::Panic as i32)
 }
 
+/// Pure editor/policy request, API v1 (ABI 1.16). No session or OS side effects.
+/// Input/output are bounded UTF-8 service DTOs; exported profile text is INI.
+/// A null/zero output performs a size query and returns BufferTooSmall.
+/// # Safety
+/// Input must address input_len readable bytes; output must address capacity writable bytes.
+/// out_len must be writable. Buffers must not overlap. Caller clears secret-bearing buffers.
+#[no_mangle]
+pub unsafe extern "C" fn qeli_config_request(
+    input: *const u8,
+    input_len: usize,
+    output: *mut u8,
+    capacity: usize,
+    out_len: *mut usize,
+) -> i32 {
+    ffi_guard(|| {
+        if out_len.is_null()
+            || input.is_null()
+            || input_len == 0
+            || input_len > crate::config::editor::MAX_REQUEST
+            || capacity > crate::config::editor::MAX_RESPONSE
+            || (output.is_null() && capacity != 0)
+        {
+            return ErrorCode::InvalidArgument as i32;
+        }
+        unsafe {
+            *out_len = 0;
+        }
+        let bytes = unsafe { std::slice::from_raw_parts(input, input_len) };
+        let response = zeroize::Zeroizing::new(crate::config::editor::request(bytes));
+        unsafe {
+            *out_len = response.len();
+        }
+        if capacity < response.len() {
+            return ErrorCode::BufferTooSmall as i32;
+        }
+        if !response.is_empty() {
+            unsafe {
+                std::ptr::copy_nonoverlapping(response.as_ptr(), output, response.len());
+            }
+        }
+        OK
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1000,7 +1044,7 @@ mod tests {
     #[cfg(feature = "experimental-roaming")]
     use crate::transport_core::{NetworkAddress, NetworkAddressFamily, NetworkFamilyMode};
 
-    const CONFIG: &str = "[qeli]\nserver = 127.0.0.1:443\nproto = tcp\nuser = test\npass = secret\nkey = 1111111111111111111111111111111111111111111111111111111111111111\nmode = fake-tls\n";
+    const CONFIG: &str = "[qeli]\nserver = 127.0.0.1:443\nproto = tcp\nuser = test\npass = secret\nkey = 1111111111111111111111111111111111111111111111111111111111111111\nmode = fake-tls\ngateway = false\n";
 
     unsafe fn new_handle_with_capabilities(platform_capabilities: u64) -> u64 {
         let mut handle = 0;
@@ -1059,7 +1103,7 @@ mod tests {
         assert_eq!(std::mem::size_of::<QeliClientStats>(), STATS_V3_SIZE);
 
         let header = include_str!("../../include/qeli_transport_core.h");
-        assert!(header.contains("QELI_CLIENT_ABI_VERSION UINT32_C(0x0001000f)"));
+        assert!(header.contains("QELI_CLIENT_ABI_VERSION UINT32_C(0x00010010)"));
         assert!(header.contains("QELI_CLIENT_ABI_IS_COMPATIBLE"));
         assert!(header.contains("QELI_CLIENT_PLATFORM_REJECTED = -10"));
         assert!(header.contains("QELI_CLIENT_EVENT_V1_SIZE UINT32_C(48)"));

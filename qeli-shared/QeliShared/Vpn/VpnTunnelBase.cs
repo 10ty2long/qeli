@@ -63,6 +63,8 @@ public abstract class VpnTunnelBase
 
     // True once an established tunnel is up; used to detect a server-side drop.
     private volatile bool _wasConnected;
+    private long _attemptConnectedAtTick = -1;
+    private long _attemptEndedAtTick = -1;
 
     // 1 while the firewall kill-switch is engaged (so the teardown lifts exactly what
     // Start() raised). The kill-switch is raised ONCE before the connect loop and
@@ -865,39 +867,23 @@ public abstract class VpnTunnelBase
     }
 
     // ── reconnect loop ─────────────────────────────────────────────────────────
-    /// <summary>Advance the backoff counter for a failed attempt — but not while the network is
-    /// still settling after a resume-from-sleep / network change, or while there is no physical
-    /// address at all.
-    ///
-    /// The exponential backoff exists to stop us hammering a server that is down. A failure into
-    /// a network that cannot yet carry a handshake is not that, and counting it was the
-    /// resume-from-sleep stall: with the default base of 1 s the delay doubles per attempt, so
-    /// the handful of attempts burned while Wi-Fi reassociated and DHCP completed left the client
-    /// parked in a 16–32 s sleep long AFTER the network became usable — the reported "about a
-    /// minute" to come back, against no delay at all from clients that just keep retrying. With a
-    /// finite `max_retries` those same attempts could also exhaust it, and giving up tears the
-    /// TUN and routes down (see the end of the loop) — dropping the user's traffic onto the bare
-    /// network, which is the leak reported alongside the delay. (Field report 2026-07-25, item 1.)
-    ///
-    /// Clamped rather than reset to zero: a machine that resumes with no network at all must not
-    /// spin in a delay-free retry loop, and the cap keeps settling failures from ever reaching a
-    /// `max_retries` above it.</summary>
-    private int NextAttempt(int attempt)
+    // Count only time spent in Running, using a monotonic clock. DNS/handshake and
+    // platform cleanup must not turn an immediate disconnect into a stable session.
+    private long NextAttempt(long attempt, bool established, bool forced)
     {
-        bool settling = Environment.TickCount64 < Interlocked.Read(ref _settlingUntilTick)
-                        || PhysicalNetSignature().Length == 0;
-        return settling ? Math.Min(attempt + 1, SettlingAttemptCap) : attempt + 1;
+        long connectedAt = Interlocked.Exchange(ref _attemptConnectedAtTick, -1);
+        long endedAt = Interlocked.Exchange(ref _attemptEndedAtTick, -1);
+        long connectedMs = connectedAt < 0 ? 0 : Math.Max(0, (endedAt < 0 ? Environment.TickCount64 : endedAt) - connectedAt);
+        return Model.ConfigCore.Policy("next_attempt", new {
+            attempt, established, forced, connected_ms = connectedMs
+        }).GetProperty("value").GetInt64();
     }
 
     /// <summary>Bounded 80–100% reconnect jitter. It never exceeds the configured schedule,
     /// while preventing a fleet that lost one endpoint simultaneously from retrying on the same
     /// deterministic exponential boundaries.</summary>
-    internal static long JitterReconnectDelay(long scheduledMs)
-    {
-        if (scheduledMs <= 1) return Math.Max(0, scheduledMs);
-        long minimum = scheduledMs - scheduledMs / 5;
-        return Random.Shared.NextInt64(minimum, scheduledMs + 1);
-    }
+    internal static long JitterReconnectDelay(long scheduledMs) =>
+        Model.ConfigCore.Policy("jitter",new { scheduled=scheduledMs }).GetProperty("value").GetInt64();
 
     /// <summary>Put the platform data plane into a safe retry state after either a native
     /// error or a clean native return that was not a user disconnect. Both outcomes occur
@@ -934,44 +920,40 @@ public abstract class VpnTunnelBase
 
     private void ConnectWithRetry(VpnConfig config, CancellationToken ct)
     {
-        int attempt = 0;          // consecutive UNSTABLE attempts → backoff + max-retries
+        long attempt = 0;         // consecutive UNSTABLE attempts → backoff + max-retries
         bool firstAttempt = true; // very first connect: no reconnect gating / delay / status change
         long baseMs = config.ReconnectBaseDelaySecs * 1000;
         long maxMs = config.ReconnectMaxDelaySecs * 1000;
         string? reconnectStateFailure = null;
+        long startedAt = Environment.TickCount64;
         while (!ct.IsCancellationRequested)
         {
-            DateTime startedAt = DateTime.UtcNow; // reset precisely before RunVpnConnection below
             try
             {
                 if (!firstAttempt)
                 {
-                    // The reconnect policy applies to EVERY reconnect — INCLUDING one after an
-                    // established session dropped. Previously the gate/status/delay lived under
-                    // `attempt > 0`, and `attempt` was reset to 0 after an established drop, so on
-                    // the common flapping path ReconnectEnabled=false and max-retries were silently
-                    // ignored and the UI stayed Connected while the TUN was torn down. (C-02/C-03)
-                    if (!config.ReconnectEnabled) { Log("Reconnect disabled, giving up"); break; }
-                    if (config.ReconnectMaxRetries >= 0 && attempt > config.ReconnectMaxRetries)
-                    { Log("Max retries reached, giving up"); break; }
-                    // Announce we left Connected BEFORE re-entering — no green-UI leak window
-                    // while the TUN/routes are down.
+                    bool settling = Environment.TickCount64 < Interlocked.Read(ref _settlingUntilTick)
+                                    || PhysicalNetSignature().Length == 0;
+                    var decision = Model.ConfigCore.Policy("retry_decision", new {
+                        attempt, enabled = config.ReconnectEnabled, max_retries = config.ReconnectMaxRetries,
+                        @base = baseMs, cap = maxMs, elapsed_ms = Environment.TickCount64 - startedAt,
+                        settling_cap = settling ? (int?)SettlingAttemptCap : null
+                    }).GetProperty("value");
+                    string? reason = decision.GetProperty("reason").GetString();
+                    if (reason != null)
+                    {
+                        Log(reason == "disabled" ? "Reconnect disabled, giving up" : "Max retries reached, giving up");
+                        break;
+                    }
                     Status(VpnStatus.Connecting);
-                    if (attempt > 0)
-                    {
-                        long pow = (long)Math.Pow(2, Math.Min(attempt - 1, 7));
-                        long scheduledMs = Math.Max(Math.Min(baseMs * Math.Min(pow, 100), maxMs), 1000);
-                        long delayMs = JitterReconnectDelay(scheduledMs);
-                        Log($"Reconnect attempt {attempt} in {delayMs / 1000.0:F1}s");
-                        if (ct.WaitHandle.WaitOne((int)delayMs)) break; // cancelled
-                    }
-                    else
-                    {
-                        Log("Reconnecting…"); // a stable session dropped — reconnect promptly
-                    }
+                    long delayMs = decision.GetProperty("delay_ms").GetInt64();
+                    Log($"Reconnect attempt {Math.Max(1, attempt)} in {delayMs / 1000.0:F1}s");
+                    if (ct.WaitHandle.WaitOne((int)delayMs)) break;
                 }
                 firstAttempt = false;
-                startedAt = DateTime.UtcNow;
+                startedAt = Environment.TickCount64;
+                Interlocked.Exchange(ref _attemptConnectedAtTick, -1);
+                Interlocked.Exchange(ref _attemptEndedAtTick, -1);
                 RunVpnConnection(config, ct);
                 Log("Connection closed cleanly");
                 if (_userRequestedDisconnect) break;
@@ -979,6 +961,7 @@ public abstract class VpnTunnelBase
                 _forcedReconnectInFlight = false;
                 bool cleanWasEstablished = _wasConnected;
                 _wasConnected = false;
+                attempt = NextAttempt(attempt, cleanWasEstablished, cleanForced);
                 if (!cleanForced && cleanWasEstablished)
                     ConnectionDropped?.Invoke("Connection closed");
                 try
@@ -992,14 +975,6 @@ public abstract class VpnTunnelBase
                     Log($"[SECURITY] {reconnectStateFailure}");
                     break;
                 }
-                // Reset the backoff only after a STABLE session (ran a while). A connect-then-
-                // instant-drop keeps escalating, so it can't hot-loop AND still counts toward
-                // ReconnectMaxRetries. A cycle WE asked for (resume from sleep, network change)
-                // is not a failure: counting it as one made a laptop that sleeps often climb the
-                // backoff until the tunnel spent longer serving a penalty than carrying traffic.
-                attempt = cleanForced
-                    ? 0
-                    : (DateTime.UtcNow - startedAt >= TimeSpan.FromSeconds(30)) ? 0 : NextAttempt(attempt);
             }
             catch (ServerKickException e) when (!ct.IsCancellationRequested)
             {
@@ -1048,12 +1023,8 @@ public abstract class VpnTunnelBase
                     ConnectionDropped?.Invoke(e.Message);
                 }
                 // Reset backoff only after a STABLE established session; otherwise escalate so a
-                // flapping / never-stable server hits the delay + max-retries — EXCEPT while the
-                // network is still settling, where escalating is simply wrong.
-                attempt = (wasForced && wasEstablished)
-                    ? 0
-                    : (wasEstablished && DateTime.UtcNow - startedAt >= TimeSpan.FromSeconds(30))
-                        ? 0 : NextAttempt(attempt);
+                // flapping / never-stable server reaches its configured retry limit.
+                attempt = NextAttempt(attempt, wasEstablished, wasForced);
                 // persist-tun: on a reconnect (not a user Stop) keep the TUN + routes up
                 // so the next attempt reuses them (no flicker / route gap; fail-closed).
                 // Only when one is actually UP, though (`_persistedClientIp` is set next to
@@ -1521,6 +1492,7 @@ public abstract class VpnTunnelBase
                             if (!PlanReplacementGuardLift())
                                 throw new InvalidOperationException(
                                     "new tunnel is ready, but the temporary replacement firewall guard could not be restored");
+                            Interlocked.Exchange(ref _attemptConnectedAtTick, Environment.TickCount64);
                             _wasConnected = true;
                             ConnectedSince = DateTime.Now;
                             string tunnelAddresses = _persistedTunnelAddresses ?? _persistedClientIp ?? "";
@@ -1582,6 +1554,7 @@ public abstract class VpnTunnelBase
         }
         finally
         {
+            Interlocked.Exchange(ref _attemptEndedAtTick, Environment.TickCount64);
             lock (_nativeRoamingGate)
             {
                 Interlocked.Exchange(ref _nativePlanGeneration, 0);
@@ -2014,6 +1987,8 @@ public abstract class VpnTunnelBase
         Add(canonical, "interface_metric", config.InterfaceMetric
             .ToString(System.Globalization.CultureInfo.InvariantCulture));
         Add(canonical, "forward", config.Forward.ToString());
+        Add(canonical, "dev_node", config.DevNode);
+        Add(canonical, "dev", config.CarriedKeys.GetValueOrDefault("dev"));
         Add(canonical, "local_address", config.LocalAddress?.Trim());
         Add(canonical, "uses_app_filter", config.UsesAppFilter.ToString());
         Add(canonical, "apps_mode", config.AppsMode.Trim().ToLowerInvariant());

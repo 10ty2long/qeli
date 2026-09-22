@@ -8,7 +8,7 @@
 Обозначения:
 
 - **A** — ключ читается и влияет на работу клиента;
-- **C** — ключ принимается и сохраняется без изменений, но на этой платформе не применяется;
+- **C** — ключ принимается, его значение сохраняется, но на этой платформе не применяется;
 - **R** — ключ распознаётся как допустимый, но данным клиентом не применяется и не
   пересохраняется (актуально для headless CLI, у которого нет редактора профилей);
 - **D** — ключ принимался, но терялся при сохранении профиля; это дефект 0.7.14;
@@ -25,18 +25,18 @@ fail-closed. Текущие GUI-клиенты сохраняют любой и�
 
 | Ключи | CLI | Windows | macOS | Android | iOS | Текущий контракт / изменение |
 |---|:-:|:-:|:-:|:-:|:-:|---|
-| `server` `proto` `user` `pass` `key` `bind_static` `mode` `sni` `obfs_key` `front` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `route_local` `include` `exclude` `dns` `ipv6` `allow_ipv6_leak` `allow_ipv4_leak` | A→A | A→A | A→A | A→A | A→A | IPv6 согласуется внутри аутентифицированных capabilities/NetworkPlan v2. Режимы `auto`, `required` и `off`, а также симметричные leak-controls едины для всех адаптеров; платформенные дефолты `gateway` передаются явно. |
+| `server` `proto` `user` `pass` `key` `bind_static` `mode` `sni` `obfs_key` `front` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `route_local` `include` `exclude` `dns` `ipv6` `allow_ipv6_leak` `allow_ipv4_leak` | A→A | A→A | A→A | A→A | A→A | IPv6 согласуется внутри аутентифицированных capabilities/NetworkPlan v2. Режимы `auto`, `required` и `off`, а также симметричные leak-controls едины для всех адаптеров; общий default `gateway=true`; явный `false` включает split tunnel. |
 | `roaming` | N→A | N→A | N→A | N→A | N→A | Новый общий ключ 0.8: `off` запрещает roam, `auto` использует безопасно согласованный TCP/UDP roam с reconnect fallback, `required` отказывает без полного контракта. Явные `local`/ненулевой `lport` несовместимы с `required`. |
 | `reality_compact` `reality_split` `reality_split_delay` | R→A | C→A | C→A | C→A | C→A | Единое Rust-ядро управляет размером REALITY ClientHello и split-write evasion на всех приложениях. Редакторы без отдельных контролов сохраняют точные значения. |
-| `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` | R→R | A→A | A→A | A→A | A→A | Реконнект остаётся платформенным lifecycle-контуром; Rust-ядро владеет попыткой соединения, но не решением GUI о следующем запуске. В 0.7.15 iOS adapter действительно создаёт следующую generation; до аудита ключи сохранялись, но любая native/pump ошибка была terminal. |
+| `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` | R→A | A→A | A→A | A→A | A→A | Ключи теперь читаются также CLI и доходят до его встроенного цикла. Ядро задаёт счётчик ошибок, решение по лимиту, backoff/jitter и интервал 1,5 с между началами попыток. Адаптеры передают монотонное время установленной связи и события ОС; ожидание сети не обнуляет бюджет. `reconnect_retries=-1` означает неограниченные повторы. |
 | `timeout` | R→A | A→A | A→A | A→A | A→A | Таймаут соединения перенесён в Rust и теперь действительно доходит до общего ядра. |
 | `padding` `padding_min` `padding_max` `heartbeat` `heartbeat_interval` `heartbeat_size` `heartbeat_jitter` `shaping` `shaping_gap_mean` `shaping_gap_min` `shaping_gap_max` `shaping_budget` `shaping_min_size` `shaping_max_size` `shaping_stealth` `shaping_stealth_mbps` | R→A | A→A | A→A | A→A | A→A | Локальные значения теперь разбирает единое ядро; аутентифицированный push сервера, если он есть, остаётся старше локального значения. |
 | `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` | A→A | C→A | C→A | C→A | C→A | Настройки сокета применяет Rust на всех нативных клиентах. TCP сохраняет autotuning. Отсутствующий `recv_buffer_size` включает bounded auto-grow UDP 4→8→16 МиБ; явное значение фиксировано, `0` оставляет ОС. Новые stats показывают kernel/internal drops, grow events и фактический размер. |
-| `dns_servers` | A→A | A→A | C→A | C→A | C→A | Все клиенты используют канонический dual-family список `dns_servers`; мобильные всё ещё импортируют старое `dns = IP, IP`, но сохраняют канонический вид. Резолверы фильтруются по согласованным inner families; публичный fallback DNS не подставляется. |
+| `dns_servers` | A→A | A→A | C→A | C→A | C→A | Все клиенты используют общий DNS-план для legacy IPv4 и v2: явные резолверы перекрывают push, максимум 8 адресов активных inner families, неверный выбранный push вызывает ошибку. DNS получает защищённый host-маршрут и в split-режиме; публичный fallback не подставляется. |
 | `allow_unpinned_tofu` | A→A | C→A | C→A | C→A | C→A | Дефолт везде `false`. `true` разрешает продолжить только при доказанном сбое сохранения впервые увиденного ключа; несовпадение с известным пином всегда фатально. |
 | `password_file` `password_command` | A→A | C→C | C→C | C→C | C→C | Источники пароля остаются headless-функцией; GUI не выполняют команды и не читают произвольные файлы. |
 | `local` `lport` | R→A | A→A | A→A | D→C | D→C | Linux и Windows/macOS применяют привязку первичного TCP/UDP carrier. Вторичные bonded TCP-сокеты сохраняют `local`, но используют ephemeral-порт и намеренно не занимают тот же фиксированный `lport`. Ошибка bind блокирует подключение вместо скрытого продолжения с другим source address/port. Телефоны сохраняют ключи для desktop-профиля. |
-| `dev` | A→A | A→A | C→C | D→C | D→C | Имя интерфейса применимо Linux/Windows; macOS получает `utunN` от ядра, телефоны — системный TUN. |
+| `dev` | A→A | A→A | C→C | D→C | D→C | Linux применяет `dev` как имя TUN/TAP. Windows использует явный `dev`, приоритет имеет `dev_node`; без обоих ключей сохраняется уникальное имя профиля. macOS получает `utunN` от ядра, телефоны — системный TUN. |
 | `device_type` | R→A | C→C | C→C | C→C | C→C | Linux выбирает `tun` или `tap`; остальные клиенты сохраняют переносимый ключ и отклоняют TAP при подключении, потому что их системные VPN-интерфейсы работают только на L3. |
 | `dev_attach` | A→A | C→C | C→C | C→C | C→C | Подключение к готовому TUN остаётся функцией CLI; остальные редакторы не теряют ключ. |
 | `dev_node` `metric` | R→R | A→A | C→C | D→C | D→C | Wintun-ключи применяет только Windows, остальные GUI сохраняют их. |
@@ -57,8 +57,8 @@ fail-closed. Текущие GUI-клиенты сохраняют любой и�
 - `timeout`, все padding/heartbeat/shaping и `local`/`lport` добавлены в Rust parser,
   validation и round-trip;
 - `keepalive`, `tcp_nodelay` и socket buffers больше не заменяются скрытыми константами GUI;
-- `gateway` и все transport-owned значения передаются в ядро явно, поэтому разный default
-  разных UI не зависит от Rust-default;
+- defaults формы и runtime берутся из общей Rust-схемы; отсутствие `recv_buffer_size`
+  сохраняется, поскольку оно включает автоматический рост UDP-буфера;
 - `dns_servers` стал единым wire/config-представлением, а молчаливая подстановка
   `1.1.1.1`/`8.8.8.8` удалена;
 - Android/iOS перестали удалять известные ключи другой платформы;
@@ -66,6 +66,41 @@ fail-closed. Текущие GUI-клиенты сохраняют любой и�
 - Android `kill_switch` теперь означает проверяемый системный lockdown, а не неработающий
   флаг в профиле.
 
-Секция `[logging]` не входит в эти общие ключи `[qeli]`: CLI её применяет; Android/iOS
-переносят её при редактировании; Windows/macOS используют собственные настройки логов и эту
-секцию не разбирают.
+Секция `[logging]` добавляет **3 поля** к 81 ключу `[qeli]` и сохраняется всеми GUI.
+CLI применяет `level`, `file`, `time_format`. Windows/macOS используют `level` в профиле
+службы/демона; GUI может задать его из настроек приложения. `file` и `time_format` desktop
+сохраняет в документе, но не применяет. Android/iOS сохраняют все три поля, используя
+для журнала настройки своего приложения.
+
+Редакторская грамматика и defaults теперь общие: [ABI 1.16 configuration core](../plans/CLIENT-CONFIG-CORE.md). Таблица выше описывает применение полей платформой, а не наличие отдельных парсеров.
+
+## Повторная сверка с исходниками — 22 сентября 2026
+
+Исправлены пропуски чтения `reconnect*` в CLI и применения явного `dev` в Windows.
+Экспорт C# больше не теряет пустые/повторные `route_file`; пути с разным регистром
+сохраняются отдельно. Неизменённые bool/int из `carriedKeys` сравниваются по типу:
+дубликаты больше не исчезают при сохранении формы. Разбор имени `qeli://` на Android
+также делегирован ядру. Проверки моделей охватывают все 84 поля, включая `[logging]`.
+
+Матрица описывает исходники после исправлений. Для установленного приложения нужны
+новые native-библиотеки ABI 1.16; Apple/device и release A/B проверки не подменяются
+локальным C#/JVM прогоном. См. [статус переноса](../plans/CLIENT-CONFIG-CORE.md).
+
+<!-- generated-model-coverage -->
+## Покрытие моделей: все 84 поля
+
+Этот блок генерируется из `editor/schema.rs`; M — типизированное свойство модели,
+S — значение сохраняется в исходном документе ядра и/или `carriedKeys`.
+Это не перечень контролов формы: поле без отдельного UI остаётся доступно через INI.
+Все 81 ключ `[qeli]` и 3 ключа `[logging]` распознаются общим парсером.
+
+Ключей с типизированным представлением: C# 62, Kotlin 58, Swift 57; остальные поля сохраняются как S.
+
+| Ключи схемы | C# (Windows/macOS) | Kotlin | Swift |
+|---|:-:|:-:|:-:|
+| `server` `proto` `user` `pass` `key` `bind_static` `allow_unpinned_tofu` `mode` `obfs_key` `front` `sni` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `ipv6` `roaming` `route_local` `allow_ipv4_leak` `allow_ipv6_leak` `include` `exclude` `dns` `dns_servers` `apps_mode` `apps` `route_file` `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` `timeout` `padding` `padding_min` `padding_max` `heartbeat` `heartbeat_interval` `heartbeat_size` `heartbeat_jitter` `shaping` `shaping_gap_mean` `shaping_gap_min` `shaping_gap_max` `shaping_budget` `shaping_min_size` `shaping_max_size` `shaping_stealth` `shaping_stealth_mbps` `logging.level` | M | M | M |
+| `name` `persist_tun` `forward` `local` `lport` `metric` `dev_node` | M | S | S |
+| `kill_switch` | M | M | S |
+| `allow_lan` `logging.file` `logging.time_format` | S | M | M |
+| `dev` `device_type` `dev_attach` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |
+<!-- /generated-model-coverage -->

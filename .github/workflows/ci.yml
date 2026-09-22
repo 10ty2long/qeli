@@ -117,6 +117,8 @@ jobs:
           grep -F "release qeli server builds require --features jemalloc" "$log"
       - name: Build release server with jemalloc
         run: cargo build --locked --bin qeli --release --features jemalloc
+      - name: Server INI roundtrip key coverage
+        run: python3 ../scripts/gen_roundtrip_fixture.py --check
       - name: Test
         run: cargo test --locked --workspace -- --test-threads=1
       # The whole-client ABI is opt-in while clients migrate. Test its state machine with
@@ -124,6 +126,10 @@ jobs:
       # the actual minimal cdylib configuration separately. The release profile is the
       # important half: `transport-core-ffi` implies `ffi-cdylib`, whose compile-time guard
       # rejects panic=abort because it would make every catch_unwind boundary ineffective.
+      - name: Configuration document and policy service tests
+        run: cargo test --locked --features transport-core-ffi --test config_editor
+      - name: Generated native configuration adapters are current
+        run: python3 ../scripts/gen_config_bindings.py --check
       - name: Transport-core C ABI tests
         env:
           CARGO_PROFILE_RELEASE_PANIC: unwind
@@ -321,8 +327,8 @@ jobs:
   # labels and mechanics in step: a comment that misstates whether a gate blocks is how people come
   # to believe a red job is expected. (Audit 2026-07-27, Z5.)
   #
-  # The native realtls core (libqeli.so / qeli.dll / libqeli.dylib) is committed under each
-  # client, so these jobs only need the platform toolchain — they do NOT cross-build Rust.
+  # Adapter tests and app builds use fresh ABI 1.16 cores from this checkout.
+  # The independent native-libs job still gates committed release provenance.
   android-build:
     runs-on: ubuntu-latest
     steps:
@@ -344,6 +350,24 @@ jobs:
       # Pinned by SHA like every other action here. (Audit 2026-08-04.)
       - name: Validate the Gradle wrapper
         uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: qeli
+      - name: Build current host configuration and transport core
+        working-directory: .
+        run: python scripts/build_client_core.py --github-env
+      - name: Install pinned native Android build dependencies
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "ndk;$(python3 -c 'import sys; sys.path.insert(0,"scripts"); from native_repro import DEFAULT_ANDROID_NDK; print(DEFAULT_ANDROID_NDK)')"
+          cargo install cargo-ndk --locked --version "$(python3 -c 'import sys; sys.path.insert(0,"scripts"); from native_repro import DEFAULT_CARGO_NDK_VERSION; print(DEFAULT_CARGO_NDK_VERSION)')"
+          rustup target add aarch64-linux-android x86_64-linux-android
+      - name: Build current Android JNI cores
+        working-directory: .
+        run: python3 scripts/build_client_core.py --android --github-env
       - name: Assemble debug APK
         working-directory: qeli-android
         run: |
@@ -389,6 +413,24 @@ jobs:
           java-version: '17'
       - name: Validate the Gradle wrapper
         uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: qeli
+      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: platform-tools
+      - name: Install pinned native Android build dependencies
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "ndk;$(python3 -c 'import sys; sys.path.insert(0,"scripts"); from native_repro import DEFAULT_ANDROID_NDK; print(DEFAULT_ANDROID_NDK)')"
+          cargo install cargo-ndk --locked --version "$(python3 -c 'import sys; sys.path.insert(0,"scripts"); from native_repro import DEFAULT_CARGO_NDK_VERSION; print(DEFAULT_CARGO_NDK_VERSION)')"
+          rustup target add aarch64-linux-android x86_64-linux-android
+      - name: Build current Android JNI cores
+        working-directory: .
+        run: python3 scripts/build_client_core.py --android --abis x86_64 --github-env
       - name: Enable KVM for the Android emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -420,6 +462,13 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: '10.0.x'
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: qeli
+      - name: Build current host configuration and transport core
+        working-directory: .
+        run: python scripts/build_client_core.py --github-env
       - name: Build QeliWin (Release)
         working-directory: qeli-win
         run: dotnet build QeliWin/QeliWin.csproj -c Release
@@ -457,6 +506,13 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: '10.0.x'
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: qeli
+      - name: Build current host configuration and transport core
+        working-directory: .
+        run: python scripts/build_client_core.py --github-env
       - name: Build QeliMac (Release)
         working-directory: qeli-mac
         run: dotnet build QeliMac/QeliMac.csproj -c Release

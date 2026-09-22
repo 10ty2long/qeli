@@ -517,6 +517,13 @@ async fn main() -> anyhow::Result<()> {
             let text = std::fs::read_to_string(&config)
                 .map_err(|e| anyhow::anyhow!("cannot read {}: {}", path, e))?;
 
+            if client {
+                config::parse_client_config_strict(&text)
+                    .map_err(|e| anyhow::anyhow!("{}: {}", path, e))?;
+                println!("{}: OK", path);
+                return Ok(());
+            }
+
             // Parse the document ourselves rather than going through
             // parse_*_config(), because the unread-key report needs the same
             // IniDoc the config was built from.
@@ -524,14 +531,7 @@ async fn main() -> anyhow::Result<()> {
                 .map_err(|e| anyhow::anyhow!("{}: {}", path, e))?;
 
             let mut problems = 0usize;
-            if client {
-                let cfg = config::client::ClientConfig::from_ini(&doc)
-                    .map_err(|e| anyhow::anyhow!("{}: {}", path, e))?;
-                // The same enum checks `run_client` runs, so this command and a real start
-                // agree — mirroring what the server branch below already does.
-                cfg.validate()
-                    .map_err(|e| anyhow::anyhow!("{}: {}", path, e))?;
-            } else {
+            {
                 let cfg = config::server::ServerConfig::from_ini(&doc)
                     .map_err(|e| anyhow::anyhow!("{}: {}", path, e))?;
                 // The same schema checks the data-plane worker runs at startup,
@@ -565,10 +565,6 @@ async fn main() -> anyhow::Result<()> {
             // Keys nothing read: not a parse error, never surfaced at runtime,
             // and the reason a misspelling silently keeps the default.
             //
-            // A client config is shared with the Windows/macOS clients, which have
-            // their own parser and implement a few keys this binary does not. Those
-            // are perfectly valid here — reporting them as typos would be a lie —
-            // so they are listed separately and do not fail the check.
             // Keys removed in 0.7.12 because they never had any effect. An existing
             // config may still carry them, and calling those a "typo" would send the
             // operator hunting for a spelling mistake that isn't there. Name them for
@@ -579,24 +575,10 @@ async fn main() -> anyhow::Result<()> {
             // could never be reported here — listing it would promise a message that
             // can't happen. It is marked "not implemented" in CONFIG.md instead.
 
-            let (gui_only, rest): (Vec<_>, Vec<_>) = doc
+            let (retired, unknown): (Vec<_>, Vec<_>) = doc
                 .unread_keys()
                 .into_iter()
-                .partition(|(section, key)| client && config::is_gui_only_client_key(section, key));
-            let (retired, unknown): (Vec<_>, Vec<_>) = rest
-                .into_iter()
                 .partition(|(section, key)| config::is_retired_key(section, key));
-
-            if !gui_only.is_empty() {
-                println!(
-                    "{}: {} key(s) used only by the Windows/macOS clients (ignored here):",
-                    path,
-                    gui_only.len()
-                );
-                for (section, key) in &gui_only {
-                    println!("  {} {}", section, key);
-                }
-            }
 
             if !retired.is_empty() {
                 println!(
@@ -620,10 +602,7 @@ async fn main() -> anyhow::Result<()> {
                 for (section, key) in &unknown {
                     eprintln!("  {} {}", section, key);
                 }
-                eprintln!(
-                    "An unknown key is not an error: it is simply ignored, and the setting \
-                     keeps its default."
-                );
+                eprintln!("Unknown keys prevent startup; correct or remove the reported fields.");
             }
 
             // Values that were PRESENT but not understood. `unread_keys` above only finds

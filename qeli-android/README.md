@@ -96,3 +96,11 @@ cd qeli-android
 
 > Инкрементальная сборка иногда раздувает APK — если размер вырос неожиданно, сделайте
 > `./gradlew clean` и пересоберите.
+
+## Shared native configuration core
+
+The editor and portable policies require the Rust ABI 1.16 `ConfigCore` JNI service.
+For JVM tests, run `python scripts/build_client_core.py --debug` from repository root
+and set the printed `QELI_CONFIG_NATIVE_LIBRARY`. For APK builds, build with `--android`
+and set `QELI_NATIVE_JNI_DIR` before Gradle. This replaces the jniLibs inputs.
+See [shared configuration](../docs/eng/plans/CLIENT-CONFIG-CORE.md) for prerequisites and release A/B gates.

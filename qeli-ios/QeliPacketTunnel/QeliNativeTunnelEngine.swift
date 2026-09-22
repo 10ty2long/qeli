@@ -206,6 +206,8 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
     private var networkSettingsGeneration: UInt64 = 0
     private var appliedNetworkSettingsFingerprint: NativeNetworkSettingsFingerprint?
     private var pendingUplink = MobilePacketHandoffBuffer()
+    private var attemptConnectedAt: TimeInterval?
+    private var attemptWasForced = false
     private var snapshot: TunnelSnapshot
     private var sampledUpload: UInt64 = 0
     private var sampledDownload: UInt64 = 0
@@ -274,6 +276,8 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
             carrierAddresses = resolvedCarriers
             runnerResult = nil
             attemptFailureMessage = nil
+            attemptConnectedAt = nil
+            attemptWasForced = false
             return true
         }
         guard installed else { transport.stop(); throw CancellationError() }
@@ -413,11 +417,12 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
         var pendingFailure: Error?
         var failureCount = 0
         var carrierGeneration = 0
-        var attemptStarted = Date()
+        var attemptStarted = ProcessInfo.processInfo.systemUptime
         let policy = ReconnectPolicy(config: config)
         while !Task.isCancelled, !stateLock.withLock({ stopped }) {
             var failure = pendingFailure
-            var sessionWasEstablished = false
+            var connectedMilliseconds: Int?
+            var wasForced = false
             pendingFailure = nil
 
             if let active = transport {
@@ -428,7 +433,10 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
                     return
                 } catch {
                     failure = error
-                    sessionWasEstablished = stateLock.withLock({ snapshot.phase == .connected })
+                    connectedMilliseconds = stateLock.withLock {
+                        wasForced = attemptWasForced
+                        return attemptConnectedAt.map { max(0, Int((ProcessInfo.processInfo.systemUptime - $0) * 1_000)) }
+                    }
                     await cleanupAttempt(active)
                     transport = nil
                 }
@@ -440,15 +448,16 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
                 return
             }
 
-            failureCount = policy.nextFailureCount(
-                previous: failureCount,
-                sessionWasEstablished: sessionWasEstablished
-            )
-            let elapsed = max(0, Int(Date().timeIntervalSince(attemptStarted) * 1_000))
-            switch policy.decision(
-                failureCount: failureCount,
-                millisecondsSinceAttemptStarted: elapsed
-            ) {
+            let decision: ReconnectDecision
+            do {
+                let elapsed = max(0, Int((ProcessInfo.processInfo.systemUptime - attemptStarted) * 1_000))
+                failureCount = try policy.nextFailureCount(previous:failureCount, sessionWasEstablished: connectedMilliseconds != nil, connectedMilliseconds: connectedMilliseconds ?? 0, forced: wasForced)
+                decision = try policy.decision(failureCount:failureCount,millisecondsSinceAttemptStarted:elapsed)
+            } catch {
+                terminalFailure(error)
+                return
+            }
+            switch decision {
             case .stop(.disabled):
                 terminalFailure(NativeTunnelError.transportStopped(
                     "Native transport stopped and reconnect is disabled."
@@ -477,11 +486,18 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
                 if resumedFromOffline {
                     // A carrier outage is not a failed server connection and must not leave an
                     // exponential timer between NWPath becoming usable and the next handshake.
-                    failureCount = 0
+                    // Retain both the retry budget and the minimum start-to-start interval.
                     update(phase: .connecting, message: "Physical network restored; reconnecting")
-                    sharedStore.appendLog(
-                        "Physical network available; reconnecting immediately"
-                    )
+                    do {
+                        let elapsed = max(0, Int((ProcessInfo.processInfo.systemUptime - attemptStarted) * 1_000))
+                        if case .retry(_, let floor) = try policy.decision(
+                            failureCount: failureCount, millisecondsSinceAttemptStarted: elapsed,
+                            carrierRestored: true), floor > 0 {
+                            try await Task.sleep(nanoseconds: UInt64(floor) * 1_000_000)
+                        }
+                    } catch is CancellationError { return }
+                    catch { terminalFailure(error); return }
+                    sharedStore.appendLog("Physical network available; reconnecting")
                 } else {
                     update(
                         phase: .connecting,
@@ -521,7 +537,7 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
                 }
                 let rotated = Self.rotated(latest, by: carrierGeneration)
                 transport = try launchReconnectTransport(carrierAddresses: rotated)
-                attemptStarted = Date()
+                attemptStarted = ProcessInfo.processInfo.systemUptime
                 sharedStore.appendLog(
                     "Native reconnect uses carrier candidates: \(rotated.joined(separator: ", "))"
                 )
@@ -532,7 +548,7 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
                 // through the same retry budget instead of turning the first failed restart into
                 // a provider-terminal failure.
                 pendingFailure = error
-                attemptStarted = Date()
+                attemptStarted = ProcessInfo.processInfo.systemUptime
             }
         }
     }
@@ -628,6 +644,8 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
             native = next
             runnerResult = nil
             attemptFailureMessage = nil
+            attemptConnectedAt = nil
+            attemptWasForced = false
             return true
         }
         guard installed else {
@@ -1045,7 +1063,7 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
         let privateUpdatePath = config.hasPrivateUpdatePath(globalAllowLAN: allowLAN)
         let liveConnectionProperties = LiveConnectionProperties(
             config: config, globalAllowLAN: allowLAN)
-        let effectiveExcludes = RouteExclusionPlanner.effectiveExcludes(
+        let effectiveExcludes = try RouteExclusionPlanner.effectiveExcludes(
             configured: config.excludeRoutes,
             fullTunnel: plan.fullTunnel,
             allowLAN: allowLAN
@@ -1441,6 +1459,7 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
     private func publishConnected(_ plan: NativeNetworkPlan) {
         stateLock.withLock {
             guard !stopped else { return }
+            if attemptConnectedAt == nil { attemptConnectedAt = ProcessInfo.processInfo.systemUptime }
             snapshot.phase = .connected
             snapshot.message = "Connected — Rust transport core"
             snapshot.error = nil
@@ -1562,7 +1581,9 @@ final class QeliNativeTunnelEngine: @unchecked Sendable {
         transport: QeliNativeTransport, generation: UInt64, reason: String
     ) {
         let shouldStop = stateLock.withLock {
-            !stopped && native === transport && activePlan?.generation == generation
+            guard !stopped, native === transport, activePlan?.generation == generation else { return false }
+            attemptWasForced = true
+            return true
         }
         guard shouldStop else { return }
         provider.reasserting = true

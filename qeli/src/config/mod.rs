@@ -16,8 +16,11 @@ use serde::{Deserialize, Serialize};
 /// (`[auth]` / `[web]` / `[logging]` singletons + `[profile:<name>]` sections);
 /// see [`server::ServerConfig::from_ini`].
 pub fn parse_server_config(s: &str) -> anyhow::Result<server::ServerConfig> {
-    let doc = format::IniDoc::parse(s)?;
-    server::ServerConfig::from_ini(&doc)
+    let (config, findings) = parse_server_config_reporting(s)?;
+    if !findings.is_empty() {
+        anyhow::bail!("invalid server config:\n  {}", findings.join("\n  "));
+    }
+    Ok(config)
 }
 
 /// Decode internal panel form data with strict field checking at this API boundary.
@@ -52,14 +55,10 @@ pub const GUI_ONLY_CLIENT_KEYS: &[&str] = &[
     "allow_lan",
     "apps",
     "apps_mode",
-    // Display metadata and GUI reconnect policy remain outside the Rust connection attempt.
+    // Display metadata remains outside the Rust connection attempt; reconnect is parsed there.
     // Transport-owned timeout/padding/heartbeat/shaping keys used to be listed here too; the
     // shared core now parses and applies them, so exempting them would hide parser drift.
     "name",
-    "reconnect",
-    "reconnect_retries",
-    "reconnect_base_delay",
-    "reconnect_max_delay",
 ];
 
 /// Keys that USED to exist. A config carrying one is stale rather than misspelled, and the
@@ -134,37 +133,18 @@ pub fn unknown_keys(doc: &format::IniDoc, client: bool) -> Vec<String> {
         .collect()
 }
 
-/// Parse a client config and REFUSE anything the runtime would silently reinterpret.
-///
-/// Two independent ways a config can lie about itself, and both used to fail OPEN on the real
-/// start while only `check-config` reported them:
-///   * a misspelled key NAME (`kill_swtich`) — never read, so the field keeps its default;
-///   * a value PRESENT but not understood (`kill_switch = ture`) — `bool_or` records it and
-///     substitutes the default.
-///
-/// Either one silently disables a security setting, so the process about to ACT on the config
-/// is exactly where they must be fatal. `check-config` keeps its own flow: it reports every
-/// problem at once rather than stopping at the first. (Audit 2026-08-01, §4/§5.)
-/// Parse a SERVER config, returning it together with the values that were present but not
-/// understood.
-///
-/// The server deliberately WARNS rather than refuses on these — aborting a start over a
-/// long-standing typo would take a working server down on upgrade, and the operator sees the
-/// line in the journal at boot. What changed is only where the findings come from: they belong
-/// to this parse rather than to a process-global that any other thread could drain.
-/// (Audit 2026-08-01, §2.)
+/// Parse a server config and collect malformed values, duplicate scalar/map keys
+/// and unknown keys. Startup, reload and panel validation reject non-empty findings;
+/// diagnostic callers can display all findings together. Section-shape errors are
+/// returned directly. Findings belong to this document, never to shared global state.
 pub fn parse_server_config_reporting(
     s: &str,
 ) -> anyhow::Result<(server::ServerConfig, Vec<String>)> {
     let doc = format::IniDoc::parse(s)?;
     let cfg = server::ServerConfig::from_ini(&doc)?;
     let mut findings = doc.bad_values();
-    // Misspelled key NAMES, which this path did not look at AT ALL. Only the value-level
-    // findings were surfaced, so `kill_switch = ture` warned while `kill_swtich = true` — the
-    // same setting, silently off, one letter away — produced nothing anywhere but
-    // `check-config`, a command nobody runs on an already-working server. The client has
-    // refused both since §4; the server reports both and still starts, for the reason above.
-    // (Audit 2026-08-01, §1.)
+    // Report unknown names as well as invalid values: an unread setting otherwise
+    // retains its default and can disappear on the next serialized save.
     let unknown = unknown_keys(&doc, false);
     if !unknown.is_empty() {
         findings.push(format!(
@@ -176,36 +156,15 @@ pub fn parse_server_config_reporting(
     Ok((cfg, findings))
 }
 
+/// Parse a client config and reject unknown keys and malformed values.
 pub fn parse_client_config_strict(s: &str) -> anyhow::Result<client::ClientConfig> {
-    let doc = format::IniDoc::parse(s)?;
-    let cfg = client::ClientConfig::from_ini(&doc)?;
-    let unknown = unknown_keys(&doc, true);
-    let bad = doc.bad_values();
-    if unknown.is_empty() && bad.is_empty() {
-        return Ok(cfg);
-    }
-    let mut why: Vec<String> = Vec::new();
-    if !unknown.is_empty() {
-        why.push(format!(
-            "unknown key(s), likely misspelled: {}",
-            unknown.join(", ")
-        ));
-    }
-    why.extend(bad.iter().cloned());
-    anyhow::bail!(
-        "refusing to start: {} config problem(s) whose defaults would otherwise be substituted silently
-  {}",
-        unknown.len() + bad.len(),
-        why.join("
-  ")
-    )
+    editor::parse_runtime(s)
 }
 
 /// Parse a client config. The one and only format is flat INI with a `[qeli]`
 /// section; see [`client::ClientConfig::from_ini`].
 pub fn parse_client_config(s: &str) -> anyhow::Result<client::ClientConfig> {
-    let doc = format::IniDoc::parse(s)?;
-    client::ClientConfig::from_ini(&doc)
+    editor::parse_runtime(s)
 }
 
 /// Upsert `key = value` pairs inside a singleton `[section]` of a flat-INI
@@ -224,17 +183,23 @@ pub fn parse_client_config(s: &str) -> anyhow::Result<client::ClientConfig> {
 /// on every platform.
 pub fn set_section_keys(original: &str, section: &str, updates: &[(&str, String)]) -> String {
     let header = format!("[{}]", section);
+    // Client sections/keys are case-insensitive in the shared document service.
+    // Keep the server INI's existing case-sensitive contract for all other sections.
+    let client_section = section == "qeli";
 
     // Does `line_trimmed` start an active `key = ...` / `key=...` assignment?
     // Comment lines (`#` / `;`) never match, so a commented-out key is left alone.
-    fn is_active_key(line_trimmed: &str, key: &str) -> bool {
+    fn is_active_key(line_trimmed: &str, key: &str, client_section: bool) -> bool {
         if line_trimmed.starts_with('#') || line_trimmed.starts_with(';') {
             return false;
         }
-        match line_trimmed.strip_prefix(key) {
-            Some(rest) => rest.trim_start().starts_with('='),
-            None => false,
-        }
+        line_trimmed.split_once('=').is_some_and(|(name, _)| {
+            if client_section {
+                name.trim_end().eq_ignore_ascii_case(key)
+            } else {
+                name.trim_end() == key
+            }
+        })
     }
 
     let mut out: Vec<String> = Vec::new();
@@ -243,7 +208,12 @@ pub fn set_section_keys(original: &str, section: &str, updates: &[(&str, String)
     let mut written: Vec<String> = Vec::new();
 
     for line in original.lines() {
-        let t = line.trim_start();
+        let t = if client_section {
+            line.trim_start_matches(['\u{feff}', ' ', '\t'])
+                .trim_start()
+        } else {
+            line.trim_start()
+        };
         let is_header = t.starts_with('[') && t.trim_end().ends_with(']');
         if is_header {
             // Leaving the target section: emit any keys we haven't placed yet.
@@ -257,7 +227,13 @@ pub fn set_section_keys(original: &str, section: &str, updates: &[(&str, String)
             in_section = format::IniDoc::parse(t)
                 .ok()
                 .and_then(|doc| doc.sections.into_iter().next())
-                .is_some_and(|sec| sec.kind == section && sec.instance.is_none());
+                .is_some_and(|sec| {
+                    (if client_section {
+                        sec.kind.eq_ignore_ascii_case(section)
+                    } else {
+                        sec.kind == section
+                    }) && sec.instance.is_none()
+                });
             if in_section {
                 section_seen = true;
                 written.clear();
@@ -268,7 +244,7 @@ pub fn set_section_keys(original: &str, section: &str, updates: &[(&str, String)
         if in_section {
             let mut replaced = false;
             for u in updates {
-                if !written.iter().any(|w| w == u.0) && is_active_key(t, u.0) {
+                if !written.iter().any(|w| w == u.0) && is_active_key(t, u.0, client_section) {
                     out.push(format!("{} = {}", u.0, format::quote_if_needed(&u.1)));
                     written.push(u.0.to_string());
                     replaced = true;
@@ -827,10 +803,6 @@ mod tests {
         let gui_only = [
             // profile metadata / desktop-side connection knobs
             "name",
-            "reconnect",
-            "reconnect_retries",
-            "reconnect_base_delay",
-            "reconnect_max_delay",
             // platform-specific interface handling
             "dev_node",
             "metric",
@@ -1306,3 +1278,8 @@ fn default_awg_jmin() -> u16 {
 fn default_awg_jmax() -> u16 {
     300
 }
+
+pub mod editor;
+pub mod policy;
+
+pub mod route_file;

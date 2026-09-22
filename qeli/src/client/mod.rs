@@ -1711,6 +1711,7 @@ struct LinuxCoreAdapter {
     post_up: Option<String>,
     hook_context: Option<ClientHookContext>,
     connected_since: Option<std::time::Instant>,
+    attempt_connected_since: Option<std::time::Instant>,
     #[cfg(feature = "experimental-roaming")]
     path_controller: Arc<LinuxPathController>,
 }
@@ -1971,6 +1972,7 @@ impl LinuxCoreAdapter {
                 post_up: None,
                 hook_context: None,
                 connected_since: None,
+                attempt_connected_since: None,
                 #[cfg(feature = "experimental-roaming")]
                 path_controller,
             },
@@ -1986,6 +1988,7 @@ impl LinuxCoreAdapter {
             self.with_core(|core| core.stop())?;
             self.drain_events(None)?;
         }
+        self.attempt_connected_since = None;
         if reconnect {
             self.with_core(ClientCore::record_reconnect);
         }
@@ -2072,6 +2075,10 @@ impl LinuxCoreAdapter {
             match event.kind {
                 EventKind::StateChanged => {
                     log::debug!("transport core state: {:?}", event.state);
+                    if event.state == ClientState::Running {
+                        self.attempt_connected_since
+                            .get_or_insert_with(std::time::Instant::now);
+                    }
                     let reconnects = self.with_core(|core| core.stats().reconnects);
                     self.diagnostics.update_state(event.state, reconnects);
                     self.diagnostics.publish(&self.counters);
@@ -2344,17 +2351,17 @@ fn consume_authenticated_management(
     }
 }
 
-/// Desynchronise clients that lose the same server/carrier at once. Jitter only shortens the
-/// scheduled delay (by at most 20%), so the configured maximum is never exceeded.
+/// A stop signal must interrupt even a day-long configured backoff. The atomic flag
+/// handles cancellation before registration; Notify handles it while the timer is pending.
 #[cfg(any(target_os = "linux", test))]
-fn jitter_reconnect_delay(scheduled: Duration) -> Duration {
-    let millis = u64::try_from(scheduled.as_millis()).unwrap_or(u64::MAX);
-    let spread = millis / 5;
-    if spread == 0 {
-        return scheduled;
+async fn wait_for_reconnect(delay: Duration, shutdown: &AtomicBool, wakeup: &tokio::sync::Notify) {
+    if shutdown.load(Ordering::Acquire) {
+        return;
     }
-    let reduction = rand::rng().random_range(0..=spread);
-    Duration::from_millis(millis.saturating_sub(reduction))
+    tokio::select! {
+        _ = wakeup.notified() => {},
+        _ = tokio::time::sleep(delay) => {},
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -2503,6 +2510,8 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // restores DNS, routes, firewall state and lifecycle hooks exactly once.
     let shutdown_requested = core_adapter.cancel_token();
     let signal_cancel = shutdown_requested.clone();
+    let shutdown_wakeup = Arc::new(tokio::sync::Notify::new());
+    let signal_wakeup = shutdown_wakeup.clone();
     tokio::spawn(async move {
         use tokio::signal::unix::{signal, SignalKind};
         let mut term = signal(SignalKind::terminate()).ok();
@@ -2517,6 +2526,7 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
         }
         log::info!("Shutdown signal received — stopping the active tunnel cleanly");
         signal_cancel.store(true, Ordering::Release);
+        signal_wakeup.notify_one();
     });
 
     // Engage the kill-switch BEFORE the first connect, so even the first attempt
@@ -2538,23 +2548,31 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // router independent from IPv4 iptables/sysctls (and vice versa). `post_up` is consumed
     // immediately afterwards by the data-plane setup, once on the first successful plan.
 
-    let mut retry_count = 0u64;
+    let mut retry_count = 0i64;
+    let mut carrier_generation = 0usize;
 
     loop {
-        core_adapter.begin_connection(retry_count > 0)?;
-        // A reconnect generation gets a fresh DNS candidate set. Bonded streams inside
-        // that generation are restricted to the set pinned by its authenticated plan.
-        reset_carrier_candidates(usize::try_from(retry_count).unwrap_or(usize::MAX));
         let started = std::time::Instant::now();
-        let result = if config.server.protocol == "udp" {
-            connect_and_run_udp(&config, &password, &mut core_adapter).await
+        let result = if shutdown_requested.load(Ordering::Acquire) {
+            // Backoff was interrupted. Reuse the ordinary teardown below without dialing.
+            Ok(())
         } else {
-            connect_and_run_tcp(&config, &password, &mut core_adapter).await
+            core_adapter.begin_connection(carrier_generation > 0)?;
+            // Carrier generations keep rotating independently of the unstable-attempt budget.
+            reset_carrier_candidates(carrier_generation);
+            carrier_generation = carrier_generation.saturating_add(1);
+            if config.server.protocol == "udp" {
+                connect_and_run_udp(&config, &password, &mut core_adapter).await
+            } else {
+                connect_and_run_tcp(&config, &password, &mut core_adapter).await
+            }
         };
+        let connected_ms = core_adapter
+            .attempt_connected_since
+            .map(|started| i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX));
         if let Err(error) = core_adapter.finish_connection() {
             log::error!("transport core teardown error: {error}");
         }
-        let ran = started.elapsed();
 
         if let Err(error) = &result {
             if error
@@ -2618,21 +2636,23 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
 
         let deliberate = DELIBERATE_CYCLE.swap(false, std::sync::atomic::Ordering::AcqRel);
         match &result {
-            Ok(_) => {
-                log::info!("Connection closed, reconnecting...");
-                // Reset the backoff ONLY when the session was STABLE (ran a while):
-                // only *consecutive* connect/auth failures should escalate the delay
-                // (a flapping cell / Wi-Fi↔LTE link shouldn't crawl to max_delay). But
-                // a server that accepts auth then INSTANTLY drops must keep escalating,
-                // or we'd hot-loop at the floor delay with a full teardown each cycle.
-                if deliberate || ran >= Duration::from_secs(30) {
-                    retry_count = 0;
-                }
-            }
+            Ok(_) => log::info!("Connection closed"),
             Err(e) => log::error!("Connection error: {}", e),
         }
+        retry_count = crate::config::policy::reconnect_next_attempt(
+            retry_count,
+            connected_ms.is_some(),
+            deliberate,
+            connected_ms.unwrap_or(0),
+        );
+        let max_retries = config.server.reconnect.max_retries;
+        let stop_reason = crate::config::policy::reconnect_stop_reason(
+            config.server.reconnect.enabled,
+            i64::from(max_retries),
+            retry_count,
+        );
 
-        if !config.server.reconnect.enabled {
+        if stop_reason == Some("disabled") {
             // Clean exit (reconnect disabled): lift the kill-switch / gateway NAT so
             // the host isn't left firewalled or NAT'ing after the client returns.
             let cleanup = cleanup_routing_features(
@@ -2668,8 +2688,7 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             return result;
         }
 
-        let max_retries = config.server.reconnect.max_retries;
-        if max_retries >= 0 && retry_count >= max_retries as u64 {
+        if stop_reason == Some("retry_limit") {
             let cleanup = cleanup_routing_features(
                 ks_on,
                 gw_on,
@@ -2704,23 +2723,17 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             return Err(error);
         }
 
-        // Exponential backoff from the base delay. Compute BEFORE incrementing so the
-        // first retry uses the configured base (retry_count 0 → base * 2^0), not
-        // double it (the previous off-by-one skipped the base step).
-        let multiplier = 1u64
-            .checked_shl(retry_count as u32)
-            .unwrap_or(u64::MAX)
-            .min(100);
-        let scheduled_delay = std::cmp::min(
-            config
-                .server
-                .reconnect
-                .base_delay_secs
-                .saturating_mul(multiplier),
-            config.server.reconnect.max_delay_secs,
+        let delay_ms = crate::config::policy::reconnect_delay(
+            retry_count,
+            i64::try_from(config.server.reconnect.base_delay_secs.saturating_mul(1000))
+                .unwrap_or(i64::MAX),
+            i64::try_from(config.server.reconnect.max_delay_secs.saturating_mul(1000))
+                .unwrap_or(i64::MAX),
+            i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX),
+            None,
+            None,
         );
-        let delay = jitter_reconnect_delay(Duration::from_secs(scheduled_delay));
-        retry_count += 1;
+        let delay = Duration::from_millis(delay_ms as u64);
 
         // Re-resolve the server so a rotated (DDNS / round-robin) address is allowed
         // through the kill-switch before the next attempt — otherwise a stale
@@ -2740,11 +2753,13 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             delay.as_secs_f64(),
             retry_count
         );
-        core_adapter
-            .diagnostics
-            .retrying(result.as_ref().err(), retry_count, retry_in_secs);
+        core_adapter.diagnostics.retrying(
+            result.as_ref().err(),
+            carrier_generation as u64,
+            retry_in_secs,
+        );
         core_adapter.diagnostics.publish(&core_adapter.counters);
-        tokio::time::sleep(delay).await;
+        wait_for_reconnect(delay, &shutdown_requested, &shutdown_wakeup).await;
     }
 }
 
@@ -2861,14 +2876,45 @@ mod management_event_tests {
 
 #[cfg(test)]
 mod reconnect_jitter_tests {
-    use super::jitter_reconnect_delay;
+    #[tokio::test]
+    async fn shutdown_interrupts_a_pending_long_reconnect_delay() {
+        let shutdown = super::AtomicBool::new(false);
+        let wakeup = tokio::sync::Notify::new();
+        let wait =
+            super::wait_for_reconnect(std::time::Duration::from_secs(86_400), &shutdown, &wakeup);
+        tokio::pin!(wait);
+        tokio::select! {
+            biased;
+            _ = &mut wait => panic!("retry delay ended before cancellation"),
+            _ = tokio::task::yield_now() => {},
+        }
+        shutdown.store(true, super::Ordering::Release);
+        wakeup.notify_one();
+        tokio::time::timeout(std::time::Duration::from_secs(1), wait)
+            .await
+            .expect("shutdown must wake the pending retry timer");
+    }
+
+    #[tokio::test]
+    async fn shutdown_before_reconnect_wait_does_not_require_a_notification() {
+        let shutdown = super::AtomicBool::new(true);
+        let wakeup = tokio::sync::Notify::new();
+        tokio::time::timeout(
+            std::time::Duration::from_secs(1),
+            super::wait_for_reconnect(std::time::Duration::from_secs(86_400), &shutdown, &wakeup),
+        )
+        .await
+        .expect("a stopped client must not start another retry timer");
+    }
+
+    use crate::config::policy::reconnect_jitter;
     use std::time::Duration;
 
     #[test]
     fn reconnect_jitter_stays_within_eighty_to_one_hundred_percent() {
         let scheduled = Duration::from_secs(60);
         for _ in 0..256 {
-            let delay = jitter_reconnect_delay(scheduled);
+            let delay = Duration::from_millis(reconnect_jitter(60_000, None) as u64);
             assert!(delay >= Duration::from_secs(48));
             assert!(delay <= scheduled);
         }

@@ -61,44 +61,27 @@ def rust_contract() -> set[str]:
     return contract
 
 
+def editor_contract() -> set[str]:
+    import json
+    fields = [json.loads("[" + row + "]") for row in re.findall(r'field!\(([^\n]+)\)', source("qeli/src/config/editor/schema.rs")) if row.startswith('"')]
+    return {row[0] for row in fields if "." not in row[0]}
+
+
+def generated_contract(relative: str) -> set[str]:
+    # The generator check below proves every schema-to-model projection is up to date.
+    return quoted_keys(source(relative)) & editor_contract() | {"server"}
+
+
 def android_contract() -> tuple[set[str], set[str]]:
-    text = source("qeli-android/app/src/main/kotlin/com/qeli/model/Config.kt")
-    carried = quoted_keys(
-        between(text, "private val CARRIED_INI_KEYS", "private val KNOWN_INI_KEYS")
-    )
-    modeled = quoted_keys(
-        between(text, "private val KNOWN_INI_KEYS", "private fun longAt")
-    )
-    unsupported = quoted_keys(
-        between(text, "private val UNSUPPORTED_INI_KEYS", "private val CARRIED_INI_KEYS")
-    )
-    return modeled | carried | unsupported, unsupported
+    return generated_contract("qeli-android/app/src/main/kotlin/com/qeli/model/ConfigProjection.kt"), set()
 
 
 def csharp_contract() -> set[str]:
-    text = source("qeli-shared/QeliShared/Model/VpnConfig.cs")
-    carried = quoted_keys(
-        between(
-            text,
-            "public static readonly HashSet<string> CarriedIniKeys",
-            "private static readonly HashSet<string> KnownIniKeys",
-        )
-    )
-    modeled = quoted_keys(
-        between(
-            text,
-            "private static readonly HashSet<string> KnownIniKeys",
-            "public IReadOnlyList<string> UnknownKeys",
-        )
-    )
-    return modeled | carried
+    return generated_contract("qeli-shared/QeliShared/Model/VpnConfig.Native.g.cs")
 
 
 def swift_contract() -> set[str]:
-    text = source("qeli-ios/QeliCore/Model/VPNConfig.swift")
-    carried = quoted_keys(between(text, "static let carriedINIKeys", "static let mtuMin"))
-    modeled = quoted_keys(between(text, "static let knownINIKeys", "static let carriedINIKeys"))
-    return modeled | carried
+    return generated_contract("qeli-ios/QeliCore/Model/VPNConfigProjection.swift")
 
 
 def documented_client_matrix(relative: str) -> dict[str, tuple[str, ...]]:
@@ -138,6 +121,13 @@ def documented_client_matrix(relative: str) -> dict[str, tuple[str, ...]]:
 
 
 class ClientConfigKeyContractTests(unittest.TestCase):
+    def test_native_schema_and_generated_adapters_are_current(self):
+        import gen_config_bindings
+        self.assertEqual(editor_contract(), rust_contract())
+        for relative, expected in gen_config_bindings.generate().items():
+            self.assertEqual(source(relative), expected, relative)
+
+
     def test_rust_roundtrip_fixture_and_assertions_cover_every_runtime_key(self):
         text = source("qeli/src/config/client.rs")
         body = text[text.index("fn exhaustive_round_trip_every_client_key()") :]
@@ -169,6 +159,15 @@ class ClientConfigKeyContractTests(unittest.TestCase):
     def test_android_has_no_silently_unsupported_shared_security_keys(self):
         _recognized, unsupported = android_contract()
         self.assertEqual(unsupported, set())
+
+    def test_cli_applied_matrix_keys_match_actual_runtime_reads(self):
+        # A GUI-only exemption must not be mistaken for a working CLI setting.
+        # Conversely a newly wired reader requires updating the current-state matrix.
+        expected = rust_runtime_contract()
+        for lang in ("ru", "eng"):
+            matrix = documented_client_matrix(f"docs/{lang}/reference/CLIENT-CONFIG-MATRIX.md")
+            applied = {key for key, states in matrix.items() if states[0].endswith("→A")}
+            self.assertEqual(applied, expected, lang)
 
     def test_ru_and_english_before_after_matrices_cover_the_live_contract(self):
         expected = rust_contract()

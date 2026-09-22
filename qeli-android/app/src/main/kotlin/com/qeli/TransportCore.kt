@@ -304,7 +304,7 @@ internal class TransportCore private constructor(
         const val STATE_CREATED = 0
         const val STATE_CONNECTING = 1
 
-        private const val COMPATIBILITY_ABI_VERSION = 0x0001000b
+        private const val COMPATIBILITY_ABI_VERSION = 0x00010010
         private const val PATH_TRANSACTION_ABI_VERSION = 0x0001000e
         private const val CORE_STRICT_CONFIG = 1L shl 0
         private const val CORE_LIFECYCLE_EVENTS = 1L shl 1

@@ -175,6 +175,16 @@ def verify_exports(client: LabConnection) -> None:
             "| grep -c 'Java_com_qeli_TransportCore_' || true",
             f"{abi} JNI exports",
         )
+        editor = client.checked(
+            f"nm -D {shlex.quote(artifact)} 2>/dev/null | grep -c ' qeli_config_request$' || true",
+            f"{abi} configuration editor export",
+        )
+        editor_jni = client.checked(
+            f"nm -D {shlex.quote(artifact)} 2>/dev/null | grep -c 'Java_com_qeli_ConfigCore_nativeRequest$' || true",
+            f"{abi} configuration JNI export",
+        )
+        if editor.strip() != "1" or editor_jni.strip() != "1":
+            raise RuntimeError(f"{abi} artifact lacks the ABI 1.16 configuration API")
         print(
             f"[{abi}] libqeli.so={size} bytes, qeli_realtls exports={reality}, "
             f"qeli_client exports={core}, TransportCore JNI exports={jni}"

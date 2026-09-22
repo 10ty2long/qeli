@@ -49,13 +49,10 @@ object UpdateChecker {
         config: com.qeli.model.VpnConfig,
         globalAllowLan: Boolean = false,
     ): Boolean =
-        config.isFullTunnel &&
-            !config.appsMode.equals("include", ignoreCase = true) &&
-            !config.allowIpv4Leak &&
-            !config.allowIpv6Leak &&
-            !config.allowLan &&
-            !globalAllowLan &&
-            config.excludeRoutes.isEmpty()
+        ConfigCore.policy("private_update", org.json.JSONObject()
+            .put("full",config.isFullTunnel).put("captured",!config.appsMode.equals("include",ignoreCase=true))
+            .put("leak4",config.allowIpv4Leak).put("leak6",config.allowIpv6Leak)
+            .put("lan",config.allowLan).put("global_lan",globalAllowLan).put("excluded",config.excludeRoutes.isNotEmpty())).getBoolean("value")
 
     suspend fun check(currentVersionName: String, vpnNetwork: Network): UpdateInfo? =
         withContext(Dispatchers.IO) {
@@ -115,24 +112,6 @@ object UpdateChecker {
         }
 
     /** Strip a leading 'v', drop any '-prerelease'/'+build' suffix → dotted numeric core. */
-    fun normalize(s: String): String {
-        var v = s.trim()
-        if (v.startsWith("v") || v.startsWith("V")) v = v.substring(1)
-        val cut = v.indexOfFirst { it == '-' || it == '+' }
-        if (cut >= 0) v = v.substring(0, cut)
-        return if (v.isEmpty()) "0" else v
-    }
-
-    /** True if [latest] is strictly newer than [current] — NUMERIC compare, not lexical. */
-    fun isNewer(latest: String, current: String): Boolean {
-        val a = normalize(latest).split(".").map { it.toIntOrNull() ?: 0 }
-        val b = normalize(current).split(".").map { it.toIntOrNull() ?: 0 }
-        val n = maxOf(a.size, b.size)
-        for (i in 0 until n) {
-            val x = a.getOrElse(i) { 0 }
-            val y = b.getOrElse(i) { 0 }
-            if (x != y) return x > y
-        }
-        return false
-    }
+    fun normalize(s: String): String = ConfigCore.policy("version_normalize", org.json.JSONObject().put("value",s)).getString("value")
+    fun isNewer(latest: String, current: String): Boolean = ConfigCore.policy("version_compare", org.json.JSONObject().put("a",latest).put("b",current)).getInt("value") > 0
 }

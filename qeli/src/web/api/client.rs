@@ -7,7 +7,6 @@
 //! panel / SSH), so it is an explicit opt-in — the UI warns about it.
 
 use crate::config::client::ClientConfig;
-use crate::config::format::IniDoc;
 use crate::config::share::ClientLink;
 use crate::server::client_manager::ClientManager;
 use crate::server::web::auth::{self, AuthError};
@@ -141,12 +140,11 @@ fn profile_summary(name: &str) -> Value {
     let path = ClientManager::profile_path(name);
     let cfg = std::fs::read_to_string(&path)
         .ok()
-        .and_then(|s| IniDoc::parse(&s).ok())
-        .and_then(|d| ClientConfig::from_ini(&d).ok());
+        .and_then(|s| crate::config::parse_client_config_strict(&s).ok());
     match cfg {
         Some(c) => json!({
             "name": name,
-            "server": format!("{}:{}", c.server.address, c.server.port),
+            "server": crate::util::join_host_port(&c.server.address, c.server.port),
             "proto": c.server.protocol,
             "mode": c.obfuscation.mode,
             "user": c.auth.username,
@@ -405,12 +403,9 @@ fn free_dev(exclude: &str) -> anyhow::Result<String> {
             continue;
         }
         if let Ok(s) = std::fs::read_to_string(ClientManager::profile_path(&n)) {
-            if let Ok(d) = IniDoc::parse(&s) {
-                if let Ok(c) = ClientConfig::from_ini(&d) {
-                    // ClientConfig zeroizes secrets in Drop, so none of its fields may be
-                    // moved out even when this particular field is not sensitive.
-                    used.insert(c.tun.name.clone());
-                }
+            if let Ok(c) = crate::config::parse_client_config_strict(&s) {
+                // ClientConfig zeroizes secrets in Drop, so clone the device name.
+                used.insert(c.tun.name.clone());
             }
         }
     }
@@ -428,15 +423,7 @@ fn free_dev(exclude: &str) -> anyhow::Result<String> {
 /// keep it; if this profile already exists, reuse its device (editing doesn't move
 /// it); otherwise auto-assign a free `vpnN` so multiple tunnels can coexist.
 fn ensure_unique_dev(name: &str, ini: &str) -> anyhow::Result<String> {
-    let doc = IniDoc::parse(ini)?;
-    if doc.sections_of("qeli").count() != 1 {
-        anyhow::bail!("client config requires exactly one [qeli] section");
-    }
-    let qeli = doc.section("qeli").expect("checked section count");
-    if qeli.instance.is_some() {
-        anyhow::bail!("client section must be [qeli], without an instance name");
-    }
-    if qeli.get("dev").is_some_and(|value| !value.is_empty()) {
+    if crate::config::editor::explicit_device(ini)?.is_some() {
         return Ok(ini.to_string());
     }
     let previous = std::fs::read_to_string(ClientManager::profile_path(name))
@@ -454,41 +441,10 @@ fn ensure_unique_dev(name: &str, ini: &str) -> anyhow::Result<String> {
     ))
 }
 
-/// Validate `ini` as a client config, then persist it VERBATIM (preserving raw
-/// keys/comments — so the panel can fully configure a client, not just the form
-/// subset), auto-assigning a distinct TUN device when none is set. Rejects anything
-/// `from_ini` won't accept.
-fn persist(name: &str, ini: &str) -> anyhow::Result<()> {
-    let doc = IniDoc::parse(ini).map_err(|e| anyhow::anyhow!("invalid config: {e}"))?;
-    let cfg = ClientConfig::from_ini(&doc)?;
-    // A misspelled key NAME and a value present-but-unreadable both fail open at parse: the
-    // field silently keeps its default. The runtime now refuses to start on either, so saving
-    // one here would hand the operator a green "Saved" and a client that will not run.
-    // (Audit 2026-08-01, §4/§5.)
-    let unknown = crate::config::unknown_keys(&doc, true);
-    let bad = doc.bad_values();
-    if !unknown.is_empty() {
-        anyhow::bail!(
-            "unknown key(s), likely misspelled: {} — the client would start with the defaults              for them",
-            unknown.join(", ")
-        );
-    }
-    if !bad.is_empty() {
-        anyhow::bail!("{}", bad.join("; "));
-    }
-    if cfg.server.address.is_empty() {
-        anyhow::bail!("server address is required");
-    }
-    // The same enum/bool checks `run_client` runs. Without this the panel happily SAVED a
-    // config the client then refused at startup — `proto = ucp`, `mode = realty-tls`,
-    // `front = webscoket` — so the operator got a green "saved" and a connect that failed
-    // later, somewhere else. Saving is the moment to say no. (Audit 2026-07-31, §7.)
-    cfg.validate()?;
-    // `from_ini` parses the port as u16, which happily accepts 0 — a port that can never be
-    // connected to. Caught here rather than at connect time for the same reason.
-    if cfg.server.port == 0 {
-        anyhow::bail!("server port must be 1..65535, got 0");
-    }
+/// Validate with the common client contract, then apply the panel's additional
+/// command/path restrictions before any profile write or device assignment.
+fn validate_panel_profile(ini: &str) -> anyhow::Result<()> {
+    let cfg = crate::config::parse_client_config_strict(ini)?;
     // SECURITY: the panel/API must NEVER persist a client config that can run a shell
     // command as root — `post_up`/`post_down` (hooks.rs) and `password_command`
     // (client/mod.rs) are executed via `sh -c`, so a compromised/XSS/CSRF'd panel
@@ -523,9 +479,15 @@ fn persist(name: &str, ini: &str) -> anyhow::Result<()> {
             anyhow::bail!("password_file: {e}");
         }
     }
+    Ok(())
+}
+
+/// Persist the original INI, retaining comments and assigning a TUN device if absent.
+fn persist(name: &str, ini: &str) -> anyhow::Result<()> {
+    validate_panel_profile(ini)?;
     let ini = ensure_unique_dev(name, ini)?;
     // Validate the bytes that will be written, including the automatic device assignment.
-    crate::config::parse_client_config_strict(&ini)?.validate()?;
+    crate::config::parse_client_config_strict(&ini)?;
     std::fs::create_dir_all(crate::server::client_manager::CLIENTS_DIR)?;
     // The profile embeds the plaintext VPN password (`pass = …`), so it must be
     // born 0600 — `write_atomic` would fall back to 0644 for a new file, leaving
@@ -577,7 +539,7 @@ pub async fn import_link(
         .get("link")
         .and_then(|v| v.as_str())
         .unwrap_or("")
-        .trim();
+        .trim_matches([' ', '\t', '\r', '\n']);
     let parsed = match ClientLink::from_uri(link) {
         Ok(l) => l,
         Err(e) => return Json(super::err_json(format!("invalid qeli:// link: {e}"))),
@@ -588,7 +550,7 @@ pub async fn import_link(
         .filter(|s| !s.trim().is_empty())
         .map(sanitize_name)
         .unwrap_or_else(|| sanitize_name(parsed.label.as_deref().unwrap_or(&parsed.host)));
-    // from_link → split-tunnel by default (the link never carries gateway).
+    // Links do not carry gateway; from_link applies the shared client default.
     let cfg = ClientConfig::from_link(&parsed);
     match persist(&name, &cfg.to_ini_string()) {
         Ok(()) => Json(json!({ "ok": true, "name": name })),
@@ -683,6 +645,31 @@ pub async fn disconnect(
 #[cfg(test)]
 mod diagnostic_tests {
     use super::*;
+    use crate::config::format::IniDoc;
+
+    #[test]
+    fn panel_validation_uses_shared_config_rules_and_retains_privilege_limits() {
+        for source in [
+            "[qeli]\nserver=host:443\ndns=1.1.1.1\n",
+            "[qeli]\nserver=host:443\ninclude=10.0.0.0/8\ninclude=192.0.2.0/24\n",
+            "\u{feff}[QELI]\nSERVER=host:443\nDEV=vpn42\n",
+        ] {
+            validate_panel_profile(source).unwrap();
+        }
+        for tail in [
+            "post_up=echo bad",
+            "post_down=echo bad",
+            "password_command=echo bad",
+            "password_file=/etc/shadow",
+            "reconnect_retries=-2",
+            "apps_mode=include",
+        ] {
+            assert!(
+                validate_panel_profile(&format!("[qeli]\nserver=host:443\n{tail}\n")).is_err(),
+                "{tail}"
+            );
+        }
+    }
 
     #[test]
     fn backend_form_agrees_with_the_browser_ini_corpus() {

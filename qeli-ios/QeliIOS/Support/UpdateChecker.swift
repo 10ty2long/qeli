@@ -49,32 +49,19 @@ enum UpdateChecker {
         guard let release = releases.first(where: { !$0.draft && !$0.tagName.isEmpty }) else {
             throw UpdateCheckerError.noRelease
         }
-        let latest = normalize(release.tagName)
+        let latest = try normalize(release.tagName)
         return UpdateInfo(
             latest: latest,
             url: URL(string: release.htmlURL ?? "") ?? releasesPage,
-            isNewer: isNewer(latest, than: currentVersion)
+            isNewer: try isNewer(latest, than: currentVersion)
         )
     }
 
-    static func normalize(_ value: String) -> String {
-        var value = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.first == "v" || value.first == "V" { value.removeFirst() }
-        if let suffix = value.firstIndex(where: { $0 == "-" || $0 == "+" }) {
-            value = String(value[..<suffix])
-        }
-        return value.isEmpty ? "0" : value
+    static func normalize(_ value: String) throws -> String {
+        try ConfigCore.policy("version_normalize",["value":value])["value"] as! String
     }
-
-    static func isNewer(_ latest: String, than current: String) -> Bool {
-        let lhs = normalize(latest).split(separator: ".").map { Int($0) ?? 0 }
-        let rhs = normalize(current).split(separator: ".").map { Int($0) ?? 0 }
-        for index in 0..<max(lhs.count, rhs.count) {
-            let left = index < lhs.count ? lhs[index] : 0
-            let right = index < rhs.count ? rhs[index] : 0
-            if left != right { return left > right }
-        }
-        return false
+    static func isNewer(_ latest: String, than current: String) throws -> Bool {
+        (try ConfigCore.policy("version_compare",["a":latest,"b":current])["value"] as! Int) > 0
     }
 
     private struct Release: Decodable {

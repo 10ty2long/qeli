@@ -1204,7 +1204,7 @@ ipv6 = auto
     private fun addProfileFromQeliUri(raw: String) {
         try {
             val cfg = VpnConfig.fromQeliUri(raw).also { it.validate() }
-            val label = qeliLabel(raw) ?: cfg.serverAddress
+            val label = cfg.carriedKeys["name"]?.takeIf { it.isNotBlank() } ?: cfg.serverAddress
             val ini = cfg.toIni(label)
             val candidate = profiles.map { it.copy() }.toMutableList()
             candidate.add(Profile(label, ini))
@@ -1225,11 +1225,9 @@ ipv6 = auto
     }
 
     /** Extract the human label from a qeli:// fragment (#label), if present. */
-    private fun qeliLabel(uri: String): String? {
-        val frag = uri.substringAfter('#', "").trim()
-        if (frag.isEmpty()) return null
-        return try { Uri.decode(frag) } catch (_: Exception) { frag }
-    }
+    private fun qeliLabel(uri: String): String? = runCatching {
+        VpnConfig.fromQeliUri(uri).carriedKeys["name"]?.takeIf { it.isNotBlank() }
+    }.getOrNull()
 
     private fun importConfigFromUri(uri: Uri) {
         lifecycleScope.launch {

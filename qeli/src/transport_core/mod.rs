@@ -13,12 +13,13 @@
 //! platform clients. ABI 1.14 distinguishes a reversible path-command rejection from an
 //! incomplete platform rollback that must terminate the generation. ABI 1.15 adds bounded
 //! server NOTICE and terminal KICK events without changing the fixed event header.
+//! ABI 1.16 adds the pure configuration document/schema and portable policy service.
 
 use self::path::{
     PathCandidate, PathCandidatePhase, PathCommand, PathCommandAction, PathCommandFailure,
     PathCommandOutcome, PathUpdate, PreparedPathCandidate, QueuedPathCandidate,
 };
-use crate::config::{client::ClientConfig, parse_client_config_strict, share::ClientLink};
+use crate::config::client::ClientConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, VecDeque};
 use std::net::IpAddr;
@@ -37,6 +38,8 @@ pub(crate) mod carrier;
 #[cfg(any(test, feature = "transport-core-ffi"))]
 pub(crate) mod diagnostic;
 
+#[cfg(feature = "transport-core-ffi")]
+mod config_jni;
 #[cfg(all(feature = "transport-core-ffi", target_pointer_width = "64"))]
 pub mod ffi;
 
@@ -119,7 +122,7 @@ compile_error!(
 );
 
 pub const ABI_VERSION_MAJOR: u16 = 1;
-pub const ABI_VERSION_MINOR: u16 = 15;
+pub const ABI_VERSION_MINOR: u16 = 16;
 pub const ABI_VERSION: u32 = ((ABI_VERSION_MAJOR as u32) << 16) | ABI_VERSION_MINOR as u32;
 
 pub const DEFAULT_EVENT_CAPACITY: usize = 64;
@@ -2631,28 +2634,8 @@ impl ClientCore {
 }
 
 pub(crate) fn parse_config(config_text: &str) -> Result<ClientConfig, CoreError> {
-    let text = config_text.trim();
-    if text.is_empty() {
-        return Err(CoreError::InvalidConfig("configuration is empty".into()));
-    }
-    let config = if text.starts_with("qeli://") {
-        let mut link = ClientLink::from_uri(text)
-            .map_err(|error| CoreError::InvalidConfig(error.to_string()))?;
-        let config = ClientConfig::from_link(&link);
-        // `from_link` currently clones its input. Wipe the short-lived duplicate so the
-        // new shared core does not extend the lifetime of credentials merely by accepting
-        // the mobile import format. The caller still owns and must clear the source buffer.
-        link.pass.zeroize();
-        link.obfs_key.zeroize();
-        config
-    } else {
-        parse_client_config_strict(text)
-            .map_err(|error| CoreError::InvalidConfig(error.to_string()))?
-    };
-    config
-        .validate()
-        .map_err(|error| CoreError::InvalidConfig(error.to_string()))?;
-    Ok(config)
+    crate::config::editor::parse_runtime(config_text)
+        .map_err(|error| CoreError::InvalidConfig(error.to_string()))
 }
 
 #[cfg(test)]

@@ -58,12 +58,18 @@ public sealed class VpnTunnel : VpnTunnelBase
             ? NativeRoamingPathCapabilities | NativePathRefreshCapability
             : 0;
 
-    internal static bool AllowsNativePathRoaming(VpnConfig config) =>
-        !config.RoamingPolicy.Equals("off", StringComparison.OrdinalIgnoreCase)
-        && string.IsNullOrWhiteSpace(config.LocalAddress) && config.LocalPort == 0;
+    internal static bool AllowsNativePathRoaming(VpnConfig config) => config.AllowsNativePathRoaming;
 
     internal static void RunRoamingCapabilitySelfTest(Action<string, bool> check)
     {
+        var named = new VpnConfig { CarriedKeys = new Dictionary<string, string> { ["dev"] = "office" } };
+        var overrideName = new VpnConfig { DevNode = "custom", CarriedKeys = named.CarriedKeys };
+        check("adapter: explicit dev names the Windows interface", AdapterIdentity(named).name == "office");
+        check("adapter: dev_node overrides dev", AdapterIdentity(overrideName).name == "custom");
+        check("adapter: explicit alias has stable identity across profiles",
+            AdapterIdentity(named) == AdapterIdentity(new VpnConfig { DevNode = "office" }));
+        check("adapter: omitted dev keeps distinct per-profile identities",
+            AdapterIdentity(new VpnConfig { Id = "one" }) != AdapterIdentity(new VpnConfig { Id = "two" }));
         var ordinaryProfiles = new[]
         {
             new VpnConfig { Protocol = "tcp", WireMode = "fake-tls" },
@@ -787,13 +793,16 @@ public sealed class VpnTunnel : VpnTunnelBase
     // The hash is for uniqueness only (not security).
     private static (string name, Guid guid) AdapterIdentity(VpnConfig config)
     {
-        // OpenVPN dev-node: an explicit adapter name overrides the auto-derived one. The
-        // GUID is still derived from that name so it stays stable across runs.
-        if (!string.IsNullOrWhiteSpace(config.DevNode))
+        // Explicit dev_node wins over portable dev. Only a PRESENT dev selects a
+        // name; an absent key retains the collision-resistant per-profile identity.
+        string? requestedName = config.DevNode;
+        if (string.IsNullOrWhiteSpace(requestedName))
+            config.CarriedKeys.TryGetValue("dev", out requestedName);
+        if (!string.IsNullOrWhiteSpace(requestedName))
         {
             byte[] dh = System.Security.Cryptography.MD5.HashData(
-                System.Text.Encoding.UTF8.GetBytes("qeli-adapter:dev-node:" + config.DevNode));
-            return (config.DevNode!, new Guid(dh));
+                System.Text.Encoding.UTF8.GetBytes("qeli-adapter:dev-node:" + requestedName));
+            return (requestedName, new Guid(dh));
         }
         string keyStr = $"{config.ServerAddress}:{config.Port}|{config.Id}";
         if (string.IsNullOrEmpty(config.ServerAddress) && string.IsNullOrEmpty(config.Id))

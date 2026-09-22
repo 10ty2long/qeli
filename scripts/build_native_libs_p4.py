@@ -250,6 +250,12 @@ def verify_exports(client: LabConnection) -> None:
         "| grep -c qeli_client_ || true",
         "Windows client exports",
     )
+    editor = client.checked(
+        f"x86_64-w64-mingw32-objdump -p {shlex.quote(win)} 2>/dev/null | grep -c qeli_config_request || true",
+        "Windows configuration editor export",
+    )
+    if editor.strip() != "1":
+        raise RuntimeError("Windows artifact lacks the ABI 1.16 configuration API")
     print(
         f"[win] qeli.dll={win_size} bytes, qeli_realtls exports={reality}, "
         f"qeli_client exports={core}"
@@ -273,6 +279,12 @@ def verify_exports(client: LabConnection) -> None:
         f"llvm-nm {shlex.quote(mac)} 2>/dev/null) | grep -c ' T _qeli_client_' || true",
         "macOS client exports",
     )
+    editor = client.checked(
+        f"(llvm-nm-19 {shlex.quote(mac)} 2>/dev/null || llvm-nm {shlex.quote(mac)} 2>/dev/null) | grep -c ' T _qeli_config_request$' || true",
+        "macOS configuration editor export",
+    )
+    if editor.strip() != "1":
+        raise RuntimeError("macOS artifact lacks the ABI 1.16 configuration API")
     print(
         f"[mac] libqeli.dylib={mac_size} bytes, qeli_realtls exports={reality}, "
         f"qeli_client exports={core}\n      {architecture}"

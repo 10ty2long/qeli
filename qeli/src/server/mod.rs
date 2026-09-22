@@ -4284,12 +4284,8 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
         }
     };
 
-    // Findings are FATAL here, unlike at startup — and the difference is not inconsistency,
-    // it is what refusing costs. Aborting a start over a long-standing typo takes a working
-    // server down on upgrade, so the boot path warns. A reload that refuses simply keeps the
-    // configuration already running: nothing stops, nobody is disconnected, and the operator
-    // gets a log line naming the key. There is no reason to apply a config we can see is
-    // ambiguous when declining is free. (Audit 2026-08-01, §3.)
+    // Like startup, reload rejects every parser finding. A rejected reload keeps
+    // the currently running configuration and reports the problem to the operator.
     let new_config: ServerConfig = match std::fs::read_to_string(&cfg_path)
         .map_err(|e| anyhow::anyhow!("{}", e))
         .and_then(|s| crate::config::parse_server_config_reporting(&s))

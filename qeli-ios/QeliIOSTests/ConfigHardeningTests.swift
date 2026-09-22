@@ -10,6 +10,64 @@ import XCTest
 /// ``VPNConfig/validate()`` is what refuses. Same split as the Kotlin, C# and Rust ports.
 final class ConfigHardeningTests: XCTestCase {
 
+    func testMalformedZeroPinsCannotBecomeTOFUAfterSave() throws {
+        for pin in ["0", String(repeating: "0", count: 63), String(repeating: "0", count: 65)] {
+            let draft = try VPNConfig.fromINI(ini("key = \(pin)"))
+            let reopened = try VPNConfig.fromINI(draft.toINI())
+            XCTAssertThrowsError(try reopened.validate())
+            XCTAssertThrowsError(try VPNConfig.fromQeliURI("qeli://u:p@host:443?key=\(pin)"))
+        }
+    }
+
+    func testInvalidHostsStayInvalidAfterSave() throws {
+        for endpoint in ["host/path:443", "exa mple.com:443"] {
+            let draft = try VPNConfig.fromINI("[qeli]\nserver=\(endpoint)\n")
+            let reopened = try VPNConfig.fromINI(draft.toINI())
+            XCTAssertThrowsError(try reopened.validate())
+        }
+    }
+
+    func testPartialEditCannotRepairUnsuppliedPort() throws {
+        let result = try ConfigCore.call(["version": 1, "op": "export", "source": "[qeli]\nserver=host:wrong\n",
+            "values": ["user": "bob"], "unresolved": [String]()])
+        XCTAssertTrue((result["text"] as? String)?.contains("host:wrong") == true)
+    }
+
+    func testURIControlsCannotRewriteEndpointOrPin() {
+        for uri in ["qeli://u:p@exa\u{7}mple.com:443", "qeli://u:p@host:443?key=" + String(repeating: "0", count: 64) + "%07"] {
+            XCTAssertThrowsError(try VPNConfig.fromQeliURI(uri))
+        }
+    }
+
+    func testLoggingKeyInQeliDoesNotAliasLoggingSection() throws {
+        let draft = try VPNConfig.fromINI(ini("logging.level = debug"))
+        let reopened = try VPNConfig.fromINI(draft.toINI())
+        XCTAssertThrowsError(try reopened.validate())
+    }
+
+    func testLegacyDNSErrorsSurviveModelSave() throws {
+        for tail in ["dns = 1.1.1.1\ndns = 8.8.8.8", "dns = 1.1.1.1\ndns_servers = 8.8.8.8,,"] {
+            let draft = try VPNConfig.fromINI(ini(tail))
+            let reopened = try VPNConfig.fromINI(draft.toINI())
+            XCTAssertThrowsError(try reopened.validate())
+        }
+    }
+
+    func testControlsAndBOMDoNotBypassConfigValidation() throws {
+        for tail in ["pass = sec\u{7}ret", "gatewa\u{7}y = false"] {
+            XCTAssertThrowsError(try VPNConfig.fromINI(ini(tail)))
+        }
+        XCTAssertThrowsError(try VPNConfig.fromQeliURI("\u{feff}qeli://u:p@host:443?proto=udp&mode=reality-tls"))
+    }
+
+    func testPatchCredentialsAreRedacted() {
+        XCTAssertThrowsError(try ConfigCore.call(["version": 1, "op": "validate", "source": ini(),
+            "patch": ["pass": "fixture-private", "mode": "fixture-private"]])) { error in
+            XCTAssertFalse(error.localizedDescription.contains("fixture-private"))
+            XCTAssertTrue(error.localizedDescription.contains("[redacted]"))
+        }
+    }
+
     func testAuthCredentialBudgetMatchesRustWireContract() {
         XCTAssertEqual(VPNConfig.authCredentialBudget, UDPFragmentation.maxChunk - (32 + 17))
     }
@@ -108,8 +166,8 @@ final class ConfigHardeningTests: XCTestCase {
         XCTAssertTrue(good.unparsedNumericKeys.isEmpty)
         XCTAssertNoThrow(try good.validate())
 
-        // The port was already strict and must stay that way — an outright throw, not a record.
-        XCTAssertThrowsError(try VPNConfig.fromINI("[qeli]\nserver = 1.2.3.4:notnum\n"))
+        // A draft keeps the bad port visible; validation refuses it.
+        XCTAssertThrowsError(try VPNConfig.fromINI("[qeli]\nserver = 1.2.3.4:notnum\n").validate())
     }
 
     func testInvertedShapingRangesAndInsufficientBudgetAreRefused() throws {
@@ -159,11 +217,10 @@ final class ConfigHardeningTests: XCTestCase {
         XCTAssertTrue(clean.duplicateKeys.isEmpty, "clean config recorded \(clean.duplicateKeys)")
         XCTAssertNoThrow(try clean.validate())
 
-        // Recorded ONCE however many times the key repeats, and the last value still wins, so a
-        // file that already had a duplicate parses exactly as it always did.
+        // The draft displays the first value; activation refuses every duplicate.
         let thrice = try VPNConfig.fromINI(ini("mtu = 1400", "mtu = 1300", "mtu = 1200"))
         XCTAssertEqual(thrice.duplicateKeys, ["qeli.mtu"])
-        XCTAssertEqual(thrice.mtu, 1200)
+        XCTAssertEqual(thrice.mtu, 1400)
     }
 
     func testRepeatedRouteFilesAreAdditiveAndSurviveRoundTrip() throws {
@@ -264,4 +321,43 @@ final class ConfigHardeningTests: XCTestCase {
             }
         }
     }
+    func testEverySchemaFieldSurvivesModelEditing() throws {
+        let fields = try XCTUnwrap(ConfigCore.call(["version":1,"op":"schema"])["fields"] as? [[String:Any]])
+        var source = ""
+        for section in ["qeli", "logging"] {
+            source += "[\(section)]\n"
+            for field in fields {
+                let key = try XCTUnwrap(field["key"] as? String)
+                if key.contains(".") != (section == "logging") { continue }
+                let value: String
+                switch key {
+                case "server": value = "vpn.example.com:443"
+                case "pass": value = "secret"
+                case "logging.file": value = "/tmp/coverage.log"
+                case "logging.time_format": value = "rfc3339"
+                default: value = try XCTUnwrap(field["default"] as? String)
+                }
+                source += "\(key.split(separator: ".").last!) = \(value)\n"
+            }
+        }
+        var config = try VPNConfig.fromINI(source)
+        config.password = "edited"
+        let raw = try XCTUnwrap(ConfigCore.call(["version":1,"op":"import","source":config.toINI()])["raw"] as? [String:[String]])
+        XCTAssertEqual(fields.count,84)
+        for field in fields { XCTAssertNotNil(raw[field["key"] as! String]) }
+        XCTAssertEqual(raw["pass"],["edited"])
+        XCTAssertEqual(raw["logging.file"],["/tmp/coverage.log"])
+        XCTAssertEqual(raw["logging.time_format"],["rfc3339"])
+    }
+
+    func testDuplicateCarriedScalarsCannotActivateAfterEditing() throws {
+        for (key,first,second) in [("autostart","true","false"),("recv_buffer_size","4194304","0")] {
+            var config = try VPNConfig.fromINI(ini("\(key) = \(first)","\(key) = \(second)"))
+            config.password = "edited"
+            XCTAssertThrowsError(try config.validate())
+            let raw = try XCTUnwrap(ConfigCore.call(["version":1,"op":"import","source":config.toINI()])["raw"] as? [String:[String]])
+            XCTAssertEqual(raw[key]?.count,2)
+        }
+    }
+
 }

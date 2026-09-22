@@ -73,6 +73,8 @@ class VpnServiceImpl : VpnService() {
     @Volatile private var activePlanGeneration = 0L
     private val pathUpdateSequence = AtomicLong(0)
     @Volatile private var nativeFatalError: Throwable? = null
+    @Volatile private var attemptConnectedAt = -1L
+    @Volatile private var attemptEndedAt = -1L
     private var wakeLock: PowerManager.WakeLock? = null
     private var wakeLockRenewalJob: Job? = null
     // Watches the physical network (Wi-Fi <-> LTE switch). A feature TCP core receives a
@@ -210,13 +212,12 @@ class VpnServiceImpl : VpnService() {
         // The tunnel's own /24
         // (added via addAddress) is a more-specific connected route, so excluding 10/8
         // here does NOT strand the tunnel gateway.
-        private val LAN_BYPASS_IPV4_EXCLUDES = listOf(
-            "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16",
-            "224.0.0.0/24", "239.255.255.250/32",
-        )
-        // IPv6 local scope: ULA, link-local and multicast. A local GUA prefix cannot be
-        // inferred safely; users can add that exact prefix through `exclude`.
-        private val LAN_BYPASS_IPV6_EXCLUDES = listOf("fc00::/7", "fe80::/10", "ff00::/8")
+        private fun lanBypassPrefixes(family: Int): List<String> {
+            val values = ConfigCore.policy("lan_prefixes", org.json.JSONObject().put("family", family)).getJSONArray("value")
+            return (0 until values.length()).map(values::getString)
+        }
+        private val LAN_BYPASS_IPV4_EXCLUDES by lazy { lanBypassPrefixes(4) }
+        private val LAN_BYPASS_IPV6_EXCLUDES by lazy { lanBypassPrefixes(6) }
         // Last known tunnel state, readable by a (re)created Activity so it can
         // restore its UI without a fresh broadcast. The foreground service keeps
         // running across Activity recreation (theme switch / rotation), so the
@@ -1651,6 +1652,7 @@ class VpnServiceImpl : VpnService() {
             val result = try {
                 core.runTransport(fallbackDns, carrierAddresses)
             } finally {
+                if (transportCore === core) attemptEndedAt = SystemClock.elapsedRealtime()
                 statsJob.cancel()
                 if (transportCore === core) {
                     roamingUpdateJob?.cancel()
@@ -1754,20 +1756,10 @@ class VpnServiceImpl : VpnService() {
     }
 
     private suspend fun connectWithRetry(config: VpnConfig) {
-        var attempt = 0
+        var attempt = 0L
         var carrierGeneration = 0
         val baseMs = config.reconnectBaseDelaySecs * 1000
         val maxMs = config.reconnectMaxDelaySecs * 1000
-        // Floor between the START of consecutive connect attempts. A server that
-        // accepts auth then immediately drops, or a flapping Wi-Fi<->LTE network,
-        // used to reconnect back-to-back: a session that reached CONNECTED resets
-        // attempt to 0, so the backoff above is skipped and native transport is
-        // re-entered with no delay. On a fast flap that became a tight loop that
-        // flooded the UI with log broadcasts until the main thread ANR'd. Measuring
-        // from the attempt START means a healthy long-lived session still reconnects
-        // promptly (it ran well past the floor), while a sub-second flap is throttled.
-        val minReconnectMs = 1500L
-        val stableMs = 30_000L         // a session must run this long to count as "stable"
         var lastAttemptStart = 0L
         var firstAttempt = true        // very first connect: no reconnect gating / delay / status change
         // Why the loop gave up, for the give-up broadcast below; null = still running / cancelled.
@@ -1779,49 +1771,39 @@ class VpnServiceImpl : VpnService() {
         // (Audit 2026-07-27, M3)
         while (currentCoroutineContext().isActive) {
             try {
-                val resumedFromOffline = awaitUsableCarrier()
-                if (resumedFromOffline) {
-                    // Offline time is not a failed server attempt. Do not carry its retry
-                    // budget or inter-attempt floor into the newly available carrier.
-                    attempt = 0
-                    lastAttemptStart = 0L
+                // Check the budget before parking for a carrier. Offline waiting must not
+                // keep a disabled/exhausted session alive or erase previous failed attempts.
+                val retryData = org.json.JSONObject()
+                        .put("attempt", attempt).put("enabled", config.reconnectEnabled)
+                        .put("max_retries", config.reconnectMaxRetries)
+                        .put("base", baseMs).put("cap", maxMs)
+                        .put("elapsed_ms", SystemClock.elapsedRealtime() - lastAttemptStart)
+                val decision = if (firstAttempt) null else
+                    ConfigCore.policy("retry_decision", retryData).getJSONObject("value")
+                val reason = decision?.takeUnless { it.isNull("reason") }?.getString("reason")
+                if (reason != null) {
+                    giveUpReason = if (reason == "disabled") "Reconnect is disabled — giving up"
+                        else "Max reconnect retries (${config.reconnectMaxRetries}) reached — giving up"
+                    broadcastLog(giveUpReason)
+                    break
                 }
+                if (!firstAttempt) broadcastStatus(STATUS_CONNECTING)
+                val resumedFromOffline = awaitUsableCarrier()
                 if (!firstAttempt) {
-                    // The reconnect policy applies to EVERY reconnect — INCLUDING after an
-                    // established drop. Previously the gate/status/backoff lived under
-                    // `attempt > 0`, and `attempt` reset to 0 after established, so on the
-                    // common flapping path reconnectEnabled=false / max-retries were silently
-                    // ignored and the Tile/UI stayed Connected while the TUN was torn down.
-                    if (!config.reconnectEnabled) {
-                        giveUpReason = "Reconnect is disabled — giving up"
-                        broadcastLog(giveUpReason); break
-                    }
-                    if (config.reconnectMaxRetries in 0 until attempt) {
-                        giveUpReason = "Max reconnect retries (${config.reconnectMaxRetries}) reached — giving up"
-                        broadcastLog(giveUpReason); break
-                    }
-                    // Leave Connected BEFORE re-entering — no green-Tile leak window while the
-                    // TUN/routes are down.
-                    broadcastStatus(STATUS_CONNECTING)
                     showNotification(s(R.string.notif_reconnecting, attempt.coerceAtLeast(1)))
-                    if (attempt > 0 && !resumedFromOffline) {
-                        val pow = Math.pow(2.0, (attempt - 1).coerceAtMost(7).toDouble()).toLong()
-                        val scheduledMs = (baseMs * pow.coerceAtMost(100)).coerceAtMost(maxMs).coerceAtLeast(1000)
-                        val delayMs = jitterReconnectDelay(scheduledMs)
-                        broadcastLog("Reconnect attempt $attempt in ${"%.1f".format(delayMs / 1000.0)}s")
-                        delay(delayMs)
-                    } else {
-                        broadcastLog("Reconnecting…") // a stable session dropped — reconnect promptly
-                    }
-                    // Inter-attempt floor: throttle a sub-second flap even when the backoff was
-                    // skipped (no-op when the previous attempt already ran past the floor).
-                    val sinceLast = SystemClock.elapsedRealtime() - lastAttemptStart
-                    if (lastAttemptStart != 0L && sinceLast < minReconnectMs) {
-                        delay(minReconnectMs - sinceLast)
-                    }
+                    // Carrier restoration bypasses the stale delay, but retains the retry budget.
+                    val readyDecision = if (resumedFromOffline) ConfigCore.policy("retry_decision",
+                        retryData.put("carrier_restored", true)
+                            .put("elapsed_ms", SystemClock.elapsedRealtime() - lastAttemptStart)
+                    ).getJSONObject("value") else decision!!
+                    val delayMs = readyDecision.getLong("delay_ms")
+                    broadcastLog("Reconnect attempt ${attempt.coerceAtLeast(1)} in ${"%.1f".format(delayMs / 1000.0)}s")
+                    delay(delayMs)
                 }
                 firstAttempt = false
                 lastAttemptStart = SystemClock.elapsedRealtime()
+                attemptConnectedAt = -1L
+                attemptEndedAt = -1L
                 // The native generation owns its carriers; stop/free cancellation is the only
                 // cross-thread teardown path.
                 runNativeTransport(config, carrierGeneration++)
@@ -1829,8 +1811,7 @@ class VpnServiceImpl : VpnService() {
                 if (userRequestedDisconnect) break
                 val forced = forcedReconnectInFlight
                 forcedReconnectInFlight = false
-                val ran = SystemClock.elapsedRealtime() - lastAttemptStart
-                attempt = nextAttempt(attempt, ran, stableMs, forced)
+                attempt = nextAttempt(attempt, forced)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Genuine cancellation (user disconnect / service stop) — never
                 // treat as a retryable error, or the loop spins on delay() which
@@ -1861,8 +1842,7 @@ class VpnServiceImpl : VpnService() {
                     var cause = e.cause
                     while (cause != null) { broadcastLog("  <- ${cause.message}"); cause = cause.cause }
                 }
-                val ran = SystemClock.elapsedRealtime() - lastAttemptStart
-                attempt = nextAttempt(attempt, ran, stableMs, forced)
+                attempt = nextAttempt(attempt, forced)
                 // Keep the Java TUN descriptor open across backoff so routing remains
                 // captured fail-closed; stop only the native transport generation.
                 runCatching { transportCore?.stop() }
@@ -2490,37 +2470,18 @@ class VpnServiceImpl : VpnService() {
         }
     }
 
-    /** The underlying link changed or died: reconnect at once, but only from an established
-     *  tunnel (a connect already in flight is retried by the loop anyway). */
-    /**
-     * Next value of the reconnect-backoff counter.
-     *
-     * The backoff exists to stop a broken path from being hammered, so only a FAILURE may
-     * advance it. A cycle we asked for ourselves — a wake or a network change — is not a
-     * failure, and counting it as one is what turned normal phone use into an outage: each
-     * screen-off cycled the tunnel, sessions between cycles rarely reach [stableMs], so the
-     * counter climbed 1→2→4→…→32 s and the tunnel spent more time waiting out a penalty than
-     * carrying traffic (reproduced on the lab emulator: attempt 6, 32 s, after six wakes).
-     * A deliberate cycle of a session that was actually established clears the counter — the
-     * path just demonstrably worked; one that never established leaves it untouched rather
-     * than rewarding a flapping link. `forceReconnect`'s own debounce and the inter-attempt
-     * floor keep this from hot-looping.
-     */
-    private fun nextAttempt(attempt: Int, ranMs: Long, stableMs: Long, forced: Boolean): Int {
-        val established = liveStatus == STATUS_CONNECTED
-        return when {
-            forced -> if (established) 0 else attempt
-            established && ranMs >= stableMs -> 0
-            else -> attempt + 1
-        }
-    }
-
-    private fun jitterReconnectDelay(scheduledMs: Long): Long {
-        if (scheduledMs <= 1L) return scheduledMs.coerceAtLeast(0L)
-        val minimum = scheduledMs - scheduledMs / 5L
-        // Config validation caps this far below Long.MAX_VALUE, so the exclusive upper bound
-        // cannot overflow. Jitter never exceeds the operator's capped schedule.
-        return kotlin.random.Random.nextLong(minimum, scheduledMs + 1L)
+    /** Capture this generation's established time before cleanup or UI changes. */
+    private fun nextAttempt(attempt: Long, forced: Boolean): Long {
+        val connectedAt = attemptConnectedAt
+        val endedAt = attemptEndedAt.takeIf { it >= 0 } ?: SystemClock.elapsedRealtime()
+        attemptConnectedAt = -1L
+        attemptEndedAt = -1L
+        val connectedMs = if (connectedAt < 0) 0L else
+            (endedAt - connectedAt).coerceAtLeast(0)
+        return ConfigCore.policy("next_attempt", org.json.JSONObject()
+            .put("attempt", attempt).put("forced", forced)
+            .put("established", connectedAt >= 0).put("connected_ms", connectedMs))
+            .getLong("value")
     }
 
     private fun switchedNetwork(
@@ -3467,6 +3428,7 @@ class VpnServiceImpl : VpnService() {
         liveAddresses = tunnelAddresses
         liveBytesUp = 0L
         liveBytesDown = 0L
+        if (attemptConnectedAt < 0) attemptConnectedAt = SystemClock.elapsedRealtime()
         liveStatus = STATUS_CONNECTED
         sendBroadcast(Intent(BROADCAST_STATUS).apply {
             setPackage(packageName)

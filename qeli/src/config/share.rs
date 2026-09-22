@@ -89,6 +89,13 @@ fn supported_dns_host(host: &str) -> bool {
     })
 }
 
+/// One host grammar for client INI, share links and panel public endpoints.
+/// Names are ASCII (use IDNA/Punycode for internationalized DNS names); underscores
+/// retain compatibility with existing local hostnames. IPv6 is passed unbracketed.
+pub(crate) fn supported_endpoint_host(host: &str) -> bool {
+    host.parse::<std::net::IpAddr>().is_ok() || supported_dns_host(host)
+}
+
 pub fn supported_public_endpoint(input: &str, default_port: u16) -> Result<(String, u16), String> {
     let value = input.trim();
     if value.is_empty() {
@@ -136,7 +143,7 @@ pub fn supported_public_endpoint(input: &str, default_port: u16) -> Result<(Stri
             None => (value.to_string(), default_port),
         }
     };
-    if host.parse::<std::net::IpAddr>().is_err() && !supported_dns_host(&host) {
+    if !supported_endpoint_host(&host) {
         return Err(format!(
             "invalid public endpoint host '{host}' (expected an IP address or DNS hostname)"
         ));
@@ -319,7 +326,7 @@ impl ClientLink {
 
         // Split off fragment (#label), then query (?...).
         let (rest, fragment) = match rest.split_once('#') {
-            Some((r, f)) => (r, Some(pct_decode(f))),
+            Some((r, f)) => (r, Some(pct_decode(f)?)),
             None => (rest, None),
         };
         let (authority, query) = match rest.split_once('?') {
@@ -353,6 +360,11 @@ impl ClientLink {
         if host.is_empty() {
             return Err(LinkError("empty host"));
         }
+        if !supported_endpoint_host(host) {
+            return Err(LinkError(
+                "host must be an IP address or ASCII DNS hostname",
+            ));
+        }
         // Reject port 0 explicitly: it parses fine as a u16 but is not connectable, so
         // accepting it just defers the failure to an opaque socket error at connect time.
         // Swift and C# already rejected it; Rust and Kotlin did not — a divergence the
@@ -364,12 +376,13 @@ impl ClientLink {
 
         let (user, pass) = match userinfo {
             Some(ui) => match ui.split_once(':') {
-                Some((u, p)) => (pct_decode(u), pct_decode(p)),
-                None => (pct_decode(ui), String::new()),
+                Some((u, p)) => (pct_decode(u)?, pct_decode(p)?),
+                None => (pct_decode(ui)?, String::new()),
             },
             None => (String::new(), String::new()),
         };
 
+        let awg_defaults = crate::config::AwgConfig::default();
         let mut link = ClientLink {
             host: host.to_string(),
             port,
@@ -385,17 +398,38 @@ impl ClientLink {
             quic: false,
             awg: false,
             jc: 0,
-            jmin: 0,
-            jmax: 0,
+            jmin: awg_defaults.jmin,
+            jmax: awg_defaults.jmax,
             mtu: 0,
             roaming: "auto".into(),
             label: fragment,
         };
 
         if let Some(q) = query {
+            let mut seen = std::collections::HashSet::new();
             for pair in q.split('&').filter(|s| !s.is_empty()) {
                 let (k, v) = pair.split_once('=').unwrap_or((pair, ""));
-                let v = pct_decode(v);
+                let v = pct_decode(v)?;
+                if matches!(
+                    k,
+                    "proto"
+                        | "mode"
+                        | "key"
+                        | "sni"
+                        | "rsid"
+                        | "obfs"
+                        | "front"
+                        | "quic"
+                        | "awg"
+                        | "jc"
+                        | "jmin"
+                        | "jmax"
+                        | "mtu"
+                        | "roaming"
+                ) && !seen.insert(k)
+                {
+                    return Err(LinkError("duplicate connection parameter"));
+                }
                 match k {
                     "proto" => link.proto = v,
                     "mode" => link.mode = v,
@@ -404,12 +438,16 @@ impl ClientLink {
                     "rsid" => link.reality_sid = Some(v),
                     "obfs" => link.obfs_key = Some(v),
                     "front" => link.fronting = Some(v),
-                    "quic" => link.quic = matches!(v.as_str(), "1" | "true"),
-                    "awg" => link.awg = matches!(v.as_str(), "1" | "true"),
-                    "jc" => link.jc = v.parse().unwrap_or(0),
-                    "jmin" => link.jmin = v.parse().unwrap_or(0),
-                    "jmax" => link.jmax = v.parse().unwrap_or(0),
-                    "mtu" => link.mtu = v.parse().unwrap_or(0),
+                    "quic" => link.quic = parse_link_bool(&v)?,
+                    "awg" => link.awg = parse_link_bool(&v)?,
+                    "jc" => link.jc = v.parse().map_err(|_| LinkError("invalid jc number"))?,
+                    "jmin" => {
+                        link.jmin = v.parse().map_err(|_| LinkError("invalid jmin number"))?
+                    }
+                    "jmax" => {
+                        link.jmax = v.parse().map_err(|_| LinkError("invalid jmax number"))?
+                    }
+                    "mtu" => link.mtu = v.parse().map_err(|_| LinkError("invalid mtu number"))?,
                     "roaming" => match v.trim().to_ascii_lowercase().as_str() {
                         "off" | "auto" | "required" => link.roaming = v.trim().to_ascii_lowercase(),
                         _ => {
@@ -420,6 +458,18 @@ impl ClientLink {
                 }
             }
         }
+        // Apply the same bounded AWG policy as client config loading before an
+        // imported link is displayed, shared again or passed to the native core.
+        let mut awg = crate::config::AwgConfig {
+            enabled: link.awg,
+            jc: link.jc,
+            jmin: link.jmin,
+            jmax: link.jmax,
+        };
+        awg.sanitize("qeli link");
+        link.jc = awg.jc;
+        link.jmin = awg.jmin;
+        link.jmax = awg.jmax;
         // Alias convenience: `mode=udp-quic` / `udp-obfs` fold transport+QUIC into the
         // wire mode. Split it back into proto + wire mode + quic.
         match link.mode.as_str() {
@@ -526,24 +576,42 @@ fn pct_encode(s: &str) -> String {
     out
 }
 
-/// Decode percent-escapes. Invalid escapes are passed through literally rather
-/// than erroring — a scanned QR with a stray `%` should still import.
-fn pct_decode(s: &str) -> String {
+fn parse_link_bool(value: &str) -> Result<bool, LinkError> {
+    match value.to_ascii_lowercase().as_str() {
+        "1" | "true" => Ok(true),
+        "0" | "false" => Ok(false),
+        _ => Err(LinkError("boolean must be true, false, 1 or 0")),
+    }
+}
+
+/// Decode a complete UTF-8 value without silently changing credentials.
+fn pct_decode(s: &str) -> Result<String, LinkError> {
     let bytes = s.as_bytes();
-    let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
+    let mut out = Vec::with_capacity(bytes.len());
     let mut i = 0;
     while i < bytes.len() {
-        if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let (Some(h), Some(l)) = (from_hex(bytes[i + 1]), from_hex(bytes[i + 2])) {
-                out.push((h << 4) | l);
-                i += 3;
-                continue;
-            }
+        if bytes[i] == b'%' {
+            let h = bytes.get(i + 1).copied().and_then(from_hex);
+            let l = bytes.get(i + 2).copied().and_then(from_hex);
+            let (Some(h), Some(l)) = (h, l) else {
+                return Err(LinkError("invalid percent escape"));
+            };
+            out.push((h << 4) | l);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
         }
-        out.push(bytes[i]);
-        i += 1;
     }
-    String::from_utf8_lossy(&out).into_owned()
+    let value =
+        String::from_utf8(out).map_err(|_| LinkError("percent-decoded value is not UTF-8"))?;
+    // Validate before URI aliases, trimming or INI serialization can silently
+    // remove a character and turn a malformed endpoint/key into a valid one.
+    // Tabs remain lossless in quoted INI credentials and labels.
+    if value.chars().any(|c| c.is_control() && c != '\t') {
+        return Err(LinkError("unsupported control character in decoded value"));
+    }
+    Ok(value)
 }
 
 fn hex_digit(n: u8) -> char {
@@ -567,6 +635,7 @@ mod tests {
     use super::*;
 
     fn sample() -> ClientLink {
+        let awg_defaults = crate::config::AwgConfig::default();
         ClientLink {
             host: "vpn.example.com".into(),
             port: 443,
@@ -582,8 +651,8 @@ mod tests {
             quic: false,
             awg: false,
             jc: 0,
-            jmin: 0,
-            jmax: 0,
+            jmin: awg_defaults.jmin,
+            jmax: awg_defaults.jmax,
             mtu: 0,
             roaming: "auto".into(),
             label: Some("My VPN".into()),
@@ -682,6 +751,46 @@ mod tests {
     }
 
     #[test]
+    fn rejects_controls_before_uri_normalization_or_ini_serialization() {
+        for control in ["%00", "%07", "%0A", "%0D", "%7F", "%C2%85"] {
+            let mut uris = vec![
+                format!("qeli://u{control}:p@host:443"),
+                format!("qeli://u:p{control}@host:443"),
+                format!("qeli://u:p@host:443#name{control}"),
+                format!("qeli://u:p@host:443?roaming={control}auto"),
+                format!("qeli://u:p@host:443?proto=t{control}cp&mode=udp-quic"),
+            ];
+            for key in ["proto", "mode", "key", "sni", "rsid", "obfs", "front"] {
+                uris.push(format!("qeli://u:p@host:443?{key}=x{control}y"));
+            }
+            for uri in uris {
+                assert!(ClientLink::from_uri(&uri).is_err(), "{uri}");
+            }
+        }
+        for control in ['\0', '\u{7}', '\t', '\n', '\r', '\u{7f}', '\u{85}'] {
+            let uri = format!("qeli://u:p@exa{control}mple.com:443");
+            assert!(ClientLink::from_uri(&uri).is_err());
+        }
+        let link = ClientLink::from_uri("qeli://u:p%09q@host:443#tab%09label").unwrap();
+        assert_eq!(link.pass, "p\tq");
+        assert_eq!(link.label.as_deref(), Some("tab\tlabel"));
+    }
+
+    #[test]
+    fn rejects_malformed_authority_hosts() {
+        for host in [
+            "exa mple.com",
+            "host/path",
+            "host[",
+            "-host",
+            "host..example",
+            "vpn%20example",
+        ] {
+            assert!(ClientLink::from_uri(&format!("qeli://u:p@{host}:443")).is_err());
+        }
+    }
+
+    #[test]
     fn forward_compatible_unknown_params_ignored() {
         let link = ClientLink::from_uri("qeli://u:p@h:1?proto=tcp&future=xyz").unwrap();
         assert_eq!(link.proto, "tcp");
@@ -727,11 +836,9 @@ mod conformance {
     //! Cross-implementation conformance for the `qeli://` link.
     //!
     //! The fixtures in `conformance/qeli-links.json` are shared with the Kotlin, C# and
-    //! Swift parsers. The link format is implemented four separate times, so every field
-    //! is four chances to disagree — and the failure is silent (the link "imports", with a
-    //! field quietly dropped or re-defaulted). Writing these fixtures immediately exposed
-    //! one such divergence: Swift and C# rejected an out-of-range port, Rust accepted 0 and
-    //! Kotlin accepted anything at all.
+    //! Swift adapters. All clients now use this Rust parser; the fixtures continue to
+    //! catch field loss or changed defaults at the FFI/model boundary. Historically,
+    //! independent parsers disagreed even on whether port 0 was valid.
     use super::*;
     use serde_json::Value;
 
@@ -844,14 +951,17 @@ mod conformance {
     #[test]
     fn rejects_every_invalid_fixture() {
         let fx = fixtures();
-        for c in fx["reject"].as_array().expect("reject[]") {
-            let name = c["name"].as_str().unwrap_or("?");
-            let uri = c["uri"].as_str().expect("case.uri");
-            assert!(
-                ClientLink::from_uri(uri).is_err(),
-                "case '{name}': this link MUST be rejected, but it parsed: {uri}"
-            );
-        }
+        let accepted: Vec<_> = fx["reject"]
+            .as_array()
+            .expect("reject[]")
+            .iter()
+            .filter(|c| ClientLink::from_uri(c["uri"].as_str().expect("case.uri")).is_ok())
+            .map(|c| c["name"].as_str().unwrap_or("?"))
+            .collect();
+        assert!(
+            accepted.is_empty(),
+            "invalid fixtures accepted: {accepted:?}"
+        );
     }
 
     #[test]

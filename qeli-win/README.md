@@ -1,7 +1,7 @@
 # qeli-win
 
 Нативный Windows-клиент для VPN **qeli** (Quick Easy Link IP): C# / .NET 10 + WPF
-как platform/UI слой и общее Rust transport-ядро ABI 1.15 (compatibility floor 1.11). Rust владеет
+как platform/UI слой и общее Rust transport-ядро ABI 1.16 (compatibility floor 1.16). Rust владеет
 DNS/connect, handshake, crypto, TCP/UDP/QUIC/Reality, heartbeat/shaping, bonding и
 Wintun session/rings; C# управляет lifecycle/reconnect, созданием интерфейса,
 маршрутами/DNS/kill-switch, trust и UI. Только для per-app-профиля C# передаёт
@@ -18,7 +18,7 @@ handshake/framing. Внешний TLS и внутренний qeli AEAD сохр
 | Компонент            | Чем реализовано                                              |
 |----------------------|-------------------------------------------------------------|
 | TUN-устройство       | Wintun для `apps_mode=all`; WinDivert capture для `include`/`exclude` (обе пары DLL/драйверов вшиты в exe) |
-| Transport/crypto     | Rust `qeli.dll`, ABI 1.15 (`qeli_client_run` + native Wintun rings) |
+| Transport/crypto     | Rust `qeli.dll`, ABI 1.16 (`qeli_client_run` + native Wintun rings) |
 | Conformance/diagnostics | .NET wire/KAT и reachability tools; production fallback отсутствует |
 | GUI                  | WPF (.NET 10)                                                |
 | Маршруты / DNS / IP  | `iphlpapi` (LUID→index, gateway, `CreateIpForwardEntry2` для маршрутов) + `netsh` / `route` (fallback) |
@@ -29,7 +29,7 @@ handshake/framing. Внешний TLS и внутренний qeli AEAD сохр
 qeli-win/
 ├── QeliWin/
 │   ├── Model/         VpnConfig (flat-INI + qeli://), ProfileStore (profiles.json — внутреннее зашифрованное хранилище приложения)
-│   ├── Vpn/           Wintun lifecycle, NetworkConfigurator, ABI 1.15 adapter
+│   ├── Vpn/           Wintun lifecycle, NetworkConfigurator, ABI 1.16 adapter
 │   ├── App.xaml(.cs)  точка входа + headless CLI
 │   ├── MainWindow.*   интерфейс
 │   ├── InputDialog.cs модальный ввод
@@ -209,9 +209,9 @@ Managed crypto/codec/config KAT и benchmark вынесены из production EX
 
 ## Состояние сборки и release gate 0.8.0
 
-Windows-клиент сохраняет compatibility floor ABI 1.11, а fail-closed roaming использует
-типизированные path results ABI 1.14. Закоммиченная `qeli.dll` уже соответствует текущему
-Rust source digest и прошла reproducible A/B provenance. Перед выпуском 0.8.0 обязательно:
+Windows-клиент сохраняет compatibility floor ABI 1.16, а fail-closed roaming использует
+типизированные path results ABI 1.14. После переноса редактора в ABI 1.16 закоммиченная `qeli.dll` требует новой
+reproducible A/B-пересборки и обновления provenance. Перед выпуском 0.8.0 обязательно:
 
 - пересобрать core только если изменилось Rust-дерево, но всегда заново собрать оба EXE;
 - пройти `native-libs/provenance.py --check`, hash/ABI/package/signing gates;
@@ -221,3 +221,11 @@ Rust source digest и прошла reproducible A/B provenance. Перед вы�
 Публичный ключ сервера не копируют из этого README. Для каждого сервера получите актуальный
 pin командой `qeli show-identity` по доверенному каналу; отключение pinning допустимо только
 как осознанная временная диагностика, а не как инструкция для рабочего профиля.
+
+## Общее ядро конфигурации
+
+INI/URI, проверки, defaults и переносимые политики теперь выполняет Rust ABI 1.16.
+Модель клиента — тонкая проекция без местного парсера. Для разработки сначала выполните
+`python scripts/build_client_core.py --debug` из корня и задайте напечатанный
+`QeliNativeCorePath` перед `dotnet build`. Релизные библиотеки требуют штатных A/B-сборок.
+Подробности: [единая конфигурация](../docs/ru/plans/CLIENT-CONFIG-CORE.md).

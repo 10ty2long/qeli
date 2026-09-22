@@ -89,8 +89,7 @@ impl ClientManager {
     pub fn profile_autostarts(name: &str) -> bool {
         std::fs::read_to_string(Self::profile_path(name))
             .ok()
-            .and_then(|s| crate::config::format::IniDoc::parse(&s).ok())
-            .and_then(|d| crate::config::client::ClientConfig::from_ini(&d).ok())
+            .and_then(|s| crate::config::parse_client_config_strict(&s).ok())
             .map(|c| c.autostart)
             .unwrap_or(false)
     }
