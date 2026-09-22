@@ -4,6 +4,7 @@ pub mod server;
 #[allow(dead_code)]
 pub mod client;
 pub mod format;
+pub mod notify;
 mod server_ini;
 #[allow(dead_code)]
 pub mod share;
@@ -253,7 +254,10 @@ pub fn set_section_keys(original: &str, section: &str, updates: &[(&str, String)
                     }
                 }
             }
-            in_section = t.trim_end() == header;
+            in_section = format::IniDoc::parse(t)
+                .ok()
+                .and_then(|doc| doc.sections.into_iter().next())
+                .is_some_and(|sec| sec.kind == section && sec.instance.is_none());
             if in_section {
                 section_seen = true;
                 written.clear();

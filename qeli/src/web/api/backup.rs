@@ -106,6 +106,41 @@ fn inspect_backup_archive(
     Ok((bytes, members))
 }
 
+fn read_backup_member(bytes: Vec<u8>, member: &str) -> Result<(Vec<u8>, String), String> {
+    use std::io::Write;
+    use std::process::Stdio;
+    let mut child = std::process::Command::new("tar")
+        .args(["xOzf", "-", "--", member])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|error| format!("cannot read archived configuration: {error}"))?;
+    let mut input = child
+        .stdin
+        .take()
+        .ok_or("cannot open archive reader stdin")?;
+    let writer = std::thread::spawn(move || {
+        let result = input.write_all(&bytes);
+        (bytes, result)
+    });
+    let output = child.wait_with_output();
+    let (bytes, write_result) = writer
+        .join()
+        .map_err(|_| "archive reader writer panicked")?;
+    let output = output.map_err(|error| format!("cannot wait for archive reader: {error}"))?;
+    write_result.map_err(|error| format!("cannot feed archive reader: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "cannot read archived configuration: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let raw = String::from_utf8(output.stdout)
+        .map_err(|error| format!("archived configuration is not UTF-8: {error}"))?;
+    Ok((bytes, raw))
+}
+
 #[derive(Debug)]
 struct CriticalBackupPath {
     archive_path: String,
@@ -205,13 +240,24 @@ pub async fn download_backup(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<crate::server::ServerState>>,
     _guard: auth::AuthGuard,
 ) -> Result<Response, AuthError> {
+    let _write_guard = state.config_write_lock.lock().await;
     let config_path = state
         .config_path
         .lock()
         .await
         .clone()
         .unwrap_or_else(|| "/etc/qeli/server.conf".to_string());
-    let critical_paths = match critical_backup_paths(&state.config, &config_path) {
+    let current_raw = match std::fs::read_to_string(&config_path) {
+        Ok(raw) => raw,
+        Err(error) => {
+            return Ok((StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response())
+        }
+    };
+    let config = match crate::config::parse_server_config(&current_raw) {
+        Ok(config) => config,
+        Err(error) => return Ok((StatusCode::CONFLICT, error.to_string()).into_response()),
+    };
+    let critical_paths = match critical_backup_paths(&config, &config_path) {
         Ok(paths) => paths,
         Err(error) => return Ok((StatusCode::CONFLICT, error).into_response()),
     };
@@ -258,8 +304,21 @@ pub async fn download_backup(
     // Do not infer completeness from tar stderr: an already-missing path need not be named.
     // List the archive that will actually be returned and require every runtime dependency.
     let tar_stderr = String::from_utf8_lossy(&o.stderr).trim().to_string();
-    let inspected = tokio::task::spawn_blocking(move || inspect_backup_archive(o.stdout)).await;
-    let (bytes, members) = match inspected {
+    let archived_config_path = managed_archive_path(&config_path, "server config")
+        .map_err(|error| (StatusCode::CONFLICT, Json(super::err_json(error))))?;
+    let inspected = tokio::task::spawn_blocking(move || -> Result<_, String> {
+        let (bytes, members) = inspect_backup_archive(o.stdout)?;
+        let (bytes, archived_raw) = read_backup_member(bytes, &archived_config_path)?;
+        if archived_raw != current_raw {
+            return Err("server config changed while creating backup; retry the download".into());
+        }
+        let config = crate::config::parse_server_config(&archived_raw)
+            .map_err(|error| format!("archived server config is invalid: {error}"))?;
+        let required = critical_backup_paths(&config, &config_path)?;
+        Ok((bytes, members, required))
+    })
+    .await;
+    let (bytes, members, critical_paths) = match inspected {
         Ok(Ok(value)) => value,
         Ok(Err(error)) => return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response()),
         Err(error) => {
@@ -372,13 +431,16 @@ pub async fn restore_backup(
     axum::extract::Query(q): axum::extract::Query<RestoreQuery>,
     body: Bytes,
 ) -> Result<Response, AuthError> {
+    let _config_write_guard = state.config_write_lock.lock().await;
     let config_path = state
         .config_path
         .lock()
         .await
         .clone()
         .unwrap_or_else(|| "/etc/qeli/server.conf".to_string());
-    if let Err(error) = critical_backup_paths(&state.config, &config_path) {
+    // Restore must also repair a corrupt live config. Validate the destination here;
+    // the uploaded config and its dependencies are validated in staging before publish.
+    if let Err(error) = managed_archive_path(&config_path, "server config") {
         return Ok((
             StatusCode::CONFLICT,
             Json(json!({
@@ -391,7 +453,6 @@ pub async fn restore_backup(
     // A restore replaces the same files as Configuration/Quick Start. Keep it mutually
     // exclusive with those read-modify-write operations so neither can publish a stale tree
     // over the other while extraction and validation are in progress.
-    let _config_write_guard = state.config_write_lock.lock().await;
     // `?exact=1` opts into deleting live files the archive does not contain. Default stays
     // OVERLAY: exact restore removes data, and that must never be what a plain "Restore"
     // click does. (Р1)
@@ -653,6 +714,19 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
         stage_cleanup();
         return Err(e);
     }
+    let network_check = (|| -> Result<(), String> {
+        let relative = qeli_relative_path(config_path).ok_or("invalid active config path")?;
+        let raw = std::fs::read_to_string(std::path::Path::new(&staged_root).join(relative))
+            .map_err(|error| error.to_string())?;
+        let config = crate::config::parse_server_config(&raw).map_err(|error| error.to_string())?;
+        crate::server::preflight::run(&config).map_err(|error| {
+            format!("refused: restored config conflicts with host networking: {error}")
+        })
+    })();
+    if let Err(error) = network_check {
+        stage_cleanup();
+        return Err(error);
+    }
     if let Err(error) = normalize_staged_permissions(std::path::Path::new(&staged_root)) {
         stage_cleanup();
         return Err(format!(
@@ -848,7 +922,9 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
                     staged_config.auth.users_file
                 ));
             }
-            if let Some(users_relative) = qeli_relative_path(&staged_config.auth.users_file) {
+            let users = if let Some(users_relative) =
+                qeli_relative_path(&staged_config.auth.users_file)
+            {
                 let users_path = std::path::Path::new(root).join(&users_relative);
                 if users_path.is_file() {
                     let content = std::fs::read_to_string(&users_path).map_err(|e| {
@@ -857,13 +933,14 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
                             users_relative.display()
                         )
                     })?;
-                    crate::config::users::UsersDb::parse_strict(&content, &users_relative)
-                        .map_err(|e| {
+                    crate::config::users::UsersDb::parse_strict(&content, &users_relative).map_err(
+                        |e| {
                             format!(
                                 "refused: users database '{}' is invalid: {e}",
                                 users_relative.display()
                             )
-                        })?;
+                        },
+                    )?
                 } else {
                     return Err(format!(
                         "refused: active server config '{}' requires users database '{}', but the archive does not contain it",
@@ -877,7 +954,7 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
                 // dependency now; load_users_db refuses an existing corrupt file even
                 // when inline users are also present.
                 match crate::config::users::UsersDb::load(&staged_config.auth.users_file) {
-                    Ok(_) => {}
+                    Ok(users) => users,
                     Err(error) => {
                         return Err(format!(
                             "refused: active server config '{}' refers to unusable users database '{}': {error}",
@@ -886,7 +963,10 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
                         ));
                     }
                 }
-            }
+            };
+            crate::server::effective_users_from_external(&staged_config, users).map_err(
+                |error| format!("refused: restored config/users are incompatible: {error}"),
+            )?;
         } else {
             return Err(format!(
                 "refused: archive does not contain the active server config '{}'",
@@ -894,6 +974,9 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
             ));
         }
     }
+    // Validate notification settings and migrate an older backup before publishing it.
+    crate::config::notify::load_path(&std::path::Path::new(root).join("notify.ini"))
+        .map_err(|error| format!("refused: restored notification config is invalid: {error}"))?;
     let hook_files = hook_referenced_files(config_path);
     vet_staged_dir(std::path::Path::new(root), &hook_files)
 }
@@ -1194,6 +1277,67 @@ fn prune_pre_restore_snapshots(keep: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn staged_users_are_validated_against_inline_groups_and_reservations() {
+        let dir = std::env::temp_dir().join(format!("qeli-restore-union-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let server = dir.join("server.ini");
+        let users = dir.join("users.conf");
+        std::fs::write(&server, srv("")).unwrap();
+        std::fs::write(&users, "[user:alice]\npassword_hash=fixture\ngroup=staff\n").unwrap();
+        let error = vet_staged_tree(dir.to_str().unwrap(), "/etc/qeli/server.ini").unwrap_err();
+        assert!(error.contains("group 'staff' does not exist"), "{error}");
+        std::fs::write(
+            &server,
+            format!("{}\n[group:staff]\nmax_sessions=2\n", srv("")),
+        )
+        .unwrap();
+        assert!(vet_staged_tree(dir.to_str().unwrap(), "/etc/qeli/server.ini").is_ok());
+        std::fs::write(&server, srv("pool.reservation.bob=10.0.0.9\n")).unwrap();
+        std::fs::write(
+            &users,
+            "[user:alice]\npassword_hash=fixture\nstatic_ip=10.0.0.9\n",
+        )
+        .unwrap();
+        let error = vet_staged_tree(dir.to_str().unwrap(), "/etc/qeli/server.ini").unwrap_err();
+        assert!(error.contains("incompatible"), "{error}");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn backup_reads_current_configuration_from_the_actual_archive() {
+        let dir = std::env::temp_dir().join(format!("qeli-backup-current-{}", std::process::id()));
+        let inner = dir.join("qeli");
+        std::fs::create_dir_all(&inner).unwrap();
+        let raw = format!(
+            "[auth]\nusers_file=/etc/qeli/current-users.conf\n{}",
+            srv("identity_key=/etc/qeli/current.key\n")
+        );
+        std::fs::write(inner.join("server.conf"), &raw).unwrap();
+        let archive = std::process::Command::new("tar")
+            .args(["czf", "-", "-C"])
+            .arg(&dir)
+            .arg("qeli")
+            .output()
+            .unwrap();
+        assert!(archive.status.success());
+        let (bytes, members) = inspect_backup_archive(archive.stdout).unwrap();
+        let (_, archived) = read_backup_member(bytes, "qeli/server.conf").unwrap();
+        assert_eq!(archived, raw);
+        let config = crate::config::parse_server_config(&archived).unwrap();
+        let required = critical_backup_paths(&config, "/etc/qeli/server.conf").unwrap();
+        assert!(required
+            .iter()
+            .any(|path| path.archive_path == "qeli/current-users.conf"));
+        assert!(required
+            .iter()
+            .any(|path| path.archive_path == "qeli/current.key"));
+        assert!(required
+            .iter()
+            .any(|path| !members.contains(&path.archive_path)));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn panel_backup_accepts_custom_managed_paths() {

@@ -1,21 +1,20 @@
 //! Outbound notifications (Tier-3): Telegram bot + generic webhook.
 //!
-//! Config lives in a sidecar `/etc/qeli/notify.json` (same pattern as
-//! `usage.json`) so editing it from the panel needs no main-config reload, and
+//! Config lives in `/etc/qeli/notify.ini`, so panel edits need no main-config reload, and
 //! both the supervisor (server-start / login-lockout / restore events) and the
 //! worker (quota sweep) can read it independently. Sends are fire-and-forget with
 //! a hard timeout and never touch the data-plane hot path. Outbound HTTPS reuses
 //! the existing rustls(ring) stack + the Mozilla root bundle (webpki-roots) so
 //! certificates are properly verified — no MITM hole for the notification path.
 
-use serde::{Deserialize, Serialize};
+pub use crate::config::notify::{ChannelEvents, NotifyConfig};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 /// Sidecar config file (qeli-owned, beside the main config).
-pub const NOTIFY_PATH: &str = "/etc/qeli/notify.json";
+pub const NOTIFY_PATH: &str = "/etc/qeli/notify.ini";
 const SEND_TIMEOUT: Duration = Duration::from_secs(10);
 /// Metadata that changes on content replacement and, on Unix, chmod/chown/inode changes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,72 +39,6 @@ struct FileStampValue {
 type FileStamp = Option<FileStampValue>;
 type NotifyCache = OnceLock<Mutex<Option<(FileStamp, NotifyConfig)>>>;
 static NOTIFY_CACHE: NotifyCache = OnceLock::new();
-
-/// Which events a single channel sends. Defaults to all-on, so a freshly enabled
-/// channel notifies everything until the admin trims it.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChannelEvents {
-    #[serde(default = "d_true")]
-    pub on_server_start: bool,
-    #[serde(default = "d_true")]
-    pub on_quota_breach: bool,
-    #[serde(default = "d_true")]
-    pub on_login_lockout: bool,
-    #[serde(default = "d_true")]
-    pub on_auth_lockout: bool,
-    #[serde(default = "d_true")]
-    pub on_restore: bool,
-    /// Client connect/disconnect can be high-volume, so these default OFF (opt-in)
-    /// unlike the rare security/lifecycle events above.
-    #[serde(default)]
-    pub on_client_connect: bool,
-    #[serde(default)]
-    pub on_client_disconnect: bool,
-}
-
-impl Default for ChannelEvents {
-    fn default() -> Self {
-        Self {
-            on_server_start: true,
-            on_quota_breach: true,
-            on_login_lockout: true,
-            on_auth_lockout: true,
-            on_restore: true,
-            on_client_connect: false,
-            on_client_disconnect: false,
-        }
-    }
-}
-
-/// Telegram and the generic webhook are fully independent channels — each has its
-/// own enable switch, credentials, and event selection.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct NotifyConfig {
-    /// Optional label identifying THIS server in notification messages, so several
-    /// servers reporting to the same Telegram chat / webhook are distinguishable.
-    /// Empty = omit. Set it here in `/etc/qeli/notify.json` or on the panel's
-    /// Notifications page.
-    #[serde(default)]
-    pub server_name: String,
-    #[serde(default)]
-    pub telegram_enabled: bool,
-    #[serde(default)]
-    pub telegram_token: String,
-    #[serde(default)]
-    pub telegram_chat_id: String,
-    #[serde(default)]
-    pub telegram_events: ChannelEvents,
-    #[serde(default)]
-    pub webhook_enabled: bool,
-    #[serde(default)]
-    pub webhook_url: String,
-    #[serde(default)]
-    pub webhook_events: ChannelEvents,
-}
-
-fn d_true() -> bool {
-    true
-}
 
 #[derive(Clone, Copy)]
 pub enum Event {
@@ -157,14 +90,8 @@ impl Event {
 /// Read the sidecar without hiding an I/O or parse failure. The panel uses this path so a
 /// failed GET can never be followed by a PUT layered over empty defaults that erases secrets.
 pub fn load_checked() -> Result<NotifyConfig, String> {
-    let s = match std::fs::read_to_string(NOTIFY_PATH) {
-        Ok(s) => s,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(NotifyConfig::default());
-        }
-        Err(error) => return Err(format!("cannot read {NOTIFY_PATH}: {error}")),
-    };
-    serde_json::from_str(&s).map_err(|error| format!("cannot parse {NOTIFY_PATH}: {error}"))
+    crate::config::notify::load_path(std::path::Path::new(NOTIFY_PATH))
+        .map_err(|error| format!("cannot load {NOTIFY_PATH}: {error}"))
 }
 
 /// Runtime reads fail closed to disabled channels, but log loudly; unlike the panel they cannot
@@ -221,7 +148,7 @@ fn file_stamp() -> FileStamp {
 ///
 /// The config is read on every notification-worthy event, most of which fire from the
 /// session hot path. Stat-and-maybe-read is far cheaper than read-and-parse, and an
-/// operator editing `notify.json` (or the panel saving it) still takes effect within one
+/// operator editing `notify.ini` (or the panel saving it) still takes effect within one
 /// event because the metadata changes. (Audit 2026-07-27, S2.)
 pub fn load_cached() -> NotifyConfig {
     let stamp = file_stamp();
@@ -239,11 +166,9 @@ pub fn load_cached() -> NotifyConfig {
 
 /// Persist atomically (temp + rename) so a crash can't truncate the file.
 pub fn save(cfg: &NotifyConfig) -> anyhow::Result<()> {
-    let json = serde_json::to_vec_pretty(cfg)
-        .map_err(|error| anyhow::anyhow!("cannot encode notification config: {error}"))?;
     let cell = NOTIFY_CACHE.get_or_init(|| Mutex::new(None));
     let mut cached = cell.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    crate::util::write_atomic_private(NOTIFY_PATH, &json)?;
+    crate::config::notify::save_path(std::path::Path::new(NOTIFY_PATH), cfg)?;
     *cached = Some((file_stamp(), cfg.clone()));
     Ok(())
 }

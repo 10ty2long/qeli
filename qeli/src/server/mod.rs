@@ -1148,6 +1148,32 @@ impl ProfileHookEnv {
     }
 }
 
+/// Isolated API test state: no sockets, worker, metrics sampler or production sidecars.
+#[cfg(test)]
+pub(crate) fn test_api_state(
+    config: ServerConfig,
+    config_path: &std::path::Path,
+) -> Arc<ServerState> {
+    Arc::new(ServerState {
+        live_web: Arc::new(RwLock::new(config.web.clone())),
+        udp_buffer_budget: server_udp_buffer_budget(&config).unwrap(),
+        config,
+        users_db: Arc::new(RwLock::new(UsersDb::default())),
+        dummy_password_hashes: Arc::new(RwLock::new(Vec::new())),
+        config_path: Mutex::new(Some(config_path.to_string_lossy().into_owned())),
+        config_write_lock: Mutex::new(()),
+        profiles: Arc::new(RwLock::new(HashMap::new())),
+        profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
+        failed_auth: Arc::new(Mutex::new(FailedAuthTracker::new(true, 5, 300, 900))),
+        worker_tx: None,
+        client_manager: Arc::new(client_manager::ClientManager::new()),
+        metrics: Arc::new(metrics::MetricsState::new()),
+        usage: Arc::new(usage::UsageStore::load_read_only(
+            &config_path.with_extension("usage.json").to_string_lossy(),
+        )),
+    })
+}
+
 impl ServerState {
     /// Refresh the supervisor's live `[web]` settings from the on-disk config, so
     /// a panel change to the admin password / IP allowlist / CSRF origins /

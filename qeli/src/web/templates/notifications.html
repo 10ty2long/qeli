@@ -64,7 +64,7 @@
       </div>
 
       <div class="flex items-center gap-3 mt-4">
-        <button class="btn btn-ghost btn-sm" @click="testChan('telegram')" :disabled="testingTg">
+        <button class="btn btn-ghost btn-sm" @click="testChan('telegram')" :disabled="!loaded || loading || testingTg">
           <div x-show="testingTg" class="w-3.5 h-3.5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></div>
           Send test
         </button>
@@ -115,7 +115,7 @@
       </div>
 
       <div class="flex items-center gap-3 mt-4">
-        <button class="btn btn-ghost btn-sm" @click="testChan('webhook')" :disabled="testingWh">
+        <button class="btn btn-ghost btn-sm" @click="testChan('webhook')" :disabled="!loaded || loading || testingWh">
           <div x-show="testingWh" class="w-3.5 h-3.5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></div>
           Send test
         </button>
@@ -127,7 +127,7 @@
   <!-- Save -->
   <div class="flex justify-end mb-8">
     <span x-show="loadFailed" class="text-xs mr-3 self-center" style="color:var(--red)">Reload this page before saving.</span>
-    <button class="btn btn-primary" @click="save()" :disabled="busy || loadFailed">
+    <button class="btn btn-primary" @click="save()" :disabled="!loaded || loading || busy || loadFailed">
       <div x-show="busy" class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
       Save changes
     </button>
@@ -147,6 +147,8 @@ function notificationsPage() {
     },
     tokenSet: false,
     tokenHint: '',
+    loaded: false,
+    loading: true,
     loadFailed: false,
     busy: false,
     testingTg: false,
@@ -164,6 +166,8 @@ function notificationsPage() {
     ],
 
     async init() {
+      this.loading = true;
+      this.loaded = false;
       try {
         const d = await apiFetch('api/notify');
         if (!d.ok) throw new Error(d.error || 'Load failed');
@@ -179,26 +183,31 @@ function notificationsPage() {
         this.tokenHint = c.telegram_token_hint || '';
         this.cfg.telegram_token = '';
         this.loadFailed = false;
+        this.loaded = true;
       } catch (e) {
         this.loadFailed = true;
         this.$dispatch('notify', { msg: qeliT('Notification settings were not loaded: ') + e.message, type: 'error' });
+      } finally {
+        this.loading = false;
       }
     },
 
     async save() {
-      if (this.busy || this.loadFailed) return;
+      if (!this.loaded || this.loading || this.busy || this.loadFailed) return;
       this.busy = true;
+      const submitted = JSON.stringify(this.cfg);
+      const submittedToken = this.cfg.telegram_token;
       try {
         const d = await apiFetch('api/notify', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.cfg),
+          body: submitted,
         });
         if (d.ok) {
           const saved = d.config || {};
           this.$dispatch('notify', { msg: 'Notification settings saved', type: 'success' });
           this.tokenSet = !!saved.telegram_token_set;
           this.tokenHint = saved.telegram_token_hint || '';
-          this.cfg.telegram_token = '';
+          if (this.cfg.telegram_token === submittedToken) this.cfg.telegram_token = '';
         } else {
           this.$dispatch('notify', { msg: d.error || 'Save failed', type: 'error' });
         }
@@ -210,6 +219,7 @@ function notificationsPage() {
     },
 
     async testChan(channel) {
+      if (!this.loaded || this.loading) return;
       const flag = channel === 'telegram' ? 'testingTg' : 'testingWh';
       if (this[flag]) return;
       this[flag] = true;

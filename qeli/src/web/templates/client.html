@@ -374,11 +374,11 @@ function clientPage() {
     iniValue(value) {
       const text = value.trim();
       return text.length >= 2 && text.startsWith('"') && text.endsWith('"')
-        ? text.slice(1, -1).replace(/\"/g, '"') : text;
+        ? text.slice(1, -1).replace(/\\"/g, '"') : text;
     },
     iniQuote(value) {
       const text = String(value ?? '');
-      return !text || /^\s|\s$|[;#"]/.test(text) ? '"' + text.replace(/"/g, '\"') + '"' : text;
+      return !text || /^\s|\s$|[;#"]/.test(text) ? '"' + text.replace(/"/g, '\\"') + '"' : text;
     },
     parseIni(raw, f) {
       const next = this.blankForm();

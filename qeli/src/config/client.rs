@@ -2860,3 +2860,43 @@ file = /tmp/client.log
         }
     }
 }
+
+#[cfg(test)]
+mod panel_ini_conformance {
+    #[test]
+    fn browser_corpus_matches_the_canonical_codec() {
+        let cases: serde_json::Value =
+            serde_json::from_str(include_str!("../../../conformance/panel-client-ini.json"))
+                .unwrap();
+        for case in cases.as_array().unwrap() {
+            let raw = case["raw"].as_str().unwrap();
+            let config = crate::config::parse_client_config_strict(raw).unwrap();
+            assert_eq!(config.auth.password.as_deref(), case["password"].as_str());
+            let serialized = config.to_ini_string();
+            assert_eq!(
+                serialized.lines().find(|line| line.starts_with("pass = ")),
+                raw.lines().find(|line| line.starts_with("pass = "))
+            );
+        }
+    }
+    #[test]
+    fn automatic_device_edits_use_the_canonical_section_grammar() {
+        for header in ["[qeli]", "[ qeli ]", "[qeli ]"] {
+            for dev in ["", "dev=\n", "dev=\"\"\n"] {
+                let raw = format!("{header}\n# retain comment\nserver=fixture.invalid:443\n{dev}[logging]\nlevel=info\n");
+                let changed =
+                    crate::config::set_section_keys(&raw, "qeli", &[("dev", "vpn42".into())]);
+                let config = crate::config::parse_client_config_strict(&changed).unwrap();
+                assert_eq!(config.tun.name, "vpn42");
+                assert!(changed.contains("# retain comment"));
+                assert_eq!(
+                    crate::config::format::IniDoc::parse(&changed)
+                        .unwrap()
+                        .sections_of("qeli")
+                        .count(),
+                    1
+                );
+            }
+        }
+    }
+}

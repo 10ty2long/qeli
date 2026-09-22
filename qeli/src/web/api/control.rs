@@ -5,6 +5,26 @@ use axum::Json;
 use serde_json::{json, Value};
 use std::sync::Arc;
 
+fn validate_restart_candidate(
+    config: &crate::config::server::ServerConfig,
+    preflight: impl FnOnce(&crate::config::server::ServerConfig) -> anyhow::Result<()>,
+) -> Result<(), String> {
+    crate::server::validate_profiles(config)
+        .map_err(|error| format!("restart refused: server config is invalid: {error}"))?;
+    super::effective_users(config)
+        .map_err(|error| format!("restart refused: users configuration is invalid: {error}"))?;
+    preflight(config).map_err(|error| {
+        format!("restart refused: server config conflicts with host networking: {error}")
+    })
+}
+
+async fn preflight_restart(state: &Arc<ServerState>) -> Result<(), String> {
+    let config = super::current_server_config(state)
+        .await
+        .map_err(|error| format!("restart refused: {error}"))?;
+    validate_restart_candidate(&config, crate::server::preflight::run)
+}
+
 /// Apply config changes by restarting the data-plane worker process. The
 /// supervisor — and with it the web panel and this very request — keep running,
 /// so the panel never goes down: only the VPN profiles (TUN, listeners, DNS,
@@ -30,20 +50,8 @@ pub async fn restart(
             "error": "The saved panel settings require a full process restart; a worker restart cannot apply them.",
         })));
     }
-    if let Err(error) = crate::server::validate_profiles(&config) {
-        return Ok(Json(super::err_json(format!(
-            "restart refused: server config is invalid: {error}"
-        ))));
-    }
-    if let Err(error) = super::effective_users(&config) {
-        return Ok(Json(super::err_json(format!(
-            "restart refused: profile reservations conflict with users: {error}"
-        ))));
-    }
-    if let Err(error) = crate::server::preflight::run(&config) {
-        return Ok(Json(super::err_json(format!(
-            "restart refused: server config conflicts with host networking: {error}"
-        ))));
+    if let Err(error) = validate_restart_candidate(&config, crate::server::preflight::run) {
+        return Ok(Json(super::err_json(error)));
     }
     match &state.worker_tx {
         Some(tx) => {
@@ -98,7 +106,14 @@ pub fn last_restart_failure() -> Option<String> {
     LAST_RESTART_FAILURE.lock().ok().and_then(|g| g.clone())
 }
 
-pub async fn full_restart(_guard: auth::AuthGuard) -> Result<Json<Value>, AuthError> {
+pub async fn full_restart(
+    State(state): State<Arc<ServerState>>,
+    _guard: auth::AuthGuard,
+) -> Result<Json<Value>, AuthError> {
+    let _config_write_guard = state.config_write_lock.lock().await;
+    if let Err(error) = preflight_restart(&state).await {
+        return Ok(Json(super::err_json(error)));
+    }
     // A fresh attempt supersedes any stale failure from a previous one.
     if let Ok(mut g) = LAST_RESTART_FAILURE.lock() {
         *g = None;
@@ -108,9 +123,18 @@ pub async fn full_restart(_guard: auth::AuthGuard) -> Result<Json<Value>, AuthEr
     match restart_capability(&unit).await {
         RestartReady::Ok => {
             let unit_bg = unit.clone();
+            let state_bg = state.clone();
             tokio::spawn(async move {
                 // Let the HTTP response flush before systemd stops us.
                 tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+                // A config edit or network change during the response delay must not kill
+                // the healthy process. Keep writes excluded through command dispatch.
+                let _write_guard = state_bg.config_write_lock.lock().await;
+                if let Err(error) = preflight_restart(&state_bg).await {
+                    log::error!("full-restart: {error}");
+                    record_restart_failure(error);
+                    return;
+                }
                 match tokio::process::Command::new("systemctl")
                     .args(["restart", &unit_bg])
                     .status()
@@ -399,5 +423,60 @@ mod tests {
             pkcheck_process_subject(stat, 4242, 991),
             Some("4242,987654,991".to_string())
         );
+    }
+}
+
+#[cfg(test)]
+mod restart_validation_tests {
+    use super::*;
+    #[tokio::test]
+    async fn full_restart_refuses_invalid_disk_config_before_systemd_dispatch() {
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-full-restart-validation-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("server.conf");
+        std::fs::write(&path, "not valid INI").unwrap();
+        let state =
+            crate::server::test_api_state(crate::config::server::ServerConfig::default(), &path);
+        let response = full_restart(State(state), auth::AuthGuard).await.unwrap().0;
+        assert_eq!(response["ok"], false);
+        assert!(
+            response["error"]
+                .as_str()
+                .unwrap()
+                .contains("restart refused"),
+            "{response}"
+        );
+        assert!(response.get("unit").is_none());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn restart_requires_valid_profiles_users_and_host_networking() {
+        let mut config = crate::config::parse_server_config("[profile:p]\nbind.port=443\ntun.name=vpn0\ntun.address=10.0.0.1\npool.cidr=10.0.0.0/24\n").unwrap();
+        let path =
+            std::env::temp_dir().join(format!("qeli-restart-users-{}.conf", std::process::id()));
+        config.auth.users_file = path.to_string_lossy().into_owned();
+        std::fs::write(&path, "").unwrap();
+        assert!(validate_restart_candidate(&config, |_| Ok(())).is_ok());
+        let error =
+            validate_restart_candidate(&config, |_| anyhow::bail!("fixture host collision"))
+                .unwrap_err();
+        assert!(error.contains("fixture host collision"), "{error}");
+        std::fs::write(
+            &path,
+            "[user:alice]\npassword_hash=fixture\ngroup=missing\n",
+        )
+        .unwrap();
+        let error =
+            validate_restart_candidate(&config, |_| panic!("must reject users first")).unwrap_err();
+        assert!(error.contains("group 'missing'"), "{error}");
+        config.profiles[0].bind.port = 0;
+        let error = validate_restart_candidate(&config, |_| panic!("must reject config first"))
+            .unwrap_err();
+        assert!(error.contains("server config is invalid"), "{error}");
+        std::fs::remove_file(path).unwrap();
     }
 }

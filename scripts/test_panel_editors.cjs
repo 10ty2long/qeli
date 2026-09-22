@@ -124,6 +124,45 @@ async function main() {
     assert.equal(sent.expire_at, Math.floor(new Date('2026-10-03T23:59:59').getTime() / 1000));
     model.usageForm.expire_date = ''; model.syncFromDate(); await model.saveLimit(); assert.equal(sent.expire_at, null);
   });
+  await check('shared Rust INI corpus survives the client editor exactly', () => {
+    const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'conformance', 'panel-client-ini.json'), 'utf8'));
+    const { model } = component('client.html', 'clientPage');
+    for (const test of cases) {
+      const form = model.blankForm(); model.parseIni(test.raw, form);
+      assert.equal(form.pass, test.password);
+      model.form = form;
+      const line = text => text.split('\n').find(row => row.startsWith('pass = '));
+      assert.equal(line(model.formToIni()), line(test.raw));
+    }
+  });
+  await check('notifications cannot save or send a test until initial load succeeds', async () => {
+    let finish, writes = 0;
+    const { model } = component('notifications.html', 'notificationsPage', {
+      apiFetch: async (url, opts) => {
+        if (opts) { writes++; return { ok: true }; }
+        return new Promise(resolve => { finish = resolve; });
+      },
+    });
+    const loading = model.init();
+    await model.save(); await model.testChan('telegram'); assert.equal(writes, 0);
+    assert(!model.loaded); assert(model.loading);
+    finish({ ok: true, config: { telegram_enabled: true, telegram_token_set: true, telegram_chat_id: 'fixture' } });
+    await loading; assert(model.loaded); assert(!model.loading);
+    await model.save(); assert.equal(writes, 1);
+  });
+  await check('failed notification load blocks writes and a successful save retains newer token edits', async () => {
+    let writes = 0;
+    const { model, context } = component('notifications.html', 'notificationsPage', {
+      apiFetch: async (url, opts) => { if (opts) writes++; return { ok: false, error: 'fixture' }; },
+    });
+    await model.init(); await model.save(); assert.equal(writes, 0); assert(model.loadFailed);
+    model.loaded = true; model.loadFailed = false; model.cfg.telegram_token = 'submitted-fixture';
+    let finish;
+    context.apiFetch = async () => new Promise(resolve => { finish = resolve; });
+    const save = model.save(); model.cfg.telegram_token = 'later-fixture';
+    finish({ ok: true, config: { telegram_token_set: true } }); await save;
+    assert.equal(model.cfg.telegram_token, 'later-fixture');
+  });
   console.log(`Panel editor regressions: ${passed} passed`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -261,7 +261,7 @@ The **⤓ Backup** and **⤒ Restore** buttons in the header of the *Host load* 
 - **Backup** (`GET /api/backup`) — the browser downloads
   `qeli-backup-<unixtime>.tar.gz`: a `tar czf` of the whole **`/etc/qeli`** directory —
   the server config, the users file, the **per-profile identity keys**,
-  `usage.json`, `notify.json`, the client profiles and the panel's TLS cert. Leftovers
+  `usage.json`, `notify.ini`, the client profiles and the panel's TLS cert. Leftovers
   from earlier restores (`.pre-restore-*`, `.restore-*`) are
   excluded so an archive can't nest inside the next one; local editor rollback history
   (`.config-history`) is excluded as well, so superseded credentials do not accumulate in
@@ -649,9 +649,42 @@ a trusted / loopback bind). The same policies are also editable in **Config → 
 ### Notifications
 Outbound alerts on key server events via **Telegram** and a **generic webhook** — two
 independent channels, each with its own switch, credentials, event toggles and **Send
-test** button. Config lives in `/etc/qeli/notify.json` (editable from the panel or the
+test** button. Config lives in `/etc/qeli/notify.ini` (editable from the panel or the
 file); sends are best-effort and never block the data plane, and outbound TLS certs are
-verified. OFF by default (no `notify.json` → no-op).
+verified. Channels are OFF by default when no saved notification settings exist.
+
+The file uses the shared INI parser with `[notify]`, `[telegram]`, and `[webhook]`
+sections. Event keys belong to their channel section; unknown keys, duplicates and
+invalid booleans are rejected. Example:
+
+```ini
+[notify]
+server_name = edge-eu
+
+[telegram]
+enabled = false
+token = ""
+chat_id = ""
+on_server_start = true
+on_quota_breach = true
+on_login_lockout = true
+on_auth_lockout = true
+on_restore = true
+on_client_connect = false
+on_client_disconnect = false
+
+[webhook]
+enabled = false
+url = ""
+on_restore = true
+```
+
+On first read, an existing legacy `notify.json` is converted to `notify.ini` only
+when INI is absent. After validation and an atomic `0600` write, the old file is
+removed; the token and event selections are preserved. Existing INI is authoritative,
+and invalid INI never falls back to JSON. Restoring an older backup performs the same
+conversion in staging before publication. Internal API and webhook messages retain JSON.
+
 - **Server name** — a label prefixed to every message (`[name] …`) and put in the
   webhook JSON `server` field, so several servers reporting into one chat / hook are
   distinguishable. Empty = no prefix.

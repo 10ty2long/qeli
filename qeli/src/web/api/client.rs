@@ -392,21 +392,13 @@ fn ini_from_fields(b: &Value) -> String {
     s
 }
 
-/// Does the INI explicitly set a `dev` key in `[qeli]`?
-fn ini_has_dev(ini: &str) -> bool {
-    ini.lines().any(|l| {
-        let t = l.trim_start();
-        !t.starts_with('#') && t.split('=').next().map(str::trim) == Some("dev")
-    })
-}
-
 /// Lowest `vpn<N>` not used as the TUN device by any OTHER stored client profile AND
 /// not already a live interface on this host — so an outbound tunnel started from the
 /// panel never clashes with vpn0/vpn1 already claimed by a SERVER profile on the same
 /// box (or by another client, or anything else). Checking only stored client profiles
 /// was the bug: on a host whose server runs on vpn1, this handed out vpn1 and the
 /// client's TUN creation then failed with "device busy".
-fn free_dev(exclude: &str) -> String {
+fn free_dev(exclude: &str) -> anyhow::Result<String> {
     let mut used = std::collections::HashSet::new();
     for n in ClientManager::list_profiles() {
         if n == exclude {
@@ -429,37 +421,37 @@ fn free_dev(exclude: &str) -> String {
             // on the host (a server profile's tun, or any other live interface).
             !used.contains(d) && !std::path::Path::new(&format!("/sys/class/net/{d}")).exists()
         })
-        .unwrap_or_else(|| "vpn0".to_string())
+        .ok_or_else(|| anyhow::anyhow!("no free client TUN device in vpn0..vpn255"))
 }
 
 /// Ensure the profile has a distinct TUN device. If the INI already sets `dev`,
 /// keep it; if this profile already exists, reuse its device (editing doesn't move
 /// it); otherwise auto-assign a free `vpnN` so multiple tunnels can coexist.
-fn ensure_unique_dev(name: &str, ini: &str) -> String {
-    if ini_has_dev(ini) {
-        return ini.to_string();
+fn ensure_unique_dev(name: &str, ini: &str) -> anyhow::Result<String> {
+    let doc = IniDoc::parse(ini)?;
+    if doc.sections_of("qeli").count() != 1 {
+        anyhow::bail!("client config requires exactly one [qeli] section");
     }
-    let dev = std::fs::read_to_string(ClientManager::profile_path(name))
+    let qeli = doc.section("qeli").expect("checked section count");
+    if qeli.instance.is_some() {
+        anyhow::bail!("client section must be [qeli], without an instance name");
+    }
+    if qeli.get("dev").is_some_and(|value| !value.is_empty()) {
+        return Ok(ini.to_string());
+    }
+    let previous = std::fs::read_to_string(ClientManager::profile_path(name))
         .ok()
-        .and_then(|s| IniDoc::parse(&s).ok())
-        .and_then(|d| ClientConfig::from_ini(&d).ok())
-        .map(|c| c.tun.name.clone())
-        .unwrap_or_else(|| free_dev(name));
-    let mut out = String::with_capacity(ini.len() + 20);
-    let mut injected = false;
-    for line in ini.lines() {
-        out.push_str(line);
-        out.push('\n');
-        if !injected && line.trim() == "[qeli]" {
-            out.push_str(&format!("dev = {dev}\n"));
-            injected = true;
-        }
-    }
-    if injected {
-        out
-    } else {
-        format!("[qeli]\ndev = {dev}\n{ini}")
-    }
+        .and_then(|s| crate::config::parse_client_config_strict(&s).ok())
+        .map(|c| c.tun.name.clone());
+    let dev = match previous {
+        Some(dev) => dev,
+        None => free_dev(name)?,
+    };
+    Ok(crate::config::set_section_keys(
+        ini,
+        "qeli",
+        &[("dev", dev)],
+    ))
 }
 
 /// Validate `ini` as a client config, then persist it VERBATIM (preserving raw
@@ -531,7 +523,9 @@ fn persist(name: &str, ini: &str) -> anyhow::Result<()> {
             anyhow::bail!("password_file: {e}");
         }
     }
-    let ini = ensure_unique_dev(name, ini);
+    let ini = ensure_unique_dev(name, ini)?;
+    // Validate the bytes that will be written, including the automatic device assignment.
+    crate::config::parse_client_config_strict(&ini)?.validate()?;
     std::fs::create_dir_all(crate::server::client_manager::CLIENTS_DIR)?;
     // The profile embeds the plaintext VPN password (`pass = …`), so it must be
     // born 0600 — `write_atomic` would fall back to 0644 for a new file, leaving
@@ -543,10 +537,11 @@ fn persist(name: &str, ini: &str) -> anyhow::Result<()> {
 /// Create/replace a profile. Body is EITHER a full raw INI (`{name, raw}` — full
 /// control over every client key) OR form fields (`{name, server, proto, ...}`).
 pub async fn save_profile(
-    State(_state): State<Arc<ServerState>>,
+    State(state): State<Arc<ServerState>>,
     _g: auth::AuthGuard,
     Json(body): Json<Value>,
 ) -> Json<Value> {
+    let _write_guard = state.config_write_lock.lock().await;
     let name = body
         .get("name")
         .and_then(|v| v.as_str())
@@ -573,10 +568,11 @@ pub async fn save_profile(
 
 /// Import a `qeli://` link as a profile. Body: {link, name?}.
 pub async fn import_link(
-    State(_state): State<Arc<ServerState>>,
+    State(state): State<Arc<ServerState>>,
     _g: auth::AuthGuard,
     Json(body): Json<Value>,
 ) -> Json<Value> {
+    let _write_guard = state.config_write_lock.lock().await;
     let link = body
         .get("link")
         .and_then(|v| v.as_str())
@@ -687,6 +683,25 @@ pub async fn disconnect(
 #[cfg(test)]
 mod diagnostic_tests {
     use super::*;
+
+    #[test]
+    fn backend_form_agrees_with_the_browser_ini_corpus() {
+        let cases: Value = serde_json::from_str(include_str!(
+            "../../../../conformance/panel-client-ini.json"
+        ))
+        .unwrap();
+        for case in cases.as_array().unwrap() {
+            let ini =
+                ini_from_fields(&json!({"server":"fixture.invalid:443","pass":case["password"]}));
+            let parsed = crate::config::parse_client_config_strict(&ini).unwrap();
+            assert_eq!(parsed.auth.password.as_deref(), case["password"].as_str());
+            let expected = case["raw"].as_str().unwrap();
+            assert_eq!(
+                ini.lines().find(|line| line.starts_with("pass = ")),
+                expected.lines().find(|line| line.starts_with("pass = "))
+            );
+        }
+    }
 
     #[test]
     fn structured_states_map_to_honest_panel_states() {
