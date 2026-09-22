@@ -16,6 +16,12 @@ pub mod transport_core;
 // the realtls FFI cdylib for Android/Windows/macOS.
 pub mod util;
 
+// Resolver wire/cache/upstream code has no Linux dependencies. Compile it in host tests
+// too; GUI native release libraries keep it excluded and Linux owns the socket lifecycle.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/dns/resolver.rs"]
+mod dns_resolver;
+
 // One cross-process ownership journal for every Linux component that changes host-wide
 // forwarding sysctls. The full daemon can run server profiles and panel-managed outbound
 // clients at the same time, so separate server/client snapshots would race on teardown.

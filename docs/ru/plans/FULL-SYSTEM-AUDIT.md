@@ -503,7 +503,7 @@ NAT44/forward_private/gateway_nat/MSS и iptables/nft backend errors. Before/aft
 
 ### 19. DNS сервера и клиентов
 
-**Код:** `qeli/src/server/dns.rs`, `qeli/src/client/dns.rs`, `qeli/src/transport_core/network.rs`.
+**Код:** `qeli/src/server/dns.rs`, `qeli/src/server/dns/resolver.rs`, `qeli/src/client/dns.rs`, `qeli/src/transport_core/network.rs`.
 
 UDP/TCP upstream, truncation fallback, timeouts, malformed packets, cache/eviction/blocklist. Full/split, resolved/resolv.conf и OS resolvers, leak v4/v6, failed apply до Connected, crash restore. Custom port/manual IPv6; DoT не объявляется реализованным при отказе валидатора.
 
@@ -522,6 +522,12 @@ UDP/TCP upstream, truncation fallback, timeouts, malformed packets, cache/evicti
 и зависимость лимита маршрутов от порядка исключений; убрана устаревшая тестовая
 реализация Linux DNS. Это проверка общего планировщика, не завершение всего модуля.
 DNS proxy/cache, реальные OS apply/rollback и конкурентный lifecycle остаются открыты.
+
+**Серверный DNS, 23 сентября 2026:** [отчёт Q19](../reports/AUDIT-Q19-DNS-PROXY.md).
+Исправлены Q19-F004–F006: TTL NODATA после CNAME, проверка сжатых имён и failover
+после TCP TC. Один production engine тестируется локально; 22 DNS-теста с UDP/TCP,
+754 Rust-теста суммарно — PASS. Linux lifecycle, расширенные DNS-типы и нагрузочные
+проверки остаются открытыми; общий статус раздела не закрыт.
 
 
 ### 20. DHCP и lease lifecycle

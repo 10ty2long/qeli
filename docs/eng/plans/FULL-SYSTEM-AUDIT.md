@@ -498,7 +498,7 @@ All 4×3 egress/NDP combinations and every transition for ipv4/dual/ipv6. Linux 
 
 ### 19. Server and client DNS
 
-**Source:** `qeli/src/server/dns.rs`, `qeli/src/client/dns.rs`, `qeli/src/transport_core/network.rs`.
+**Source:** `qeli/src/server/dns.rs`, `qeli/src/server/dns/resolver.rs`, `qeli/src/client/dns.rs`, `qeli/src/transport_core/network.rs`.
 
 UDP/TCP upstreams, truncation fallback, timeouts, malformed packets, caching/eviction/blocklists. Full/split, resolved/resolv.conf and OS resolvers, v4/v6 leaks, failed apply before Connected and crash recovery. Custom ports/manual IPv6; rejected DoT is not implemented DoT.
 
@@ -517,6 +517,12 @@ UDP/TCP upstreams, truncation fallback, timeouts, malformed packets, caching/evi
 and order-dependent route-budget failures; removed obsolete Linux DNS test code.
 This validates the shared planner, not the entire module. DNS proxy/cache, actual
 OS apply/rollback and concurrent lifecycle checks remain open.
+
+**Server DNS, 23 September 2026:** [Q19 report](../reports/AUDIT-Q19-DNS-PROXY.md).
+Fixed Q19-F004–F006: NODATA TTL after CNAME, compressed-name validation and failover
+after TCP TC. One production engine is tested locally: 22 DNS tests with UDP/TCP,
+754 Rust tests overall — PASS. Linux lifecycle, advanced DNS types and load checks
+remain open; the overall section is not complete.
 
 
 ### 20. DHCP and lease lifecycle

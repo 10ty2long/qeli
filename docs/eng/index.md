@@ -61,6 +61,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 |---|---|
 | [AUDIT-Q02-CLIENT-PARSERS.md](reports/AUDIT-Q02-CLIENT-PARSERS.md) | INI/URI and editors: 19 findings, common corpus, Rust/C#/Kotlin tests and Swift limits |
 | [AUDIT-Q19-Q22-NETWORK-PLAN.md](reports/AUDIT-Q19-Q22-NETWORK-PLAN.md) | Shared DNS plan, legacy/v2 and CIDR exclusions: fixes, regressions and verification limits |
+| [AUDIT-Q19-DNS-PROXY.md](reports/AUDIT-Q19-DNS-PROXY.md) | Server DNS: CNAME/NODATA, compressed names, TCP failover and loopback network tests |
 | [AUDIT-Q01-SERVER-INI.md](reports/AUDIT-Q01-SERVER-INI.md) | First server INI pass: 7 findings, fixes, tests and remaining limits |
 | [AUDIT.md](reports/AUDIT.md) | Current security model and audit status |
 | [DPI-AUDIT.md](reports/DPI-AUDIT.md) | DPI detectability analysis and mitigations |

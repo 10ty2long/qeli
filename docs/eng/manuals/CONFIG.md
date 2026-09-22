@@ -2743,6 +2743,13 @@ unreadable chain fails profile startup.
 | `dns.blocklist` | `[]` | ASCII/punycode domains answered with `NXDOMAIN` (the name and all subdomains); no `*` wildcard, maximum 10000 unique names |
 | `dns.push_servers` | `[]` | hand clients IPv4/IPv6 resolvers **without** running the proxy. Empty = the active proxy listeners when `dns.enabled`, else nothing. Every address is strict-IP-validated and must belong to an active inner family |
 
+The cache stores whole responses. NXDOMAIN and NODATA, including a CNAME chain,
+are bounded by the negative SOA lifetime and alias TTL; without a suitable SOA,
+a negative response is not cached. Cached record TTLs are reduced by entry age.
+Truncated responses (TC) are not cached. If TCP retry also returns TC, the proxy
+tries the next upstream within the total `dns.timeout_secs` deadline; that response
+is retained only as a last resort when no complete answer is available.
+
 When `dns.enabled = false`, proxy-only fields (`listen`, `listen_ipv6`, `port`, `upstream`,
 `upstream_protocol`, cache, timeout and blocklist) are dormant and preserved without validation;
 they are validated again when the proxy is enabled. `dns.push_servers` is intentionally independent:
