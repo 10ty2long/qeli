@@ -346,3 +346,33 @@ editing a config.
 
 Separately: **a misspelled key name is not logged at all** — see
 [§2](#2-checking-a-config-before-you-start).
+
+## Local control socket
+
+The worker listens on `/var/run/qeli/control.sock`. `QELI_CONTROL_SOCKET` selects another
+server path and the CLI default; an explicit `--socket` selects the command's path.
+This is an administrative API protected by OS permissions. Its JSON envelopes are not
+a configuration format: Qeli configuration remains INI.
+
+The socket directory must belong to the worker user, have mode `0700`, and not be a
+symlink. Qeli creates new directories privately and never chmods existing directories.
+Do not place the socket directly in shared `/tmp`: use, for example,
+`/tmp/qeli-<uid>/control.sock`. Ancestors must belong to root/the worker user and deny
+other users write access; shared sticky `/tmp` is allowed. The standard `/var/run` →
+`/run` symlink is supported. The packaged systemd unit sets `RuntimeDirectoryMode=0700`;
+a custom unit must provide the same mode and owner. When updating only the binary,
+check the runtime directory settings in the existing unit.
+
+The socket itself is `0600`. A neighboring `control.sock.lock` holds an interprocess
+lease until the worker's control handlers and profiles finish. Do not delete a live
+process's lock file. A second worker refuses an occupied path; regular files and
+symlinks are preserved. Crash leftovers are reclaimed only after ownership checks
+and `ECONNREFUSED` from a nonblocking connect. Normal shutdown removes only this
+worker's socket inode; the lock file remains for subsequent starts.
+
+The protocol is one JSON line per connection, up to 64 KiB per request and 8 MiB per
+response excluding LF/CRLF. Overflow is an error, never a truncated message. Request
+reads, CLI connect, and writes have a 5 s deadline; CLI response reads have 15 s.
+At most 16 connections are handled concurrently. Shutdown closes admission and drains
+accepted handlers before profile teardown; the supervisor's overall 60 s worker grace
+still applies. Forced termination cannot guarantee completion of commands or hooks.

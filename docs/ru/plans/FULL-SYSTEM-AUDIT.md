@@ -423,7 +423,7 @@ Off/prefer/required и legacy peer; batch/reassembly caps, flush deadlines, canc
 
 ### 14. Supervisor, workers и профили
 
-**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/rename профиля, hook failure и умерший control client. Lock order, backoff, watchdog и tasks. Cleanup идемпотентен, ошибка одного профиля не затрагивает соседний.
 
@@ -451,6 +451,13 @@ stop во время ошибок spawn, владение Child/PID, 60-секу
 тестов и дочерний fixture; 812 Rust-тестов суммарно — PASS. Проверены реальные
 изолированные host-процессы, не Linux worker с TUN. Control socket, hooks,
 Unix-сигналы и rollback на Linux остаются открытыми.
+
+**Control socket и hooks, 23 сентября 2026:**
+[проход Q14-F008–F013](../reports/AUDIT-Q14-CONTROL.md): владение Unix-сокетом,
+безопасные права runtime-каталога, границы сообщений, deadlines и drain handlers
+до teardown профилей, post_down только для готового поколения. 819 host Rust tests
+PASS; 12 новых Unix tests только скомпилированы. Linux runtime/systemd/hooks и
+forced cancellation остаются открытыми; далее — hook processes/output и startup rollback.
 
 ### 15. Сессии, IP-пулы и лимиты
 

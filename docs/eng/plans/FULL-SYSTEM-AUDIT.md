@@ -418,7 +418,7 @@ Off/prefer/required and legacy peers; batch/reassembly caps, flush deadlines, ca
 
 ### 14. Supervisor, workers and profiles
 
-**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
 
 Start/stop/reload/crash/respawn, occupied bind/TUN, profile deletion/rename, hook failures and dead control clients. Lock ordering, backoff, watchdogs and task ownership. Cleanup is idempotent and isolated between profiles.
 
@@ -446,6 +446,13 @@ queuing and early signal installation. Thirteen behavioral tests plus a child
 fixture; 812 Rust tests overall pass. Tests use real isolated host processes,
 not the Linux TUN worker. Control sockets, hooks, Unix signals and Linux rollback
 remain open.
+
+**Control socket and hooks, 23 September 2026:**
+[Q14-F008–F013 pass](../reports/AUDIT-Q14-CONTROL.md): Unix socket ownership,
+safe runtime directory permissions, message bounds, deadlines, handler drain before
+profile teardown, and post_down only for ready generations. 819 host Rust tests pass;
+12 new Unix tests compiled only. Linux runtime/systemd/hooks and forced cancellation
+remain open; next are hook processes/output and startup rollback.
 
 ### 15. Sessions, IP pools and limits
 

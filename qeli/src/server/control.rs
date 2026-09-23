@@ -1,9 +1,9 @@
+use super::control_socket::ControlSocket;
 use crate::config::users::UsersDb;
+use crate::control_io::{self, IO_TIMEOUT, MAX_REQUEST, MAX_RESPONSE, RESPONSE_TIMEOUT};
 use crate::server::{ProfileRuntime, ServerState};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::UnixListener;
 
 /// Default control-socket path. Override with `QELI_CONTROL_SOCKET` — see
 /// [`control_socket_path`].
@@ -119,98 +119,64 @@ pub struct ClientInfo {
 /// Bind and secure the control socket before the data plane starts. A worker without this
 /// socket is not manageable by the supervisor, so bind failures must be startup failures,
 /// not errors hidden in a detached task.
-pub fn bind_control_server() -> anyhow::Result<UnixListener> {
+pub(super) fn bind_control_server() -> anyhow::Result<ControlSocket> {
     let sock = control_socket_path();
-    if let Some(parent) = std::path::Path::new(&sock).parent() {
-        std::fs::create_dir_all(parent)?;
-        // Lock the socket's directory to 0700 BEFORE binding, so that during the
-        // unavoidable window between bind() (which creates the socket with the
-        // process umask, typically world-traversable) and the 0600 chmod below,
-        // the socket is still unreachable by other users — the directory gates
-        // traversal. (L2)
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(parent, std::fs::Permissions::from_mode(0o700))?;
-        }
-    }
-    match std::fs::remove_file(&sock) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.into()),
-    }
-
-    let listener = UnixListener::bind(&sock)?;
-    #[cfg(unix)]
-    std::fs::set_permissions(&sock, std::os::unix::fs::PermissionsExt::from_mode(0o600))?;
-
+    let listener = ControlSocket::bind(std::path::Path::new(&sock))?;
     log::info!("Control socket listening on {}", sock);
     Ok(listener)
 }
 
-pub async fn run_control_server(
+pub(super) async fn run_control_server(
     state: Arc<ServerState>,
-    listener: UnixListener,
+    listener: tokio::net::UnixListener,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
 ) -> anyhow::Result<()> {
-    // Bound concurrent control handlers: acquire a permit BEFORE accepting the
-    // next connection, so a flood of connections queues in the kernel backlog
-    // instead of spawning unbounded tasks/fds (each handler also has a read
-    // timeout below, so a silent peer can't park a slot forever).
-    let sem = Arc::new(tokio::sync::Semaphore::new(16));
     let mut handlers = tokio::task::JoinSet::new();
-    loop {
-        let permit = match sem.clone().acquire_owned().await {
-            Ok(p) => p,
-            Err(_) => break Ok(()), // semaphore closed — shouldn't happen
-        };
-        let accepted = tokio::select! {
-            accepted = listener.accept() => accepted,
+    let result = loop {
+        // Completed handlers count towards the cap until reaped. At capacity the
+        // accept branch is disabled, but shutdown and task completion remain live.
+        tokio::select! {
+            biased;
+            _ = crate::server_supervisor::wait_for_shutdown(&mut shutdown) => break Ok(()),
             joined = handlers.join_next(), if !handlers.is_empty() => {
                 if let Some(Err(error)) = joined {
                     log::warn!("Control handler task panicked: {error}");
                 }
-                // `continue` drops the unused permit before the next accept.
-                continue;
             }
-        };
-        let (stream, _) = match accepted {
-            Ok(value) => value,
-            Err(error) => return Err(anyhow::anyhow!("control accept failed: {error}")),
-        };
-
-        let state = state.clone();
-        handlers.spawn(async move {
-            let _permit = permit; // held for the handler's lifetime
-            if let Err(e) = handle_control(stream, state).await {
-                log::debug!("Control handler error: {}", e);
+            accepted = listener.accept(), if handlers.len() < 16 => {
+                let (stream, _) = match accepted {
+                    Ok(value) => value,
+                    Err(error) => break Err(anyhow::anyhow!("control accept failed: {error}")),
+                };
+                let state = state.clone();
+                handlers.spawn(async move {
+                    if let Err(error) = handle_control(stream, state).await {
+                        log::debug!("Control handler error: {error}");
+                    }
+                });
             }
-        });
+        }
+    };
+    // Close admission. The worker keeps the pathname lease until all handlers
+    // and profiles finish. Do not cancel a disk/runtime update at
+    // an arbitrary await. The worker supervisor retains its process grace limit.
+    drop(listener);
+    while let Some(joined) = handlers.join_next().await {
+        if let Err(error) = joined {
+            log::warn!("Control handler task panicked: {error}");
+        }
     }
+    result
 }
 
 async fn handle_control(
     mut stream: tokio::net::UnixStream,
     state: Arc<ServerState>,
 ) -> anyhow::Result<()> {
-    // Cap the request size: a control command is a single short JSON line.
-    // Without a bound, a client holding the socket open and streaming bytes
-    // without a newline would grow the line buffer unboundedly (OOM). 64 KiB is
-    // far more than any legitimate command needs.
-    const MAX_CONTROL_REQUEST: u64 = 64 * 1024;
-    let (reader, mut writer) = stream.split();
-    let mut lines =
-        BufReader::new(tokio::io::AsyncReadExt::take(reader, MAX_CONTROL_REQUEST)).lines();
-
-    // Read timeout: a peer that connects and never sends a newline must not park
-    // this task + fd indefinitely (the 64 KiB `take` bounds memory, not time).
-    let line =
-        match tokio::time::timeout(std::time::Duration::from_secs(5), lines.next_line()).await {
-            Ok(Ok(Some(l))) => l,
-            Ok(Ok(None)) => return Ok(()), // clean EOF, no command
-            Ok(Err(e)) => return Err(e.into()),
-            Err(_) => return Ok(()), // timed out waiting for a command line
-        };
-
+    let (reader, writer) = stream.split();
+    let Some(line) = control_io::read_line(reader, MAX_REQUEST, IO_TIMEOUT).await? else {
+        return Ok(());
+    };
     let resp = match serde_json::from_str::<Request>(&line) {
         Ok(req) => dispatch(req, &state).await,
         Err(e) => Response {
@@ -220,10 +186,8 @@ async fn handle_control(
             message: None,
         },
     };
-
-    let mut out = serde_json::to_string(&resp)?;
-    out.push('\n');
-    writer.write_all(out.as_bytes()).await?;
+    let out = serde_json::to_string(&resp)?;
+    control_io::write_line(writer, &out, MAX_RESPONSE, IO_TIMEOUT).await?;
     Ok(())
 }
 
@@ -940,47 +904,20 @@ async fn dispatch(req: Request, state: &Arc<ServerState>) -> Response {
 }
 
 pub async fn send_command(socket_path: &str, cmd_json: &str) -> anyhow::Result<String> {
-    use tokio::io::AsyncReadExt;
-    let mut stream = tokio::net::UnixStream::connect(socket_path)
+    let mut stream = tokio::time::timeout(IO_TIMEOUT, tokio::net::UnixStream::connect(socket_path))
         .await
-        .map_err(|e| {
+        .map_err(|_| anyhow::anyhow!("Timed out connecting to control socket {socket_path}"))?
+        .map_err(|error| {
             anyhow::anyhow!(
-                "Cannot connect to control socket {}: {}\nIs the server running?",
-                socket_path,
-                e
+                "Cannot connect to control socket {socket_path}: {error}\nIs the server running?"
             )
         })?;
-
-    let mut msg = cmd_json.to_string();
-    msg.push('\n');
-    stream.write_all(msg.as_bytes()).await?;
-
-    // The server side has bounded its read since the last audit pass; this — the CLIENT —
-    // was still `read_to_string` with neither a deadline nor a cap. `read_to_string` returns
-    // only at EOF, so a server that accepts the connection and then wedges (or simply never
-    // closes its half) hangs the CLI forever with no way out but Ctrl-C, and a runaway
-    // response grows this String without bound. Bound both. (S-16)
-    //
-    // The cap is generous because legitimate replies carry list output (users, sessions,
-    // blocked IPs); the deadline is what actually protects against a stuck server.
-    const MAX_CONTROL_RESPONSE: u64 = 8 * 1024 * 1024;
-    const CONTROL_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
-
-    let mut resp = String::new();
-    // Bind the `Take` adapter to a local: inlining it drops the temporary at the end of
-    // the statement while the read future still borrows it (E0716).
-    let mut limited = tokio::io::AsyncReadExt::take(stream, MAX_CONTROL_RESPONSE);
-    let read = limited.read_to_string(&mut resp);
-    match tokio::time::timeout(CONTROL_READ_TIMEOUT, read).await {
-        Ok(Ok(_)) => Ok(resp.trim().to_string()),
-        Ok(Err(e)) => Err(e.into()),
-        Err(_) => Err(anyhow::anyhow!(
-            "timed out after {:?} waiting for a reply from the control socket {} — \
-             the server accepted the connection but did not answer. Check `journalctl -u qeli -e`.",
-            CONTROL_READ_TIMEOUT,
-            socket_path
-        )),
-    }
+    control_io::write_line(&mut stream, cmd_json, MAX_REQUEST, IO_TIMEOUT).await?;
+    let response = control_io::read_line(&mut stream, MAX_RESPONSE, RESPONSE_TIMEOUT)
+        .await
+        .map_err(|error| anyhow::anyhow!("Cannot read control reply from {socket_path}: {error}"))?
+        .ok_or_else(|| anyhow::anyhow!("Control socket {socket_path} closed without a reply"))?;
+    Ok(response.trim().to_string())
 }
 
 #[cfg(test)]
@@ -1121,5 +1058,145 @@ mod tests {
             message: None,
         };
         assert_eq!(serde_json::to_string(&r).unwrap(), r#"{"ok":true}"#);
+    }
+
+    struct Fixture(std::path::PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            use std::os::unix::fs::DirBuilderExt;
+            let path = std::env::temp_dir().join(format!(
+                "qeli-ctrl-test-{}-{}",
+                std::process::id(),
+                rand::random::<u64>()
+            ));
+            std::fs::DirBuilder::new()
+                .mode(0o700)
+                .create(&path)
+                .unwrap();
+            Self(path)
+        }
+        fn socket(&self) -> std::path::PathBuf {
+            self.0.join("control.sock")
+        }
+        fn state(&self) -> Arc<ServerState> {
+            crate::server::test_api_state(
+                crate::config::server::ServerConfig::default(),
+                &self.0.join("server.conf"),
+            )
+        }
+    }
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn control_shutdown_drains_accepted_mutation_and_holds_lease() {
+        let fixture = Fixture::new();
+        let path = fixture.socket();
+        let state = fixture.state();
+        let tracker_guard = state.failed_auth.lock().await;
+        let mut owned = ControlSocket::bind(&path).unwrap();
+        let listener = owned.listener.take().unwrap();
+        let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+        let handler_state = state.clone();
+        let task = tokio::spawn(async move {
+            let result = run_control_server(handler_state, listener, stop_rx).await;
+            drop(owned);
+            result
+        });
+        let mut peer = tokio::net::UnixStream::connect(&path).await.unwrap();
+        control_io::write_line(
+            &mut peer,
+            r#"{"cmd":"unblock-all"}"#,
+            MAX_REQUEST,
+            IO_TIMEOUT,
+        )
+        .await
+        .unwrap();
+        tokio::time::timeout(IO_TIMEOUT, async {
+            while Arc::strong_count(&state) < 3 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        stop_tx.send(true).unwrap();
+        // The handler cannot complete while its mutation lock is held.
+        tokio::task::yield_now().await;
+        assert!(!task.is_finished());
+        assert!(ControlSocket::bind(&path).is_err());
+        drop(tracker_guard);
+        let response = control_io::read_line(&mut peer, MAX_RESPONSE, IO_TIMEOUT)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&response).unwrap()["ok"],
+            true
+        );
+        tokio::time::timeout(IO_TIMEOUT, task)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+        assert_eq!(Arc::strong_count(&state), 1);
+        assert!(!path.exists());
+    }
+
+    #[tokio::test]
+    async fn control_shutdown_at_capacity_joins_all_handlers() {
+        let fixture = Fixture::new();
+        let path = fixture.socket();
+        let state = fixture.state();
+        let mut owned = ControlSocket::bind(&path).unwrap();
+        let listener = owned.listener.take().unwrap();
+        let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+        let handler_state = state.clone();
+        let task = tokio::spawn(async move {
+            let result = run_control_server(handler_state, listener, stop_rx).await;
+            drop(owned);
+            result
+        });
+        let mut peers = Vec::new();
+        for _ in 0..16 {
+            peers.push(tokio::net::UnixStream::connect(&path).await.unwrap());
+        }
+        tokio::time::timeout(IO_TIMEOUT, async {
+            while Arc::strong_count(&state) < 18 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        stop_tx.send(true).unwrap();
+        drop(peers);
+        tokio::time::timeout(IO_TIMEOUT, task)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+        assert_eq!(Arc::strong_count(&state), 1);
+        assert!(!path.exists());
+    }
+
+    #[tokio::test]
+    async fn control_closed_owner_stops_before_accepting() {
+        let fixture = Fixture::new();
+        let path = fixture.socket();
+        let mut owned = ControlSocket::bind(&path).unwrap();
+        let listener = owned.listener.take().unwrap();
+        let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+        drop(stop_tx);
+        tokio::time::timeout(
+            IO_TIMEOUT,
+            run_control_server(fixture.state(), listener, stop_rx),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        drop(owned);
+        assert!(!path.exists());
     }
 }

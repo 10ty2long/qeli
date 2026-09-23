@@ -2449,13 +2449,17 @@ set -eu
 Серверные хуки остаются отдельным per-profile контрактом:
 
 - `routing.post_up` — после поднятия TUN и NAT/routed-состояния профиля;
-- `routing.post_down` — при чистой остановке профиля/сервера;
+- `routing.post_down` — один раз при завершении поколения, которое дошло до TUN +
+  NAT/routed + NDP setup (в том числе после более поздней ошибки запуска);
 - env: `QELI_PROFILE`, `QELI_TUN`, `QELI_POOL`, `QELI_POOL_IPV4`, `QELI_POOL_IPV6`,
   `QELI_WAN`, `QELI_WAN_IPV4`, `QELI_WAN_IPV6`, `QELI_BIND_PORT`.
 
 Расширенные клиентские `QELI_ADDRESS_N_*`, carrier и JSON-переменные к серверному hook не
 относятся. Сервер сохраняет один снимок реально выбранных WAN-интерфейсов поколения и передаёт
-тот же снимок в `routing.post_down`.
+тот же снимок в `routing.post_down`. Отключённый профиль и ошибка до этой точки не запускают
+`post_down`. Снимок регистрируется перед `post_up`: ошибка или прерывание `post_up` не отменяет
+необходимость последующей очистки; пустой `post_up` также допустим. При рестарте новое
+поколение получает собственный снимок. SIGKILL и аварийное завершение не гарантируют хук.
 
 ```ini
 [profile:tcp]
@@ -2841,7 +2845,7 @@ NS/CNAME/PTR/DNAME, MX, IN SRV, SOA и TXT. Неизвестные формат�
 | `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink для NDP; пусто = использовать выбранный/заданный IPv6 interface либо определить uplink, в том числе в `manual` |
 | `route` | — | повторяемый: раздаваемый клиентам маршрут `<cidr> [gateway=<ip>] [metric=<n>]`; максимум 256 |
 | `routing.post_up` | — | команда после поднятия TUN+NAT профиля (Linux, root). **Только из доверенного файла** (панель/API не пишут — RCE-гейт). Env включает `QELI_PROFILE`, `QELI_TUN`, явные `QELI_POOL_IPV4`/`QELI_POOL_IPV6`, фактические `QELI_WAN_IPV4`/`QELI_WAN_IPV6`, `QELI_BIND_PORT`; старые `QELI_POOL`/`QELI_WAN` выбирают основное семейство профиля |
-| `routing.post_down` | — | команда при чистой остановке профиля/сервера (зеркало `routing.post_up`; краш не выполняет) |
+| `routing.post_down` | — | однократная очистка поколения после завершённого network setup; disabled/ранняя ошибка не запускает, SIGKILL не гарантирует |
 | `tun.device_type` | `tun` | тип интерфейса: `tun` (L3) \| `tap` (L2) |
 | `obf.tls.reality_proxy.peek_timeout_ms` | `1500` | сколько мс «подсматривать» ClientHello перед классификацией клиент/пробер; минимум `300` при включённом Reality |
 

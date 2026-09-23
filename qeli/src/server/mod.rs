@@ -1,6 +1,7 @@
 pub mod acl;
 pub mod client_manager;
 pub mod control;
+mod control_socket;
 pub mod dhcp;
 pub mod dns;
 pub(crate) use crate::profile_tasks::{ProfileServices, ProfileTasks};
@@ -1109,22 +1110,6 @@ impl ProfileHookEnv {
             wan_ipv6,
             bind_port: pcfg.bind.port.to_string(),
         }
-    }
-
-    fn fallback(pcfg: &ProfileConfig) -> Self {
-        use crate::config::server::{IpMode, Ipv6RoutingMode};
-        let wan_ipv4 = if pcfg.tun.ip_mode != IpMode::Ipv6 && pcfg.routing.nat.enabled {
-            nat::resolve_wan_ipv4(&pcfg.routing.nat.interface).unwrap_or_default()
-        } else {
-            String::new()
-        };
-        let wan_ipv6 =
-            if pcfg.tun.ip_mode != IpMode::Ipv4 && pcfg.routing.ipv6.mode != Ipv6RoutingMode::Off {
-                nat::resolve_wan_ipv6(&pcfg.routing.ipv6.interface).unwrap_or_default()
-            } else {
-                String::new()
-            };
-        Self::new(pcfg, wan_ipv4, wan_ipv6)
     }
 
     fn variables(&self) -> Vec<(&'static str, String)> {
@@ -3494,14 +3479,24 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 
     // Control socket (shared across profiles) — the supervisor's panel reaches
     // live client data (list/kick/bandwidth) through this.
-    let control_listener = control::bind_control_server()?;
+    let mut control_socket = control::bind_control_server()?;
+    // Fail before spawning services; the socket lease rolls back on startup errors.
+    nat::cleanup_all()?;
+    let control_listener = control_socket
+        .listener
+        .take()
+        .expect("new control listener");
+    let (control_shutdown_tx, control_shutdown_rx) = tokio::sync::watch::channel(false);
     let (control_fatal_tx, mut control_fatal_rx) = mpsc::unbounded_channel::<String>();
     let ctrl_state = state.clone();
     let control_task = tokio::spawn(async move {
-        let reason = match control::run_control_server(ctrl_state, control_listener).await {
-            Ok(()) => "control server stopped unexpectedly".to_string(),
-            Err(error) => format!("control server failed: {error}"),
-        };
+        let reason =
+            match control::run_control_server(ctrl_state, control_listener, control_shutdown_rx)
+                .await
+            {
+                Ok(()) => "control server stopped unexpectedly".to_string(),
+                Err(error) => format!("control server failed: {error}"),
+            };
         let _ = control_fatal_tx.send(reason);
     });
 
@@ -3526,17 +3521,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         });
     }
 
-    // Clear any leaked NAT rules from a previous run whose profile has since been
-    // REMOVED from the config (its per-profile cleanup never runs again). Active
-    // profiles re-install their own rules in run_profile right below.
-    nat::cleanup_all()?;
-
-    // Profiles whose `post_down` has already run for their current lifecycle. A
-    // profile supervisor clears its entry immediately before every restart, so an
-    // aborted active generation is still paired by the worker's shutdown sweep.
-    let post_down_done: Arc<Mutex<std::collections::HashSet<String>>> =
-        Arc::new(Mutex::new(std::collections::HashSet::new()));
-
     // Start one independent supervisor per profile. The JoinSet only watches for a
     // supervisor panic/return; ordinary profile failures are restarted in place.
     let (profile_shutdown_tx, profile_shutdown_rx) = tokio::sync::watch::channel(false);
@@ -3551,7 +3535,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         }
         let state = state.clone();
         let pcfg = pcfg.clone();
-        let post_down_done = post_down_done.clone();
         let mut profile_shutdown = profile_shutdown_rx.clone();
         profile_set.spawn(async move {
             let pname = pcfg.name.clone();
@@ -3560,7 +3543,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                 if *profile_shutdown.borrow() {
                     break;
                 }
-                post_down_done.lock().await.remove(&pname);
                 let started = tokio::time::Instant::now();
                 let result =
                     run_profile(state.clone(), pcfg.clone(), profile_shutdown.clone()).await;
@@ -3571,7 +3553,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                         Err(e) => log::error!("Profile '{}' error: {}", pname, e),
                     }
                 }
-                run_post_down(&state, &pname, &post_down_done).await;
+                run_post_down(&state, &pname).await;
                 if stopping {
                     break;
                 }
@@ -3638,13 +3620,15 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         }
     }
 
+    // Finish accepted administrative operations before profiles lose their resources.
+    let _ = control_shutdown_tx.send(true);
+    let _ = control_task.await;
+
     // Ask every generation to leave through its normal async cleanup path. Aborting the
     // supervisors dropped `ProfileTeardown` synchronously and could remove TUN/NAT while
     // generation-owned tasks were still detached and using those resources.
     let _ = profile_shutdown_tx.send(true);
     while profile_set.join_next().await.is_some() {}
-    control_task.abort();
-    let _ = control_task.await;
 
     // Tear down the host NAT rules we installed (the next start also cleans stale
     // rules, so a SIGKILL that skips this is recovered then) and run post_down.
@@ -3661,9 +3645,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         // (Audit 2026-07-27, B6.)
         nat::cleanup(&pcfg.name);
         // Skips any profile whose hook already ran when that profile ended on its own — the
-        // interlock lives in `run_post_down`, so a shutdown racing a dying profile cannot fire
+        // snapshot claim lives in `run_post_down`, so a shutdown racing a dying profile cannot fire
         // the hook twice.
-        run_post_down(&state, &pcfg.name, &post_down_done).await;
+        run_post_down(&state, &pcfg.name).await;
     }
 
     log::info!("Server shutdown complete");
@@ -3679,6 +3663,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         if let Err(error) = state.usage.flush() {
             log::error!("usage: shutdown flush failed: {error}");
         }
+        // process::exit skips Drop: release the pathname only after the final
+        // usage flush, so a replacement worker cannot load stale counters.
+        drop(control_socket);
         std::process::exit(0);
     }
     if let Some(reason) = fatal_reason {
@@ -4703,33 +4690,19 @@ impl Drop for ProfileTeardown {
 
 /// Run a profile's `post_down` hook exactly once, whoever gets there first.
 ///
-/// Two things can end a profile — the profile's own task returning, and the worker shutting
-/// down — and both must leave the hook run, but only once. The `done` set is the interlock;
-/// it is checked and inserted under one lock so a shutdown racing a dying profile cannot run
-/// the hook twice.
-///
-/// Honoured ONLY from a config the hook layer considers trusted, exactly like `post_up`: the
-/// panel and the API never write these fields, and running a command out of an untrusted file
-/// would be remote code execution.
-async fn run_post_down(
-    state: &Arc<ServerState>,
-    profile: &str,
-    done: &Arc<Mutex<std::collections::HashSet<String>>>,
-) {
+/// Claim the ready generation's snapshot once, atomically. Disabled profiles and
+/// failures before routing/NDP setup have nothing to tear down. A generation that
+/// reached post_up remains armed even if that hook failed or was interrupted.
+/// Trusted file-only hooks retain the same permission guard as post_up.
+async fn run_post_down(state: &Arc<ServerState>, profile: &str) {
     let Some(pcfg) = state.config.profiles.iter().find(|p| p.name == profile) else {
         return;
     };
-    // Take the generation snapshot even when no post_down command is configured, so a later
-    // restart can never inherit the previous generation's auto-detected WAN.
-    let hook_env = state.profile_hook_env.lock().await.remove(profile);
+    let Some(hook_env) = state.profile_hook_env.lock().await.remove(profile) else {
+        return;
+    };
     if pcfg.routing.post_down.is_empty() {
         return;
-    }
-    {
-        let mut d = done.lock().await;
-        if !d.insert(profile.to_string()) {
-            return; // already run for this profile
-        }
     }
     let trusted = {
         let p = state.config_path.lock().await.clone();
@@ -4740,7 +4713,6 @@ async fn run_post_down(
     if !trusted {
         return;
     }
-    let hook_env = hook_env.unwrap_or_else(|| ProfileHookEnv::fallback(pcfg));
     crate::hooks::run(
         &format!("post_down:{profile}"),
         &pcfg.routing.post_down,
@@ -6649,6 +6621,68 @@ mod tests {
 
     fn ip(s: &str) -> IpAddr {
         s.parse().unwrap()
+    }
+
+    #[tokio::test]
+    async fn post_down_requires_ready_generation_and_claims_its_environment_once() {
+        use std::os::unix::fs::OpenOptionsExt;
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-hooks-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let config_path = dir.join("server.conf");
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&config_path)
+            .unwrap();
+        let marker = dir.join("events");
+        let mut config = ServerConfig::default();
+        let mut ready = ProfileConfig::baseline();
+        ready.name = "ready".into();
+        ready.routing.post_down = format!(
+            "printf '%s\\n' \"$QELI_WAN_IPV4\" >> '{}'",
+            marker.display()
+        );
+        let mut disabled = ready.clone();
+        disabled.name = "disabled".into();
+        disabled.enabled = false;
+        let mut early_failure = ready.clone();
+        early_failure.name = "early".into();
+        config.profiles = vec![ready.clone(), disabled, early_failure];
+        let state = test_api_state(config, &config_path);
+        for profile in ["disabled", "early", "ready"] {
+            run_post_down(&state, profile).await;
+        }
+        assert!(
+            !marker.exists(),
+            "a generation that never became ready must not run a hook"
+        );
+        state.profile_hook_env.lock().await.insert(
+            "ready".into(),
+            ProfileHookEnv::new(&ready, "actual-wan1".into(), String::new()),
+        );
+        tokio::join!(
+            run_post_down(&state, "ready"),
+            run_post_down(&state, "ready")
+        );
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "actual-wan1\n");
+        state.profile_hook_env.lock().await.insert(
+            "ready".into(),
+            ProfileHookEnv::new(&ready, "actual-wan2".into(), String::new()),
+        );
+        run_post_down(&state, "ready").await;
+        run_post_down(&state, "ready").await;
+        assert_eq!(
+            std::fs::read_to_string(&marker).unwrap(),
+            "actual-wan1\nactual-wan2\n"
+        );
+        assert!(state.profile_hook_env.lock().await.is_empty());
+        drop(state);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

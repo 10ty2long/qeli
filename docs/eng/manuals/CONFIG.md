@@ -2486,13 +2486,17 @@ set -eu
 Server hooks remain a separate per-profile contract:
 
 - `routing.post_up`: after the profile TUN and NAT/routed state are up;
-- `routing.post_down`: on clean profile/server shutdown;
+- `routing.post_down`: once when a generation that reached TUN + NAT/routed + NDP
+  setup ends, including a later startup failure;
 - env: `QELI_PROFILE`, `QELI_TUN`, `QELI_POOL`, `QELI_POOL_IPV4`, `QELI_POOL_IPV6`,
   `QELI_WAN`, `QELI_WAN_IPV4`, `QELI_WAN_IPV6`, `QELI_BIND_PORT`.
 
 The extended client `QELI_ADDRESS_N_*`, carrier and JSON values do not apply to server hooks. The
 server retains one snapshot of the actual WAN interfaces selected for a generation and supplies
-that same snapshot to `routing.post_down`.
+that same snapshot to `routing.post_down`. Disabled profiles and failures before this point
+never run `post_down`. The snapshot is armed before `post_up`: failure or interruption of
+`post_up` still needs subsequent cleanup; an empty `post_up` is valid too. Each restarted
+generation has its own snapshot. SIGKILL and process crashes cannot guarantee a hook.
 
 ```ini
 [profile:tcp]
@@ -2881,7 +2885,7 @@ Server-side routing for the profile (client-side routing keys are in the "Client
 | `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink for NDP; empty = reuse the effective/configured IPv6 interface or discover the IPv6 uplink, including in `manual` |
 | `route` | — | repeatable: a route advertised to clients, `<cidr> [gateway=<ip>] [metric=<n>]`; maximum 256 |
 | `routing.post_up` | — | command run after this profile's TUN+NAT are up (Linux, root). **File-only** (panel/API never write it — RCE guard). Env includes `QELI_PROFILE`, `QELI_TUN`, explicit `QELI_POOL_IPV4`/`QELI_POOL_IPV6`, actual `QELI_WAN_IPV4`/`QELI_WAN_IPV6`, `QELI_BIND_PORT`; legacy `QELI_POOL`/`QELI_WAN` select the profile's primary family |
-| `routing.post_down` | — | command run on a clean profile/server stop (mirrors `routing.post_up`; a crash doesn't run it) |
+| `routing.post_down` | — | once-per-generation cleanup after completed network setup; disabled/early failure does not run it; SIGKILL cannot guarantee it |
 | `tun.device_type` | `tun` | interface type: `tun` (L3) \| `tap` (L2) |
 | `obf.tls.reality_proxy.peek_timeout_ms` | `1500` | how many ms to peek the ClientHello before classifying peer as client vs probe; minimum `300` while Reality is enabled |
 

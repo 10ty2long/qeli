@@ -27,6 +27,11 @@ mod dns_resolver;
 #[path = "server/tasks.rs"]
 mod profile_tasks;
 
+// Control protocol bounds are shared by the Unix server and its CLI client.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/control_io.rs"]
+mod control_io;
+
 // Process ownership/retry logic is tested with isolated child processes on the host.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/supervisor.rs"]
