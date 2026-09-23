@@ -1105,6 +1105,7 @@ impl ClientHookContext {
 
 #[cfg(target_os = "linux")]
 fn cleanup_routing_features(
+    core_stop: anyhow::Result<()>,
     kill_switch: bool,
     gateway_enabled: bool,
     exit_node: bool,
@@ -1113,6 +1114,7 @@ fn cleanup_routing_features(
     lan_subnet_ipv6: &str,
 ) -> anyhow::Result<()> {
     crate::client_cleanup::routing(
+        core_stop,
         kill_switch,
         || {
             if gateway_enabled || exit_node {
@@ -2575,25 +2577,61 @@ async fn run_client_inner(
 
     loop {
         let started = std::time::Instant::now();
+        let mut start_failed = false;
         let result = if shutdown_requested.load(Ordering::Acquire) {
             // Backoff was interrupted. Reuse the ordinary teardown below without dialing.
             Ok(())
         } else {
-            core_adapter.begin_connection(carrier_generation > 0)?;
-            // Carrier generations keep rotating independently of the unstable-attempt budget.
-            reset_carrier_candidates(carrier_generation);
-            carrier_generation = carrier_generation.saturating_add(1);
-            if config.server.protocol == "udp" {
-                connect_and_run_udp(&config, &password, &mut core_adapter).await
-            } else {
-                connect_and_run_tcp(&config, &password, &mut core_adapter).await
+            match core_adapter.begin_connection(carrier_generation > 0) {
+                Err(error) => {
+                    start_failed = true;
+                    let message = format!("transport core startup failed: {error}");
+                    Err(error.context(message))
+                }
+                Ok(()) => {
+                    // Carrier generations rotate independently of the unstable-attempt budget.
+                    reset_carrier_candidates(carrier_generation);
+                    carrier_generation = carrier_generation.saturating_add(1);
+                    if config.server.protocol == "udp" {
+                        connect_and_run_udp(&config, &password, &mut core_adapter).await
+                    } else {
+                        connect_and_run_tcp(&config, &password, &mut core_adapter).await
+                    }
+                }
             }
         };
         let connected_ms = core_adapter
             .attempt_connected_since
             .map(|started| i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX));
-        if let Err(error) = core_adapter.finish_connection() {
-            log::error!("transport core teardown error: {error}");
+        let core_stop = core_adapter.finish_connection().map_err(|error| {
+            let message = format!("transport core teardown failed: {error}");
+            error.context(message)
+        });
+        if start_failed || core_stop.is_err() {
+            // A broken lifecycle must not enter retry or the clean-signal success path.
+            // Withdraw router permits, but retain the kill-switch if core teardown failed.
+            let (reason, error_code) = if core_stop.is_err() {
+                ("core_stop_failed", "core_stop")
+            } else {
+                ("core_start_failed", "core_start")
+            };
+            let cleanup = cleanup_routing_features(
+                core_stop,
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+                &lan_subnet,
+                &lan_subnet_ipv6,
+            );
+            let terminal = crate::client_cleanup::with_cleanup_error(result, cleanup);
+            let message = terminal
+                .as_ref()
+                .err()
+                .map(ToString::to_string)
+                .unwrap_or_default();
+            run_client_post_down(&core_adapter, &post_down, reason, error_code, &message).await;
+            return terminal;
         }
 
         if let Err(error) = &result {
@@ -2602,6 +2640,7 @@ async fn run_client_inner(
                 .is_some_and(|kick| !kick.reconnect_allowed)
             {
                 let cleanup = cleanup_routing_features(
+                    Ok(()),
                     ks_on,
                     gw_on,
                     exit_on,
@@ -2627,6 +2666,7 @@ async fn run_client_inner(
 
         if shutdown_requested.load(Ordering::Acquire) {
             let cleanup = cleanup_routing_features(
+                Ok(()),
                 ks_on,
                 gw_on,
                 exit_on,
@@ -2674,6 +2714,7 @@ async fn run_client_inner(
             // Clean exit (reconnect disabled): lift the kill-switch / gateway NAT so
             // the host isn't left firewalled or NAT'ing after the client returns.
             let cleanup = cleanup_routing_features(
+                Ok(()),
                 ks_on,
                 gw_on,
                 exit_on,
@@ -2706,6 +2747,7 @@ async fn run_client_inner(
 
         if stop_reason == Some("retry_limit") {
             let cleanup = cleanup_routing_features(
+                Ok(()),
                 ks_on,
                 gw_on,
                 exit_on,

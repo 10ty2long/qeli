@@ -41,3 +41,5 @@ The begin_connection error path after kill-switch engagement still needs explici
 this patch does not claim complete network rollback. Retaining an already-installed
 barrier is not proof that every kernel rule exists or that external actors leave it intact.
 Linux fault-injection/E2E, nested task ownership and the wider audit remain open.
+
+Follow-up: [core lifecycle audit](AUDIT-Q25-CORE-LIFECYCLE.md) handles the early startup error path and makes failed core teardown terminal. Full route/DNS rollback and live Linux E2E remain open.

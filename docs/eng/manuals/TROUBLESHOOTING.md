@@ -968,6 +968,22 @@ has a different meaning: removal may have partially succeeded, so retention is n
 
 ---
 
+### 6.19 Linux: transport core startup or teardown failed
+
+After kill-switch setup, a core lifecycle error terminates the client with a failure status;
+it is not retried as an ordinary carrier failure. `post_down` receives `core_start_failed` /
+`core_start`, or `core_stop_failed` / `core_stop` (reason / error code). If both phases fail,
+`core_stop_failed` takes precedence and the message keeps the startup and cleanup causes.
+A concurrent SIGINT/SIGTERM cannot turn the teardown failure into a successful stop.
+
+`kill-switch retained because transport core teardown did not complete` means Qeli could
+not confirm core teardown. Forwarding cleanup is still attempted. A combined message names
+both failures when forwarding cleanup also fails. Preserve the error log and verify process,
+firewall and route state before administrator recovery; do not interpret a hook invocation
+as proof of a clean network reset. User hook scripts can make their own firewall changes.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

@@ -1831,8 +1831,9 @@ level = info
 
 ## Kill-switch (`kill_switch`)
 
-На Linux включённый kill-switch снимается только после успешной очистки forwarding
-для gateway/exit-node. При ошибке Qeli сообщает `kill-switch retained` и сохраняет
+На Linux включённый kill-switch снимается только после успешной остановки transport core
+и очистки forwarding для gateway/exit-node. При ошибке любого этапа Qeli сообщает
+`kill-switch retained` и сохраняет
 защиту выхода. Сначала устраните причину отказа, затем повторите очистку либо выполните
 восстановление администратором. Ошибочная остановка не означает успешный сброс сети.
 
@@ -2231,8 +2232,13 @@ policy routing, дополнительные firewall/mangle-правила, и�
   план `post_up` не запускают.
 - Обычный reconnect пересоздаёт сетевое поколение, но повторно `post_up` не запускает. Снимок
   контекста при этом обновляется, поэтому `post_down` получит последний успешно применённый план.
-- `post_down` запускается один раз при терминальной чистой остановке: SIGINT/SIGTERM, отключённом
-  reconnect, терминальном kick сервера либо исчерпании `reconnect_retries`.
+- `post_down` запускается один раз при обработанном терминальном выходе: SIGINT/SIGTERM,
+  отключённом reconnect, терминальном kick сервера, исчерпании `reconnect_retries` либо ошибке
+  запуска/остановки ядра после настройки kill-switch. Вызов хука не означает успех очистки.
+  Ошибка остановки ядра имеет приоритет над одновременным сигналом остановки и запрещает
+  reconnect: Qeli пытается очистить forwarding и сохраняет включённый kill-switch. Если запуск
+  ядра не удался, но последующая остановка и очистка forwarding успешны, защита может быть снята,
+  а исходная ошибка запуска остаётся терминальной.
 - Если ни один план не был применён, `post_down` всё равно может выполниться: тогда
   `QELI_PLAN_AVAILABLE=false`, зависящие от плана значения пусты, а в JSON поле
   `network_plan` равно `null`.
@@ -2283,8 +2289,8 @@ post_down = /etc/qeli/hooks/client-route.sh "$@"
 | `QELI_PLAN_AVAILABLE` | `true`, если хотя бы один authenticated `NetworkPlan` был успешно применён. |
 | `QELI_PLAN_GENERATION` | Номер последнего применённого поколения плана. |
 | `QELI_SESSION_DURATION_SECONDS` | Секунды с момента первого успешно применённого плана в этом процессе; до него `0`. Включает время reconnect между поколениями. |
-| `QELI_REASON`, `QELI_STOP_REASON` | Причина события. Для `post_up` — `connected`; для `post_down` — `shutdown_signal`, `reconnect_disabled`, `server_kick` или `max_retries`. `QELI_REASON` — короткий универсальный алиас. |
-| `QELI_ERROR_CODE` | Машиночитаемая категория терминальной ошибки: пусто, `shutdown`, `transport_error`, `server_kick` или `max_retries`. |
+| `QELI_REASON`, `QELI_STOP_REASON` | Причина события. Для `post_up` — `connected`; для `post_down` — `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed` или `core_stop_failed`. `QELI_REASON` — короткий универсальный алиас. |
+| `QELI_ERROR_CODE` | Машиночитаемая категория терминальной ошибки: пусто, `shutdown`, `transport_error`, `server_kick`, `max_retries`, `core_start` или `core_stop`. |
 | `QELI_ERROR_MESSAGE` | Текст последней ошибки без секретов; пусто при штатном завершении. Не разбирайте его как стабильный API. |
 | `QELI_CONTEXT_FILE`, `QELI_NETWORK_PLAN_FILE` | Два имени одного временного JSON-файла с полным контекстом. Файл имеет режим `0600` и удаляется сразу после завершения хука. При ошибке создания обе переменные пусты. |
 

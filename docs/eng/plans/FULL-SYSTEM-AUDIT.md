@@ -504,7 +504,15 @@ Startup/network rollback, background fault monitoring and Linux E2E remain open.
 [Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup must succeed
 before an enabled kill-switch is removed; failures retain the barrier and report why.
 899 host Rust tests PASS, including four portable fault-injection scenarios. Linux is
-cross-checked only; real firewall/E2E and early begin_connection rollback remain open.
+cross-checked only. The early begin_connection follow-up is recorded below; real firewall/E2E remain open.
+
+**Core lifecycle failure handling, 23 September 2026:**
+[Q25-F004/F005](../reports/AUDIT-Q25-CORE-LIFECYCLE.md): core startup errors now reach
+cleanup/post_down; core teardown errors terminate with failure and retain the enabled
+kill-switch while still attempting forwarding cleanup. Six new host regressions include
+real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-checked only.
+Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
+
 
 ### 15. Sessions, IP pools and limits
 
@@ -751,7 +759,15 @@ Startup/network rollback, background fault monitoring and Linux E2E remain open.
 [Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup must succeed
 before an enabled kill-switch is removed; failures retain the barrier and report why.
 899 host Rust tests PASS, including four portable fault-injection scenarios. Linux is
-cross-checked only; real firewall/E2E and early begin_connection rollback remain open.
+cross-checked only. The early begin_connection follow-up is recorded below; real firewall/E2E remain open.
+
+**Core lifecycle failure handling, 23 September 2026:**
+[Q25-F004/F005](../reports/AUDIT-Q25-CORE-LIFECYCLE.md): core startup errors now reach
+cleanup/post_down; core teardown errors terminate with failure and retain the enabled
+kill-switch while still attempting forwarding cleanup. Six new host regressions include
+real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-checked only.
+Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
+
 
 ### 26. Shared C# and managed/native boundary
 

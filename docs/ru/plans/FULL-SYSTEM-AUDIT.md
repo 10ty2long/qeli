@@ -509,7 +509,15 @@ Startup/network rollback, мониторинг фоновых ошибок и Li
 [Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup должен
 завершиться успешно до снятия включённого kill-switch; ошибка сохраняет защиту и её причину.
 899 host Rust tests PASS, включая четыре переносимых fault-injection сценария. Linux
-пока только cross-check; live firewall/E2E и ранний begin_connection rollback ещё открыты.
+пока только cross-check. Разбор begin_connection записан ниже; live firewall/E2E ещё открыты.
+
+**Ошибки жизненного цикла ядра, 23 сентября 2026:**
+[Q25-F004/F005](../reports/AUDIT-Q25-CORE-LIFECYCLE.md): ошибка запуска ядра проходит через
+cleanup/post_down; ошибка остановки завершается отказом и сохраняет включённый kill-switch,
+при этом очистка forwarding выполняется. Шесть новых host-регрессий, включая реальный отказ
+ClientCore при полной очереди. 905 host Rust tests PASS; Linux только cross-check.
+Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
+
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -758,7 +766,15 @@ Startup/network rollback, мониторинг фоновых ошибок и Li
 [Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup должен
 завершиться успешно до снятия включённого kill-switch; ошибка сохраняет защиту и её причину.
 899 host Rust tests PASS, включая четыре переносимых fault-injection сценария. Linux
-пока только cross-check; live firewall/E2E и ранний begin_connection rollback ещё открыты.
+пока только cross-check. Разбор begin_connection записан ниже; live firewall/E2E ещё открыты.
+
+**Ошибки жизненного цикла ядра, 23 сентября 2026:**
+[Q25-F004/F005](../reports/AUDIT-Q25-CORE-LIFECYCLE.md): ошибка запуска ядра проходит через
+cleanup/post_down; ошибка остановки завершается отказом и сохраняет включённый kill-switch,
+при этом очистка forwarding выполняется. Шесть новых host-регрессий, включая реальный отказ
+ClientCore при полной очереди. 905 host Rust tests PASS; Linux только cross-check.
+Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
+
 
 ### 26. Общий C# и managed/native граница
 
