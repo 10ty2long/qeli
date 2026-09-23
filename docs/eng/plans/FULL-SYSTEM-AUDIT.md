@@ -714,6 +714,15 @@ newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
 Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
 races, overall deadlines and Linux runtime remain open.
 
+**Exit NAT and kill-switch admission, 23 September 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT comments distinguish
+TUN/WAN rules; cleanup no longer discovers unowned WAN targets. Public kill-switch
+startup checks both families before mutation and rejects other/legacy Qeli chains.
+The first carrier remains reachable; concurrent starts in one process admit one
+policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
+1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
+IPv6-protection discovery and Linux runtime remain open.
+
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -784,6 +793,15 @@ process lock. Eight baseline failures → PASS; 25 new tests and five existing t
 newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
 Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
 races, overall deadlines and Linux runtime remain open.
+
+**Exit NAT and kill-switch admission, 23 September 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT comments distinguish
+TUN/WAN rules; cleanup no longer discovers unowned WAN targets. Public kill-switch
+startup checks both families before mutation and rejects other/legacy Qeli chains.
+The first carrier remains reachable; concurrent starts in one process admit one
+policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
+1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
+IPv6-protection discovery and Linux runtime remain open.
 
 ### 19. Server and client DNS
 
@@ -1422,6 +1440,15 @@ newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
 Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
 races, overall deadlines and Linux runtime remain open.
 
+**Exit NAT and kill-switch admission, 23 September 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT comments distinguish
+TUN/WAN rules; cleanup no longer discovers unowned WAN targets. Public kill-switch
+startup checks both families before mutation and rejects other/legacy Qeli chains.
+The first carrier remains reachable; concurrent starts in one process admit one
+policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
+1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
+IPv6-protection discovery and Linux runtime remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1697,10 +1724,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with shared exit-node WAN/MASQUERADE ownership
-and interaction of multiple kill-switch chains; then IPv6-protection evidence.
-Q25-F040–F042 covers gateway scope/subnet rollback and checked permit insertion.
-Overall deadlines, durable crash recovery, cross-process races and Q14-F027 TUN
-workers/FD remain open. Section 05 still needs an overall preflight deadline and
-review of synchronous waits in async handlers. Unfinished 01–07, Linux E2E
-restart/restore/manual+NDP, native certification and a new benchmark remain planned.
+**Next work:** continue section 25 with cross-process kill-switch admission,
+stale TUN identity and IPv6-protection evidence. Q25-F043–F045 fixes exit NAT selector
+sharing and unowned cleanup, and rejects incompatible kill-switch policies before
+mutation within the checked scope. DNS/carrier globals, overall deadlines, durable
+crash recovery, Q14-F027 TUN workers/FD and section 05 synchronous preflight waits
+remain open. Linux E2E restart/restore/manual+NDP, native certification and a new
+benchmark remain planned; no complete section is promoted to PASS by this run.

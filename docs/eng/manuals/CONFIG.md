@@ -1913,7 +1913,7 @@ independent mechanisms plus the system one on mobile. Summary:
 
 | Platform | Mechanism | Scope | Manual teardown |
 |---|---|---|---|
-| Linux | `iptables`/`ip6tables`, own `QELI_KS_<tun>` chain | per interface | §13.2 in GETTING-STARTED |
+| Linux | `iptables`/`ip6tables`, own `QELI_KS_<tun>` chain | network namespace policy; cleanup per interface | §13.2 in GETTING-STARTED |
 | Windows | WinDivert kernel DROP gate + crash-persistent WFP/`NetSecurity` default-block and `qeli_ks` allow group | whole host (all profiles) | `Remove-NetFirewallRule -Group qeli_ks` + restore the default |
 | macOS | `pf`, anchor `qeli` (or `com.apple/qeli`) | whole host | flush the anchor (**not** `pfctl -f /etc/pf.conf`) |
 | Android | system "Always-on VPN + Block connections without VPN" | whole host | in Android settings |
@@ -1933,8 +1933,15 @@ policy also survives a clean stop and remains until the user or MDM disables it 
 
 How it works (matters for manual teardown and for several instances on one host):
 
-- The rules live in a **per-interface chain** — `QELI_KS_<tun_if>` (e.g. `QELI_KS_vpn0`),
-  keyed on `dev = …`. Two clients on one host therefore **cannot wipe** each other's rules.
+- Rules use a **separate chain per interface**, `QELI_KS_<tun_if>` (for example
+  `QELI_KS_vpn0`), keyed by `dev = …` to scope cleanup. OUTPUT/FORWARD policy covers
+  the entire network namespace: independent terminal-DROP chains do not compose.
+  Before any changes, Qeli inspects both available families and refuses another
+  `QELI_KS_<tun>` or legacy `QELI_KS`, including unhooked chains. Unknown/incomplete
+  inventory also refuses; `allow_ipv4_leak`/`allow_ipv6_leak` do not bypass ownership
+  conflicts. The same TUN may rebuild its own chain. Use separate network namespaces
+  for independently protected tunnels. Checks are serialized within the process;
+  the cross-process race is not yet eliminated.
 - **DNS is scoped to the system resolvers** — the same as Windows and macOS. The rule used to
   be `--dport 53` to any destination, so while the tunnel was down **every** application's DNS
   queries egressed in cleartext on the physical interface, to a resolver of the querier's
@@ -2117,6 +2124,19 @@ forward counters are visible there too:
 sudo iptables -t nat -L POSTROUTING -v -n | grep MASQUERADE   # packets should climb
 sudo ip6tables -t nat -L POSTROUTING -v -n | grep MASQUERADE  # IPv6/NAT66 counter
 ```
+
+Exit NAT rules have an exact `qeli-exit-node:<tun>` comment, for example
+`qeli-exit-node:vpn0`. Multiple TUNs on one WAN get distinct equivalent MASQUERADE
+rules: stopping one does not delete another's rule. MARK/FORWARD/MSS keep the
+`qeli-exit-node` comment and are distinguished by interfaces. Bits selected by
+`0x51/0x51` are reserved for Qeli exit traffic and must not be reused by other marking.
+
+Cleanup uses only WANs remembered during installation, including previous uplinks;
+without ownership records, the current default route cannot authorize deletion.
+An old MASQUERADE with an unsuffixed comment is preserved. After confirming its old
+owners have stopped, inspect and recover it explicitly. WAN records are in memory:
+successful cleanup in a new process does not prove recovery of pre-crash rules.
+[Validation and limits](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).
 
 ### How it works and what the flag programs
 

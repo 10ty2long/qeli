@@ -137,27 +137,3 @@ fn unusable_route_get_output_does_not_invent_a_wan() {
         }
     }
 }
-
-#[test]
-fn cleanup_keeps_all_remembered_uplinks_without_discovery() {
-    let remembered = vec!["eth0".to_owned(), "wwan0".to_owned()];
-    assert_eq!(
-        cleanup_wans(&remembered, || panic!(
-            "owned cleanup must not query current routes"
-        )),
-        remembered
-    );
-}
-
-#[test]
-fn cleanup_discovers_once_only_when_ownership_is_missing() {
-    for fallback in [None, Some("eth2".to_owned())] {
-        let mut calls = 0;
-        let wans = cleanup_wans(&[], || {
-            calls += 1;
-            fallback.clone()
-        });
-        assert_eq!(wans, fallback.into_iter().collect::<Vec<_>>());
-        assert_eq!(calls, 1);
-    }
-}

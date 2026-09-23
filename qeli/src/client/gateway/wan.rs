@@ -54,19 +54,6 @@ fn dev_token(line: &str) -> Option<String> {
         .map(|device| device.to_string())
 }
 
-/// Teardown uses every WAN it actually installed rules on, including previous uplinks.
-/// Discovery is only a best-effort fallback when there is no in-memory ownership.
-pub(super) fn cleanup_wans(
-    remembered: &[String],
-    discover: impl FnOnce() -> Option<String>,
-) -> Vec<String> {
-    if remembered.is_empty() {
-        discover().into_iter().collect()
-    } else {
-        remembered.to_vec()
-    }
-}
-
 #[cfg(test)]
 #[path = "wan/tests.rs"]
 mod tests;

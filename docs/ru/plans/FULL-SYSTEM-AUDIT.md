@@ -719,6 +719,15 @@ permit тоже проверяет порядок kill-switch. Router-опера
 матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
 гонки, общий deadline и Linux runtime остаются открытыми.
 
+**Exit NAT и допуск kill-switch, 23 сентября 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT-комментарии различают
+правила TUN/WAN; cleanup больше не обнаруживает цели без записанного владения.
+Запуск kill-switch проверяет обе семьи до изменений и отвергает чужую/старую Qeli
+chain. Carrier первого остаётся доступен; конкурентные запуски одного процесса
+принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
+helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
+гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -789,6 +798,15 @@ permit тоже проверяет порядок kill-switch. Router-опера
 и пять существующих, впервые включённых на host; 1287 Rust tests и девять команд
 матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
 гонки, общий deadline и Linux runtime остаются открытыми.
+
+**Exit NAT и допуск kill-switch, 23 сентября 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT-комментарии различают
+правила TUN/WAN; cleanup больше не обнаруживает цели без записанного владения.
+Запуск kill-switch проверяет обе семьи до изменений и отвергает чужую/старую Qeli
+chain. Carrier первого остаётся доступен; конкурентные запуски одного процесса
+принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
+helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
+гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
 
 ### 19. DNS сервера и клиентов
 
@@ -1429,6 +1447,15 @@ permit тоже проверяет порядок kill-switch. Router-опера
 матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
 гонки, общий deadline и Linux runtime остаются открытыми.
 
+**Exit NAT и допуск kill-switch, 23 сентября 2026:**
+[Q25-F043–F045](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md): NAT-комментарии различают
+правила TUN/WAN; cleanup больше не обнаруживает цели без записанного владения.
+Запуск kill-switch проверяет обе семьи до изменений и отвергает чужую/старую Qeli
+chain. Carrier первого остаётся доступен; конкурентные запуски одного процесса
+принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
+helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
+гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1706,10 +1733,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: владение общим WAN/MASQUERADE exit-node
-и взаимодействие нескольких kill-switch chains; затем доказательства IPv6-защиты.
-Q25-F040–F042 закрывает откат gateway по scope/подсети и проверяемую вставку permit.
-Общий deadline, постоянный crash recovery, межпроцессные гонки и Q14-F027 TUN
-workers/FD остаются открытыми. В 05 остаются общий preflight deadline и sync waits
-в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
-native certification и новый benchmark остаются в плане.
+**Ближайшая работа:** продолжить 25: межпроцессный допуск kill-switch,
+stale TUN identity и доказательства IPv6-защиты. Q25-F043–F045 исправляет общий
+selector exit NAT и очистку без владения, отвергает несовместимые kill-switch
+до изменений в проверенных пределах. DNS/carrier globals, общий deadline,
+постоянный crash recovery, Q14-F027 TUN workers/FD и синхронные preflight waits
+раздела 05 открыты. Linux E2E restart/restore/manual+NDP, native certification
+и новый benchmark остаются в плане; целый раздел этот прогон не переводит в PASS.

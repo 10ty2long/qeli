@@ -1623,3 +1623,17 @@ iptables/ip6tables and the actual FORWARD chain order. After a process crash the
 in-memory rule registry is gone; review leftover `qeli-gw-nat` rules for the affected
 interface/subnet before manual recovery.
 [Evidence and limitations](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md).
+
+### Exit-node NAT or kill-switch conflict
+
+For a shared WAN, inspect the exact `qeli-exit-node:<tun>` NAT comments in each family.
+The unsuffixed legacy MASQUERADE is preserved during cleanup; do not delete it while
+an older exit process may still rely on it. No remembered WAN means no automatic
+firewall deletion, not proof that a previous process left nothing behind.
+
+`kill-switch conflict` means another per-TUN or legacy Qeli chain was found before
+installation. Stop its live owner cleanly, or establish that it is stale and recover
+the exact chain using the procedure in [Getting started](GETTING-STARTED.md).
+Do not flush the whole filter table. Incomplete/unreadable inventory also blocks
+admission. Leak overrides do not resolve policy conflicts.
+[Audit evidence and limits](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).

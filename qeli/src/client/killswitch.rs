@@ -50,6 +50,16 @@ use crate::system_command::Command;
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
 
+#[path = "killswitch/admission.rs"]
+mod admission;
+
+// Serializes preflight + mutation in this process. Kernel snapshots are not a
+// cross-process lease; another process/admin may still change the rules externally.
+static OPERATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+fn operation() -> std::sync::MutexGuard<'static, ()> {
+    OPERATION.lock().unwrap_or_else(|error| error.into_inner())
+}
+
 /// Dedicated chain (in the `filter` table) holding the kill-switch ruleset.
 /// Chain name for THIS instance.
 ///
@@ -59,13 +69,15 @@ use std::path::Path;
 /// whichever instance stopped first removed the chain out from under the other, leaving
 /// it running with no kill-switch at all and nothing said about it. The tun interface
 /// name is already unique per instance — that is what `dev=` is for — so key the chain
-/// on it. iptables allows 28 characters; `QELI_KS_` (8) plus an IFNAMSIZ name (≤15) fits.
+/// on it. This scopes cleanup, not packet policy: two terminal-DROP chains still
+/// conflict in OUTPUT/FORWARD, so admission permits only one TUN's kill-switch.
+/// iptables allows 28 characters; `QELI_KS_` (8) plus an IFNAMSIZ name (≤15) fits.
 fn chain_for(tun_if: &str) -> String {
     format!("QELI_KS_{tun_if}")
 }
 
-/// The pre-per-instance chain name. Only removed on engage, to clean up after an
-/// upgrade from a build that used one shared chain.
+/// The pre-per-instance chain name. Its owner is unknown; admission preserves it
+/// for explicit administrator recovery rather than treating it as this TUN's chain.
 const LEGACY_CHAIN: &str = "QELI_KS";
 
 /// Resolve `server_addr:port` to the set of IPs the kill-switch must allow through
@@ -298,17 +310,7 @@ fn engage_family(
     let chain = &chain_for(tun_if);
     teardown_family(path, chain).map_err(|error| {
         anyhow::anyhow!("kill-switch: cannot clear the previous {chain} ruleset: {error}")
-    })?; // clean slate (leftover from a crash, or OUR own live one)
-         // Upgrade path: a build before per-instance chains left a shared `QELI_KS` behind,
-         // and nothing else will ever remove it.
-    if present_checked(path, &["-C", "OUTPUT", "-j", LEGACY_CHAIN])? {
-        log::info!("removing the legacy shared kill-switch chain {LEGACY_CHAIN}");
-        teardown_family(path, LEGACY_CHAIN).map_err(|error| {
-            anyhow::anyhow!(
-                "kill-switch: cannot remove legacy shared chain {LEGACY_CHAIN}: {error}"
-            )
-        })?;
-    }
+    })?; // Rebuild only this exact TUN's chain; admission has rejected other owners.
     let _ = ipt(path, &["-N", chain]); // create chain (ignore "already exists")
 
     // Append a rule to the chain and confirm it actually landed.
@@ -518,7 +520,17 @@ pub fn engage(
     // ignoring a missing tool on a dual-stack host would be the opposite (false security).
     // Protect a family whenever its firewall is available, and otherwise use the same
     // evidence + explicit escape-hatch rule for both families.
+    let _operation = operation();
     let v4_path = ipt_path("iptables");
+    let v6_path = ipt_path("ip6tables");
+    // Inspect both available families before changing either one. A conflict is
+    // host-wide policy incompatibility, not permission to use a leak escape hatch.
+    for path in [v4_path.as_deref(), v6_path.as_deref()]
+        .into_iter()
+        .flatten()
+    {
+        admission::check(path, &chain)?;
+    }
     let v4_protected = match v4_path.as_deref() {
         Some(path) => match engage_family(path, tun_if, &v4, guard_forward) {
             Ok(()) => true,
@@ -545,8 +557,8 @@ pub fn engage(
     // sense of security. So on a host that actually HAS global IPv6, fail closed
     // (matching the v4 "refuse to run unprotected" contract) unless the operator has
     // opted into the leak.
-    let v6_protected = match ipt_path("ip6tables") {
-        Some(v6_path) => match engage_family(&v6_path, tun_if, &v6, guard_forward) {
+    let v6_protected = match v6_path.as_deref() {
+        Some(v6_path) => match engage_family(v6_path, tun_if, &v6, guard_forward) {
             Ok(()) => true,
             Err(e) => {
                 log::warn!("kill-switch: IPv6 leg not engaged ({e})");
@@ -618,6 +630,7 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
     if ips.is_empty() {
         return Ok(());
     }
+    let _operation = operation();
     let mut errors = Vec::new();
     for (bin, want_v6) in [("iptables", false), ("ip6tables", true)] {
         let Some(path) = ipt_path(bin) else {
@@ -761,6 +774,7 @@ fn live_server_allows(path: &str, chain: &str) -> anyhow::Result<Vec<String>> {
 /// Remove the kill-switch chain on both families. Called only on a clean stop. A missing
 /// chain is an idempotent success; an inaccessible or still-referenced chain is an error.
 pub fn disengage(tun_if: &str) -> anyhow::Result<()> {
+    let _operation = operation();
     let chain = chain_for(tun_if);
     let mut errors = Vec::new();
     if let Some(p) = ipt_path("iptables") {

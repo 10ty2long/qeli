@@ -88,3 +88,5 @@ multiple simultaneous kill-switch chains or shared exit-node WAN/NAT ownership.
 Those are next, followed by IPv6 protection discovery, remaining DNS/carrier globals,
 Q14-F027 TUN workers/FD, crash recovery, native certification and a new benchmark.
 INI keys and internal JSON protocols are unchanged. The full audit is not complete.
+
+Follow-up: [exit NAT ownership and kill-switch conflicts](AUDIT-Q25-EXIT-OWNERSHIP.md).

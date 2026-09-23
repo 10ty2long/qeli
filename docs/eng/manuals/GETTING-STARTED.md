@@ -1237,13 +1237,15 @@ sudo ip6tables -X $CH            2>/dev/null; true
 # Exit node / gateway (if exit_node = true or gateway_nat = true was set). These rules are
 # also lifted only on a CLEAN stop, and a crash leaves them — the host then keeps
 # masquerading and forwarding long after the tunnel died. Every rule carries a comment:
-# qeli-exit-node (exit_node) or qeli-gw-nat (gateway_nat) — that is how you find them.
+# qeli-exit-node[:<tun>] (exit_node) or qeli-gw-nat (gateway_nat).
+# New exit MASQUERADE rules include the :<tun> suffix.
+# Do not remove another live profile's rules or old shared NAT without checking all owners.
 sudo iptables -t mangle -S | grep -e qeli-exit-node -e qeli-gw-nat
 sudo iptables -t nat    -S | grep -e qeli-exit-node -e qeli-gw-nat
 sudo iptables           -S | grep -e qeli-exit-node -e qeli-gw-nat
 # Delete them line by line: take a printed line, swap -A for -D and run it as-is, e.g.
 #   sudo iptables -t nat -D POSTROUTING -o eth0 -m mark --mark 0x51/0x51 -j MASQUERADE \
-#        -m comment --comment qeli-exit-node
+#        -m comment --comment qeli-exit-node:vpn0
 # ip_forward and rp_filter were changed on the fly — restore them if they had been off:
 #   sudo sysctl -w net.ipv4.ip_forward=0
 #   sudo sysctl -w net.ipv4.conf.eth0.rp_filter=1        # eth0 = your WAN

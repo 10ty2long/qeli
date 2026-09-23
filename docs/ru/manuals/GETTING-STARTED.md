@@ -1244,13 +1244,15 @@ sudo ip6tables -X $CH            2>/dev/null; true
 # Exit-узел / шлюз (если был exit_node = true или gateway_nat = true). Эти правила тоже
 # снимаются только на ЧИСТОЙ остановке, а краш их оставляет — и тогда хост продолжает
 # маскарадить и форвардить уже после того, как туннель умер. Каждое правило помечено
-# комментарием: qeli-exit-node (exit_node) или qeli-gw-nat (gateway_nat) — по нему и ищем.
+# комментарием: qeli-exit-node[:<tun>] (exit_node) или qeli-gw-nat (gateway_nat).
+# У MASQUERADE exit-node суффикс :<tun> обязателен в новых правилах.
+# Не удаляйте чужие live-правила и старый общий NAT без проверки всех его владельцев.
 sudo iptables -t mangle -S | grep -e qeli-exit-node -e qeli-gw-nat
 sudo iptables -t nat    -S | grep -e qeli-exit-node -e qeli-gw-nat
 sudo iptables           -S | grep -e qeli-exit-node -e qeli-gw-nat
 # Удалять построчно: в найденной строке заменить -A на -D и выполнить как есть, например:
 #   sudo iptables -t nat -D POSTROUTING -o eth0 -m mark --mark 0x51/0x51 -j MASQUERADE \
-#        -m comment --comment qeli-exit-node
+#        -m comment --comment qeli-exit-node:vpn0
 # ip_forward и rp_filter клиент менял на лету — вернуть, если они были выключены:
 #   sudo sysctl -w net.ipv4.ip_forward=0
 #   sudo sysctl -w net.ipv4.conf.eth0.rp_filter=1        # eth0 = ваш WAN

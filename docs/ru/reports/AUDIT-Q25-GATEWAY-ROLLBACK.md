@@ -91,3 +91,5 @@ kill-switch chains и владение общим WAN/NAT у exit-node. Это �
 затем обнаружение необходимости IPv6-защиты, оставшиеся DNS/carrier globals,
 Q14-F027 TUN workers/FD, crash recovery, native certification и новый benchmark.
 Ключи INI и служебные JSON-протоколы не менялись. Полный аудит не завершён.
+
+Продолжение: [владение exit NAT и конфликты kill-switch](AUDIT-Q25-EXIT-OWNERSHIP.md).

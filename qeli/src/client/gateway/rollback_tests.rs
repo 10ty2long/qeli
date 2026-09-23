@@ -21,6 +21,11 @@ struct Kernel {
     lost_add: bool,
     fail_acquire: bool,
     fail_release: bool,
+    wans: [Option<String>; 2],
+    fail_mark_delete: bool,
+    fail_nat_add: bool,
+    inventory_failure: Option<bool>,
+    inventory_override: Option<(bool, Vec<u8>)>,
 }
 fn output(code: u32, text: &str, error: &str) -> Output {
     #[cfg(unix)]
@@ -45,7 +50,12 @@ impl Kernel {
         self.calls.push(args.clone());
         let program = cmd.get_program().to_string_lossy();
         if program == "ip" {
-            return Ok(output(0, "", ""));
+            let wan = &self.wans[usize::from(args.first().is_some_and(|arg| arg == "-6"))];
+            let text = wan
+                .as_ref()
+                .map(|wan| format!("default dev {wan}"))
+                .unwrap_or_default();
+            return Ok(output(0, &text, ""));
         }
         assert!(
             program.ends_with("iptables") || program.ends_with("ip6tables"),
@@ -61,8 +71,68 @@ impl Kernel {
             ("filter".into(), 0)
         };
         let op = args[start].as_str();
+        for builtin in ["INPUT", "OUTPUT", "FORWARD"] {
+            self.rules
+                .entry((ipv6, "filter".into(), builtin.into()))
+                .or_default();
+        }
+        if op == "-S" && args.len() == start + 1 {
+            if self.inventory_failure == Some(ipv6) {
+                return Ok(output(4, "", "iptables: inventory unavailable"));
+            }
+            if let Some((family, data)) = &self.inventory_override {
+                if *family == ipv6 {
+                    let mut result = output(0, "", "");
+                    result.stdout = data.clone();
+                    return Ok(result);
+                }
+            }
+            let mut text = String::new();
+            for (family, rule_table, name) in self.rules.keys() {
+                if *family != ipv6 || rule_table != &table {
+                    continue;
+                }
+                if ["INPUT", "OUTPUT", "FORWARD"].contains(&name.as_str()) {
+                    text.push_str(&format!("-P {name} ACCEPT\n"));
+                } else {
+                    text.push_str(&format!("-N {name}\n"));
+                }
+            }
+            for ((family, rule_table, name), rules) in &self.rules {
+                if *family != ipv6 || rule_table != &table {
+                    continue;
+                }
+                for rule in rules {
+                    text.push_str(&format!("-A {name} {}\n", rule.join(" ")));
+                }
+            }
+            return Ok(output(0, &text, ""));
+        }
         let chain = args[start + 1].clone();
-        let rules = self.rules.entry((ipv6, table, chain.clone())).or_default();
+        let key = (ipv6, table, chain.clone());
+        match op {
+            "-N" => {
+                self.rules.entry(key).or_default();
+                return Ok(output(0, "", ""));
+            }
+            "-F" => {
+                self.rules.get_mut(&key).unwrap().clear();
+                return Ok(output(0, "", ""));
+            }
+            "-X" => {
+                self.rules.remove(&key);
+                return Ok(output(0, "", ""));
+            }
+            "-S" if !self.rules.contains_key(&key) => {
+                return Ok(output(
+                    1,
+                    "",
+                    "iptables: No chain/target/match by that name.",
+                ));
+            }
+            _ => {}
+        }
+        let rules = self.rules.entry(key).or_default();
         if op == "-S" {
             let mut text = format!("-P {chain} DROP\n");
             for rule in rules {
@@ -88,7 +158,9 @@ impl Kernel {
             return Ok(output(u32::from(!rules.contains(&body)), "", ""));
         }
         if op == "-D" {
-            if self.delete_fault == Some(ipv6) {
+            if self.delete_fault == Some(ipv6)
+                || (self.fail_mark_delete && body.iter().any(|s| s == "MARK"))
+            {
                 return Err(io::Error::new(
                     io::ErrorKind::PermissionDenied,
                     "delete blocked",
@@ -102,7 +174,7 @@ impl Kernel {
             return Ok(output(0, "", ""));
         }
         assert!(op == "-A" || insertion, "{args:?}");
-        if !self.lie_add {
+        if !self.lie_add && !(self.fail_nat_add && body.iter().any(|s| s == "MASQUERADE")) {
             let index = if insertion {
                 args[start + 2].parse::<usize>().unwrap() - 1
             } else {
@@ -158,12 +230,20 @@ impl Kernel {
             .iter()
             .filter(|args| {
                 args.iter()
-                    .any(|s| ["-A", "-I", "-D"].contains(&s.as_str()))
+                    .any(|s| ["-A", "-I", "-D", "-N", "-F", "-X"].contains(&s.as_str()))
             })
             .count()
     }
 }
 fn reset_gateway_state() {
+    EXIT_WANS_V4
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .clear();
+    EXIT_WANS_V6
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .clear();
     GATEWAY_SCOPES
         .lock()
         .unwrap_or_else(|e| e.into_inner())
@@ -546,3 +626,9 @@ fn inactive_exit_refresh_does_not_wait_for_another_router_operation() {
         .expect("ordinary path commit blocked behind unrelated router cleanup")
         .unwrap();
 }
+
+#[path = "exit_tests.rs"]
+mod exit_tests;
+
+#[path = "kill_switch_tests.rs"]
+mod kill_switch_tests;

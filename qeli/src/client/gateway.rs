@@ -31,7 +31,7 @@ mod host;
 
 #[path = "gateway/wan.rs"]
 mod wan;
-use wan::{cleanup_wans, detect_wan, detect_wan_ipv6};
+use wan::{detect_wan, detect_wan_ipv6};
 
 /// Comment tag on every rule we own, so teardown removes exactly ours.
 const TAG: &str = "qeli-gw-nat";
@@ -69,7 +69,8 @@ pub fn ipv6_available() -> bool {
 // packets forwarded tun->wan in mangle/FORWARD and MASQUERADE only those in
 // nat/POSTROUTING — so locally-generated traffic (OUTPUT->POSTROUTING, never marked) is
 // left alone, and no pool knowledge is needed. The nfmark persists FORWARD->POSTROUTING
-// on the same skb. Masked (`0x51/0x51`) so it coexists with any other fwmark user.
+// on the same skb. The mask `0x51/0x51` preserves unrelated bits, but its selected
+// bits are reserved for Qeli exit traffic and must not be reused by other marking.
 const EXIT_TAG: &str = "qeli-exit-node";
 const EXIT_MARK: &str = "0x51/0x51";
 
@@ -251,7 +252,14 @@ fn exit_mark_rule<'a>(tun_if: &'a str, wan_if: &'a str) -> Vec<&'a str> {
     ]
 }
 
-fn exit_masq_rule(wan_if: &str) -> Vec<&str> {
+// The match may be identical on a shared WAN, but each TUN owns a distinct rule.
+// Including the TUN in the exact comment lets another process keep its own NAT rule
+// without an in-memory reference count. Old unsuffixed rules are not ours to claim.
+fn exit_masq_tag(tun_if: &str) -> String {
+    format!("{EXIT_TAG}:{tun_if}")
+}
+
+fn exit_masq_rule<'a>(wan_if: &'a str, tag: &'a str) -> Vec<&'a str> {
     vec![
         "-o",
         wan_if,
@@ -264,7 +272,7 @@ fn exit_masq_rule(wan_if: &str) -> Vec<&str> {
         "-m",
         "comment",
         "--comment",
-        EXIT_TAG,
+        tag,
     ]
 }
 
@@ -426,7 +434,11 @@ fn engage_exit_on(tun_if: &str, wan: &str) -> anyhow::Result<()> {
     if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, wan)) {
         anyhow::bail!("exit-node: could not install the tun->wan MARK rule (mangle FORWARD)");
     }
-    if !ensure("nat", "POSTROUTING", &exit_masq_rule(wan)) {
+    if !ensure(
+        "nat",
+        "POSTROUTING",
+        &exit_masq_rule(wan, &exit_masq_tag(tun_if)),
+    ) {
         anyhow::bail!("exit-node: could not install MASQUERADE out {wan} (nat POSTROUTING)");
     }
     // FORWARD accepts are conditional — only an empty chain with policy ACCEPT makes them
@@ -550,7 +562,11 @@ fn engage_exit_ipv6_on(tun_if: &str, requested_wan: &str) -> anyhow::Result<()> 
     if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, &wan)) {
         anyhow::bail!("exit-node IPv6: could not install the tun->WAN MARK rule");
     }
-    if !ensure("nat", "POSTROUTING", &exit_masq_rule(&wan)) {
+    if !ensure(
+        "nat",
+        "POSTROUTING",
+        &exit_masq_rule(&wan, &exit_masq_tag(tun_if)),
+    ) {
         anyhow::bail!("exit-node IPv6: could not install NAT66 MASQUERADE out {wan}");
     }
     let forward_ok = ensure("filter", "FORWARD", &exit_fwd_out(tun_if, &wan))
@@ -657,32 +673,29 @@ fn remove_rule(path: &str, table: &str, chain: &str, rule: &[&str]) -> anyhow::R
 /// has been confirmed clean so a second cleanup attempt can recover from a transient tool
 /// failure or a physical-path change.
 fn remove_exit_rules(tun_if: &str) -> anyhow::Result<()> {
-    fn remove_family(
-        binary: &str,
-        tun_if: &str,
-        remembered: &[String],
-        discover: impl FnOnce() -> Option<String>,
-    ) -> anyhow::Result<()> {
-        let wans = cleanup_wans(remembered, discover);
-        if wans.is_empty() {
+    fn remove_family(binary: &str, tun_if: &str, remembered: &[String]) -> anyhow::Result<()> {
+        // Current routes do not establish ownership. An unstarted/already-clean family
+        // must not discover and delete rules on another profile's WAN.
+        if remembered.is_empty() {
             return Ok(());
         }
         let Some(path) = ipt_path(binary) else {
-            // If this family was never engaged there cannot be qeli rules to remove.
-            if remembered.is_empty() {
-                return Ok(());
-            }
             anyhow::bail!(
                 "exit-node cleanup: `{binary}` is unavailable; rules tagged `{EXIT_TAG}` may remain"
             );
         };
         let mut errors = Vec::new();
-        for wan in wans {
+        for wan in remembered {
             for result in [
-                remove_rule(&path, "mangle", "FORWARD", &exit_mark_rule(tun_if, &wan)),
-                remove_rule(&path, "nat", "POSTROUTING", &exit_masq_rule(&wan)),
-                remove_rule(&path, "filter", "FORWARD", &exit_fwd_out(tun_if, &wan)),
-                remove_rule(&path, "filter", "FORWARD", &exit_fwd_in(tun_if, &wan)),
+                remove_rule(&path, "mangle", "FORWARD", &exit_mark_rule(tun_if, wan)),
+                remove_rule(
+                    &path,
+                    "nat",
+                    "POSTROUTING",
+                    &exit_masq_rule(wan, &exit_masq_tag(tun_if)),
+                ),
+                remove_rule(&path, "filter", "FORWARD", &exit_fwd_out(tun_if, wan)),
+                remove_rule(&path, "filter", "FORWARD", &exit_fwd_in(tun_if, wan)),
                 remove_rule(&path, "mangle", "FORWARD", &exit_mss(tun_if)),
             ] {
                 if let Err(error) = result {
@@ -699,8 +712,8 @@ fn remove_exit_rules(tun_if: &str) -> anyhow::Result<()> {
 
     let wans_v4 = exit_wans_for(&EXIT_WANS_V4, tun_if);
     let wans_v6 = exit_wans_for(&EXIT_WANS_V6, tun_if);
-    let v4 = remove_family("iptables", tun_if, &wans_v4, detect_wan);
-    let v6 = remove_family("ip6tables", tun_if, &wans_v6, detect_wan_ipv6);
+    let v4 = remove_family("iptables", tun_if, &wans_v4);
+    let v6 = remove_family("ip6tables", tun_if, &wans_v6);
     if v4.is_ok() {
         forget_exit_tun(&EXIT_WANS_V4, tun_if);
     }
