@@ -623,6 +623,12 @@ Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust t
 PASS. Linux example-test compilation without the server feature is fixed.
 Attach/teardown races and actual Linux runtime remain open.
 
+[Q25-F057–F058](../reports/AUDIT-Q25-TUN-ATTACH.md): attach and later queues cannot
+register a replacement for a vanished TUN; failed TUNSETIFINDEX stops opening.
+VNET_HDR/unknown features are refused, supported flags preserved. 18 new host tests
+plus an existing parser test; 1425 Rust PASS. Three new Linux ioctl tests compiled
+only. Name-based cleanup and replacement identity remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -1025,6 +1031,12 @@ lookup errors/changed ifindex; client and server create the first queue exclusiv
 Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust tests
 PASS. Linux example-test compilation without the server feature is fixed.
 Attach/teardown races and actual Linux runtime remain open.
+
+[Q25-F057–F058](../reports/AUDIT-Q25-TUN-ATTACH.md): attach and later queues cannot
+register a replacement for a vanished TUN; failed TUNSETIFINDEX stops opening.
+VNET_HDR/unknown features are refused, supported flags preserved. 18 new host tests
+plus an existing parser test; 1425 Rust PASS. Three new Linux ioctl tests compiled
+only. Name-based cleanup and replacement identity remain open.
 
 ### 22. Transport core, FFI/JNI and memory
 
@@ -1534,6 +1546,12 @@ Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust t
 PASS. Linux example-test compilation without the server feature is fixed.
 Attach/teardown races and actual Linux runtime remain open.
 
+[Q25-F057–F058](../reports/AUDIT-Q25-TUN-ATTACH.md): attach and later queues cannot
+register a replacement for a vanished TUN; failed TUNSETIFINDEX stops opening.
+VNET_HDR/unknown features are refused, supported flags preserved. 18 new host tests
+plus an existing parser test; 1425 Rust PASS. Three new Linux ioctl tests compiled
+only. Name-based cleanup and replacement identity remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1809,12 +1827,13 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue sections 25/21 with dev_attach disappearance races,
-TUN ownership at cleanup and consistent parser/backend interface names.
-Q25-F054–F056 removes recovery deletion and makes first-queue creation exclusive.
+**Next work:** continue sections 25/21 with descriptor ownership and name-based TUN
+cleanup, binding route/DNS cleanup to device lifetime, metadata from the correct
+namespace and consistent parser/backend names. Q25-F057–F058 prevents creation during
+attach and preserves supported framing. Run the new actual ioctl tests on Linux.
 Then address namespace identity after object destruction, journal file trust and
-lock deadlines. Actual Linux namespace/migration/reboot, lease/attach/reconnect,
-iptables-nft/legacy and IPv6-disabled scenarios, IPv6 appearing after startup,
-DNS/carrier globals, overall deadlines, durable crash recovery, Q14-F027 workers/FD
-and synchronous preflight waits remain open. Native certification and a new benchmark
-were not run; full section statuses are unchanged.
+lock deadlines. Actual Linux namespace/migration/reboot, lease/reconnect, iptables-nft/
+legacy and IPv6-disabled scenarios, IPv6 appearing after startup, DNS/carrier globals,
+overall deadlines, durable crash recovery, Q14-F027 workers/FD and synchronous preflight
+waits remain open. Native certification and a new benchmark were not run;
+full section statuses are unchanged.

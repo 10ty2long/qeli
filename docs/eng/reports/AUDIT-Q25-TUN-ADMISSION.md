@@ -90,3 +90,7 @@ privileged process between queue opens. Parser/backend name templates and trunca
 blocking setup waits, namespace inode reuse, journal file trust, deadlines and
 crash recovery remain on the plan. No new benchmark or native certification was run;
 full section PASS is not claimed.
+
+Follow-up: [Q25-F057–F058](AUDIT-Q25-TUN-ATTACH.md) prevents new-device registration
+during attach and preserves supported features; VNET_HDR is refused. Existing
+replacement identity, sysfs provenance and name-based cleanup remain open.

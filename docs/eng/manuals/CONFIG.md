@@ -1773,7 +1773,7 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `lan_subnet` / `lan_subnet_ipv6` | restrict `gateway_nat`/`forward` to one source CIDR per family; empty = apply to all traffic of that family leaving the tun |
 | `forward` (default `false`) | site-to-site **without NAT**: forward traffic between the tun and the LAN behind the client while preserving the original source IP (unlike `gateway_nat`, which masquerades it). Use it when a routed network sits behind the client and its addresses must stay visible on the server. See "Routing networks behind nodes WITHOUT NAT" below |
 | `exit_node` (default `false`) | **mirror of `gateway_nat`.** `gateway_nat` masquerades a LAN behind the client INTO the tunnel; `exit_node` masquerades traffic that arrived FROM the tunnel out the physical WAN — so other clients reach the internet under THIS host's IP (e.g. behind a grey/NAT'd line). See "Exit node (`exit_node`)" below. Linux/router-only |
-| `dev = <name>` + `dev_attach = true` | **attach to a pre-existing** interface instead of creating one. `dev` is literal: qeli does not rename TAP devices. The existing kind must match `device_type`, it must use `IFF_NO_PI`, and qeli detects its single/multi-queue mode automatically. qeli only opens it for packet IO: it does **not** create, address, route, or delete it — an external manager (router firmware, your own script) owns all of that. The assigned tunnel IP is written to `$QELI_TUNIP_FILE` (if set in the environment) so the external script can bring up the address/routes itself |
+| `dev = <name>` + `dev_attach = true` | **attach to a pre-existing** interface instead of creating one. `dev` is literal: qeli does not rename TAP devices. The existing kind must match `device_type`, it must use `IFF_NO_PI` without `IFF_VNET_HDR`, and qeli detects its single/multi-queue mode automatically while preserving supported features. qeli only opens it for packet IO: it does **not** create, address, route, or delete it — an external manager (router firmware, your own script) owns all of that. The assigned tunnel IP is written to `$QELI_TUNIP_FILE` (if set in the environment) so the external script can bring up the address/routes itself |
 | `post_up` / `post_down` | standalone Linux client lifecycle commands. A committed NetworkPlan supplies `$1=ifname`, `$2=gateway`, the full versioned `QELI_*` environment and temporary JSON (`QELI_CONTEXT_FILE`); `post_down` gets the stop reason and latest plan. **SECURITY:** trusted file-only config; panel/API never write them |
 | `dns` | client DNS mode. On Linux, `tunnel` applies per-interface DNS through `systemd-resolved`; it does not overwrite `/etc/resolv.conf`. Installing a requested resolver fails if resolved is not the active system resolver. Deleting the tunnel interface removes its DNS; clean shutdown also explicitly reverts it. `off` / `system` leaves DNS to the platform. File-only; emitted to INI only when `!= tunnel` |
 | `autostart` | auto-connect this profile when the supervisor/panel starts (accepts `true`/`1`/`yes`/`on`). Read by the **panel client-manager**; ignored by the client runtime itself. Emitted to INI only when `true` |
@@ -1785,6 +1785,13 @@ open are exclusive: a device appearing after the check is not borrowed. Later qu
 use the first queue's actual name. The server immediately refuses an occupied
 `tun.name`. No new parameters are introduced; diagnostics and `dev_attach` limits:
 [TROUBLESHOOTING.md §6.47](TROUBLESHOOTING.md).
+
+`dev_attach` and additional multiqueue descriptors require permitted `TUNSETIFINDEX`
+to prevent creation if the original device disappears. An ioctl refusal has no
+unguarded fallback. The external owner must keep the device and framing stable
+during opening, and sysfs must match the current network namespace.
+See [diagnostics §6.48](TROUBLESHOOTING.md).
+
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred

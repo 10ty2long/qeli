@@ -92,3 +92,7 @@ client-only, server-only, minimal FFI, no-roaming, no-features и rustfmt.
 Шаблоны и усечение имён на границе parser/backend, блокирующее ожидание setup,
 namespace inode reuse, journal file trust, deadlines и crash recovery остаются в плане.
 Новый benchmark и native certification не выполнялись; полный PASS не заявляется.
+
+Продолжение: [Q25-F057–F058](AUDIT-Q25-TUN-ATTACH.md) запрещает регистрацию нового
+устройства при attach и сохраняет поддерживаемые features; VNET_HDR отклоняется.
+Identity уже существующей замены, sysfs и cleanup по имени остаются открыты.

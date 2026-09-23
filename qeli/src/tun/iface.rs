@@ -13,7 +13,7 @@ const TUNSETIFF: libc::c_ulong = 0x800454ca;
 #[cfg(not(any(target_arch = "mips", target_arch = "mips64")))]
 const TUNSETIFF: libc::c_ulong = 0x400454ca;
 pub use super::open::DeviceType;
-use super::open::{self, OpenMode, IFF_MULTI_QUEUE, IFF_NO_PI, IFF_TAP, IFF_TUN};
+use super::open::{self, OpenMode, QueueIoctl};
 
 #[repr(C)]
 struct IfReq {
@@ -26,6 +26,45 @@ pub struct TunInterface {
     pub fd: File,
     pub name: String,
     pub mtu: i32,
+}
+
+struct QueueDescriptor<'a>(&'a File);
+
+impl QueueIoctl for QueueDescriptor<'_> {
+    fn set_creation_index(&mut self, index: u32) -> io::Result<()> {
+        // SAFETY: ioctl reads one initialized u32 and self.0 owns the live TUN fd.
+        let result = unsafe { libc::ioctl(self.0.as_raw_fd(), libc::TUNSETIFINDEX as _, &index) };
+        if result < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
+
+    fn set_interface(&mut self, name: &str, flags: i16) -> io::Result<String> {
+        let mut ifr = IfReq {
+            ifr_name: [0u8; 16],
+            ifr_flags: flags,
+            ifr_pad: [0u8; 22],
+        };
+        let name_bytes = name.as_bytes();
+        let copy_len = std::cmp::min(name_bytes.len(), 15);
+        ifr.ifr_name[..copy_len].copy_from_slice(&name_bytes[..copy_len]);
+        let ret = unsafe {
+            libc::ioctl(
+                self.0.as_raw_fd(),
+                TUNSETIFF as _,
+                &mut ifr as *mut _ as *mut libc::c_void,
+            )
+        };
+        if ret < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let actual_name = std::str::from_utf8(&ifr.ifr_name)
+            .unwrap_or(name)
+            .trim_end_matches('\0')
+            .to_string();
+        Ok(actual_name)
+    }
 }
 
 impl TunInterface {
@@ -48,34 +87,11 @@ impl TunInterface {
                 format!("could not inspect existing TUN/TAP '{name}' via {flags_path}: {error}"),
             )
         })?;
-        let flags = parse_tun_flags(&flags_text)?;
-        let expected_kind = match device_type {
-            DeviceType::Tun => IFF_TUN,
-            DeviceType::Tap => IFF_TAP,
-        };
-        let actual_kind = flags & (IFF_TUN | IFF_TAP);
-        if actual_kind != expected_kind {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!(
-                    "existing interface '{name}' has tun_flags {:#x}, which does not match device_type = {}",
-                    flags,
-                    if device_type == DeviceType::Tap { "tap" } else { "tun" }
-                ),
-            ));
-        }
-        if flags & IFF_NO_PI == 0 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!(
-                    "existing interface '{name}' includes a packet-information header; qeli dev_attach requires IFF_NO_PI"
-                ),
-            ));
-        }
+        let observed = open::parse_tun_flags(&flags_text)?;
         Self::open_device(
             name,
             mtu,
-            open::flags(device_type, flags & IFF_MULTI_QUEUE != 0, OpenMode::Attach),
+            open::attachment_flags(name, device_type, observed)?,
         )
     }
 
@@ -109,28 +125,7 @@ impl TunInterface {
             .read(true)
             .write(true)
             .open("/dev/net/tun")?;
-        let mut ifr = IfReq {
-            ifr_name: [0u8; 16],
-            ifr_flags: flags,
-            ifr_pad: [0u8; 22],
-        };
-        let name_bytes = name.as_bytes();
-        let copy_len = std::cmp::min(name_bytes.len(), 15);
-        ifr.ifr_name[..copy_len].copy_from_slice(&name_bytes[..copy_len]);
-        let ret = unsafe {
-            libc::ioctl(
-                fd.as_raw_fd(),
-                TUNSETIFF as _,
-                &mut ifr as *mut _ as *mut libc::c_void,
-            )
-        };
-        if ret < 0 {
-            return Err(io::Error::last_os_error());
-        }
-        let actual_name = std::str::from_utf8(&ifr.ifr_name)
-            .unwrap_or(name)
-            .trim_end_matches('\0')
-            .to_string();
+        let actual_name = open::configure_queue(&mut QueueDescriptor(&fd), name, flags)?;
         Ok(TunInterface {
             fd,
             name: actual_name,
@@ -282,25 +277,6 @@ impl TunInterface {
     }
 }
 
-fn parse_tun_flags(value: &str) -> io::Result<libc::c_short> {
-    let value = value.trim();
-    let parsed = if let Some(hex) = value
-        .strip_prefix("0x")
-        .or_else(|| value.strip_prefix("0X"))
-    {
-        u16::from_str_radix(hex, 16)
-    } else {
-        value.parse::<u16>()
-    }
-    .map_err(|error| {
-        io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("invalid tun_flags value '{value}': {error}"),
-        )
-    })?;
-    Ok(parsed as libc::c_short)
-}
-
 impl Read for TunInterface {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.fd.read(buf)
@@ -321,17 +297,7 @@ impl AsRawFd for TunInterface {
         self.fd.as_raw_fd()
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn tun_flags_parser_accepts_kernel_hex_and_decimal_forms() {
-        assert_eq!(
-            parse_tun_flags("0x1102\n").unwrap(),
-            IFF_TAP | IFF_NO_PI | IFF_MULTI_QUEUE
-        );
-        assert_eq!(parse_tun_flags("4097").unwrap(), IFF_TUN | IFF_NO_PI);
-        assert!(parse_tun_flags("not-flags").is_err());
-    }
-}
+#[cfg(test)]
+#[path = "attach_linux_tests.rs"]
+mod linux_tests;

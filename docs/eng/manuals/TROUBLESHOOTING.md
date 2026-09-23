@@ -1551,9 +1551,28 @@ A non-persistent TUN disappears when its owner closes the last descriptor.
 
 The server immediately refuses an occupied `tun.name`. The first client/server
 queue is created exclusively; later queues use the name returned by the kernel.
-`dev_attach` still requires a pre-created compatible interface. Disappearance
-between its check and open, and identity during later cleanup, remain separate
-audit items. [Validation and limits](../reports/AUDIT-Q25-TUN-ADMISSION.md).
+`dev_attach` requires a pre-created compatible interface; §6.48 describes preventing
+creation after it disappears. An already-existing replacement and identity during
+later cleanup remain separate audit items. [Validation and limits](../reports/AUDIT-Q25-TUN-ADMISSION.md).
+
+### 6.48 Linux: attach prevents creation and checks packet framing
+
+`cannot prohibit TUN creation while attaching` means installing the guard failed
+before attachment. Check kernel support and sandbox permission for `TUNSETIFINDEX`;
+Qeli does not continue without it. Additional server multiqueue descriptors have the
+same requirement; the first exclusive creation does not. If the name disappears,
+the subsequent ioctl refuses instead of creating a new TUN.
+
+`uses IFF_VNET_HDR` means the external device uses virtio headers that Qeli cannot
+process. Provide a separate TUN/TAP without VNET_HDR, with NO_PI and matching
+`device_type`. Do not change the framing of another application's device.
+`unsupported tun_flags` refuses unknown features rather than silently resetting them.
+
+Supported ONE_QUEUE/NAPI/NAPI_FRAGS and queue mode are preserved; persistence is unchanged.
+The external manager must retain the device and stable framing during opening.
+Sysfs must describe the current network namespace. The guard does not prove the
+identity of a same-name replacement or fix name-based cleanup.
+[Report, Linux tests and limits](../reports/AUDIT-Q25-TUN-ATTACH.md).
 
 ---
 
