@@ -1127,9 +1127,9 @@ unconfirmed; include the complete log when reporting it.
 Server DNS permit cleanup attempts both UDP and TCP even if one fails. Exactly 1024
 identical rules are supported; `still present after 1024 deletion attempts` means the
 last check still found the rule. Accumulated copies, concurrent additions or a backend's
-successful no-op may explain this. Successful server exit alone still does not establish
-cleanup: propagating DNS lease errors into final shutdown status remains open.
-[Report and limits](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+successful no-op may explain this. Final retry of known DNS leases now affects worker
+exit status; see §6.31. This does not verify all server resources.
+[Firewall checks report](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
 
 ---
 
@@ -1147,8 +1147,30 @@ Resolve cleanup failures first; successful retirement releases capacity without
 automatically evicting existing records.
 
 The evidence lives only in the current worker's memory. Do not assume retries survive
-crashes or process restarts; there is no separate persistent journal yet. Successful
-server exit also does not yet establish cleanup. [Report and limits](../reports/AUDIT-Q14-DNS-OWNERSHIP.md).
+crashes or process restarts; there is no separate persistent journal yet. Final worker
+verification is described in §6.31; it does not verify all server resources.
+[Report and limits](../reports/AUDIT-Q14-DNS-OWNERSHIP.md).
+
+---
+
+### 6.31 Server: Server shutdown failed — owned network cleanup
+
+After profiles stop, the worker retries retained DNS INPUT rules and remaining IPv6
+sysctl leases. If cleanup cannot be confirmed, signal-driven worker shutdown exits 1
+and logs `Server shutdown failed: owned network cleanup: ...`. Concurrent failures add
+`worker` and/or `usage shutdown flush` to the same message. Accounting is flushed even
+after network cleanup failure.
+
+`DNS INPUT lease still active at worker shutdown` means active ownership remains;
+this check does not delete its rules. For ordinary cleanup failure, inspect the named
+firewall tool, sysctl access and earlier profile errors. If final retry confirms cleanup,
+an earlier transient failure alone does not change a successful exit status.
+
+This check covers only DNS/IPv6 sysctl leases known to the worker. A successful exit
+does not prove the absence of generic NAT rules, TUN devices or outer supervisor errors.
+DNS ownership is lost when the process exits; automatic exact-rule recovery after
+restart is not yet guaranteed.
+[Report and open boundaries](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md).
 
 ---
 

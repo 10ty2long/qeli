@@ -40,6 +40,21 @@ impl Errors {
     }
 }
 
+/// Verify retained worker ownership after the ordinary profile cleanup attempts.
+/// A DNS failure must not skip sysctls; one profile's failure must not skip another.
+pub(crate) fn finish_owned_cleanup_with(
+    dns: impl FnOnce() -> anyhow::Result<()>,
+    profiles: &[String],
+    mut release_sysctls: impl FnMut(&str) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let mut errors = Errors::default();
+    errors.record("DNS INPUT", dns());
+    for profile in profiles {
+        errors.record(&format!("IPv6 sysctls/{profile}"), release_sysctls(profile));
+    }
+    errors.finish()
+}
+
 /// Parse the shell-quoted shape emitted by `iptables -S` without invoking a shell. Comments
 /// may contain whitespace or quotes because profile names are user-visible strings.
 fn split_iptables_args(line: &str) -> Option<Vec<String>> {

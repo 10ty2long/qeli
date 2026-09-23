@@ -94,6 +94,25 @@ impl DnsInputRegistry {
         Ok(())
     }
 
+    /// At worker shutdown every lease should have retired. Retry pending exact rules,
+    /// but report a still-active owner instead of deleting its permits or claiming success.
+    pub(crate) fn finish_shutdown(
+        &mut self,
+        cleanup: impl FnMut(&DnsInputRules) -> anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
+        let mut errors = crate::nat_cleanup::Errors::default();
+        errors.record("pending DNS INPUT", self.retry(None, cleanup));
+        for entry in self.entries.values().filter(|entry| !entry.retired) {
+            errors.record(
+                &entry.rules.profile,
+                Err(anyhow::anyhow!(
+                    "DNS INPUT lease still active at worker shutdown"
+                )),
+            );
+        }
+        errors.finish()
+    }
+
     /// Only retired entries are eligible. A profile retry must never touch active
     /// permits or another profile; retry(None) handles every retired owner.
     pub(crate) fn retry(

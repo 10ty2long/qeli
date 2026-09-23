@@ -39,6 +39,11 @@ mod nat_cleanup;
 #[path = "server/nat/dns_input.rs"]
 mod nat_dns_input;
 
+// Share final worker error/exit policy with portable host regression tests.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/shutdown.rs"]
+mod server_shutdown;
+
 // Profile ownership is platform-neutral and exercised without privileged network setup.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/tasks.rs"]

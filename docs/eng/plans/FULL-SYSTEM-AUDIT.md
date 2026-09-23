@@ -568,6 +568,13 @@ Tokens protect replacements from stale leases; exact retry skips active entries.
 12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
 separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
 
+**Worker shutdown outcome, 23 September 2026:**
+[Q14-F027, partial fix](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): final retry of known
+DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
+runs after network failure; active DNS leases are reported without deleting their rules.
+14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -642,6 +649,13 @@ Tokens protect replacements from stale leases; exact retry skips active entries.
 12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
 separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
 
+**Worker shutdown outcome, 23 September 2026:**
+[Q14-F027, partial fix](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): final retry of known
+DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
+runs after network failure; active DNS leases are reported without deleting their rules.
+14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -678,6 +692,13 @@ after failed Drop/rollback; cleanup and new installation retry pending retiremen
 Tokens protect replacements from stale leases; exact retry skips active entries.
 12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
 separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
+
+**Worker shutdown outcome, 23 September 2026:**
+[Q14-F027, partial fix](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): final retry of known
+DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
+runs after network failure; active DNS leases are reported without deleting their rules.
+14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -772,6 +793,13 @@ after failed Drop/rollback; cleanup and new installation retry pending retiremen
 Tokens protect replacements from stale leases; exact retry skips active entries.
 12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
 separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
+
+**Worker shutdown outcome, 23 September 2026:**
+[Q14-F027, partial fix](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): final retry of known
+DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
+runs after network failure; active DNS leases are reported without deleting their rules.
+14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 

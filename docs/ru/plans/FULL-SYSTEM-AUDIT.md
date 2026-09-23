@@ -573,6 +573,13 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
 baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
 
+**Итог остановки worker, 23 сентября 2026:**
+[Q14-F027, частичное исправление](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): окончательный
+retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
+статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
+14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -647,6 +654,13 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
 baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
 
+**Итог остановки worker, 23 сентября 2026:**
+[Q14-F027, частичное исправление](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): окончательный
+retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
+статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
+14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -683,6 +697,13 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 новое поколение от старого lease; активные записи не участвуют в точечном retry.
 12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
 baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
+
+**Итог остановки worker, 23 сентября 2026:**
+[Q14-F027, частичное исправление](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): окончательный
+retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
+статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
+14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -779,6 +800,13 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 новое поколение от старого lease; активные записи не участвуют в точечном retry.
 12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
 baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
+
+**Итог остановки worker, 23 сентября 2026:**
+[Q14-F027, частичное исправление](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md): окончательный
+retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
+статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
+14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
+Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 

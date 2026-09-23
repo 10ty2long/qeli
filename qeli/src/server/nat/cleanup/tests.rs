@@ -580,3 +580,79 @@ fn exact_cleanup_keeps_both_protocol_errors() {
     assert!(error.contains("udp:"), "{error}");
     assert!(error.contains("tcp:"), "{error}");
 }
+
+#[test]
+fn final_owned_cleanup_attempts_every_sysctl_after_dns_and_profile_errors() {
+    let calls = std::cell::RefCell::new(Vec::new());
+    let error = super::finish_owned_cleanup_with(
+        || {
+            calls.borrow_mut().push("dns".to_string());
+            anyhow::bail!("DNS denied")
+        },
+        &["first".into(), "second".into()],
+        |profile| {
+            calls.borrow_mut().push(profile.to_string());
+            if profile == "first" {
+                anyhow::bail!("restore denied");
+            }
+            Ok(())
+        },
+    )
+    .unwrap_err()
+    .to_string();
+    assert_eq!(*calls.borrow(), ["dns", "first", "second"]);
+    assert!(error.contains("DNS denied"), "{error}");
+    assert!(
+        error.contains("IPv6 sysctls/first: restore denied"),
+        "{error}"
+    );
+}
+
+#[test]
+fn final_owned_cleanup_does_not_preserve_a_recovered_attempt_as_failure() {
+    let attempts = std::cell::Cell::new(0);
+    let mut release = |_: &str| {
+        attempts.set(attempts.get() + 1);
+        if attempts.get() == 1 {
+            anyhow::bail!("transient lock failure");
+        }
+        Ok(())
+    };
+    let profiles = ["edge".into()];
+    assert!(super::finish_owned_cleanup_with(|| Ok(()), &profiles, &mut release).is_err());
+    assert!(super::finish_owned_cleanup_with(|| Ok(()), &profiles, &mut release).is_ok());
+    assert_eq!(attempts.get(), 2);
+}
+
+#[test]
+fn final_owned_cleanup_checks_dns_even_without_sysctl_leases() {
+    let calls = std::cell::Cell::new(0);
+    assert!(super::finish_owned_cleanup_with(
+        || {
+            calls.set(calls.get() + 1);
+            Ok(())
+        },
+        &[],
+        |_| panic!("no sysctl owners"),
+    )
+    .is_ok());
+    assert_eq!(calls.get(), 1);
+}
+
+#[test]
+fn final_owned_cleanup_bounds_diagnostics_but_still_attempts_every_profile() {
+    let profiles: Vec<_> = (0..20).map(|i| format!("p{i}")).collect();
+    let calls = std::cell::Cell::new(0);
+    let error = super::finish_owned_cleanup_with(
+        || Ok(()),
+        &profiles,
+        |_| {
+            calls.set(calls.get() + 1);
+            anyhow::bail!("denied");
+        },
+    )
+    .unwrap_err()
+    .to_string();
+    assert_eq!(calls.get(), profiles.len());
+    assert!(error.contains("12 additional cleanup errors"), "{error}");
+}

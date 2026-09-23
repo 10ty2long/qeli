@@ -305,3 +305,88 @@ fn partial_udp_failure_retains_rules_for_real_exact_cleanup_retry() {
     assert!(registry.entries.is_empty());
     assert!(installed.borrow().is_empty());
 }
+
+#[test]
+fn shutdown_retries_retired_rules_and_confirms_an_empty_registry() {
+    let mut registry = DnsInputRegistry::default();
+    let id = registry.begin(rules("edge"), no_pending).unwrap();
+    registry
+        .finish(id, |_| anyhow::bail!("transient denial"))
+        .unwrap_err();
+    let calls = Cell::new(0);
+    registry
+        .finish_shutdown(|owned| {
+            assert_eq!(owned, &rules("edge"));
+            calls.set(calls.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(calls.get(), 1);
+    assert!(registry.entries.is_empty());
+    registry.finish_shutdown(no_pending).unwrap();
+}
+
+#[test]
+fn shutdown_keeps_a_permanent_failure_retryable() {
+    let mut registry = DnsInputRegistry::default();
+    let id = registry.begin(rules("edge"), no_pending).unwrap();
+    registry
+        .finish(id, |_| anyhow::bail!("denied"))
+        .unwrap_err();
+    let error = registry
+        .finish_shutdown(|_| anyhow::bail!("tool unavailable"))
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("tool unavailable"), "{error}");
+    assert!(registry.entries[&id].retired);
+    assert_eq!(registry.entries[&id].rules, rules("edge"));
+    registry.finish_shutdown(|_| Ok(())).unwrap();
+}
+
+#[test]
+fn shutdown_reports_active_owners_without_deleting_their_rules() {
+    let mut registry = DnsInputRegistry::default();
+    let id = registry.begin(rules("edge"), no_pending).unwrap();
+    let error = registry
+        .finish_shutdown(no_pending)
+        .unwrap_err()
+        .to_string();
+    assert!(
+        error.contains("edge: DNS INPUT lease still active"),
+        "{error}"
+    );
+    assert!(!registry.entries[&id].retired);
+    registry.finish(id, |_| Ok(())).unwrap();
+    registry.finish_shutdown(no_pending).unwrap();
+}
+
+#[test]
+fn shutdown_reports_active_and_failed_retired_owners_and_cleans_the_rest() {
+    let mut registry = DnsInputRegistry::default();
+    let active = registry.begin(rules("active"), no_pending).unwrap();
+    let failed = registry.begin(rules("failed"), no_pending).unwrap();
+    let recovered = registry.begin(rules("recovered"), no_pending).unwrap();
+    for id in [failed, recovered] {
+        registry
+            .finish(id, |_| anyhow::bail!("denied"))
+            .unwrap_err();
+    }
+    let error = registry
+        .finish_shutdown(|owned| {
+            assert_ne!(owned.profile, "active");
+            if owned.profile == "failed" {
+                anyhow::bail!("persistent denial");
+            }
+            Ok(())
+        })
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("persistent denial"), "{error}");
+    assert!(
+        error.contains("active: DNS INPUT lease still active"),
+        "{error}"
+    );
+    assert!(!registry.entries.contains_key(&recovered));
+    assert!(!registry.entries[&active].retired);
+    assert!(registry.entries[&failed].retired);
+}

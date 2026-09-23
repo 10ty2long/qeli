@@ -225,24 +225,25 @@ fn acquire_ipv6_sysctls(profile: &str, wan: Option<&str>, tun: &str) -> anyhow::
 }
 
 fn release_ipv6_sysctls(profile: &str) {
+    if let Err(error) = release_ipv6_sysctls_checked(profile) {
+        log::error!(
+            "IPv6 routing: could not release host sysctls for profile '{profile}': {error}"
+        );
+    }
+}
+
+fn release_ipv6_sysctls_checked(profile: &str) -> anyhow::Result<()> {
     let mut leases = ipv6_sysctl_leases()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     let Some(lease) = leases.get(profile).cloned() else {
-        return;
+        return Ok(());
     };
-    match crate::sysctl::release_scope(&lease.scope) {
-        Ok(()) => {
-            leases.remove(profile);
-        }
-        Err(error) => {
-            // Retain the process-local lease so a later profile cleanup can retry. The
-            // persistent journal also keeps any value whose restore could not be verified.
-            log::error!(
-                "IPv6 routing: could not release host sysctls for profile '{profile}': {error}"
-            );
-        }
-    }
+    // Keep both the lease and the journal evidence if restoration fails. The final
+    // worker pass must see the failure, not just the earlier best-effort log.
+    crate::sysctl::release_scope(&lease.scope)?;
+    leases.remove(profile);
+    Ok(())
 }
 fn detect_wan_ipv6() -> Option<String> {
     let output = Command::new("ip")
@@ -1391,6 +1392,32 @@ pub fn cleanup(profile: &str) {
         cleanup_with(&path, profile);
     }
     release_ipv6_sysctls(profile);
+}
+
+/// Final verification of resources whose exact ownership is retained by this worker.
+/// Call only AFTER all profile supervisors have stopped and the generic tag sweeps ran.
+/// This does not claim to verify generic NAT rules, TUNs, or a previous worker's journal.
+pub(crate) fn finish_owned_cleanup() -> anyhow::Result<()> {
+    let _firewall_guard = firewall_program_lock()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut profiles: Vec<_> = ipv6_sysctl_leases()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .keys()
+        .cloned()
+        .collect();
+    profiles.sort();
+    crate::nat_cleanup::finish_owned_cleanup_with(
+        || {
+            dns_input_registry()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .finish_shutdown(cleanup_dns_rules)
+        },
+        &profiles,
+        release_ipv6_sysctls_checked,
+    )
 }
 
 /// Restore a killed worker's host-wide IPv6 sysctls, then remove EVERY qeli-managed NAT rule

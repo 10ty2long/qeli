@@ -3672,30 +3672,28 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 
     // Every path (including service failure) collects counters after profile writers have
     // stopped, and persists while the exclusive worker lease is still held.
-    let flush_failed = if let Err(error) = state.usage.flush() {
-        log::error!("usage: shutdown flush failed: {error}");
-        fatal_reason.get_or_insert_with(|| format!("usage: shutdown flush failed: {error}"));
-        true
-    } else {
-        false
-    };
+    // Earlier Drop/sweep failures may have been transient. Decide from this final
+    // exact ownership pass, while still attempting the accounting flush on failure.
+    let owned_cleanup = nat::finish_owned_cleanup();
+    let usage_flush = state.usage.flush();
+    let result = crate::server_shutdown::result(fatal_reason, owned_cleanup, usage_flush);
     notifications.shutdown().await;
-    log::info!("Server shutdown complete");
+    match &result {
+        Ok(()) => log::info!("Server shutdown complete"),
+        Err(error) => log::error!("{error}"),
+    }
     // On a signal-driven stop, exit the process directly. The data plane spawns
     // blocking TUN reader threads; a graceful runtime drop joins them and would hang
     // (they block in read()), making `systemctl stop` time out and the unit go
-    // "failed". The kernel reclaims the TUN devices / fds on exit, and NAT was already
-    // torn down above.
+    // "failed". The kernel reclaims the TUN devices / fds on exit; the final owned
+    // cleanup result above determines whether the stop can report success.
     if via_signal {
         // process::exit skips Drop: release the pathname only after the final
         // usage flush, so a replacement worker cannot load stale counters.
         drop(control_socket);
-        std::process::exit(if flush_failed { 1 } else { 0 });
+        std::process::exit(i32::from(result.is_err()));
     }
-    if let Some(reason) = fatal_reason {
-        anyhow::bail!(reason);
-    }
-    Ok(())
+    result
 }
 
 /// Periodic per-profile UDP loss breakdown. Off the data path entirely: one snapshot of
