@@ -51,7 +51,8 @@ shutdown while retaining their previous ownership and release assertions.
 Linux all-targets Clippy, client-only, server-only, client without roaming, minimal FFI,
 compatibility without features and rustfmt PASS. Clippy retains the existing
 `chunks_exact_to_as_chunks` exception; existing feature-specific warnings were not changed.
-Linux-only HTTP/2 and DNS tests were compiler-checked, not executed here.
+Portable HTTP/2 and DNS tests ran on the host, including a rerun after stronger shutdown
+assertions; Linux worker integration was compiler-checked.
 
 Before application, 53 portable-module tests passed in a separate review copy. They overlap
 with the main matrix and are not added to 1060.
@@ -65,8 +66,9 @@ stopping during retry backoff can still return Ok. These cases require tracking 
 generation cleanup separately, without turning a recovered transient startup failure into
 a permanent error. The outer supervisor respawn policy is unchanged.
 
-Separate gaps remain in `sysctl::recover()`, which can return Ok with unresolved stale
-entries, and partial IPv6 sysctl acquisition before registration of the profile lease.
+The subsequent [sysctl recovery pass](AUDIT-Q14-SYSCTL-RECOVERY.md) fixes false Ok for
+unresolved stale entries and ownership loss on failed reacquisition. Partial IPv6 sysctl
+acquisition before registration of the profile lease remains open.
 DNS ownership is worker-local memory without persistent journaling. Firewall commands
 still lack an overall deadline. A successful outcome does not prove that all resources
 from earlier generations or processes are absent.

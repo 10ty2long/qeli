@@ -76,6 +76,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-TUN-CLEANUP.md](reports/AUDIT-Q25-TUN-CLEANUP.md) | TUN/DNS/route cleanup errors, guarded plan handoff and terminal kick preservation |
 | [AUDIT-Q14-OWNED-SHUTDOWN.md](reports/AUDIT-Q14-OWNED-SHUTDOWN.md) | Final DNS/IPv6 sysctl lease checks and worker/supervisor error propagation; partial Q14-F027 fix |
 | [AUDIT-Q14-PROFILE-SHUTDOWN.md](reports/AUDIT-Q14-PROFILE-SHUTDOWN.md) | Profile task failures, TUN queue timeout/panic and TUN deletion errors in shutdown outcome; partial Q14-F027 |
+| [AUDIT-Q14-SYSCTL-RECOVERY.md](reports/AUDIT-Q14-SYSCTL-RECOVERY.md) | Q14-F029/F030: sysctl recovery failures and preserving prior ownership on repeated acquisition |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Retained DNS rule specifications after cleanup/rollback failure, retries and generation identity |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |

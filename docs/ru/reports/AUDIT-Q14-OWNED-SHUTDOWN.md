@@ -103,9 +103,9 @@ Q14-F027 **не закрыта**: generic NAT cleanup и незавершённ�
 
 Проверяются только leases в памяти worker. Неудачный частичный acquire до регистрации
 IPv6 lease, записи старого worker и IPv4 forwarding, удерживаемый на время жизни worker,
-не покрываются новым проходом как отдельные классы владения. `sysctl::recover()` всё ещё
-может вернуть Ok после сохранения неустранённых stale entries; его контракт требует
-отдельного прохода. DNS registry не переживает crash/restart, persistent journal отсутствует.
+не покрываются новым проходом как отдельные классы владения. Последующий
+[проход sysctl recovery](AUDIT-Q14-SYSCTL-RECOVERY.md) исправляет ложный Ok после
+сохранения неустранённых stale entries и потерю владельца при повторном acquire. DNS registry не переживает crash/restart, persistent journal отсутствует.
 
 Firewall-команды не имеют общего deadline; зависшая команда может задержать и финальную
 проверку. Linux runtime, реальные firewall/TUN/DNS, устройства, native release,

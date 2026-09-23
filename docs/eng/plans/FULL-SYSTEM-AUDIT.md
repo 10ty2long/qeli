@@ -579,7 +579,10 @@ Rust tests PASS, plus three separate supervisor regression scenarios PASS.
 Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
 the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
-Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
+success and loss of existing ownership on failed reacquisition;
+1060 Rust tests and 7 separate fixture checks PASS.
+Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
 persistent journaling and live Linux remain open.
 
 ### 15. Sessions, IP pools and limits
@@ -667,7 +670,10 @@ Rust tests PASS, plus three separate supervisor regression scenarios PASS.
 Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
 the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
-Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
+success and loss of existing ownership on failed reacquisition;
+1060 Rust tests and 7 separate fixture checks PASS.
+Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
 persistent journaling and live Linux remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
@@ -718,7 +724,10 @@ Rust tests PASS, plus three separate supervisor regression scenarios PASS.
 Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
 the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
-Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
+success and loss of existing ownership on failed reacquisition;
+1060 Rust tests and 7 separate fixture checks PASS.
+Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
 persistent journaling and live Linux remain open.
 
 ### 19. Server and client DNS
@@ -826,7 +835,10 @@ Rust tests PASS, plus three separate supervisor regression scenarios PASS.
 Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
 the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
-Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
+success and loss of existing ownership on failed reacquisition;
+1060 Rust tests and 7 separate fixture checks PASS.
+Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
 persistent journaling and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle

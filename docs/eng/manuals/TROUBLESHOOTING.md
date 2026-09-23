@@ -1204,6 +1204,22 @@ retry/replacement still require separate accounting.
 
 ---
 
+### 6.33 Server: could not restore stale host sysctl value(s)
+
+At worker startup, sysctl journal recovery found settings with no live owner that could
+not be restored. Startup returns an error listing their paths. Check service access to
+the named sysctls and preceding `host networking` messages. Keep `sysctls.state`: its
+original values are needed for retry. After resolving the cause, starting again retries
+restoration.
+
+One failure does not skip other journal entries. Values with live owners and external
+administrator changes are preserved. Failed repeated lease acquisition now retains the
+previous owner, preventing recovery from restoring the original value beneath an active
+component. Supervisor restart policy is unchanged.
+[Report and validation boundaries](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

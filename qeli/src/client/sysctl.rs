@@ -302,14 +302,14 @@ pub fn acquire_checked(path: &str, value: &str, scope: &str) -> anyhow::Result<(
         }
         let owner = owner_id(scope)?;
         let current = read_value(path)?;
-        if let Some(entry) = journal.entries.get_mut(path) {
+        let new_owner = if let Some(entry) = journal.entries.get_mut(path) {
             if entry.managed != value {
                 anyhow::bail!(
                     "{path} is already managed as {} by another qeli client",
                     entry.managed
                 );
             }
-            entry.owners.insert(owner.clone());
+            entry.owners.insert(owner.clone())
         } else {
             journal.entries.insert(
                 path.to_string(),
@@ -319,17 +319,23 @@ pub fn acquire_checked(path: &str, value: &str, scope: &str) -> anyhow::Result<(
                     owners: BTreeSet::from([owner.clone()]),
                 },
             );
-        }
+            true
+        };
         // Persist the pristine value and owner BEFORE changing the kernel. A SIGKILL after
         // the write can then be recovered by the next qeli client operation.
         persist(journal_path, journal)?;
         if current != value {
             if let Err(error) = write_value(path, value) {
-                // The owner was made durable before the kernel write. Remove this failed
-                // acquisition, but retain an empty entry until the next recovery pass: a
-                // write followed by a failed verification may already have changed the knob.
-                if let Some(entry) = journal.entries.get_mut(path) {
-                    entry.owners.remove(&owner);
+                // Undo only ownership added by this call. A failed idempotent reacquire
+                // must not discard an earlier successful lease of the same live component.
+                // Retain empty entries: write verification may fail after changing the knob.
+                if new_owner {
+                    journal
+                        .entries
+                        .get_mut(path)
+                        .expect("acquired sysctl entry")
+                        .owners
+                        .remove(&owner);
                 }
                 persist(journal_path, journal)?;
                 return Err(error);
@@ -390,7 +396,23 @@ pub fn release_scope(scope: &str) -> anyhow::Result<()> {
 /// Called at server-worker startup; ordinary acquire/release operations perform the same pass.
 #[cfg(feature = "server")]
 pub fn recover() -> anyhow::Result<()> {
-    with_locked_journal(|_, _| Ok(()))
+    with_locked_journal(|_, journal| {
+        // The locked pre-pass already attempted every stale entry and persisted any
+        // failures for retry. Live owners are expected; ownerless entries are not success.
+        let unresolved: Vec<&str> = journal
+            .entries
+            .iter()
+            .filter(|(_, entry)| entry.owners.is_empty())
+            .map(|(path, _)| path.as_str())
+            .collect();
+        if !unresolved.is_empty() {
+            anyhow::bail!(
+                "could not restore stale host sysctl value(s): {}",
+                unresolved.join(", ")
+            );
+        }
+        Ok(())
+    })
 }
 
 #[cfg(test)]

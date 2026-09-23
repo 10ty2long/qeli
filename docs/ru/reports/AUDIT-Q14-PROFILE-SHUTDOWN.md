@@ -51,7 +51,8 @@ join выполняется только для завершённых пото�
 Linux all-targets Clippy, client-only, server-only, client без roaming, minimal FFI,
 compatibility без features и rustfmt PASS. Clippy сохраняет прежнее исключение
 `chunks_exact_to_as_chunks`; прежние feature-specific warnings не исправлялись этим патчем.
-Linux-only HTTP/2 и DNS тесты проверены компилятором, здесь не исполнялись.
+Переносимые HTTP/2 и DNS тесты выполнялись на host, включая повтор после усиления
+проверок shutdown; интеграция с Linux worker проверена компилятором.
 
 До применения патча отдельно прошли 53 теста переносимых модулей в review-копии;
 они пересекаются с основной матрицей и не прибавляются к 1060.
@@ -65,8 +66,9 @@ Q14-F027 остаётся открытой для generic NAT cleanup и общ�
 отдельно отслеживать незавершённую очистку поколения, не превращая устранённую временную
 ошибку запуска в постоянный отказ. Политика respawn внешнего supervisor не менялась.
 
-Отдельно остаются `sysctl::recover()`, способный вернуть Ok с неустранёнными stale entries,
-и частичный acquire IPv6 sysctls до регистрации профильного lease. DNS ownership хранится
+Следующий проход [sysctl recovery](AUDIT-Q14-SYSCTL-RECOVERY.md) исправляет ложный Ok
+при неустранённых stale entries и потерю владельца при повторном acquire.
+Частичный acquire IPv6 sysctls до регистрации профильного lease остаётся открытым. DNS ownership хранится
 в памяти worker, постоянного журнала нет. Общего deadline firewall-команд также нет.
 Успешный итог не доказывает отсутствие всех ресурсов старых поколений или процессов.
 

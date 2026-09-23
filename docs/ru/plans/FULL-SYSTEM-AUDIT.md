@@ -584,7 +584,10 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
 итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
-Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
+sysctl recovery и потеря существующего owner при неудачном повторном acquire;
+1060 Rust tests и 7 отдельных fixture checks PASS.
+Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
 persistent journal и live Linux остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
@@ -672,7 +675,10 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
 итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
-Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
+sysctl recovery и потеря существующего owner при неудачном повторном acquire;
+1060 Rust tests и 7 отдельных fixture checks PASS.
+Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
 persistent journal и live Linux остаются открытыми.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
@@ -723,7 +729,10 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
 итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
-Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
+sysctl recovery и потеря существующего owner при неудачном повторном acquire;
+1060 Rust tests и 7 отдельных fixture checks PASS.
+Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
 persistent journal и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
@@ -833,7 +842,10 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
 итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
-Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+[Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
+sysctl recovery и потеря существующего owner при неудачном повторном acquire;
+1060 Rust tests и 7 отдельных fixture checks PASS.
+Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
 persistent journal и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle

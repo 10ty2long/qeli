@@ -100,8 +100,9 @@ systemd reporting has not been tested.
 
 Only in-memory worker leases are checked. A failed partial acquire before IPv6 lease
 registration, previous-worker journal records and IPv4 forwarding held for the worker
-lifetime are not separately covered by this pass. `sysctl::recover()` can still return
-Ok after persisting unresolved stale entries; its contract needs a separate pass.
+lifetime are not separately covered by this pass. The subsequent
+[sysctl recovery pass](AUDIT-Q14-SYSCTL-RECOVERY.md) fixes false Ok after persisting
+unresolved stale entries and ownership loss on failed reacquisition.
 The DNS registry does not survive crashes/restarts; persistent journaling is absent.
 
 Firewall commands lack an overall deadline; a stalled command can delay final
