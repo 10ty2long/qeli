@@ -22,6 +22,12 @@ pub mod util;
 #[path = "server/dns/resolver.rs"]
 mod dns_resolver;
 
+// Preflight parsing and fail-open policy are portable; Linux retains the server entry point.
+#[cfg(all(test, not(all(target_os = "linux", feature = "server"))))]
+#[allow(dead_code)] // Host tests inject observations rather than invoking the host's `ip`.
+#[path = "server/preflight.rs"]
+mod server_preflight;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

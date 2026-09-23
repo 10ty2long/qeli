@@ -1252,9 +1252,31 @@ cleanup retry in the current worker; a failed check is not proof of rule absence
 Generic NAT sweeps retain their previous best-effort policy and log failures.
 
 This limits an individual command: the full cleanup sequence and process termination
-can take longer. Preflight and client firewall/route commands are outside this change.
+can take longer. Preflight is covered separately in §6.36; client firewall/route
+commands remain outside this change.
 There are no new INI keys.
 [Scope and validation](../reports/AUDIT-Q14-NAT-COMMANDS.md).
+
+### 6.36 Server: preflight delay or unavailable network state
+
+The four `ip` queries for IPv4/IPv6 addresses/routes now use the shared runner:
+15 seconds per command, with separate 16 MiB stdout/stderr limits. Oversized output
+is never parsed partially.
+
+The warning `pre-flight: could not read the host's network state` means the IPv4
+snapshot is unavailable: causes include missing `ip`, nonzero exit, read errors,
+timeouts or output overflow. Existing policy permits startup; this does not establish
+absence of network collisions. Inspect the host's addresses and routes.
+
+An IPv6 address or route query failure preserves IPv4 and the available IPv6 part;
+there is still no separate warning for this partial failure. Observed collisions
+continue to block application. Successful empty output is valid.
+
+The complete preflight and panel transaction can take longer than 15 seconds:
+commands run sequentially and process termination can extend the call. Synchronous
+waiting in panel handlers remains. There are no new INI keys.
+[Scope and limitations](../reports/AUDIT-Q05-PREFLIGHT.md).
+
 
 ---
 

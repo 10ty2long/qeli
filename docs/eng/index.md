@@ -78,6 +78,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-PROFILE-SHUTDOWN.md](reports/AUDIT-Q14-PROFILE-SHUTDOWN.md) | Profile task failures, TUN queue timeout/panic and TUN deletion errors in shutdown outcome; partial Q14-F027 |
 | [AUDIT-Q14-SYSCTL-RECOVERY.md](reports/AUDIT-Q14-SYSCTL-RECOVERY.md) | Q14-F029/F030: sysctl recovery failures and preserving prior ownership on repeated acquisition |
 | [AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md](reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) | Q14-F031: track partial IPv6 acquisition and retry rollback until release succeeds |
+| [AUDIT-Q05-PREFLIGHT.md](reports/AUDIT-Q05-PREFLIGHT.md) | Q05-F001: bounded preflight commands and partial IPv4/IPv6 snapshot policy |
 | [AUDIT-Q14-NAT-COMMANDS.md](reports/AUDIT-Q14-NAT-COMMANDS.md) | Q14-F032: server NAT shares the bounded command runner; ownership after timeout |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Retained DNS rule specifications after cleanup/rollback failure, retries and generation identity |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |

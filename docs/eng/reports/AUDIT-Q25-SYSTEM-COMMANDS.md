@@ -84,7 +84,8 @@ that deliberately leaves its process group has no group-termination guarantee.
 
 Server NAT, including its firewall/probe/WAN lookup commands, is subsequently migrated in
 [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Other route, client kill-switch, gateway, path-monitor
-and server preflight commands still use the previous execution path. Migrating them requires checking ownership journals after mutations with an
+commands still use the previous execution path. Server preflight is migrated in
+[Q05-F001](AUDIT-Q05-PREFLIGHT.md). Migrating remaining mutations requires checking ownership journals after an
 unknown outcome and preserving fail-closed behavior. Do not treat the entire system-command
 layer as fixed. Server cleanup errors and overall operation serialization also need review.
 

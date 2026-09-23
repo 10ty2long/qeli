@@ -139,7 +139,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 02 | Клиентские парсеры и qeli:// | H04, H06, H08–H10 | IN_PROGRESS |
 | 03 | Панель: UI и состояние | H02, H09–H11 | TODO |
 | 04 | Web auth и защита API | H01–H03, H08–H09 | TODO |
-| 05 | Транзакции конфигурации и restart | H08–H10 | TODO |
+| 05 | Транзакции конфигурации и restart | H08–H10 | IN_PROGRESS |
 | 06 | Пользователи, группы и выдача доступа | H01, H04, H09–H10 | TODO |
 | 07 | Backup, restore и history | H03–H04, H08, H10 | TODO |
 | 08 | Криптография, identity и ключи | H01, H04, H08 | TODO |
@@ -291,7 +291,14 @@ JVM-перепроверки корпуса. 651 Rust-тест, 438 C# checks и
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Preflight, 23 сентября 2026:** [Q05-F001](../reports/AUDIT-Q05-PREFLIGHT.md):
+четыре host-state probe используют общий runner (15 секунд, по 16 МиБ stdout/stderr).
+Fail-open IPv4 и независимый частичный IPv6 snapshot сохранены. 4 новых теста и
+20 существующих preflight-тестов включены в host-прогон; 1097 Rust tests и 21
+production-adapter сценарий PASS. Linux HTTP/restart/restore, общий срок транзакции
+и синхронное ожидание в async handlers остаются открытыми.
 
 ### 06. Пользователи, группы и выдача доступа
 
@@ -593,9 +600,16 @@ sysctl recovery и потеря существующего owner при неуд
 теста: матрица этого этапа 1072 Rust tests PASS; пять отдельных adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): все пять запусков команд server NAT
 переведены на общий runner (15 с; 16 МиБ на каждый поток вывода). Timeout не теряет
-DNS ownership; текущая матрица 1073 Rust tests и шесть отдельных adapter checks PASS.
+DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
+
+**Preflight, 23 сентября 2026:** [Q05-F001](../reports/AUDIT-Q05-PREFLIGHT.md):
+четыре host-state probe используют общий runner (15 секунд, по 16 МиБ stdout/stderr).
+Fail-open IPv4 и независимый частичный IPv6 snapshot сохранены. 4 новых теста и
+20 существующих preflight-тестов включены в host-прогон; 1097 Rust tests и 21
+production-adapter сценарий PASS. Linux HTTP/restart/restore, общий срок транзакции
+и синхронное ожидание в async handlers остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -691,7 +705,7 @@ sysctl recovery и потеря существующего owner при неуд
 теста: матрица этого этапа 1072 Rust tests PASS; пять отдельных adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): все пять запусков команд server NAT
 переведены на общий runner (15 с; 16 МиБ на каждый поток вывода). Timeout не теряет
-DNS ownership; текущая матрица 1073 Rust tests и шесть отдельных adapter checks PASS.
+DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
 
@@ -752,7 +766,7 @@ sysctl recovery и потеря существующего owner при неуд
 теста: матрица этого этапа 1072 Rust tests PASS; пять отдельных adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): все пять запусков команд server NAT
 переведены на общий runner (15 с; 16 МиБ на каждый поток вывода). Timeout не теряет
-DNS ownership; текущая матрица 1073 Rust tests и шесть отдельных adapter checks PASS.
+DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
 
@@ -872,7 +886,7 @@ sysctl recovery и потеря существующего owner при неуд
 теста: матрица этого этапа 1072 Rust tests PASS; пять отдельных adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): все пять запусков команд server NAT
 переведены на общий runner (15 с; 16 МиБ на каждый поток вывода). Timeout не теряет
-DNS ownership; текущая матрица 1073 Rust tests и шесть отдельных adapter checks PASS.
+DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
 
@@ -1156,7 +1170,7 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 **Продолжение серверного слоя:**
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): все пять запусков команд server NAT
 переведены на общий runner (15 с; 16 МиБ на каждый поток вывода). Timeout не теряет
-DNS ownership; текущая матрица 1073 Rust tests и шесть отдельных adapter checks PASS.
+DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
 
@@ -1437,7 +1451,8 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 22–25: вложенные H2/transport workers и отмена
-TUN shutdown, затем сроки системных команд и platform rollback/ACK. Сохраняется очередь
+**Ближайшая работа:** продолжить 25: оставшиеся команды routes/kill-switch/gateway/path
+monitor, затем старые поколения TUN и platform rollback/ACK. В 05 остаются общий срок
+preflight-транзакции и синхронные ожидания в async handlers. Сохраняется очередь
 незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
 Новый полный бенчмарк выполняется после стабилизации исправлений.

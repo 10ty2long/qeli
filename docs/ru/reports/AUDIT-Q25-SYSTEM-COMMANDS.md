@@ -84,7 +84,8 @@ spawn, процесс в непрерываемом kernel wait либо оши�
 
 Server NAT, включая его firewall/probe/WAN lookup, позднее перенесён в
 [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Остальные команды маршрутов, клиентского kill-switch,
-gateway, path monitor и server preflight ещё используют прежний запуск. Их перенос требует проверки ownership journal при неизвестном результате мутации
+gateway и path monitor ещё используют прежний запуск. Server preflight перенесён в
+[Q05-F001](AUDIT-Q05-PREFLIGHT.md). Перенос оставшихся мутаций требует проверки ownership journal при неизвестном результате мутации
 и сохранения fail-closed поведения. Не объявлять весь слой системных команд исправленным.
 Серверные ошибки cleanup и общая сериализация операций также требуют отдельного прохода.
 

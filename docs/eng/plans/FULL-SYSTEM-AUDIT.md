@@ -134,7 +134,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 02 | Client parsers and qeli:// | H04, H06, H08–H10 | IN_PROGRESS |
 | 03 | Panel UI and state | H02, H09–H11 | TODO |
 | 04 | Web auth and API protection | H01–H03, H08–H09 | TODO |
-| 05 | Config transactions and restart | H08–H10 | TODO |
+| 05 | Config transactions and restart | H08–H10 | IN_PROGRESS |
 | 06 | Users, groups and provisioning | H01, H04, H09–H10 | TODO |
 | 07 | Backup, restore and history | H03–H04, H08, H10 | TODO |
 | 08 | Cryptography, identity and keys | H01, H04, H08 | TODO |
@@ -286,7 +286,14 @@ Common validation/preflight for Form/INI/API/history/Quick Start/worker/full res
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Preflight, 23 September 2026:** [Q05-F001](../reports/AUDIT-Q05-PREFLIGHT.md):
+four host-state probes share the bounded runner (15 seconds, 16 MiB per output stream).
+IPv4 fail-open and independent partial IPv6 observations are preserved. The host suite
+includes 4 new tests and 20 existing preflight tests; 1097 Rust tests and 21 production-adapter
+scenarios PASS. Linux HTTP/restart/restore, transaction-wide deadlines and synchronous
+waiting in async handlers remain open.
 
 ### 06. Users, groups and provisioning
 
@@ -588,9 +595,16 @@ retains the scope for final cleanup. 11 new regressions plus one moved Linux-onl
 that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
 use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
-current matrix 1073 Rust tests and six separate adapter checks PASS.
+that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
+
+**Preflight, 23 September 2026:** [Q05-F001](../reports/AUDIT-Q05-PREFLIGHT.md):
+four host-state probes share the bounded runner (15 seconds, 16 MiB per output stream).
+IPv4 fail-open and independent partial IPv6 observations are preserved. The host suite
+includes 4 new tests and 20 existing preflight tests; 1097 Rust tests and 21 production-adapter
+scenarios PASS. Linux HTTP/restart/restore, transaction-wide deadlines and synchronous
+waiting in async handlers remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -686,7 +700,7 @@ retains the scope for final cleanup. 11 new regressions plus one moved Linux-onl
 that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
 use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
-current matrix 1073 Rust tests and six separate adapter checks PASS.
+that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
 
@@ -747,7 +761,7 @@ retains the scope for final cleanup. 11 new regressions plus one moved Linux-onl
 that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
 use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
-current matrix 1073 Rust tests and six separate adapter checks PASS.
+that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
 
@@ -865,7 +879,7 @@ retains the scope for final cleanup. 11 new regressions plus one moved Linux-onl
 that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
 use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
-current matrix 1073 Rust tests and six separate adapter checks PASS.
+that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
 
@@ -1149,7 +1163,7 @@ and actual backend/runtime validation remain open.
 **Server command follow-up:**
 [Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
 use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
-current matrix 1073 Rust tests and six separate adapter checks PASS.
+that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
 
@@ -1428,7 +1442,8 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 22–25 with nested H2/transport workers and TUN-shutdown
-cancellation, then system-command deadlines and platform rollback/ACK. Outstanding 01–07, Linux
+**Next work:** continue 25 with remaining route/kill-switch/gateway/path-monitor
+commands, then older TUN generations and platform rollback/ACK. Section 05 still needs
+transaction-wide preflight deadlines and removal of synchronous waits in async handlers. Outstanding 01–07, Linux
 restart/restore/manual+NDP E2E and platform certification remain queued. A new full benchmark
 follows stabilization of fixes.

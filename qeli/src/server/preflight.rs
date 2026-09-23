@@ -22,9 +22,9 @@
 //! is no configuration in which overlapping the host's own addressing works.
 
 use crate::config::server::ServerConfig;
+use crate::system_command::Command;
 use ipnet::{Ipv4Net, Ipv6Net};
 use std::net::{Ipv4Addr, Ipv6Addr};
-use std::process::Command;
 
 /// Snapshot of the host's IPv4 networking, as read from `ip`. Interface names are kept
 /// so a collision can name the interface it hit (an operator fixes `net0` far faster
@@ -285,32 +285,27 @@ pub fn parse_ipv6_route_lines(out: &str) -> (Vec<Ipv6Addr>, Vec<String>, Vec<(St
     (gateways, default_interfaces, routes)
 }
 
-/// Read the host's IPv4 state. `None` if `ip` is missing or fails — the caller then
-/// skips the check with a warning rather than blocking startup (see module docs).
+/// Read the host's IPv4/IPv6 state using the shared command deadline/output limits.
+/// `None` if an IPv4 probe fails; the caller warns and follows the fail-open policy.
+/// Unavailable IPv6 observations do not discard the successfully observed host state.
 pub fn gather_host_net() -> Option<HostNet> {
-    let addr_out = Command::new("ip")
-        .args(["-4", "-o", "addr", "show"])
-        .output()
-        .ok()?;
-    let route_out = Command::new("ip")
-        .args(["-4", "route", "show"])
-        .output()
-        .ok()?;
+    gather_host_net_with(|args| Command::new("ip").args(args).output())
+}
+
+fn gather_host_net_with(
+    mut run: impl FnMut(&[&str]) -> std::io::Result<std::process::Output>,
+) -> Option<HostNet> {
+    let addr_out = run(&["-4", "-o", "addr", "show"]).ok()?;
+    let route_out = run(&["-4", "route", "show"]).ok()?;
     if !addr_out.status.success() || !route_out.status.success() {
         return None;
     }
     let (gateways, routes) = parse_route_lines(&String::from_utf8_lossy(&route_out.stdout));
     // Keep the useful IPv4 safety snapshot when an old/minimal `ip` cannot report
-    // IPv6. In that case the IPv6 half is empty and the caller follows the documented
-    // fail-open policy for state it could not observe.
-    let ipv6_addr_out = Command::new("ip")
-        .args(["-6", "-o", "addr", "show"])
-        .output()
-        .ok();
-    let ipv6_route_out = Command::new("ip")
-        .args(["-6", "route", "show"])
-        .output()
-        .ok();
+    // IPv6. Each unavailable IPv6 part stays empty independently, following the
+    // documented fail-open policy only for state we could not observe.
+    let ipv6_addr_out = run(&["-6", "-o", "addr", "show"]).ok();
+    let ipv6_route_out = run(&["-6", "route", "show"]).ok();
     let ipv6_addr_text = ipv6_addr_out
         .as_ref()
         .filter(|output| output.status.success())
@@ -885,3 +880,7 @@ mod tests {
         assert!(error.contains("eth1"), "got: {error}");
     }
 }
+
+#[cfg(test)]
+#[path = "preflight/snapshot_tests.rs"]
+mod snapshot_tests;

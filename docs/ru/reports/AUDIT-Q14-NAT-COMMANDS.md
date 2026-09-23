@@ -63,7 +63,8 @@ loopback witness подтвердил закрытие сокета дочерн
 process group, не покрывается гарантией её завершения. Два существующих Linux group-теста
 проверены компилятором; доставка Linux-сигналов здесь не исполнялась.
 
-Preflight, клиентские routes/kill-switch/gateway/path monitor этим проходом не перенесены.
+Preflight позднее перенесён в [Q05-F001](AUDIT-Q05-PREFLIGHT.md).
+Клиентские routes/kill-switch/gateway/path monitor этим проходом не перенесены.
 Q14-F027, ресурсы старых поколений, общий срок всей сетевой операции и постоянный DNS
 journal остаются открытыми. Проверки/удаления не атомарны относительно внешнего firewall.
 Реальные Linux firewall/TUN/sysctl/systemd, устройства, native release и бенчмарки не запускались.
