@@ -2296,6 +2296,10 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   and the Linux monitor finish before platform-path inspection/rollback, followed by DNS/TUN
   cleanup. Management-event errors follow this sequence too. Cancelling a candidate stops
   its receiver while the active path keeps running; see [details and validation limits](../reports/AUDIT-Q25-UDP-TASKS.md).
+- Cancelling an already-started Unix TUN/Wintun shutdown retains worker ownership and
+  waits for worker termination during pump destruction. This wait can be synchronous;
+  it does not confirm completion of other tasks or network recovery when cancelling
+  the whole client. See [the contract and validation](../reports/AUDIT-Q25-TUN-WORKERS.md).
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and

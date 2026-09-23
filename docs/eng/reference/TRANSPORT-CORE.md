@@ -60,6 +60,11 @@ candidate-connect and the Linux monitor. A movable TaskHandle cancels an individ
 while the group retains join ownership; resource release precedes path rollback.
 Management-event errors follow normal teardown. ABI is unchanged; see [the UDP report](../reports/AUDIT-Q25-UDP-TASKS.md).
 
+TUN lifetime (23 September 2026): shared TunWorkers retains Unix TUN and Wintun reader/writer
+handles across cancelled shutdown. Drop waits for an ongoing join or performs it itself
+when the blocking helper is queued. This guarantees pump destruction ordering, not complete
+platform rollback. ABI remains 1.16; see [the report](../reports/AUDIT-Q25-TUN-WORKERS.md).
+
 ---
 
 ## 1. The verdict: what justifies this, and what does not

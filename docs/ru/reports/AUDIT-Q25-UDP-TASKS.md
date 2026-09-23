@@ -68,3 +68,6 @@ Linux проверен кросс-сборкой; Linux runtime, реальны�
 ip/iptables/resolvectl, rollback платформенных ACK, вложенные H2/transport workers и отмена
 TUN shutdown остаются отдельными проверками. Перед release нужны актуальные native builds
 и реальные платформенные сценарии. Полный аудит остаётся открытым.
+
+Продолжение 23 сентября: отмена shutdown потоков TUN/Wintun проверена и исправлена
+в [Q25-F014](AUDIT-Q25-TUN-WORKERS.md). Остальные ограничения выше сохраняются.

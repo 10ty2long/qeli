@@ -5,6 +5,7 @@
 //! so reconnect teardown has one implementation independent of the selected wire mode.
 
 use super::buffer_pool::{BufferPool, PooledBuffer};
+use super::tun_workers::TunWorkers;
 use crate::tun::{
     client_tap_control_reply, destination_mac_for_ip, is_client_tap_control_frame,
     strip_ethernet_header, TapGateway,
@@ -14,7 +15,6 @@ use std::ops::{Deref, Range};
 use std::os::fd::{AsRawFd, OwnedFd};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc as std_mpsc, Arc};
-use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
@@ -195,8 +195,7 @@ pub struct LinuxTunPump {
     to_tun: Option<std_mpsc::SyncSender<PooledBuffer>>,
     downlink_pool: BufferPool,
     stop: LinuxTunPumpStop,
-    reader: Option<JoinHandle<()>>,
-    writer: Option<JoinHandle<()>>,
+    workers: TunWorkers,
 }
 
 impl LinuxTunPump {
@@ -300,8 +299,7 @@ impl LinuxTunPump {
             to_tun: Some(to_tun_tx),
             downlink_pool,
             stop,
-            reader: Some(reader),
-            writer: Some(writer),
+            workers: TunWorkers::new(vec![reader, writer]),
         })
     }
 
@@ -333,23 +331,7 @@ impl LinuxTunPump {
     /// Stop both workers, close their descriptors and wait until ownership is released.
     pub async fn shutdown(mut self) {
         self.request_stop();
-        let reader = self.reader.take();
-        let writer = self.writer.take();
-        if reader.is_none() && writer.is_none() {
-            return;
-        }
-        let joined = tokio::task::spawn_blocking(move || {
-            if let Some(reader) = reader {
-                let _ = reader.join();
-            }
-            if let Some(writer) = writer {
-                let _ = writer.join();
-            }
-        })
-        .await;
-        if let Err(error) = joined {
-            log::warn!("TUN worker join failed: {error}");
-        }
+        self.workers.finish().await;
     }
 
     fn request_stop(&mut self) {
@@ -388,19 +370,9 @@ fn reusable_downlink_buffer_count(buffer_capacity: usize) -> usize {
 
 impl Drop for LinuxTunPump {
     fn drop(&mut self) {
-        // Error/cancellation paths cannot await, but returning from the native runner is an
-        // ownership promise to Android/macOS: no duplicated TUN descriptor may remain alive.
-        // Merely setting the stop flag left both threads detached for up to one poll interval,
-        // so Android could keep the dead VPN (and its DNS) selected after the UI said it was
-        // disconnected. Join here; graceful `shutdown()` has already taken both handles and
-        // therefore remains non-blocking in Drop.
         self.request_stop();
-        if let Some(reader) = self.reader.take() {
-            let _ = reader.join();
-        }
-        if let Some(writer) = self.writer.take() {
-            let _ = writer.join();
-        }
+        // TunWorkers remains owned even when async shutdown has started. Its field Drop
+        // joins before this pump is fully destroyed, including a cancelled shutdown waiter.
     }
 }
 
@@ -1034,5 +1006,47 @@ mod tests {
         // corresponding worker-owned endpoint is gone, which is the lifecycle invariant here.
         assert!(reader_test.send(&[1]).is_err());
         assert!(writer_test.send(&[1]).is_err());
+    }
+    #[test]
+    fn cancelled_queued_shutdown_closes_descriptors_before_return() {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .max_blocking_threads(1)
+            .build()
+            .unwrap();
+        runtime.block_on(async {
+            let (started, ready) = tokio::sync::oneshot::channel();
+            let (unblock_pool, pool_wait) = std_mpsc::channel::<()>();
+            let blocker = tokio::task::spawn_blocking(move || {
+                started.send(()).unwrap();
+                let _ = pool_wait.recv_timeout(Duration::from_secs(5));
+            });
+            ready.await.unwrap();
+            let (reader_test, reader_fd) = packet_pair();
+            let (writer_test, writer_fd) = packet_pair();
+            let pump = LinuxTunPump::start(
+                reader_fd,
+                writer_fd,
+                LinuxTunPumpConfig {
+                    buffer_size: 2048,
+                    framing: TunFraming::Raw,
+                    downlink_record_bytes: 2048,
+                    write_drops: None,
+                },
+            )
+            .unwrap();
+            let mut shutdown = Box::pin(pump.shutdown());
+            std::future::poll_fn(|cx| {
+                assert!(std::future::Future::poll(shutdown.as_mut(), cx).is_pending());
+                std::task::Poll::Ready(())
+            })
+            .await;
+            drop(shutdown);
+            assert!(reader_test.send(&[1]).is_err());
+            assert!(writer_test.send(&[1]).is_err());
+            assert!(!blocker.is_finished());
+            drop(unblock_pool);
+            blocker.await.unwrap();
+        });
     }
 }

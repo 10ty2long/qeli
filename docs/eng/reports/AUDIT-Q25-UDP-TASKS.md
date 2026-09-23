@@ -68,3 +68,6 @@ only requests cancellation. Abort cannot interrupt running blocking work. Deadli
 ip/iptables/resolvectl, platform ACK rollback, nested H2/transport workers and TUN-shutdown
 cancellation remain separate checks. Release requires fresh native builds and real platform
 scenarios. The full audit remains open.
+
+Follow-up on 23 September: TUN/Wintun worker-shutdown cancellation was validated and fixed
+in [Q25-F014](AUDIT-Q25-TUN-WORKERS.md). The other limits above remain.

@@ -150,13 +150,13 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 18 | IPv6 off/manual/route/nat66 and NDP | H06, H11 | TODO |
 | 19 | Server and client DNS | H01–H02, H05–H06 | IN_PROGRESS |
 | 20 | DHCP and lease lifecycle | H02, H05 | TODO |
-| 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | TODO |
+| 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | IN_PROGRESS |
 | 22 | Transport core, FFI/JNI and memory | H06, H08 | IN_PROGRESS |
 | 23 | Roaming, resume and CONTROL_V2 | H06, H08 | IN_PROGRESS |
 | 24 | Multipath, bonding and shared budgets | H04, H06, H08 | IN_PROGRESS |
 | 25 | Linux CLI and network recovery | H01, H04, H08 | IN_PROGRESS |
 | 26 | Shared C# and managed/native boundary | H04, H06, H08 | TODO |
-| 27 | Windows GUI, service and drivers | H01, H04, H08 | TODO |
+| 27 | Windows GUI, service and drivers | H01, H04, H08 | IN_PROGRESS |
 | 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | TODO |
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | TODO |
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
@@ -687,7 +687,13 @@ TUN host prefixes, TAP ARP/NDP/RA/DAD and unsupported EtherType/VLAN/multicast. 
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Cancelled TUN shutdown, 23 September 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, including
+cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
+tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
+other section scenarios remain unverified; the full audit is still open.
 
 ### 22. Transport core, FFI/JNI and memory
 
@@ -726,6 +732,12 @@ normal cleanup; the group finishes before platform-candidate inspection/rollback
 preserves join ownership across cancelled waits and path transfer. Nine new regressions;
 940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
 cancellation, command deadlines and platform fault injection remain open.
+
+**Cancelled TUN shutdown, 23 September 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, including
+cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
+tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
+other section scenarios remain unverified; the full audit is still open.
 
 ### 23. Roaming, resume and CONTROL_V2
 
@@ -865,6 +877,12 @@ preserves join ownership across cancelled waits and path transfer. Nine new regr
 940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
 cancellation, command deadlines and platform fault injection remain open.
 
+**Cancelled TUN shutdown, 23 September 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, including
+cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
+tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
+other section scenarios remain unverified; the full audit is still open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -895,7 +913,13 @@ LocalSystem IPC/ACL/SIDs, DPAPI, protected directories, atomic service profiles 
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Cancelled TUN shutdown, 23 September 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, including
+cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
+tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
+other section scenarios remain unverified; the full audit is still open.
 
 ### 28. macOS daemon, utun, pf and Network Extension
 

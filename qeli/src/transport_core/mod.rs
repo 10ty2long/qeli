@@ -108,6 +108,20 @@ pub(crate) mod network;
 ))]
 pub(crate) mod tasks;
 
+#[cfg(any(
+    test,
+    all(
+        any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "macos",
+            target_os = "windows"
+        ),
+        any(feature = "client", feature = "transport-core-ffi")
+    )
+))]
+pub(crate) mod tun_workers;
+
 pub mod path;
 
 #[cfg(feature = "experimental-roaming")]

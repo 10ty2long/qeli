@@ -155,13 +155,13 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 18 | IPv6 off/manual/route/nat66 и NDP | H06, H11 | TODO |
 | 19 | DNS сервера и клиентов | H01–H02, H05–H06 | IN_PROGRESS |
 | 20 | DHCP и lease lifecycle | H02, H05 | TODO |
-| 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | TODO |
+| 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | IN_PROGRESS |
 | 22 | Transport core, FFI/JNI и память | H06, H08 | IN_PROGRESS |
 | 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | IN_PROGRESS |
 | 24 | Multipath, bonding и общий бюджет | H04, H06, H08 | IN_PROGRESS |
 | 25 | Linux CLI и восстановление сети | H01, H04, H08 | IN_PROGRESS |
 | 26 | Общий C# и managed/native граница | H04, H06, H08 | TODO |
-| 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | TODO |
+| 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | IN_PROGRESS |
 | 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | TODO |
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | TODO |
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
@@ -694,7 +694,13 @@ TUN host prefixes, TAP ARP/NDP/RA/DAD, unsupported EtherType/VLAN/multicast. MTU
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Отмена shutdown TUN, 23 сентября 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Общий TunWorkers сохраняет владение Unix TUN/Wintun потоками до join, включая отмену
+начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
+Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
+сценарии раздела не проверены; полный аудит остаётся открытым.
 
 ### 22. Transport core, FFI/JNI и память
 
@@ -733,6 +739,12 @@ candidate-connect и Linux-монитор принадлежат одной гр
 TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
 регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
 workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
+
+**Отмена shutdown TUN, 23 сентября 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Общий TunWorkers сохраняет владение Unix TUN/Wintun потоками до join, включая отмену
+начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
+Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
+сценарии раздела не проверены; полный аудит остаётся открытым.
 
 ### 23. Роуминг, resume и CONTROL_V2
 
@@ -872,6 +884,12 @@ TaskHandle сохраняет обязанность join при отмене о
 регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
 workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
 
+**Отмена shutdown TUN, 23 сентября 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Общий TunWorkers сохраняет владение Unix TUN/Wintun потоками до join, включая отмену
+начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
+Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
+сценарии раздела не проверены; полный аудит остаётся открытым.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -902,7 +920,13 @@ LocalSystem IPC/ACL/SID, DPAPI, protected directories, atomic service profile и
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Отмена shutdown TUN, 23 сентября 2026:** [Q25-F014](../reports/AUDIT-Q25-TUN-WORKERS.md).
+Общий TunWorkers сохраняет владение Unix TUN/Wintun потоками до join, включая отмену
+начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
+Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
+сценарии раздела не проверены; полный аудит остаётся открытым.
 
 ### 28. macOS: daemon, utun, pf и Network Extension
 

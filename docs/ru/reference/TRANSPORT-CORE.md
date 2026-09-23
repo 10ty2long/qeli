@@ -61,6 +61,11 @@ candidate-connect и Linux-монитор. Перемещаемый TaskHandle �
 а группа сохраняет join; освобождение ресурсов ожидается до отката пути. Ранняя ошибка
 управляющего события проходит штатный teardown. ABI не меняется; [UDP-отчёт](../reports/AUDIT-Q25-UDP-TASKS.md).
 
+TUN lifetime (23 сентября 2026): общий TunWorkers сохраняет reader/writer handles Unix
+TUN и Wintun при отмене shutdown. Drop ждёт уже выполняемый join либо делает его сам,
+если blocking-помощник ещё в очереди. Это гарантия уничтожения pump, не подтверждение
+всего платформенного rollback. ABI 1.16 сохранён; [отчёт](../reports/AUDIT-Q25-TUN-WORKERS.md).
+
 ---
 
 ## 1. Вердикт: чем это оправдано, а чем — нет

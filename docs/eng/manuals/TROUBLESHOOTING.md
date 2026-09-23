@@ -1044,6 +1044,20 @@ See [the report and tested scenarios](../reports/AUDIT-Q25-UDP-TASKS.md).
 
 ---
 
+### 6.24 TUN/Wintun worker termination when shutdown is cancelled
+
+Even if the shutdown waiter is cancelled, pump destruction waits for its reader/writer.
+Cancellation can make this synchronous. A saturated blocking pool does not prevent Drop
+from joining itself; a join already running is awaited until both threads have terminated.
+
+Stop and closing the inbound queue release packet waits and blocking_send. Bounded loop
+waits do not guarantee a finite deadline for driver/OS calls. If shutdown stalls, distinguish
+TUN workers, system commands and platform ACK waits using logs/thread dumps. A stop request
+or UI state does not prove all network cleanup is complete. See [tested scenarios and
+limits](../reports/AUDIT-Q25-TUN-WORKERS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)
