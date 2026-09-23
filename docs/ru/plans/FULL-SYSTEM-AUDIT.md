@@ -727,6 +727,9 @@ chain. Carrier первого остаётся доступен; конкуре�
 принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
 helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
 гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
+Продолжение: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
+Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -807,6 +810,9 @@ chain. Carrier первого остаётся доступен; конкуре�
 принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
 helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
 гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
+Продолжение: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
+Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
 
 ### 19. DNS сервера и клиентов
 
@@ -1455,6 +1461,9 @@ chain. Carrier первого остаётся доступен; конкуре�
 принимают одну политику. 13 исходных FAIL → PASS; 30 новых тестов, два устаревших
 helper-теста удалены. 1315 Rust tests и девять команд матрицы PASS. Межпроцессные
 гонки, stale TUN identity, обнаружение IPv6-защиты и Linux runtime остаются открыты.
+Продолжение: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
+Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1733,10 +1742,11 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: межпроцессный допуск kill-switch,
-stale TUN identity и доказательства IPv6-защиты. Q25-F043–F045 исправляет общий
-selector exit NAT и очистку без владения, отвергает несовместимые kill-switch
-до изменений в проверенных пределах. DNS/carrier globals, общий deadline,
-постоянный crash recovery, Q14-F027 TUN workers/FD и синхронные preflight waits
-раздела 05 открыты. Linux E2E restart/restore/manual+NDP, native certification
-и новый benchmark остаются в плане; целый раздел этот прогон не переводит в PASS.
+**Ближайшая работа:** продолжить 25: Linux runtime для lease и обеих firewall-семей,
+совместимость IPv6-disabled с установленным ip6tables, владение TUN у gateway/exit
+без kill-switch и изменение IPv6 после старта. [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md)
+добавляет lifetime lease защищённого клиента и fail-closed IPv6 evidence.
+DNS/carrier globals, общий deadline, постоянный crash recovery, Q14-F027 TUN workers/FD
+и синхронные preflight waits раздела 05 открыты. Linux E2E restart/restore/manual+NDP,
+native certification и новый benchmark остаются в плане; целый раздел этот прогон
+не переводит в PASS.

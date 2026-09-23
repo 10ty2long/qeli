@@ -1939,9 +1939,13 @@ How it works (matters for manual teardown and for several instances on one host)
   Before any changes, Qeli inspects both available families and refuses another
   `QELI_KS_<tun>` or legacy `QELI_KS`, including unhooked chains. Unknown/incomplete
   inventory also refuses; `allow_ipv4_leak`/`allow_ipv6_leak` do not bypass ownership
-  conflicts. The same TUN may rebuild its own chain. Use separate network namespaces
-  for independently protected tunnels. Checks are serialized within the process;
-  the cross-process race is not yet eliminated.
+  conflicts. Before DNS recovery and firewall setup, the client atomically claims
+  kill-switch ownership for its entire session in this network namespace.
+  A second process using the same or another TUN is refused before changes; the lease
+  spans reconnects and terminal cleanup. Once the owner exits, the same TUN may recover
+  its remaining chain. Old binaries and external firewall tools do not participate.
+  Use separate network namespaces for independently protected tunnels. Failure to obtain
+  the lease also refuses startup; leak overrides do not bypass it.
 - **DNS is scoped to the system resolvers** — the same as Windows and macOS. The rule used to
   be `--dport 53` to any destination, so while the tunnel was down **every** application's DNS
   queries egressed in cleartext on the physical interface, to a resolver of the querier's
@@ -1960,10 +1964,14 @@ How it works (matters for manual teardown and for several instances on one host)
 - In **router mode** (`gateway_nat`) the chain is also hooked from **FORWARD** — routed
   LAN traffic behind the client never traverses OUTPUT, so without the FORWARD hook it
   would be unprotected during a reconnect.
-- IPv6 is programmed symmetrically (`ip6tables`). On a host with global IPv6 where
-  `ip6tables` is unavailable the kill-switch **refuses to arm** (fail-closed) — override
-  with `allow_ipv6_leak = true`, accepting the v6 leak (see also the `::/1`+`8000::/1`
-  blackhole in the client routing-keys table).
+- IPv6 is programmed symmetrically (`ip6tables`). If installation is unavailable or fails,
+  skipping IPv6 protection requires a successful empty
+  `ip -6 address show scope global` result or explicit `allow_ipv6_leak = true`.
+  Errors, timeouts, output overflow, a missing `ip` or any nonempty response require
+  protection; unreadable host state no longer proves the absence of IPv6.
+  Refusal rolls back an already installed IPv4 leg and reports any rollback failure.
+  This is a startup snapshot, not monitoring for IPv6 appearing later.
+  See also the `::/1`+`8000::/1` blackhole in the client routing-keys table.
 
 It is removed automatically on a **clean** stop (Ctrl+C / SIGTERM); a crash leaves the
 chain in place (fail-safe). **Never drop it with `iptables -F`** — that flushes the entire

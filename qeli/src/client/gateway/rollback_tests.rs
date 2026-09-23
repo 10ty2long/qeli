@@ -24,6 +24,8 @@ struct Kernel {
     wans: [Option<String>; 2],
     fail_mark_delete: bool,
     fail_nat_add: bool,
+    fail_ipv6_drop: bool,
+    ipv6_observation: Option<io::Result<Output>>,
     inventory_failure: Option<bool>,
     inventory_override: Option<(bool, Vec<u8>)>,
 }
@@ -50,6 +52,12 @@ impl Kernel {
         self.calls.push(args.clone());
         let program = cmd.get_program().to_string_lossy();
         if program == "ip" {
+            if args == ["-6", "address", "show", "scope", "global"] {
+                return self
+                    .ipv6_observation
+                    .take()
+                    .unwrap_or_else(|| Ok(output(0, "", "")));
+            }
             let wan = &self.wans[usize::from(args.first().is_some_and(|arg| arg == "-6"))];
             let text = wan
                 .as_ref()
@@ -120,6 +128,21 @@ impl Kernel {
                 return Ok(output(0, "", ""));
             }
             "-X" => {
+                let referenced = self.rules.iter().any(|((family, rule_table, _), rules)| {
+                    *family == ipv6
+                        && rule_table == &key.1
+                        && rules.iter().any(|rule| {
+                            rule.windows(2)
+                                .any(|pair| pair[0] == "-j" && pair[1] == chain)
+                        })
+                });
+                if referenced || self.rules.get(&key).is_some_and(|rules| !rules.is_empty()) {
+                    return Ok(output(
+                        1,
+                        "",
+                        "iptables: chain is not empty or still referenced",
+                    ));
+                }
                 self.rules.remove(&key);
                 return Ok(output(0, "", ""));
             }
@@ -143,6 +166,9 @@ impl Kernel {
         let insertion = op == "-I";
         let body = args[start + if insertion { 3 } else { 2 }..].to_vec();
         if op == "-C" {
+            if ipv6 && self.fail_ipv6_drop && body == ["-j", "DROP"] {
+                return Ok(output(1, "", ""));
+            }
             let hook = body.iter().any(|s| s.starts_with("QELI_KS_"));
             if hook && self.hook_fault {
                 return Err(io::Error::new(

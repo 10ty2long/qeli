@@ -53,8 +53,13 @@ use std::path::Path;
 #[path = "killswitch/admission.rs"]
 mod admission;
 
-// Serializes preflight + mutation in this process. Kernel snapshots are not a
-// cross-process lease; another process/admin may still change the rules externally.
+#[cfg(target_os = "linux")]
+#[path = "killswitch/lease.rs"]
+pub(crate) mod lease;
+
+// Serializes individual firewall operations. The Linux client also holds a
+// namespace lease for its whole session, before DNS recovery and the first engage.
+// Old binaries and external administrators do not participate in that lease.
 static OPERATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
 fn operation() -> std::sync::MutexGuard<'static, ()> {
     OPERATION.lock().unwrap_or_else(|error| error.into_inner())
@@ -458,21 +463,15 @@ fn engage_family(
     Ok(())
 }
 
-/// Best-effort probe: does this host have a globally-scoped IPv6 address on any
-/// non-loopback interface? If so, an unprotected IPv6 leg is a real leak rather than
-/// harmless-on-a-v4-only-box. Reads `/proc/net/if_inet6`, whose columns are
-/// `addr ifindex prefixlen scope flags devname`; the scope is hex and `00` == global.
-/// Returns false when the file is absent/unreadable (no evidence of IPv6 → don't block).
-fn host_has_global_ipv6() -> bool {
-    let Ok(txt) = std::fs::read_to_string("/proc/net/if_inet6") else {
-        return false;
-    };
-    txt.lines().any(|line| {
-        let mut cols = line.split_whitespace();
-        let scope = cols.nth(3); // 0-based: addr(0) ifindex(1) prefixlen(2) scope(3)
-        let devname = cols.nth(1); // remaining: flags(4) devname(5)
-        scope == Some("00") && devname != Some("lo")
-    })
+/// Only a successful empty address inventory rules out global IPv6. In particular,
+/// an inaccessible/missing procfs or a failed command is not an IPv4-only host.
+/// The shared command boundary bounds runtime and output, including partial replies.
+fn host_may_have_global_ipv6() -> bool {
+    Command::new("ip")
+        .args(["-6", "address", "show", "scope", "global"])
+        .output()
+        .map(|output| !output.status.success() || !output.stdout.is_empty())
+        .unwrap_or(true)
 }
 
 /// Engage the kill-switch: allow only loopback, `tun_if`, DHCP, DNS, and the server
@@ -554,9 +553,8 @@ pub fn engage(
 
     // IPv6 leg. Program ip6tables where present; where it's missing (or programming
     // fails) the host would leak over v6 while the switch reports ENGAGED — a false
-    // sense of security. So on a host that actually HAS global IPv6, fail closed
-    // (matching the v4 "refuse to run unprotected" contract) unless the operator has
-    // opted into the leak.
+    // sense of security. Require protection when global IPv6 exists OR its absence
+    // could not be verified, unless the operator explicitly accepts the leak.
     let v6_protected = match v6_path.as_deref() {
         Some(v6_path) => match engage_family(v6_path, tun_if, &v6, guard_forward) {
             Ok(()) => true,
@@ -568,7 +566,7 @@ pub fn engage(
         None => false,
     };
     if !v6_protected {
-        if host_has_global_ipv6() && !allow_ipv6_leak {
+        if !allow_ipv6_leak && host_may_have_global_ipv6() {
             // Roll back the v4 leg we may have armed so a refusal leaves the host exactly
             // as it was — not half-locked to a server the client will never reach.
             if v4_protected {
@@ -583,14 +581,11 @@ pub fn engage(
                 }
             }
             anyhow::bail!(
-                "kill-switch: this host has global IPv6 but ip6tables is unavailable, so IPv6 \
-                 egress can't be locked — refusing to engage a leaking kill-switch. Install \
-                 ip6tables, use an IPv4-only host, or set allow_ipv6_leak = true to \
-                 connect and accept the IPv6 leak."
+                "kill-switch: global IPv6 is present or could not be ruled out, but ip6tables is unavailable or could not be programmed — refusing to engage a leaking kill-switch. Install/fix ip6tables and IPv6 inspection, or set allow_ipv6_leak = true to connect and accept the IPv6 leak."
             );
         }
         log::warn!(
-            "kill-switch: IPv6 egress is NOT restricted (no global IPv6 detected on this host, \
+            "kill-switch: IPv6 egress is NOT restricted (global IPv6 inventory verified empty, \
              or allow_ipv6_leak is set)"
         );
     }

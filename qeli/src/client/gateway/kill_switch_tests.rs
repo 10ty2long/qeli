@@ -254,3 +254,103 @@ fn concurrent_public_start_admits_only_one_policy() {
         .collect();
     assert_eq!(chains.len(), 1);
 }
+
+// Force IPv6 installation to fail after IPv4 has been armed. The observation
+// is supplied at the production command boundary; no host routes are changed.
+fn failed_ipv6(k: &Rc<RefCell<Kernel>>, observation: io::Result<Output>) {
+    let mut k = k.borrow_mut();
+    k.fail_ipv6_drop = true;
+    k.ipv6_observation = Some(observation);
+}
+fn assert_ipv4_removed(k: &Rc<RefCell<Kernel>>) {
+    assert!(!k
+        .borrow()
+        .rules
+        .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+}
+#[test]
+fn regression_unknown_ipv6_refuses_and_rolls_back_ipv4() {
+    for kind in [
+        io::ErrorKind::NotFound,
+        io::ErrorKind::PermissionDenied,
+        io::ErrorKind::TimedOut,
+        io::ErrorKind::InvalidData,
+    ] {
+        run(|k| {
+            failed_ipv6(&k, Err(kind.into()));
+            assert!(
+                protect("ks_a", "203.0.113.7").is_err(),
+                "unknown IPv6 evidence: {kind:?}"
+            );
+            assert_ipv4_removed(&k);
+        });
+    }
+}
+#[test]
+fn regression_failed_ipv6_query_refuses_and_rolls_back_ipv4() {
+    run(|k| {
+        failed_ipv6(&k, Ok(output(2, "", "query failed")));
+        assert!(protect("ks_a", "203.0.113.7").is_err());
+        assert_ipv4_removed(&k);
+    });
+}
+#[test]
+fn regression_observed_ipv6_refuses_and_rolls_back_ipv4() {
+    run(|k| {
+        failed_ipv6(
+            &k,
+            Ok(output(
+                0,
+                "2: eth0\n    inet6 2001:db8::1/64 scope global\n",
+                "",
+            )),
+        );
+        assert!(protect("ks_a", "203.0.113.7").is_err());
+        assert_ipv4_removed(&k);
+    });
+}
+#[test]
+fn regression_unrecognized_ipv6_output_requires_protection() {
+    run(|k| {
+        let mut reply = output(0, "", "");
+        reply.stdout = vec![0xff];
+        failed_ipv6(&k, Ok(reply));
+        assert!(protect("ks_a", "203.0.113.7").is_err());
+        assert_ipv4_removed(&k);
+    });
+}
+#[test]
+fn regression_ipv6_refusal_reports_failed_ipv4_rollback() {
+    run(|k| {
+        failed_ipv6(&k, Err(io::ErrorKind::PermissionDenied.into()));
+        k.borrow_mut().lie_delete = true;
+        let error = protect("ks_a", "203.0.113.7").unwrap_err().to_string();
+        assert!(error.contains("rollback"), "{error}");
+        assert!(k
+            .borrow()
+            .rules
+            .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+    });
+}
+#[test]
+fn verified_empty_ipv6_query_allows_ipv4_only_protection() {
+    run(|k| {
+        failed_ipv6(&k, Ok(output(0, "", "")));
+        protect("ks_a", "203.0.113.7").unwrap();
+        assert!(k
+            .borrow()
+            .rules
+            .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+    });
+}
+#[test]
+fn explicit_ipv6_leak_override_allows_unknown_evidence() {
+    run(|k| {
+        failed_ipv6(&k, Err(io::ErrorKind::PermissionDenied.into()));
+        ks::engage("203.0.113.7", 443, "ks_a", false, true, true).unwrap();
+        assert!(k
+            .borrow()
+            .rules
+            .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+    });
+}

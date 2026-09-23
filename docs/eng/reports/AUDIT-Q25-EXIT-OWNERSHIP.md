@@ -102,3 +102,7 @@ A process killed after partial setup may leave a chain requiring recovery.
 No overall operation deadline, new benchmark or native certification was added.
 Next: cross-process admission and stale TUN identity, IPv6-protection evidence,
 DNS/carrier globals, Q14-F027 TUN workers/FD and Linux E2E recovery.
+
+Follow-up: [Q25-F046–F047](AUDIT-Q25-KILL-SWITCH-LIFETIME.md) adds a cooperative
+lease spanning a protected Linux session and fail-closed IPv6 inspection.
+The cross-process limitation above describes the state at this report's baseline.

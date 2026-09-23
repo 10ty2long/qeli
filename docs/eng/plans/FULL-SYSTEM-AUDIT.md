@@ -722,6 +722,9 @@ The first carrier remains reachable; concurrent starts in one process admit one
 policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
 1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
 IPv6-protection discovery and Linux runtime remain open.
+Follow-up: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+cross-process protected-session ownership and refusal on unknown IPv6.
+Linux runtime for the new lease tests remains open; section status is unchanged.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -802,6 +805,9 @@ The first carrier remains reachable; concurrent starts in one process admit one
 policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
 1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
 IPv6-protection discovery and Linux runtime remain open.
+Follow-up: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+cross-process protected-session ownership and refusal on unknown IPv6.
+Linux runtime for the new lease tests remains open; section status is unchanged.
 
 ### 19. Server and client DNS
 
@@ -1448,6 +1454,9 @@ The first carrier remains reachable; concurrent starts in one process admit one
 policy. 13 baseline failures → PASS; 30 new tests, two obsolete helper tests removed.
 1315 Rust tests and nine matrix commands PASS. Interprocess races, stale TUN identity,
 IPv6-protection discovery and Linux runtime remain open.
+Follow-up: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
+cross-process protected-session ownership and refusal on unknown IPv6.
+Linux runtime for the new lease tests remains open; section status is unchanged.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1724,10 +1733,11 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with cross-process kill-switch admission,
-stale TUN identity and IPv6-protection evidence. Q25-F043–F045 fixes exit NAT selector
-sharing and unowned cleanup, and rejects incompatible kill-switch policies before
-mutation within the checked scope. DNS/carrier globals, overall deadlines, durable
-crash recovery, Q14-F027 TUN workers/FD and section 05 synchronous preflight waits
-remain open. Linux E2E restart/restore/manual+NDP, native certification and a new
-benchmark remain planned; no complete section is promoted to PASS by this run.
+**Next work:** continue section 25 with Linux runtime for the lease and both firewall
+families, IPv6-disabled hosts with ip6tables installed, gateway/exit TUN ownership without
+a kill-switch, and IPv6 appearing after startup. [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md)
+adds a protected-client lifetime lease and fail-closed IPv6 evidence.
+DNS/carrier globals, overall deadlines, durable crash recovery, Q14-F027 TUN workers/FD
+and section 05 synchronous preflight waits remain open. Linux E2E restart/restore/manual+NDP,
+native certification and a new benchmark remain planned; no complete section is promoted
+to PASS by this run.

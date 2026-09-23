@@ -1257,6 +1257,11 @@ rm -f ~/qeli-client.conf                        # your client config path
 sudo rm -rf /var/lib/qeli                       # device-id + dns-backup
 ```
 
+Before manual recovery, establish that the live protected client has stopped.
+The Linux lease rejects another startup with the same or another TUN until the owner
+exits; release after a crash does not remove the remaining firewall.
+[Ownership and IPv6 troubleshooting](TROUBLESHOOTING.md).
+
 > **Never drop the kill-switch with `iptables -F`.** Without a chain name that command
 > flushes the **entire** `filter` table — your SSH rules, ufw/fail2ban, Docker, everything
 > the administrator configured. qeli keeps its rules in its own `QELI_KS_<interface>` chain

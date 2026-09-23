@@ -1634,3 +1634,24 @@ adb shell appops set com.qeli ACTIVATE_VPN allow   # если поддержив
 [Getting started](GETTING-STARTED.md). Не очищайте всю filter-таблицу.
 Неполный/нечитаемый снимок также блокирует допуск. Разрешения утечек не устраняют
 конфликт политик. [Доказательства и ограничения](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).
+
+### Linux: занято владение kill-switch или неизвестно состояние IPv6
+
+`cannot exclusively own this network namespace` означает, что резервирование
+kill-switch не удалось. При `Address already in use` остановите другой защищённый
+клиент в этом network namespace, включая экземпляр с тем же `dev`. При другой
+ошибке проверьте ограничения AF_UNIX/sandbox и ресурсы процесса. До этого отказа
+новый клиент не восстанавливает DNS и не изменяет firewall. Leak overrides его не обходят.
+
+Lease освобождается при закрытии клиента, но сам по себе не удаляет firewall после
+краша. Сначала установите, кому принадлежат оставшиеся цепочки; используйте точечное
+восстановление из [GETTING-STARTED.md](GETTING-STARTED.md). У lease нет lock-файла,
+который нужно удалять. Старые версии и ручные изменения firewall требуют отдельной
+координации при обновлении.
+
+`global IPv6 is present or could not be ruled out` после ошибки установки IPv6-части
+означает, что безопасно пропустить её не удалось. Проверьте `ip6tables` и успешность
+`ip -6 address show scope global`. Пустой ответ при ошибочном exit status не достаточен.
+`allow_ipv6_leak = true` — явное принятие утечки. Если указан сбой rollback IPv4,
+не считайте оставшийся firewall очищенным.
+[Проверки и ограничения](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md).

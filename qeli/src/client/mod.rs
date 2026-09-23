@@ -2416,6 +2416,9 @@ async fn run_client_inner(
     // STRICT: a misspelled key name and an unreadable value both used to fail open here —
     // only `check-config` reported them, while the real start substituted defaults in silence.
     // See `config::parse_client_config_strict`. (Audit 2026-08-01, §4/§5.)
+    // Declare before the adapter so cancellation/unwinding drops network owners
+    // before releasing the namespace claim.
+    let _kill_switch_lease;
     let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
     *final_report = Some((
         core_adapter.diagnostics.clone(),
@@ -2535,12 +2538,23 @@ async fn run_client_inner(
         return Ok(());
     }
 
+    // Claim the namespace before any shared network recovery/setup. Keep this guard
+    // across every reconnect and all terminal cleanup/post_down paths. A competing
+    // process (including one using the same TUN name) must not rebuild our live chain.
+    let ks_on = killswitch::should_engage(&config.routing);
+    _kill_switch_lease = if ks_on {
+        Some(killswitch::lease::acquire().map_err(|error| {
+            anyhow::anyhow!(
+                "kill-switch: cannot exclusively own this network namespace: {error}. Another protected Qeli client may be active; stop it or use a separate network namespace. No firewall rules were changed by this startup"
+            )
+        })?)
+    } else {
+        None
+    };
+
     // Repair any DNS state left behind by a previous run that died without
     // restoring (SIGKILL / power loss / panic). Must run before we touch DNS.
     dns::recover_stale()?;
-
-    // Whether to run the firewall kill-switch for this config (enabled + full-tunnel).
-    let ks_on = killswitch::should_engage(&config.routing);
 
     // Gateway/router NAT + lifecycle hooks (Linux). Resolve the tun interface name
     // once — both the kill-switch and the gateway NAT key their rules on it.

@@ -1637,3 +1637,23 @@ the exact chain using the procedure in [Getting started](GETTING-STARTED.md).
 Do not flush the whole filter table. Incomplete/unreadable inventory also blocks
 admission. Leak overrides do not resolve policy conflicts.
 [Audit evidence and limits](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).
+
+### Linux: kill-switch ownership unavailable or IPv6 state unknown
+
+`cannot exclusively own this network namespace` means the kill-switch claim failed.
+For `Address already in use`, stop the other protected client in this network namespace,
+including one using the same `dev`. For other errors, inspect AF_UNIX/sandbox restrictions
+and process resources. Before this refusal the new client does not recover DNS or change
+the firewall. Leak overrides do not bypass it.
+
+The lease is released when the client closes, but does not itself remove firewall rules
+after a crash. Establish ownership of remaining chains before the precise recovery in
+[GETTING-STARTED.md](GETTING-STARTED.md). There is no lease lock file to delete.
+Old versions and manual firewall changes need separate coordination during upgrades.
+
+`global IPv6 is present or could not be ruled out` after IPv6 setup failure means that
+skipping protection could not be justified. Check `ip6tables` and the successful completion
+of `ip -6 address show scope global`. Empty output with a failing status is insufficient.
+`allow_ipv6_leak = true` explicitly accepts leakage. If IPv4 rollback also failed,
+do not assume the remaining firewall was cleaned up.
+[Checks and limits](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md).

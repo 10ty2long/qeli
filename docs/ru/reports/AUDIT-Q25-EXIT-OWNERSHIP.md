@@ -103,3 +103,7 @@ selectors, но не является межпроцессным lease поко�
 Общий deadline операции, новый benchmark и native certification не добавлены.
 Далее: межпроцессный допуск и stale TUN identity, доказательства IPv6-защиты,
 DNS/carrier globals, Q14-F027 TUN workers/FD и Linux E2E восстановления.
+
+Продолжение: [Q25-F046–F047](AUDIT-Q25-KILL-SWITCH-LIFETIME.md) добавляет
+кооперативный lease на срок защищённой Linux-сессии и проверку IPv6 fail-closed.
+Межпроцессное ограничение выше описывает состояние на момент этого отчёта.
