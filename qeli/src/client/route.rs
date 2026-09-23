@@ -60,7 +60,7 @@ fn route_command_output(args: &[String]) -> std::io::Result<std::process::Output
 mod candidate_outcome_tests;
 
 #[cfg(test)]
-static ROUTE_TEST_SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
+pub(crate) static ROUTE_TEST_SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 // The two /1 routes capture the default IPv6 route without replacing ::/0, but they do not
 // beat physical aggregate routes commonly present on hosts (notably 2000::/3 and fc00::/7).

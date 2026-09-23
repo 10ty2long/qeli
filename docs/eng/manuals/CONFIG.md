@@ -1769,7 +1769,7 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `ipv6` (default `auto`) | authenticated inner-family policy. `auto` uses IPv6 only when server, Rust core and platform adapter all advertise the complete capability set; `required` refuses an IPv4 downgrade; `off` requests the IPv4 side of a dual profile and refuses IPv6-only |
 | `allow_ipv6_leak` / `allow_ipv4_leak` (default `false`) | symmetric full-tunnel escape hatches. When the negotiated plan lacks one family, qeli blocks that family's native egress by default; the matching `true` deliberately lets it bypass the VPN. `allow_ipv6_leak` also opts out of the IPv6 half of the Linux kill-switch readiness check |
 | `kill_switch` | firewall kill-switch (Linux/iptables, full-tunnel only): while the tunnel is down, block all egress except loopback/tun/DHCP/server IP, so a drop can't leak onto the physical interface |
-| `gateway_nat` | router mode (Linux/iptables): the client programs `ip_forward` + `MASQUERADE` out the tun (+FORWARD +MSS-clamp) so a LAN **behind** it reaches the internet through the tunnel — no manual iptables. Idempotent, kept across reconnects, removed on a clean stop (a crash leaves it, like the kill-switch) |
+| `gateway_nat` | router mode (Linux/iptables): the client programs `ip_forward` + `MASQUERADE` out the tun (+FORWARD +MSS-clamp) so a LAN **behind** it reaches the internet through the tunnel — no manual iptables. Idempotent within a generation; removed before releasing the original TUN and reinstalled on full reconnect. A crash may leave rules |
 | `lan_subnet` / `lan_subnet_ipv6` | restrict `gateway_nat`/`forward` to one source CIDR per family; empty = apply to all traffic of that family leaving the tun |
 | `forward` (default `false`) | site-to-site **without NAT**: forward traffic between the tun and the LAN behind the client while preserving the original source IP (unlike `gateway_nat`, which masquerades it). Use it when a routed network sits behind the client and its addresses must stay visible on the server. See "Routing networks behind nodes WITHOUT NAT" below |
 | `exit_node` (default `false`) | **mirror of `gateway_nat`.** `gateway_nat` masquerades a LAN behind the client INTO the tunnel; `exit_node` masquerades traffic that arrived FROM the tunnel out the physical WAN — so other clients reach the internet under THIS host's IP (e.g. behind a grey/NAT'd line). See "Exit node (`exit_node`)" below. Linux/router-only |
@@ -1814,8 +1814,17 @@ See [route ownership recovery §6.51](TROUBLESHOOTING.md).
 Original TUN/namespace checks also apply before setup/roaming route commands and managed
 MAC/address/up. Identity loss prevents continuing the same generation even when physical
 rollback succeeds. RouteOwner holds Weak evidence and does not retain the TUN after the
-session ends. Gateway/firewall inside platform callbacks need separate ownership;
-see [setup/roaming errors §6.52](TROUBLESHOOTING.md).
+session ends. See [setup/roaming errors §6.52](TROUBLESHOOTING.md).
+
+Gateway/exit-node bind the same generation, including router features with `dev_attach=true`.
+They check the original TUN/namespace inside firewall and WAN operations; sysctl checks
+surround the shared journal API. Gateway/exit rules and the sysctl scope are cleaned before
+TUN release; full reconnect reinstalls them. Losing the TUN still permits recorded rule
+cleanup in the original namespace, but defers the entire sysctl scope, including shared
+forwarding/rp_filter. Failed cleanup retains the generation reservation. Kill-switch has
+its separate lifetime across reconnect. Sysctl internals, crash recovery and races after
+the final observation remain limitations.
+See [gateway ownership and recovery §6.53](TROUBLESHOOTING.md).
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred
@@ -1920,7 +1929,8 @@ level = info
 ```
 
 `chmod 600 client.conf` — and the client keeps `ip_forward` + `MASQUERADE -s
-192.168.254.0/24 -o vpn0` configured across reconnects. After a crash or forced stop,
+192.168.254.0/24 -o vpn0` configured for the current generation, cleaning up before TUN
+release and reinstalling on full reconnect. After a crash or forced stop,
 check for leftover rules before reusing the interface.
 
 > On `iptables-nft` hosts the `filter` table's `FORWARD` chain can be legacy-
@@ -2211,8 +2221,8 @@ The server keeps `0.0.0.0/0` and `::/0` in qeli's internal longest-prefix table.
 server's own WAN and control connection. Packets move directly into the normal downlink
 pipeline, where client isolation, MTU/fragmentation, rate limits and encryption still apply.
 
-`exit_node = true` installs (idempotent, by interface name, kept across reconnects, removed on
-a clean stop):
+`exit_node = true` installs generation-owned rules (idempotent within that generation;
+cleaned before releasing the original TUN and reinstalled on full reconnect):
 - `net.ipv4.ip_forward = 1` + relaxed `rp_filter` on the tun and WAN (asymmetric path);
 - for negotiated IPv6, `net.ipv6.conf.all.forwarding = 1`, `accept_ra = 2` on an
   RA-based IPv6 WAN, and a separately verified `ip6tables` NAT66 path;

@@ -133,7 +133,7 @@ impl RouteOwner {
     }
 
     #[cfg(test)]
-    pub(super) fn test_new(interface: &str, generation: u64) -> anyhow::Result<Self> {
+    pub(crate) fn test_new(interface: &str, generation: u64) -> anyhow::Result<Self> {
         let mut owner = Self::new(interface, generation)?;
         Arc::get_mut(&mut owner.0)
             .expect("new private lease")
@@ -145,7 +145,7 @@ impl RouteOwner {
     }
 
     #[cfg(test)]
-    pub(super) fn test_evidence(&self) -> Arc<Mutex<TestEvidence>> {
+    pub(crate) fn test_evidence(&self) -> Arc<Mutex<TestEvidence>> {
         self.0
             .evidence
             .as_ref()
@@ -159,7 +159,8 @@ impl RouteOwner {
     }
 
     // Capture only once, before any managed link/route setup. Attach mode has no
-    // managed routes and never binds. No later connection can rebind this owner.
+    // managed routes; it binds only if router features need device identity.
+    // No later connection can rebind this owner.
     #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
     pub(crate) fn bind_tun(
         &self,
@@ -257,6 +258,27 @@ impl RouteOwner {
         result
     }
 
+    // Cleanup may proceed after forward admission has stopped, but may never change
+    // namespace or substitute a device with the same name.
+    pub(crate) fn verify_cleanup_identity(&self, needs_tunnel: bool) -> anyhow::Result<()> {
+        self.observe_identity(needs_tunnel)
+    }
+
+    pub(crate) fn verify_router_plan(&self) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            registry()
+                .entries
+                .iter()
+                .any(|entry| entry.id == self.0.id && entry.accepting),
+            "route owner is stopped; refusing router setup"
+        );
+        self.verify_plan()
+    }
+
+    pub(crate) fn same_owner(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+
     pub(crate) fn verify_plan(&self) -> anyhow::Result<()> {
         self.check_identity(true)
     }
@@ -309,7 +331,7 @@ impl RouteOwner {
         guard
     }
 
-    pub(super) fn stop_admission(&self) {
+    pub(crate) fn stop_admission(&self) {
         registry()
             .entries
             .iter_mut()
@@ -468,9 +490,9 @@ pub(super) fn reset_tests() {
 
 #[cfg(test)]
 #[derive(Debug)]
-pub(super) struct TestEvidence {
-    pub(super) namespace: bool,
-    pub(super) tunnel: bool,
+pub(crate) struct TestEvidence {
+    pub(crate) namespace: bool,
+    pub(crate) tunnel: bool,
 }
 
 // Weak evidence does not extend the TUN lifetime or keep orphaned devices alive.

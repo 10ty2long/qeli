@@ -1011,6 +1011,12 @@ DISCOVER/OFFER/REQUEST/ACK/NAK/RELEASE, invalid requested_ip, duplicate xid/MAC,
 
 ### 21. TUN/TAP, IP, MTU/PMTU and fragmentation
 
+[Q25-F067–F068](../reports/AUDIT-Q25-GATEWAY-IDENTITY.md): gateway binds RouteOwner;
+firewall operations check namespace/TUN internally, and cleanup precedes TUN release.
+Lost TUN permits rule cleanup in the original namespace while retaining the sysctl scope.
+13 new host tests, 1485 Rust PASS; 9 baseline regressions reproduced. Internal sysctl
+journal/stale recovery and independent kill-switch operations remain open.
+
 [Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
 verify the original TUN through Weak and its held namespace; physical rollback is independent.
 Identity loss is terminal, including callback and final FIB query. 13 new host tests,
@@ -1077,6 +1083,12 @@ baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace test compiled only. Rou
 resolver service namespace and post-check index reuse remain open.
 
 ### 22. Transport core, FFI/JNI and memory
+
+[Q25-F067–F068](../reports/AUDIT-Q25-GATEWAY-IDENTITY.md): gateway binds RouteOwner;
+firewall operations check namespace/TUN internally, and cleanup precedes TUN release.
+Lost TUN permits rule cleanup in the original namespace while retaining the sysctl scope.
+13 new host tests, 1485 Rust PASS; 9 baseline regressions reproduced. Internal sysctl
+journal/stale recovery and independent kill-switch operations remain open.
 
 [Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
 verify the original TUN through Weak and its held namespace; physical rollback is independent.
@@ -1367,6 +1379,12 @@ cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../re
 Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
 
 ### 25. Linux CLI and network recovery
+
+[Q25-F067–F068](../reports/AUDIT-Q25-GATEWAY-IDENTITY.md): gateway binds RouteOwner;
+firewall operations check namespace/TUN internally, and cleanup precedes TUN release.
+Lost TUN permits rule cleanup in the original namespace while retaining the sysctl scope.
+13 new host tests, 1485 Rust PASS; 9 baseline regressions reproduced. Internal sysctl
+journal/stale recovery and independent kill-switch operations remain open.
 
 [Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
 verify the original TUN through Weak and its held namespace; physical rollback is independent.
@@ -1902,13 +1920,11 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25/21/22 with gateway/firewall/sysctl ownership and refresh
-callback internals, including rollback after TUN/namespace loss. Q25-F065–F066 checks
-setup/roaming route commands and direct managed MAC/address/up; other platform mutations
-are not complete. Then address physical uplinks, resolver service/bus namespace and
-parser/backend names. Run seven native route identity tests, seven TUN ioctl tests and
-Linux DNS/filesystem cases. Procfs/sysfs/journal trust, sysctl namespace identity, overall
-deadlines, crash recovery, dynamic IPv6, DNS/carrier globals, Q14-F027 workers/FD,
-preflight waits and actual Linux namespace/reboot/reconnect/firewall scenarios remain
-open. Native certification and a new benchmark were not run; full section statuses
-are unchanged.
+**Next work:** continue 25/21/22 with sysctl journal internals: checks after lock waits,
+stale owners, namespace changes and TUN/WAN name reuse. Then review independent kill-switch
+lifecycle. Q25-F067–F068 covers gateway command boundaries and cleanup while the original
+fd is alive, not the entire sysctl backend. Run seven native route identity tests, seven
+TUN ioctl tests and Linux DNS/filesystem/firewall cases. Physical uplinks, resolver service/bus
+namespace, parser/backend names, procfs/sysfs/journal trust, deadlines, crash recovery, dynamic
+IPv6, DNS/carrier globals, Q14-F027 workers/FD and preflight waits remain open. Native
+certification and a new benchmark were not run; full section statuses are unchanged.

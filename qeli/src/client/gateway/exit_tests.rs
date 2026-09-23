@@ -10,7 +10,7 @@ fn start(kernel: &Rc<RefCell<Kernel>>, tun: &str, wan: &str, ipv6: bool) {
     }
 }
 fn stop(tun: &str) -> anyhow::Result<()> {
-    disengage_plan(tun, false, true)
+    disengage_plan(tun)
 }
 fn nat_count(kernel: &Rc<RefCell<Kernel>>, wan: &str, ipv6: bool) -> usize {
     kernel

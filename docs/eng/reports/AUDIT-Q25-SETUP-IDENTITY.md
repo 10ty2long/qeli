@@ -92,3 +92,5 @@ MAC/address/up checks. Procfs/sysfs trust, parser/backend name consistency, reso
 bus namespace, overall deadlines and durable crash recovery remain open. Q14-F027 workers/FD,
 Linux E2E, native certification and a new benchmark are not complete. Plan: 37 sections,
 19 IN_PROGRESS, 18 TODO, no full PASS.
+
+Follow-up: [Q25-F067–F068](AUDIT-Q25-GATEWAY-IDENTITY.md) adds gateway checks and cleanup before TUN release; sysctl journal internals remain a separate task.

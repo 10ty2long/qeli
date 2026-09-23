@@ -1,18 +1,13 @@
 //! Read-only WAN discovery and selection of remembered cleanup targets.
-use crate::system_command::Command;
 use std::io;
 use std::process::Output;
 
-fn ip_output(args: &[&str]) -> io::Result<Output> {
-    Command::new("ip").args(args).output()
+pub(super) fn detect_wan(ctx: &super::Context) -> Option<String> {
+    detect_wan_with(false, |args| ctx.ip(args))
 }
 
-pub(super) fn detect_wan() -> Option<String> {
-    detect_wan_with(false, ip_output)
-}
-
-pub(super) fn detect_wan_ipv6() -> Option<String> {
-    detect_wan_with(true, ip_output)
+pub(super) fn detect_wan_ipv6(ctx: &super::Context) -> Option<String> {
+    detect_wan_with(true, |args| ctx.ip(args))
 }
 
 /// Prefer the default route itself; route-get remains the fallback for policy routing.

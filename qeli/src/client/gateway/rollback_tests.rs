@@ -14,6 +14,8 @@ type Rules = BTreeMap<(bool, String, String), Vec<Vec<String>>>;
 #[derive(Default)]
 struct Kernel {
     rules: Rules,
+    lose_after_command: Option<(String, bool)>,
+    lose_after_acquire: Option<bool>,
     calls: Vec<Vec<String>>,
     releases: Vec<String>,
     leases: BTreeMap<String, Vec<String>>,
@@ -225,6 +227,15 @@ impl Kernel {
         match op {
             Operation::Acquire(path, value, tun) => {
                 assert!(path.starts_with("/proc/sys/net/"));
+                if let Some(namespace) = self.lose_after_acquire.take() {
+                    let evidence = identity::test_support::evidence(tun);
+                    let mut evidence = evidence.lock().unwrap();
+                    if namespace {
+                        evidence.namespace = false;
+                    } else {
+                        evidence.tunnel = false;
+                    }
+                }
                 if self.fail_acquire {
                     return Err(io::Error::other("acquire failed"));
                 }
@@ -293,10 +304,32 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
     let commands = kernel.clone();
     let knobs = kernel.clone();
     with_commands(
-        move |cmd| Action::Reply(commands.borrow_mut().command(cmd)),
+        move |cmd| {
+            let result = commands.borrow_mut().command(cmd);
+            let args = arguments(cmd);
+            let mut kernel = commands.borrow_mut();
+            if kernel
+                .lose_after_command
+                .as_ref()
+                .is_some_and(|(token, _)| args.contains(token))
+            {
+                let (_, namespace) = kernel.lose_after_command.take().unwrap();
+                let evidence = identity::test_support::evidence("gw_a");
+                let mut evidence = evidence.lock().unwrap();
+                if namespace {
+                    evidence.namespace = false;
+                } else {
+                    evidence.tunnel = false;
+                }
+            }
+            Action::Reply(result)
+        },
         || {
             kill_switch::ipv6_state::test_support::with_disabled(false, || {
-                with_sysctls(move |op| knobs.borrow_mut().sysctl(op), || test(kernel));
+                with_sysctls(
+                    move |op| knobs.borrow_mut().sysctl(op),
+                    || identity::test_support::with_owners(|| test(kernel)),
+                );
             });
         },
     );
@@ -309,7 +342,7 @@ fn engage_family(tun: &str, ipv6: bool) {
     }
 }
 fn cleanup(tun: &str) -> anyhow::Result<()> {
-    disengage_plan(tun, true, false)
+    disengage_plan(tun)
 }
 fn sibling_cleanup(ipv6: bool) {
     run(|kernel| {
@@ -372,6 +405,7 @@ fn regression_unknown_rule_snapshot_never_authorizes_add() {
     run(|kernel| {
         kernel.borrow_mut().query_fault = Some("iptables: Permission denied");
         assert!(!ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "nat",
@@ -390,6 +424,7 @@ fn regression_unknown_kill_switch_snapshot_never_authorizes_permit() {
         );
         kernel.borrow_mut().hook_fault = true;
         assert!(!ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -471,7 +506,7 @@ fn lying_add_is_rejected_and_partial_sysctls_are_released() {
     run(|kernel| {
         kernel.borrow_mut().lie_add = true;
         assert!(engage("gw_a", "", true).is_err());
-        disengage_plan("gw_a", true, false).unwrap();
+        disengage_plan("gw_a").unwrap();
         assert!(kernel.borrow().leases.is_empty());
     });
 }
@@ -483,6 +518,7 @@ fn permit_remains_after_first_kill_switch_jump() {
             vec![vec!["-j".into(), "QELI_KS_gw_a".into()]],
         );
         assert!(ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -499,6 +535,7 @@ fn permit_remains_after_first_kill_switch_jump() {
 fn permit_with_absent_kill_switch_is_installed_and_verified() {
     run(|kernel| {
         assert!(ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -519,6 +556,7 @@ fn misplaced_kill_switch_refuses_new_permit() {
             ],
         );
         assert!(!ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -550,6 +588,7 @@ fn regression_existing_permit_ahead_of_kill_switch_is_not_accepted() {
             ],
         );
         assert!(!ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -605,6 +644,7 @@ fn ipv6_unknown_rule_snapshot_cannot_authorize_nat66() {
     run(|kernel| {
         kernel.borrow_mut().query_fault = Some("ip6tables: backend unavailable");
         assert!(!ensure_rule(
+            &Context::forward("gw_a").unwrap(),
             "ip6tables",
             "gw_a",
             "nat",
@@ -664,3 +704,9 @@ mod exit_tests;
 
 #[path = "kill_switch_tests.rs"]
 mod kill_switch_tests;
+
+#[path = "identity_tests.rs"]
+mod identity_tests;
+
+#[path = "owner_tests.rs"]
+mod owner_tests;

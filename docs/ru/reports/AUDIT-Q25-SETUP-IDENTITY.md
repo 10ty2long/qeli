@@ -96,3 +96,5 @@ refresh и внешние hooks требуют отдельного проход
 resolver service/bus namespace, общий deadline и постоянный crash recovery остаются
 открытыми. Q14-F027 workers/FD, Linux E2E, native certification и новый benchmark
 не закрыты. План: 37 разделов, 19 IN_PROGRESS, 18 TODO, полного PASS нет.
+
+Продолжение: [Q25-F067–F068](AUDIT-Q25-GATEWAY-IDENTITY.md) добавляет собственные проверки gateway и cleanup до закрытия TUN; внутренний sysctl journal остаётся отдельной задачей.

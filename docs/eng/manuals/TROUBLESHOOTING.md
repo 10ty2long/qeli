@@ -1697,6 +1697,39 @@ remain limitations.
 
 ---
 
+### 6.53 Linux: gateway ownership or router cleanup is unconfirmed
+
+`router ... has no bound NetworkPlan owner` means gateway was called without its original
+owner. `route owner is stopped; refusing router setup` rejects a stopped generation.
+`router ownership ... still reserved by another generation` means previous ownership has
+not been cleaned. Inspect the nested cause of `router-plan cleanup failed`: command failure,
+loss of original TUN/namespace, or unavailable ioctl/metadata.
+
+On full reconnect, Qeli now removes gateway/exit rules and releases their sysctl scope
+before closing the original TUN. The next generation reinstalls them. Roaming within a
+generation retains old WAN rules until that generation ends. Kill-switch continues across
+reconnect under its separate contract.
+
+A lost TUN still permits deletion of confirmed tagged rules in the original namespace.
+The entire sysctl scope is deferred: even shared forwarding/rp_filter may remain enabled,
+since the scope also contains original interface settings. With an unconfirmed namespace,
+gateway executes no rule queries/deletes or sysctl journal calls. Remaining state and the
+reservation are retained; cleanup errors prevent automatic reconnect.
+
+Establish the cause of rename/delete/namespace changes and the actual interface's owner.
+Cleanup retries need original identity; a new interface with the old name is no substitute.
+If the original fd is lost, inspect remaining rules and host settings before process exit
+and manual recovery. Do not flush the firewall, remove other owners' rules or delete
+sysctls.state to bypass a reservation. A crash does not grant ownership to a new process.
+
+Checks are not atomic with external commands. Shared sysctl checks currently surround its
+API: internal lock/prune/read/write, stale recovery and physical WAN identity need separate
+review. Independent kill-switch operations are also outside the gateway context.
+[Report and tests](../reports/AUDIT-Q25-GATEWAY-IDENTITY.md).
+
+---
+
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

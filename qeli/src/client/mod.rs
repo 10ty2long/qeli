@@ -1108,7 +1108,7 @@ fn cleanup_routing_features(
         kill_switch,
         || {
             if gateway_enabled || exit_node {
-                gateway::disengage_plan(tun_if, gateway_enabled, exit_node)
+                gateway::disengage_plan(tun_if)
             } else {
                 Ok(())
             }
@@ -6260,6 +6260,8 @@ where
         });
         let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
         let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
+        let cleanup =
+            crate::client_cleanup::with_cleanup_error(cleanup, tun_guard.restore_router());
         if cleanup.is_ok() {
             tun_guard.disarm();
         }
@@ -6808,6 +6810,13 @@ impl TunGuard {
             .observe(crate::client_cleanup::Resource::Dns, result)
     }
 
+    fn restore_router(&self) -> anyhow::Result<()> {
+        self.failures.observe(
+            crate::client_cleanup::Resource::Forwarding,
+            gateway::disengage_owned(&self.routes),
+        )
+    }
+
     fn attach_pump(&mut self, stop: LinuxTunPumpStop) {
         self.stop = Some(stop);
     }
@@ -6851,6 +6860,9 @@ impl Drop for TunGuard {
         }
         if let Err(error) = self.restore_dns() {
             log::error!("TUN guard DNS cleanup failed: {error}");
+        }
+        if let Err(error) = self.restore_router() {
+            log::error!("TUN guard router cleanup failed: {error}");
         }
         if self.owns_device {
             if let Err(error) = cleanup_owned_routes(&self.routes, &self._tun, &self.failures) {
@@ -7585,8 +7597,6 @@ struct NetworkPlanApplyGuard<'a> {
     if_name: String,
     owns_device: bool,
     routes: route::RouteOwner,
-    gateway_enabled: bool,
-    exit_enabled: bool,
     platform_state_touched: bool,
     routes_started: bool,
     dns: Option<dns::DnsLease>,
@@ -7597,7 +7607,6 @@ struct NetworkPlanApplyGuard<'a> {
 impl<'a> NetworkPlanApplyGuard<'a> {
     fn new(
         tun: &'a TunInterface,
-        config: &crate::config::client::ClientConfig,
         if_name: &str,
         owns_device: bool,
         routes: route::RouteOwner,
@@ -7609,8 +7618,6 @@ impl<'a> NetworkPlanApplyGuard<'a> {
             if_name: if_name.to_string(),
             owns_device,
             routes,
-            gateway_enabled: config.routing.gateway_nat || config.routing.forward,
-            exit_enabled: config.routing.exit_node,
             platform_state_touched: false,
             routes_started: false,
             dns: None,
@@ -7663,7 +7670,7 @@ impl Drop for NetworkPlanApplyGuard<'_> {
             // idempotent and remove their IPv4 and IPv6 family halves independently.
             if let Err(error) = self.failures.observe(
                 crate::client_cleanup::Resource::Forwarding,
-                gateway::disengage_plan(&self.if_name, self.gateway_enabled, self.exit_enabled),
+                gateway::disengage_owned(&self.routes),
             ) {
                 log::warn!("router rollback after NetworkPlan failure also failed: {error}");
             }
@@ -7767,7 +7774,9 @@ fn setup_tunnel(
         )
     })?;
     let tun = std::sync::Arc::new(tun);
-    if !attach {
+    let router_enabled =
+        config.routing.gateway_nat || config.routing.forward || config.routing.exit_node;
+    if !attach || router_enabled {
         route_owner.bind_tun(&tun)?;
     }
     // Cover partial setup with a local transaction. A completed TunGuard is transferred
@@ -7777,7 +7786,6 @@ fn setup_tunnel(
     // The external interface in attach mode is borrowed and is therefore never deleted.
     let mut plan_guard = NetworkPlanApplyGuard::new(
         &tun,
-        config,
         &if_name,
         !attach,
         route_owner.clone(),
@@ -7826,15 +7834,15 @@ fn setup_tunnel(
         .addresses
         .iter()
         .any(|address| address.family == crate::transport_core::NetworkAddressFamily::Ipv6);
-    if (config.routing.gateway_nat || config.routing.forward || config.routing.exit_node)
-        && has_ipv4
-    {
+    if router_enabled {
+        gateway::bind_owner(&route_owner)?;
         plan_guard.touch_platform_state();
-        crate::client::gateway::apply_tun_rp_filter(&if_name);
+    }
+    if router_enabled && has_ipv4 {
+        crate::client::gateway::apply_tun_rp_filter(&if_name)?;
     }
     if config.routing.gateway_nat || config.routing.forward {
         if has_ipv4 {
-            plan_guard.touch_platform_state();
             // `gateway_nat` masquerades; `forward` alone is pure L3 routing (#13).
             crate::client::gateway::engage(
                 &if_name,
@@ -7843,7 +7851,6 @@ fn setup_tunnel(
             )?;
         }
         if has_ipv6 {
-            plan_guard.touch_platform_state();
             crate::client::gateway::engage_ipv6(
                 &if_name,
                 &config.routing.lan_subnet_ipv6,
@@ -7853,11 +7860,9 @@ fn setup_tunnel(
     }
     if config.routing.exit_node {
         if has_ipv4 {
-            plan_guard.touch_platform_state();
             crate::client::gateway::engage_exit(&if_name)?;
         }
         if has_ipv6 {
-            plan_guard.touch_platform_state();
             crate::client::gateway::engage_exit_ipv6(&if_name)?;
         }
     }
@@ -7954,7 +7959,7 @@ fn setup_tunnel(
     // Publish only after every fallible host-network step succeeded. A router wrapper
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
-    if !attach {
+    if !attach || router_enabled {
         route_owner.verify_plan()?;
     }
     publish_network_plan_state(plan)?;
@@ -11905,6 +11910,8 @@ pub(crate) async fn run_udp_tunnel(
         });
         let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
         let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
+        let cleanup =
+            crate::client_cleanup::with_cleanup_error(cleanup, tun_guard.restore_router());
         if cleanup.is_ok() {
             tun_guard.disarm();
         }
