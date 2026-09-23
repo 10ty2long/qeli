@@ -2444,7 +2444,7 @@ post_down = /etc/qeli/hooks/client-route.sh "$@"
 | `QELI_PLAN_AVAILABLE` | `true`, если хотя бы один authenticated `NetworkPlan` был успешно применён. |
 | `QELI_PLAN_GENERATION` | Номер последнего применённого поколения плана. |
 | `QELI_SESSION_DURATION_SECONDS` | Секунды с момента первого успешно применённого плана в этом процессе; до него `0`. Включает время reconnect между поколениями. |
-| `QELI_REASON`, `QELI_STOP_REASON` | Причина события. Для `post_up` — `connected`; для `post_down` — `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed`, `core_stop_failed` или `network_cleanup_failed`. `QELI_REASON` — короткий универсальный алиас. |
+| `QELI_REASON`, `QELI_STOP_REASON` | Причина события. Для `post_up` — `connected`; для `post_down` — `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed`, `core_stop_failed`, `network_cleanup_failed` или `kill_switch_failed`. `QELI_REASON` — короткий универсальный алиас. |
 | `QELI_ERROR_CODE` | Машиночитаемая категория терминальной ошибки: пусто, `shutdown`, `transport_error`, `server_kick`, `max_retries`, `core_start`, `core_stop` или `network_cleanup`. |
 | `QELI_ERROR_MESSAGE` | Текст последней ошибки без секретов; пусто при штатном завершении. Не разбирайте его как стабильный API. |
 | `QELI_CONTEXT_FILE`, `QELI_NETWORK_PLAN_FILE` | Два имени одного временного JSON-файла с полным контекстом. Файл имеет режим `0600` и удаляется сразу после завершения хука. При ошибке создания обе переменные пусты. |

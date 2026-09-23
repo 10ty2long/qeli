@@ -1765,6 +1765,24 @@ a deadline for complete network setup or file I/O.
 [Report](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md).
 
 
+### 6.56 Linux: kill-switch identity or reconnect verification failed
+
+`kill-switch namespace identity lost` stops commands in the current namespace and
+retains the original owner/rules. Do not start cleanup against an unrelated same-name
+chain. Return to the original namespace and retry verified cleanup, or establish the
+exact stale owner and use the recovery procedure in [Getting started](GETTING-STARTED.md).
+An identity failure cannot be overridden with `allow_ipv4_leak` / `allow_ipv6_leak`.
+
+`kill-switch verification/address refresh failed` stops reconnect before the next dial.
+Inspect the reported OUTPUT/FORWARD/DROP rule or unavailable firewall tool. Remaining
+protection is retained; post_down receives reason `kill_switch_failed` and error code
+`kill_switch`. Failed installation of a new server allowance keeps the old allowance.
+Restore the required tool/access and recover the exact rules before restarting. Do not
+flush the whole filter table. A clean IPv6-only lifecycle does not require an IPv4 tool
+that was never used. Cleanup without a live in-process owner does not claim crash recovery.
+[Report and boundaries](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md).
+
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

@@ -66,6 +66,10 @@ mod client_tun_recovery;
 #[path = "tun/open.rs"]
 mod tun_open;
 
+// A live fd pins the namespace shared by route and standalone firewall owners.
+#[cfg(all(target_os = "linux", any(test, feature = "client")))]
+mod network_namespace;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

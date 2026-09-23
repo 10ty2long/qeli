@@ -2613,6 +2613,40 @@ async fn run_client_inner(
 
     loop {
         let started = std::time::Instant::now();
+        // Re-resolve the server so a rotated (DDNS / round-robin) address is allowed
+        // through the kill-switch before the next attempt — otherwise a stale
+        // allow-list would block every reconnect. Verify the barrier before retrying.
+        if ks_on && !shutdown_requested.load(Ordering::Acquire) {
+            if let Err(error) =
+                killswitch::refresh_server_ips(&config.server.address, config.server.port, &tun_if)
+            {
+                let message = format!("kill-switch verification/address refresh failed: {error}");
+                log::error!("{message}; stopping reconnect and retaining protection");
+                let cleanup = cleanup_routing_features(
+                    crate::client_cleanup::Checks {
+                        core: Ok(()),
+                        network: Err(anyhow::anyhow!("{message}")),
+                    },
+                    ks_on,
+                    gw_on,
+                    exit_on,
+                    &tun_if,
+                );
+                run_client_post_down(
+                    &core_adapter,
+                    &post_down,
+                    "kill_switch_failed",
+                    "kill_switch",
+                    &message,
+                )
+                .await;
+                return crate::client_cleanup::with_cleanup_error(
+                    Err(error.context(message)),
+                    cleanup,
+                );
+            }
+        }
+
         let mut start_failed = false;
         let result = if shutdown_requested.load(Ordering::Acquire) {
             // Backoff was interrupted. Reuse the ordinary teardown below without dialing.
@@ -2788,17 +2822,6 @@ async fn run_client_inner(
             None,
         );
         let delay = Duration::from_millis(delay_ms as u64);
-
-        // Re-resolve the server so a rotated (DDNS / round-robin) address is allowed
-        // through the kill-switch before the next attempt — otherwise a stale
-        // allow-list would block every reconnect (add-only, no leak window).
-        if ks_on {
-            if let Err(error) =
-                killswitch::refresh_server_ips(&config.server.address, config.server.port, &tun_if)
-            {
-                log::error!("kill-switch address refresh failed: {error}");
-            }
-        }
 
         let retry_in_secs =
             u64::try_from(delay.as_millis().saturating_add(999) / 1000).unwrap_or(u64::MAX);

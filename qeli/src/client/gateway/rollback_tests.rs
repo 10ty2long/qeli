@@ -15,6 +15,8 @@ type Rules = BTreeMap<(bool, String, String), Vec<Vec<String>>>;
 struct Kernel {
     rules: Rules,
     lose_after_command: Option<(String, bool)>,
+    lose_kill_namespace_after: Option<String>,
+    missing_firewall: Option<bool>,
     lose_after_acquire: Option<bool>,
     calls: Vec<Vec<String>>,
     releases: Vec<String>,
@@ -75,6 +77,9 @@ impl Kernel {
             program.ends_with("iptables") || program.ends_with("ip6tables"),
             "{program}"
         );
+        if self.missing_firewall == Some(program.ends_with("ip6tables")) {
+            return Err(io::ErrorKind::NotFound.into());
+        }
         if args == ["--version"] {
             return Ok(output(0, "", ""));
         }
@@ -277,6 +282,7 @@ impl Kernel {
     }
 }
 fn reset_gateway_state() {
+    kill_switch::ownership::test_support::clear();
     EXIT_WANS_V4
         .lock()
         .unwrap_or_else(|e| e.into_inner())
@@ -322,13 +328,28 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
                     evidence.tunnel = false;
                 }
             }
+            if kernel
+                .lose_kill_namespace_after
+                .as_ref()
+                .is_some_and(|token| args.contains(token))
+            {
+                kernel.lose_kill_namespace_after = None;
+                kill_switch::ownership::test_support::set_namespace(2);
+            }
             Action::Reply(result)
         },
         || {
             kill_switch::ipv6_state::test_support::with_disabled(false, || {
                 with_sysctls(
                     move |op| knobs.borrow_mut().sysctl(op),
-                    || identity::test_support::with_owners(|| test(kernel)),
+                    || {
+                        identity::test_support::with_owners(|| {
+                            kill_switch::ownership::test_support::with_namespace(
+                                std::sync::Arc::new(std::sync::atomic::AtomicU64::new(1)),
+                                || test(kernel),
+                            )
+                        })
+                    },
                 );
             });
         },

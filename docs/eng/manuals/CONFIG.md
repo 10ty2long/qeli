@@ -2478,7 +2478,7 @@ known or not applicable is an empty string. Array indices begin at zero and end 
 | `QELI_PLAN_AVAILABLE` | `true` after at least one authenticated `NetworkPlan` was committed. |
 | `QELI_PLAN_GENERATION` | Generation number of the latest committed plan. |
 | `QELI_SESSION_DURATION_SECONDS` | Seconds since this process committed its first plan; `0` before that. Reconnect time between generations is included. |
-| `QELI_REASON`, `QELI_STOP_REASON` | Event reason. `post_up`: `connected`; `post_down`: `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed`, `core_stop_failed` or `network_cleanup_failed`. `QELI_REASON` is the generic alias. |
+| `QELI_REASON`, `QELI_STOP_REASON` | Event reason. `post_up`: `connected`; `post_down`: `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed`, `core_stop_failed`, `network_cleanup_failed` or `kill_switch_failed`. `QELI_REASON` is the generic alias. |
 | `QELI_ERROR_CODE` | Stable terminal category: empty, `shutdown`, `transport_error`, `server_kick`, `max_retries`, `core_start`, `core_stop` or `network_cleanup`. |
 | `QELI_ERROR_MESSAGE` | Human-readable final error with no secrets. It is not a stable machine-parsing API. |
 | `QELI_CONTEXT_FILE`, `QELI_NETWORK_PLAN_FILE` | Two names for the same temporary full-context JSON file. It is mode `0600` and removed as soon as the hook exits. Both values are empty if file creation failed. |

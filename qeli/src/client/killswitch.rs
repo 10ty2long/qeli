@@ -8,7 +8,7 @@
 //! during the reconnect window — closing the classic "real IP exposed between
 //! reconnects" hole.
 //!
-//! Implemented as a dedicated `QELI_KS` chain in the `filter` table, jumped to from
+//! Implemented as a dedicated `QELI_KS_<tun>` chain in the `filter` table, jumped to from
 //! the top of `OUTPUT`; the chain ends in a terminal `DROP`, so it has the effect of
 //! a drop policy without touching the host's global `OUTPUT` policy. IPv4 goes
 //! through `iptables`, IPv6 through `ip6tables` (the old nftables `inet` table covered
@@ -30,7 +30,7 @@
 //! to avoid even that. (Windows and macOS scope this identically.)
 //!
 //! FAIL-SAFE LIFECYCLE — this is the whole point, read carefully:
-//!   * [`engage`] installs the `QELI_KS` chain + OUTPUT jump and is idempotent (it
+//!   * [`engage`] pins the calling network namespace and installs `QELI_KS_<tun>` + OUTPUT jump and is idempotent (it
 //!     tears down any existing copy first, then rebuilds). It is installed ONCE,
 //!     before the connect loop, and deliberately stays up across every reconnect.
 //!   * [`disengage`] removes the chain and is called only on a CLEAN stop
@@ -38,8 +38,9 @@
 //!   * A crashed run (SIGKILL / panic / power loss) leaves the chain in place — the
 //!     machine stays locked (no leak) until qeli runs again, which `engage`
 //!     replaces it. To unlock without reconnecting:
-//!     `sudo iptables -D OUTPUT -j QELI_KS; sudo iptables -F QELI_KS; sudo iptables -X QELI_KS`
-//!     (and the same with `ip6tables`).
+//!     use the exact per-TUN chain shown in the log, in its original network namespace.
+//!     Remove its OUTPUT/FORWARD jumps before flushing/deleting that exact chain.
+//!     Repeat for `ip6tables` when IPv6 was programmed; preserve unrelated chains.
 //!
 //! Only meaningful in full-tunnel mode (in split-tunnel the dropped "everything
 //! else" is exactly the traffic that is supposed to go direct), so the caller
@@ -52,6 +53,9 @@ use std::path::Path;
 
 #[path = "killswitch/admission.rs"]
 mod admission;
+#[path = "killswitch/ownership.rs"]
+pub(crate) mod ownership;
+use ownership::Context;
 #[path = "killswitch/ipv6_state.rs"]
 pub(crate) mod ipv6_state;
 
@@ -104,6 +108,10 @@ fn resolve_ips(server_addr: &str, server_port: u16) -> Vec<String> {
 /// approach as `server::nat::iptables_path` (duplicated because the server module is
 /// `cfg`-excluded from the client/.so builds).
 pub(crate) fn ipt_path(bin: &str) -> Option<String> {
+    #[cfg(test)]
+    if let Some(path) = ownership::test_support::path(bin) {
+        return path;
+    }
     // A positively disabled module has no IPv6 firewall to own or clean up.
     // Missing/denied/malformed evidence does not bypass filter admission.
     if bin == "ip6tables" && ipv6_state::globally_disabled() {
@@ -147,13 +155,6 @@ pub(crate) fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Ou
     Command::new(path).args(args).output()
 }
 
-/// Is `<bin> -C <args>` satisfied? The only reliable presence check across the
-/// legacy/nft backends — the exit code of `-A`/`-I` lies on a chain the nft wrapper
-/// considers incompatible.
-pub(crate) fn present(path: &str, args: &[&str]) -> bool {
-    ipt(path, args).map(|o| o.status.success()).unwrap_or(false)
-}
-
 fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
     let candidate = args
         .windows(2)
@@ -193,23 +194,24 @@ pub(crate) fn valid_ifname(s: &str) -> bool {
 
 /// Does the dedicated chain still exist? Unlike the hot-path helper, this distinguishes
 /// a genuinely absent chain from an inspection failure.
-fn chain_exists(path: &str, chain: &str) -> anyhow::Result<bool> {
-    let output = ipt(path, &["-S", chain])
+fn chain_exists(context: &Context, path: &str, chain: &str) -> anyhow::Result<bool> {
+    let output = context
+        .ipt(path, &["-S", chain])
         .map_err(|error| anyhow::anyhow!("cannot run {path} -S {chain}: {error}"))?;
     checked_presence(&output, Query::Chain(chain))
         .map_err(|error| anyhow::anyhow!("{path} -S {chain}: {error}"))
 }
 
-fn teardown_family(path: &str, chain: &str) -> anyhow::Result<()> {
+fn teardown_family(context: &Context, path: &str, chain: &str) -> anyhow::Result<()> {
     let mut errors = Vec::new();
     // Remove the jump(s) first — a chain cannot be deleted while referenced. FORWARD is
     // only ever hooked in gateway mode, but unhook it unconditionally: a crash between
     // engage and disengage must not leave a dangling reference that blocks cleanup.
     for hook in ["OUTPUT", "FORWARD"] {
         for _ in 0..8 {
-            match present_checked(path, &["-C", hook, "-j", chain]) {
+            match context.present_checked(path, &["-C", hook, "-j", chain]) {
                 Ok(true) => {
-                    if let Err(error) = ipt(path, &["-D", hook, "-j", chain]) {
+                    if let Err(error) = context.ipt(path, &["-D", hook, "-j", chain]) {
                         errors.push(format!("cannot remove {hook} jump to {chain}: {error}"));
                         break;
                     }
@@ -221,7 +223,7 @@ fn teardown_family(path: &str, chain: &str) -> anyhow::Result<()> {
                 }
             }
         }
-        match present_checked(path, &["-C", hook, "-j", chain]) {
+        match context.present_checked(path, &["-C", hook, "-j", chain]) {
             Ok(true) => errors.push(format!(
                 "{path}: {hook} still jumps to {chain} after 8 deletion attempts"
             )),
@@ -230,11 +232,11 @@ fn teardown_family(path: &str, chain: &str) -> anyhow::Result<()> {
         }
     }
 
-    match chain_exists(path, chain) {
+    match chain_exists(context, path, chain) {
         Ok(true) => {
-            let _ = ipt(path, &["-F", chain]);
-            let _ = ipt(path, &["-X", chain]);
-            match chain_exists(path, chain) {
+            let _ = context.ipt(path, &["-F", chain]);
+            let _ = context.ipt(path, &["-X", chain]);
+            match chain_exists(context, path, chain) {
                 Ok(true) => errors.push(format!("{path}: chain {chain} still exists")),
                 Ok(false) => {}
                 Err(error) => errors.push(error.to_string()),
@@ -310,25 +312,26 @@ fn system_resolvers() -> Vec<String> {
 /// Build the `QELI_KS` chain on one family and hook it at the top of OUTPUT.
 /// `allow_ips` are the server addresses of THIS family to let through.
 fn engage_family(
+    context: &Context,
     path: &str,
     tun_if: &str,
     allow_ips: &[String],
     guard_forward: bool,
 ) -> anyhow::Result<()> {
     let chain = &chain_for(tun_if);
-    teardown_family(path, chain).map_err(|error| {
+    teardown_family(context, path, chain).map_err(|error| {
         anyhow::anyhow!("kill-switch: cannot clear the previous {chain} ruleset: {error}")
     })?; // Rebuild only this exact TUN's chain; admission has rejected other owners.
-    let _ = ipt(path, &["-N", chain]); // create chain (ignore "already exists")
+    let _ = context.ipt(path, &["-N", chain]); // create chain (ignore "already exists")
 
     // Append a rule to the chain and confirm it actually landed.
     let add = |rule: &[&str]| -> bool {
         let mut a: Vec<&str> = vec!["-A", chain];
         a.extend_from_slice(rule);
-        let _ = ipt(path, &a); // exit code is unreliable — verify below
+        let _ = context.ipt(path, &a); // exit code is unreliable — verify below
         let mut c: Vec<&str> = vec!["-C", chain];
         c.extend_from_slice(rule);
-        present(path, &c)
+        context.present(path, &c)
     };
 
     // The ACCEPT rules are as load-bearing as the DROP: their return value used to be
@@ -407,7 +410,7 @@ fn engage_family(
         require(&["-d", ip.as_str(), "-j", "ACCEPT"]);
     }
     if !missing.is_empty() {
-        let cleanup = teardown_family(path, chain)
+        let cleanup = teardown_family(context, path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -421,7 +424,7 @@ fn engage_family(
     // Terminal DROP — everything not explicitly allowed above. This is the rule that
     // makes it a kill-switch, so its presence is mandatory.
     if !add(&["-j", "DROP"]) {
-        let cleanup = teardown_family(path, chain)
+        let cleanup = teardown_family(context, path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -430,11 +433,11 @@ fn engage_family(
 
     // Hook the chain at the top of OUTPUT — added LAST, so the chain is already
     // complete the instant it becomes reachable (no partial-block window).
-    if !present(path, &["-C", "OUTPUT", "-j", chain]) {
-        let _ = ipt(path, &["-I", "OUTPUT", "1", "-j", chain]);
+    if !context.present(path, &["-C", "OUTPUT", "-j", chain]) {
+        let _ = context.ipt(path, &["-I", "OUTPUT", "1", "-j", chain]);
     }
-    if !present(path, &["-C", "OUTPUT", "-j", chain]) {
-        let cleanup = teardown_family(path, chain)
+    if !context.present(path, &["-C", "OUTPUT", "-j", chain]) {
+        let cleanup = teardown_family(context, path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -449,11 +452,11 @@ fn engage_family(
     // but ONLY when qeli is actually acting as a gateway — on a plain client the box may
     // be routing something unrelated, and hijacking its FORWARD chain is not ours to do.
     if guard_forward {
-        if !present(path, &["-C", "FORWARD", "-j", chain]) {
-            let _ = ipt(path, &["-I", "FORWARD", "1", "-j", chain]);
+        if !context.present(path, &["-C", "FORWARD", "-j", chain]) {
+            let _ = context.ipt(path, &["-I", "FORWARD", "1", "-j", chain]);
         }
-        if !present(path, &["-C", "FORWARD", "-j", chain]) {
-            let cleanup = teardown_family(path, chain)
+        if !context.present(path, &["-C", "FORWARD", "-j", chain]) {
+            let cleanup = teardown_family(context, path, chain)
                 .err()
                 .map(|error| format!("; rollback also failed: {error}"))
                 .unwrap_or_default();
@@ -497,6 +500,7 @@ pub fn engage(
     if !valid_ifname(tun_if) {
         anyhow::bail!("kill-switch: invalid TUN interface name {tun_if:?}");
     }
+    let context = Context::prepare(tun_if)?;
     let chain = chain_for(tun_if);
     let ips = resolve_ips(server_addr, server_port);
     if ips.is_empty() {
@@ -526,6 +530,7 @@ pub fn engage(
     // Protect a family whenever its firewall is available, and otherwise use the same
     // evidence + explicit escape-hatch rule for both families.
     let _operation = operation();
+    context.check()?;
     let v4_path = ipt_path("iptables");
     let v6_path = ipt_path("ip6tables");
     // Inspect both available families before changing either one. A conflict is
@@ -534,20 +539,28 @@ pub fn engage(
         .into_iter()
         .flatten()
     {
-        admission::check(path, &chain)?;
+        admission::check(&context, path, &chain)?;
     }
+    context.bind(tun_if)?;
     let v4_protected = match v4_path.as_deref() {
-        Some(path) => match engage_family(path, tun_if, &v4, guard_forward) {
-            Ok(()) => true,
-            Err(error) => {
-                log::warn!("kill-switch: IPv4 leg not engaged ({error})");
-                false
+        Some(path) => {
+            context.remember(false, path)?;
+            match engage_family(&context, path, tun_if, &v4, guard_forward) {
+                Ok(()) => true,
+                Err(error) => {
+                    log::warn!("kill-switch: IPv4 leg not engaged ({error})");
+                    false
+                }
             }
-        },
+        }
         None => false,
     };
+    context.check()?;
+    context.protected(false, v4_protected, guard_forward);
     if !v4_protected {
-        if !allow_ipv4_leak && host_may_have_ipv4_default_route() {
+        let needs_protection = !allow_ipv4_leak && host_may_have_ipv4_default_route();
+        context.check()?;
+        if needs_protection {
             anyhow::bail!(
                 "kill-switch: IPv4 egress is present or could not be ruled out, but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
             );
@@ -562,22 +575,29 @@ pub fn engage(
     // sense of security. Require protection when global IPv6 exists OR its absence
     // could not be verified, unless the operator explicitly accepts the leak.
     let v6_protected = match v6_path.as_deref() {
-        Some(v6_path) => match engage_family(v6_path, tun_if, &v6, guard_forward) {
-            Ok(()) => true,
-            Err(e) => {
-                log::warn!("kill-switch: IPv6 leg not engaged ({e})");
-                false
+        Some(v6_path) => {
+            context.remember(true, v6_path)?;
+            match engage_family(&context, v6_path, tun_if, &v6, guard_forward) {
+                Ok(()) => true,
+                Err(e) => {
+                    log::warn!("kill-switch: IPv6 leg not engaged ({e})");
+                    false
+                }
             }
-        },
+        }
         None => false,
     };
+    context.check()?;
+    context.protected(true, v6_protected, guard_forward);
     if !v6_protected {
-        if !allow_ipv6_leak && host_may_have_global_ipv6() {
+        let needs_protection = !allow_ipv6_leak && host_may_have_global_ipv6();
+        context.check()?;
+        if needs_protection {
             // Roll back the v4 leg we may have armed so a refusal leaves the host exactly
             // as it was — not half-locked to a server the client will never reach.
             if v4_protected {
                 if let Some(path) = v4_path.as_deref() {
-                    if let Err(rollback) = teardown_family(path, &chain_for(tun_if)) {
+                    if let Err(rollback) = teardown_family(&context, path, &chain_for(tun_if)) {
                         anyhow::bail!(
                             "kill-switch: IPv6 protection is unavailable and rollback of the \
                              already-installed IPv4 leg also failed: {rollback}. Manual firewall \
@@ -596,6 +616,7 @@ pub fn engage(
         );
     }
 
+    context.check()?;
     log::warn!(
         "Kill-switch ENGAGED (iptables chain {chain}): egress restricted to lo, {tun_if}, DHCP, \
          DNS and {}. It stays up across reconnects and is removed only on a clean stop; a crash \
@@ -623,29 +644,53 @@ fn host_may_have_ipv4_default_route() -> bool {
 /// down. So a DDNS / round-robin server whose address rotates mid-session can still
 /// be reconnected to, with NO leak window (unlike re-calling [`engage`], which
 /// briefly removes the OUTPUT jump). Idempotent: never removes the DROP or existing
-/// allows, and is a no-op when the chain isn't installed. Inspection or rule-update
-/// failures are returned to the caller. Call it before each reconnect attempt.
+/// removes stale server allowances only after adding the current ones. A previously
+/// armed family must still have its hooks and DROP. Inspection or update errors stop
+/// reconnect; the retained rules require recovery. Call it before each attempt.
 pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> anyhow::Result<()> {
+    anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
+    let Some(context) = Context::lookup(tun_if, false)? else {
+        return Ok(());
+    };
     let chain = chain_for(tun_if);
     let ips = resolve_ips(server_addr, server_port);
-    if ips.is_empty() {
-        return Ok(());
-    }
     let _operation = operation();
+    context.confirm(tun_if)?;
     let mut errors = Vec::new();
-    for (bin, want_v6) in [("iptables", false), ("ip6tables", true)] {
-        let Some(path) = ipt_path(bin) else {
+    for (want_v6, family) in context.paths() {
+        if !family.protected {
             continue;
-        };
-        // Only touch a chain we actually installed (kill-switch engaged).
-        match present_checked(&path, &["-C", "OUTPUT", "-j", chain.as_str()]) {
-            Ok(true) => {}
-            Ok(false) => continue,
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
+        }
+        let path = family.path;
+        // Reconnect may not silently accept removal of the original protection.
+        let mut intact = true;
+        let mut mandatory = vec![
+            vec!["-C", "OUTPUT", "-j", chain.as_str()],
+            vec!["-C", chain.as_str(), "-j", "DROP"],
+        ];
+        if family.guard_forward {
+            mandatory.push(vec!["-C", "FORWARD", "-j", chain.as_str()]);
+        }
+        for rule in mandatory {
+            match context.present_checked(&path, &rule) {
+                Ok(true) => {}
+                Ok(false) => {
+                    errors.push(format!(
+                        "{path}: kill-switch protection disappeared: {}",
+                        rule.join(" ")
+                    ));
+                    intact = false;
+                }
+                Err(error) => {
+                    errors.push(error.to_string());
+                    intact = false;
+                }
             }
         }
+        if !intact || ips.is_empty() {
+            continue;
+        }
+        let errors_before_add = errors.len();
         for ip in &ips {
             let canon = match ip.parse::<IpAddr>() {
                 Ok(p) if p.is_ipv6() == want_v6 => p.to_string(),
@@ -654,15 +699,15 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
             let rule = ["-d", canon.as_str(), "-j", "ACCEPT"];
             let mut check: Vec<&str> = vec!["-C", chain.as_str()];
             check.extend_from_slice(&rule);
-            if present(&path, &check) {
+            if context.present(&path, &check) {
                 continue; // already allowed
             }
             // Insert at the top so it precedes the terminal DROP (appending would
             // land AFTER the DROP and never match).
             let mut add: Vec<&str> = vec!["-I", chain.as_str(), "1"];
             add.extend_from_slice(&rule);
-            let add_error = ipt(&path, &add).err();
-            match present_checked(&path, &check) {
+            let add_error = context.ipt(&path, &add).err();
+            match context.present_checked(&path, &check) {
                 Ok(true) => {
                     log::info!("kill-switch: allowed new server IP {canon} (address rotated)")
                 }
@@ -674,6 +719,11 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
                 )),
                 Err(error) => errors.push(error.to_string()),
             }
+        }
+
+        // Preserve the previous carrier path if any replacement was not verified.
+        if errors.len() != errors_before_add {
+            continue;
         }
 
         // Now withdraw allowances for addresses the server NO LONGER resolves to.
@@ -698,7 +748,7 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
             // than stripping the client's only path to the server.
             continue;
         }
-        let stale_addresses = match live_server_allows(&path, &chain) {
+        let stale_addresses = match live_server_allows(&context, &path, &chain) {
             Ok(addresses) => addresses,
             Err(error) => {
                 errors.push(error.to_string());
@@ -712,10 +762,10 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
             let rule = ["-d", stale.as_str(), "-j", "ACCEPT"];
             let mut del: Vec<&str> = vec!["-D", chain.as_str()];
             del.extend_from_slice(&rule);
-            let delete_error = ipt(&path, &del).err();
+            let delete_error = context.ipt(&path, &del).err();
             let mut check: Vec<&str> = vec!["-C", chain.as_str()];
             check.extend_from_slice(&rule);
-            match present_checked(&path, &check) {
+            match context.present_checked(&path, &check) {
                 Ok(false) => {
                     log::info!("kill-switch: withdrew stale server IP {stale} (no longer resolves)")
                 }
@@ -729,6 +779,7 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
             }
         }
     }
+    context.check()?;
     if errors.is_empty() {
         Ok(())
     } else {
@@ -744,10 +795,9 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
 /// Deliberately narrow: it matches only the shape `refresh_server_ips` and `engage` use
 /// for server addresses, so the loopback / tun / DHCP / DNS allowances — which have
 /// interface or port matchers — are never returned and can never be withdrawn.
-fn live_server_allows(path: &str, chain: &str) -> anyhow::Result<Vec<String>> {
-    let out = Command::new(path)
-        .args(["-S", chain])
-        .output()
+fn live_server_allows(context: &Context, path: &str, chain: &str) -> anyhow::Result<Vec<String>> {
+    let out = context
+        .ipt(path, &["-S", chain])
         .map_err(|error| anyhow::anyhow!("cannot inspect {path} chain {chain}: {error}"))?;
     if !out.status.success() {
         anyhow::bail!(
@@ -774,27 +824,25 @@ fn live_server_allows(path: &str, chain: &str) -> anyhow::Result<Vec<String>> {
 
 /// Remove the kill-switch chain on both families. Called only on a clean stop. A missing
 /// chain is an idempotent success; an inaccessible or still-referenced chain is an error.
+/// Without an in-process owner there is no authority to remove a same-name chain.
 pub fn disengage(tun_if: &str) -> anyhow::Result<()> {
+    anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
     let _operation = operation();
+    let Some(context) = Context::lookup(tun_if, true)? else {
+        return Ok(());
+    };
     let chain = chain_for(tun_if);
     let mut errors = Vec::new();
-    if let Some(p) = ipt_path("iptables") {
-        if let Err(error) = teardown_family(&p, &chain) {
-            errors.push(error.to_string());
-        }
-    } else {
-        errors.push(format!(
-            "kill-switch cleanup: `iptables` is unavailable, so {chain} cannot be removed"
-        ));
-    }
-    if let Some(p) = ipt_path("ip6tables") {
-        if let Err(error) = teardown_family(&p, &chain) {
+    for (_, family) in context.paths() {
+        if let Err(error) = teardown_family(&context, &family.path, &chain) {
             errors.push(error.to_string());
         }
     }
+    context.check()?;
     if !errors.is_empty() {
         anyhow::bail!("kill-switch cleanup failed: {}", errors.join("; "))
     }
+    context.forget(tun_if)?;
     log::info!("Kill-switch disengaged (iptables chain {chain} removed)");
     Ok(())
 }
@@ -930,7 +978,13 @@ mod fault_injection {
     fn engage_test(ipt: &Ipt, tun_if: &str, guard_forward: bool) -> anyhow::Result<()> {
         let path = ipt.dir.join("iptables");
         let path = path.to_string_lossy().into_owned();
-        engage_family(&path, tun_if, &["203.0.113.7".to_string()], guard_forward)
+        engage_family(
+            &Context::fixture(),
+            &path,
+            tun_if,
+            &["203.0.113.7".to_string()],
+            guard_forward,
+        )
     }
 
     #[test]
@@ -941,7 +995,7 @@ mod fault_injection {
             "#!/bin/sh\necho \"$*\" >> \"{}\"\necho 'iptables: Permission denied (you must be root)' >&2\nexit 1\n",
             fixture.dir.join("calls.log").display(),
         )).unwrap();
-        let error = teardown_family(path.to_str().unwrap(), "QELI_KS_qtest")
+        let error = teardown_family(&Context::fixture(), path.to_str().unwrap(), "QELI_KS_qtest")
             .unwrap_err()
             .to_string();
         assert!(error.contains("Permission denied"), "{error}");
@@ -1123,9 +1177,21 @@ mod fault_injection {
         );
     }
 
+    // These two tests install through the per-family helper, so explicitly bind
+    // its fake rules to a live namespace before exercising public cleanup.
+    fn bind_cleanup_fixture(ipt: &Ipt) {
+        let _operation = operation();
+        let context = Context::prepare("qtest").unwrap();
+        context.bind("qtest").unwrap();
+        context
+            .remember(false, ipt.dir.join("iptables").to_str().unwrap())
+            .unwrap();
+    }
+
     #[test]
     fn disengage_unhooks_both_chains_it_may_have_installed() {
         let ipt = Ipt::new("off", &[]);
+        bind_cleanup_fixture(&ipt);
         engage_test(&ipt, "qtest", true).expect("arm");
         disengage("qtest").expect("a healthy firewall must be removed");
         let calls = ipt.calls();
@@ -1140,15 +1206,26 @@ mod fault_injection {
     #[test]
     fn disengage_reports_a_chain_that_remains_installed() {
         let ipt = Ipt::stuck("stuck");
+        bind_cleanup_fixture(&ipt);
         engage_test(&ipt, "qtest", false).expect("arm");
         let error = disengage("qtest").unwrap_err();
         assert!(
             error.to_string().contains("still"),
             "a lying delete command must not produce clean-stop success: {error}"
         );
+        // The synthetic kernel is about to be discarded with its temporary directory.
+        Context::lookup("qtest", true)
+            .unwrap()
+            .unwrap()
+            .forget("qtest")
+            .unwrap();
     }
 }
 
 #[cfg(test)]
 #[path = "killswitch/command_bounds_tests.rs"]
 mod command_bounds_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "killswitch/native_tests.rs"]
+mod native_tests;

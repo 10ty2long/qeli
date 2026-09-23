@@ -221,6 +221,7 @@ fn another_profile_can_start_after_verified_cleanup() {
 #[test]
 fn concurrent_public_start_admits_only_one_policy() {
     let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+    ks::ownership::test_support::clear();
     let kernel = std::sync::Arc::new(Mutex::new(Kernel::default()));
     let barrier = std::sync::Arc::new(std::sync::Barrier::new(2));
     let workers: Vec<_> = [("ks_a", "203.0.113.7"), ("ks_b", "203.0.113.8")]
@@ -234,7 +235,10 @@ fn concurrent_public_start_admits_only_one_policy() {
                         move |cmd| Action::Reply(kernel.lock().unwrap().command(cmd)),
                         || {
                             barrier.wait();
-                            protect(tun, ip).is_ok()
+                            ks::ownership::test_support::with_namespace(
+                                std::sync::Arc::new(std::sync::atomic::AtomicU64::new(1)),
+                                || protect(tun, ip).is_ok(),
+                            )
                         },
                     )
                 })
@@ -255,6 +259,7 @@ fn concurrent_public_start_admits_only_one_policy() {
         .cloned()
         .collect();
     assert_eq!(chains.len(), 1);
+    ks::ownership::test_support::clear();
 }
 
 // Force IPv6 installation to fail after IPv4 has been armed. The observation
@@ -422,6 +427,159 @@ fn module_disabled_does_not_bypass_unknown_ipv4_inventory() {
         ks::ipv6_state::test_support::with_disabled(true, || {
             assert!(protect("ks_a", "203.0.113.7").is_err());
             assert_eq!(k.borrow().mutations(), 0);
+        });
+    });
+}
+
+#[test]
+fn regression_kill_switch_namespace_change_preserves_foreign_chain() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        ks::ownership::test_support::set_namespace(2);
+        let before = k.borrow().calls.len();
+        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert!(ks::disengage("ks_a").is_err());
+        assert!(ks::engage("203.0.113.8", 443, "ks_a", true, true, false).is_err());
+        assert_eq!(
+            k.borrow().calls.len(),
+            before,
+            "no command in the wrong namespace"
+        );
+        ks::ownership::test_support::set_namespace(1);
+        assert!(
+            protect("ks_a", "203.0.113.7").is_err(),
+            "identity loss remains sticky"
+        );
+        ks::disengage("ks_a").unwrap();
+        protect("ks_a", "203.0.113.7").unwrap();
+        ks::disengage("ks_a").unwrap();
+    });
+}
+#[test]
+fn regression_identity_loss_after_mutation_cannot_use_leak_override() {
+    run(|k| {
+        k.borrow_mut().lose_kill_namespace_after = Some("-N".into());
+        assert!(ks::engage("203.0.113.7", 443, "ks_a", true, true, false).is_err());
+        assert_eq!(k.borrow().calls.last().unwrap()[0], "-N");
+        let before = k.borrow().calls.len();
+        assert!(ks::disengage("ks_a").is_err());
+        assert_eq!(k.borrow().calls.len(), before);
+        ks::ownership::test_support::set_namespace(1);
+        ks::disengage("ks_a").unwrap();
+        assert_ipv4_removed(&k);
+    });
+}
+#[test]
+fn regression_cleanup_identity_loss_retains_retry_authority() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        k.borrow_mut().lose_kill_namespace_after = Some("-D".into());
+        assert!(ks::disengage("ks_a").is_err());
+        assert_eq!(k.borrow().calls.last().unwrap()[0], "-D");
+        ks::ownership::test_support::set_namespace(1);
+        ks::disengage("ks_a").unwrap();
+        assert_ipv4_removed(&k);
+    });
+}
+#[test]
+fn regression_refresh_identity_loss_stops_after_current_command() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        k.borrow_mut().lose_kill_namespace_after = Some("-I".into());
+        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert_eq!(k.borrow().calls.last().unwrap()[0], "-I");
+        ks::ownership::test_support::set_namespace(1);
+        ks::disengage("ks_a").unwrap();
+    });
+}
+#[test]
+fn regression_cleanup_without_owner_preserves_same_name_rules() {
+    run(|k| {
+        seed(&mut k.borrow_mut(), false, "QELI_KS_ks_a");
+        let before = k.borrow().rules.clone();
+        ks::disengage("ks_a").unwrap();
+        assert_eq!(k.borrow().rules, before);
+        assert!(k.borrow().calls.is_empty());
+    });
+}
+#[test]
+fn regression_disappeared_ipv6_tool_is_not_successful_cleanup() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        k.borrow_mut().missing_firewall = Some(true);
+        assert!(ks::disengage("ks_a").is_err());
+        k.borrow_mut().missing_firewall = None;
+        ks::disengage("ks_a").unwrap();
+        assert!(!k
+            .borrow()
+            .rules
+            .keys()
+            .any(|(_, _, chain)| chain == "QELI_KS_ks_a"));
+    });
+}
+#[test]
+fn regression_cleanup_error_retains_owner_until_verified_retry() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        k.borrow_mut().lie_delete = true;
+        assert!(ks::disengage("ks_a").is_err());
+        k.borrow_mut().lie_delete = false;
+        ks::disengage("ks_a").unwrap();
+        assert_ipv4_removed(&k);
+        let before = k.borrow().calls.len();
+        ks::disengage("ks_a").unwrap();
+        assert_eq!(k.borrow().calls.len(), before);
+    });
+}
+#[test]
+fn regression_reconnect_rejects_removed_output_forward_or_drop() {
+    for (chain, rule) in [
+        ("OUTPUT", vec!["-j", "QELI_KS_ks_a"]),
+        ("FORWARD", vec!["-j", "QELI_KS_ks_a"]),
+        ("QELI_KS_ks_a", vec!["-j", "DROP"]),
+    ] {
+        run(|k| {
+            protect("ks_a", "203.0.113.7").unwrap();
+            k.borrow_mut()
+                .rules
+                .get_mut(&(false, "filter".into(), chain.into()))
+                .unwrap()
+                .retain(|existing| existing != &rule);
+            let before = k.borrow().mutations();
+            assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+            // The intact IPv6 family has no new server address, so no mutations.
+            assert_eq!(k.borrow().mutations(), before);
+            ks::disengage("ks_a").unwrap();
+        });
+    }
+}
+
+#[test]
+fn regression_refresh_failed_add_keeps_previous_server_allowance() {
+    run(|k| {
+        protect("ks_a", "203.0.113.7").unwrap();
+        k.borrow_mut().lie_add = true;
+        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert!(allow_egress(
+            &k.borrow(),
+            "OUTPUT",
+            "wan0",
+            "203.0.113.7",
+            0
+        ));
+        k.borrow_mut().lie_add = false;
+        ks::disengage("ks_a").unwrap();
+    });
+}
+
+#[test]
+fn regression_ipv6_only_cleanup_never_requires_unprogrammed_ipv4() {
+    run(|k| {
+        ks::ownership::test_support::with_paths([None, Some("model-ip6tables".into())], || {
+            protect("ks_a", "2001:db8::7").unwrap();
+            ks::refresh_server_ips("2001:db8::8", 443, "ks_a").unwrap();
+            ks::disengage("ks_a").unwrap();
+            assert!(k.borrow().rules.keys().all(|(ipv6, _, _)| *ipv6));
         });
     });
 }

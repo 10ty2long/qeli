@@ -10,10 +10,9 @@ use std::net::IpAddr;
 
 #[path = "route/ownership.rs"]
 mod ownership;
-use ownership::{delete_spec, route_matches_spec};
 #[cfg(target_os = "linux")]
-#[path = "route/identity.rs"]
-mod identity;
+use crate::network_namespace as identity;
+use ownership::{delete_spec, route_matches_spec};
 #[path = "route/journal.rs"]
 mod journal;
 #[cfg(all(test, feature = "experimental-roaming"))]

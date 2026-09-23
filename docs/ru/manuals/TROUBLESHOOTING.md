@@ -1764,6 +1764,24 @@ snapshot во время чтения приводят к отказу до во
 [Отчёт](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md).
 
 
+### 6.56 Linux: потеря identity kill switch или ошибка проверки reconnect
+
+`kill-switch namespace identity lost` останавливает команды в текущем namespace и
+сохраняет исходного владельца/правила. Не очищайте чужую одноимённую цепочку.
+Вернитесь в исходный namespace для повторной проверяемой очистки либо установите
+точного устаревшего владельца и используйте процедуру [Getting started](GETTING-STARTED.md).
+`allow_ipv4_leak` / `allow_ipv6_leak` не обходят ошибку identity.
+
+`kill-switch verification/address refresh failed` прекращает reconnect до следующего dial.
+Проверьте указанное правило OUTPUT/FORWARD/DROP или недоступный firewall-инструмент.
+Оставшаяся защита сохраняется; post_down получает reason `kill_switch_failed` и error code
+`kill_switch`. При неудачном добавлении нового адреса прежнее разрешение сохраняется.
+Восстановите инструмент/доступ и точные правила перед перезапуском. Не очищайте всю
+таблицу filter. Корректная остановка IPv6-only не требует IPv4-инструмента, который
+не использовался. Очистка без живого владельца внутри процесса не подтверждает crash recovery.
+[Отчёт и границы](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md).
+
+
 ## 7. Справочник
 
 ### 7.1 Статусы туннеля (клиенты)

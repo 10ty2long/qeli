@@ -93,6 +93,7 @@
 | [AUDIT-Q25-CLIENT-NAMESPACE.md](reports/AUDIT-Q25-CLIENT-NAMESPACE.md) | Q25-F048–F049: отключённый IPv6 и общее резервирование клиентского TUN |
 | [AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md](reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) | Q25-F050–F051: проверка владельцев sysctl и сохранение незавершённого восстановления |
 | [AUDIT-Q25-SYSCTL-JOURNAL-IO.md](reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md) | Ограниченное чтение journal по fd, FIFO-lock и deadline ожидания sysctl |
+| [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Владелец namespace, защита reconnect и точная очистка семейств |
 | [AUDIT-Q25-SYSCTL-NAMESPACE.md](reports/AUDIT-Q25-SYSCTL-NAMESPACE.md) | Q25-F052–F053: изоляция sysctl по namespace и миграция журнала v2 |
 | [AUDIT-Q25-TUN-ADMISSION.md](reports/AUDIT-Q25-TUN-ADMISSION.md) | Q25-F054–F056: пассивное ожидание TUN и эксклюзивное создание очередей |
 | [AUDIT-Q25-TUN-ATTACH.md](reports/AUDIT-Q25-TUN-ATTACH.md) | Q25-F057–F058: запрет создания при attach и сохранение формата TUN |

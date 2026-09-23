@@ -4,16 +4,16 @@ use std::fs::File;
 use std::os::unix::fs::MetadataExt;
 
 #[derive(Debug)]
-pub(super) struct Namespace(File);
+pub(crate) struct Namespace(File);
 impl Namespace {
-    pub(super) fn capture() -> anyhow::Result<Self> {
+    pub(crate) fn capture() -> anyhow::Result<Self> {
         Ok(Self(File::open("/proc/thread-self/ns/net")?))
     }
-    pub(super) fn verify(&self) -> anyhow::Result<()> {
+    pub(crate) fn verify(&self) -> anyhow::Result<()> {
         let expected = self.0.metadata()?;
         let actual = std::fs::metadata("/proc/thread-self/ns/net")?;
         if (expected.dev(), expected.ino()) != (actual.dev(), actual.ino()) {
-            anyhow::bail!("route owner network namespace changed; refusing route commands");
+            anyhow::bail!("network namespace changed; refusing network commands");
         }
         Ok(())
     }

@@ -1,11 +1,12 @@
 //! A per-TUN chain still enforces host-wide egress policy. Two such policies do
 //! not compose: the first terminal DROP blocks the other tunnel/server. Refuse a
 //! conflicting ruleset before removing/rebuilding anything for the new profile.
-use super::{ipt, LEGACY_CHAIN};
+use super::{Context, LEGACY_CHAIN};
 use std::collections::BTreeSet;
 
-pub(super) fn check(path: &str, own_chain: &str) -> anyhow::Result<()> {
-    let output = ipt(path, &["-t", "filter", "-S"])
+pub(super) fn check(context: &Context, path: &str, own_chain: &str) -> anyhow::Result<()> {
+    let output = context
+        .ipt(path, &["-t", "filter", "-S"])
         .map_err(|error| anyhow::anyhow!("cannot inspect {path} kill-switch ownership: {error}"))?;
     if !output.status.success() {
         anyhow::bail!(

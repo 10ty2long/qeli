@@ -41,7 +41,10 @@ fn command_bounds_firewall_queries_never_claim_absence_on_limit() {
                     &["-C", "OUTPUT", "-j", "QELI_KS_qtest"]
                 )
                 .is_err());
-                assert!(chain_exists("qeli-test-iptables", "QELI_KS_qtest").is_err());
+                assert!(
+                    chain_exists(&Context::fixture(), "qeli-test-iptables", "QELI_KS_qtest")
+                        .is_err()
+                );
             },
         );
     }
@@ -58,7 +61,12 @@ fn command_bounds_teardown_does_not_flush_uninspectable_chain() {
                 );
                 Action::Probe { mode }
             },
-            || assert!(teardown_family("qeli-test-iptables", "QELI_KS_qtest").is_err()),
+            || {
+                assert!(
+                    teardown_family(&Context::fixture(), "qeli-test-iptables", "QELI_KS_qtest")
+                        .is_err()
+                )
+            },
         );
     }
 }
@@ -71,7 +79,14 @@ fn command_bounds_server_allow_inventory_rejects_partial_output() {
                 assert_eq!(arguments(command), ["-S", "QELI_KS_qtest"]);
                 Action::Probe { mode }
             },
-            || assert!(live_server_allows("qeli-test-iptables", "QELI_KS_qtest").is_err()),
+            || {
+                assert!(live_server_allows(
+                    &Context::fixture(),
+                    "qeli-test-iptables",
+                    "QELI_KS_qtest"
+                )
+                .is_err())
+            },
         );
     }
 }
