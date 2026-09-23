@@ -1220,6 +1220,25 @@ component. Supervisor restart policy is unchanged.
 
 ---
 
+### 6.34 Server: IPv6 sysctl acquisition failed — rollback incomplete
+
+A route/nat66 setup error may include both the original acquisition failure and
+`rollback incomplete`: sysctl restoration after the failure could not be confirmed.
+This can happen even on the first accept_ra call because writing may precede failed
+verification. The profile scope is retained for cleanup retry.
+
+Ordinary profile cleanup and final worker shutdown retry scope release. If it still
+fails, the final outcome includes `owned network cleanup` with `IPv6 sysctls/<profile>`.
+Check service access to the named sysctls and journal; keep `sysctls.state` for retry.
+Successful final retry clears this network failure; the current generation's original
+failure may separately remain under `profile/worker task cleanup`.
+
+Until the old scope is released, another WAN/TUN for the same profile cannot replace it.
+The accept_ra → forwarding order and `off`/`manual` modes are preserved; no new INI keys.
+[Report and validation](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

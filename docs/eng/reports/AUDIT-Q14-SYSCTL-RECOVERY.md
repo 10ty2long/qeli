@@ -52,9 +52,10 @@ This is recovery metadata, not a user JSON configuration.
 Failed startup recovery now stops worker startup through the existing `?`; supervisor
 retry/respawn policy is unchanged.
 
-Q14-F027 remains open: generic NAT cleanup, partial IPv6 acquisition before registration
-of the profile lease, earlier-generation resources, persistent DNS journaling and overall
-firewall command deadlines need separate passes. Actual Linux sysctl/firewall/TUN/systemd,
+The subsequent [Q14-F031 pass](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) fixes tracking of partial
+IPv6 acquisition before both settings complete. Q14-F027 remains open: generic NAT cleanup,
+earlier-generation resources, persistent DNS journaling and overall firewall command
+deadlines need separate passes. Actual Linux sysctl/firewall/TUN/systemd,
 devices, native release and benchmarks were not run.
 
 Previous pass: [profile tasks and TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md).

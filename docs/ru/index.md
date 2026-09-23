@@ -77,6 +77,7 @@
 | [AUDIT-Q14-OWNED-SHUTDOWN.md](reports/AUDIT-Q14-OWNED-SHUTDOWN.md) | Итоговая проверка DNS/IPv6 sysctl leases и передача ошибок worker/supervisor; Q14-F027 исправлена частично |
 | [AUDIT-Q14-PROFILE-SHUTDOWN.md](reports/AUDIT-Q14-PROFILE-SHUTDOWN.md) | Ошибки задач профиля, TUN queue timeout/panic и удаления TUN в результате остановки; Q14-F027 частично |
 | [AUDIT-Q14-SYSCTL-RECOVERY.md](reports/AUDIT-Q14-SYSCTL-RECOVERY.md) | Q14-F029/F030: ошибки восстановления sysctl и сохранение прежнего владельца при повторном acquire |
+| [AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md](reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) | Q14-F031: учёт частичного IPv6 acquire и повторный rollback до подтверждённого освобождения |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Сохранение DNS rule specs при отказе cleanup/rollback, retry и идентичность поколения |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Конечная очистка NAT, проверка результата, диагностика и открытые ошибки teardown |

@@ -98,9 +98,10 @@ Q14-F027 **remains open**: generic NAT cleanup and unfinished cleanup of earlier
 need separate accounting. The outer supervisor propagates final stop failure, but live
 systemd reporting has not been tested.
 
-Only in-memory worker leases are checked. A failed partial acquire before IPv6 lease
-registration, previous-worker journal records and IPv4 forwarding held for the worker
-lifetime are not separately covered by this pass. The subsequent
+Only in-memory worker leases are checked. The subsequent
+[Q14-F031 pass](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) also registers partial IPv6 acquisition.
+Previous-worker journal records and worker-lifetime IPv4 forwarding are not separately
+covered by this final pass. The subsequent
 [sysctl recovery pass](AUDIT-Q14-SYSCTL-RECOVERY.md) fixes false Ok after persisting
 unresolved stale entries and ownership loss on failed reacquisition.
 The DNS registry does not survive crashes/restarts; persistent journaling is absent.

@@ -24,7 +24,6 @@
 use crate::nat_cleanup::exact_delete_args;
 use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_comment};
 use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInputRules};
-use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 
@@ -130,17 +129,9 @@ fn enable_ip_forward() -> bool {
     }
 }
 
-const IPV6_FORWARDING_SYSCTL: &str = "/proc/sys/net/ipv6/conf/all/forwarding";
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Ipv6SysctlLease {
-    wan: Option<String>,
-    scope: String,
-}
-
-fn ipv6_sysctl_leases() -> &'static Mutex<HashMap<String, Ipv6SysctlLease>> {
-    static LEASES: OnceLock<Mutex<HashMap<String, Ipv6SysctlLease>>> = OnceLock::new();
-    LEASES.get_or_init(|| Mutex::new(HashMap::new()))
+fn ipv6_sysctl_leases() -> &'static Mutex<crate::nat_ipv6_sysctl::Registry> {
+    static LEASES: OnceLock<Mutex<crate::nat_ipv6_sysctl::Registry>> = OnceLock::new();
+    LEASES.get_or_init(Default::default)
 }
 
 fn firewall_program_lock() -> &'static Mutex<()> {
@@ -148,80 +139,18 @@ fn firewall_program_lock() -> &'static Mutex<()> {
     LOCK.get_or_init(|| Mutex::new(()))
 }
 
-fn server_sysctl_scope(tun: &str) -> String {
-    // Encode the kernel interface name instead of using it verbatim. Linux permits a few
-    // punctuation characters that are deliberately forbidden in the journal's owner grammar.
-    let mut scope = String::with_capacity(2 + tun.len() * 2);
-    scope.push_str("s-");
-    for byte in tun.as_bytes() {
-        use std::fmt::Write as _;
-        write!(&mut scope, "{byte:02x}").expect("writing to String cannot fail");
-    }
-    scope
-}
-
-fn accept_ra_sysctl(wan: &str) -> anyhow::Result<String> {
-    // Interface names originate in a trusted config or `ip route`, but they are still used as
-    // one filesystem component below. Reject separators/dot components here so a malformed
-    // command response or config can never turn this into an arbitrary /proc write.
-    if wan.is_empty()
-        || wan.len() > 15
-        || wan == "."
-        || wan == ".."
-        || wan.contains('/')
-        || wan.contains('\\')
-        || wan.contains('\0')
-        || wan
-            .chars()
-            .any(|character| character.is_control() || character.is_whitespace())
-    {
-        anyhow::bail!("invalid IPv6 uplink interface name '{wan}'");
-    }
-    Ok(format!("/proc/sys/net/ipv6/conf/{wan}/accept_ra"))
-}
-
-/// Acquire the host IPv6-router settings for one server profile through the same persistent,
-/// cross-process journal used by router/exit clients. `accept_ra=2` is applied first so
-/// enabling global forwarding cannot silently remove a SLAAC WAN address/default route.
+/// Acquire router settings with a retryable scope registered before either sysctl write.
 fn acquire_ipv6_sysctls(profile: &str, wan: Option<&str>, tun: &str) -> anyhow::Result<()> {
-    let ra_path = wan.map(accept_ra_sysctl).transpose()?;
-    let scope = server_sysctl_scope(tun);
-    let mut leases = ipv6_sysctl_leases()
+    ipv6_sysctl_leases()
         .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-
-    if let Some(existing) = leases.get(profile) {
-        if existing.wan.as_deref() != wan || existing.scope != scope {
-            anyhow::bail!(
-                "profile '{profile}' already owns IPv6 router settings for interface '{}'",
-                existing.wan.as_deref().unwrap_or("<none>")
-            );
-        }
-        // Do not return early. A previous release may have restored one knob but retained
-        // this process-local lease because another knob could not be restored. Re-acquiring
-        // both settings is idempotent and repairs that partial-teardown state.
-    }
-
-    if let Some(ra_path) = ra_path.as_deref() {
-        crate::sysctl::acquire_checked(ra_path, "2", &scope)?;
-    }
-    if let Err(error) = crate::sysctl::acquire_checked(IPV6_FORWARDING_SYSCTL, "1", &scope) {
-        if let Err(release_error) = crate::sysctl::release_scope(&scope) {
-            log::error!(
-                "IPv6 routing: could not roll back router sysctls after forwarding acquisition failed: {release_error}"
-            );
-        }
-        return Err(error);
-    }
-
-    leases.insert(
-        profile.to_string(),
-        Ipv6SysctlLease {
-            wan: wan.map(str::to_string),
-            scope,
-        },
-    );
-    Ok(())
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .acquire(
+            profile,
+            wan,
+            tun,
+            crate::sysctl::acquire_checked,
+            crate::sysctl::release_scope,
+        )
 }
 
 fn release_ipv6_sysctls(profile: &str) {
@@ -233,17 +162,10 @@ fn release_ipv6_sysctls(profile: &str) {
 }
 
 fn release_ipv6_sysctls_checked(profile: &str) -> anyhow::Result<()> {
-    let mut leases = ipv6_sysctl_leases()
+    ipv6_sysctl_leases()
         .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let Some(lease) = leases.get(profile).cloned() else {
-        return Ok(());
-    };
-    // Keep both the lease and the journal evidence if restoration fails. The final
-    // worker pass must see the failure, not just the earlier best-effort log.
-    crate::sysctl::release_scope(&lease.scope)?;
-    leases.remove(profile);
-    Ok(())
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .release(profile, crate::sysctl::release_scope)
 }
 fn detect_wan_ipv6() -> Option<String> {
     let output = Command::new("ip")
@@ -1401,13 +1323,10 @@ pub(crate) fn finish_owned_cleanup() -> anyhow::Result<()> {
     let _firewall_guard = firewall_program_lock()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let mut profiles: Vec<_> = ipv6_sysctl_leases()
+    let profiles = ipv6_sysctl_leases()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .keys()
-        .cloned()
-        .collect();
-    profiles.sort();
+        .profiles();
     crate::nat_cleanup::finish_owned_cleanup_with(
         || {
             dns_input_registry()
@@ -1469,7 +1388,7 @@ mod tests {
     use super::{
         chain_policy_from_output, cross_profile_drop_rules, dns_input_rule, exact_delete_args,
         forward_permit_position_from_listing, ipv6_off_rules, ipv6_rules, resolve_wan_ipv6,
-        rule_comment, server_sysctl_scope, tag,
+        rule_comment, tag,
     };
     use crate::config::server::Ipv6RoutingMode;
 
@@ -1838,12 +1757,6 @@ mod tests {
         assert_eq!(rule_comment(none), None);
     }
 
-    #[test]
-    fn server_sysctl_scope_is_bounded_and_unambiguous() {
-        assert_eq!(server_sysctl_scope("qeli6"), "s-71656c6936");
-        assert_ne!(server_sysctl_scope("qeli:6"), server_sysctl_scope("qeli6"));
-        assert!(server_sysctl_scope("abcdefghijklmno").len() <= 32);
-    }
     #[test]
     fn dns_input_rule_is_scoped_to_one_profile_resolver() {
         assert_eq!(

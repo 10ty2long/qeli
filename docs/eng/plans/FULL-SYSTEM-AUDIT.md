@@ -582,8 +582,12 @@ the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
 success and loss of existing ownership on failed reacquisition;
 1060 Rust tests and 7 separate fixture checks PASS.
-Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
-persistent journaling and live Linux remain open.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
+registered before the first attempt; any failure triggers rollback, and failed rollback
+retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
+current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
+Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
+firewall command deadlines and live Linux remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -673,8 +677,12 @@ the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
 success and loss of existing ownership on failed reacquisition;
 1060 Rust tests and 7 separate fixture checks PASS.
-Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
-persistent journaling and live Linux remain open.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
+registered before the first attempt; any failure triggers rollback, and failed rollback
+retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
+current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
+Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
+firewall command deadlines and live Linux remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -727,8 +735,12 @@ the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
 success and loss of existing ownership on failed reacquisition;
 1060 Rust tests and 7 separate fixture checks PASS.
-Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
-persistent journaling and live Linux remain open.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
+registered before the first attempt; any failure triggers rollback, and failed rollback
+retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
+current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
+Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
+firewall command deadlines and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -838,8 +850,12 @@ the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): fixed false sysctl recovery
 success and loss of existing ownership on failed reacquisition;
 1060 Rust tests and 7 separate fixture checks PASS.
-Generic NAT, old generations/retry backoff, partial IPv6 acquisition, restart policy,
-persistent journaling and live Linux remain open.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
+registered before the first attempt; any failure triggers rollback, and failed rollback
+retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
+current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
+Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
+firewall command deadlines and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 

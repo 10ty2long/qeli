@@ -68,7 +68,7 @@ a permanent error. The outer supervisor respawn policy is unchanged.
 
 The subsequent [sysctl recovery pass](AUDIT-Q14-SYSCTL-RECOVERY.md) fixes false Ok for
 unresolved stale entries and ownership loss on failed reacquisition. Partial IPv6 sysctl
-acquisition before registration of the profile lease remains open.
+acquisition tracking is subsequently fixed by [Q14-F031](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md).
 DNS ownership is worker-local memory without persistent journaling. Firewall commands
 still lack an overall deadline. A successful outcome does not prove that all resources
 from earlier generations or processes are absent.

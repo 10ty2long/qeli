@@ -53,9 +53,10 @@ client-only, server-only, client без roaming, minimal FFI, compatibility бе
 Неудачный startup recovery теперь останавливает запуск worker через существующий `?`;
 политика retry/respawn supervisor не менялась.
 
-Q14-F027 не закрыта: generic NAT cleanup, частичный IPv6 acquire до регистрации
-профильного lease, ресурсы старых поколений, постоянный DNS journal и общий deadline
-firewall-команд требуют отдельных проходов. Реальные Linux sysctl/firewall/TUN/systemd,
+Следующий проход [Q14-F031](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) исправляет учёт частичного
+IPv6 acquire до успешного завершения обеих настроек. Q14-F027 не закрыта: generic NAT
+cleanup, ресурсы старых поколений, постоянный DNS journal и общий deadline firewall-команд
+требуют отдельных проходов. Реальные Linux sysctl/firewall/TUN/systemd,
 устройства, native release и бенчмарки не запускались.
 
 Предыдущий этап: [задачи профиля и TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md).

@@ -587,8 +587,12 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
 sysctl recovery и потеря существующего owner при неудачном повторном acquire;
 1060 Rust tests и 7 отдельных fixture checks PASS.
-Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
-persistent journal и live Linux остаются открытыми.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): частичный IPv6 acquire теперь
+регистрируется до первой попытки; любой отказ вызывает rollback, неуспешный откат
+сохраняет scope для итоговой очистки. 11 новых регрессий и перенос одного Linux-only
+теста: текущая матрица 1072 Rust tests PASS; пять отдельных adapter checks PASS.
+Generic NAT, старые поколения/retry backoff, restart policy, persistent journal,
+сроки firewall-команд и live Linux остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -678,8 +682,12 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
 sysctl recovery и потеря существующего owner при неудачном повторном acquire;
 1060 Rust tests и 7 отдельных fixture checks PASS.
-Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
-persistent journal и live Linux остаются открытыми.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): частичный IPv6 acquire теперь
+регистрируется до первой попытки; любой отказ вызывает rollback, неуспешный откат
+сохраняет scope для итоговой очистки. 11 новых регрессий и перенос одного Linux-only
+теста: текущая матрица 1072 Rust tests PASS; пять отдельных adapter checks PASS.
+Generic NAT, старые поколения/retry backoff, restart policy, persistent journal,
+сроки firewall-команд и live Linux остаются открытыми.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -732,8 +740,12 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
 sysctl recovery и потеря существующего owner при неудачном повторном acquire;
 1060 Rust tests и 7 отдельных fixture checks PASS.
-Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
-persistent journal и live Linux остаются открытыми.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): частичный IPv6 acquire теперь
+регистрируется до первой попытки; любой отказ вызывает rollback, неуспешный откат
+сохраняет scope для итоговой очистки. 11 новых регрессий и перенос одного Linux-only
+теста: текущая матрица 1072 Rust tests PASS; пять отдельных adapter checks PASS.
+Generic NAT, старые поколения/retry backoff, restart policy, persistent journal,
+сроки firewall-команд и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -845,8 +857,12 @@ host-тестов, итог этого этапа 1047 Rust tests PASS; три �
 [Q14-F029/F030](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md): исправлены ложный успех
 sysctl recovery и потеря существующего owner при неудачном повторном acquire;
 1060 Rust tests и 7 отдельных fixture checks PASS.
-Generic NAT, старые поколения/retry backoff, частичный IPv6 acquire, restart policy,
-persistent journal и live Linux остаются открытыми.
+[Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): частичный IPv6 acquire теперь
+регистрируется до первой попытки; любой отказ вызывает rollback, неуспешный откат
+сохраняет scope для итоговой очистки. 11 новых регрессий и перенос одного Linux-only
+теста: текущая матрица 1072 Rust tests PASS; пять отдельных adapter checks PASS.
+Generic NAT, старые поколения/retry backoff, restart policy, persistent journal,
+сроки firewall-команд и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 

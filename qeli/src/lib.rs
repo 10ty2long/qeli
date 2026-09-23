@@ -34,6 +34,11 @@ mod firewall_check;
 #[path = "server/nat/cleanup.rs"]
 mod nat_cleanup;
 
+// IPv6 sysctl rollback keeps partial acquisitions visible until release succeeds.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/nat/ipv6_sysctl.rs"]
+mod nat_ipv6_sysctl;
+
 // Exact DNS firewall ownership survives failed cleanup within the running worker.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/nat/dns_input.rs"]

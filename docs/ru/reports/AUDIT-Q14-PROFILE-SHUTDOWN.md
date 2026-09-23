@@ -68,7 +68,8 @@ Q14-F027 остаётся открытой для generic NAT cleanup и общ�
 
 Следующий проход [sysctl recovery](AUDIT-Q14-SYSCTL-RECOVERY.md) исправляет ложный Ok
 при неустранённых stale entries и потерю владельца при повторном acquire.
-Частичный acquire IPv6 sysctls до регистрации профильного lease остаётся открытым. DNS ownership хранится
+[Q14-F031](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) затем добавляет учёт частичного IPv6 acquire
+до первой попытки изменения. DNS ownership хранится
 в памяти worker, постоянного журнала нет. Общего deadline firewall-команд также нет.
 Успешный итог не доказывает отсутствие всех ресурсов старых поколений или процессов.
 
