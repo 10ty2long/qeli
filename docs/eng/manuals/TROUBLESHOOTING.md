@@ -999,6 +999,23 @@ compatibility path does not enable direct resolver-file takeover for new connect
 
 ---
 
+### 6.21 Linux: network resource cleanup reported errors
+
+`kill-switch retained because network resource cleanup reported errors` means that DNS,
+route, TUN or NetworkPlan rollback cleanup failed during this client run. The client attempts
+forwarding cleanup, reports terminal failure and does not reconnect. `post_down` receives
+`network_cleanup_failed` / `network_cleanup`, unless core teardown also failed (then
+`core_stop_failed` / `core_stop` has priority). A simultaneous stop signal does not hide the
+cleanup failure. If the server also sent a terminal kick, its cause remains in the error.
+
+A fallback guard may retry cleanup, but its later success does not erase the original fault
+or automatically release the kill-switch. Review the first error for each resource and verify
+current DNS, route and interface state before administrator recovery. The retained record is
+limited to four resource categories with the first 2048 characters each; it is not a complete
+history of every retry. User hook scripts may still change firewall state independently.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

@@ -1105,7 +1105,7 @@ impl ClientHookContext {
 
 #[cfg(target_os = "linux")]
 fn cleanup_routing_features(
-    core_stop: anyhow::Result<()>,
+    checks: impl Into<crate::client_cleanup::Checks>,
     kill_switch: bool,
     gateway_enabled: bool,
     exit_node: bool,
@@ -1114,7 +1114,7 @@ fn cleanup_routing_features(
     lan_subnet_ipv6: &str,
 ) -> anyhow::Result<()> {
     crate::client_cleanup::routing(
-        core_stop,
+        checks,
         kill_switch,
         || {
             if gateway_enabled || exit_node {
@@ -1703,6 +1703,7 @@ struct LinuxCoreAdapter {
     cancel: Arc<AtomicBool>,
     counters: Arc<RuntimeCounters>,
     diagnostics: ClientStatusReporter,
+    cleanup_failures: crate::client_cleanup::Failures,
     post_up: Option<String>,
     hook_context: Option<ClientHookContext>,
     connected_since: Option<std::time::Instant>,
@@ -1964,6 +1965,7 @@ impl LinuxCoreAdapter {
                 cancel: Arc::new(AtomicBool::new(false)),
                 counters,
                 diagnostics,
+                cleanup_failures: crate::client_cleanup::Failures::default(),
                 post_up: None,
                 hook_context: None,
                 connected_since: None,
@@ -2186,8 +2188,9 @@ impl ClientPlatform for LinuxCoreAdapter {
         network: &HandshakeNetwork<'_>,
     ) -> anyhow::Result<TunnelSetup> {
         let mut hook_context = self.hook_context.clone();
+        let cleanup_failures = self.cleanup_failures.clone();
         let (tunnel, hook_context) = self.apply_network_plan(plan, |plan| {
-            let tunnel = setup_tunnel(config, plan, network)?;
+            let tunnel = setup_tunnel(config, plan, network, cleanup_failures)?;
             if let Some(context) = hook_context.as_mut() {
                 context.refresh(plan, &tunnel.if_name);
             }
@@ -2245,6 +2248,33 @@ static DELIBERATE_CYCLE: std::sync::atomic::AtomicBool = std::sync::atomic::Atom
 struct ServerKickError {
     message: String,
     reconnect_allowed: bool,
+}
+
+#[cfg(test)]
+mod terminal_cleanup_tests {
+    use super::ServerKickError;
+
+    #[test]
+    fn terminal_kick_survives_dns_and_route_cleanup_failure() {
+        let kick = ServerKickError {
+            message: "profile disabled".to_string(),
+            reconnect_allowed: false,
+        };
+        let cleanup = crate::client_cleanup::with_cleanup_error(
+            Err(anyhow::anyhow!("DNS revert failed")),
+            Err(anyhow::anyhow!("route delete failed")),
+        );
+        let error =
+            crate::client_cleanup::with_cleanup_error(Err(kick.into()), cleanup).unwrap_err();
+        let kick = error
+            .downcast_ref::<ServerKickError>()
+            .expect("terminal policy must survive cleanup");
+        assert!(!kick.reconnect_allowed);
+        let message = error.to_string();
+        assert!(message.contains("profile disabled"));
+        assert!(message.contains("DNS revert failed"));
+        assert!(message.contains("route delete failed"));
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -2607,16 +2637,18 @@ async fn run_client_inner(
             let message = format!("transport core teardown failed: {error}");
             error.context(message)
         });
-        if start_failed || core_stop.is_err() {
-            // A broken lifecycle must not enter retry or the clean-signal success path.
-            // Withdraw router permits, but retain the kill-switch if core teardown failed.
-            let (reason, error_code) = if core_stop.is_err() {
-                ("core_stop_failed", "core_stop")
-            } else {
-                ("core_start_failed", "core_start")
-            };
+        let checks = crate::client_cleanup::Checks {
+            core: core_stop,
+            network: core_adapter.cleanup_failures.result(),
+        };
+        let failure_reason = checks.failure_reason();
+        if start_failed || failure_reason.is_some() {
+            // Cleanup faults outrank signal-success and reconnect. This includes failures
+            // reported by Drop guards before the connection future returned.
+            let (reason, error_code) =
+                failure_reason.unwrap_or(("core_start_failed", "core_start"));
             let cleanup = cleanup_routing_features(
-                core_stop,
+                checks,
                 ks_on,
                 gw_on,
                 exit_on,
@@ -5389,12 +5421,7 @@ where
     // Everything below can bail out through `?`, which would skip the teardown at the
     // end of this function; from here on the guard covers that (see `TunGuard`).
     #[cfg(target_os = "linux")]
-    let mut tun_guard = TunGuard::new(
-        tun_name.clone(),
-        !config.tun.attach_existing,
-        server_addr.clone(),
-        config.routing.exclude.clone(),
-    );
+    let mut tun_guard = tunnel.guard;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let mut tun_pump = LinuxTunPump::start(
         reader_fd,
@@ -6284,7 +6311,13 @@ where
         h.abort();
     }
     #[cfg(target_os = "linux")]
-    let dns_cleanup_error = dns::restore_dns_for(&tun_name).err();
+    let dns_cleanup_error = tun_guard
+        .failures
+        .observe(
+            crate::client_cleanup::Resource::Dns,
+            dns::restore_dns_for(&tun_name),
+        )
+        .err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
     // Closes the TUN fd: `TunInterface` holds it as a `File`. (Do NOT also close the raw
@@ -6296,30 +6329,40 @@ where
     // (we only borrowed the fd). Otherwise remove the device + routes we created.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(&tun_name, &server_addr, &config.routing.exclude).err()
+        cleanup_owned_tun(
+            &tun_name,
+            &server_addr,
+            &config.routing.exclude,
+            &tun_guard.failures,
+        )
+        .err()
     } else {
         None
     };
-    #[cfg(target_os = "linux")]
-    match (dns_cleanup_error, tun_cleanup_error) {
-        (None, None) => {}
-        (Some(dns), None) => return Err(anyhow::anyhow!("DNS cleanup failed: {dns}")),
-        (None, Some(tun)) => return Err(tun),
-        (Some(dns), Some(tun)) => {
-            return Err(anyhow::anyhow!("DNS cleanup failed: {dns}; {tun}"));
-        }
-    }
-    #[cfg(target_os = "linux")]
-    tun_guard.disarm(); // graceful teardown done — nothing left for `Drop` to repeat
-    log::info!("Client disconnected");
-    if let Some(kick) = terminal_kick {
-        return Err(ServerKickError {
+    let result = match terminal_kick {
+        Some(kick) => Err(ServerKickError {
             message: kick.message,
             reconnect_allowed: kick.reconnect_allowed,
         }
-        .into());
+        .into()),
+        None => Ok(()),
+    };
+    #[cfg(target_os = "linux")]
+    let result = {
+        let dns_cleanup = dns_cleanup_error.map_or(Ok(()), |error| {
+            Err(anyhow::anyhow!("DNS cleanup failed: {error}"))
+        });
+        let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
+        let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
+        if cleanup.is_ok() {
+            tun_guard.disarm();
+        }
+        crate::client_cleanup::with_cleanup_error(result, cleanup)
+    };
+    if result.is_ok() {
+        log::info!("Client disconnected");
     }
-    Ok(())
+    result
 }
 
 /// Load (or first-time generate + persist) this client's stable device id. Stored
@@ -6752,6 +6795,8 @@ pub(crate) enum WindowsTunSetup {
 
 pub(crate) struct TunnelSetup {
     #[cfg(target_os = "linux")]
+    guard: TunGuard,
+    #[cfg(target_os = "linux")]
     tun: TunInterface,
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     reader_fd: OwnedFd,
@@ -6810,10 +6855,12 @@ impl TunnelSetup {
 ///
 /// This guard carries the platform parts that must happen no matter how we leave: request
 /// pump cancellation before touching the device, restore the resolver, and remove the
-/// interface and routes we installed. The normal path `disarm()`s it after the fuller
+/// interface and routes we installed. TunnelSetup owns it before the core ACK, then the
+/// data-plane loop takes ownership. The normal path `disarm()`s it after the fuller
 /// graceful sequence, whose `.await`s are impossible in `Drop`.
 #[cfg(target_os = "linux")]
 struct TunGuard {
+    failures: crate::client_cleanup::Failures,
     if_name: String,
     stop: Option<LinuxTunPumpStop>,
     /// Attach mode borrows an externally-owned device: pump packets, never tear down.
@@ -6825,8 +6872,15 @@ struct TunGuard {
 
 #[cfg(target_os = "linux")]
 impl TunGuard {
-    fn new(if_name: String, owns_device: bool, server_addr: String, exclude: Vec<String>) -> Self {
+    fn new(
+        if_name: String,
+        owns_device: bool,
+        server_addr: String,
+        exclude: Vec<String>,
+        failures: crate::client_cleanup::Failures,
+    ) -> Self {
         Self {
+            failures,
             if_name,
             stop: None,
             owns_device,
@@ -6851,9 +6905,24 @@ impl TunGuard {
 /// while deleting the interface does not prove that independently installed bypass routes
 /// were removed.
 #[cfg(target_os = "linux")]
-fn cleanup_owned_tun(if_name: &str, server_addr: &str, exclude: &[String]) -> anyhow::Result<()> {
-    let route_error = route::cleanup_routes(if_name, server_addr, exclude).err();
-    let tun_error = TunInterface::delete(if_name).err();
+fn cleanup_owned_tun(
+    if_name: &str,
+    server_addr: &str,
+    exclude: &[String],
+    failures: &crate::client_cleanup::Failures,
+) -> anyhow::Result<()> {
+    let route_error = failures
+        .observe(
+            crate::client_cleanup::Resource::Routes,
+            route::cleanup_routes(if_name, server_addr, exclude),
+        )
+        .err();
+    let tun_error = failures
+        .observe(
+            crate::client_cleanup::Resource::Tun,
+            TunInterface::delete(if_name).map_err(anyhow::Error::from),
+        )
+        .err();
     match (route_error, tun_error) {
         (None, None) => Ok(()),
         (Some(routes), None) => Err(anyhow::anyhow!("route cleanup failed: {routes}")),
@@ -6880,11 +6949,19 @@ impl Drop for TunGuard {
         if let Some(stop) = &self.stop {
             stop.request_stop();
         }
-        if let Err(error) = dns::restore_dns_for(&self.if_name) {
+        if let Err(error) = self.failures.observe(
+            crate::client_cleanup::Resource::Dns,
+            dns::restore_dns_for(&self.if_name),
+        ) {
             log::error!("TUN guard DNS cleanup failed: {error}");
         }
         if self.owns_device {
-            if let Err(error) = cleanup_owned_tun(&self.if_name, &self.server_addr, &self.exclude) {
+            if let Err(error) = cleanup_owned_tun(
+                &self.if_name,
+                &self.server_addr,
+                &self.exclude,
+                &self.failures,
+            ) {
                 log::error!("TUN guard cleanup failed: {error}");
             }
         }
@@ -7750,6 +7827,7 @@ async fn probe_udp_mtu(
 
 #[cfg(target_os = "linux")]
 struct NetworkPlanApplyGuard {
+    failures: crate::client_cleanup::Failures,
     if_name: String,
     owns_device: bool,
     server_addr: String,
@@ -7766,8 +7844,14 @@ struct NetworkPlanApplyGuard {
 
 #[cfg(target_os = "linux")]
 impl NetworkPlanApplyGuard {
-    fn new(config: &crate::config::client::ClientConfig, if_name: &str, owns_device: bool) -> Self {
+    fn new(
+        config: &crate::config::client::ClientConfig,
+        if_name: &str,
+        owns_device: bool,
+        failures: crate::client_cleanup::Failures,
+    ) -> Self {
         Self {
+            failures,
             if_name: if_name.to_string(),
             owns_device,
             server_addr: pin_target(config),
@@ -7811,14 +7895,18 @@ impl Drop for NetworkPlanApplyGuard {
             self.if_name
         );
         if self.dns_started {
-            if let Err(error) = dns::restore_dns_for(&self.if_name) {
+            if let Err(error) = self.failures.observe(
+                crate::client_cleanup::Resource::Dns,
+                dns::restore_dns_for(&self.if_name),
+            ) {
                 log::warn!("DNS rollback after NetworkPlan failure also failed: {error}");
             }
         }
         if self.routes_started && self.owns_device {
-            if let Err(error) =
-                route::cleanup_routes(&self.if_name, &self.server_addr, &self.exclude)
-            {
+            if let Err(error) = self.failures.observe(
+                crate::client_cleanup::Resource::Routes,
+                route::cleanup_routes(&self.if_name, &self.server_addr, &self.exclude),
+            ) {
                 log::warn!("route rollback after NetworkPlan failure also failed: {error}");
             }
         }
@@ -7826,18 +7914,24 @@ impl Drop for NetworkPlanApplyGuard {
             // A rejected reconnect generation must not leave old router permits active
             // while there is no acknowledged TUN plan. Both teardown functions are
             // idempotent and remove their IPv4 and IPv6 family halves independently.
-            if let Err(error) = gateway::disengage_plan(
-                &self.if_name,
-                &self.gateway_lan_ipv4,
-                &self.gateway_lan_ipv6,
-                self.gateway_enabled,
-                self.exit_enabled,
+            if let Err(error) = self.failures.observe(
+                crate::client_cleanup::Resource::Forwarding,
+                gateway::disengage_plan(
+                    &self.if_name,
+                    &self.gateway_lan_ipv4,
+                    &self.gateway_lan_ipv6,
+                    self.gateway_enabled,
+                    self.exit_enabled,
+                ),
             ) {
                 log::warn!("router rollback after NetworkPlan failure also failed: {error}");
             }
         }
         if self.owns_device {
-            if let Err(error) = TunInterface::delete(&self.if_name) {
+            if let Err(error) = self.failures.observe(
+                crate::client_cleanup::Resource::Tun,
+                TunInterface::delete(&self.if_name).map_err(anyhow::Error::from),
+            ) {
                 log::warn!("TUN rollback after NetworkPlan failure also failed: {error}");
             }
         }
@@ -7879,6 +7973,7 @@ fn setup_tunnel(
     config: &crate::config::client::ClientConfig,
     plan: &NetworkPlan,
     _network: &HandshakeNetwork<'_>,
+    cleanup_failures: crate::client_cleanup::Failures,
 ) -> anyhow::Result<TunnelSetup> {
     let client_ip = plan.tunnel_address.as_str();
     let mtu = i32::from(plan.mtu);
@@ -7950,11 +8045,13 @@ fn setup_tunnel(
             e
         )
     })?;
-    // The caller cannot construct TunGuard until this function returns. Keep every
-    // platform mutation in one local transaction instead: address/up, gateway and exit
+    // Cover partial setup with a local transaction. A completed TunGuard is transferred
+    // into TunnelSetup before returning, so a failed core ACK cannot leave a gap.
+    // This transaction covers address/up, gateway and exit
     // firewall state, descriptor duplication, routes, DNS, and the final TAP MAC read.
     // The external interface in attach mode is borrowed and is therefore never deleted.
-    let mut plan_guard = NetworkPlanApplyGuard::new(config, &if_name, !attach);
+    let mut plan_guard =
+        NetworkPlanApplyGuard::new(config, &if_name, !attach, cleanup_failures.clone());
     if attach {
         // The interface owner sets L3 (address + link up) — some managers only route
         // through an interface they configured themselves, so if qeli sets the address
@@ -8138,8 +8235,16 @@ fn setup_tunnel(
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
     publish_network_plan_state(plan)?;
+    let guard = TunGuard::new(
+        if_name.clone(),
+        !attach,
+        pin_target(config),
+        config.routing.exclude.clone(),
+        cleanup_failures,
+    );
     plan_guard.disarm();
     Ok(TunnelSetup {
+        guard,
         tun,
         reader_fd: owned_reader,
         writer_fd: owned_writer,
@@ -9954,12 +10059,7 @@ pub(crate) async fn run_udp_tunnel(
     // Everything below can bail out through `?`, which would skip the teardown at the
     // end of this function; from here on the guard covers that (see `TunGuard`).
     #[cfg(target_os = "linux")]
-    let mut tun_guard = TunGuard::new(
-        tun_name.clone(),
-        !config.tun.attach_existing,
-        server_addr.clone(),
-        config.routing.exclude.clone(),
-    );
+    let mut tun_guard = tun_setup.guard;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let mut tun_pump = LinuxTunPump::start(
         reader_fd,
@@ -12081,7 +12181,13 @@ pub(crate) async fn run_udp_tunnel(
     let _ = udp_receive_task.await;
 
     #[cfg(target_os = "linux")]
-    let dns_cleanup_error = dns::restore_dns_for(&tun_name).err();
+    let dns_cleanup_error = tun_guard
+        .failures
+        .observe(
+            crate::client_cleanup::Resource::Dns,
+            dns::restore_dns_for(&tun_name),
+        )
+        .err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
     // Closes the TUN fd: `TunInterface` holds it as a `File`. (Do NOT also close the raw
@@ -12092,30 +12198,40 @@ pub(crate) async fn run_udp_tunnel(
     // Attach mode: the interface + routes belong to an external owner — leave them.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(&tun_name, &server_addr, &config.routing.exclude).err()
+        cleanup_owned_tun(
+            &tun_name,
+            &server_addr,
+            &config.routing.exclude,
+            &tun_guard.failures,
+        )
+        .err()
     } else {
         None
     };
-    #[cfg(target_os = "linux")]
-    match (dns_cleanup_error, tun_cleanup_error) {
-        (None, None) => {}
-        (Some(dns), None) => return Err(anyhow::anyhow!("DNS cleanup failed: {dns}")),
-        (None, Some(tun)) => return Err(tun),
-        (Some(dns), Some(tun)) => {
-            return Err(anyhow::anyhow!("DNS cleanup failed: {dns}; {tun}"));
-        }
-    }
-    #[cfg(target_os = "linux")]
-    tun_guard.disarm(); // graceful teardown done — nothing left for `Drop` to repeat
-    log::info!("UDP client disconnected");
-    if let Some(kick) = terminal_kick {
-        return Err(ServerKickError {
+    let result = match terminal_kick {
+        Some(kick) => Err(ServerKickError {
             message: kick.message,
             reconnect_allowed: kick.reconnect_allowed,
         }
-        .into());
+        .into()),
+        None => Ok(()),
+    };
+    #[cfg(target_os = "linux")]
+    let result = {
+        let dns_cleanup = dns_cleanup_error.map_or(Ok(()), |error| {
+            Err(anyhow::anyhow!("DNS cleanup failed: {error}"))
+        });
+        let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
+        let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
+        if cleanup.is_ok() {
+            tun_guard.disarm();
+        }
+        crate::client_cleanup::with_cleanup_error(result, cleanup)
+    };
+    if result.is_ok() {
+        log::info!("UDP client disconnected");
     }
-    Ok(())
+    result
 }
 
 /// Compute the actual read capacity after the server-selected MTU is known.
@@ -12577,6 +12693,61 @@ mod lifecycle_adapter_tests {
 
         assert_eq!(result, 42);
         assert_eq!(adapter.with_core(|core| core.state()), ClientState::Running);
+    }
+
+    struct DropFailure(crate::client_cleanup::Failures);
+
+    impl Drop for DropFailure {
+        fn drop(&mut self) {
+            let _ = self.0.observe::<()>(
+                crate::client_cleanup::Resource::Tun,
+                Err(anyhow::anyhow!("simulated resource rollback failed")),
+            );
+        }
+    }
+
+    #[test]
+    fn rejected_core_ack_drops_owned_platform_value_and_reports_rollback_failure() {
+        let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
+        adapter.begin_connection(false).unwrap();
+        let failures = adapter.cleanup_failures.clone();
+        let core = adapter.core.clone();
+        let generation = adapter.next_generation();
+        let result = adapter.apply_network_plan(plan(generation), |_| {
+            // Invalidate ACK after apply: the applied value must retain a cleanup owner.
+            core.lock().unwrap().stop().unwrap();
+            Ok(DropFailure(failures))
+        });
+        assert!(result.is_err());
+        assert!(adapter
+            .cleanup_failures
+            .result()
+            .unwrap_err()
+            .to_string()
+            .contains("simulated resource rollback failed"));
+    }
+
+    #[test]
+    fn partial_apply_drop_fault_reaches_the_adapter_cleanup_check() {
+        let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
+        adapter.begin_connection(false).unwrap();
+        let failures = adapter.cleanup_failures.clone();
+        let generation = adapter.next_generation();
+        let error = adapter
+            .apply_network_plan::<()>(plan(generation), |_| {
+                let _guard = DropFailure(failures);
+                anyhow::bail!("platform apply failed")
+            })
+            .unwrap_err();
+        assert!(error.to_string().contains("platform apply failed"));
+        let checks = crate::client_cleanup::Checks {
+            core: adapter.finish_connection(),
+            network: adapter.cleanup_failures.result(),
+        };
+        assert_eq!(
+            checks.failure_reason(),
+            Some(("network_cleanup_failed", "network_cleanup"))
+        );
     }
 
     #[test]

@@ -514,6 +514,14 @@ real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-che
 Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
 
 
+**TUN/route/DNS cleanup propagation, 23 September 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): explicit teardown and rollback guards
+share bounded failure evidence with the Linux retry loop. Cleanup errors cannot become a
+successful signal stop or release the enabled kill-switch. TunnelSetup owns its guard before
+core ACK; terminal kick types survive combined cleanup errors. Eight new host tests pass;
+two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
+command deadlines and complete generation-task joining remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -640,6 +648,14 @@ load remain open.
 payloads no longer count as successful recovery and cannot retire the recovery record.
 Eight new Windows host tests pass; three Unix-specific cases are cross-checked only.
 913 host Rust tests PASS. Live Linux DNS and propagation of lower-level cleanup errors remain open.
+
+**TUN/route/DNS cleanup propagation, 23 September 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): explicit teardown and rollback guards
+share bounded failure evidence with the Linux retry loop. Cleanup errors cannot become a
+successful signal stop or release the enabled kill-switch. TunnelSetup owns its guard before
+core ACK; terminal kick types survive combined cleanup errors. Eight new host tests pass;
+two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
+command deadlines and complete generation-task joining remain open.
 
 ### 20. DHCP and lease lifecycle
 
@@ -780,6 +796,14 @@ Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
 payloads no longer count as successful recovery and cannot retire the recovery record.
 Eight new Windows host tests pass; three Unix-specific cases are cross-checked only.
 913 host Rust tests PASS. Live Linux DNS and propagation of lower-level cleanup errors remain open.
+
+**TUN/route/DNS cleanup propagation, 23 September 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): explicit teardown and rollback guards
+share bounded failure evidence with the Linux retry loop. Cleanup errors cannot become a
+successful signal stop or release the enabled kill-switch. TunnelSetup owns its guard before
+core ACK; terminal kick types survive combined cleanup errors. Eight new host tests pass;
+two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
+command deadlines and complete generation-task joining remain open.
 
 ### 26. Shared C# and managed/native boundary
 

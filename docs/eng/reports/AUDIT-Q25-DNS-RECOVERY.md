@@ -43,3 +43,5 @@ Symlink restoration still has an unlink/recreate window; a later failure preserv
 backup but cannot promise an unchanged resolver. Lower-level TunGuard/NetworkPlan rollback
 errors and normal data-plane cleanup errors still need end-to-end propagation to the retry
 loop. This pass does not close those lifecycle findings or the full system audit.
+
+Follow-up: [TUN cleanup audit](AUDIT-Q25-TUN-CLEANUP.md) propagates explicit resource and rollback-guard failures to the client stop policy. Live Linux E2E and complete task shutdown remain open.

@@ -55,3 +55,5 @@ firewall, VPN E2E, external SSH, systemd, GitHub Actions or benchmark was run.
 Route/DNS cleanup errors in lower-level resource guards, firewall subprocess deadlines,
 Linux lifecycle fault injection and nested task ownership still need audit. This pass does
 not prove complete kernel-state rollback or availability after an uncertain teardown.
+
+Follow-up: [TUN cleanup audit](AUDIT-Q25-TUN-CLEANUP.md) propagates explicit resource and rollback-guard failures to the client stop policy. Live Linux E2E and complete task shutdown remain open.

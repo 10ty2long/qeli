@@ -1877,9 +1877,9 @@ manual wiring or watchdog entrypoint needed.
 
 ## Kill-switch (`kill_switch`)
 
-On Linux, successful transport-core teardown and gateway/exit-node forwarding cleanup
-are required before releasing an enabled kill-switch. If either fails, Qeli reports
-`kill-switch retained` and
+On Linux, successful transport-core teardown and gateway/exit-node forwarding cleanup,
+with no recorded DNS/route/TUN cleanup failures, are required before releasing an enabled
+kill-switch. If these conditions are not met, Qeli reports `kill-switch retained` and
 keeps the egress barrier. Resolve the reported cleanup failure before retrying cleanup
 or performing administrator recovery. A failed stop is not a successful network reset.
 
@@ -2281,6 +2281,12 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   precedence over a simultaneous stop signal and prevents reconnect; Qeli attempts forwarding
   cleanup and retains an enabled kill-switch. If core startup fails but subsequent teardown and
   forwarding cleanup succeed, the barrier can be removed while the startup error remains fatal.
+- A reported DNS, route, TUN or setup-rollback cleanup failure terminates the client with
+  `network_cleanup_failed` / `network_cleanup`. It takes precedence over signal-success and
+  reconnect. Core teardown failure still has higher reason priority. An enabled kill-switch
+  remains installed even if a later guard retry succeeds; that retry does not erase the
+  previously reported failure. The record belongs to this client run and is not reset between
+  attempts. Inspect the log and current network state before administrator recovery.
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and
@@ -2326,8 +2332,8 @@ known or not applicable is an empty string. Array indices begin at zero and end 
 | `QELI_PLAN_AVAILABLE` | `true` after at least one authenticated `NetworkPlan` was committed. |
 | `QELI_PLAN_GENERATION` | Generation number of the latest committed plan. |
 | `QELI_SESSION_DURATION_SECONDS` | Seconds since this process committed its first plan; `0` before that. Reconnect time between generations is included. |
-| `QELI_REASON`, `QELI_STOP_REASON` | Event reason. `post_up`: `connected`; `post_down`: `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed` or `core_stop_failed`. `QELI_REASON` is the generic alias. |
-| `QELI_ERROR_CODE` | Stable terminal category: empty, `shutdown`, `transport_error`, `server_kick`, `max_retries`, `core_start` or `core_stop`. |
+| `QELI_REASON`, `QELI_STOP_REASON` | Event reason. `post_up`: `connected`; `post_down`: `shutdown_signal`, `reconnect_disabled`, `server_kick`, `max_retries`, `core_start_failed`, `core_stop_failed` or `network_cleanup_failed`. `QELI_REASON` is the generic alias. |
+| `QELI_ERROR_CODE` | Stable terminal category: empty, `shutdown`, `transport_error`, `server_kick`, `max_retries`, `core_start`, `core_stop` or `network_cleanup`. |
 | `QELI_ERROR_MESSAGE` | Human-readable final error with no secrets. It is not a stable machine-parsing API. |
 | `QELI_CONTEXT_FILE`, `QELI_NETWORK_PLAN_FILE` | Two names for the same temporary full-context JSON file. It is mode `0600` and removed as soon as the hook exits. Both values are empty if file creation failed. |
 

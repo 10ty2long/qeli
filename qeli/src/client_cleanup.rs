@@ -1,24 +1,110 @@
-//! Release the host egress barrier only after core and forwarding cleanup succeed.
+//! Release host egress only after core, network-resource and forwarding cleanup succeed.
+use std::sync::{Arc, Mutex};
+
+/// Preconditions for releasing host egress, checked before forwarding cleanup.
+pub(crate) struct Checks {
+    pub(crate) core: anyhow::Result<()>,
+    pub(crate) network: anyhow::Result<()>,
+}
+
+impl From<anyhow::Result<()>> for Checks {
+    fn from(core: anyhow::Result<()>) -> Self {
+        Self {
+            core,
+            network: Ok(()),
+        }
+    }
+}
+
+impl Checks {
+    pub(crate) fn failure_reason(&self) -> Option<(&'static str, &'static str)> {
+        if self.core.is_err() {
+            Some(("core_stop_failed", "core_stop"))
+        } else if self.network.is_err() {
+            Some(("network_cleanup_failed", "network_cleanup"))
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum Resource {
+    Dns,
+    Routes,
+    Tun,
+    Forwarding,
+}
+
+const RESOURCE_NAMES: [&str; 4] = ["DNS", "routes", "TUN", "forwarding/NAT"];
+const ERROR_CHARS: usize = 2048;
+
+/// Sticky, bounded evidence shared by one Linux client and its resource guards.
+/// A later successful Drop retry must not erase an already returned cleanup failure.
+#[derive(Clone, Default)]
+pub(crate) struct Failures(Arc<Mutex<[Option<String>; 4]>>);
+
+#[derive(Debug, thiserror::Error)]
+#[error("network resource cleanup reported failure: {0}")]
+struct NetworkCleanupError(String);
+
+impl Failures {
+    pub(crate) fn observe<T>(
+        &self,
+        resource: Resource,
+        result: anyhow::Result<T>,
+    ) -> anyhow::Result<T> {
+        if let Err(error) = &result {
+            let mut errors = crate::util::lock_or_recover(&self.0, "client::cleanup_failures");
+            errors[resource as usize]
+                .get_or_insert_with(|| error.to_string().chars().take(ERROR_CHARS).collect());
+        }
+        result
+    }
+
+    pub(crate) fn result(&self) -> anyhow::Result<()> {
+        let errors = crate::util::lock_or_recover(&self.0, "client::cleanup_failures");
+        let messages: Vec<_> = errors
+            .iter()
+            .zip(RESOURCE_NAMES)
+            .filter_map(|(error, name)| error.as_ref().map(|error| format!("{name}: {error}")))
+            .collect();
+        if messages.is_empty() {
+            Ok(())
+        } else {
+            Err(NetworkCleanupError(messages.join("; ")).into())
+        }
+    }
+}
+
 pub(crate) fn routing(
-    core_stop: anyhow::Result<()>,
+    checks: impl Into<Checks>,
     kill_switch: bool,
     remove_forwarding: impl FnOnce() -> anyhow::Result<()>,
     release_kill_switch: impl FnOnce() -> anyhow::Result<()>,
 ) -> anyhow::Result<()> {
-    let core_stopped = core_stop.is_ok();
-    // Even after a core fault, try to withdraw forwarding permits. Never release the
-    // egress barrier unless both cleanup stages completed successfully.
+    let checks = checks.into();
+    let mut incomplete = Vec::new();
+    if checks.core.is_err() {
+        incomplete.push("transport core teardown");
+    }
+    let network_failed = checks.network.is_err();
+    // Withdraw forwarding permits even when an earlier cleanup stage failed.
     let forwarding = remove_forwarding();
-    let forwarding_removed = forwarding.is_ok();
-    if let Err(error) = with_cleanup_error(core_stop, forwarding) {
+    if forwarding.is_err() {
+        incomplete.push("forwarding/NAT cleanup");
+    }
+    let prerequisites = with_cleanup_error(checks.core, checks.network);
+    if let Err(error) = with_cleanup_error(prerequisites, forwarding) {
         let retained = if !kill_switch {
-            ""
-        } else if core_stopped {
-            "; kill-switch retained because forwarding/NAT cleanup did not complete"
-        } else if forwarding_removed {
-            "; kill-switch retained because transport core teardown did not complete"
+            String::new()
+        } else if network_failed {
+            "; kill-switch retained because network resource cleanup reported errors".to_string()
         } else {
-            "; kill-switch retained because transport core teardown and forwarding/NAT cleanup did not complete"
+            format!(
+                "; kill-switch retained because {} did not complete",
+                incomplete.join(" and ")
+            )
         };
         let message = format!("host cleanup failed: {error}{retained}");
         return Err(error.context(message));
@@ -320,5 +406,179 @@ mod tests {
                 Some(CoreError::EventQueueFull)
             ));
         }
+    }
+
+    #[test]
+    fn resource_fault_is_terminal_even_after_core_stop_and_forwarding_succeed() {
+        let failures = Failures::default();
+        assert!(failures
+            .observe::<()>(
+                Resource::Dns,
+                Err(anyhow::anyhow!("resolver revert failed"))
+            )
+            .is_err());
+        let checks = Checks {
+            core: Ok(()),
+            network: failures.result(),
+        };
+        assert_eq!(
+            checks.failure_reason(),
+            Some(("network_cleanup_failed", "network_cleanup"))
+        );
+        let forwarded = Cell::new(true);
+        let error = routing(
+            checks,
+            true,
+            || {
+                forwarded.set(false);
+                Ok(())
+            },
+            || panic!("DNS cleanup failure must not release the kill-switch"),
+        )
+        .unwrap_err();
+        assert!(!forwarded.get());
+        assert!(error.to_string().contains("resolver revert failed"));
+        assert!(error.to_string().contains("kill-switch retained"));
+    }
+
+    #[test]
+    fn successful_fallback_does_not_erase_an_observed_failure() {
+        let failures = Failures::default();
+        let guard = failures.clone();
+        let _ = failures.observe::<()>(
+            Resource::Routes,
+            Err(anyhow::anyhow!("route delete failed")),
+        );
+        guard.observe(Resource::Routes, Ok(())).unwrap();
+        assert!(failures
+            .result()
+            .unwrap_err()
+            .to_string()
+            .contains("route delete failed"));
+        assert!(
+            Failures::default().result().is_ok(),
+            "other clients must have isolated records"
+        );
+    }
+
+    #[test]
+    fn late_old_guard_fault_is_not_lost_between_clean_attempts() {
+        let failures = Failures::default();
+        let old_guard = failures.clone();
+        failures.result().unwrap();
+        failures.observe(Resource::Dns, Ok(())).unwrap();
+        let _ = old_guard.observe::<()>(
+            Resource::Tun,
+            Err(anyhow::anyhow!("late TUN deletion failed")),
+        );
+        assert!(failures
+            .result()
+            .unwrap_err()
+            .to_string()
+            .contains("late TUN deletion failed"));
+    }
+
+    #[test]
+    fn drop_cleanup_fault_survives_original_operation_error_and_unwind() {
+        struct FaultyGuard(Failures);
+        impl Drop for FaultyGuard {
+            fn drop(&mut self) {
+                let _ = self
+                    .0
+                    .observe::<()>(Resource::Routes, Err(anyhow::anyhow!("rollback failed")));
+            }
+        }
+        fn fail(failures: Failures) -> anyhow::Result<()> {
+            let _guard = FaultyGuard(failures);
+            anyhow::bail!("plan acknowledgement failed")
+        }
+        let failures = Failures::default();
+        let result = fail(failures.clone());
+        let error = with_cleanup_error(result, failures.result())
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("plan acknowledgement failed"));
+        assert!(error.contains("rollback failed"));
+        let fresh = Failures::default();
+        assert!(std::panic::catch_unwind(|| {
+            let _guard = FaultyGuard(fresh.clone());
+            panic!("simulated callback panic");
+        })
+        .is_err());
+        assert!(fresh.result().is_err());
+    }
+
+    #[test]
+    fn failure_evidence_is_bounded_and_keeps_first_error_for_each_resource() {
+        let failures = Failures::default();
+        for resource in [
+            Resource::Dns,
+            Resource::Routes,
+            Resource::Tun,
+            Resource::Forwarding,
+        ] {
+            let _ = failures.observe::<()>(
+                resource,
+                Err(anyhow::anyhow!("{}", "é".repeat(ERROR_CHARS * 4))),
+            );
+            let _ = failures.observe::<()>(resource, Err(anyhow::anyhow!("replacement")));
+        }
+        let errors = failures.0.lock().unwrap();
+        assert_eq!(errors.iter().flatten().count(), 4);
+        for error in errors.iter().flatten() {
+            assert_eq!(error.chars().count(), ERROR_CHARS);
+            assert!(!error.contains("replacement"));
+        }
+    }
+
+    #[test]
+    fn concurrent_guards_preserve_each_resource_failure() {
+        let failures = Failures::default();
+        std::thread::scope(|scope| {
+            for (resource, message) in [
+                (Resource::Dns, "dns fault"),
+                (Resource::Routes, "route fault"),
+                (Resource::Tun, "tun fault"),
+                (Resource::Forwarding, "nat fault"),
+            ] {
+                let copy = failures.clone();
+                scope.spawn(move || {
+                    let _ = copy.observe::<()>(resource, Err(anyhow::anyhow!(message)));
+                });
+            }
+        });
+        let message = failures.result().unwrap_err().to_string();
+        for expected in [
+            "DNS: dns fault",
+            "routes: route fault",
+            "TUN: tun fault",
+            "forwarding/NAT: nat fault",
+        ] {
+            assert!(message.contains(expected), "{message}");
+        }
+    }
+
+    #[test]
+    fn cleanup_reason_priority_and_disabled_barrier_remain_explicit() {
+        let failures = Failures::default();
+        let _ = failures.observe::<()>(Resource::Dns, Err(anyhow::anyhow!("DNS fault")));
+        let checks = Checks {
+            core: Err(anyhow::anyhow!("core fault")),
+            network: failures.result(),
+        };
+        assert_eq!(
+            checks.failure_reason(),
+            Some(("core_stop_failed", "core_stop"))
+        );
+        let error = routing(
+            checks,
+            false,
+            || Ok(()),
+            || panic!("disabled barrier was touched"),
+        )
+        .unwrap_err();
+        assert!(!error.to_string().contains("kill-switch retained"));
+        assert!(error.to_string().contains("DNS fault"));
+        assert_eq!(Checks::from(Ok(())).failure_reason(), None);
     }
 }

@@ -44,3 +44,5 @@ Linux all-targets Clippy, client-only, server-only, minimal FFI, rustfmt, дев
 снимок сохранится, но неизменность resolver не гарантируется. Ошибки отката TunGuard/
 NetworkPlan и штатной очистки data plane ещё нужно довести до retry loop. Этот проход
 не закрывает перечисленные проблемы жизненного цикла и полный системный аудит.
+
+Продолжение: [аудит очистки TUN](AUDIT-Q25-TUN-CLEANUP.md) передаёт ошибки явной очистки и guards отката в политику остановки клиента. Live Linux E2E и полное завершение задач ещё открыты.

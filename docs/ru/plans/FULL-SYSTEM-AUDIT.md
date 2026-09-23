@@ -519,6 +519,14 @@ ClientCore при полной очереди. 905 host Rust tests PASS; Linux �
 Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
 
 
+**Передача ошибок очистки TUN/маршрутов/DNS, 23 сентября 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): явная очистка и guards отката передают
+ошибки в Linux retry loop через общий ограниченный журнал. Ошибка не становится успешной
+остановкой по сигналу и не снимает включённый kill-switch. TunnelSetup владеет guard до ACK
+ядра; тип terminal kick сохраняется при сопутствующих ошибках. Восемь новых host-тестов
+проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
+E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -647,6 +655,14 @@ TTL всех возвращаемых секций, структуру расп�
 больше не считаются успешным восстановлением и не приводят к удалению записи восстановления.
 Восемь новых Windows host-тестов проходят; три Unix-сценария только cross-check.
 913 host Rust tests PASS. Live Linux DNS и передача ошибок нижележащей очистки ещё открыты.
+
+**Передача ошибок очистки TUN/маршрутов/DNS, 23 сентября 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): явная очистка и guards отката передают
+ошибки в Linux retry loop через общий ограниченный журнал. Ошибка не становится успешной
+остановкой по сигналу и не снимает включённый kill-switch. TunnelSetup владеет guard до ACK
+ядра; тип terminal kick сохраняется при сопутствующих ошибках. Восемь новых host-тестов
+проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
+E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
 
 ### 20. DHCP и lease lifecycle
 
@@ -787,6 +803,14 @@ Live Linux lifecycle/firewall и полный rollback маршрутов/DNS е
 больше не считаются успешным восстановлением и не приводят к удалению записи восстановления.
 Восемь новых Windows host-тестов проходят; три Unix-сценария только cross-check.
 913 host Rust tests PASS. Live Linux DNS и передача ошибок нижележащей очистки ещё открыты.
+
+**Передача ошибок очистки TUN/маршрутов/DNS, 23 сентября 2026:**
+[Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): явная очистка и guards отката передают
+ошибки в Linux retry loop через общий ограниченный журнал. Ошибка не становится успешной
+остановкой по сигналу и не снимает включённый kill-switch. TunnelSetup владеет guard до ACK
+ядра; тип terminal kick сохраняется при сопутствующих ошибках. Восемь новых host-тестов
+проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
+E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
 
 ### 26. Общий C# и managed/native граница
 
