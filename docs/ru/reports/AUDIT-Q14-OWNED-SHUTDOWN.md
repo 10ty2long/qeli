@@ -108,8 +108,8 @@ Q14-F027 **не закрыта**: generic NAT cleanup и незавершённ�
 [проход sysctl recovery](AUDIT-Q14-SYSCTL-RECOVERY.md) исправляет ложный Ok после
 сохранения неустранённых stale entries и потерю владельца при повторном acquire. DNS registry не переживает crash/restart, persistent journal отсутствует.
 
-Firewall-команды не имеют общего deadline; зависшая команда может задержать и финальную
-проверку. Linux runtime, реальные firewall/TUN/DNS, устройства, native release,
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md) позднее ограничивает отдельные команды server NAT;
+общий срок всей финальной проверки ещё не ограничен. Linux runtime, реальные firewall/TUN/DNS, устройства, native release,
 SSH/systemd/Actions и бенчмарки не запускались.
 
 Предыдущий этап: [сохранение DNS ownership](AUDIT-Q14-DNS-OWNERSHIP.md).

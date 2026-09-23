@@ -1239,6 +1239,25 @@ The accept_ra → forwarding order and `off`/`manual` modes are preserved; no ne
 
 ---
 
+### 6.35 Server: system command timed out / output limit exceeded in NAT cleanup
+
+Server NAT commands, including iptables/ip6tables, PATH version probes and WAN route
+lookup, use a 15-second deadline and separate 16 MiB stdout/stderr limits. `--wait 5`
+remains the xtables lock wait within that attempt. On timeout, the shared runner requests
+process termination; oversized output is never passed partially to the parser.
+
+`system command timed out` does not mean the firewall is unchanged. Inspect backend/xtables
+delays and earlier profile messages. Exact DNS rule specifications remain available for
+cleanup retry in the current worker; a failed check is not proof of rule absence.
+Generic NAT sweeps retain their previous best-effort policy and log failures.
+
+This limits an individual command: the full cleanup sequence and process termination
+can take longer. Preflight and client firewall/route commands are outside this change.
+There are no new INI keys.
+[Scope and validation](../reports/AUDIT-Q14-NAT-COMMANDS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

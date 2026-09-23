@@ -82,8 +82,9 @@ chunks_exact_to_as_chunks относится к неизменённому ndp_p
 spawn, процесс в непрерываемом kernel wait либо ошибка kill могут задержать возврат;
 потомок, намеренно покинувший process group, не получает гарантию групповой остановки.
 
-Команды маршрутов, NAT/firewall/kill-switch, gateway и path monitor ещё используют прежний
-запуск. Их перенос требует проверки ownership journal при неизвестном результате мутации
+Server NAT, включая его firewall/probe/WAN lookup, позднее перенесён в
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Остальные команды маршрутов, клиентского kill-switch,
+gateway, path monitor и server preflight ещё используют прежний запуск. Их перенос требует проверки ownership journal при неизвестном результате мутации
 и сохранения fail-closed поведения. Не объявлять весь слой системных команд исправленным.
 Серверные ошибки cleanup и общая сериализация операций также требуют отдельного прохода.
 
@@ -95,4 +96,5 @@ Linux runtime, реальные TUN/firewall/DNS, SSH/systemd/Actions, native re
 [серверный H2](AUDIT-Q14-H2-TASKS.md).
 
 Продолжение: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) делает общий NAT sweep конечным
-и добавляет диагностику. Runner firewall-команд и передача ошибок teardown остаются открытыми.
+и добавляет диагностику. Сроки server NAT-команд добавлены в [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md);
+общий срок операций и полная передача ошибок teardown остаются открытыми.

@@ -656,3 +656,91 @@ fn final_owned_cleanup_bounds_diagnostics_but_still_attempts_every_profile() {
     assert_eq!(calls.get(), profiles.len());
     assert!(error.contains("12 additional cleanup errors"), "{error}");
 }
+
+#[test]
+fn dns_ownership_survives_delete_timeout_before_or_after_mutation() {
+    use crate::nat_dns_input::{DnsInputRegistry, DnsInputRules};
+    for applied_before_timeout in [false, true] {
+        let mut registry = DnsInputRegistry::default();
+        let owned = DnsInputRules::new("edge", "tun0", "10.42.0.0/24", "10.42.0.1", 53).unwrap();
+        let id = registry
+            .begin(owned.clone(), |_| panic!("no pending owner"))
+            .unwrap();
+        let mut present = [true, true];
+        let mut deletions = [0, 0];
+        let error = registry
+            .finish(id, |spec| {
+                cleanup_exact_rules_with(
+                    "filter",
+                    "INPUT",
+                    ["udp", "tcp"]
+                        .into_iter()
+                        .zip(spec.rules.iter().map(Vec::as_slice)),
+                    |args| {
+                        let proto = usize::from(args.contains(&"tcp"));
+                        match args[2] {
+                            "-C" => Ok(check_output(present[proto])),
+                            "-D" => {
+                                deletions[proto] += 1;
+                                if proto == 0 {
+                                    if applied_before_timeout {
+                                        present[proto] = false;
+                                    }
+                                    return Err(std::io::Error::new(
+                                        std::io::ErrorKind::TimedOut,
+                                        "system command timed out",
+                                    ));
+                                }
+                                present[proto] = false;
+                                Ok(output(true, "", ""))
+                            }
+                            _ => panic!("exact cleanup must not depend on listings"),
+                        }
+                    },
+                )
+            })
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("timed out"), "{error}");
+        assert!(!present[1], "UDP timeout must not skip TCP cleanup");
+        assert_eq!(deletions, [1, 1]);
+        let mut retried = false;
+        registry
+            .finish_shutdown(|spec| {
+                retried = true;
+                assert_eq!(
+                    *spec, owned,
+                    "timeout must retain exact scope and rule specs"
+                );
+                cleanup_exact_rules_with(
+                    "filter",
+                    "INPUT",
+                    ["udp", "tcp"]
+                        .into_iter()
+                        .zip(spec.rules.iter().map(Vec::as_slice)),
+                    |args| {
+                        let proto = usize::from(args.contains(&"tcp"));
+                        match args[2] {
+                            "-C" => Ok(check_output(present[proto])),
+                            "-D" => {
+                                deletions[proto] += 1;
+                                present[proto] = false;
+                                Ok(output(true, "", ""))
+                            }
+                            _ => panic!("unexpected command"),
+                        }
+                    },
+                )
+            })
+            .unwrap();
+        assert!(
+            retried,
+            "failed deletion must remain visible to the final pass"
+        );
+        assert_eq!(present, [false, false]);
+        assert_eq!(deletions, [if applied_before_timeout { 1 } else { 2 }, 1]);
+        registry
+            .finish_shutdown(|_| panic!("already released"))
+            .unwrap();
+    }
+}

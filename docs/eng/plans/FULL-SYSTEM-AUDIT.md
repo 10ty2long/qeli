@@ -585,9 +585,12 @@ success and loss of existing ownership on failed reacquisition;
 [Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
 registered before the first attempt; any failure triggers rollback, and failed rollback
 retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
-current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
-Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
-firewall command deadlines and live Linux remain open.
+that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
+[Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
+use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
+current matrix 1073 Rust tests and six separate adapter checks PASS.
+Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
+overall operation deadlines, remaining system commands and live Linux remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -680,9 +683,12 @@ success and loss of existing ownership on failed reacquisition;
 [Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
 registered before the first attempt; any failure triggers rollback, and failed rollback
 retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
-current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
-Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
-firewall command deadlines and live Linux remain open.
+that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
+[Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
+use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
+current matrix 1073 Rust tests and six separate adapter checks PASS.
+Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
+overall operation deadlines, remaining system commands and live Linux remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -738,9 +744,12 @@ success and loss of existing ownership on failed reacquisition;
 [Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
 registered before the first attempt; any failure triggers rollback, and failed rollback
 retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
-current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
-Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
-firewall command deadlines and live Linux remain open.
+that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
+[Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
+use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
+current matrix 1073 Rust tests and six separate adapter checks PASS.
+Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
+overall operation deadlines, remaining system commands and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -853,9 +862,12 @@ success and loss of existing ownership on failed reacquisition;
 [Q14-F031](../reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md): partial IPv6 acquisition is now
 registered before the first attempt; any failure triggers rollback, and failed rollback
 retains the scope for final cleanup. 11 new regressions plus one moved Linux-only test:
-current matrix 1072 Rust tests PASS; five separate adapter checks PASS.
-Generic NAT, old generations/retry backoff, restart policy, persistent journaling,
-firewall command deadlines and live Linux remain open.
+that pass totals 1072 Rust tests PASS; five separate adapter checks PASS.
+[Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
+use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
+current matrix 1073 Rust tests and six separate adapter checks PASS.
+Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
+overall operation deadlines, remaining system commands and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 
@@ -1133,6 +1145,13 @@ kill-switch share presence/absence/error classification; exact DNS cleanup verif
 1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
 PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
 and actual backend/runtime validation remain open.
+
+**Server command follow-up:**
+[Q14-F032](../reports/AUDIT-Q14-NAT-COMMANDS.md): all five server NAT command launch sites
+use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS ownership;
+current matrix 1073 Rust tests and six separate adapter checks PASS.
+Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
+overall operation deadlines, remaining system commands and live Linux remain open.
 
 ### 26. Shared C# and managed/native boundary
 

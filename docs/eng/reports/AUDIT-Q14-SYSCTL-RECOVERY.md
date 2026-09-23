@@ -54,8 +54,9 @@ retry/respawn policy is unchanged.
 
 The subsequent [Q14-F031 pass](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) fixes tracking of partial
 IPv6 acquisition before both settings complete. Q14-F027 remains open: generic NAT cleanup,
-earlier-generation resources, persistent DNS journaling and overall firewall command
-deadlines need separate passes. Actual Linux sysctl/firewall/TUN/systemd,
+earlier-generation resources, persistent DNS journaling and overall network-operation
+deadlines need separate passes. Server NAT command deadlines are added in
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Actual Linux sysctl/firewall/TUN/systemd,
 devices, native release and benchmarks were not run.
 
 Previous pass: [profile tasks and TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md).

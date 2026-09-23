@@ -75,17 +75,19 @@ journal. Generic startup sweeps still help on enumerable chains but cannot repla
 journal on mixed native nft. There is no independent background retry: retries occur at
 the cleanup/setup calls listed above.
 
-**Q14-F027 remains open:** DNS leases log errors from Drop without returning them to final
-worker shutdown status. Ownership changes do not fix the supervisor/exit-status contract.
-NAT/firewall commands still lack an overall deadline; mutex duration and external rule
-changes require separate validation.
+**Q14-F027 is partially addressed:** subsequent [final checks](AUDIT-Q14-OWNED-SHUTDOWN.md)
+propagate unresolved DNS/sysctl errors through the worker and outer supervisor; current
+generation task/TUN failures are also included. Generic NAT and older generations remain open.
+The subsequent [Q14-F032 pass](AUDIT-Q14-NAT-COMMANDS.md) bounds each server NAT command.
+Overall operation/mutex duration and external rule changes need separate validation.
 
 Linux runtime, real firewall/TUN/DNS, devices, native release builds, SSH/systemd/Actions
-and benchmarks were not run. Next: explicit cleanup results, shutdown error propagation
-and a separate design for a safe recovery journal.
+and benchmarks were not run. Generic NAT outcomes, older generations
+and a separate safe-recovery-journal design remain open.
 
 Previous pass: [shared firewall checks](AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
 
 Follow-up: [final verification of known DNS/sysctl leases](AUDIT-Q14-OWNED-SHUTDOWN.md)
 propagates their unresolved errors to worker exit status. Q14-F027 is partially addressed;
-The outer supervisor propagates final stop failure; TUN, generic NAT and profile JoinSet remain open.
+[Profile tasks and TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md) also propagate current-generation
+failures; generic NAT and unfinished cleanup of older generations remain open.

@@ -24,7 +24,7 @@
 use crate::nat_cleanup::exact_delete_args;
 use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_comment};
 use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInputRules};
-use std::process::Command;
+use crate::system_command::Command;
 use std::sync::{Mutex, OnceLock};
 
 const XTABLES_LOCK_WAIT_SECS: &str = "5";
@@ -49,7 +49,7 @@ pub fn iptables_path() -> Option<String> {
         }
     }
     if Command::new("iptables")
-        .arg("--version")
+        .args(["--version"])
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
@@ -71,7 +71,7 @@ pub fn ip6tables_path() -> Option<String> {
         }
     }
     Command::new("ip6tables")
-        .arg("--version")
+        .args(["--version"])
         .output()
         .ok()
         .filter(|output| output.status.success())
@@ -84,9 +84,9 @@ pub fn available() -> bool {
 }
 
 fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
-    // qeli serialises its own mutations, but package managers and host firewall services use
-    // the same xtables lock. Wait for a short bounded interval instead of failing a profile
-    // because another process happened to hold the lock for a few milliseconds.
+    // Keep the 5s xtables-lock wait inside the shared runner's 15s command deadline.
+    // The lock wait alone cannot bound a stalled backend or inherited output pipe.
+    // A timeout can follow an applied mutation: callers must still verify/retain ownership.
     Command::new(path)
         .args(["--wait", XTABLES_LOCK_WAIT_SECS])
         .args(args)

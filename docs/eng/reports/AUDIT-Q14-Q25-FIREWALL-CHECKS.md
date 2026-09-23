@@ -74,10 +74,11 @@ Evidence: C:/Users/litvi/OneDrive/Documents/qeli/firewall-presence-audit-2026092
 
 ## Open boundaries
 
-Q14-F027 remains open: DNS leases log errors from Drop without returning them to worker
-shutdown status. Next: testable explicit cleanup and a separate error-propagation
-integration accounting for native nft. The whole lifecycle is not claimed fixed.
-NAT/kill-switch still use the previous process runner without an overall deadline.
+Q14-F027 is partially addressed by subsequent passes: [known DNS/sysctl leases](AUDIT-Q14-OWNED-SHUTDOWN.md)
+and [current-generation task/TUN failures](AUDIT-Q14-PROFILE-SHUTDOWN.md) reach the final
+shutdown outcome. Generic NAT and unfinished cleanup of older generations remain open.
+The subsequent [Q14-F032 pass](AUDIT-Q14-NAT-COMMANDS.md) moves server NAT to the bounded
+runner. Client kill-switch and overall network-operation deadlines remain open.
 Inspection/deletion is not atomic against external administration. Actual backend,
 version and locale combinations need target Linux validation: unknown diagnostics
 produce inspection errors. Linux runtime, real firewall/TUN/DNS, devices, native release

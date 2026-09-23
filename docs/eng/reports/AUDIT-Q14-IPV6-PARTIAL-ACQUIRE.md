@@ -61,8 +61,8 @@ C:/Users/litvi/OneDrive/Documents/qeli/ipv6-partial-acquire-audit-20260923.
 ## Open boundaries
 
 Q14-F027 remains open for generic NAT cleanup and incomplete cleanup of older TUN/queue
-generations after retry/replacement. Overall firewall command deadlines and persistent
-DNS journaling also remain separate work. Low-level sysctl restoration depends on the
+generations after retry/replacement. The subsequent [Q14-F032 pass](AUDIT-Q14-NAT-COMMANDS.md) bounds each
+server NAT command. Overall network-operation deadlines and persistent DNS journaling remain open. Low-level sysctl restoration depends on the
 retained journal; this pass does not establish behavior after journal loss or failure
 to persist the entry itself. Worker-lifetime IPv4 forwarding ownership is unchanged.
 

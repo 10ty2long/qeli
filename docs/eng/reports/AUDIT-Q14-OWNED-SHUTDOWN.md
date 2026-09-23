@@ -106,8 +106,8 @@ covered by this final pass. The subsequent
 unresolved stale entries and ownership loss on failed reacquisition.
 The DNS registry does not survive crashes/restarts; persistent journaling is absent.
 
-Firewall commands lack an overall deadline; a stalled command can delay final
-verification too. Linux runtime, actual firewall/TUN/DNS, devices, native release,
+The subsequent [Q14-F032 pass](AUDIT-Q14-NAT-COMMANDS.md) bounds individual server NAT
+commands; the complete final verification still lacks an overall deadline. Linux runtime, actual firewall/TUN/DNS, devices, native release,
 SSH/systemd/Actions and benchmarks were not run.
 
 Previous pass: [retained DNS ownership](AUDIT-Q14-DNS-OWNERSHIP.md).

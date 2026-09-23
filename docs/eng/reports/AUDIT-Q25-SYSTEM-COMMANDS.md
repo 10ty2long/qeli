@@ -82,8 +82,9 @@ termination/reaping, synchronous filesystem operations and other cleanup steps a
 Spawn, a child in an uninterruptible kernel wait or failed kill can delay return; a descendant
 that deliberately leaves its process group has no group-termination guarantee.
 
-Route, NAT/firewall/kill-switch, gateway and path-monitor commands still use the previous
-execution path. Migrating them requires checking ownership journals after mutations with an
+Server NAT, including its firewall/probe/WAN lookup commands, is subsequently migrated in
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Other route, client kill-switch, gateway, path-monitor
+and server preflight commands still use the previous execution path. Migrating them requires checking ownership journals after mutations with an
 unknown outcome and preserving fail-closed behavior. Do not treat the entire system-command
 layer as fixed. Server cleanup errors and overall operation serialization also need review.
 
@@ -95,4 +96,5 @@ Previous passes: [cleanup failures](AUDIT-Q25-TUN-CLEANUP.md) and
 [server H2](AUDIT-Q14-H2-TASKS.md).
 
 Follow-up: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) makes the generic NAT sweep finite
-and adds diagnostics. Firewall process-runner migration and teardown error propagation remain open.
+and adds diagnostics. Server NAT command deadlines are added in [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md);
+overall operation deadlines and complete teardown error propagation remain open.

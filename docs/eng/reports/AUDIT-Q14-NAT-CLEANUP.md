@@ -80,8 +80,9 @@ flush, so a successful exit does not confirm firewall/TUN cleanup. This pass add
 sweep diagnostics; Result propagation and lifecycle changes are still pending. Tests must
 cover continued cleanup, combined failures and native nft compatibility.
 
-`--wait 5` bounds xtables lock acquisition, not command duration. NAT still uses its old
-process runner and has no overall shutdown deadline. Listing and deletion are not atomic
+`--wait 5` bounds xtables lock acquisition. The subsequent
+[Q14-F032 pass](AUDIT-Q14-NAT-COMMANDS.md) adds the shared runner and a deadline per NAT
+command; there is still no overall cleanup-sequence deadline. Listing and deletion are not atomic
 against external administration; changes after the final verification remain possible.
 Linux runtime, actual TUN/firewall/DNS, release libraries, device applications,
 SSH/systemd/Actions and new benchmarks were not run.
