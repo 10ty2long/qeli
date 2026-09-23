@@ -1293,6 +1293,24 @@ separate bounds. Check iproute2 availability and earlier debug logs when trouble
 [Validation and boundaries](../reports/AUDIT-Q25-PATH-MONITOR.md).
 
 
+### 6.38 Linux gateway/exit-node: WAN detection and cleanup
+
+WAN is selected independently for IPv4 and IPv6. Qeli reads the default route first,
+then falls back to a local route-get lookup for `1.1.1.1` or `2606:4700:4700::1111`.
+Each query has a 15-second deadline and separate 16 MiB stdout/stderr limits.
+A failed first query can still succeed through fallback; failure of both leaves the
+WAN unavailable. Check iproute2 availability and the relevant family's routing table.
+
+Exit-node cleanup uses all WANs remembered for that TUN, including previous uplinks,
+without querying current routes for a family with known targets. Failed family cleanup
+keeps its targets for retry. If ownership is empty, discovery remains best-effort;
+this does not reconstruct ownership lost in a crash.
+
+The limit is per read-only query. Sequential fallback and process waiting can take
+longer, and gateway/kill-switch firewall commands still need separate bounds.
+There are no new INI parameters.
+[Validation and boundaries](../reports/AUDIT-Q25-GATEWAY-WAN.md).
+
 ---
 
 ## 7. Reference

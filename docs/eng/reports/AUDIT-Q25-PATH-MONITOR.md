@@ -59,8 +59,9 @@ shutdown deadline. Spawn/kill/reap and uninterruptible kernel waits may extend t
 descendants leaving the Linux process group have no group-termination guarantee.
 Linux signals were not executed here.
 
-Route mutations inside submit_path_update and client route/kill-switch/gateway commands
-still need separate migration and ownership checks for uncertain outcomes. Forced Drop
+Gateway WAN discovery is subsequently migrated in [Q25-F021/F022](AUDIT-Q25-GATEWAY-WAN.md).
+Route mutations inside submit_path_update and client route/kill-switch/gateway firewall
+commands still need separate migration and ownership checks for uncertain outcomes. Forced Drop
 of the entire group does not replace async join. Actual Linux TUN/firewall, network
 changes, suspend/resume, systemd, devices, native release and benchmarks were not run.
 The overall audit remains open.

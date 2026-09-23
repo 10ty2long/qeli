@@ -58,7 +58,8 @@ Production timeout проверен настоящим ожиданием (~15 �
 Spawn/kill/reap и непрерываемые kernel waits могут продлить вызов; потомки, покинувшие
 Linux process group, не покрыты групповой остановкой. Linux signals здесь не исполнялись.
 
-Изменяющие маршруты команды внутри submit_path_update, клиентские route/kill-switch/gateway
+Gateway WAN discovery позднее перенесён в [Q25-F021/F022](AUDIT-Q25-GATEWAY-WAN.md).
+Изменяющие маршруты команды внутри submit_path_update и firewall-команды kill-switch/gateway
 ещё требуют отдельного переноса и проверки ownership при неизвестном результате.
 Принудительный Drop всей группы не заменяет async join. Реальный Linux TUN/firewall,
 сеть и смена интерфейса, suspend/resume, systemd, устройства, native release и benchmark

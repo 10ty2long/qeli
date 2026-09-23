@@ -83,8 +83,9 @@ Spawn, a child in an uninterruptible kernel wait or failed kill can delay return
 that deliberately leaves its process group has no group-termination guarantee.
 
 Server NAT, including its firewall/probe/WAN lookup commands, is subsequently migrated in
-[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Other route, client kill-switch and gateway
-commands still use the previous execution path. Read-only path monitoring is migrated in
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Route mutations and client kill-switch/gateway firewall
+commands still use the previous execution path. Gateway WAN discovery is migrated in
+[Q25-F021/F022](AUDIT-Q25-GATEWAY-WAN.md). Read-only path monitoring is migrated in
 [Q25-F020](AUDIT-Q25-PATH-MONITOR.md). Server preflight is migrated in
 [Q05-F001](AUDIT-Q05-PREFLIGHT.md). Migrating remaining mutations requires checking ownership journals after an
 unknown outcome and preserving fail-closed behavior. Do not treat the entire system-command

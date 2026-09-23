@@ -28,6 +28,12 @@ mod dns_resolver;
 #[path = "server/preflight.rs"]
 mod server_preflight;
 
+// WAN selection/fallback policy is tested without changing host routes or firewall.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)] // Host tests inject probe results instead of invoking the host's ip.
+#[path = "client/gateway/wan.rs"]
+mod gateway_wan;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

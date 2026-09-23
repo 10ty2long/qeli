@@ -23,6 +23,9 @@
 
 use super::killswitch::{ipt, ipt_path, present, present_checked, valid_ifname};
 
+mod wan;
+use wan::{cleanup_wans, detect_wan, detect_wan_ipv6};
+
 /// Comment tag on every rule we own, so teardown removes exactly ours.
 const TAG: &str = "qeli-gw-nat";
 
@@ -97,77 +100,6 @@ fn forget_exit_tun(store: &std::sync::Mutex<ExitWansByTun>, tun_if: &str) {
         .lock()
         .unwrap_or_else(|error| error.into_inner())
         .remove(tun_if);
-}
-
-/// Extract the token following `dev` in an `ip route` line.
-fn dev_token(s: &str) -> Option<String> {
-    let toks: Vec<&str> = s.split_whitespace().collect();
-    toks.iter()
-        .position(|&t| t == "dev")
-        .and_then(|i| toks.get(i + 1))
-        .map(|s| s.to_string())
-}
-
-/// Detect the WAN (default-route) interface. `None` if there is no default route — an
-/// exit node with no internet path has nothing to share.
-///
-/// Asks the ROUTING TABLE for the default route first, and only falls back to probing a
-/// well-known address. The probe alone was wrong on any host that routes that specific
-/// address differently — a Pi-hole or corporate resolver at 1.1.1.1 reached over a
-/// management interface, or a blackhole entry for it. `MASQUERADE` and the `MARK` rule
-/// were then installed on the WRONG interface: tunnel traffic left with a private source
-/// address, the return path was a black hole, and the log still said "Exit-node engaged".
-/// (Audit 2026-07-27, R4.)
-fn detect_wan() -> Option<String> {
-    // 1. The default route itself. `ip route show default` prints e.g.
-    //    "default via 10.0.0.1 dev eth0 proto dhcp metric 100"; with several defaults the
-    //    first line is the lowest-metric one, which is what the kernel would pick.
-    if let Ok(out) = std::process::Command::new("ip")
-        .args(["route", "show", "default"])
-        .output()
-    {
-        if out.status.success() {
-            let s = String::from_utf8_lossy(&out.stdout);
-            if let Some(dev) = s.lines().find_map(dev_token) {
-                return Some(dev);
-            }
-        }
-    }
-    // 2. Fallback: ask the kernel which interface it would use for a public address.
-    //    Kept because it also resolves policy-routing setups that `show default` misses.
-    let out = std::process::Command::new("ip")
-        .args(["route", "get", "1.1.1.1"])
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    // "1.1.1.1 via 10.0.0.1 dev eth0 src ..." — the token after "dev".
-    dev_token(&String::from_utf8_lossy(&out.stdout))
-}
-
-/// IPv6 counterpart of [`detect_wan`]. The WAN may differ by family, so reusing the
-/// IPv4 interface silently breaks multi-uplink and IPv6-over-a-different-provider hosts.
-fn detect_wan_ipv6() -> Option<String> {
-    if let Ok(out) = std::process::Command::new("ip")
-        .args(["-6", "route", "show", "default"])
-        .output()
-    {
-        if out.status.success() {
-            let text = String::from_utf8_lossy(&out.stdout);
-            if let Some(device) = text.lines().find_map(dev_token) {
-                return Some(device);
-            }
-        }
-    }
-    let out = std::process::Command::new("ip")
-        .args(["-6", "route", "get", "2606:4700:4700::1111"])
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    dev_token(&String::from_utf8_lossy(&out.stdout))
 }
 
 fn policy_output_accepts_forward(output: &str) -> bool {
@@ -659,12 +591,9 @@ fn remove_exit_rules(tun_if: &str) -> anyhow::Result<()> {
         binary: &str,
         tun_if: &str,
         remembered: &[String],
-        fallback: Option<String>,
+        discover: impl FnOnce() -> Option<String>,
     ) -> anyhow::Result<()> {
-        let mut wans = remembered.to_vec();
-        if wans.is_empty() {
-            wans.extend(fallback);
-        }
+        let wans = cleanup_wans(remembered, discover);
         if wans.is_empty() {
             return Ok(());
         }
@@ -700,8 +629,8 @@ fn remove_exit_rules(tun_if: &str) -> anyhow::Result<()> {
 
     let wans_v4 = exit_wans_for(&EXIT_WANS_V4, tun_if);
     let wans_v6 = exit_wans_for(&EXIT_WANS_V6, tun_if);
-    let v4 = remove_family("iptables", tun_if, &wans_v4, detect_wan());
-    let v6 = remove_family("ip6tables", tun_if, &wans_v6, detect_wan_ipv6());
+    let v4 = remove_family("iptables", tun_if, &wans_v4, detect_wan);
+    let v6 = remove_family("ip6tables", tun_if, &wans_v6, detect_wan_ipv6);
     if v4.is_ok() {
         forget_exit_tun(&EXIT_WANS_V4, tun_if);
     }

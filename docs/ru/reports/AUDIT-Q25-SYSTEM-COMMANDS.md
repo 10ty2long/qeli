@@ -83,8 +83,9 @@ spawn, процесс в непрерываемом kernel wait либо оши�
 потомок, намеренно покинувший process group, не получает гарантию групповой остановки.
 
 Server NAT, включая его firewall/probe/WAN lookup, позднее перенесён в
-[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Остальные команды маршрутов, клиентского kill-switch,
-gateway ещё используют прежний запуск. Read-only path monitor перенесён в
+[Q14-F032](AUDIT-Q14-NAT-COMMANDS.md). Мутации маршрутов и firewall-команды клиентского kill-switch/gateway
+ещё используют прежний запуск. Gateway WAN discovery перенесён в
+[Q25-F021/F022](AUDIT-Q25-GATEWAY-WAN.md). Read-only path monitor перенесён в
 [Q25-F020](AUDIT-Q25-PATH-MONITOR.md). Server preflight перенесён в
 [Q05-F001](AUDIT-Q05-PREFLIGHT.md). Перенос оставшихся мутаций требует проверки ownership journal при неизвестном результате мутации
 и сохранения fail-closed поведения. Не объявлять весь слой системных команд исправленным.

@@ -997,6 +997,12 @@ teardown; flush отказа сохраняет pre-auth slot до освобо�
 ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
 Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
 
+**Gateway WAN, 23 сентября 2026:** [Q25-F021/F022](../reports/AUDIT-Q25-GATEWAY-WAN.md):
+IPv4/IPv6 default-route и fallback используют общий runner с ограничениями; cleanup
+ищет WAN только при отсутствии сохранённых целей семейства. Семь новых переносимых
+регрессий, 1105 Rust tests и 33 отдельных adapter-сценария PASS. Реальный Linux firewall
+и ownership при неизвестном результате мутации остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1191,6 +1197,12 @@ journal, общий срок всей операции, остальные си�
 и лимитами вывода. TaskGroup сохраняет владение blocking-командой при остановке;
 ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
 Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
+
+**Gateway WAN, 23 сентября 2026:** [Q25-F021/F022](../reports/AUDIT-Q25-GATEWAY-WAN.md):
+IPv4/IPv6 default-route и fallback используют общий runner с ограничениями; cleanup
+ищет WAN только при отсутствии сохранённых целей семейства. Семь новых переносимых
+регрессий, 1105 Rust tests и 33 отдельных adapter-сценария PASS. Реальный Linux firewall
+и ownership при неизвестном результате мутации остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1469,7 +1481,8 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: оставшиеся команды routes/kill-switch/gateway,
+**Ближайшая работа:** продолжить 25: мутации routes и firewall-команды kill-switch/gateway
+(read-only WAN discovery покрыт Q25-F021/F022),
 затем старые поколения TUN и platform rollback/ACK. В 05 остаются общий срок
 preflight-транзакции и синхронные ожидания в async handlers. Сохраняется очередь
 незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
