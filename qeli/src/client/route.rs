@@ -5,6 +5,10 @@ use crate::transport_core::{NetworkAddressFamily, NetworkPlan, NetworkRoute};
 use ipnet::Ipv4Net;
 use std::net::IpAddr;
 
+#[path = "route/ownership.rs"]
+mod ownership;
+use ownership::{delete_spec, remove_recorded_route, route_key, route_matches_spec};
+
 // Keep the route transaction's command boundary injectable without changing process PATH.
 fn route_command_output(args: &[String]) -> std::io::Result<std::process::Output> {
     #[cfg(all(test, feature = "experimental-roaming"))]
@@ -29,7 +33,8 @@ static ROUTE_TEST_SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
 /// ("File exists"), so those are exactly the cases where the route was someone else's:
 /// an operator's static bypass, a route another VPN put there, a blackhole the host had.
 /// Disconnecting then deleted it and left the host worse than it found it, with nothing
-/// said. Record on successful creation, delete only what is recorded.
+/// said. Record selectors on successful creation, verify them before cleanup, and retain
+/// failed cleanup entries. This process-local journal is not a persistent recovery log.
 static CREATED_ROUTES: std::sync::Mutex<Vec<Vec<String>>> = std::sync::Mutex::new(Vec::new());
 
 // The two /1 routes capture the default IPv6 route without replacing ::/0, but they do not
@@ -47,33 +52,36 @@ fn full_tunnel_prefixes(family: NetworkAddressFamily) -> &'static [&'static str]
 }
 
 fn note_created(args: &[&str]) {
-    CREATED_ROUTES
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .push(args.iter().map(|s| s.to_string()).collect());
+    note_created_owned(args.iter().map(|s| s.to_string()).collect());
 }
 
 fn note_created_owned(args: Vec<String>) {
-    if let Ok(mut journal) = CREATED_ROUTES.lock() {
-        journal.push(args);
-    }
+    let mut journal = CREATED_ROUTES
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    journal.retain(|entry| route_key(entry) != route_key(&args));
+    journal.push(args);
 }
 
-#[cfg(feature = "experimental-roaming")]
-fn created_by_us_owned(args: &[String]) -> bool {
+fn recorded_undo(args: &[String]) -> Option<Vec<String>> {
     CREATED_ROUTES
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .unwrap_or_else(|error| error.into_inner())
         .iter()
-        .any(|entry| entry == args)
+        .find(|entry| route_key(entry) == route_key(args))
+        .cloned()
 }
 
-#[cfg(feature = "experimental-roaming")]
+#[cfg(all(test, feature = "experimental-roaming"))]
+fn created_by_us_owned(args: &[String]) -> bool {
+    recorded_undo(args).is_some()
+}
+
 fn forget_created_owned(args: &[String]) {
     CREATED_ROUTES
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .retain(|entry| entry != args);
+        .unwrap_or_else(|error| error.into_inner())
+        .retain(|entry| route_key(entry) != route_key(args));
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -298,6 +306,7 @@ enum CandidateRouteMutation {
     Replace {
         ipv6: bool,
         previous: Vec<String>,
+        previous_undo: Vec<String>,
     },
 }
 
@@ -418,33 +427,52 @@ fn rollback_candidate_route_steps(applied: &[CandidateRouteStep]) -> Vec<String>
             CandidateRouteMutation::Add {
                 undo,
                 journal_was_present,
-            } => match route_command_output(undo) {
-                Ok(output) if output.status.success() => {
+            } => match remove_recorded_route(undo) {
+                Ok(removed) => {
                     if !journal_was_present {
                         forget_created_owned(undo);
                     }
-                }
-                Ok(output) => {
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    if route_is_already_absent(&stderr) {
-                        if !journal_was_present {
-                            forget_created_owned(undo);
-                        }
-                    } else {
-                        errors.push(format!("ip {}: {}", undo.join(" "), stderr.trim()));
+                    if !removed {
+                        errors.push("candidate route ownership changed during rollback".into());
                     }
                 }
-                Err(error) => errors.push(format!("ip {}: {error}", undo.join(" "))),
+                Err(error) => errors.push(error.to_string()),
             },
-            CandidateRouteMutation::Replace { ipv6, previous } => {
+            CandidateRouteMutation::Replace {
+                ipv6,
+                previous,
+                previous_undo,
+            } => {
+                let expected = delete_spec(&candidate_route_command("add", &step.route));
+                let action = match exact_route_tokens(step.route.remote) {
+                    Ok(Some(current)) if current == *previous => {
+                        note_created_owned(previous_undo.clone());
+                        continue;
+                    }
+                    Ok(Some(current)) if route_matches_spec(&expected, &current) => "replace",
+                    Ok(None) => "add",
+                    Ok(Some(_)) => {
+                        forget_created_owned(&expected);
+                        errors.push(format!(
+                            "carrier route {} ownership changed before rollback",
+                            step.route.remote
+                        ));
+                        continue;
+                    }
+                    Err(error) => {
+                        errors.push(error.to_string());
+                        continue;
+                    }
+                };
                 let mut restore = Vec::new();
                 if *ipv6 {
                     restore.push("-6".to_string());
                 }
-                restore.extend(["route".to_string(), "replace".to_string()]);
+                restore.extend(["route".to_string(), action.to_string()]);
                 restore.extend(previous.iter().cloned());
-                if let Err(error) = run_ip_owned(&restore, "could not restore carrier route") {
-                    errors.push(error.to_string());
+                match run_ip_owned(&restore, "could not restore carrier route") {
+                    Ok(()) => note_created_owned(previous_undo.clone()),
+                    Err(error) => errors.push(error.to_string()),
                 }
             }
         }
@@ -465,11 +493,29 @@ struct RetiredCarrierRoute {
 fn restore_retired_carrier_routes(retired: &[RetiredCarrierRoute]) -> Vec<String> {
     let mut errors = Vec::new();
     for route in retired.iter().rev() {
+        match exact_route_tokens(route.remote) {
+            Ok(Some(current)) if current == route.previous => {
+                note_created_owned(route.undo.clone());
+                continue;
+            }
+            Ok(None) => {}
+            Ok(Some(_)) => {
+                errors.push(format!(
+                    "retired carrier {} was replaced before restoration",
+                    route.remote
+                ));
+                continue;
+            }
+            Err(error) => {
+                errors.push(error.to_string());
+                continue;
+            }
+        }
         let mut restore = Vec::new();
         if route.ipv6 {
             restore.push("-6".to_string());
         }
-        restore.extend(["route".to_string(), "replace".to_string()]);
+        restore.extend(["route".to_string(), "add".to_string()]);
         restore.extend(route.previous.iter().cloned());
         match run_ip_owned(&restore, "could not restore retired carrier route") {
             Ok(()) => note_created_owned(route.undo.clone()),
@@ -509,30 +555,41 @@ impl LinuxPreparedPathRoutes {
             if desired.contains(&remote) {
                 continue;
             }
-            let undo = carrier_route_undo(remote);
-            if !created_by_us_owned(&undo) {
+            let key = carrier_route_undo(remote);
+            let Some(undo) = recorded_undo(&key) else {
                 continue;
-            }
+            };
             match exact_route_tokens(remote)? {
-                Some(previous) => retire.push(RetiredCarrierRoute {
-                    remote,
-                    undo,
-                    ipv6: remote.is_ipv6(),
-                    previous,
-                }),
-                None => forget_created_owned(&undo),
+                Some(previous) if route_matches_spec(&undo, &previous) => {
+                    retire.push(RetiredCarrierRoute {
+                        remote,
+                        undo,
+                        ipv6: remote.is_ipv6(),
+                        previous,
+                    })
+                }
+                Some(_) | None => forget_created_owned(&undo),
             }
         }
         let mut steps = Vec::with_capacity(self.routes.len());
         for route in &self.routes {
-            let undo = carrier_route_undo(route.remote);
-            let owned = created_by_us_owned(&undo);
+            let key = carrier_route_undo(route.remote);
+            let recorded = recorded_undo(&key);
             let existing = exact_route_tokens(route.remote)?;
+            let owned = recorded
+                .as_ref()
+                .zip(existing.as_ref())
+                .is_some_and(|(undo, current)| route_matches_spec(undo, current));
+            if recorded.is_some() && !owned {
+                forget_created_owned(&key);
+            }
+            let undo = delete_spec(&candidate_route_command("add", route));
             let expected = candidate_route_expected_tokens(route);
             let mutation = match existing {
                 Some(previous) if owned => CandidateRouteMutation::Replace {
                     ipv6: route.remote.is_ipv6(),
                     previous,
+                    previous_undo: recorded.expect("matched ownership"),
                 },
                 Some(previous)
                     if route_output_satisfies_all(
@@ -576,7 +633,9 @@ impl LinuxPreparedPathRoutes {
                 }
                 CandidateRouteMutation::Replace { .. } => {
                     let args = candidate_route_command("replace", &step.route);
-                    run_ip_owned(&args, "could not replace qeli-owned carrier route")
+                    run_ip_owned(&args, "could not replace qeli-owned carrier route").map(|()| {
+                        note_created_owned(delete_spec(&args));
+                    })
                 }
             };
             if let Err(error) = result {
@@ -703,7 +762,7 @@ fn add_tunnel_route(
     // route sends the inner packet to qeli without neighbour discovery. TAP is real L2 and
     // retains the gateway route.
     let args = tunnel_route_args(ipv6, cidr, gateway, ifname, metric, is_tap);
-    let output = std::process::Command::new("ip").args(&args).output()?;
+    let output = route_command_output(&args)?;
     if output.status.success() {
         return Ok(());
     }
@@ -886,7 +945,7 @@ fn add_blackhole_half(cidr: &str) -> anyhow::Result<()> {
         "blackhole".into(),
         cidr.into(),
     ]);
-    let output = std::process::Command::new("ip").args(&args).output()?;
+    let output = route_command_output(&args)?;
     if output.status.success() {
         let mut undo = args;
         let action = if ipv6 { 2 } else { 1 };
@@ -929,14 +988,9 @@ fn pin_carrier_route(carrier: IpAddr, path: &PhysicalPath) -> anyhow::Result<()>
         ]);
     }
 
-    let output = std::process::Command::new("ip").args(&args).output()?;
+    let output = route_command_output(&args)?;
     if output.status.success() {
-        let mut undo = Vec::new();
-        if ipv6 {
-            undo.push("-6".into());
-        }
-        undo.extend(["route".into(), "del".into(), destination]);
-        note_created_owned(undo);
+        note_created_owned(delete_spec(&args));
         return Ok(());
     }
 
@@ -1117,14 +1171,9 @@ pub fn setup_network_plan_routes(
         } else {
             args.extend(["dev".into(), device.clone(), "scope".into(), "link".into()]);
         }
-        let output = std::process::Command::new("ip").args(&args).output()?;
+        let output = route_command_output(&args)?;
         if output.status.success() {
-            let mut undo = Vec::new();
-            if ipv6 {
-                undo.push("-6".into());
-            }
-            undo.extend(["route".into(), "del".into(), cidr]);
-            note_created_owned(undo);
+            note_created_owned(delete_spec(&args));
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
             if stderr.contains("File exists") {
@@ -1182,11 +1231,7 @@ pub fn setup_network_plan_routes(
 /// undo is already queued answers "is this route ours". Used before any delete that is
 /// not paired with an add of our own. (Audit 2026-07-27, R6.)
 fn created_by_us(args: &[&str]) -> bool {
-    CREATED_ROUTES
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .iter()
-        .any(|e| e.iter().eq(args.iter().copied()))
+    recorded_undo(&args.iter().map(|s| s.to_string()).collect::<Vec<_>>()).is_some()
 }
 
 /// Take the journal, leaving it empty (cleanup runs once per connection).
@@ -1221,7 +1266,7 @@ pub fn setup_routes(
                 .args(["route", "add", server_addr, "via", gw])
                 .output()?;
             if output.status.success() {
-                note_created(&["route", "del", server_addr]);
+                note_created(&["route", "del", server_addr, "via", gw]);
                 log::info!("Added bypass route: {} via {}", server_addr, gw);
             } else {
                 let stderr = String::from_utf8_lossy(&output.stderr);
@@ -1247,7 +1292,7 @@ pub fn setup_routes(
                 .args(["route", "add", server_addr, "dev", &dev, "scope", "link"])
                 .output()?;
             if output.status.success() {
-                note_created(&["route", "del", server_addr]);
+                note_created(&["route", "del", server_addr, "dev", &dev, "scope", "link"]);
                 log::info!("Added on-link bypass route: {} dev {}", server_addr, dev);
             } else {
                 let stderr = String::from_utf8_lossy(&output.stderr);
@@ -1457,7 +1502,7 @@ pub fn setup_routes(
                 .output();
             if let Ok(o) = output {
                 if o.status.success() {
-                    note_created(&["route", "del", subnet]);
+                    note_created(&["route", "del", subnet, "via", gw]);
                 } else {
                     let stderr = String::from_utf8_lossy(&o.stderr);
                     if !stderr.contains("File exists") {
@@ -1868,17 +1913,16 @@ pub fn cleanup_routes(ifname: &str, _server_addr: &str, _exclude: &[String]) -> 
     let mut failed = Vec::new();
     let mut errors = Vec::new();
     for args in take_created() {
-        match std::process::Command::new("ip").args(&args).output() {
-            Ok(output) if output.status.success() => {}
-            Ok(output) => {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                if !route_is_already_absent(&stderr) {
-                    errors.push(format!("ip {}: {}", args.join(" "), stderr.trim()));
-                    failed.push(args);
-                }
+        match remove_recorded_route(&args) {
+            Ok(true) => {}
+            Ok(false) => {
+                log::info!(
+                    "owned route changed; preserving replacement: ip {}",
+                    args.join(" ")
+                );
             }
             Err(error) => {
-                errors.push(format!("ip {}: {error}", args.join(" ")));
+                errors.push(error.to_string());
                 failed.push(args);
             }
         }
@@ -1895,10 +1939,7 @@ pub fn cleanup_routes(ifname: &str, _server_addr: &str, _exclude: &[String]) -> 
 
     // The tun device's own routes go with the device, so flushing by interface can only
     // ever touch ours.
-    match std::process::Command::new("ip")
-        .args(["route", "flush", "dev", ifname])
-        .output()
-    {
+    match route_command_output(&["route", "flush", "dev", ifname].map(str::to_string)) {
         Ok(output) if output.status.success() => {}
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -1908,10 +1949,7 @@ pub fn cleanup_routes(ifname: &str, _server_addr: &str, _exclude: &[String]) -> 
         }
         Err(error) => errors.push(format!("ip route flush dev {ifname}: {error}")),
     }
-    match std::process::Command::new("ip")
-        .args(["-6", "route", "flush", "dev", ifname])
-        .output()
-    {
+    match route_command_output(&["-6", "route", "flush", "dev", ifname].map(str::to_string)) {
         Ok(output) if output.status.success() => {}
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -2158,16 +2196,38 @@ mod fault_injection {
             std::fs::create_dir_all(&dir).unwrap();
             let log = dir.join("calls.log");
 
-            let mut script = String::from("#!/bin/sh\n");
-            script.push_str(&format!("echo \"$@\" >> {}\n", log.display()));
-            script.push_str("case \"$*\" in\n");
+            let state = dir.join("routes");
+            std::fs::create_dir_all(&state).unwrap();
+            let mut script = format!(
+                r#"#!/bin/sh
+echo "$@" >> '{log}'
+original="$*"
+family=4
+if [ "$1" = "-6" ]; then family=6; shift; fi
+destination="$3"
+if [ "$3" = "blackhole" ] || [ "$3" = "exact" ]; then destination="$4"; fi
+key=$(printf '%s' "$destination" | tr '/:' '__')
+record='{state}/'"$family-$key"
+if [ "$1" = "route" ] && [ "$2" = "show" ] && [ "$3" = "exact" ]; then
+  if [ -f "$record" ]; then cat "$record"; fi
+  exit 0
+fi
+case "$original" in
+"#,
+                log = log.display(),
+                state = state.display(),
+            );
             for cond in fail_on {
+                // An "already absent" fixture models an actual absent route too.
+                let absent = if route_is_already_absent(stderr_text) {
+                    "if [ \"$2\" = \"del\" ]; then rm -f \"$record\"; fi; "
+                } else {
+                    ""
+                };
                 script.push_str(&format!(
-                    "  *\"{cond}\"*) echo '{stderr_text}' >&2; exit 2;;\n"
+                    "  *\"{cond}\"*) {absent}echo '{stderr_text}' >&2; exit 2;;\n"
                 ));
             }
-            // `route get` must answer with a gateway and `route show` with a device, or
-            // setup_routes cannot get as far as the behaviour under test.
             script.push_str(
                 "  *\"route get\"*) echo '1.2.3.4 via 10.0.0.254 dev eth0 src 10.0.0.5'; exit 0;;\n",
             );
@@ -2185,7 +2245,17 @@ mod fault_injection {
             } else {
                 script.push_str("  *\"route show\"*) exit 0;;\n");
             }
-            script.push_str("esac\nexit 0\n");
+            script.push_str(
+                r#"esac
+if [ "$1" = "route" ]; then
+  case "$2" in
+    add|replace) shift 2; printf '%s\n' "$*" > "$record";;
+    del) rm -f "$record";;
+  esac
+fi
+exit 0
+"#,
+            );
 
             let bin = dir.join("ip");
             let mut f = std::fs::File::create(&bin).unwrap();
@@ -2532,7 +2602,18 @@ mod fault_injection {
             Some("198.51.100.20 via 192.0.2.1 dev old0"),
         );
         let remote = "198.51.100.20".parse::<IpAddr>().unwrap();
-        note_created_owned(carrier_route_undo(remote));
+        note_created_owned(
+            [
+                carrier_route_undo(remote),
+                vec![
+                    "via".into(),
+                    "192.0.2.1".into(),
+                    "dev".into(),
+                    "old0".into(),
+                ],
+            ]
+            .concat(),
+        );
         let prepared =
             prepare_candidate_path_routes_on(&ipv4_candidate(), "qtest", "eth0").unwrap();
         prepared.commit(&[]).unwrap();
@@ -2589,7 +2670,20 @@ mod fault_injection {
             ],
             None,
         );
-        note_created_owned(carrier_route_undo(old));
+        note_created_owned(
+            [
+                carrier_route_undo(old),
+                vec![
+                    "via".into(),
+                    "192.0.2.1".into(),
+                    "dev".into(),
+                    "old0".into(),
+                    "src".into(),
+                    "192.0.2.2".into(),
+                ],
+            ]
+            .concat(),
+        );
         let prepared =
             prepare_candidate_path_routes_on(&ipv6_candidate(), "qtest", "eth0").unwrap();
         prepared.commit(&[old]).unwrap();
@@ -2651,7 +2745,20 @@ mod fault_injection {
             ],
             None,
         );
-        note_created_owned(carrier_route_undo(old));
+        note_created_owned(
+            [
+                carrier_route_undo(old),
+                vec![
+                    "via".into(),
+                    "192.0.2.1".into(),
+                    "dev".into(),
+                    "old0".into(),
+                    "src".into(),
+                    "192.0.2.2".into(),
+                ],
+            ]
+            .concat(),
+        );
         let prepared =
             prepare_candidate_path_routes_on(&ipv6_candidate(), "qtest", "eth0").unwrap();
         let error = prepared.commit(&[old]).unwrap_err().to_string();

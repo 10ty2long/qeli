@@ -80,3 +80,6 @@ route/kill-switch/gateway команды ещё требуют отдельно�
 не запускались. INI/API/ABI не изменены; полный аудит остаётся открытым.
 
 Предыдущий этап: [gateway WAN](AUDIT-Q25-GATEWAY-WAN.md).
+
+Продолжение: [Q25-F025/F026](AUDIT-Q25-ROUTE-OWNERSHIP.md) добавляет параметры удаления,
+проверку заменённого маршрута и cleanup. Global/pending ownership и атомарное recovery остаются открытыми.

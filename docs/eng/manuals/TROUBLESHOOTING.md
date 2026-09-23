@@ -1329,6 +1329,23 @@ does not prove ownership; such a route may remain for inspection. Pending-operat
 recovery and command deadlines remain separate work. No new INI fields are required.
 [Evidence and limits](../reports/AUDIT-Q25-ROUTE-OUTCOME.md).
 
+### 6.40 Linux: changed route ownership or cleanup retry
+
+Physical-route cleanup compares the recorded gateway/device and other supplied identity
+fields with the current exact route. `owned route changed; preserving replacement`
+means a different observed route was left in place and the stale journal record dropped.
+An already absent route also requires no delete.
+
+`command succeeded but route remains` means the matching route survived the command.
+Unreadable, malformed or ambiguous snapshots likewise fail cleanup; the specification
+is retained for retry. A lost command result can still complete cleanup if a subsequent
+query confirms absence. Roaming updates cleanup parameters after a successful route change.
+
+The journal remains in memory and shared by the process. This does not guarantee
+cross-profile/generation isolation, crash recovery or atomic protection against every
+concurrent route change. Commands still need deadlines. No new INI parameters.
+[Checks and boundaries](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md).
+
 ---
 
 ## 7. Reference

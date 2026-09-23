@@ -1004,6 +1004,14 @@ eight existing route tests now run on host; 1128 Rust tests PASS. Baseline repro
 has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
 command deadlines and live Linux remain open.
 
+**Route ownership and cleanup, 23 September 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): the journal retains supplied
+delete selectors; stale identity no longer authorizes replace/retirement/rollback.
+Cleanup verifies absence and keeps failed entries for retry. Sixteen new regressions;
+1144 Rust tests PASS. The same adapter tests reproduce 15 baseline failures and one
+control. Process-global ownership, pending unknown mutations, atomic identity, command
+deadlines and live Linux remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1054,6 +1062,14 @@ changed or multi-line snapshots produce unknown state. Fifteen new regressions p
 eight existing route tests now run on host; 1128 Rust tests PASS. Baseline reproduction
 has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
 command deadlines and live Linux remain open.
+
+**Route ownership and cleanup, 23 September 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): the journal retains supplied
+delete selectors; stale identity no longer authorizes replace/retirement/rollback.
+Cleanup verifies absence and keeps failed entries for retry. Sixteen new regressions;
+1144 Rust tests PASS. The same adapter tests reproduce 15 baseline failures and one
+control. Process-global ownership, pending unknown mutations, atomic identity, command
+deadlines and live Linux remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1220,6 +1236,14 @@ changed or multi-line snapshots produce unknown state. Fifteen new regressions p
 eight existing route tests now run on host; 1128 Rust tests PASS. Baseline reproduction
 has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
 command deadlines and live Linux remain open.
+
+**Route ownership and cleanup, 23 September 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): the journal retains supplied
+delete selectors; stale identity no longer authorizes replace/retirement/rollback.
+Cleanup verifies absence and keeps failed entries for retry. Sixteen new regressions;
+1144 Rust tests PASS. The same adapter tests reproduce 15 baseline failures and one
+control. Process-global ownership, pending unknown mutations, atomic identity, command
+deadlines and live Linux remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1496,10 +1520,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with pending ownership and recovery of uncertain route
-mutations, then route/kill-switch/gateway command deadlines. Q25-F023/F024 fixes outcome
-classification, not complete recovery. Read-only WAN discovery is covered by Q25-F021/F022.
-Older TUN generations and platform rollback/ACK remain queued. Section 05 still needs
-transaction-wide preflight deadlines and removal of synchronous waits in async handlers.
-Outstanding 01–07, Linux restart/restore/manual+NDP E2E and platform certification remain
-queued. A new full benchmark follows stabilization of fixes.
+**Next work:** continue 25 with TUN/generation-scoped route ownership, pending unknown
+mutations and persistent recovery. Q25-F025/F026 adds supplied identity selectors and
+verified cleanup, not full isolation or atomic recovery. Then migrate route/kill-switch/
+gateway commands to bounded execution. Older TUN generations and platform rollback/ACK
+remain queued. Section 05 still needs transaction-wide preflight deadlines and removal
+of synchronous waits in async handlers. Outstanding 01–07, Linux restart/restore/manual+NDP
+E2E and platform certification remain queued. A full benchmark follows stabilization.

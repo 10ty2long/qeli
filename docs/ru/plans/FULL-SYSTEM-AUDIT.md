@@ -1011,6 +1011,14 @@ IPv4/IPv6 default-route и fallback используют общий runner с о
 Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
 маршрута, сроки команд и реальный Linux остаются открытыми.
 
+**Владение маршрутами и cleanup, 23 сентября 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): журнал сохраняет переданные
+параметры удаления; устаревшая identity не разрешает replace/retirement/rollback.
+Очистка подтверждает отсутствие и сохраняет неудачные записи для retry.
+16 новых регрессий; 1144 Rust tests PASS. Те же adapter-тесты воспроизводят 15 отказов
+baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
+атомарная identity, сроки команд и реальный Linux остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1061,6 +1069,14 @@ Standalone H2, ранний platform rollback, UDP cancellation и deadlines о�
 существующих route-тестов теперь исполняются на host; 1128 Rust tests PASS.
 Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
 маршрута, сроки команд и реальный Linux остаются открытыми.
+
+**Владение маршрутами и cleanup, 23 сентября 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): журнал сохраняет переданные
+параметры удаления; устаревшая identity не разрешает replace/retirement/rollback.
+Очистка подтверждает отсутствие и сохраняет неудачные записи для retry.
+16 новых регрессий; 1144 Rust tests PASS. Те же adapter-тесты воспроизводят 15 отказов
+baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
+атомарная identity, сроки команд и реальный Linux остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1227,6 +1243,14 @@ IPv4/IPv6 default-route и fallback используют общий runner с о
 существующих route-тестов теперь исполняются на host; 1128 Rust tests PASS.
 Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
 маршрута, сроки команд и реальный Linux остаются открытыми.
+
+**Владение маршрутами и cleanup, 23 сентября 2026:**
+[Q25-F025/F026](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md): журнал сохраняет переданные
+параметры удаления; устаревшая identity не разрешает replace/retirement/rollback.
+Очистка подтверждает отсутствие и сохраняет неудачные записи для retry.
+16 новых регрессий; 1144 Rust tests PASS. Те же adapter-тесты воспроизводят 15 отказов
+baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
+атомарная identity, сроки команд и реальный Linux остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1505,10 +1529,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: pending ownership и recovery неопределённых
-мутаций маршрута, затем сроки команд routes/kill-switch/gateway. Q25-F023/F024 исправляет
-классификацию результата, не полное recovery. Read-only WAN discovery покрыт Q25-F021/F022.
-Старые поколения TUN и platform rollback/ACK остаются в очереди. В 05 нужны общий срок
-preflight-транзакции и устранение синхронных ожиданий в async handlers.
-Сохраняются незакрытые 01–07, Linux E2E restart/restore/manual+NDP и платформенная
-сертификация. Новый полный бенчмарк выполняется после стабилизации исправлений.
+**Ближайшая работа:** продолжить 25: ownership маршрутов по TUN/generation, неизвестные
+pending мутации и постоянный recovery. Q25-F025/F026 добавляет переданные identity selectors
+и проверку cleanup, не полную изоляцию или атомарное восстановление. Затем ограничить
+команды routes/kill-switch/gateway. Старые поколения TUN и platform rollback/ACK остаются
+в очереди. В 05 нужны общий preflight deadline и устранение синхронных ожиданий в async
+handlers. Сохраняются незакрытые 01–07, Linux E2E restart/restore/manual+NDP и платформенная
+сертификация. Полный benchmark выполняется после стабилизации исправлений.

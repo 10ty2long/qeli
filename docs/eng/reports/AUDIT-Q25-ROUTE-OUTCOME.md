@@ -79,3 +79,6 @@ No live Linux netlink/iptables/TUN/handover, device tests, native release or new
 ran. INI/API/ABI are unchanged; the complete audit remains open.
 
 Previous pass: [gateway WAN](AUDIT-Q25-GATEWAY-WAN.md).
+
+Follow-up: [Q25-F025/F026](AUDIT-Q25-ROUTE-OWNERSHIP.md) adds supplied delete selectors,
+changed-route checks and verified cleanup. Global/pending ownership and atomic recovery remain open.

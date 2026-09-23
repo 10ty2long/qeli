@@ -83,6 +83,7 @@
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Сохранение DNS rule specs при отказе cleanup/rollback, retry и идентичность поколения |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Конечная очистка NAT, проверка результата, диагностика и открытые ошибки teardown |
+| [AUDIT-Q25-ROUTE-OWNERSHIP.md](reports/AUDIT-Q25-ROUTE-OWNERSHIP.md) | Q25-F025/F026: сохранение заменённых маршрутов и проверка cleanup перед сбросом ownership |
 | [AUDIT-Q25-ROUTE-OUTCOME.md](reports/AUDIT-Q25-ROUTE-OUTCOME.md) | Q25-F023/F024: проверка неуспешной мутации маршрута и отказ при неоднозначном снимке |
 | [AUDIT-Q25-GATEWAY-WAN.md](reports/AUDIT-Q25-GATEWAY-WAN.md) | Q25-F021/F022: ограничение WAN-запросов и очистка сохранённых интерфейсов без лишнего discovery |
 | [AUDIT-Q25-PATH-MONITOR.md](reports/AUDIT-Q25-PATH-MONITOR.md) | Q25-F020: ограниченные read-only команды Linux-монитора и ожидание child при stop |
