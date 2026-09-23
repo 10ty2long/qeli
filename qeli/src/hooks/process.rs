@@ -1,4 +1,8 @@
-//! Bounded hook output and owned process lifetime, shared by Linux client/server hooks.
+//! Owned command lifetime for Linux hooks and credential suppliers.
+//! Hooks keep diagnostic tails; credential output is collected separately and never logged.
+#[cfg(any(test, feature = "client"))]
+#[path = "secret.rs"]
+pub(crate) mod secret;
 use std::collections::VecDeque;
 use std::io;
 use std::process::{ExitStatus, Stdio};
@@ -109,10 +113,14 @@ struct OwnedProcess {
 
 impl OwnedProcess {
     fn spawn(command: &mut Command) -> io::Result<Self> {
+        Self::spawn_with_stderr(command, Stdio::piped())
+    }
+
+    fn spawn_with_stderr(command: &mut Command, stderr: Stdio) -> io::Result<Self> {
         command
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(stderr)
             .kill_on_drop(true);
         #[cfg(target_os = "linux")]
         command.process_group(0);
@@ -153,7 +161,7 @@ impl OwnedProcess {
     async fn terminate(&mut self) -> io::Result<ExitStatus> {
         #[cfg(target_os = "linux")]
         if let Err(error) = self.kill_group() {
-            log::warn!("hook: cannot kill process group: {error}");
+            log::warn!("command: cannot kill process group: {error}");
         }
         // Group signaling is disarmed now, so reaping cannot expose a recycled
         // PGID. The leader may already have exited before/during the group kill.
@@ -173,7 +181,7 @@ impl Drop for OwnedProcess {
     fn drop(&mut self) {
         #[cfg(target_os = "linux")]
         if let Err(error) = self.kill_group() {
-            log::warn!("hook: cannot kill cancelled process group: {error}");
+            log::warn!("command: cannot kill cancelled process group: {error}");
         }
         // Child's kill_on_drop is the leader fallback; Tokio owns eventual reaping
         // on cancellation. Normal timeout/error paths explicitly await it instead.
@@ -250,6 +258,29 @@ mod tests {
                 stderr.flush().unwrap();
                 std::process::exit(0);
             }
+            "secret" | "secret-fail" | "secret-invalid" => {
+                let mut stdout = std::io::stdout().lock();
+                stdout
+                    .write_all("  fixture-secret-π \r\n".as_bytes())
+                    .unwrap();
+                if mode == "secret-invalid" {
+                    stdout.write_all(&[0xff]).unwrap();
+                }
+                stdout.flush().unwrap();
+                let mut stderr = std::io::stderr().lock();
+                for _ in 0..256 {
+                    stderr.write_all(&[b'e'; 4096]).unwrap();
+                }
+                stderr.write_all(b"stderr-fixture-secret").unwrap();
+                stderr.flush().unwrap();
+                std::process::exit(if mode == "secret-fail" { 17 } else { 0 });
+            }
+            "stderr-forever" => {
+                let mut stderr = std::io::stderr().lock();
+                loop {
+                    stderr.write_all(&[b'e'; 4096]).unwrap();
+                }
+            }
             "fail" => {
                 eprint!("expected failure");
                 std::process::exit(17);
@@ -268,7 +299,7 @@ mod tests {
         }
     }
 
-    fn fixture(mode: &str) -> Command {
+    pub(super) fn fixture(mode: &str) -> Command {
         let mut command = Command::new(std::env::current_exe().unwrap());
         command
             .args([
@@ -443,7 +474,7 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    fn shell_fixture(script: &str, witness: std::net::SocketAddr) -> Command {
+    pub(super) fn shell_fixture(script: &str, witness: std::net::SocketAddr) -> Command {
         let mut command = Command::new("/bin/sh");
         command
             .args(["-c", script, "qeli-hook-test"])
@@ -453,8 +484,7 @@ mod tests {
         command
     }
 
-    #[cfg(target_os = "linux")]
-    async fn witness(listener: &tokio::net::TcpListener) -> tokio::net::TcpStream {
+    pub(super) async fn witness(listener: &tokio::net::TcpListener) -> tokio::net::TcpStream {
         let (mut peer, _) = tokio::time::timeout(DEADLINE, listener.accept())
             .await
             .unwrap()
@@ -469,7 +499,7 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    async fn leader_exited_but_not_reaped(pid: u32) {
+    pub(super) async fn leader_exited_but_not_reaped(pid: u32) {
         tokio::time::timeout(DEADLINE, async {
             loop {
                 // WNOWAIT observes the owned leader without stealing it from the runner.
@@ -496,7 +526,7 @@ mod tests {
         .unwrap();
     }
 
-    async fn assert_peer_closed(mut peer: tokio::net::TcpStream) {
+    pub(super) async fn assert_peer_closed(mut peer: tokio::net::TcpStream) {
         let mut bytes = Vec::new();
         let result = tokio::time::timeout(DEADLINE, peer.read_to_end(&mut bytes))
             .await

@@ -71,7 +71,7 @@ metadata comparison is not an atomic transaction against every hostile in-place 
 General config size limits, installer/update/restore boundaries, notification cache
 loading and supervisor/client startup task ownership need separate passes.
 
-The client password_command still uses blocking, unbounded Command::output; its timeout,
-stdout/stderr bounds, secret-safe diagnostics and child cancellation are the next
-candidate. Linux runtime/signal/systemd integration remains open. Sections 14/33 and
-the full audit are not complete.
+Follow-up: [credential command audit](AUDIT-Q25-CREDENTIAL-COMMANDS.md) fixes the blocking,
+unbounded password_command path, secret-bearing stderr and early signal cancellation.
+password_file and final client task drain remain open, along with Linux runtime/signal/
+systemd integration. Sections 14/33 and the full audit are not complete.

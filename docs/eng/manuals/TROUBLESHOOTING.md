@@ -919,6 +919,23 @@ See [configuration security](CONFIG.md#security).
 
 ---
 
+### 6.16 Linux: password supplier timeout, oversized output or hidden stderr
+
+`auth.password_command exceeded its execution/output deadline` means the command,
+stdout EOF or shell exit did not finish within 30 seconds. Use a noninteractive
+supplier: stdin is closed. A background child holding stdout open also consumes this
+deadline; redirect its streams if it is intentionally persistent.
+
+`stdout exceeds 16384 bytes` rejects all output, including a small password surrounded
+by too much whitespace. `stdout is not valid UTF-8` rejects malformed bytes. Return
+only the password on stdout; the smaller AUTH wire-size check still applies after trim.
+`failed with ...; command output is not logged` preserves the exit status while keeping
+stderr out of Qeli logs. Inspect the supplier in a protected operator session when
+needed; do not paste secrets into tickets or enable secret-bearing diagnostic output.
+SIGINT/SIGTERM while waiting for the supplier cancel startup and clean up its process group.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

@@ -73,7 +73,7 @@ post_down. Удаление или изменение прав могло мол
 конфига, installer/update/restore, загрузка notification cache и владение задачами
 при запуске supervisor/клиента.
 
-Клиентский password_command ещё использует блокирующий неограниченный Command::output.
-Следующий кандидат: deadline, ограничения stdout/stderr, диагностика без секретов и
-отмена дочерних процессов. Linux runtime/signal/systemd integration остаётся открытой.
-Разделы 14/33 и полный аудит не завершены.
+Продолжение: [аудит команды пароля](AUDIT-Q25-CREDENTIAL-COMMANDS.md) исправляет блокирующий
+неограниченный password_command, раскрытие stderr и раннюю отмену по сигналу.
+password_file, финальный drain клиента и Linux runtime/signal/systemd integration ещё
+открыты. Разделы 14/33 и полный аудит не завершены.

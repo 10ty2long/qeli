@@ -102,8 +102,8 @@ pub mod hooks;
 #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
 pub mod trace;
 
-// `client`/`tun` build under feature = "client"; `server`/`web` under
-// feature = "server". Default features enable both, so a normal build is
+// `client` builds under feature = "client"; `server`/`web` under feature = "server".
+// Linux TUN is shared by either feature. Default features enable both, so a normal build is
 // unchanged. A router (Keenetic) build uses `--no-default-features --features
 // client-bin` to drop the server/web stack (and its MIPS-incompatible `ring`).
 #[cfg(any(
@@ -125,7 +125,7 @@ pub mod server;
 // fd-backed Android/macOS core. The actual TUN device implementation remains Linux-only
 // inside `tun::iface`.
 #[cfg(any(
-    all(target_os = "linux", feature = "client"),
+    all(target_os = "linux", any(feature = "client", feature = "server")),
     all(
         any(target_os = "android", target_os = "macos"),
         feature = "transport-core-ffi"

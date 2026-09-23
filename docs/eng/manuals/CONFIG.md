@@ -1696,6 +1696,18 @@ The password can be supplied three ways in the `[qeli]` section (precedence high
   opened file that supplies the parsed bytes; otherwise the client refuses to start
   (fail-closed). After fixing permissions, start the client again. The panel never persists
   this key. See the [hook security rules](#security) for the shared file policy.
+  The Linux client uses `/bin/sh -c`, with stdin closed and stderr discarded. Execution,
+  stdout reading and exit wait share a **30-second deadline**; stdout may contain at most
+  **16 KiB before whitespace trimming**. Overflow, invalid UTF-8 or a nonzero exit reject
+  the password, never truncate or replace it. The existing AUTH credential-size limit
+  still applies after trimming. Errors report the cause/status without the command or
+  its output. SIGINT/SIGTERM during this step cancel startup and terminate the supplier;
+  timeout, overflow and cancellation also target its Linux process group. Normal error/
+  stop paths await the shell; forced future cancellation uses eventual Tokio reaping.
+  Descendants that deliberately leave the group and uninterruptible kernel waits remain
+  outside this cleanup guarantee. Successful commands may retain explicitly redirected
+  background services, as with hooks. Raw retained output and the returned password use
+  zeroizing buffers. These execution limits apply to `password_command`, not `password_file`.
 
 On the **server**, users can be kept inline — as
 `[user:<name>]` sections right in server.conf (with Argon2 hashes) — or in the

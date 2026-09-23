@@ -154,7 +154,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 22 | Transport core, FFI/JNI and memory | H06, H08 | IN_PROGRESS |
 | 23 | Roaming, resume and CONTROL_V2 | H06, H08 | TODO |
 | 24 | Multipath, bonding and shared budgets | H04, H06, H08 | TODO |
-| 25 | Linux CLI and network recovery | H01, H04, H08 | TODO |
+| 25 | Linux CLI and network recovery | H01, H04, H08 | IN_PROGRESS |
 | 26 | Shared C# and managed/native boundary | H04, H06, H08 | TODO |
 | 27 | Windows GUI, service and drivers | H01, H04, H08 | TODO |
 | 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | TODO |
@@ -163,7 +163,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | IN_PROGRESS |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | IN_PROGRESS |
-| 34 | CI, dependencies, native provenance and release | H04, H06, H08 | TODO |
+| 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | TODO |
 | 36 | Benchmarks and measurement methodology | H07 | TODO |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | TODO |
@@ -483,6 +483,15 @@ environment after config removal/replacement. 874 host Rust tests PASS; four new
 Linux tests cross-checked only. password_command process bounds, startup ownership,
 installer/update/restore and Linux runtime integration remain open.
 
+**Credential execution and feature isolation, 23 September 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+asynchronous password_command, 30-second deadline, full stdout up to 16 KiB, discarded
+stderr and secret-safe failures. Early SIGINT/SIGTERM cancels and reaps the supplier;
+client watchers/sampler have a scoped owner. Server-only TUN gate fixed and both isolated
+features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked only.
+Server-only check has 23 existing transport dead-code warnings. password_file bounds,
+final client task drain and Linux runtime/release checks remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -705,7 +714,16 @@ Endpoint route pinning/same-LAN, full/split, includes/excludes, leak policies/ki
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Credential execution and feature isolation, 23 September 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+asynchronous password_command, 30-second deadline, full stdout up to 16 KiB, discarded
+stderr and secret-safe failures. Early SIGINT/SIGTERM cancels and reaps the supplier;
+client watchers/sampler have a scoped owner. Server-only TUN gate fixed and both isolated
+features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked only.
+Server-only check has 23 existing transport dead-code warnings. password_file bounds,
+final client task drain and Linux runtime/release checks remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -850,6 +868,15 @@ environment after config removal/replacement. 874 host Rust tests PASS; four new
 Linux tests cross-checked only. password_command process bounds, startup ownership,
 installer/update/restore and Linux runtime integration remain open.
 
+**Credential execution and feature isolation, 23 September 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+asynchronous password_command, 30-second deadline, full stdout up to 16 KiB, discarded
+stderr and secret-safe failures. Early SIGINT/SIGTERM cancels and reaps the supplier;
+client watchers/sampler have a scoped owner. Server-only TUN gate fixed and both isolated
+features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked only.
+Server-only check has 23 existing transport dead-code warnings. password_file bounds,
+final client task drain and Linux runtime/release checks remain open.
+
 ### 34. CI, dependencies, native provenance and release
 
 **Source:** `qeli/Cargo.toml`, `qeli/Cargo.lock`, `.github/workflows`, `native-libs`, `release/certification`.
@@ -864,7 +891,16 @@ Feature/debug/release/jemalloc matrices, lockfiles, current advisories/licenses 
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Credential execution and feature isolation, 23 September 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+asynchronous password_command, 30-second deadline, full stdout up to 16 KiB, discarded
+stderr and secret-safe failures. Early SIGINT/SIGTERM cancels and reaps the supplier;
+client watchers/sampler have a scoped owner. Server-only TUN gate fixed and both isolated
+features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked only.
+Server-only check has 23 existing transport dead-code warnings. password_file bounds,
+final client task drain and Linux runtime/release checks remain open.
 
 ### 35. Fuzzing, concurrency, DoS and soak
 

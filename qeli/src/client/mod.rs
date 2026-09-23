@@ -1889,12 +1889,12 @@ impl ClientStatusReporter {
         }
     }
 
-    fn start_sampler(&self, counters: Arc<RuntimeCounters>) {
+    fn start_sampler(&self, counters: Arc<RuntimeCounters>, tasks: &mut tokio::task::JoinSet<()>) {
         if self.path.is_none() {
             return;
         }
         let reporter = self.clone();
-        tokio::spawn(async move {
+        tasks.spawn(async move {
             loop {
                 reporter.publish(&counters);
                 tokio::time::sleep(Duration::from_secs(2)).await;
@@ -2367,7 +2367,8 @@ async fn wait_for_reconnect(delay: Duration, shutdown: &AtomicBool, wakeup: &tok
 #[cfg(target_os = "linux")]
 pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
-    tokio::spawn(trace::watch());
+    let mut client_tasks = tokio::task::JoinSet::new();
+    client_tasks.spawn(trace::watch());
 
     let (config_content, config_command_trust) =
         crate::config_source::load(config_path)?.into_parts();
@@ -2377,7 +2378,26 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
     core_adapter
         .diagnostics
-        .start_sampler(core_adapter.counters.clone());
+        .start_sampler(core_adapter.counters.clone(), &mut client_tasks);
+    // Register synchronously before any credential command is spawned. One stop token
+    // covers startup, the active carrier and reconnect backoff. JoinSet owns watchers
+    // and the sampler, aborting them on startup error/return/cancellation.
+    use tokio::signal::unix::{signal, SignalKind};
+    let mut term = signal(SignalKind::terminate())?;
+    let mut interrupt = signal(SignalKind::interrupt())?;
+    let shutdown_requested = core_adapter.cancel_token();
+    let signal_cancel = shutdown_requested.clone();
+    let shutdown_wakeup = Arc::new(tokio::sync::Notify::new());
+    let signal_wakeup = shutdown_wakeup.clone();
+    client_tasks.spawn(async move {
+        tokio::select! {
+            _ = interrupt.recv() => {},
+            _ = term.recv() => {},
+        }
+        log::info!("Shutdown signal received — stopping the client cleanly");
+        signal_cancel.store(true, Ordering::Release);
+        signal_wakeup.notify_one();
+    });
     // Warn when a config holding a cleartext password is readable by other local accounts.
     //
     // Nothing on the LOAD path ever looked at the file mode. `pass = <vpn password>` and a
@@ -2412,10 +2432,10 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             }
         }
     }
-    let password = zeroize::Zeroizing::new(if let Some(ref pw) = config.auth.password {
-        pw.clone()
+    let password = if let Some(ref pw) = config.auth.password {
+        zeroize::Zeroizing::new(pw.clone())
     } else if let Some(ref pw_file) = config.auth.password_file {
-        std::fs::read_to_string(pw_file)?.trim().to_string()
+        zeroize::Zeroizing::new(std::fs::read_to_string(pw_file)?.trim().to_string())
     } else if let Some(ref pw_cmd) = config.auth.password_command {
         // SECURITY: password_command runs `sh -c` as us (typically root). Honour it
         // ONLY from a trusted (not group/world-writable) config file, exactly like
@@ -2426,22 +2446,21 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
         config_command_trust
             .check()
             .map_err(|why| anyhow::anyhow!("refusing to run auth.password_command — {why}"))?;
-        let output = std::process::Command::new("sh")
-            .args(["-c", pw_cmd])
-            .output()?;
-        if !output.status.success() {
-            anyhow::bail!(
-                "auth.password_command failed with {}: {}",
-                output.status,
-                String::from_utf8_lossy(&output.stderr).trim()
-            );
+        let stop = async {
+            if !shutdown_requested.load(Ordering::Acquire) {
+                shutdown_wakeup.notified().await;
+            }
+        };
+        match crate::hook_process::secret::password(pw_cmd, stop).await {
+            Ok(password) => password,
+            Err(crate::hook_process::secret::SecretError::Cancelled) => return Ok(()),
+            Err(error) => return Err(error.into()),
         }
-        String::from_utf8(output.stdout)?.trim().to_string()
     } else {
         return Err(anyhow::anyhow!(
             "auth.password, auth.password_file or auth.password_command required"
         ));
-    });
+    };
     // Bound the EFFECTIVE credential, not just the inline one.
     //
     // `config.validate()` above already checked `pass`, but it ran before this block — the
@@ -2457,6 +2476,10 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
         "password_command"
     };
     config.check_credential_size(&password, pw_source)?;
+
+    if shutdown_requested.load(Ordering::Acquire) {
+        return Ok(());
+    }
 
     // Repair any DNS state left behind by a previous run that died without
     // restoring (SIGKILL / power loss / panic). Must run before we touch DNS.
@@ -2503,33 +2526,6 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // address, gateway, DNS, route, data-plane and physical-carrier facts. `post_up` consumes
     // the first committed snapshot; `post_down` receives the latest one.
     core_adapter.configure_hooks(&config, config_path, post_up.clone());
-
-    // SIGINT/SIGTERM must enter the same cooperative cancellation path as GUI/native stop.
-    // The previous signal task called process::exit after doing its own partial cleanup. That
-    // skipped data-plane destructors and, for roaming, made it impossible to send authenticated
-    // CLOSE_SESSION before the socket disappeared. Keep one cancellation token alive for the
-    // whole CLI retry loop; after the active generation unwinds, the ordinary teardown below
-    // restores DNS, routes, firewall state and lifecycle hooks exactly once.
-    let shutdown_requested = core_adapter.cancel_token();
-    let signal_cancel = shutdown_requested.clone();
-    let shutdown_wakeup = Arc::new(tokio::sync::Notify::new());
-    let signal_wakeup = shutdown_wakeup.clone();
-    tokio::spawn(async move {
-        use tokio::signal::unix::{signal, SignalKind};
-        let mut term = signal(SignalKind::terminate()).ok();
-        tokio::select! {
-            _ = tokio::signal::ctrl_c() => {}
-            _ = async {
-                match term.as_mut() {
-                    Some(t) => { let _ = t.recv().await; }
-                    None => std::future::pending::<()>().await,
-                }
-            } => {}
-        }
-        log::info!("Shutdown signal received — stopping the active tunnel cleanly");
-        signal_cancel.store(true, Ordering::Release);
-        signal_wakeup.notify_one();
-    });
 
     // Engage the kill-switch BEFORE the first connect, so even the first attempt
     // and every reconnect window is leak-proof. It stays up across reconnects and

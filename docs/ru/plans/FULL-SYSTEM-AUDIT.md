@@ -159,7 +159,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 22 | Transport core, FFI/JNI и память | H06, H08 | IN_PROGRESS |
 | 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | TODO |
 | 24 | Multipath, bonding и общий бюджет | H04, H06, H08 | TODO |
-| 25 | Linux CLI и восстановление сети | H01, H04, H08 | TODO |
+| 25 | Linux CLI и восстановление сети | H01, H04, H08 | IN_PROGRESS |
 | 26 | Общий C# и managed/native граница | H04, H06, H08 | TODO |
 | 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | TODO |
 | 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | TODO |
@@ -168,7 +168,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | IN_PROGRESS |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | IN_PROGRESS |
-| 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | TODO |
+| 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
 | 36 | Бенчмарки и методика измерения | H07 | TODO |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | TODO |
@@ -488,6 +488,15 @@ autostart supervisor, доверие конфигу и Linux E2E ещё откр
 Linux-теста только cross-checked. Лимиты password_command, владение startup-задачами,
 installer/update/restore и Linux runtime integration ещё открыты.
 
+**Поставщик пароля и изоляция features, 23 сентября 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+асинхронный password_command, deadline 30 секунд, полный stdout до 16 KiB, отброшенный
+stderr и ошибки без секретов. Ранний SIGINT/SIGTERM отменяет и собирает поставщика;
+watchers/sampler клиента имеют владельца. Исправлен server-only TUN gate, обе изолированные
+features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
+Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
+финальный drain клиента и Linux runtime/release checks ещё открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -712,7 +721,16 @@ Endpoint route pin/same-LAN, full/split, include/exclude, leak policy/kill switc
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Поставщик пароля и изоляция features, 23 сентября 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+асинхронный password_command, deadline 30 секунд, полный stdout до 16 KiB, отброшенный
+stderr и ошибки без секретов. Ранний SIGINT/SIGTERM отменяет и собирает поставщика;
+watchers/sampler клиента имеют владельца. Исправлен server-only TUN gate, обе изолированные
+features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
+Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
+финальный drain клиента и Linux runtime/release checks ещё открыты.
 
 ### 26. Общий C# и managed/native граница
 
@@ -857,6 +875,15 @@ Fresh install/upgrade/downgrade/remove, systemd sandbox, identity/users preserva
 Linux-теста только cross-checked. Лимиты password_command, владение startup-задачами,
 installer/update/restore и Linux runtime integration ещё открыты.
 
+**Поставщик пароля и изоляция features, 23 сентября 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+асинхронный password_command, deadline 30 секунд, полный stdout до 16 KiB, отброшенный
+stderr и ошибки без секретов. Ранний SIGINT/SIGTERM отменяет и собирает поставщика;
+watchers/sampler клиента имеют владельца. Исправлен server-only TUN gate, обе изолированные
+features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
+Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
+финальный drain клиента и Linux runtime/release checks ещё открыты.
+
 ### 34. CI, зависимости, native provenance и релиз
 
 **Код:** `qeli/Cargo.toml`, `qeli/Cargo.lock`, `.github/workflows`, `native-libs`, `release/certification`.
@@ -871,7 +898,16 @@ Feature/debug/release/jemalloc matrix, lockfiles, актуальные CVE/licen
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Поставщик пароля и изоляция features, 23 сентября 2026:**
+[Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
+асинхронный password_command, deadline 30 секунд, полный stdout до 16 KiB, отброшенный
+stderr и ошибки без секретов. Ранний SIGINT/SIGTERM отменяет и собирает поставщика;
+watchers/sampler клиента имеют владельца. Исправлен server-only TUN gate, обе изолированные
+features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
+Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
+финальный drain клиента и Linux runtime/release checks ещё открыты.
 
 ### 35. Fuzzing, concurrency, DoS и soak
 
