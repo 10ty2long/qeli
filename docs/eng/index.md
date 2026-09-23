@@ -74,6 +74,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-CORE-LIFECYCLE.md](reports/AUDIT-Q25-CORE-LIFECYCLE.md) | Core startup/teardown failures, terminal hooks and kill-switch retention |
 | [AUDIT-Q25-DNS-RECOVERY.md](reports/AUDIT-Q25-DNS-RECOVERY.md) | Legacy DNS recovery: checked operations and retained snapshots |
 | [AUDIT-Q25-TUN-CLEANUP.md](reports/AUDIT-Q25-TUN-CLEANUP.md) | TUN/DNS/route cleanup errors, guarded plan handoff and terminal kick preservation |
+| [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |
 | [AUDIT-Q25-SYSTEM-COMMANDS.md](reports/AUDIT-Q25-SYSTEM-COMMANDS.md) | TUN/resolvectl execution and output bounds, child lifetime and DNS markers |
 | [AUDIT-Q25-TCP-TASKS.md](reports/AUDIT-Q25-TCP-TASKS.md) | TCP task ownership, closed admission and Linux path-worker joining |

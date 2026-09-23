@@ -551,8 +551,15 @@ overall shutdown deadline remain open; section status stays IN_PROGRESS.
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
 post-delete verification and failure diagnostics while continuing other rules/chains.
 13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
-Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
-deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
+Q14-F026 is fixed in the [next pass](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (teardown error propagation), firewall deadlines and live Linux remain open.
+
+**Shared firewall checks, 23 September 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): server and Linux
+kill-switch share presence/absence/error classification; exact DNS cleanup verifies the
+1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
+PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
+and actual backend/runtime validation remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -611,8 +618,15 @@ NAT44/forward_private/gateway_nat/MSS and iptables/nft backend errors. Before/af
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
 post-delete verification and failure diagnostics while continuing other rules/chains.
 13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
-Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
-deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
+Q14-F026 is fixed in the [next pass](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (teardown error propagation), firewall deadlines and live Linux remain open.
+
+**Shared firewall checks, 23 September 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): server and Linux
+kill-switch share presence/absence/error classification; exact DNS cleanup verifies the
+1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
+PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
+and actual backend/runtime validation remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -634,8 +648,15 @@ All 4×3 egress/NDP combinations and every transition for ipv4/dual/ipv6. Linux 
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
 post-delete verification and failure diagnostics while continuing other rules/chains.
 13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
-Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
-deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
+Q14-F026 is fixed in the [next pass](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (teardown error propagation), firewall deadlines and live Linux remain open.
+
+**Shared firewall checks, 23 September 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): server and Linux
+kill-switch share presence/absence/error classification; exact DNS cleanup verifies the
+1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
+PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
+and actual backend/runtime validation remain open.
 
 ### 19. Server and client DNS
 
@@ -714,8 +735,15 @@ overall shutdown deadline remain open; section status stays IN_PROGRESS.
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
 post-delete verification and failure diagnostics while continuing other rules/chains.
 13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
-Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
-deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
+Q14-F026 is fixed in the [next pass](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (teardown error propagation), firewall deadlines and live Linux remain open.
+
+**Shared firewall checks, 23 September 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): server and Linux
+kill-switch share presence/absence/error classification; exact DNS cleanup verifies the
+1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
+PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
+and actual backend/runtime validation remain open.
 
 ### 20. DHCP and lease lifecycle
 
@@ -986,6 +1014,13 @@ output capped at 16 MiB per stream, child termination and DNS-marker retention o
 Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
 process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
 overall shutdown deadline remain open; section status stays IN_PROGRESS.
+
+**Shared firewall checks, 23 September 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): server and Linux
+kill-switch share presence/absence/error classification; exact DNS cleanup verifies the
+1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
+PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
+and actual backend/runtime validation remain open.
 
 ### 26. Shared C# and managed/native boundary
 

@@ -22,6 +22,13 @@ pub mod util;
 #[path = "server/dns/resolver.rs"]
 mod dns_resolver;
 
+// Shared interpretation of firewall rule/chain checks; no platform commands in this module.
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+mod firewall_check;
+
 // Firewall cleanup algorithms are tested with command results, without host mutations.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/nat/cleanup.rs"]

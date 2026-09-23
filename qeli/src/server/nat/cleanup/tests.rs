@@ -332,3 +332,251 @@ fn comment_parser_does_not_confuse_substrings_or_broken_quotes() {
     assert_eq!(rule_comment("-A INPUT --comment \"unfinished"), None);
     assert_eq!(rule_comment("-A INPUT --commentary qeli-nat:edge"), None);
 }
+
+fn check_output(present: bool) -> Output {
+    let mut result = output(true, "", "");
+    if !present {
+        #[cfg(unix)]
+        {
+            result.status = std::process::ExitStatus::from_raw(1 << 8);
+        }
+        #[cfg(windows)]
+        {
+            result.status = std::process::ExitStatus::from_raw(1);
+        }
+        result.stderr = b"iptables: Bad rule (does a matching rule exist in that chain?).".to_vec();
+    }
+    result
+}
+
+fn exact_rule() -> Vec<String> {
+    [
+        "-i",
+        "tun0",
+        "-s",
+        "10.42.0.0/24",
+        "-d",
+        "10.42.0.1",
+        "-p",
+        "udp",
+        "--dport",
+        "53",
+        "-m",
+        "comment",
+        "--comment",
+        "qeli-nat:edge",
+        "-j",
+        "ACCEPT",
+    ]
+    .into_iter()
+    .map(str::to_string)
+    .collect()
+}
+
+#[test]
+fn exact_cleanup_uses_only_check_and_delete_with_identical_ownership() {
+    let rule = exact_rule();
+    let mut remaining = 3;
+    let mut calls = Vec::new();
+    cleanup_exact_rules_with("filter", "INPUT", [("udp", rule.as_slice())], |args| {
+        assert_eq!(&args[..2], &["-t", "filter"]);
+        assert_eq!(args[3], "INPUT");
+        assert_eq!(args[4..], rule);
+        calls.push(args[2].to_string());
+        match args[2] {
+            "-C" => Ok(check_output(remaining != 0)),
+            "-D" => {
+                remaining -= 1;
+                Ok(output(true, "", ""))
+            }
+            _ => panic!("mixed native nft chains must never require -S"),
+        }
+    })
+    .unwrap();
+    assert_eq!(remaining, 0);
+    assert_eq!(calls, ["-C", "-D", "-C", "-D", "-C", "-D", "-C"]);
+}
+
+#[test]
+fn exact_cleanup_absence_is_idempotent_without_deleting() {
+    let mut calls = 0;
+    cleanup_exact_rules_with(
+        "filter",
+        "INPUT",
+        [("udp", exact_rule().as_slice())],
+        |args| {
+            calls += 1;
+            assert_eq!(args[2], "-C");
+            Ok(check_output(false))
+        },
+    )
+    .unwrap();
+    assert_eq!(calls, 1);
+}
+
+#[test]
+fn exact_cleanup_rejects_failed_check_and_never_deletes_on_unknown_state() {
+    for io_failure in [false, true] {
+        let mut calls = 0;
+        let error = cleanup_exact_rules_with(
+            "filter",
+            "INPUT",
+            [("udp", exact_rule().as_slice())],
+            |args| {
+                calls += 1;
+                assert_eq!(args[2], "-C");
+                if io_failure {
+                    return Err(std::io::Error::other("fixture spawn denied"));
+                }
+                let mut value = check_output(false);
+                value.stderr = b"iptables: Permission denied (you must be root)".to_vec();
+                Ok(value)
+            },
+        )
+        .unwrap_err()
+        .to_string();
+        assert_eq!(calls, 1);
+        assert!(
+            error.contains(if io_failure {
+                "fixture spawn denied"
+            } else {
+                "Permission denied"
+            }),
+            "{error}"
+        );
+        assert!(error.contains("udp"), "{error}");
+    }
+}
+
+#[test]
+fn exact_cleanup_checks_absence_after_exactly_1024_deletions() {
+    let mut remaining = MAX_EXACT_RULE_COPIES;
+    let mut checks = 0;
+    cleanup_exact_rules_with(
+        "filter",
+        "INPUT",
+        [("udp", exact_rule().as_slice())],
+        |args| match args[2] {
+            "-C" => {
+                checks += 1;
+                Ok(check_output(remaining > 0))
+            }
+            "-D" => {
+                remaining -= 1;
+                Ok(output(true, "", ""))
+            }
+            _ => panic!("unexpected command"),
+        },
+    )
+    .unwrap();
+    assert_eq!(remaining, 0);
+    assert_eq!(checks, MAX_EXACT_RULE_COPIES + 1);
+}
+
+#[test]
+fn exact_cleanup_stops_at_limit_if_rule_still_exists() {
+    for no_op in [false, true] {
+        let mut remaining = MAX_EXACT_RULE_COPIES + 1;
+        let mut deletes = 0;
+        let error = cleanup_exact_rules_with(
+            "filter",
+            "INPUT",
+            [("udp", exact_rule().as_slice())],
+            |args| match args[2] {
+                "-C" => Ok(check_output(remaining > 0)),
+                "-D" => {
+                    deletes += 1;
+                    assert!(deletes <= MAX_EXACT_RULE_COPIES, "cleanup must be finite");
+                    if !no_op {
+                        remaining -= 1;
+                    }
+                    Ok(output(true, "", ""))
+                }
+                _ => panic!("unexpected command"),
+            },
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("still present after 1024"), "{error}");
+        assert_eq!(deletes, MAX_EXACT_RULE_COPIES);
+        assert_eq!(remaining, if no_op { MAX_EXACT_RULE_COPIES + 1 } else { 1 });
+    }
+}
+
+#[test]
+fn exact_cleanup_rejects_failed_final_check_after_deletion() {
+    let mut checks = 0;
+    let error = cleanup_exact_rules_with(
+        "filter",
+        "INPUT",
+        [("udp", exact_rule().as_slice())],
+        |args| {
+            if args[2] == "-C" {
+                checks += 1;
+                if checks == 2 {
+                    return Err(std::io::Error::other("fixture verification unavailable"));
+                }
+            }
+            Ok(output(true, "", ""))
+        },
+    )
+    .unwrap_err()
+    .to_string();
+    assert!(
+        error.contains("fixture verification unavailable"),
+        "{error}"
+    );
+}
+
+#[test]
+fn exact_cleanup_continues_tcp_after_udp_check_or_delete_failure() {
+    for fail_check in [true, false] {
+        let udp = exact_rule();
+        let mut tcp = udp.clone();
+        tcp[7] = "tcp".into();
+        let mut tcp_present = true;
+        let error = cleanup_exact_rules_with(
+            "filter",
+            "INPUT",
+            [("udp", udp.as_slice()), ("tcp", tcp.as_slice())],
+            |args| {
+                if args.contains(&"udp") {
+                    if !fail_check && args[2] == "-C" {
+                        return Ok(output(true, "", ""));
+                    }
+                    return Err(std::io::Error::other("fixture UDP command failure"));
+                }
+                assert!(args.contains(&"tcp"));
+                match args[2] {
+                    "-C" => Ok(check_output(tcp_present)),
+                    "-D" => {
+                        tcp_present = false;
+                        Ok(output(true, "", ""))
+                    }
+                    _ => panic!("unexpected command"),
+                }
+            },
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("udp"), "{error}");
+        assert!(error.contains("fixture UDP command failure"), "{error}");
+        assert!(!tcp_present, "UDP failure must not skip TCP cleanup");
+    }
+}
+
+#[test]
+fn exact_cleanup_keeps_both_protocol_errors() {
+    let udp = exact_rule();
+    let tcp = exact_rule();
+    let error = cleanup_exact_rules_with(
+        "filter",
+        "INPUT",
+        [("udp", udp.as_slice()), ("tcp", tcp.as_slice())],
+        |_| Ok(output(false, "", "fixture backend error")),
+    )
+    .unwrap_err()
+    .to_string();
+    assert!(error.contains("udp:"), "{error}");
+    assert!(error.contains("tcp:"), "{error}");
+}

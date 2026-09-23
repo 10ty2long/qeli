@@ -20,7 +20,9 @@
 //! any explicit rule/jump, or an unreadable chain fails closed instead of starting a
 //! profile that black-holes client traffic.
 
-use crate::nat_cleanup::{cleanup_matching_with, rule_comment};
+#[cfg(test)]
+use crate::nat_cleanup::exact_delete_args;
+use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_comment};
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
@@ -983,38 +985,6 @@ fn dns_input_rule(
     ]
 }
 
-const MAX_EXACT_RULE_COPIES: usize = 1024;
-
-fn exact_delete_args(table: &str, chain: &str, rule: &[String]) -> Vec<String> {
-    let mut args = vec!["-t".into(), table.into(), "-D".into(), chain.into()];
-    args.extend_from_slice(rule);
-    args
-}
-
-/// Delete every copy of one rule without listing its chain. Native nftables rules can make
-/// `iptables-nft -S` reject an otherwise mutable built-in chain; exact `-C`/`-D` remains valid.
-fn delete_exact_rule(path: &str, table: &str, chain: &str, rule: &[String]) -> anyhow::Result<()> {
-    for _ in 0..MAX_EXACT_RULE_COPIES {
-        if !rule_present(path, table, chain, rule) {
-            return Ok(());
-        }
-        let args = exact_delete_args(table, chain, rule);
-        let argv: Vec<&str> = args.iter().map(String::as_str).collect();
-        let output = ipt(path, &argv).map_err(|error| {
-            anyhow::anyhow!("could not execute exact {table}/{chain} cleanup: {error}")
-        })?;
-        if !output.status.success() {
-            anyhow::bail!(
-                "exact {table}/{chain} cleanup failed: {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            );
-        }
-    }
-    anyhow::bail!(
-        "refusing to remove more than {MAX_EXACT_RULE_COPIES} identical {table}/{chain} rules"
-    )
-}
-
 fn cleanup_dns_input_with(
     path: &str,
     profile: &str,
@@ -1023,18 +993,19 @@ fn cleanup_dns_input_with(
     listen: &str,
     port: u16,
 ) -> anyhow::Result<()> {
-    let mut errors = Vec::new();
-    for proto in ["udp", "tcp"] {
-        let args = dns_input_rule(profile, tun, pool_cidr, listen, port, proto);
-        if let Err(error) = delete_exact_rule(path, "filter", "INPUT", &args) {
-            errors.push(format!("{proto}: {error}"));
-        }
-    }
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        anyhow::bail!("DNS INPUT cleanup failed: {}", errors.join("; "))
-    }
+    let rules = ["udp", "tcp"].map(|proto| {
+        (
+            proto,
+            dns_input_rule(profile, tun, pool_cidr, listen, port, proto),
+        )
+    });
+    cleanup_exact_rules_with(
+        "filter",
+        "INPUT",
+        rules.iter().map(|(proto, rule)| (*proto, rule.as_slice())),
+        |args| ipt(path, args),
+    )
+    .map_err(|error| anyhow::anyhow!("DNS INPUT cleanup failed: {error}"))
 }
 
 /// Exact ownership token for the INPUT permits installed by [`enable_dns_input`].

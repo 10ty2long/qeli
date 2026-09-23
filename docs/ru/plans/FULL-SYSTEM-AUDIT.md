@@ -556,8 +556,15 @@ Linux и общий deadline shutdown остаются открытыми; ст�
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
 проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
 13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
-Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
-и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
+Q14-F026 исправлена [следующим проходом](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (передача ошибок teardown), сроки firewall-команд и live Linux остаются открытыми.
+
+**Общие firewall-проверки, 23 сентября 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): сервер и Linux
+kill-switch используют общий разбор presence/absence/errors; точечная очистка DNS
+проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
+1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
+Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -616,8 +623,15 @@ NAT44/forward_private/gateway_nat/MSS и iptables/nft backend errors. Before/aft
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
 проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
 13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
-Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
-и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
+Q14-F026 исправлена [следующим проходом](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (передача ошибок teardown), сроки firewall-команд и live Linux остаются открытыми.
+
+**Общие firewall-проверки, 23 сентября 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): сервер и Linux
+kill-switch используют общий разбор presence/absence/errors; точечная очистка DNS
+проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
+1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
+Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -639,8 +653,15 @@ Q14-F026/F027 (точечная DNS-проверка и передача оши�
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
 проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
 13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
-Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
-и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
+Q14-F026 исправлена [следующим проходом](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (передача ошибок teardown), сроки firewall-команд и live Linux остаются открытыми.
+
+**Общие firewall-проверки, 23 сентября 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): сервер и Linux
+kill-switch используют общий разбор presence/absence/errors; точечная очистка DNS
+проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
+1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
+Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -721,8 +742,15 @@ Linux и общий deadline shutdown остаются открытыми; ст�
 [Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
 проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
 13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
-Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
-и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
+Q14-F026 исправлена [следующим проходом](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Q14-F027 (передача ошибок teardown), сроки firewall-команд и live Linux остаются открытыми.
+
+**Общие firewall-проверки, 23 сентября 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): сервер и Linux
+kill-switch используют общий разбор presence/absence/errors; точечная очистка DNS
+проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
+1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
+Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 
@@ -993,6 +1021,13 @@ Standalone H2, ранний platform rollback, UDP cancellation и deadlines о�
 при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
 PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
 Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
+
+**Общие firewall-проверки, 23 сентября 2026:**
+[Q14-F026 / Q25-F018/F019](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md): сервер и Linux
+kill-switch используют общий разбор presence/absence/errors; точечная очистка DNS
+проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
+1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
+Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 

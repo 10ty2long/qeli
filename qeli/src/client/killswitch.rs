@@ -45,6 +45,7 @@
 //! else" is exactly the traffic that is supposed to go direct), so the caller
 //! gates on that.
 
+use crate::firewall_check::{present as checked_presence, Query};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
 use std::process::Command;
@@ -147,52 +148,18 @@ fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
     candidate.filter(|chain| *chain == LEGACY_CHAIN || chain.starts_with("QELI_KS_"))
 }
 
-fn absent_check(
-    status: &std::process::ExitStatus,
-    stderr: &str,
-    expected_chain: Option<&str>,
-) -> bool {
-    if status.code() == Some(1) {
-        return true;
-    }
-    let stderr = stderr.to_ascii_lowercase();
-    if stderr.contains("no chain/target/match by that name")
-        || stderr.contains("does a matching rule exist")
-        || stderr.contains("rule does not exist")
-    {
-        return true;
-    }
-    expected_chain.is_some_and(|chain| {
-        let chain = chain.to_ascii_lowercase();
-        stderr.contains(&chain)
-            && ((stderr.contains("couldn't load target")
-                && stderr.contains("no such file or directory"))
-                // iptables-nft reports a missing jump target with status 2, not the
-                // conventional status 1. Scope this phrase to the expected QELI chain so
-                // unrelated nft parser/backend failures remain fatal.
-                || (stderr.contains("chain") && stderr.contains("does not exist")))
-    })
-}
-
 /// Presence check for teardown paths, where "absent" and "could not inspect the
 /// firewall" must not collapse into the same `false` result.
 pub(crate) fn present_checked(path: &str, args: &[&str]) -> anyhow::Result<bool> {
     let output = ipt(path, args)
         .map_err(|error| anyhow::anyhow!("cannot run {path} {}: {error}", args.join(" ")))?;
-    if output.status.success() {
-        return Ok(true);
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if absent_check(&output.status, &stderr, expected_qeli_chain(args)) {
-        Ok(false)
-    } else {
-        anyhow::bail!(
-            "{path} {} failed with {}: {}",
-            args.join(" "),
-            output.status,
-            stderr.trim()
-        )
-    }
+    checked_presence(
+        &output,
+        Query::Rule {
+            missing_target: expected_qeli_chain(args),
+        },
+    )
+    .map_err(|error| anyhow::anyhow!("{path} {}: {error}", args.join(" ")))
 }
 
 /// True for a syntactically valid Linux interface name (≤ IFNAMSIZ-1 = 15,
@@ -209,19 +176,8 @@ pub(crate) fn valid_ifname(s: &str) -> bool {
 fn chain_exists(path: &str, chain: &str) -> anyhow::Result<bool> {
     let output = ipt(path, &["-S", chain])
         .map_err(|error| anyhow::anyhow!("cannot run {path} -S {chain}: {error}"))?;
-    if output.status.success() {
-        return Ok(true);
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if absent_check(&output.status, &stderr, Some(chain)) {
-        Ok(false)
-    } else {
-        anyhow::bail!(
-            "{path} -S {chain} failed with {}: {}",
-            output.status,
-            stderr.trim()
-        )
-    }
+    checked_presence(&output, Query::Chain(chain))
+        .map_err(|error| anyhow::anyhow!("{path} -S {chain}: {error}"))
 }
 
 fn teardown_family(path: &str, chain: &str) -> anyhow::Result<()> {
@@ -963,22 +919,29 @@ mod fault_injection {
     }
 
     #[test]
-    fn iptables_legacy_missing_qeli_target_is_absent_not_fatal() {
-        use std::os::unix::process::ExitStatusExt;
+    fn failed_inspection_keeps_teardown_failed_without_flushing_chains() {
+        let fixture = Ipt::new("cleanup-query-error", &[]);
+        let path = fixture.dir.join("iptables");
+        std::fs::write(&path, format!(
+            "#!/bin/sh\necho \"$*\" >> \"{}\"\necho 'iptables: Permission denied (you must be root)' >&2\nexit 1\n",
+            fixture.dir.join("calls.log").display(),
+        )).unwrap();
+        let error = teardown_family(path.to_str().unwrap(), "QELI_KS_qtest")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("Permission denied"), "{error}");
+        let calls = fixture.calls();
+        assert!(calls.contains("-C OUTPUT"));
+        assert!(calls.contains("-C FORWARD"));
+        assert!(calls.contains("-S QELI_KS_qtest"));
+        assert!(
+            !calls.contains("-D ") && !calls.contains("-F ") && !calls.contains("-X "),
+            "{calls}"
+        );
+    }
 
-        let status = std::process::ExitStatus::from_raw(2 << 8);
-        let stderr = "iptables v1.8.9 (legacy): Couldn't load target \
-                      'QELI_KS_qtest':No such file or directory";
-        assert!(absent_check(&status, stderr, Some("QELI_KS_qtest")));
-        assert!(!absent_check(&status, stderr, Some("QELI_KS_other")));
-
-        let nft_stderr = "iptables v1.8.11 (nf_tables): Chain 'QELI_KS_qtest' does not exist";
-        assert!(absent_check(&status, nft_stderr, Some("QELI_KS_qtest")));
-        assert!(!absent_check(&status, nft_stderr, Some("QELI_KS_other")));
-
-        let unrelated = "iptables v1.8.9 (legacy): Couldn't load match \
-                         'owner':No such file or directory";
-        assert!(!absent_check(&status, unrelated, Some("QELI_KS_qtest")));
+    #[test]
+    fn only_qeli_jump_targets_allow_missing_chain_diagnostics() {
         assert_eq!(
             expected_qeli_chain(&["-C", "OUTPUT", "-j", "QELI_KS_qtest"]),
             Some("QELI_KS_qtest")

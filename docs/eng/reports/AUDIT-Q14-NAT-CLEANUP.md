@@ -69,6 +69,10 @@ the limit without a final absence check. Confirmed by review; not fixed in this 
 Next: portable negative fixtures, separate present/absent/unknown outcomes and a mixed
 native nft chain compatibility check.
 
+Follow-up on 23 September: Q14-F026 is fixed in the [next pass](AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+Exact cleanup shares result interpretation with Linux kill-switch; a final check validates
+the 1024 boundary. Mixed native nft compatibility is still covered by fixtures only.
+
 **Q14-F027, P2 — resource cleanup errors do not reach the stop result.**
 `cleanup(profile)` returns `()`, DNS leases clean up from Drop, and the stopping supervisor
 does not collect profile errors. Signal-driven worker exit status depends on accounting

@@ -188,6 +188,67 @@ pub(crate) fn cleanup_matching_with(
     errors.finish()
 }
 
+const MAX_EXACT_RULE_COPIES: usize = 1024;
+
+pub(crate) fn exact_delete_args(table: &str, chain: &str, rule: &[String]) -> Vec<String> {
+    let mut args = vec!["-t".into(), table.into(), "-D".into(), chain.into()];
+    args.extend_from_slice(rule);
+    args
+}
+
+/// Remove copies of one owned rule using only exact checks/deletes. This must not
+/// depend on `-S`: mixed native nft chains can reject listing while supporting -C/-D.
+fn delete_exact_rule_with(
+    table: &str,
+    chain: &str,
+    rule: &[String],
+    run: &mut impl FnMut(&[&str]) -> std::io::Result<Output>,
+) -> anyhow::Result<()> {
+    let delete = exact_delete_args(table, chain, rule);
+    let mut check = delete.clone();
+    check[2] = "-C".into();
+    let check: Vec<_> = check.iter().map(String::as_str).collect();
+    let delete: Vec<_> = delete.iter().map(String::as_str).collect();
+    for removed in 0..=MAX_EXACT_RULE_COPIES {
+        let output = run(&check).map_err(|error| {
+            anyhow::anyhow!("exact {table}/{chain} check could not run: {error}")
+        })?;
+        let present = crate::firewall_check::present(
+            &output,
+            crate::firewall_check::Query::Rule {
+                missing_target: None,
+            },
+        )
+        .map_err(|error| anyhow::anyhow!("exact {table}/{chain} check: {error}"))?;
+        if !present {
+            return Ok(());
+        }
+        // Always confirm absence after the last permitted deletion. Exactly 1024
+        // copies are supported; 1025 or a successful no-op remains an error.
+        if removed == MAX_EXACT_RULE_COPIES {
+            break;
+        }
+        checked_output(&delete, run)?;
+    }
+    anyhow::bail!(
+        "exact {table}/{chain} rule still present after {MAX_EXACT_RULE_COPIES} deletion attempts"
+    )
+}
+
+/// Attempt every owned rule even if one fails (in particular DNS UDP and TCP).
+pub(crate) fn cleanup_exact_rules_with<'a>(
+    table: &str,
+    chain: &str,
+    rules: impl IntoIterator<Item = (&'a str, &'a [String])>,
+    mut run: impl FnMut(&[&str]) -> std::io::Result<Output>,
+) -> anyhow::Result<()> {
+    let mut errors = Errors::default();
+    for (label, rule) in rules {
+        errors.record(label, delete_exact_rule_with(table, chain, rule, &mut run));
+    }
+    errors.finish()
+}
+
 #[cfg(test)]
 #[path = "cleanup/tests.rs"]
 mod tests;

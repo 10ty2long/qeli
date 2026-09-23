@@ -1117,6 +1117,22 @@ Do not flush an administrator's entire table to clean one profile.
 
 ---
 
+### 6.29 Linux: firewall inspection failed / DNS INPUT cleanup failed
+
+Inspection failure is now distinct from confirmed rule absence. Check the tool path,
+backend, permissions and specific stderr cause. A permission error with code 1 does not
+mean the rule was deleted. Unknown or additional diagnostic text also leaves state
+unconfirmed; include the complete log when reporting it.
+
+Server DNS permit cleanup attempts both UDP and TCP even if one fails. Exactly 1024
+identical rules are supported; `still present after 1024 deletion attempts` means the
+last check still found the rule. Accumulated copies, concurrent additions or a backend's
+successful no-op may explain this. Successful server exit alone still does not establish
+cleanup: propagating DNS lease errors into final shutdown status remains open.
+[Report and limits](../reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)
