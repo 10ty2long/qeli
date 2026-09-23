@@ -702,9 +702,25 @@ conversion in staging before publication. Internal API and webhook messages reta
   user hit their data cap or their expiry), *Panel login lockout* (an IP locked after
   too many failed **panel** logins), **VPN auth IP lockout** (an IP locked by
   brute-force protection after repeated wrong **VPN** login/password), *Config
-  restored*. Recurring conditions are throttled (≤ once/hour per user or IP).
+  restored*. Quota/VPN-auth alerts have a one-hour per-key cooldown; panel lockouts use ten minutes.
+  Opt-in connect/disconnect alerts use ten seconds per user and event type.
 - The Telegram token is **write-only** (masked after saving); **Send test** delivers a
   probe to one channel using the current (even unsaved) settings.
+
+Delivery limits apply separately to worker and supervisor: **128 accepted requests
+including active ones**, **8 active sends**, shared by Telegram, webhook and **Send test**.
+An event sent to both channels uses two slots. A full queue drops new automatic sends;
+`notify: queue full` reports the cumulative rejection count at exponentially spaced
+intervals. A panel probe gets an explicit error instead. Its **10-second total timeout
+includes queue wait**; timeout or handler cancellation cancels unsent work. Each automatic
+HTTP send also has a ten-second timeout after admission to the active group.
+
+Event details and the displayed server name are clipped at UTF-8 boundaries to 2048 and
+256 bytes respectively. Webhook bodies are capped at 32 KiB. URL/token/chat id longer
+than 4096/512/128 bytes are rejected, not shortened; saved configuration is unchanged.
+Graceful stop closes admission, drains for at most ten seconds, then cancels and joins
+remaining deliveries. There is no durable retry; full queues, shutdown or network errors
+can lose notifications. HTTP 4xx/5xx are logged with the channel name.
 
 ### Update banner (opt-in)
 When `[web] update_check = true`, the panel shows a dismissible **"Update available"**

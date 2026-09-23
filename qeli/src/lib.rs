@@ -27,6 +27,16 @@ mod dns_resolver;
 #[path = "server/tasks.rs"]
 mod profile_tasks;
 
+// Delivery admission/lifetime is tested without making external HTTP requests.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/notify_tasks.rs"]
+mod notify_tasks;
+
+#[cfg(all(test, feature = "server", not(target_os = "linux")))]
+#[allow(dead_code)] // Host tests exercise helpers; server entry points run only on Linux.
+#[path = "server/notify.rs"]
+mod server_notify;
+
 // Control protocol bounds are shared by the Unix server and its CLI client.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/control_io.rs"]

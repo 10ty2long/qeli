@@ -3489,6 +3489,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         .listener
         .take()
         .expect("new control listener");
+    let notifications = notify::start()?;
     let (control_shutdown_tx, control_shutdown_rx) = tokio::sync::watch::channel(false);
     let (control_fatal_tx, mut control_fatal_rx) = mpsc::unbounded_channel::<String>();
     let ctrl_state = state.clone();
@@ -3669,6 +3670,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     } else {
         false
     };
+    notifications.shutdown().await;
     log::info!("Server shutdown complete");
     // On a signal-driven stop, exit the process directly. The data plane spawns
     // blocking TUN reader threads; a graceful runtime drop joins them and would hang
@@ -3849,10 +3851,7 @@ async fn usage_sweep(state: Arc<ServerState>, mut shutdown: tokio::sync::watch::
                                 "subscription expired"
                             }
                         );
-                        tokio::spawn(async move {
-                            notify::fire_throttled(&key, 3600, notify::Event::QuotaBreach, &detail)
-                                .await;
-                        });
+                        notify::fire_throttled(&key, 3600, notify::Event::QuotaBreach, &detail);
                         to_kick.push((pname.clone(), *ip, s.session_id, over, expired));
                     }
                 }
@@ -4048,6 +4047,10 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
         udp_buffer_budget,
     });
 
+    let exe = std::env::current_exe()
+        .map_err(|e| anyhow::anyhow!("cannot resolve current_exe for worker: {}", e))?;
+    let notifications = notify::start()?;
+
     // Web panel — the always-up control plane.
     //
     // The outcome is AWAITED (briefly) rather than assumed. This used to be spawn-and-forget,
@@ -4110,13 +4113,10 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     ));
 
     // Notify (Tier-3): announce that the control plane is up (no-op if disabled).
-    tokio::spawn(async {
-        notify::fire(
-            notify::Event::ServerStart,
-            &format!("qeli {} control plane is up", env!("CARGO_PKG_VERSION")),
-        )
-        .await;
-    });
+    notify::fire(
+        notify::Event::ServerStart,
+        &format!("qeli {} control plane is up", env!("CARGO_PKG_VERSION")),
+    );
 
     // Auto-connect any client profiles flagged `autostart = true` (set in the panel's
     // Client tab or directly in the file). A client tunnel dials a REMOTE server, so it
@@ -4129,8 +4129,6 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     }
 
     // Supervise the data-plane worker child process.
-    let exe = std::env::current_exe()
-        .map_err(|e| anyhow::anyhow!("cannot resolve current_exe for worker: {}", e))?;
     let spawn_worker = || {
         tokio::process::Command::new(&exe)
             .arg("_worker")
@@ -4164,6 +4162,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     // restores DNS/routes before exit).
     state.client_manager.shutdown_all().await;
 
+    notifications.shutdown().await;
     log::info!("Supervisor shutdown complete");
     result.map_err(Into::into)
 }

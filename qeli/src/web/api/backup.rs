@@ -465,13 +465,10 @@ pub async fn restore_backup(
     let (status, payload) = match result {
         Ok(Ok(msg)) => {
             // Notify (Tier-3): a successful restore changed /etc/qeli on disk.
-            tokio::spawn(async {
-                crate::server::notify::fire(
-                    crate::server::notify::Event::Restore,
-                    "config restored from an uploaded backup",
-                )
-                .await;
-            });
+            crate::server::notify::fire(
+                crate::server::notify::Event::Restore,
+                "config restored from an uploaded backup",
+            );
             (StatusCode::OK, json!({ "ok": true, "message": msg }))
         }
         Ok(Err(e)) => (restore_error_status(&e), json!({ "ok": false, "error": e })),

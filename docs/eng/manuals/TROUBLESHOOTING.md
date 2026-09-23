@@ -213,6 +213,13 @@ traffic while retaining exclusive worker ownership. `usage: shutdown flush faile
 means the final write failed; inspect disk space, permissions and the preceding error.
 The worker reports failure, and unpersisted statistics are not guaranteed to survive.
 
+Notification warnings: `notify: queue full` means new events exceeded the per-process
+128-delivery budget; they are dropped, not retried indefinitely. `notify: shutdown deadline`
+means ten seconds of drain elapsed and remaining deliveries were cancelled. Check the
+channel-specific transport/HTTP warnings for a slow or rejecting destination. **Send test**
+shares the same budget and reports queue, cancellation or timeout errors directly.
+See [notification limits](PANEL.md#notifications).
+
 ### 2.2 The stages of one connection (by log)
 
 Localize the failure by the last successful line:

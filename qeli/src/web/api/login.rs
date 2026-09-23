@@ -52,15 +52,12 @@ pub async fn login(
                 client_ip,
                 crate::util::log_identity(username)
             );
-            tokio::spawn(async move {
-                crate::server::notify::fire_throttled(
-                    &key,
-                    600,
-                    crate::server::notify::Event::LoginLockout,
-                    &detail,
-                )
-                .await;
-            });
+            crate::server::notify::fire_throttled(
+                &key,
+                600,
+                crate::server::notify::Event::LoginLockout,
+                &detail,
+            );
             return (StatusCode::TOO_MANY_REQUESTS, Json(super::err_json(msg))).into_response();
         }
     }

@@ -3588,8 +3588,7 @@ pub async fn verify_client_auth(
                             addr.ip(),
                             crate::util::log_identity(username)
                         ),
-                    )
-                    .await;
+                    );
                 }
                 return Err(anyhow::anyhow!(
                     "user not found or disabled: {}",
@@ -3643,8 +3642,7 @@ pub async fn verify_client_auth(
                     addr.ip(),
                     crate::util::log_identity(username)
                 ),
-            )
-            .await;
+            );
         }
         return Err(e);
     }

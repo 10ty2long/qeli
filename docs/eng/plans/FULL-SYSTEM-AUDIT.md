@@ -161,7 +161,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | TODO |
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
-| 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | TODO |
+| 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | IN_PROGRESS |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | TODO |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | TODO |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | TODO |
@@ -467,6 +467,13 @@ periodic tasks, draining before profile cleanup, writable accounting only after 
 the worker lease, final persistence on both stop paths. Short sessions and final counter
 tails now survive registry removal. 848 host Rust tests PASS; Linux cross-check only.
 Notification tasks, forced outer cancellation and Linux E2E remain open.
+
+**Notification ownership, 23 September 2026:**
+[Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): 128 accepted deliveries,
+8 active requests per process, shared panel probe admission, bounded payloads and a
+10-second drain after producers stop. No detached notification wrappers remain.
+864 host Rust tests PASS; Linux all-targets cross-check only. Supervisor panel/metrics/
+autostart ownership, config trust and Linux runtime E2E remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -802,7 +809,14 @@ Counters/quota/session accounting across reconnect/reap/crash, corrupt stores an
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Notification ownership, 23 September 2026:**
+[Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): 128 accepted deliveries,
+8 active requests per process, shared panel probe admission, bounded payloads and a
+10-second drain after producers stop. No detached notification wrappers remain.
+864 host Rust tests PASS; Linux all-targets cross-check only. Supervisor panel/metrics/
+autostart ownership, config trust and Linux runtime E2E remain open.
 
 ### 33. Installation, updates, file permissions and hooks
 

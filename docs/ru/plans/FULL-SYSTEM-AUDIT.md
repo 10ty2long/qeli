@@ -166,7 +166,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | TODO |
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
-| 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | TODO |
+| 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | IN_PROGRESS |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | TODO |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | TODO |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
@@ -472,6 +472,13 @@ forced cancellation остаются открытыми; далее — hook pro
 захвата права worker, финальное сохранение на обоих путях остановки. Короткие сессии и
 последние байты учитываются после удаления из реестра. 848 host Rust tests PASS;
 Linux только cross-check. Уведомления, forced outer cancellation и Linux E2E ещё открыты.
+
+**Владение уведомлениями, 23 сентября 2026:**
+[Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): до 128 принятых отправок,
+8 активных запросов на процесс, общий лимит проб панели, ограниченные payloads и drain
+до 10 секунд после завершения производителей. Detached-обёртки уведомлений удалены.
+864 host Rust tests PASS; Linux только all-targets cross-check. Владение panel/metrics/
+autostart supervisor, доверие конфигу и Linux E2E ещё открыты.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -809,7 +816,14 @@ Counters/quota/session accounting при reconnect/reap/crash, corrupt store, bo
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Владение уведомлениями, 23 сентября 2026:**
+[Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): до 128 принятых отправок,
+8 активных запросов на процесс, общий лимит проб панели, ограниченные payloads и drain
+до 10 секунд после завершения производителей. Detached-обёртки уведомлений удалены.
+864 host Rust tests PASS; Linux только all-targets cross-check. Владение panel/metrics/
+autostart supervisor, доверие конфигу и Linux E2E ещё открыты.
 
 ### 33. Установка, обновление, файловые права и hooks
 

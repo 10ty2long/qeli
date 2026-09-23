@@ -2,20 +2,153 @@
 //!
 //! Config lives in `/etc/qeli/notify.ini`, so panel edits need no main-config reload, and
 //! both the supervisor (server-start / login-lockout / restore events) and the
-//! worker (quota sweep) can read it independently. Sends are fire-and-forget with
-//! a hard timeout and never touch the data-plane hot path. Outbound HTTPS reuses
-//! the existing rustls(ring) stack + the Mozilla root bundle (webpki-roots) so
+//! worker can read it independently. Each process owns a bounded delivery queue;
+//! admission never waits for network I/O and shutdown has a total drain deadline.
+//! Outbound HTTPS reuses the existing rustls(ring) stack + the Mozilla root bundle (webpki-roots) so
 //! certificates are properly verified — no MITM hole for the notification path.
 
 pub use crate::config::notify::{ChannelEvents, NotifyConfig};
+use crate::notify_tasks::DeliveryQueue;
+#[cfg(target_os = "linux")]
+use crate::server::usage;
+#[cfg(all(test, not(target_os = "linux")))]
+use crate::server_usage as usage;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock, Weak};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 /// Sidecar config file (qeli-owned, beside the main config).
 pub const NOTIFY_PATH: &str = "/etc/qeli/notify.ini";
 const SEND_TIMEOUT: Duration = Duration::from_secs(10);
+const MAX_DELIVERIES: usize = 128; // Includes waiting and active requests, across both channels.
+const MAX_ACTIVE: usize = 8;
+const MAX_DETAIL: usize = 2048;
+const MAX_SERVER_NAME: usize = 256;
+const MAX_PAYLOAD: usize = 32 * 1024;
+static DELIVERY: OnceLock<Mutex<Weak<DeliveryQueue>>> = OnceLock::new();
+
+/// Scoped process owner. The global lookup is weak; drop cancels outstanding sends,
+/// normal shutdown joins them, and a later generation can register a fresh service.
+pub struct Runtime {
+    queue: Arc<DeliveryQueue>,
+}
+impl Runtime {
+    pub async fn shutdown(&self) {
+        self.queue.shutdown().await;
+    }
+}
+impl Drop for Runtime {
+    fn drop(&mut self) {
+        self.queue.abort();
+    }
+}
+pub fn start() -> anyhow::Result<Runtime> {
+    let mut slot = DELIVERY
+        .get_or_init(|| Mutex::new(Weak::new()))
+        .lock()
+        .unwrap_or_else(|p| p.into_inner());
+    anyhow::ensure!(
+        slot.upgrade().is_none(),
+        "notification service already owned"
+    );
+    let queue = Arc::new(DeliveryQueue::new(MAX_DELIVERIES, MAX_ACTIVE, SEND_TIMEOUT));
+    *slot = Arc::downgrade(&queue);
+    Ok(Runtime { queue })
+}
+fn delivery_queue() -> Option<Arc<DeliveryQueue>> {
+    DELIVERY
+        .get()?
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .upgrade()
+}
+
+fn bounded_text(text: &str, limit: usize) -> &str {
+    &text[..text.floor_char_boundary(limit.min(text.len()))]
+}
+
+fn validate_telegram_fields(cfg: &NotifyConfig) -> Result<(), String> {
+    if cfg.telegram_token.is_empty() || cfg.telegram_chat_id.is_empty() {
+        return Err("set the bot token and chat id first".into());
+    }
+    if cfg.telegram_token.len() > 512 || cfg.telegram_chat_id.len() > 128 {
+        return Err("Telegram token/chat id exceeds 512/128 bytes".into());
+    }
+    Ok(())
+}
+fn validate_webhook_fields(cfg: &NotifyConfig) -> Result<(), String> {
+    if cfg.webhook_url.len() > 4096 {
+        return Err("webhook URL exceeds 4096 bytes".into());
+    }
+    parse_url(&cfg.webhook_url)?;
+    Ok(())
+}
+
+enum Delivery {
+    Telegram {
+        token: String,
+        chat: String,
+        text: String,
+    },
+    Webhook {
+        url: String,
+        body: String,
+    },
+}
+impl Delivery {
+    async fn send(self) -> Result<u16, String> {
+        match self {
+            Self::Telegram { token, chat, text } => send_telegram(&token, &chat, &text).await,
+            Self::Webhook { url, body } => send_webhook(&url, &body).await,
+        }
+    }
+}
+fn telegram_delivery(cfg: &NotifyConfig, text: String) -> Result<Delivery, String> {
+    validate_telegram_fields(cfg)?;
+    Ok(Delivery::Telegram {
+        token: cfg.telegram_token.clone(),
+        chat: cfg.telegram_chat_id.clone(),
+        text,
+    })
+}
+fn webhook_delivery(cfg: &NotifyConfig, body: String) -> Result<Delivery, String> {
+    validate_webhook_fields(cfg)?;
+    if body.len() > MAX_PAYLOAD {
+        return Err("notification payload exceeds 32 KiB".into());
+    }
+    Ok(Delivery::Webhook {
+        url: cfg.webhook_url.clone(),
+        body,
+    })
+}
+
+fn event_deliveries(
+    cfg: &NotifyConfig,
+    event: Event,
+    detail: &str,
+) -> Vec<Result<Delivery, String>> {
+    let telegram = cfg.telegram_enabled && event.enabled_in(&cfg.telegram_events);
+    let webhook = cfg.webhook_enabled && event.enabled_in(&cfg.webhook_events);
+    if !telegram && !webhook {
+        return Vec::new();
+    }
+    let name = bounded_text(&cfg.server_name, MAX_SERVER_NAME);
+    let detail = bounded_text(detail, MAX_DETAIL);
+    let text = format!("{}{}\n{}", server_prefix(name), event.title(), detail);
+    let mut deliveries = Vec::with_capacity(2);
+    if telegram {
+        deliveries.push(telegram_delivery(cfg, text.clone()));
+    }
+    if webhook {
+        let body = serde_json::json!({
+            "event": event.id(), "server": name, "detail": detail, "text": text, "ts": now_unix()
+        })
+        .to_string();
+        deliveries.push(webhook_delivery(cfg, body));
+    }
+    deliveries
+}
 /// Metadata that changes on content replacement and, on Unix, chmod/chown/inode changes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct FileStampValue {
@@ -176,20 +309,20 @@ pub fn save(cfg: &NotifyConfig) -> anyhow::Result<()> {
 /// Reject enabled channels that cannot deliver anything. Keeping disabled channel fields is
 /// allowed for the test-before-save flow; the API deliberately clears a disabled bot token.
 pub fn validate_enabled(cfg: &NotifyConfig) -> Result<(), String> {
-    if cfg.telegram_enabled && (cfg.telegram_token.is_empty() || cfg.telegram_chat_id.is_empty()) {
-        return Err("Telegram is enabled but the bot token or chat id is empty".into());
+    if cfg.telegram_enabled {
+        validate_telegram_fields(cfg)?;
     }
     if cfg.webhook_enabled {
         if cfg.webhook_url.is_empty() {
             return Err("Webhook is enabled but its URL is empty".into());
         }
-        parse_url(&cfg.webhook_url)?;
+        validate_webhook_fields(cfg)?;
     }
     Ok(())
 }
 
 fn now_unix() -> i64 {
-    crate::server::usage::now_unix()
+    usage::now_unix()
 }
 
 /// Per-key cooldown so recurring conditions (a user repeatedly reconnecting over
@@ -233,129 +366,87 @@ fn server_prefix(name: &str) -> String {
     }
 }
 
-/// Fire an event to every configured channel (fire-and-forget). No-op if notify
-/// is disabled or this event's toggle is off.
-pub async fn fire(event: Event, detail: &str) {
-    let cfg = load_cached();
-    // Nothing to send: return before formatting anything. `fire_connect` /
-    // `fire_disconnect` are spawned on EVERY session setup and teardown, and this
-    // function used to `read_to_string` the sidecar synchronously on each one — inside a
-    // tokio worker — even with every channel switched off, which is the default. A worker
-    // restart with a few hundred clients reconnecting turned into a few hundred blocking
-    // reads on the runtime. (Audit 2026-07-27, S2.)
-    if !cfg.telegram_enabled && !cfg.webhook_enabled {
+/// Nonblocking admission to the process-owned queue. Disabled events spawn no tasks.
+pub fn fire(event: Event, detail: &str) {
+    let Some(queue) = delivery_queue() else {
         return;
-    }
-    let text = format!(
-        "{}{}\n{}",
-        server_prefix(&cfg.server_name),
-        event.title(),
-        detail
-    );
-    if cfg.telegram_enabled
-        && event.enabled_in(&cfg.telegram_events)
-        && !cfg.telegram_token.is_empty()
-        && !cfg.telegram_chat_id.is_empty()
-    {
-        let (t, c, m) = (
-            cfg.telegram_token.clone(),
-            cfg.telegram_chat_id.clone(),
-            text.clone(),
-        );
-        tokio::spawn(async move {
-            if let Err(e) = send_telegram(&t, &c, &m).await {
-                log::warn!("notify telegram failed: {e}");
+    };
+    for delivery in event_deliveries(&load_cached(), event, detail) {
+        match delivery {
+            Ok(delivery) => {
+                let channel = match &delivery {
+                    Delivery::Telegram { .. } => "telegram",
+                    Delivery::Webhook { .. } => "webhook",
+                };
+                let _ = queue.try_spawn(async move {
+                    match delivery.send().await {
+                        Ok(code) if code >= 400 => {
+                            log::warn!("notify {channel}: delivery rejected with HTTP {code}")
+                        }
+                        Err(error) => log::warn!("notify {channel}: delivery failed: {error}"),
+                        _ => {}
+                    }
+                });
             }
-        });
-    }
-    if cfg.webhook_enabled && event.enabled_in(&cfg.webhook_events) && !cfg.webhook_url.is_empty() {
-        let url = cfg.webhook_url.clone();
-        let body = serde_json::json!({
-            "event": event.id(), "server": cfg.server_name, "detail": detail, "text": text, "ts": now_unix()
-        })
-        .to_string();
-        tokio::spawn(async move {
-            if let Err(e) = send_webhook(&url, &body).await {
-                log::warn!("notify webhook failed: {e}");
-            }
-        });
+            Err(error) => log::warn!("notify: invalid delivery: {error}"),
+        }
     }
 }
 
-/// Like [`fire`], but at most once per `cooldown` seconds for the given `key`.
-pub async fn fire_throttled(key: &str, cooldown: i64, event: Event, detail: &str) {
+/// Like fire, but at most once per cooldown seconds for a key. Never awaits network I/O.
+pub fn fire_throttled(key: &str, cooldown: i64, event: Event, detail: &str) {
     if throttle_ok(key, cooldown) {
-        fire(event, detail).await;
+        fire(event, detail);
     }
 }
 
-/// Spawn a throttled ClientConnect notification (opt-in, off by default). Fire-and-
-/// forget so it never blocks the session path; keyed per-user so a reconnect loop
-/// coalesces into one alert per 10 s.
 pub fn fire_connect(user: &str, profile: &str, peer: std::net::SocketAddr) {
-    let (u, p) = (user.to_string(), profile.to_string());
-    tokio::spawn(async move {
-        fire_throttled(
-            &format!("connect:{u}"),
-            10,
-            Event::ClientConnect,
-            &format!("{u} on '{p}' from {peer}"),
-        )
-        .await;
-    });
+    fire_throttled(
+        &format!("connect:{user}"),
+        10,
+        Event::ClientConnect,
+        &format!("{user} on '{profile}' from {peer}"),
+    );
 }
-
-/// Spawn a throttled ClientDisconnect notification (opt-in, off by default). Keyed
-/// per-user so kicking a multi-session user, or a burst of reaps, coalesces into one.
 pub fn fire_disconnect(user: &str, profile: &str, peer: std::net::SocketAddr) {
-    let (u, p) = (user.to_string(), profile.to_string());
-    tokio::spawn(async move {
-        fire_throttled(
-            &format!("disconnect:{u}"),
-            10,
-            Event::ClientDisconnect,
-            &format!("{u} on '{p}' from {peer}"),
-        )
-        .await;
-    });
+    fire_throttled(
+        &format!("disconnect:{user}"),
+        10,
+        Event::ClientDisconnect,
+        &format!("{user} on '{profile}' from {peer}"),
+    );
 }
 
-/// Send a Telegram test message, returning the result (status code or error) so
-/// the panel's per-channel "Test" button can show exactly what happened.
-pub async fn test_telegram(cfg: &NotifyConfig) -> serde_json::Value {
-    if cfg.telegram_token.is_empty() || cfg.telegram_chat_id.is_empty() {
-        return serde_json::json!({ "ok": false, "error": "set the bot token and chat id first" });
+async fn test_delivery(delivery: Result<Delivery, String>) -> serde_json::Value {
+    let result = async {
+        let delivery = delivery?;
+        let queue = delivery_queue().ok_or("notification service is unavailable")?;
+        queue.request(delivery.send(), SEND_TIMEOUT).await
     }
-    match send_telegram(
-        &cfg.telegram_token,
-        &cfg.telegram_chat_id,
-        &format!(
-            "{}\u{2705} qeli test notification",
-            server_prefix(&cfg.server_name)
-        ),
-    )
-    .await
-    {
+    .await;
+    match result {
         Ok(code) => serde_json::json!({ "ok": code < 400, "status": code }),
-        Err(e) => serde_json::json!({ "ok": false, "error": e }),
+        Err(error) => serde_json::json!({ "ok": false, "error": error }),
     }
 }
 
-/// Send a webhook test POST, returning the result (status code or error).
+/// Panel probes use the same queue and return the actual delivery result.
+pub async fn test_telegram(cfg: &NotifyConfig) -> serde_json::Value {
+    let text = format!(
+        "{}\u{2705} qeli test notification",
+        server_prefix(bounded_text(&cfg.server_name, MAX_SERVER_NAME))
+    );
+    test_delivery(telegram_delivery(cfg, text)).await
+}
 pub async fn test_webhook(cfg: &NotifyConfig) -> serde_json::Value {
-    if cfg.webhook_url.is_empty() {
-        return serde_json::json!({ "ok": false, "error": "set the webhook URL first" });
-    }
+    let name = bounded_text(&cfg.server_name, MAX_SERVER_NAME);
     let body = serde_json::json!({
-        "event": "test", "server": cfg.server_name,
-        "text": format!("{}\u{2705} qeli test notification", server_prefix(&cfg.server_name)),
+        "event": "test", "server": name,
+        "text": format!("{}\u{2705} qeli test notification", server_prefix(name)),
         "ts": now_unix()
     })
     .to_string();
-    match send_webhook(&cfg.webhook_url, &body).await {
-        Ok(code) => serde_json::json!({ "ok": code < 400, "status": code }),
-        Err(e) => serde_json::json!({ "ok": false, "error": e }),
-    }
+    test_delivery(webhook_delivery(cfg, body)).await
 }
 
 async fn send_telegram(token: &str, chat_id: &str, text: &str) -> Result<u16, String> {
@@ -693,5 +784,89 @@ mod tests {
         let after = file_stamp_for(&path);
         assert_ne!(before, after);
         let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn disabled_events_create_no_deliveries() {
+        let mut cfg = NotifyConfig::default();
+        assert!(event_deliveries(&cfg, Event::ServerStart, "event").is_empty());
+        cfg.telegram_enabled = true;
+        cfg.webhook_enabled = true;
+        // Connection notifications are opt-in on both channels.
+        assert!(event_deliveries(&cfg, Event::ClientConnect, "event").is_empty());
+    }
+
+    #[test]
+    fn event_payloads_bound_utf8_and_json_expansion() {
+        let cfg = NotifyConfig {
+            server_name: "я".repeat(500),
+            telegram_enabled: true,
+            telegram_token: "token".into(),
+            telegram_chat_id: "123".into(),
+            webhook_enabled: true,
+            webhook_url: "https://hooks.example/event".into(),
+            ..NotifyConfig::default()
+        };
+        let jobs = event_deliveries(&cfg, Event::ServerStart, &"\u{1}🙂".repeat(10_000));
+        assert_eq!(jobs.len(), 2);
+        for job in jobs {
+            match job.unwrap() {
+                Delivery::Telegram { text, .. } => assert!(text.len() < 4096),
+                Delivery::Webhook { body, .. } => {
+                    assert!(body.len() <= MAX_PAYLOAD);
+                    let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
+                    assert!(parsed["detail"].as_str().unwrap().len() <= MAX_DETAIL);
+                    assert!(parsed["server"].as_str().unwrap().len() <= MAX_SERVER_NAME);
+                }
+            }
+        }
+        assert_eq!(bounded_text("a🙂z", 3), "a");
+    }
+
+    #[test]
+    fn oversized_destination_fields_are_rejected_without_truncating_secrets() {
+        let mut cfg = NotifyConfig {
+            telegram_token: "x".repeat(513),
+            telegram_chat_id: "123".into(),
+            webhook_url: format!("https://hooks.example/{}", "x".repeat(4096)),
+            ..NotifyConfig::default()
+        };
+        assert!(telegram_delivery(&cfg, "test".into()).is_err());
+        assert!(webhook_delivery(&cfg, "{}".into()).is_err());
+        cfg.webhook_url = "https://hooks.example/".into();
+        assert!(webhook_delivery(&cfg, "x".repeat(MAX_PAYLOAD + 1)).is_err());
+    }
+
+    #[tokio::test]
+    async fn process_owner_bounds_panel_probes_closes_and_can_restart() {
+        let runtime = start().unwrap();
+        assert!(start().is_err(), "only one process owner");
+        // Fill admission with fake pending jobs. The probe must be rejected before send.
+        // Even if admission regresses, the existing SSRF guard rejects this numeric
+        // loopback destination, so this test cannot contact an external service.
+        for _ in 0..MAX_DELIVERIES {
+            runtime.queue.try_spawn(std::future::pending()).unwrap();
+        }
+        let cfg = NotifyConfig {
+            webhook_url: "http://127.0.0.1:9/".into(),
+            ..NotifyConfig::default()
+        };
+        let result = test_webhook(&cfg).await;
+        assert_eq!(result["ok"], false);
+        assert_eq!(result["error"], "notification queue is full");
+        runtime.queue.abort();
+        runtime.shutdown().await;
+        assert_eq!(
+            test_webhook(&cfg).await["error"],
+            "notification service is stopping"
+        );
+        drop(runtime);
+        assert!(delivery_queue().is_none());
+        assert_eq!(
+            test_webhook(&cfg).await["error"],
+            "notification service is unavailable"
+        );
+        let next = start().unwrap();
+        next.shutdown().await;
     }
 }
