@@ -93,3 +93,6 @@ Linux runtime, реальные TUN/firewall/DNS, SSH/systemd/Actions, native re
 
 Предыдущие этапы: [ошибки cleanup](AUDIT-Q25-TUN-CLEANUP.md) и
 [серверный H2](AUDIT-Q14-H2-TASKS.md).
+
+Продолжение: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) делает общий NAT sweep конечным
+и добавляет диагностику. Runner firewall-команд и передача ошибок teardown остаются открытыми.

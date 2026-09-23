@@ -146,8 +146,8 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 14 | Supervisor, workers and profiles | H02–H03, H08 | IN_PROGRESS |
 | 15 | Sessions, IP pools and limits | H01, H03–H04, H08 | IN_PROGRESS |
 | 16 | ACL, pushed routes and site-to-site | H03–H04, H06 | TODO |
-| 17 | IPv4 NAT, forwarding and sysctls | H02, H04, H08 | TODO |
-| 18 | IPv6 off/manual/route/nat66 and NDP | H06, H11 | TODO |
+| 17 | IPv4 NAT, forwarding and sysctls | H02, H04, H08 | IN_PROGRESS |
+| 18 | IPv6 off/manual/route/nat66 and NDP | H06, H11 | IN_PROGRESS |
 | 19 | Server and client DNS | H01–H02, H05–H06 | IN_PROGRESS |
 | 20 | DHCP and lease lifecycle | H02, H05 | TODO |
 | 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | IN_PROGRESS |
@@ -547,6 +547,13 @@ Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two 
 process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
 overall shutdown deadline remain open; section status stays IN_PROGRESS.
 
+**NAT cleanup, 23 September 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
+post-delete verification and failure diagnostics while continuing other rules/chains.
+13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
+Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
+deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -598,7 +605,14 @@ NAT44/forward_private/gateway_nat/MSS and iptables/nft backend errors. Before/af
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**NAT cleanup, 23 September 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
+post-delete verification and failure diagnostics while continuing other rules/chains.
+13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
+Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
+deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -614,7 +628,14 @@ All 4×3 egress/NDP combinations and every transition for ipv4/dual/ipv6. Linux 
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**NAT cleanup, 23 September 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
+post-delete verification and failure diagnostics while continuing other rules/chains.
+13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
+Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
+deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
 
 ### 19. Server and client DNS
 
@@ -688,6 +709,13 @@ output capped at 16 MiB per stream, child termination and DNS-marker retention o
 Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
 process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
 overall shutdown deadline remain open; section status stays IN_PROGRESS.
+
+**NAT cleanup, 23 September 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): finite snapshot deletion,
+post-delete verification and failure diagnostics while continuing other rules/chains.
+13 new host tests, 999 Rust tests PASS; production Linux cross-checked only.
+Q14-F026/F027 (exact DNS checks and teardown error propagation), firewall command
+deadlines and live Linux remain open. Other section scenarios and the full audit are pending.
 
 ### 20. DHCP and lease lifecycle
 

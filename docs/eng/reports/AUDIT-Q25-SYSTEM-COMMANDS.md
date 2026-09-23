@@ -93,3 +93,6 @@ and temporary files.
 
 Previous passes: [cleanup failures](AUDIT-Q25-TUN-CLEANUP.md) and
 [server H2](AUDIT-Q14-H2-TASKS.md).
+
+Follow-up: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) makes the generic NAT sweep finite
+and adds diagnostics. Firewall process-runner migration and teardown error propagation remain open.

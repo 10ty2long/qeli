@@ -1101,6 +1101,22 @@ runner, and kill/reap can wait on the kernel. [Report and tests](../reports/AUDI
 
 ---
 
+### 6.28 Server: NAT cleanup ... incomplete
+
+This warning means rule cleanup is unconfirmed: a listing, deletion or verification
+command failed, or owned rules remained after a successful deletion response. The log
+identifies the table/chain and cause. Qeli makes a finite pass over the discovered rules
+and continues other chains after failures.
+
+Inspect the named chain through the same backend (`iptables` or `ip6tables`), tool
+availability and process permissions. Mixed native nft chains may reject `-S` even when
+exact DNS cleanup works. The warning alone does not prove a rule remains: listing may
+have failed. Similarly, successful server exit does not yet establish firewall recovery.
+Do not flush an administrator's entire table to clean one profile.
+[Scope and open findings](../reports/AUDIT-Q14-NAT-CLEANUP.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

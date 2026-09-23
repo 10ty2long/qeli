@@ -22,6 +22,11 @@ pub mod util;
 #[path = "server/dns/resolver.rs"]
 mod dns_resolver;
 
+// Firewall cleanup algorithms are tested with command results, without host mutations.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/nat/cleanup.rs"]
+mod nat_cleanup;
+
 // Profile ownership is platform-neutral and exercised without privileged network setup.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/tasks.rs"]

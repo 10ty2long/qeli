@@ -151,8 +151,8 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 14 | Supervisor, workers и профили | H02–H03, H08 | IN_PROGRESS |
 | 15 | Сессии, IP-пулы и лимиты | H01, H03–H04, H08 | IN_PROGRESS |
 | 16 | ACL, push routes и site-to-site | H03–H04, H06 | TODO |
-| 17 | IPv4 NAT, forwarding и sysctl | H02, H04, H08 | TODO |
-| 18 | IPv6 off/manual/route/nat66 и NDP | H06, H11 | TODO |
+| 17 | IPv4 NAT, forwarding и sysctl | H02, H04, H08 | IN_PROGRESS |
+| 18 | IPv6 off/manual/route/nat66 и NDP | H06, H11 | IN_PROGRESS |
 | 19 | DNS сервера и клиентов | H01–H02, H05–H06 | IN_PROGRESS |
 | 20 | DHCP и lease lifecycle | H02, H05 | TODO |
 | 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | IN_PROGRESS |
@@ -552,6 +552,13 @@ teardown; flush отказа сохраняет pre-auth slot до освобо�
 PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
 Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
 
+**Очистка NAT, 23 сентября 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
+проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
+13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
+Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
+и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -603,7 +610,14 @@ NAT44/forward_private/gateway_nat/MSS и iptables/nft backend errors. Before/aft
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Очистка NAT, 23 сентября 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
+проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
+13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
+Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
+и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -619,7 +633,14 @@ NAT44/forward_private/gateway_nat/MSS и iptables/nft backend errors. Before/aft
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Очистка NAT, 23 сентября 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
+проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
+13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
+Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
+и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
 
 ### 19. DNS сервера и клиентов
 
@@ -695,6 +716,13 @@ E2E, сроки выполнения команд и полное ожидани
 при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
 PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
 Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
+
+**Очистка NAT, 23 сентября 2026:**
+[Q14-F024/F025](../reports/AUDIT-Q14-NAT-CLEANUP.md): конечный проход по снимку правил,
+проверка после удаления и диагностика ошибок с продолжением остальных правил/цепочек.
+13 новых host-тестов, 999 Rust tests PASS; production Linux только cross-check.
+Q14-F026/F027 (точечная DNS-проверка и передача ошибок teardown), сроки firewall-команд
+и live Linux остаются открытыми. Общий аудит и остальные сценарии раздела не завершены.
 
 ### 20. DHCP и lease lifecycle
 

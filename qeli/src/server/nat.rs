@@ -20,6 +20,7 @@
 //! any explicit rule/jump, or an unreadable chain fails closed instead of starting a
 //! profile that black-holes client traffic.
 
+use crate::nat_cleanup::{cleanup_matching_with, rule_comment};
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
@@ -1473,135 +1474,17 @@ fn cleanup_with(path: &str, profile: &str) {
     cleanup_matching(path, &tag(profile), true);
 }
 
-/// Parse the shell-quoted shape emitted by `iptables -S` without invoking a shell. Comments
-/// may contain whitespace or quotes because profile names are user-visible strings.
-fn split_iptables_args(line: &str) -> Option<Vec<String>> {
-    let mut output = Vec::new();
-    let mut current = String::new();
-    let mut quote = None;
-    let mut escaped = false;
-    let mut started = false;
-    for character in line.chars() {
-        if escaped {
-            current.push(character);
-            escaped = false;
-            started = true;
-            continue;
-        }
-        match quote {
-            Some(delimiter) if character == delimiter => {
-                quote = None;
-                started = true;
-            }
-            Some(_) if character == '\\' => escaped = true,
-            Some(_) => {
-                current.push(character);
-                started = true;
-            }
-            None if character.is_whitespace() => {
-                if started {
-                    output.push(std::mem::take(&mut current));
-                    started = false;
-                }
-            }
-            None if character == '"' || character == '\'' => {
-                quote = Some(character);
-                started = true;
-            }
-            None if character == '\\' => {
-                escaped = true;
-                started = true;
-            }
-            None => {
-                current.push(character);
-                started = true;
-            }
-        }
-    }
-    if escaped || quote.is_some() {
-        return None;
-    }
-    if started {
-        output.push(current);
-    }
-    Some(output)
-}
-
-/// The iptables comment on a rule (the token right after `--comment`, dequoted). `None`
-/// when the rule carries no comment or malformed quoting.
-fn rule_comment(line: &str) -> Option<String> {
-    let toks = split_iptables_args(line)?;
-    toks.windows(2)
-        .find(|w| w[0] == "--comment")
-        .map(|w| w[1].clone())
-}
-
 /// Delete every managed rule whose iptables comment matches `needle`. With `exact`, the
 /// comment must equal `needle` (a specific `qeli-nat:<profile>` tag); without it, the
 /// comment must START WITH `needle` (the bare `qeli-nat:` prefix used by `cleanup_all`).
 /// The comment is our own tag — no wire input — but we still match the parsed token, not a
 /// raw substring, so one profile name can never be a prefix of another's rules. (M1)
 fn cleanup_matching(path: &str, needle: &str, exact: bool) {
-    cleanup_matching_with(needle, exact, |args| ipt(path, args));
-}
-
-fn cleanup_matching_with(
-    needle: &str,
-    exact: bool,
-    mut run: impl FnMut(&[&str]) -> std::io::Result<std::process::Output>,
-) {
-    for (table, chain) in [
-        ("nat", "POSTROUTING"),
-        // `nat/PREROUTING` holds the `dns.port` REDIRECT installed by `enable_dns_redirect`,
-        // and it was missing from this list — so that rule was never removed by ANYTHING:
-        // not a profile stop, not `cleanup_all()` at worker startup, not shutdown. Every
-        // restart appended another copy, and a profile that changed `dns.port` (or turned DNS
-        // off) left a rule still redirecting :53 to a port nothing listens on any more.
-        // (Audit 2026-08-01, follow-up to §5.)
-        ("nat", "PREROUTING"),
-        // DNS proxy traffic terminates on the host rather than traversing FORWARD.
-        // `enable_dns_input` tags its narrow per-profile permits exactly like NAT rules,
-        // so profile teardown and startup recovery must remove those from INPUT too.
-        ("filter", "INPUT"),
-        ("filter", "FORWARD"),
-        ("mangle", "FORWARD"),
-    ] {
-        // List the chain, find a tagged rule, delete it by replaying its own spec
-        // with -D, and re-list (positions shift). Every successful iteration removes
-        // one exact rule, so no arbitrary cap is needed. The former limit of 64 became
-        // incorrect once cross-profile isolation legitimately created two rules per peer.
-        loop {
-            let out = match run(&["-t", table, "-S", chain]) {
-                Ok(o) if o.status.success() => o,
-                _ => break,
-            };
-            let listing = String::from_utf8_lossy(&out.stdout);
-            let Some(line) = listing.lines().find(|l| {
-                l.starts_with("-A ")
-                    && rule_comment(l).is_some_and(|c| {
-                        if exact {
-                            c == needle
-                        } else {
-                            c.starts_with(needle)
-                        }
-                    })
-            }) else {
-                break;
-            };
-            // "-A CHAIN <spec...>" -> "iptables -t table -D CHAIN <spec...>".
-            // Strip the quotes iptables-save puts around the comment value.
-            let Some(spec) =
-                split_iptables_args(line).map(|arguments| arguments.into_iter().skip(2))
-            else {
-                break;
-            };
-            let mut args: Vec<String> = vec!["-t".into(), table.into(), "-D".into(), chain.into()];
-            args.extend(spec);
-            let argv: Vec<&str> = args.iter().map(String::as_str).collect();
-            if run(&argv).map(|o| !o.status.success()).unwrap_or(true) {
-                break; // delete failed — don't loop forever
-            }
-        }
+    // Keep the existing best-effort lifecycle contract, including native nft chains
+    // which cannot be listed through iptables-nft. A failed sweep is now observable.
+    // Do not retry a successful no-op indefinitely or skip later rules after a failure.
+    if let Err(error) = cleanup_matching_with(needle, exact, |args| ipt(path, args)) {
+        log::warn!("NAT cleanup via {path} for '{needle}' incomplete: {error}");
     }
 }
 
@@ -1725,7 +1608,8 @@ mod tests {
                     stdout: stdout.into_bytes(),
                     stderr: Vec::new(),
                 })
-            });
+            })
+            .unwrap();
             assert_eq!(rules.len(), 2, "{previous}");
             assert!(rules[0].args.iter().any(|arg| arg == "qeli-nat:edge2"));
             assert!(rules[1].args.iter().any(|arg| arg == "administrator"));
