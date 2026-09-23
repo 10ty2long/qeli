@@ -39,7 +39,9 @@ async fn profile_shutdown_joins_h2_before_return_and_allows_retry() {
         std::future::pending::<()>().await;
     }));
     assert!(tokio::time::timeout(PROBE, async {
-        tokio::join!(tasks.shutdown(), tasks.shutdown());
+        let (first, second) = tokio::join!(tasks.shutdown(), tasks.shutdown());
+        first.unwrap();
+        second.unwrap();
     })
     .await
     .is_err());
@@ -51,6 +53,7 @@ async fn profile_shutdown_joins_h2_before_return_and_allows_retry() {
     drop(release);
     tokio::time::timeout(DEADLINE, tasks.shutdown())
         .await
+        .unwrap()
         .unwrap();
     assert!(released.load(Ordering::Acquire));
     drop(client);
@@ -80,7 +83,7 @@ async fn cancelled_accept_releases_io_before_preface_or_first_request() {
         })
         .await;
         drop(accepting);
-        tasks.shutdown().await;
+        tasks.shutdown().await.unwrap();
         assert!(released.load(Ordering::Acquire));
         if let Some(driver) = driver {
             driver.abort();
@@ -95,7 +98,7 @@ async fn cancelled_accept_releases_io_before_preface_or_first_request() {
 async fn closed_profile_rejects_h2_driver_and_releases_io() {
     let (io, peer, released) = observed_pair();
     let tasks = ProfileTasks::new("closed-h2");
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     let owner = tasks.spawner();
     let server = tokio::spawn(async move { accept_profile(io, &owner).await });
     let client = tokio::time::timeout(DEADLINE, connect(peer, "example.com"))
@@ -144,6 +147,7 @@ async fn rejection_delivers_status_and_profile_joins_flush() {
     drop(release);
     tokio::time::timeout(DEADLINE, tasks.shutdown())
         .await
+        .unwrap()
         .unwrap();
     assert!(released.load(Ordering::Acquire));
     driver.abort();
@@ -185,7 +189,7 @@ async fn rejection_flush_expires_without_peer_close_or_profile_shutdown() {
         tasks.spawn(async {}),
         "flush expiry must not close the profile"
     );
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     driver.abort();
     let _ = driver.await;
 }
@@ -222,6 +226,7 @@ async fn profile_shutdown_stops_backpressured_server_bridge() {
     assert!(tokio::time::timeout(PROBE, &mut finished).await.is_err());
     tokio::time::timeout(DEADLINE, tasks.shutdown())
         .await
+        .unwrap()
         .unwrap();
     assert!(released.load(Ordering::Acquire));
     driver.abort();
@@ -252,7 +257,7 @@ async fn profile_owned_half_close_keeps_reverse_reply() {
         .unwrap()
         .unwrap();
     assert_eq!(response, b"reply");
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     assert!(released.load(Ordering::Acquire));
     drop(server);
     drop(client);
@@ -287,7 +292,7 @@ async fn profile_driver_preserves_later_stream_not_found() {
             .status(),
         StatusCode::NOT_FOUND
     );
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     assert!(released.load(Ordering::Acquire));
     drop(server);
     driver.abort();
@@ -340,6 +345,7 @@ async fn rejection_retains_pre_auth_slot_until_io_destruction() {
     drop(release);
     tokio::time::timeout(DEADLINE, tasks.shutdown())
         .await
+        .unwrap()
         .unwrap();
     assert!(released.load(Ordering::Acquire));
     assert_eq!(slots.available_permits(), 1);
@@ -362,7 +368,7 @@ async fn accepted_carrier_hands_admission_to_inner_authentication() {
     drop(permit);
     assert_eq!(slots.available_permits(), 1);
     assert!(!released.load(Ordering::Acquire));
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     assert!(released.load(Ordering::Acquire));
     drop(server);
     drop(client);
@@ -375,7 +381,7 @@ async fn rejected_unpolled_flush_drops_io_before_admission() {
     let slots = std::sync::Arc::new(tokio::sync::Semaphore::new(1));
     let permit = slots.clone().acquire_owned().await.unwrap();
     let tasks = ProfileTasks::new("closed-admission");
-    tasks.shutdown().await;
+    tasks.shutdown().await.unwrap();
     let owner = tasks.spawner();
     let server = tokio::spawn(async move { accept_owned(io, &owner, permit).await });
     let (send, connection) = configure_client()

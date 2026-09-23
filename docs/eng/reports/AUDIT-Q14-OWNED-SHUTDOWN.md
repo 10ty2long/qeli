@@ -82,7 +82,7 @@ Five real-child host tests were added: clean/nonzero stop, command-channel closu
 exit 7, simultaneous ready exit/channel closure and automatic restart after unexpected exit 7. Five existing kill fixtures now
 expect an error while retaining deadline, PID, signal-count and restart-coalescing checks.
 
-**Current total: 976 host unit + 71 config integration = 1047 Rust tests PASS.**
+**Total for this pass: 976 host unit + 71 config integration = 1047 Rust tests PASS.**
 The entire prior build/Clippy/rustfmt matrix was rerun and passes; all nine docs checks PASS.
 A separate production-supervisor copy with host children confirms baseline loss of
 exit 7 and forced-kill errors. Both return Err with the fix; clean stop remains Ok and
@@ -92,10 +92,11 @@ Linux signal delivery and systemd runtime were not tested.
 
 ## Open boundaries
 
-Q14-F027 **remains open**: generic NAT sweep errors, TUN deletion, queue timeouts/panics
-and shutdown JoinSet results do not yet reach a complete aggregate outcome. Success of
-the new check does not verify those resources. The outer supervisor now propagates
-final stop failure, but live systemd reporting has not been tested.
+The subsequent [profile task and TUN pass](AUDIT-Q14-PROFILE-SHUTDOWN.md) adds shutdown
+JoinSet errors, TUN deletion failures and queue timeouts/panics to the worker outcome.
+Q14-F027 **remains open**: generic NAT cleanup and unfinished cleanup of earlier generations
+need separate accounting. The outer supervisor propagates final stop failure, but live
+systemd reporting has not been tested.
 
 Only in-memory worker leases are checked. A failed partial acquire before IPv6 lease
 registration, previous-worker journal records and IPv4 forwarding held for the worker

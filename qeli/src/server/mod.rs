@@ -3555,21 +3555,22 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
             let mut retry_secs = 1u64;
             loop {
                 if *profile_shutdown.borrow() {
-                    break;
+                    return Ok::<(), anyhow::Error>(());
                 }
                 let started = tokio::time::Instant::now();
                 let result =
                     run_profile(state.clone(), pcfg.clone(), profile_shutdown.clone()).await;
                 let stopping = *profile_shutdown.borrow();
                 if !stopping {
-                    match result {
+                    match &result {
                         Ok(()) => log::warn!("Profile '{}' stopped unexpectedly", pname),
                         Err(e) => log::error!("Profile '{}' error: {}", pname, e),
                     }
                 }
                 run_post_down(&state, &pname).await;
-                if stopping {
-                    break;
+                // Stop can arrive while post_down awaits; preserve the last generation.
+                if *profile_shutdown.borrow() {
+                    return result.map_err(|error| anyhow::anyhow!("profile '{pname}': {error}"));
                 }
 
                 // Reset the backoff after a stable generation; persistent setup
@@ -3584,7 +3585,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                 );
                 tokio::select! {
                     _ = tokio::time::sleep(Duration::from_secs(retry_secs)) => {}
-                    _ = wait_for_profile_shutdown(&mut profile_shutdown) => break,
+                    _ = wait_for_profile_shutdown(&mut profile_shutdown) => return Ok(()),
                 }
                 retry_secs = retry_secs.saturating_mul(2).min(30);
             }
@@ -3601,7 +3602,8 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         tokio::select! {
             joined = profile_set.join_next() => {
                 let reason = match joined {
-                    Some(Ok(())) => "a profile supervisor ended unexpectedly".to_string(),
+                    Some(Ok(Ok(()))) => "a profile supervisor ended unexpectedly".to_string(),
+                    Some(Ok(Err(error))) => format!("a profile supervisor failed: {error}"),
                     Some(Err(e)) => format!("a profile supervisor failed: {e}"),
                     None => "no profile supervisors remain".to_string(),
                 };
@@ -3641,14 +3643,15 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // Finish accepted administrative operations before profiles lose their resources.
     let _ = control_shutdown_tx.send(true);
     worker_services.request_shutdown();
-    let _ = control_task.await;
-    worker_services.shutdown().await;
+    let mut task_failures = crate::server_shutdown::Failures::default();
+    task_failures.record("control task", control_task.await.map_err(Into::into));
+    task_failures.record("worker services", worker_services.shutdown().await);
 
     // Ask every generation to leave through its normal async cleanup path. Aborting the
     // supervisors dropped `ProfileTeardown` synchronously and could remove TUN/NAT while
     // generation-owned tasks were still detached and using those resources.
     let _ = profile_shutdown_tx.send(true);
-    while profile_set.join_next().await.is_some() {}
+    crate::server_shutdown::drain_profiles(&mut profile_set, &mut task_failures).await;
 
     // Tear down the host NAT rules we installed (the next start also cleans stale
     // rules, so a SIGKILL that skips this is recovered then) and run post_down.
@@ -3676,7 +3679,12 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // exact ownership pass, while still attempting the accounting flush on failure.
     let owned_cleanup = nat::finish_owned_cleanup();
     let usage_flush = state.usage.flush();
-    let result = crate::server_shutdown::result(fatal_reason, owned_cleanup, usage_flush);
+    let result = crate::server_shutdown::result(
+        fatal_reason,
+        task_failures.result(),
+        owned_cleanup,
+        usage_flush,
+    );
     notifications.shutdown().await;
     match &result {
         Ok(()) => log::info!("Server shutdown complete"),
@@ -4562,6 +4570,7 @@ struct ProfileTeardown {
     /// Registry identity installed by this generation. Cleanup must not remove a replacement
     /// generation that registered under the same profile name.
     registered_profile: Option<Arc<ProfileRuntime>>,
+    failures: crate::profile_teardown::Report,
 }
 
 impl ProfileTeardown {
@@ -4617,55 +4626,23 @@ impl Drop for ProfileTeardown {
                 let _ = sender.try_send(ServerTunPacket::Fragment(Vec::new()));
             }
 
-            // Signalling is RETRIED rather than done once, and waiting is BOUNDED.
-            //
-            // A thread publishes its id from inside itself, so between `spawn` returning and
-            // that push there is a window in which the id is not known yet. The first version
-            // took a single `try_lock` and then joined unconditionally: a queue that failed
-            // early — say a DNS bind error immediately after the threads were spawned — could
-            // have a reader that never received a signal, never left `read()`, and a `join()`
-            // that blocked FOREVER. In a Drop running on a tokio worker that wedges the
-            // runtime thread: strictly worse than the leaked device this code is here to fix.
-            //
-            // Re-signalling every round closes the window (a late registrant is signalled on
-            // the next pass), and the deadline means the worst case is a logged leak rather
-            // than a hang.
-            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
-            loop {
-                #[cfg(target_os = "linux")]
-                {
-                    // A poisoned lock still holds a usable list — a panicking thread must not
-                    // cost us the ids of the healthy ones.
-                    let tids = threads
-                        .tids
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    for tid in tids.iter() {
-                        reader_wakeup::interrupt(*tid);
+            let result = crate::profile_teardown::stop_threads(
+                threads.handles,
+                std::time::Duration::from_secs(3),
+                || {
+                    #[cfg(target_os = "linux")]
+                    {
+                        let tids = threads
+                            .tids
+                            .lock()
+                            .unwrap_or_else(std::sync::PoisonError::into_inner);
+                        for tid in tids.iter() {
+                            reader_wakeup::interrupt(*tid);
+                        }
                     }
-                }
-                if threads.handles.iter().all(|h| h.is_finished()) {
-                    break;
-                }
-                if std::time::Instant::now() >= deadline {
-                    log::warn!(
-                        "Profile '{}': {} TUN queue thread(s) did not stop within 3s — leaving \
-                         them detached; the device will outlive the profile",
-                        self.profile,
-                        threads.handles.iter().filter(|h| !h.is_finished()).count()
-                    );
-                    break;
-                }
-                std::thread::sleep(std::time::Duration::from_millis(25));
-            }
-            // Join ONLY what has actually finished. Joining a still-running thread is the hang
-            // this whole block exists to avoid; the finished ones are joined so their fds are
-            // demonstrably closed before `ip tuntap del` runs, rather than merely scheduled to.
-            for h in threads.handles {
-                if h.is_finished() {
-                    let _ = h.join();
-                }
-            }
+                },
+            );
+            self.failures.record("TUN queues", result);
         }
 
         if let Some(ifname) = &self.ifname {
@@ -4677,6 +4654,8 @@ impl Drop for ProfileTeardown {
                     ifname,
                     e
                 );
+                self.failures
+                    .record(&format!("TUN '{ifname}' delete"), Err(e.into()));
             }
         }
         // The normal path removes this entry synchronously before Drop. On panic/cancellation
@@ -4697,7 +4676,13 @@ impl Drop for ProfileTeardown {
                 });
             }
         }
-        log::info!("Profile '{}': torn down (TUN, NAT, registry)", self.profile);
+        match self.failures.result() {
+            Ok(()) => log::info!(
+                "Profile '{}': teardown attempted (TUN, NAT, registry)",
+                self.profile
+            ),
+            Err(error) => log::error!("Profile '{}': teardown incomplete: {error}", self.profile),
+        }
     }
 }
 
@@ -4764,6 +4749,7 @@ async fn run_profile(
     // Armed BEFORE the first side effect on the host. The wrapper deliberately owns this
     // guard while the generation body runs, so it can await every async child BEFORE Drop
     // removes the TUN/NAT resources those children use.
+    let failures = crate::profile_teardown::Report::default();
     let mut teardown = ProfileTeardown {
         profile: name.clone(),
         ifname: None,
@@ -4772,6 +4758,7 @@ async fn run_profile(
         tasks: tasks.clone(),
         dns_input_leases: Vec::new(),
         registered_profile: None,
+        failures: failures.clone(),
     };
 
     let mut services = ProfileServices::default();
@@ -4784,10 +4771,12 @@ async fn run_profile(
         &mut services,
     )
     .await;
-    services.shutdown(&tasks).await;
+    let service_cleanup = services.shutdown(&tasks).await;
     teardown.unregister().await;
     drop(teardown);
-    result
+    failures.record("generation", result);
+    failures.record("profile tasks/services", service_cleanup);
+    failures.result()
 }
 
 async fn run_profile_generation(
@@ -4802,6 +4791,7 @@ async fn run_profile_generation(
     let ProfileServices {
         services: service_set,
         listeners: listener_set,
+        ..
     } = services;
 
     // Setup TUN interface(s). With tun.queues>1 we open several IFF_MULTI_QUEUE fds

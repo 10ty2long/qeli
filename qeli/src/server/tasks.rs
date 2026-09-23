@@ -1,5 +1,6 @@
 //! Ownership and shutdown of one profile generation.
 
+use crate::server_shutdown::Failures;
 use std::sync::Arc;
 use tokio::task::JoinSet;
 
@@ -35,12 +36,18 @@ impl ProfileSpawner {
 struct ProfileTasksInner {
     stopping: bool,
     tasks: JoinSet<()>,
+    failures: Failures,
 }
 
-fn report_result(profile: &str, result: Result<(), tokio::task::JoinError>) {
+fn report_result(
+    profile: &str,
+    result: Result<(), tokio::task::JoinError>,
+    failures: &mut Failures,
+) {
     if let Err(error) = result {
         if !error.is_cancelled() {
             log::error!("Profile '{}': child task failed: {}", profile, error);
+            failures.record("child task", Err(error.into()));
         }
     }
 }
@@ -61,7 +68,7 @@ fn spawn(
     // Reap completions without scanning live sessions. Admission and actual spawning
     // share the shutdown lock; Tokio never polls this future synchronously here.
     while let Some(result) = inner.tasks.try_join_next() {
-        report_result(profile, result);
+        report_result(profile, result, &mut inner.failures);
     }
     Some(inner.tasks.spawn(future))
 }
@@ -73,6 +80,7 @@ impl ProfileTasks {
             inner: Arc::new(std::sync::Mutex::new(ProfileTasksInner {
                 stopping: false,
                 tasks: JoinSet::new(),
+                failures: Failures::default(),
             })),
             shutdown_lock: Arc::new(tokio::sync::Mutex::new(())),
         }
@@ -101,7 +109,7 @@ impl ProfileTasks {
         inner.tasks.abort_all();
     }
 
-    pub(crate) async fn shutdown(&self) {
+    pub(crate) async fn shutdown(&self) -> anyhow::Result<()> {
         self.abort_all();
         let _waiter = self.shutdown_lock.lock().await;
         while let Some(result) = std::future::poll_fn(|cx| {
@@ -113,8 +121,17 @@ impl ProfileTasks {
         })
         .await
         {
-            report_result(&self.profile, result);
+            let mut inner = self
+                .inner
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            report_result(&self.profile, result, &mut inner.failures);
         }
+        self.inner
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .failures
+            .result()
     }
 }
 
@@ -125,16 +142,25 @@ impl ProfileTasks {
 pub(crate) struct ProfileServices {
     pub(crate) services: JoinSet<anyhow::Result<()>>,
     pub(crate) listeners: JoinSet<anyhow::Result<()>>,
+    failures: Failures,
 }
 
 impl ProfileServices {
-    pub(crate) async fn shutdown(&mut self, tasks: &ProfileTasks) {
+    pub(crate) async fn shutdown(&mut self, tasks: &ProfileTasks) -> anyhow::Result<()> {
         tasks.abort_all();
         self.listeners.abort_all();
         self.services.abort_all();
-        while self.listeners.join_next().await.is_some() {}
-        while self.services.join_next().await.is_some() {}
-        tasks.shutdown().await;
+        while let Some(result) = self.listeners.join_next().await {
+            self.failures.record_aborted_task("listener", result);
+        }
+        while let Some(result) = self.services.join_next().await {
+            self.failures.record_aborted_task("service", result);
+        }
+        // A cancelled/repeated waiter must not duplicate stored child failures.
+        let children = tasks.shutdown().await;
+        let mut result = self.failures.clone();
+        result.record("children", children);
+        result.result()
     }
 }
 
@@ -145,6 +171,7 @@ pub(crate) struct WorkerServices {
     tasks: JoinSet<()>,
     names: std::collections::HashMap<tokio::task::Id, (&'static str, bool)>,
     shutdown: tokio::sync::watch::Sender<bool>,
+    failures: Failures,
 }
 
 impl WorkerServices {
@@ -153,6 +180,7 @@ impl WorkerServices {
             tasks: JoinSet::new(),
             names: Default::default(),
             shutdown: tokio::sync::watch::channel(false).0,
+            failures: Failures::default(),
         }
     }
 
@@ -200,7 +228,7 @@ impl WorkerServices {
         self.shutdown.send_replace(true);
     }
 
-    pub(crate) async fn shutdown(&mut self) {
+    pub(crate) async fn shutdown(&mut self) -> anyhow::Result<()> {
         self.request_shutdown();
         // JoinSet retains pending handles if this waiter is cancelled. Never abort a
         // normal quota sweep halfway through session removal / route / lease cleanup.
@@ -212,8 +240,11 @@ impl WorkerServices {
             let (name, _) = self.names.remove(&id).expect("owned worker service");
             if let Err(error) = result {
                 log::error!("worker service '{name}' failed during shutdown: {error}");
+                // Worker services are drained cooperatively, so cancellation is unexpected.
+                self.failures.record(name, Err(error.into()));
             }
         }
+        self.failures.result()
     }
 }
 
@@ -265,7 +296,7 @@ mod tests {
             "child task must start before shutdown"
         );
 
-        tasks.shutdown().await;
+        tasks.shutdown().await.unwrap();
 
         assert!(
             dropped_rx.await.is_ok(),
@@ -298,7 +329,9 @@ mod tests {
         poll_pending(first.as_mut()).await;
         let mut second = Box::pin(tasks.shutdown());
         poll_pending(second.as_mut()).await;
-        tokio::join!(first, second);
+        let (first, second) = tokio::join!(first, second);
+        first.unwrap();
+        second.unwrap();
     }
 
     #[tokio::test]
@@ -310,7 +343,7 @@ mod tests {
         drop(first);
         let mut retry = Box::pin(tasks.shutdown());
         poll_pending(retry.as_mut()).await;
-        retry.await;
+        retry.await.unwrap();
         assert!(!tasks.spawn(async {}));
     }
     #[tokio::test]
@@ -336,7 +369,7 @@ mod tests {
             std::future::pending().await
         });
         // Same cleanup boundary as the outer run_profile wrapper after any startup `?`.
-        services.shutdown(&tasks).await;
+        services.shutdown(&tasks).await.unwrap();
         let _child = tokio::net::UdpSocket::bind(child_addr).await.unwrap();
         let _service = tokio::net::UdpSocket::bind(service_addr).await.unwrap();
         let _listener = tokio::net::TcpListener::bind(listener_addr).await.unwrap();
@@ -353,7 +386,7 @@ mod tests {
         let mut shutdown = Box::pin(services.shutdown(&tasks));
         poll_pending(shutdown.as_mut()).await;
         drop(shutdown);
-        services.shutdown(&tasks).await;
+        services.shutdown(&tasks).await.unwrap();
         assert!(services.services.is_empty());
         assert!(services.listeners.is_empty());
         assert!(tasks.inner.lock().unwrap().tasks.is_empty());
@@ -391,11 +424,11 @@ mod tests {
         }
         start.wait().await;
         tokio::task::yield_now().await;
-        tasks.shutdown().await;
+        tasks.shutdown().await.unwrap();
         while let Some(result) = workers.join_next().await {
             result.unwrap();
         }
-        tasks.shutdown().await;
+        tasks.shutdown().await.unwrap();
         assert_eq!(live.load(Ordering::SeqCst), 0);
         assert!(!tasks.spawn(async {}));
     }
@@ -410,7 +443,8 @@ mod tests {
         tokio::task::yield_now().await;
         tasks.spawn(std::future::pending());
         assert_eq!(tasks.inner.lock().unwrap().tasks.len(), 1);
-        tasks.shutdown().await;
+        let error = tasks.shutdown().await.unwrap_err();
+        assert!(error.to_string().contains("intentional child panic"));
     }
 
     #[tokio::test]
@@ -422,7 +456,7 @@ mod tests {
                 .await
                 .unwrap();
         assert!(reason.contains("quota") && reason.contains("stopped unexpectedly"));
-        services.shutdown().await;
+        services.shutdown().await.unwrap();
     }
 
     #[tokio::test]
@@ -434,7 +468,7 @@ mod tests {
                 .await
                 .unwrap();
         assert!(reason.contains("quota") && reason.contains("fixture failure"));
-        services.shutdown().await;
+        services.shutdown().await.unwrap();
     }
 
     #[tokio::test]
@@ -449,7 +483,7 @@ mod tests {
         let mut failure = Box::pin(services.next_failure());
         poll_pending(failure.as_mut()).await;
         drop(failure);
-        services.shutdown().await;
+        services.shutdown().await.unwrap();
         assert!(services.tasks.is_empty() && services.names.is_empty());
     }
 
@@ -486,10 +520,11 @@ mod tests {
         finish_tx.send(()).unwrap();
         tokio::time::timeout(std::time::Duration::from_secs(2), services.shutdown())
             .await
+            .unwrap()
             .unwrap();
         assert_eq!(cycles.load(std::sync::atomic::Ordering::SeqCst), 1);
         assert!(weak.upgrade().is_none());
-        services.shutdown().await; // idempotent
+        services.shutdown().await.unwrap(); // idempotent
         assert!(!services.spawn("late admission", true, async {}));
     }
 
@@ -573,7 +608,7 @@ mod tests {
         }
         let tasks = ProfileTasks::new("rejected-capture");
         let spawner = tasks.spawner();
-        tasks.shutdown().await;
+        tasks.shutdown().await.unwrap();
         let released = Arc::new(std::sync::atomic::AtomicBool::new(false));
         let guard = Reenter(spawner.clone(), released.clone());
         assert!(spawner
@@ -583,5 +618,98 @@ mod tests {
             })
             .is_none());
         assert!(released.load(std::sync::atomic::Ordering::Acquire));
+    }
+
+    #[tokio::test]
+    async fn child_panic_is_seen_by_every_shutdown_waiter() {
+        let tasks = ProfileTasks::new("panic-waiters");
+        tasks.spawn(async {
+            panic!("nested fixture panic");
+        });
+        tokio::task::yield_now().await;
+        let (first, second) = tokio::join!(tasks.shutdown(), tasks.shutdown());
+        assert!(first
+            .unwrap_err()
+            .to_string()
+            .contains("nested fixture panic"));
+        assert!(second
+            .unwrap_err()
+            .to_string()
+            .contains("nested fixture panic"));
+        assert!(tasks
+            .shutdown()
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("nested fixture panic"));
+    }
+
+    #[tokio::test]
+    async fn completed_listener_error_survives_cancelled_service_shutdown() {
+        let tasks = ProfileTasks::new("partial-drain");
+        let mut services = ProfileServices::default();
+        services.listeners.spawn(async {
+            anyhow::bail!("listener fixture failure");
+        });
+        services.services.spawn(std::future::pending());
+        tokio::task::yield_now().await;
+        let mut first = Box::pin(services.shutdown(&tasks));
+        poll_pending(first.as_mut()).await;
+        drop(first);
+        let error = services.shutdown(&tasks).await.unwrap_err().to_string();
+        assert!(error.contains("listener fixture failure"), "{error}");
+        assert!(services.listeners.is_empty() && services.services.is_empty());
+        assert_eq!(
+            services.shutdown(&tasks).await.unwrap_err().to_string(),
+            error
+        );
+    }
+
+    #[tokio::test]
+    async fn listener_service_and_child_failures_are_all_reported() {
+        let tasks = ProfileTasks::new("all-failures");
+        let mut services = ProfileServices::default();
+        tasks.spawn(async {
+            panic!("child fixture panic");
+        });
+        services.listeners.spawn(async {
+            anyhow::bail!("listener fixture failure");
+        });
+        services.services.spawn(async {
+            panic!("service fixture panic");
+        });
+        tokio::task::yield_now().await;
+        let error = services.shutdown(&tasks).await.unwrap_err().to_string();
+        for reason in [
+            "child fixture panic",
+            "listener fixture failure",
+            "service fixture panic",
+        ] {
+            assert!(error.contains(reason), "{error}");
+        }
+        assert!(services.listeners.is_empty() && services.services.is_empty());
+        assert!(tasks.inner.lock().unwrap().tasks.is_empty());
+    }
+
+    #[tokio::test]
+    async fn worker_service_panic_survives_cancelled_drain_and_keeps_other_service_owned() {
+        let mut services = WorkerServices::new();
+        services.spawn("failed", true, async {
+            panic!("periodic fixture panic");
+        });
+        let (send, receive) = tokio::sync::oneshot::channel();
+        services.spawn("still draining", true, async {
+            receive.await.unwrap();
+        });
+        tokio::task::yield_now().await;
+        let mut first = Box::pin(services.shutdown());
+        poll_pending(first.as_mut()).await;
+        drop(first);
+        assert_eq!(services.tasks.len(), 1);
+        send.send(()).unwrap();
+        let error = services.shutdown().await.unwrap_err().to_string();
+        assert!(error.contains("periodic fixture panic"), "{error}");
+        assert!(services.tasks.is_empty() && services.names.is_empty());
+        assert_eq!(services.shutdown().await.unwrap_err().to_string(), error);
     }
 }

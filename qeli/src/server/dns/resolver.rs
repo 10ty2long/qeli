@@ -2883,6 +2883,7 @@ mod tests {
         );
         tokio::time::timeout(Duration::from_secs(5), tasks.shutdown())
             .await
+            .unwrap()
             .unwrap();
         let _rebound = UdpSocket::bind(wildcard)
             .await

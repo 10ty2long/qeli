@@ -1158,7 +1158,8 @@ verification is described in §6.31; it does not verify all server resources.
 After profiles stop, the worker retries retained DNS INPUT rules and remaining IPv6
 sysctl leases. If cleanup cannot be confirmed, signal-driven worker shutdown exits 1
 and logs `Server shutdown failed: owned network cleanup: ...`. Concurrent failures add
-`worker` and/or `usage shutdown flush` to the same message. Accounting is flushed even
+`worker`, `profile/worker task cleanup` and/or `usage shutdown flush` to the same message.
+Accounting is flushed even
 after network cleanup failure.
 
 `DNS INPUT lease still active at worker shutdown` means active ownership remains;
@@ -1173,10 +1174,33 @@ Explicit Restart and unexpected exit without a stop request still respawn the wo
 termination failure is logged.
 
 This check covers only DNS/IPv6 sysctl leases known to the worker. A successful exit
-does not prove the absence of generic NAT rules, TUN devices or profile JoinSet errors.
+does not prove the absence of generic NAT rules or resources from earlier generations.
+Profile task and TUN teardown error reporting is described in §6.32.
 DNS ownership is lost when the process exits; automatic exact-rule recovery after
 restart is not yet guaranteed.
 [Report and open boundaries](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md).
+
+---
+
+### 6.32 Server: profile/worker task cleanup and teardown incomplete
+
+`Server shutdown failed: profile/worker task cleanup: ...` reports a task or current
+profile-generation failure. Nested details distinguish listener/service/child panics,
+profile supervisor errors, TUN queue timeout/panic and TUN deletion failure.
+A profile may also log `teardown incomplete: ...`.
+
+A failed profile does not skip draining the others, final known DNS/IPv6 sysctl lease
+cleanup or accounting flush. Signal-driven worker shutdown exits 1, and the outer
+supervisor propagates the failure to its calling CLI. Ordinary child-task cancellation
+during shutdown is expected. Cancelling a waiter or repeating shutdown does not erase
+already collected task diagnostics.
+
+`queue thread(s) did not stop` means a thread exceeded the three-second grace and may
+retain the device. Inspect earlier profile errors and the named TUN; this mechanism
+does not automatically retry TUN deletion. `teardown attempted` reports an attempt,
+not proof that all NAT rules or old devices are absent. Earlier-generation errors after
+retry/replacement still require separate accounting.
+[Validation and limitations](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
 
 ---
 

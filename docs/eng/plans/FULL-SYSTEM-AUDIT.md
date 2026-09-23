@@ -574,9 +574,13 @@ DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flu
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
 A follow-up propagates final worker stop failure through the outer supervisor: nonzero
-exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+exit and forced kill no longer return Ok. Five more host tests; that pass totals 1047
 Rust tests PASS, plus three separate supervisor regression scenarios PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
+Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
+the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
+Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+persistent journaling and live Linux remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -658,9 +662,13 @@ DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flu
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
 A follow-up propagates final worker stop failure through the outer supervisor: nonzero
-exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+exit and forced kill no longer return Ok. Five more host tests; that pass totals 1047
 Rust tests PASS, plus three separate supervisor regression scenarios PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
+Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
+the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
+Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+persistent journaling and live Linux remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -705,9 +713,13 @@ DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flu
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
 A follow-up propagates final worker stop failure through the outer supervisor: nonzero
-exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+exit and forced kill no longer return Ok. Five more host tests; that pass totals 1047
 Rust tests PASS, plus three separate supervisor regression scenarios PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
+Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
+the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
+Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+persistent journaling and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -809,9 +821,13 @@ DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flu
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
 A follow-up propagates final worker stop failure through the outer supervisor: nonzero
-exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+exit and forced kill no longer return Ok. Five more host tests; that pass totals 1047
 Rust tests PASS, plus three separate supervisor regression scenarios PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
+Next pass: [profile tasks and TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Shutdown JoinSet errors, TUN queue timeout/panic and device deletion failures now reach
+the worker outcome; 13 new host tests, current matrix 1060 Rust tests PASS.
+Generic NAT, old generations/retry backoff, sysctl recovery, restart policy,
+persistent journaling and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 

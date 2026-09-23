@@ -318,6 +318,7 @@ mod tests {
         async fn stop(&mut self) {
             timeout(DEADLINE, self.services.shutdown(&self.tasks))
                 .await
+                .unwrap()
                 .unwrap();
         }
 

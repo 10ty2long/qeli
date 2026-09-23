@@ -44,6 +44,10 @@ mod nat_dns_input;
 #[path = "server/shutdown.rs"]
 mod server_shutdown;
 
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/teardown.rs"]
+mod profile_teardown;
+
 // Profile ownership is platform-neutral and exercised without privileged network setup.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/tasks.rs"]

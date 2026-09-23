@@ -580,8 +580,12 @@ retry известных DNS/IPv6 sysctl leases влияет на Result и ко
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
 Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
 остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
-host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
+host-тестов, итог этого этапа 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
+итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
+Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+persistent journal и live Linux остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -664,8 +668,12 @@ retry известных DNS/IPv6 sysctl leases влияет на Result и ко
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
 Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
 остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
-host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
+host-тестов, итог этого этапа 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
+итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
+Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+persistent journal и live Linux остаются открытыми.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -711,8 +719,12 @@ retry известных DNS/IPv6 sysctl leases влияет на Result и ко
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
 Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
 остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
-host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
+host-тестов, итог этого этапа 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
+итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
+Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+persistent journal и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -817,8 +829,12 @@ retry известных DNS/IPv6 sysctl leases влияет на Result и ко
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
 Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
 остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
-host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
-Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
+host-тестов, итог этого этапа 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Следующий проход: [задачи профиля и TUN teardown](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
+Ошибки shutdown JoinSet, TUN queue timeout/panic и удаления устройства теперь входят в
+итог worker; 13 новых host-тестов, текущая матрица 1060 Rust tests PASS.
+Generic NAT, старые поколения/retry backoff, sysctl recovery, restart policy,
+persistent journal и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 
