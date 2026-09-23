@@ -746,6 +746,11 @@ workers, принудительная отмена, сроки команд и �
 Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
 сценарии раздела не проверены; полный аудит остаётся открытым.
 
+**Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
+отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
+Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -777,6 +782,11 @@ TaskHandle сохраняет обязанность join при отмене о
 регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
 workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
 
+**Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
+отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
+Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+
 ### 24. Multipath, bonding и общий бюджет
 
 **Код:** `qeli/src/transport_core/carrier.rs`, `qeli/src/transport_core/session.rs`, `qeli/src/server/handler.rs`.
@@ -807,6 +817,11 @@ candidate-connect и Linux-монитор принадлежат одной гр
 TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
 регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
 workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
+
+**Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
+отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
+Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 25. Linux CLI и восстановление сети
 
@@ -889,6 +904,11 @@ workers, принудительная отмена, сроки команд и �
 начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
 Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
 сценарии раздела не проверены; полный аудит остаётся открытым.
+
+**Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
+отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
+Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 

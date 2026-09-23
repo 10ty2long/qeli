@@ -585,14 +585,18 @@ async fn run_async(core: Arc<Mutex<ClientCore>>, input: RuntimeInput) -> anyhow:
     // `qeli_client_stop` is the ownership boundary used by every GUI adapter. It must cancel
     // every phase, not only the established data loop: carrier DNS/connect and TLS/qeli
     // handshakes can otherwise retain their socket (and, after NetworkPlan ACK, the Android
-    // TUN) until the full connection timeout expires. Dropping the attempt closes pre-tunnel
-    // sockets immediately; established tunnel pumps also observe the same token and their
-    // Drop implementation synchronously joins descriptor-owning workers.
+    // TUN) until the full connection timeout expires. Dropping the attempt releases direct
+    // sockets and cancels carrier workers; the registry below joins those workers. Established
+    // tunnel pumps also observe the token and synchronously join descriptor-owning workers.
+    let mut connection_tasks = super::tasks::TaskGroup::default();
     let result = tokio::select! {
         biased;
         _ = wait_for_runtime_cancel(cancel.clone()) => Ok(()),
-        result = run_attempt(&mut adapter, &config) => result,
+        result = connection_tasks.spawner().scope(run_attempt(&mut adapter, &config, &mut connection_tasks)) => result,
     };
+    // Dropping a pending attempt cancels its local H2 guards. Retain and join the driver
+    // and bridge here before publishing generation completion, including early errors.
+    connection_tasks.finish().await;
     let cancelled = cancel.load(Ordering::Acquire);
     finish_generation(&core, &counters, cancelled, result.as_ref().err());
     if cancelled {
@@ -602,7 +606,11 @@ async fn run_async(core: Arc<Mutex<ClientCore>>, input: RuntimeInput) -> anyhow:
     }
 }
 
-async fn run_attempt(adapter: &mut NativeCoreAdapter, config: &ClientConfig) -> anyhow::Result<()> {
+async fn run_attempt(
+    adapter: &mut NativeCoreAdapter,
+    config: &ClientConfig,
+    tasks: &mut super::tasks::TaskGroup,
+) -> anyhow::Result<()> {
     let password = config
         .auth
         .password
@@ -611,7 +619,7 @@ async fn run_attempt(adapter: &mut NativeCoreAdapter, config: &ClientConfig) -> 
         .ok_or_else(|| anyhow::anyhow!("native runtime requires an inline password"))?;
     let initial = adapter.wait_for_initial_carrier(config).await?;
     match initial {
-        ConnectedCarrier::Tcp(stream) => run_tcp(adapter, stream, config, password).await,
+        ConnectedCarrier::Tcp(stream) => run_tcp(adapter, stream, config, password, tasks).await,
         ConnectedCarrier::Udp(socket) => run_udp_tunnel(socket, config, password, adapter).await,
     }
 }
@@ -621,6 +629,7 @@ async fn run_tcp(
     stream: TcpStream,
     config: &ClientConfig,
     password: &str,
+    tasks: &mut super::tasks::TaskGroup,
 ) -> anyhow::Result<()> {
     configure_tcp(&stream, config)?;
     match config.obfuscation.mode.as_str() {
@@ -639,21 +648,23 @@ async fn run_tcp(
                     wrap_obfs(stream, &cfg).await
                 })
             });
-            run_tcp_tunnel(first, connector, config, password, adapter).await
+            run_tcp_tunnel(first, connector, config, password, adapter, tasks).await
         }
         "reality-tls" => {
-            let first = wrap_reality(stream, config).await?;
+            let carrier_tasks = tasks.spawner();
+            let first = wrap_reality(stream, config, &carrier_tasks).await?;
             let dialer = adapter.clone();
             let cfg = Arc::new(config.clone());
             let connector: StreamConnector<_> = Arc::new(move |request| {
                 let dialer = dialer.clone();
                 let cfg = cfg.clone();
+                let carrier_tasks = carrier_tasks.clone();
                 Box::pin(async move {
                     let stream = dialer.dial_tcp(&cfg, request).await?;
-                    wrap_reality(stream, &cfg).await
+                    wrap_reality(stream, &cfg, &carrier_tasks).await
                 })
             });
-            run_tcp_tunnel(first, connector, config, password, adapter).await
+            run_tcp_tunnel(first, connector, config, password, adapter, tasks).await
         }
         "fake-tls" | "plain" => {
             let dialer = adapter.clone();
@@ -663,7 +674,7 @@ async fn run_tcp(
                 let cfg = cfg.clone();
                 Box::pin(async move { dialer.dial_tcp(&cfg, request).await })
             });
-            run_tcp_tunnel(stream, connector, config, password, adapter).await
+            run_tcp_tunnel(stream, connector, config, password, adapter, tasks).await
         }
         mode => anyhow::bail!("unsupported TCP wire mode '{mode}'"),
     }
@@ -695,6 +706,7 @@ async fn wrap_obfs(
 async fn wrap_reality(
     mut stream: TcpStream,
     config: &ClientConfig,
+    tasks: &super::tasks::Spawner,
 ) -> anyhow::Result<crate::protocol::h2_carrier::Carrier> {
     let server_name = config.effective_reality_sni().to_string();
     let ephemeral = crate::crypto::Keypair::generate();
@@ -729,7 +741,7 @@ async fn wrap_reality(
     let tls = crate::protocol::realtls::stream::RealTlsStream::new(stream, established);
     tokio::time::timeout(
         timeout,
-        crate::protocol::h2_carrier::connect(tls, &server_name),
+        crate::protocol::h2_carrier::connect_owned(tls, &server_name, tasks),
     )
     .await
     .map_err(|_| anyhow::anyhow!("reality-tls HTTP/2 carrier timed out"))?

@@ -31,7 +31,38 @@ const H2_WINDOW: u32 = 2 * 1024 * 1024;
 const CARRIER_PATH: &str = "/v1/events/stream";
 const GRPC_MEDIA_TYPE: &str = "application/grpc";
 
-/// Owns the bridge AND the connection driver, including while connect is pending.
+// A client generation retains joins even after Carrier Drop requests cancellation.
+// Standalone/server carriers keep their existing owner-driven cancellation behavior.
+#[derive(Default)]
+struct TaskSpawner {
+    #[cfg(any(
+        test,
+        all(target_os = "linux", feature = "client"),
+        feature = "transport-core-ffi"
+    ))]
+    connection: Option<crate::transport_core::tasks::Spawner>,
+}
+
+impl TaskSpawner {
+    fn spawn(
+        &self,
+        future: impl std::future::Future<Output = ()> + Send + 'static,
+    ) -> io::Result<tokio::task::AbortHandle> {
+        #[cfg(any(
+            test,
+            all(target_os = "linux", feature = "client"),
+            feature = "transport-core-ffi"
+        ))]
+        if let Some(connection) = &self.connection {
+            return connection.spawn_abortable(future).ok_or_else(|| {
+                io::Error::new(io::ErrorKind::Interrupted, "HTTP/2 task owner has stopped")
+            });
+        }
+        Ok(tokio::spawn(future).abort_handle())
+    }
+}
+
+/// Cancels the bridge AND connection driver, including while connect is pending.
 #[derive(Default, Debug)]
 struct Tasks(Vec<tokio::task::AbortHandle>);
 
@@ -187,11 +218,16 @@ async fn inbound(mut stream: RecvStream, mut sink: WriteHalf<DuplexStream>) -> i
     sink.shutdown().await
 }
 
-fn bridge(send: SendStream<Bytes>, recv: RecvStream, mut tasks: Tasks) -> Carrier {
+fn bridge(
+    send: SendStream<Bytes>,
+    recv: RecvStream,
+    mut tasks: Tasks,
+    spawner: &TaskSpawner,
+) -> io::Result<Carrier> {
     let (application, worker) = tokio::io::duplex(BRIDGE_CAPACITY);
     let (source, sink) = tokio::io::split(worker);
     let driver = Tasks(tasks.0.clone());
-    let worker = tokio::spawn(async move {
+    let worker = spawner.spawn(async move {
         let mut driver = driver;
         // A failure in either direction drops the other future and the driver.
         // A clean half-close may still receive a reply until the owner is dropped.
@@ -201,12 +237,12 @@ fn bridge(send: SendStream<Bytes>, recv: RecvStream, mut tasks: Tasks) -> Carrie
             // flush the queued END_STREAM before the application drops the carrier.
             Ok(_) => driver.0.clear(),
         }
-    });
-    tasks.0.push(worker.abort_handle());
-    Carrier {
+    })?;
+    tasks.0.push(worker);
+    Ok(Carrier {
         application,
         _tasks: tasks,
-    }
+    })
 }
 
 fn configure_client() -> h2::client::Builder {
@@ -280,16 +316,47 @@ pub async fn connect<S>(io: S, authority: &str) -> io::Result<Carrier>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
+    connect_with_tasks(io, authority, TaskSpawner::default()).await
+}
+
+/// Keep every spawned worker in the generation registry, including during a pending response.
+#[cfg(any(
+    test,
+    all(target_os = "linux", feature = "client"),
+    feature = "transport-core-ffi"
+))]
+pub(crate) async fn connect_owned<S>(
+    io: S,
+    authority: &str,
+    owner: &crate::transport_core::tasks::Spawner,
+) -> io::Result<Carrier>
+where
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+{
+    connect_with_tasks(
+        io,
+        authority,
+        TaskSpawner {
+            connection: Some(owner.clone()),
+        },
+    )
+    .await
+}
+
+async fn connect_with_tasks<S>(io: S, authority: &str, spawner: TaskSpawner) -> io::Result<Carrier>
+where
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+{
     let (send_request, connection) = configure_client()
         .handshake::<_, Bytes>(io)
         .await
         .map_err(|error| h2_error("HTTP/2 client handshake failed", error))?;
-    let driver = tokio::spawn(async move {
+    let driver = spawner.spawn(async move {
         if let Err(error) = connection.await {
             log::debug!("HTTP/2 client connection ended: {error}");
         }
-    });
-    let tasks = Tasks(vec![driver.abort_handle()]);
+    })?;
+    let tasks = Tasks(vec![driver]);
 
     let mut send_request = send_request
         .ready()
@@ -317,7 +384,7 @@ where
             format!("HTTP/2 carrier returned status {}", response.status()),
         ));
     }
-    Ok(bridge(send, response.into_body(), tasks))
+    bridge(send, response.into_body(), tasks, &spawner)
 }
 
 /// Accept the first h2 request on an already authenticated REALITY-TLS stream.
@@ -397,7 +464,12 @@ where
             }
         }
     });
-    Ok(bridge(send, recv, Tasks(vec![driver.abort_handle()])))
+    bridge(
+        send,
+        recv,
+        Tasks(vec![driver.abort_handle()]),
+        &TaskSpawner::default(),
+    )
 }
 
 #[cfg(test)]
@@ -492,3 +564,6 @@ mod tests {
 
 #[cfg(test)]
 mod hardening_tests;
+
+#[cfg(test)]
+mod ownership_tests;

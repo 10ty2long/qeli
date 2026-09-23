@@ -65,6 +65,11 @@ handles across cancelled shutdown. Drop waits for an ongoing join or performs it
 when the blocking helper is queued. This guarantees pump destruction ordering, not complete
 platform rollback. ABI remains 1.16; see [the report](../reports/AUDIT-Q25-TUN-WORKERS.md).
 
+H2 lifetime (23 September 2026): the TCP-generation group starts before connect and retains
+joins for primary/additional carrier drivers and bridges. TaskScope closes admission and
+requests abort before destroying a cancelled attempt; the native runner joins before
+finish_generation. Standalone/server behavior is unchanged. ABI 1.16; [report](../reports/AUDIT-Q25-H2-TASKS.md).
+
 ---
 
 ## 1. The verdict: what justifies this, and what does not

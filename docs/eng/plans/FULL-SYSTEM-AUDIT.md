@@ -739,6 +739,12 @@ cancelled shutdown and a saturated blocking pool. Seven new host regressions; 94
 tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
 other section scenarios remain unverified; the full audit is still open.
 
+**Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+The TCP group starts before connect and joins drivers/bridges; the native runner retains
+it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
+cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
+deadlines remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -770,6 +776,12 @@ preserves join ownership across cancelled waits and path transfer. Nine new regr
 940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
 cancellation, command deadlines and platform fault injection remain open.
 
+**Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+The TCP group starts before connect and joins drivers/bridges; the native runner retains
+it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
+cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
+deadlines remain open.
+
 ### 24. Multipath, bonding and shared budgets
 
 **Source:** `qeli/src/transport_core/carrier.rs`, `qeli/src/transport_core/session.rs`, `qeli/src/server/handler.rs`.
@@ -800,6 +812,12 @@ normal cleanup; the group finishes before platform-candidate inspection/rollback
 preserves join ownership across cancelled waits and path transfer. Nine new regressions;
 940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
 cancellation, command deadlines and platform fault injection remain open.
+
+**Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+The TCP group starts before connect and joins drivers/bridges; the native runner retains
+it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
+cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
+deadlines remain open.
 
 ### 25. Linux CLI and network recovery
 
@@ -882,6 +900,12 @@ Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, incl
 cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
 tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
 other section scenarios remain unverified; the full audit is still open.
+
+**Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
+The TCP group starts before connect and joins drivers/bridges; the native runner retains
+it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
+cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
+deadlines remain open.
 
 ### 26. Shared C# and managed/native boundary
 

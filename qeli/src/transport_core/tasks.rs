@@ -16,6 +16,33 @@ pub(crate) struct TaskGroup(Arc<Mutex<State>>);
 #[derive(Clone)]
 pub(crate) struct Spawner(Weak<Mutex<State>>);
 
+/// A cancelled attempt must close task admission BEFORE dropping its network resources.
+/// The outer TaskGroup keeps the join handles and can still finish after this scope is gone.
+pub(crate) struct TaskScope<F> {
+    future: std::pin::Pin<Box<F>>,
+    owner: Spawner,
+}
+
+impl<F: Future> Future for TaskScope<F> {
+    type Output = F::Output;
+
+    fn poll(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        self.get_mut().future.as_mut().poll(cx)
+    }
+}
+
+impl<F> Drop for TaskScope<F> {
+    fn drop(&mut self) {
+        if let Some(shared) = self.owner.0.upgrade() {
+            close(&shared);
+        }
+        // Fields drop after this body, so captured network guards see closed admission.
+    }
+}
+
 /// Per-path cancellation, while the generation retains the authoritative join handle.
 /// Moving this handle transfers the path; dropping it requests cancellation, never detach.
 pub(crate) struct TaskHandle {
@@ -66,19 +93,19 @@ fn report(result: Result<(), tokio::task::JoinError>) {
     }
 }
 
+fn close(shared: &Mutex<State>) {
+    let mut state = crate::util::lock_or_recover(shared, "connection_tasks");
+    state.closed = true;
+    state.tasks.abort_all();
+}
+
 impl TaskGroup {
     pub(crate) fn spawner(&self) -> Spawner {
         Spawner(Arc::downgrade(&self.0))
     }
 
-    fn close(&self) {
-        let mut state = crate::util::lock_or_recover(&self.0, "connection_tasks");
-        state.closed = true;
-        state.tasks.abort_all();
-    }
-
     pub(crate) async fn finish(&mut self) {
-        self.close();
+        close(&self.0);
         // Keep handles in the group while pending: cancelling this waiter cannot detach
         // in-flight work. A retry waits for the same tasks, including blocking closures.
         while let Some(result) = poll_fn(|cx| {
@@ -97,11 +124,18 @@ impl Drop for TaskGroup {
     fn drop(&mut self) {
         // Drop cannot join asynchronously or interrupt a running blocking closure. It does
         // close admission and request cancellation even if producers still hold Spawners.
-        self.close();
+        close(&self.0);
     }
 }
 
 impl Spawner {
+    pub(crate) fn scope<F: Future>(&self, future: F) -> TaskScope<F> {
+        TaskScope {
+            future: Box::pin(future),
+            owner: self.clone(),
+        }
+    }
+
     fn admit(&self, spawn: impl FnOnce(&mut JoinSet<()>)) -> bool {
         let Some(shared) = self.0.upgrade() else {
             return false;
@@ -128,9 +162,19 @@ impl Spawner {
     }
 
     pub(crate) fn spawn(&self, future: impl Future<Output = ()> + Send + 'static) -> bool {
+        self.spawn_abortable(future).is_some()
+    }
+
+    /// The caller may cancel one worker; the group retains its join obligation.
+    pub(crate) fn spawn_abortable(
+        &self,
+        future: impl Future<Output = ()> + Send + 'static,
+    ) -> Option<tokio::task::AbortHandle> {
+        let mut abort = None;
         self.admit(|tasks| {
-            tasks.spawn(future);
-        })
+            abort = Some(tasks.spawn(future));
+        });
+        abort
     }
 
     pub(crate) fn spawn_owned(
@@ -528,5 +572,37 @@ mod tests {
         drop(group);
         await_release(receive).await;
         handle.finish().await;
+    }
+
+    #[tokio::test]
+    async fn scope_closes_admission_before_dropping_network_guards() {
+        struct NetworkGuard {
+            spawner: Spawner,
+            cleaned: Arc<AtomicBool>,
+        }
+        impl Drop for NetworkGuard {
+            fn drop(&mut self) {
+                assert!(!self
+                    .spawner
+                    .spawn(async { panic!("cleanup saw open admission") }));
+                self.cleaned.store(true, Ordering::Release);
+            }
+        }
+        let mut group = TaskGroup::default();
+        let spawner = group.spawner();
+        let cleaned = Arc::new(AtomicBool::new(false));
+        let guard = NetworkGuard {
+            spawner: spawner.clone(),
+            cleaned: cleaned.clone(),
+        };
+        let child_released = pending_lease(&group);
+        let attempt = spawner.scope(async move {
+            let _guard = guard;
+            std::future::pending::<()>().await;
+        });
+        drop(attempt);
+        assert!(cleaned.load(Ordering::Acquire));
+        group.finish().await;
+        await_release(child_released).await;
     }
 }

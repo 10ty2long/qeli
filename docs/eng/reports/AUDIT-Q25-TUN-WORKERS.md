@@ -68,3 +68,6 @@ async joining or platform rollback. This pass closes native TUN-thread ownership
 client tasks. Next checks cover nested H2/transport workers and resource-release ordering,
 system-command deadlines and platform fault injection. Release requires fresh native builds
 and validation on real target systems.
+
+Follow-up on 23 September: client H2 driver/bridge ownership now spans connect through
+generation joining; see [Q25-F015](AUDIT-Q25-H2-TASKS.md). Other limits remain.

@@ -69,3 +69,6 @@ ip/iptables/resolvectl остаются отдельной задачей: шт�
 отмена TUN shutdown и Linux fault injection требуют следующих проходов. Полный аудит открыт.
 
 Продолжение: [UDP task ownership](AUDIT-Q25-UDP-TASKS.md) переносит active/candidate/draining и candidate-connect в ту же модель, исправляет ранний выход и порядок ожидания перед rollback. Принудительная отмена и вложенные transport workers остаются открытыми.
+
+Продолжение 23 сентября: владение клиентскими H2 driver/bridge расширено от connect до
+join поколения; [Q25-F015](AUDIT-Q25-H2-TASKS.md). Остальные ограничения сохраняются.

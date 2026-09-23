@@ -3477,6 +3477,7 @@ async fn connect_reality(
     config: &crate::config::client::ClientConfig,
     primary: bool,
     context: LinuxStreamConnectContext,
+    tasks: &crate::transport_core::tasks::Spawner,
 ) -> anyhow::Result<crate::protocol::h2_carrier::Carrier> {
     // Bound connect + the TLS 1.3 handshake (reads) by connection_timeout_secs: a server
     // that accepts TCP then stalls the TLS handshake would otherwise hang here forever.
@@ -3571,15 +3572,18 @@ async fn connect_reality(
         }
     };
     let tls = crate::protocol::realtls::stream::RealTlsStream::new(stream, est);
-    let h2 = tokio::time::timeout(to, crate::protocol::h2_carrier::connect(tls, &server_name))
-        .await
-        .map_err(|_| {
-            anyhow::anyhow!(
-                "reality-tls HTTP/2 carrier timed out after {}s",
-                to.as_secs()
-            )
-        })?
-        .map_err(|error| anyhow::anyhow!("reality-tls HTTP/2 carrier failed: {error}"))?;
+    let h2 = tokio::time::timeout(
+        to,
+        crate::protocol::h2_carrier::connect_owned(tls, &server_name, tasks),
+    )
+    .await
+    .map_err(|_| {
+        anyhow::anyhow!(
+            "reality-tls HTTP/2 carrier timed out after {}s",
+            to.as_secs()
+        )
+    })?
+    .map_err(|error| anyhow::anyhow!("reality-tls HTTP/2 carrier failed: {error}"))?;
     log::info!("REALITY-TLS carrier: genuine HTTP/2 stream");
     Ok(h2)
 }
@@ -3658,6 +3662,25 @@ async fn connect_and_run_tcp(
     password: &str,
     core: &mut LinuxCoreAdapter,
 ) -> anyhow::Result<()> {
+    let mut tasks = crate::transport_core::tasks::TaskGroup::default();
+    let result = tasks
+        .spawner()
+        .scope(connect_and_run_tcp_owned(
+            config, password, core, &mut tasks,
+        ))
+        .await;
+    // Also cover errors before the data loop exists, including a pending H2 response.
+    tasks.finish().await;
+    result
+}
+
+#[cfg(target_os = "linux")]
+async fn connect_and_run_tcp_owned(
+    config: &crate::config::client::ClientConfig,
+    password: &str,
+    core: &mut LinuxCoreAdapter,
+    tasks: &mut crate::transport_core::tasks::TaskGroup,
+) -> anyhow::Result<()> {
     let addr = format!("{}:{}", config.server.address, config.server.port);
     log::info!(
         "Connecting to {} (TCP) as user '{}'",
@@ -3693,10 +3716,17 @@ async fn connect_and_run_tcp(
             };
             Box::pin(async move { connect_obfs(&cfg, false, context).await })
         });
-        run_tcp_tunnel(first, connector, config, password, core).await
+        run_tcp_tunnel(first, connector, config, password, core, tasks).await
     } else if config.obfuscation.mode == "reality-tls" {
         log::info!("Wire mode: reality-tls (real TLS 1.3 carrying the tunnel)");
-        let first = connect_reality(config, true, LinuxStreamConnectContext::default()).await?;
+        let carrier_tasks = tasks.spawner();
+        let first = connect_reality(
+            config,
+            true,
+            LinuxStreamConnectContext::default(),
+            &carrier_tasks,
+        )
+        .await?;
         // Connector clones the config so it outlives this scope and can be called
         // by the data-plane (fixed open / adaptive ramp).
         let cfg = std::sync::Arc::new(config.clone());
@@ -3712,9 +3742,10 @@ async fn connect_and_run_tcp(
                 #[cfg(feature = "experimental-roaming")]
                 path_controller: controller.clone(),
             };
-            Box::pin(async move { connect_reality(&cfg, false, context).await })
+            let carrier_tasks = carrier_tasks.clone();
+            Box::pin(async move { connect_reality(&cfg, false, context, &carrier_tasks).await })
         });
-        run_tcp_tunnel(first, connector, config, password, core).await
+        run_tcp_tunnel(first, connector, config, password, core, tasks).await
     } else {
         // fake-tls / plain: bare TCP transport; the qeli handshake applies the
         // fake-TLS mimicry or the raw framing. Both support stream bonding.
@@ -3735,7 +3766,7 @@ async fn connect_and_run_tcp(
             };
             Box::pin(async move { connect_bare_tcp(&cfg, false, context).await })
         });
-        run_tcp_tunnel(first, connector, config, password, core).await
+        run_tcp_tunnel(first, connector, config, password, core, tasks).await
     }
 }
 
@@ -5062,6 +5093,7 @@ pub(crate) async fn run_tcp_tunnel<S>(
     config: &crate::config::client::ClientConfig,
     password: &str,
     core: &mut dyn ClientPlatform,
+    connection_tasks: &mut crate::transport_core::tasks::TaskGroup,
 ) -> anyhow::Result<()>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static + crate::protocol::obfs::SplitStream,
@@ -5445,8 +5477,8 @@ where
     let (dead_tx, mut dead_rx) = mpsc::channel::<()>(1);
     // Live outgoing channels — one per active stream; the distributor round-robins
     // across them. The adaptive ramp task grows this Vec at runtime.
-    // Own all stream tasks, their producers, and Linux path workers through teardown.
-    let mut connection_tasks = crate::transport_core::tasks::TaskGroup::default();
+    // The caller creates this owner before connect, so H2 drivers/bridges already belong
+    // to it. Stream tasks, producers and Linux path workers share the same teardown.
     let stream_tasks = connection_tasks.spawner();
     let outs: Arc<std::sync::Mutex<Vec<ClientStreamSender>>> =
         Arc::new(std::sync::Mutex::new(Vec::new()));

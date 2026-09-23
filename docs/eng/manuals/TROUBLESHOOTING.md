@@ -1058,6 +1058,19 @@ limits](../reports/AUDIT-Q25-TUN-WORKERS.md).
 
 ---
 
+### 6.25 HTTP/2: stopping with a delayed response or full window
+
+For `reality-tls`, the client tracks internal H2 drivers/bridges with TCP tasks from connect
+onward. Normal group shutdown waits for their release before DNS/TUN cleanup. Cancelling
+a native TCP attempt also joins the group before generation-completion bookkeeping.
+
+A zero peer window or full bridge must not require another network event for cancellation.
+Half-close remains supported: a reply can follow completion of outbound traffic. This is
+not an overall shutdown deadline, validation of early rollback or a guarantee of joining
+when the entire runtime is destroyed. See [the report and scenarios](../reports/AUDIT-Q25-H2-TASKS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

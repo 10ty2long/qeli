@@ -69,3 +69,6 @@ tasks, UDP candidate/receive/draining lifetime, TUN-shutdown cancellation and Li
 injection require subsequent passes. The full audit remains open.
 
 Follow-up: [UDP task ownership](AUDIT-Q25-UDP-TASKS.md) applies the same model to active/candidate/draining and candidate-connect, fixing early exits and joining before rollback. Forced cancellation and nested transport workers remain open.
+
+Follow-up on 23 September: client H2 driver/bridge ownership now spans connect through
+generation joining; see [Q25-F015](AUDIT-Q25-H2-TASKS.md). Other limits remain.

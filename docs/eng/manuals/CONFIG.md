@@ -2300,6 +2300,10 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   waits for worker termination during pump destruction. This wait can be synchronous;
   it does not confirm completion of other tasks or network recovery when cancelling
   the whole client. See [the contract and validation](../reports/AUDIT-Q25-TUN-WORKERS.md).
+- For `reality-tls`, the client group also owns internal HTTP/2 drivers/bridges from the
+  connection stage. Normal TCP teardown joins them before DNS/TUN cleanup; the native runner
+  joins the TCP group before finish_generation after attempt cancellation. This does not
+  validate early platform rollback or UDP cleanup; see [limits](../reports/AUDIT-Q25-H2-TASKS.md).
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and

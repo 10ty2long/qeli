@@ -66,6 +66,11 @@ TUN и Wintun при отмене shutdown. Drop ждёт уже выполня�
 если blocking-помощник ещё в очереди. Это гарантия уничтожения pump, не подтверждение
 всего платформенного rollback. ABI 1.16 сохранён; [отчёт](../reports/AUDIT-Q25-TUN-WORKERS.md).
 
+H2 lifetime (23 сентября 2026): группа TCP-поколения создаётся до connect и сохраняет join
+для driver/bridge основного и дополнительных carriers. TaskScope закрывает spawn/abort до
+уничтожения отменённой попытки; внешний native runner ждёт группу до finish_generation.
+Standalone/server путь сохраняет прежний контракт. ABI 1.16; [отчёт](../reports/AUDIT-Q25-H2-TASKS.md).
+
 ---
 
 ## 1. Вердикт: чем это оправдано, а чем — нет
