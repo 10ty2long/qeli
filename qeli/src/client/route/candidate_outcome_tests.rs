@@ -62,6 +62,9 @@ struct Kernel {
 impl Kernel {
     fn run(&mut self, raw: &[String]) -> io::Result<Output> {
         self.calls.push(raw.to_vec());
+        if raw == ["-o", "link", "show"] {
+            return output(false, "fixture link inventory unavailable");
+        }
         let args = if raw.first().is_some_and(|s| s == "-6") {
             &raw[1..]
         } else {
@@ -69,8 +72,35 @@ impl Kernel {
         };
         assert_eq!(args[0], "route");
         let verb = args[1].as_str();
-        if verb == "flush" {
-            return output(!self.flush_error, "fixture flush result");
+        if verb == "flush" || (verb == "show" && args.get(2).is_some_and(|s| s == "dev")) {
+            let ipv6 = raw[0] == "-6";
+            let interface = &args[3];
+            let matching = |route: &Vec<String>| {
+                route.iter().any(|s| s.contains(':')) == ipv6
+                    && route
+                        .windows(2)
+                        .any(|p| p[0] == "dev" && &p[1] == interface)
+            };
+            if verb == "flush" {
+                if self.flush_error {
+                    return output(false, "fixture flush result");
+                }
+                self.routes.retain(|_, route| !matching(route));
+                return output(true, "");
+            }
+            if self.query_error {
+                return Err(io::ErrorKind::BrokenPipe.into());
+            }
+            return output(
+                true,
+                &self
+                    .routes
+                    .values()
+                    .filter(|r| matching(r))
+                    .map(|r| r.join(" "))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            );
         }
         let remote = &args[if (verb == "show" && args[2] == "exact") || args[2] == "blackhole" {
             3
@@ -1223,9 +1253,13 @@ fn scope_dropped_owner_with_residual_route_cannot_be_adopted() {
 }
 
 #[test]
-fn scope_failed_empty_flush_retains_reservation_until_retry_succeeds() {
+fn scope_unconfirmed_flush_retains_reservation_until_retry_succeeds() {
     let fixture = Fixture::new(Vec::new(), None);
     let owner = RouteOwner::new("flush-tun", 9).unwrap();
+    fixture.kernel.lock().unwrap().routes.insert(
+        "10.88.0.0/24".into(),
+        vec!["10.88.0.0/24".into(), "dev".into(), "flush-tun".into()],
+    );
     fixture.kernel.lock().unwrap().flush_error = true;
     assert!(cleanup_routes(&owner).is_err());
     fixture.kernel.lock().unwrap().flush_error = false;
@@ -1233,6 +1267,14 @@ fn scope_failed_empty_flush_retains_reservation_until_retry_succeeds() {
     drop(owner);
     assert!(RouteOwner::new("flush-tun", 10).is_ok());
     let failed = RouteOwner::new("failed-flush-tun", 9).unwrap();
+    fixture.kernel.lock().unwrap().routes.insert(
+        "10.88.0.0/24".into(),
+        vec![
+            "10.88.0.0/24".into(),
+            "dev".into(),
+            "failed-flush-tun".into(),
+        ],
+    );
     fixture.kernel.lock().unwrap().flush_error = true;
     assert!(cleanup_routes(&failed).is_err());
     drop(failed);
@@ -1436,3 +1478,6 @@ fn scope_platform_refresh_runs_only_inside_a_live_route_commit() {
 
 #[path = "postcondition_tests.rs"]
 mod postcondition_tests;
+
+#[path = "setup_flush_tests.rs"]
+mod setup_flush_tests;

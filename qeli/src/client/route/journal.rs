@@ -1,7 +1,6 @@
 //! Explicit ownership for one Linux network-plan lifetime.
 //! Entries surviving failed teardown stay reserved; a new connection cannot adopt them.
-use super::ownership::{recorded_route, route_key, same_route_key};
-use super::route_command_output;
+use super::ownership::{recorded_route, route_key, same_route_key, verify_interface_routes_absent};
 #[cfg(feature = "experimental-roaming")]
 use std::sync::Weak;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -82,7 +81,9 @@ impl RouteOwner {
                     );
                 }
             }
-            verify_interface_routes_absent(interface)?;
+            for ipv6 in [false, true] {
+                verify_interface_routes_absent(interface, ipv6)?;
+            }
             registry().entries.retain(|e| e.id != id);
         }
         let mut state = registry();
@@ -254,7 +255,6 @@ pub(super) fn take_created(owner: &RouteOwner) -> Vec<Vec<String>> {
 }
 
 /// An unknown result stops admission immediately but grants no new route ownership.
-#[cfg(feature = "experimental-roaming")]
 pub(super) fn note_pending(owner: &RouteOwner, spec: Vec<String>) {
     let mut state = registry();
     let entry = state
@@ -295,23 +295,6 @@ pub(super) fn reconcile_pending(owner: &RouteOwner) -> Vec<String> {
         }
     }
     errors
-}
-
-fn verify_interface_routes_absent(interface: &str) -> anyhow::Result<()> {
-    for ipv6 in [false, true] {
-        let mut args = Vec::new();
-        if ipv6 {
-            args.push("-6".to_string());
-        }
-        args.extend(["route", "show", "dev", interface].map(str::to_string));
-        let output = route_command_output(&args)?;
-        if !output.status.success() || !std::str::from_utf8(&output.stdout)?.trim().is_empty() {
-            anyhow::bail!(
-                "could not confirm empty orphan interface routes for {interface} (IPv6={ipv6})"
-            );
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]

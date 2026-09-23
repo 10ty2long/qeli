@@ -1389,7 +1389,7 @@ comparison of every attribute and atomic protection against external changes rem
 unsupported. There are no new INI parameters.
 [Regressions and limits](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md).
 
-### 6.43 Linux roaming: pending reservation after an unknown outcome
+### 6.43 Linux: pending reservation after an unknown outcome
 
 `unresolved route mutation; destination remains reserved without delete authority`
 means command completion did not establish ownership and the destination is still
@@ -1403,18 +1403,47 @@ confirmed destination absence. Successful cleanup leaves the old owner stopped;
 a new one becomes possible after the final guard is released.
 
 After guard release, a new connection in the same process performs a read-only orphan
-check only if the previous IPv4/IPv6 interface flushes completed successfully. All
+check only after the previous IPv4/IPv6 interface-flush results were confirmed.
+This requires empty state, not just successful command status (see 6.44). All
 recorded destinations must be absent and both families' interface routes empty.
 `orphan route reservation ... is still present` and
-`could not confirm empty orphan interface routes` mean release is blocked.
+`could not confirm empty interface routes` mean release is blocked.
 Other query errors also retain the reservation; routes are not overwritten.
 
 Inspect the destinations, interface and original error. Unconfirmed routes are not
-automatically deleted. Without previous cleanup, after failed interface flush or with
-a live guard, automatic release is unavailable. This mechanism operates within the
-process and does not restore the journal after crash/restart. Initial carrier/exclude/
-blackhole setup still needs a separate lost-result audit. No INI parameters were added.
+automatically deleted. Without previous cleanup, after unconfirmed interface flush or
+with a live guard, automatic release is unavailable. This mechanism operates within the
+process and does not restore the journal after crash/restart. Pending also covers initial
+carrier/exclude/blackhole setup with possible leftovers (see 6.44). No INI parameters were added.
 [Report and limits](../reports/AUDIT-Q25-ROUTE-PENDING.md).
+
+### 6.44 Linux: verifying initial setup and interface-route cleanup
+
+Before installing carrier/exclude/blackhole routes, Qeli checks the exact destination
+snapshot. A matching existing route is used without a claim. `initial route conflicts
+with an existing route` reports a conflict before writing. Query failure also prevents add.
+
+`route is absent after initial add` means the command did not create a verifiable route.
+`initial add outcome is not proven; destination remains reserved` and
+`could not verify initial route` report a possible unconfirmed leftover.
+Setup fails; pending does not authorize deletion. Even `File exists` after initial
+absence does not make a newly appearing route safe to borrow.
+
+After each IP-family flush, Qeli verifies that no interface routes remain.
+`interface routes remain` reports a leftover regardless of command status.
+`could not confirm empty interface routes` means empty state was not established.
+Lost flush completion permits success if absence is confirmed. Failure in one family
+does not skip cleanup of the other.
+
+If a route query returns negative status after TUN deletion, Qeli confirms the exact
+name is absent through a separate `ip -o link show`. `Cannot find device` alone is
+insufficient. `invalid link snapshot`, execution failure, non-UTF-8 output or a present
+interface retains cleanup failure. A route-query I/O error requires verification retry.
+
+Inspect the address, interface and preceding log errors; a live guard can retry cleanup.
+This does not certify crash recovery, arbitrary policy tables/VRFs or completed TUN
+workers. No INI parameters were added.
+[Validation and limits](../reports/AUDIT-Q25-SETUP-FLUSH.md).
 
 ---
 

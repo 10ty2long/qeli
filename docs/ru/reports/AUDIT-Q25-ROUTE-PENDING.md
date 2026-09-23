@@ -95,3 +95,8 @@ orphan-проверкой. Kernel CAS, полная identity/multipath/VRF, об
 Q14-F027 TUN workers/FD, native certification и полный benchmark остаются открытыми.
 
 Предыдущий этап: [подтверждение retirement/restore](AUDIT-Q25-ROUTE-POSTCONDITIONS.md).
+
+Продолжение: [Q25-F033/F034](AUDIT-Q25-SETUP-FLUSH.md) переносит pending-контракт
+в initial setup carrier/exclude/blackhole и подтверждает постусловия interface flush.
+Отрицательный статус при доказанном отсутствии больше не блокирует cleanup; отсутствующий
+TUN подтверждается отдельным link inventory. Постоянный crash recovery остаётся открытым.

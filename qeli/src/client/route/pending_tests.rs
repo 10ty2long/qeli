@@ -268,6 +268,14 @@ fn pending_orphan_without_cleanup_does_not_release_even_if_route_disappeared() {
 #[test]
 fn pending_orphan_failed_interface_flush_does_not_release() {
     let (fixture, owner, _) = unknown_owner(false);
+    fixture.kernel.lock().unwrap().routes.insert(
+        "10.88.0.0/24".into(),
+        vec![
+            "10.88.0.0/24".into(),
+            "dev".into(),
+            "pending-control".into(),
+        ],
+    );
     fixture.kernel.lock().unwrap().flush_error = true;
     assert!(cleanup_routes(&owner).is_err());
     drop(owner);

@@ -93,3 +93,8 @@ queries. Kernel CAS, complete identity/multipath/VRF, overall gateway rollback, 
 TUN workers/FD, native certification and a full benchmark remain open.
 
 Previous pass: [verified retirement/restore](AUDIT-Q25-ROUTE-POSTCONDITIONS.md).
+
+Follow-up: [Q25-F033/F034](AUDIT-Q25-SETUP-FLUSH.md) extends pending tracking to initial
+carrier/exclude/blackhole setup and verifies interface-flush postconditions. Negative
+status with confirmed absence no longer fails cleanup; a missing TUN requires a separate
+link inventory check. Durable crash recovery remains open.

@@ -7,13 +7,16 @@ use std::net::IpAddr;
 
 #[path = "route/ownership.rs"]
 mod ownership;
-#[cfg(feature = "experimental-roaming")]
-use ownership::route_matches_spec;
-use ownership::{delete_spec, remove_recorded_route};
+use ownership::{
+    delete_spec, recorded_route, remove_recorded_route, route_matches_spec,
+    verify_interface_routes_absent,
+};
 #[path = "route/journal.rs"]
 mod journal;
 #[cfg(all(test, feature = "experimental-roaming"))]
 use journal::created_by_us_owned;
+#[cfg(feature = "experimental-roaming")]
+use journal::forget_created_owned;
 #[cfg(test)]
 use journal::note_created;
 #[cfg(any(test, feature = "experimental-roaming"))]
@@ -21,9 +24,9 @@ use journal::recorded_undo;
 pub(crate) use journal::RouteOwner;
 #[cfg(feature = "experimental-roaming")]
 pub(crate) use journal::RouteScope;
-use journal::{ensure_unclaimed, note_created_owned, reconcile_pending, take_created};
-#[cfg(feature = "experimental-roaming")]
-use journal::{forget_created_owned, note_pending};
+use journal::{
+    ensure_unclaimed, note_created_owned, note_pending, reconcile_pending, take_created,
+};
 
 #[cfg(test)]
 thread_local! {
@@ -469,7 +472,6 @@ fn restore_retired_carrier_routes(
     errors
 }
 
-#[cfg(feature = "experimental-roaming")]
 fn completion_detail(result: &std::io::Result<std::process::Output>) -> String {
     match result {
         Ok(output) if output.status.success() => {
@@ -978,6 +980,48 @@ fn connected_tunnel_cidr(address: IpAddr, prefix: u8) -> anyhow::Result<String> 
     }
 }
 
+/// Shared initial physical-route installation. A pre-existing matching snapshot is borrowed,
+/// never claimed. After an attempted add, only a successful result AND matching snapshot
+/// grant ownership; a lost result reserves any possible leftover without delete authority.
+fn install_physical_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<()> {
+    let undo = delete_spec(args);
+    ensure_unclaimed(owner, &undo)?;
+    if let Some(previous) = recorded_route(&undo)? {
+        if route_matches_spec(&undo, &previous) {
+            return Ok(());
+        }
+        anyhow::bail!(
+            "initial route conflicts with an existing route: ip {}",
+            args.join(" ")
+        );
+    }
+    let completion = route_command_output(args);
+    let observed = recorded_route(&undo);
+    match &observed {
+        Ok(Some(current))
+            if completion.as_ref().is_ok_and(|o| o.status.success())
+                && route_matches_spec(&undo, current) =>
+        {
+            note_created_owned(owner, undo);
+            return Ok(());
+        }
+        Ok(None) => {} // Proven absent: there is nothing to claim or reserve.
+        Ok(Some(_)) | Err(_) => note_pending(owner, undo),
+    }
+    let detail = match observed {
+        Ok(None) => "route is absent after initial add".to_string(),
+        Ok(Some(_)) => {
+            "initial add outcome is not proven; destination remains reserved".to_string()
+        }
+        Err(error) => format!("could not verify initial route: {error}"),
+    };
+    anyhow::bail!(
+        "ip {}: {detail}; {}",
+        args.join(" "),
+        completion_detail(&completion)
+    )
+}
+
 fn add_blackhole_half(owner: &RouteOwner, cidr: &str) -> anyhow::Result<()> {
     let ipv6 = cidr.contains(':');
     let mut args: Vec<String> = Vec::new();
@@ -990,22 +1034,7 @@ fn add_blackhole_half(owner: &RouteOwner, cidr: &str) -> anyhow::Result<()> {
         "blackhole".into(),
         cidr.into(),
     ]);
-    ensure_unclaimed(owner, &delete_spec(&args))?;
-    let output = route_command_output(&args)?;
-    if output.status.success() {
-        let mut undo = args;
-        let action = if ipv6 { 2 } else { 1 };
-        undo[action] = "del".into();
-        note_created_owned(owner, undo);
-        return Ok(());
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stderr.contains("File exists")
-        && existing_route_satisfies(ipv6, cidr, "blackhole") == Some(true)
-    {
-        return Ok(());
-    }
-    anyhow::bail!("could not install blackhole {cidr}: {}", stderr.trim())
+    install_physical_route(owner, &args)
 }
 
 fn pin_carrier_route(
@@ -1038,41 +1067,7 @@ fn pin_carrier_route(
         ]);
     }
 
-    ensure_unclaimed(owner, &delete_spec(&args))?;
-    let output = route_command_output(&args)?;
-    if output.status.success() {
-        note_created_owned(owner, delete_spec(&args));
-        return Ok(());
-    }
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stderr.contains("File exists") {
-        let dev = format!("dev {}", path.device);
-        let via = path
-            .gateway
-            .as_ref()
-            .map(|gateway| format!("via {gateway}"));
-        let mut expected = vec![dev.as_str()];
-        if let Some(via) = via.as_deref() {
-            expected.push(via);
-        }
-        if existing_route_satisfies_all(ipv6, &carrier.to_string(), &expected) == Some(true) {
-            // It belongs to another owner but is already the exact safe physical path.
-            return Ok(());
-        }
-        anyhow::bail!(
-            "full tunnel found a conflicting existing carrier route for {carrier}; expected {}{}",
-            path.device,
-            path.gateway
-                .as_deref()
-                .map(|gateway| format!(" via {gateway}"))
-                .unwrap_or_default()
-        );
-    }
-    anyhow::bail!(
-        "full tunnel could not pin carrier {carrier}: {}",
-        stderr.trim()
-    )
+    install_physical_route(owner, &args)
 }
 
 /// Apply the already validated, generation-scoped dual-family network plan on Linux.
@@ -1227,34 +1222,7 @@ pub(crate) fn setup_network_plan_routes(
         } else {
             args.extend(["dev".into(), device.clone(), "scope".into(), "link".into()]);
         }
-        ensure_unclaimed(owner, &delete_spec(&args))?;
-        let output = route_command_output(&args)?;
-        if output.status.success() {
-            note_created_owned(owner, delete_spec(&args));
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            if stderr.contains("File exists") {
-                let dev = format!("dev {device}");
-                let via = gateway.as_ref().map(|value| format!("via {value}"));
-                let mut expected = vec![dev.as_str()];
-                if let Some(via) = via.as_deref() {
-                    expected.push(via);
-                }
-                if existing_route_satisfies_all(ipv6, &cidr, &expected) == Some(true) {
-                    // Exact operator-owned bypass; leave it in place and do not journal it.
-                    continue;
-                }
-                anyhow::bail!(
-                    "exclude {cidr}: a conflicting route already exists; expected {}{}",
-                    device,
-                    gateway
-                        .as_deref()
-                        .map(|value| format!(" via {value}"))
-                        .unwrap_or_else(|| " on-link".to_string())
-                );
-            }
-            anyhow::bail!("exclude route was not applied: {}", stderr.trim());
-        }
+        install_physical_route(owner, &args)?;
     }
     if plan.full_tunnel {
         // `ip route add` success is not the final truth when source-policy rules or several
@@ -2000,27 +1968,22 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
     errors.extend(reconcile_pending(owner));
     let errors_before_flush = errors.len();
 
-    // The tun device's own routes go with the device, so flushing by interface can only
-    // ever touch ours.
-    match route_command_output(&["route", "flush", "dev", ifname].map(str::to_string)) {
-        Ok(output) if output.status.success() => {}
-        Ok(output) => {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            if !route_is_already_absent(&stderr) {
-                errors.push(format!("ip route flush dev {ifname}: {}", stderr.trim()));
-            }
+    // The interface belongs to this owner. Verify each family independently, including
+    // when completion was lost; an error in one family must not skip the other.
+    for ipv6 in [false, true] {
+        let mut args = Vec::new();
+        if ipv6 {
+            args.push("-6".to_string());
         }
-        Err(error) => errors.push(format!("ip route flush dev {ifname}: {error}")),
-    }
-    match route_command_output(&["-6", "route", "flush", "dev", ifname].map(str::to_string)) {
-        Ok(output) if output.status.success() => {}
-        Ok(output) => {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            if !route_is_already_absent(&stderr) {
-                errors.push(format!("ip -6 route flush dev {ifname}: {}", stderr.trim()));
-            }
+        args.extend(["route", "flush", "dev", ifname].map(str::to_string));
+        let completion = route_command_output(&args);
+        if let Err(error) = verify_interface_routes_absent(ifname, ipv6) {
+            errors.push(format!(
+                "ip {}: {error}; {}",
+                args.join(" "),
+                completion_detail(&completion)
+            ));
         }
-        Err(error) => errors.push(format!("ip -6 route flush dev {ifname}: {error}")),
     }
 
     owner.cleanup_result(!errors.is_empty(), errors.len() == errors_before_flush);
@@ -2031,6 +1994,7 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
     }
 }
 
+#[cfg(all(test, target_os = "linux"))]
 fn route_is_already_absent(stderr: &str) -> bool {
     let stderr = stderr.to_ascii_lowercase();
     [
@@ -2272,7 +2236,9 @@ mod fault_injection {
                 else {
                     continue;
                 };
-                if destination.parse::<IpAddr>().is_ok() {
+                if destination.parse::<IpAddr>().is_ok()
+                    || destination.parse::<ipnet::IpNet>().is_ok()
+                {
                     let family = if destination.contains(':') { 6 } else { 4 };
                     let key = destination.replace(['/', ':'], "_");
                     std::fs::write(state.join(format!("{family}-{key}")), route).unwrap();
@@ -2288,6 +2254,17 @@ destination="$3"
 if [ "$3" = "blackhole" ] || [ "$3" = "exact" ]; then destination="$4"; fi
 key=$(printf '%s' "$destination" | tr '/:' '__')
 record='{state}/'"$family-$key"
+route_state='{state}'
+if [ "$1" = "route" ] && [ "$2" = "show" ] && [ "$3" = "dev" ]; then
+  for entry in "$route_state"/"$family-"*; do
+    if [ -s "$entry" ]; then
+      case " $(cat "$entry") " in
+        *" dev $4 "*) cat "$entry"; printf '\n';;
+      esac
+    fi
+  done
+  exit 0
+fi
 if [ "$1" = "route" ] && [ "$2" = "show" ] && [ "$3" = "exact" ]; then
   if [ -f "$record" ]; then cat "$record"; fi
   exit 0
@@ -2339,6 +2316,14 @@ if [ "$1" = "route" ]; then
   case "$2" in
     add|replace) shift 2; printf '%s\n' "$*" > "$record";;
     del) : > "$record";;
+    flush)
+      for entry in "$route_state"/"$family-"*; do
+        if [ -s "$entry" ]; then
+          case " $(cat "$entry") " in
+            *" dev $4 "*) : > "$entry";;
+          esac
+        fi
+      done;;
   esac
 fi
 exit 0
@@ -2570,10 +2555,11 @@ exit 0
 
     #[test]
     fn cleanup_surfaces_a_failed_tun_route_flush() {
-        let _shim = Shim::new(
+        let _shim = Shim::new_with_route_show(
             "cleanup-flush",
             &["route flush dev qtest"],
             "RTNETLINK answers: Operation not permitted",
+            Some("10.88.0.0/24 dev qtest"),
         );
 
         let err = cleanup_routes(&test_owner()).unwrap_err();

@@ -1036,6 +1036,14 @@ separate final-lease and interface-flush conditions. 17 new regressions/controls
 1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
 durable crash recovery, deadlines and Linux runtime remain open.
 
+**2026-09-23 follow-up — initial setup and flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
+exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
+families require confirmed empty state or a missing interface verified by link inventory.
+8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
+and Q14-F027 workers/FD remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1118,6 +1126,14 @@ Cleanup/reconnect releases pending/orphan entries only after confirmed absence, 
 separate final-lease and interface-flush conditions. 17 new regressions/controls;
 1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
 durable crash recovery, deadlines and Linux runtime remain open.
+
+**2026-09-23 follow-up — initial setup and flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
+exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
+families require confirmed empty state or a missing interface verified by link inventory.
+8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
+and Q14-F027 workers/FD remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1316,6 +1332,14 @@ Cleanup/reconnect releases pending/orphan entries only after confirmed absence, 
 separate final-lease and interface-flush conditions. 17 new regressions/controls;
 1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
 durable crash recovery, deadlines and Linux runtime remain open.
+
+**2026-09-23 follow-up — initial setup and flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
+exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
+families require confirmed empty state or a missing interface verified by link inventory.
+8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
+and Q14-F027 workers/FD remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1592,11 +1616,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with unknown initial carrier/exclude/blackhole setup outcomes
-and interface-flush postconditions. Q25-F031/F032 adds roaming pending records and
-read-only release of absent orphans within the process; durable crash/restart recovery
-and external route authorship remain unresolved. Then address route/kill-switch/gateway
-deadlines, overall gateway rollback and Q14-F027 TUN workers/FD. Section 05 still needs
-an overall preflight deadline and removal of synchronous waits in async handlers.
-Outstanding 01–07, Linux restart/restore/manual+NDP E2E, cross-process isolation,
-native certification and a full benchmark remain.
+**Next work:** continue 25 with route/kill-switch/gateway deadlines and output bounds
+while retaining pending/ownership semantics, then other TUN/pushed/local-route paths
+and complete gateway rollback. Q25-F033/F034 closes the tested initial setup and flush
+within normal routing-table boundaries; durable crash recovery, cross-process races
+and Q14-F027 TUN workers/FD remain open. Section 05 still needs an overall preflight
+deadline and removal of synchronous waits in async handlers. Outstanding 01–07,
+Linux restart/restore/manual+NDP E2E, native certification and a full benchmark remain.

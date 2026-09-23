@@ -1043,6 +1043,14 @@ Cleanup/reconnect освобождает pending/orphan только после 
 controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
 flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
 
+**Дополнение 2026-09-23 — initial setup и flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
+общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
+flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
+link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
+постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1125,6 +1133,14 @@ Cleanup/reconnect освобождает pending/orphan только после 
 с отдельными условиями для финального lease и interface flush. 17 новых регрессий/
 controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
 flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — initial setup и flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
+общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
+flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
+link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
+постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1323,6 +1339,14 @@ Cleanup/reconnect освобождает pending/orphan только после 
 с отдельными условиями для финального lease и interface flush. 17 новых регрессий/
 controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
 flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — initial setup и flush:**
+[Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
+общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
+flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
+link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
+постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1601,10 +1625,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: неизвестные результаты initial setup carrier/exclude/
-blackhole и подтверждение interface flush. Q25-F031/F032 добавляет pending учёт roaming
-и read-only освобождение отсутствующих orphan в пределах процесса; постоянный crash/restart
-recovery и авторство внешних маршрутов этим не решены. Далее сроки route/kill-switch/gateway,
-общий gateway rollback и Q14-F027 TUN workers/FD. В 05 остаются общий preflight deadline
+**Ближайшая работа:** продолжить 25: сроки и ограничения вывода route/kill-switch/gateway
+с сохранением pending/ownership-контракта, затем остальные TUN/pushed/local route paths
+и полный gateway rollback. Q25-F033/F034 закрывает проверенные initial setup и flush
+в границах обычных таблиц маршрутов; постоянный crash recovery, межпроцессные гонки
+и Q14-F027 TUN workers/FD остаются открытыми. В 05 остаются общий preflight deadline
 и sync waits в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
-межпроцессная изоляция, native certification и полный benchmark остаются в плане.
+native certification и полный benchmark остаются в плане.

@@ -144,3 +144,45 @@ pub(super) fn remove_recorded_route(spec: &[String]) -> anyhow::Result<bool> {
         }
     }
 }
+
+// A missing interface also has no routes. A failed route query alone is not proof:
+// enumerate links successfully before accepting that case, including on cleanup retry.
+pub(super) fn verify_interface_routes_absent(interface: &str, ipv6: bool) -> anyhow::Result<()> {
+    let mut args = Vec::new();
+    if ipv6 {
+        args.push("-6".to_string());
+    }
+    args.extend(["route", "show", "dev", interface].map(str::to_string));
+    let output = route_command_output(&args)?;
+    if output.status.success() {
+        if std::str::from_utf8(&output.stdout)?.trim().is_empty() {
+            return Ok(());
+        }
+        anyhow::bail!("interface routes remain for {interface} (IPv6={ipv6})");
+    }
+    let links = route_command_output(&["-o", "link", "show"].map(str::to_string))?;
+    if !links.status.success() {
+        anyhow::bail!("could not confirm empty interface routes for {interface} (IPv6={ipv6})");
+    }
+    for line in std::str::from_utf8(&links.stdout)?
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+    {
+        let mut fields = line.split_whitespace();
+        let index = fields
+            .next()
+            .and_then(|s| s.strip_suffix(':'))
+            .and_then(|s| s.parse::<u32>().ok());
+        let name = fields
+            .next()
+            .and_then(|s| s.strip_suffix(':'))
+            .and_then(|s| s.split('@').next());
+        if index.is_none_or(|index| index == 0) || name.is_none_or(str::is_empty) {
+            anyhow::bail!("invalid link snapshot while checking interface {interface}");
+        }
+        if name == Some(interface) {
+            anyhow::bail!("could not confirm empty interface routes for {interface} (IPv6={ipv6}): interface still exists");
+        }
+    }
+    Ok(())
+}
