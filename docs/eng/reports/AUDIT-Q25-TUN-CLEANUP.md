@@ -70,3 +70,5 @@ Follow-up: [TCP and Linux path workers](AUDIT-Q25-TCP-TASKS.md) adds closed admi
 Follow-up on 23 September: [Q25-F016/F017](AUDIT-Q25-SYSTEM-COMMANDS.md) bounds
 TUN/resolvectl commands and tests DNS-marker retention on errors. Route/firewall commands
 and an overall shutdown deadline remain open.
+
+Follow-up: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) removes name-based TUN deletion and retains original descriptors through cleanup. DNS/route identity during external replacement and worker timeout remain open.

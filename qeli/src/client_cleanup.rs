@@ -32,17 +32,16 @@ impl Checks {
 pub(crate) enum Resource {
     Dns,
     Routes,
-    Tun,
     Forwarding,
 }
 
-const RESOURCE_NAMES: [&str; 4] = ["DNS", "routes", "TUN", "forwarding/NAT"];
+const RESOURCE_NAMES: [&str; 3] = ["DNS", "routes", "forwarding/NAT"];
 const ERROR_CHARS: usize = 2048;
 
 /// Sticky, bounded evidence shared by one Linux client and its resource guards.
 /// A later successful Drop retry must not erase an already returned cleanup failure.
 #[derive(Clone, Default)]
-pub(crate) struct Failures(Arc<Mutex<[Option<String>; 4]>>);
+pub(crate) struct Failures(Arc<Mutex<[Option<String>; 3]>>);
 
 #[derive(Debug, thiserror::Error)]
 #[error("network resource cleanup reported failure: {0}")]
@@ -468,14 +467,14 @@ mod tests {
         failures.result().unwrap();
         failures.observe(Resource::Dns, Ok(())).unwrap();
         let _ = old_guard.observe::<()>(
-            Resource::Tun,
-            Err(anyhow::anyhow!("late TUN deletion failed")),
+            Resource::Routes,
+            Err(anyhow::anyhow!("late route cleanup failed")),
         );
         assert!(failures
             .result()
             .unwrap_err()
             .to_string()
-            .contains("late TUN deletion failed"));
+            .contains("late route cleanup failed"));
     }
 
     #[test]
@@ -511,12 +510,7 @@ mod tests {
     #[test]
     fn failure_evidence_is_bounded_and_keeps_first_error_for_each_resource() {
         let failures = Failures::default();
-        for resource in [
-            Resource::Dns,
-            Resource::Routes,
-            Resource::Tun,
-            Resource::Forwarding,
-        ] {
+        for resource in [Resource::Dns, Resource::Routes, Resource::Forwarding] {
             let _ = failures.observe::<()>(
                 resource,
                 Err(anyhow::anyhow!("{}", "é".repeat(ERROR_CHARS * 4))),
@@ -524,7 +518,7 @@ mod tests {
             let _ = failures.observe::<()>(resource, Err(anyhow::anyhow!("replacement")));
         }
         let errors = failures.0.lock().unwrap();
-        assert_eq!(errors.iter().flatten().count(), 4);
+        assert_eq!(errors.iter().flatten().count(), 3);
         for error in errors.iter().flatten() {
             assert_eq!(error.chars().count(), ERROR_CHARS);
             assert!(!error.contains("replacement"));
@@ -538,7 +532,6 @@ mod tests {
             for (resource, message) in [
                 (Resource::Dns, "dns fault"),
                 (Resource::Routes, "route fault"),
-                (Resource::Tun, "tun fault"),
                 (Resource::Forwarding, "nat fault"),
             ] {
                 let copy = failures.clone();
@@ -551,7 +544,6 @@ mod tests {
         for expected in [
             "DNS: dns fault",
             "routes: route fault",
-            "TUN: tun fault",
             "forwarding/NAT: nat fault",
         ] {
             assert!(message.contains(expected), "{message}");

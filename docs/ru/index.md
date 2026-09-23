@@ -93,6 +93,7 @@
 | [AUDIT-Q25-SYSCTL-NAMESPACE.md](reports/AUDIT-Q25-SYSCTL-NAMESPACE.md) | Q25-F052–F053: изоляция sysctl по namespace и миграция журнала v2 |
 | [AUDIT-Q25-TUN-ADMISSION.md](reports/AUDIT-Q25-TUN-ADMISSION.md) | Q25-F054–F056: пассивное ожидание TUN и эксклюзивное создание очередей |
 | [AUDIT-Q25-TUN-ATTACH.md](reports/AUDIT-Q25-TUN-ATTACH.md) | Q25-F057–F058: запрет создания при attach и сохранение формата TUN |
+| [AUDIT-Q25-TUN-LIFETIME.md](reports/AUDIT-Q25-TUN-LIFETIME.md) | Q25-F059–F060: сохранение исходных fd TUN до завершения очистки |
 | [AUDIT-Q25-CLIENT-COMMANDS.md](reports/AUDIT-Q25-CLIENT-COMMANDS.md) | Q25-F035/F036: пределы route/firewall-команд и защита при неизвестном IPv4-пути |
 | [AUDIT-Q25-SETUP-FLUSH.md](reports/AUDIT-Q25-SETUP-FLUSH.md) | Q25-F033/F034: общий initial setup и подтверждение IPv4/IPv6 flush |
 | [AUDIT-Q25-ROUTE-PENDING.md](reports/AUDIT-Q25-ROUTE-PENDING.md) | Q25-F031/F032: учёт неизвестных операций и освобождение отсутствующих orphan-маршрутов |

@@ -89,3 +89,5 @@ cargo test --manifest-path qeli/Cargo.toml --lib tun::iface::linux_tests -- --ig
 
 Полный Linux E2E, старые/минимальные ядра, OpenWrt, native certification и новый benchmark
 не выполнялись. 37 разделов плана: 19 IN_PROGRESS, 18 TODO, полного PASS пока нет.
+
+Продолжение: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) удаляет очистку TUN по имени и сохраняет исходные дескрипторы до конца cleanup. Identity DNS/маршрутов при внешней подмене и таймаут workers остаются открыты.

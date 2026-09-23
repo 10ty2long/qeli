@@ -4550,13 +4550,12 @@ struct QueueThreads {
 ///
 /// Tearing down on the success path too is deliberate: `run_profile` only returns once the
 /// profile has genuinely stopped serving, and a stopped profile should not keep a configured
-/// interface. Every step is idempotent (`ip link delete` and `iptables -D` on something that
-/// is already gone are no-ops), so overlapping with the shutdown-time `cleanup_all` is safe.
-/// (Audit 2026-08-01, §5.)
+/// interface. Original queue descriptors remain owned here through host cleanup and worker
+/// shutdown; closing them releases the non-persistent device without reopening its name.
 struct ProfileTeardown {
     profile: String,
-    /// The device as the KERNEL named it, set once the TUN exists.
-    ifname: Option<String>,
+    /// Setup retains every original; after duplication one descriptor anchors teardown.
+    queues: Vec<TunInterface>,
     state: Arc<ServerState>,
     /// Set once the per-queue reader/writer threads are running, so they can be stopped before
     /// the device is removed — it only disappears when the last descriptor closes.
@@ -4603,17 +4602,8 @@ impl Drop for ProfileTeardown {
         // the device keeps the window where a rule points at a vanished device closed.
         nat::cleanup(&self.profile);
 
-        // Stop the queue readers BEFORE removing the device.
-        //
-        // Two independent defects sat on top of each other here, and the first masked the
-        // second. `TunInterface::delete` could not delete a MULTI-QUEUE device at all (missing
-        // `multi_queue` on `ip tuntap del` → `ioctl(TUNSETIFF): Invalid argument`), which is
-        // every device this server creates. With that fixed the command succeeds — and the
-        // interface still survived, because each queue hands a `libc::dup` of its fd to a
-        // reader parked in `read()` forever, and a device created without `IFF_PERSIST` only
-        // disappears once the LAST descriptor closes. So the order below is not cosmetic: stop
-        // the readers, let them close their own fds, and only then ask for the device.
-        // (Audit 2026-08-01, §5.)
+        // Stop workers before the original queue descriptors (fields of this guard) close.
+        // A timed-out worker still owns its fd; report that failure, never delete by name.
         if let Some(threads) = self.readers.take() {
             // Order matters: the flag goes up FIRST, so a thread that has not reached its
             // blocking call yet sees it on its own and never parks. The signal is only for the
@@ -4645,19 +4635,6 @@ impl Drop for ProfileTeardown {
             self.failures.record("TUN queues", result);
         }
 
-        if let Some(ifname) = &self.ifname {
-            if let Err(e) = TunInterface::delete(ifname) {
-                log::warn!(
-                    "Profile '{}': could not remove TUN '{}' during teardown: {} — the device \
-                     outlives the profile",
-                    self.profile,
-                    ifname,
-                    e
-                );
-                self.failures
-                    .record(&format!("TUN '{ifname}' delete"), Err(e.into()));
-            }
-        }
         // The normal path removes this entry synchronously before Drop. On panic/cancellation
         // fall back to an async removal, but only if the map still contains THIS generation.
         // An unconditional remove-by-name can erase a replacement generation after restart.
@@ -4752,7 +4729,7 @@ async fn run_profile(
     let failures = crate::profile_teardown::Report::default();
     let mut teardown = ProfileTeardown {
         profile: name.clone(),
-        ifname: None,
+        queues: Vec::new(),
         state: state.clone(),
         readers: None,
         tasks: tasks.clone(),
@@ -4838,7 +4815,8 @@ async fn run_profile_generation(
         // pointless (idle pollers), but explicit values are honoured up to the limit.
         n.clamp(1, 256)
     };
-    let queues = TunInterface::create_multiqueue(&pcfg.tun.name, pcfg.tun.mtu, dev_type, nq)?;
+    teardown.queues = TunInterface::create_multiqueue(&pcfg.tun.name, pcfg.tun.mtu, dev_type, nq)?;
+    let queues = &teardown.queues;
     // The name the KERNEL gave the device, not the one we asked for. TUNSETIFF copies at most
     // IFNAMSIZ-1 = 15 bytes and writes back what it actually used; `create_multiqueue` has
     // always read that back, and this code then threw it away and kept configuring
@@ -4850,8 +4828,6 @@ async fn run_profile_generation(
         .first()
         .map(|q| q.name.clone())
         .unwrap_or_else(|| pcfg.tun.name.clone());
-    // The device exists from here on, so record it before the first fallible call below.
-    teardown.ifname = Some(ifname.clone());
     if dev_type == DeviceType::Tap {
         TunInterface::set_mac(&ifname, TAP_GATEWAY_MAC)?;
     }
@@ -5066,11 +5042,11 @@ async fn run_profile_generation(
     );
 
     // Per-queue reader/writer fds (dup'd so the blocking reader and writer threads each
-    // own a closable fd for their queue). Dropping `queues` after this keeps the device
-    // alive via these dups (closed when the threads exit).
+    // own a closable fd for their queue). Teardown keeps one original afterward, so even
+    // an early worker exit cannot release the name before host cleanup has completed.
     let mut reader_fds: Vec<OwnedFd> = Vec::with_capacity(queues.len());
     let mut writer_fds: Vec<OwnedFd> = Vec::with_capacity(queues.len());
-    for q in &queues {
+    for q in queues {
         // Leave the fds BLOCKING: the reader thread sleeps inside read() until a
         // packet arrives (no 1ms busy-poll → 0% idle CPU even with many queues); the
         // writer blocks on a full TUN queue (backpressure, not silent drop).
@@ -5095,7 +5071,9 @@ async fn run_profile_generation(
         reader_fds.push(rfd);
         writer_fds.push(wfd);
     }
-    drop(queues);
+    // One attached queue is enough to retain this non-persistent device. Other originals
+    // now have worker-owned duplicates; avoid retaining an extra fd for every queue.
+    teardown.queues.truncate(1);
 
     // Inbound (client -> TUN): one channel per queue. handle_client gets a sharded
     // sender (sticky per connection) so a connection's packets stay ordered.

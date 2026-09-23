@@ -78,3 +78,5 @@ No actual Linux worker, signal delivery, firewall/TUN/DNS, systemd, devices, nat
 SSH/Actions or benchmarks were run.
 
 Previous pass: [final leases and outer supervisor](AUDIT-Q14-OWNED-SHUTDOWN.md).
+
+Follow-up: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) removes name-based TUN deletion and retains original descriptors through cleanup. DNS/route identity during external replacement and worker timeout remain open.

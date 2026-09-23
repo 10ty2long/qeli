@@ -5297,8 +5297,6 @@ where
     #[cfg(target_os = "macos")]
     let is_tap = false;
     #[cfg(target_os = "linux")]
-    let tunnel_tun = tunnel.tun;
-    #[cfg(target_os = "linux")]
     let tap_mac = tunnel.tap_mac;
     #[cfg(not(target_os = "linux"))]
     let tap_mac = [0u8; 6];
@@ -6252,16 +6250,12 @@ where
         .err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
-    // Closes the TUN fd: `TunInterface` holds it as a `File`. (Do NOT also close the raw
-    // number — that would be a double close, and the freed number can already have been
-    // handed to another thread's socket.)
-    #[cfg(target_os = "linux")]
-    drop(tunnel_tun);
+    // TunGuard retains the original descriptor through DNS/routes cleanup and retries.
     // Attach mode: the interface + routes belong to an external owner — leave them
-    // (we only borrowed the fd). Otherwise remove the device + routes we created.
+    // (we only borrowed the fd). Otherwise remove our routes before the guard closes its fd.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(&tun_guard.routes, &tun_guard.failures).err()
+        cleanup_owned_routes(&tun_guard.routes, &tun_guard.failures).err()
     } else {
         None
     };
@@ -6714,8 +6708,6 @@ pub(crate) enum WindowsTunSetup {
 pub(crate) struct TunnelSetup {
     #[cfg(target_os = "linux")]
     guard: TunGuard,
-    #[cfg(target_os = "linux")]
-    tun: TunInterface,
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     reader_fd: OwnedFd,
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
@@ -6773,11 +6765,14 @@ impl TunnelSetup {
 ///
 /// This guard carries the platform parts that must happen no matter how we leave: request
 /// pump cancellation before touching the device, restore the resolver, and remove the
-/// interface and routes we installed. TunnelSetup owns it before the core ACK, then the
-/// data-plane loop takes ownership. The normal path `disarm()`s it after the fuller
+/// routes we installed, then close our original descriptor. TunnelSetup owns it before
+/// the core ACK, then the data-plane loop takes ownership. The normal path `disarm()`s it after the fuller
 /// graceful sequence, whose `.await`s are impossible in `Drop`.
 #[cfg(target_os = "linux")]
 struct TunGuard {
+    // A field stays alive throughout Drop, including retries after failed graceful cleanup.
+    // Closing this owned File releases only this queue; never reopen a name for deletion.
+    _tun: TunInterface,
     failures: crate::client_cleanup::Failures,
     if_name: String,
     stop: Option<LinuxTunPumpStop>,
@@ -6790,12 +6785,14 @@ struct TunGuard {
 #[cfg(target_os = "linux")]
 impl TunGuard {
     fn new(
+        tun: TunInterface,
         if_name: String,
         owns_device: bool,
         routes: route::RouteOwner,
         failures: crate::client_cleanup::Failures,
     ) -> Self {
         Self {
+            _tun: tun,
             failures,
             if_name,
             stop: None,
@@ -6815,36 +6812,18 @@ impl TunGuard {
     }
 }
 
-/// Remove every host resource owned by a non-attach client generation. Attempt both halves
-/// even when one fails: routes on the physical interface can survive a failed TUN deletion,
-/// while deleting the interface does not prove that independently installed bypass routes
-/// were removed.
+/// Remove owned routes while TunGuard retains the original queue descriptor. Physical
+/// bypass routes require explicit cleanup even though the kernel retires TUN routes when
+/// the last descriptor closes. Cleanup errors remain sticky and retryable.
 #[cfg(target_os = "linux")]
-fn cleanup_owned_tun(
+fn cleanup_owned_routes(
     routes: &route::RouteOwner,
     failures: &crate::client_cleanup::Failures,
 ) -> anyhow::Result<()> {
-    let if_name = routes.interface();
-    let route_error = failures
-        .observe(
-            crate::client_cleanup::Resource::Routes,
-            route::cleanup_routes(routes),
-        )
-        .err();
-    let tun_error = failures
-        .observe(
-            crate::client_cleanup::Resource::Tun,
-            TunInterface::delete(if_name).map_err(anyhow::Error::from),
-        )
-        .err();
-    match (route_error, tun_error) {
-        (None, None) => Ok(()),
-        (Some(routes), None) => Err(anyhow::anyhow!("route cleanup failed: {routes}")),
-        (None, Some(tun)) => Err(anyhow::anyhow!("TUN deletion failed: {tun}")),
-        (Some(routes), Some(tun)) => Err(anyhow::anyhow!(
-            "route cleanup failed: {routes}; TUN deletion failed: {tun}"
-        )),
-    }
+    failures.observe(
+        crate::client_cleanup::Resource::Routes,
+        route::cleanup_routes(routes),
+    )
 }
 
 #[cfg(target_os = "linux")]
@@ -6857,7 +6836,7 @@ impl Drop for TunGuard {
             "connection ended on an error path — releasing TUN {}",
             self.if_name
         );
-        // Ask both workers to stop before deleting the device. The descriptors are not
+        // Ask both workers to stop before releasing our descriptor. Worker descriptors are not
         // closed here directly: their OwnedFd values live in the workers and closing a
         // raw number concurrently with read/write could target a subsequently reused fd.
         if let Some(stop) = &self.stop {
@@ -6870,7 +6849,7 @@ impl Drop for TunGuard {
             log::error!("TUN guard DNS cleanup failed: {error}");
         }
         if self.owns_device {
-            if let Err(error) = cleanup_owned_tun(&self.routes, &self.failures) {
+            if let Err(error) = cleanup_owned_routes(&self.routes, &self.failures) {
                 log::error!("TUN guard cleanup failed: {error}");
             }
         }
@@ -7595,7 +7574,9 @@ async fn probe_udp_mtu(
 }
 
 #[cfg(target_os = "linux")]
-struct NetworkPlanApplyGuard {
+struct NetworkPlanApplyGuard<'a> {
+    // The rollback must finish before the original queue can be closed.
+    _tun: &'a TunInterface,
     failures: crate::client_cleanup::Failures,
     if_name: String,
     owns_device: bool,
@@ -7609,8 +7590,9 @@ struct NetworkPlanApplyGuard {
 }
 
 #[cfg(target_os = "linux")]
-impl NetworkPlanApplyGuard {
+impl<'a> NetworkPlanApplyGuard<'a> {
     fn new(
+        tun: &'a TunInterface,
         config: &crate::config::client::ClientConfig,
         if_name: &str,
         owns_device: bool,
@@ -7618,6 +7600,7 @@ impl NetworkPlanApplyGuard {
         failures: crate::client_cleanup::Failures,
     ) -> Self {
         Self {
+            _tun: tun,
             failures,
             if_name: if_name.to_string(),
             owns_device,
@@ -7649,7 +7632,7 @@ impl NetworkPlanApplyGuard {
 }
 
 #[cfg(target_os = "linux")]
-impl Drop for NetworkPlanApplyGuard {
+impl Drop for NetworkPlanApplyGuard<'_> {
     fn drop(&mut self) {
         if !self.armed {
             return;
@@ -7683,14 +7666,6 @@ impl Drop for NetworkPlanApplyGuard {
                 gateway::disengage_plan(&self.if_name, self.gateway_enabled, self.exit_enabled),
             ) {
                 log::warn!("router rollback after NetworkPlan failure also failed: {error}");
-            }
-        }
-        if self.owns_device {
-            if let Err(error) = self.failures.observe(
-                crate::client_cleanup::Resource::Tun,
-                TunInterface::delete(&self.if_name).map_err(anyhow::Error::from),
-            ) {
-                log::warn!("TUN rollback after NetworkPlan failure also failed: {error}");
             }
         }
     }
@@ -7797,6 +7772,7 @@ fn setup_tunnel(
     // firewall state, descriptor duplication, routes, DNS, and the final TAP MAC read.
     // The external interface in attach mode is borrowed and is therefore never deleted.
     let mut plan_guard = NetworkPlanApplyGuard::new(
+        &tun,
         config,
         &if_name,
         !attach,
@@ -7985,11 +7961,11 @@ fn setup_tunnel(
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
     publish_network_plan_state(plan)?;
-    let guard = TunGuard::new(if_name.clone(), !attach, route_owner, cleanup_failures);
     plan_guard.disarm();
+    drop(plan_guard);
+    let guard = TunGuard::new(tun, if_name.clone(), !attach, route_owner, cleanup_failures);
     Ok(TunnelSetup {
         guard,
-        tun,
         reader_fd: owned_reader,
         writer_fd: owned_writer,
         if_name,
@@ -9731,8 +9707,6 @@ pub(crate) async fn run_udp_tunnel(
     let is_tap = tun_setup.is_tap;
     #[cfg(target_os = "macos")]
     let is_tap = false;
-    #[cfg(target_os = "linux")]
-    let tunnel_tun = tun_setup.tun;
     #[cfg(target_os = "linux")]
     let tap_mac = tun_setup.tap_mac;
     #[cfg(any(target_os = "android", target_os = "macos"))]
@@ -11917,15 +11891,11 @@ pub(crate) async fn run_udp_tunnel(
         .err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
-    // Closes the TUN fd: `TunInterface` holds it as a `File`. (Do NOT also close the raw
-    // number — that would be a double close, and the freed number can already have been
-    // handed to another thread's socket.)
-    #[cfg(target_os = "linux")]
-    drop(tunnel_tun);
+    // TunGuard retains the original descriptor through DNS/routes cleanup and retries.
     // Attach mode: the interface + routes belong to an external owner — leave them.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(&tun_guard.routes, &tun_guard.failures).err()
+        cleanup_owned_routes(&tun_guard.routes, &tun_guard.failures).err()
     } else {
         None
     };
@@ -12416,7 +12386,7 @@ mod lifecycle_adapter_tests {
     impl Drop for DropFailure {
         fn drop(&mut self) {
             let _ = self.0.observe::<()>(
-                crate::client_cleanup::Resource::Tun,
+                crate::client_cleanup::Resource::Routes,
                 Err(anyhow::anyhow!("simulated resource rollback failed")),
             );
         }

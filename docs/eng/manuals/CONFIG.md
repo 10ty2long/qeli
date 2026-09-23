@@ -1792,6 +1792,11 @@ unguarded fallback. The external owner must keep the device and framing stable
 during opening, and sysfs must match the current network namespace.
 See [diagnostics §6.48](TROUBLESHOOTING.md).
 
+Qeli retains original TUN descriptors through cleanup, then closes them; disconnect,
+rollback and server teardown do not delete a device by name or clear persistence.
+External holders can keep it alive. DNS/route commands still require stable device
+identity during cleanup; see [diagnostics §6.49](TROUBLESHOOTING.md).
+
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred

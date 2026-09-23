@@ -89,3 +89,5 @@ the remaining namespace/journal/deadline items.
 
 Full Linux E2E, old/minimal kernels, OpenWrt, native certification and a new benchmark
 were not run. The 37-section plan remains 19 IN_PROGRESS, 18 TODO, no complete PASS.
+
+Follow-up: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) removes name-based TUN deletion and retains original descriptors through cleanup. DNS/route identity during external replacement and worker timeout remain open.

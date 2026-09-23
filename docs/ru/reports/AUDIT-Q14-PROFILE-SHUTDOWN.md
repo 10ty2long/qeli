@@ -78,3 +78,5 @@ Q14-F027 остаётся открытой для generic NAT cleanup и общ�
 SSH/Actions и бенчмарки не запускались.
 
 Предыдущий этап: [итоговые leases и внешний supervisor](AUDIT-Q14-OWNED-SHUTDOWN.md).
+
+Продолжение: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) удаляет очистку TUN по имени и сохраняет исходные дескрипторы до конца cleanup. Identity DNS/маршрутов при внешней подмене и таймаут workers остаются открыты.

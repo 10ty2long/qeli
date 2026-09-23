@@ -1002,7 +1002,7 @@ compatibility path does not enable direct resolver-file takeover for new connect
 ### 6.21 Linux: network resource cleanup reported errors
 
 `kill-switch retained because network resource cleanup reported errors` means that DNS,
-route, TUN or NetworkPlan rollback cleanup failed during this client run. The client attempts
+route or forwarding/NetworkPlan rollback cleanup failed during this client run. The client attempts
 forwarding cleanup, reports terminal failure and does not reconnect. `post_down` receives
 `network_cleanup_failed` / `network_cleanup`, unless core teardown also failed (then
 `core_stop_failed` / `core_stop` has priority). A simultaneous stop signal does not hide the
@@ -1011,7 +1011,7 @@ cleanup failure. If the server also sent a terminal kick, its cause remains in t
 A fallback guard may retry cleanup, but its later success does not erase the original fault
 or automatically release the kill-switch. Review the first error for each resource and verify
 current DNS, route and interface state before administrator recovery. The retained record is
-limited to four resource categories with the first 2048 characters each; it is not a complete
+limited to three resource categories with the first 2048 characters each; it is not a complete
 history of every retry. User hook scripts may still change firewall state independently.
 
 ---
@@ -1189,7 +1189,7 @@ restart is not yet guaranteed.
 
 `Server shutdown failed: profile/worker task cleanup: ...` reports a task or current
 profile-generation failure. Nested details distinguish listener/service/child panics,
-profile supervisor errors, TUN queue timeout/panic and TUN deletion failure.
+profile supervisor errors and TUN queue timeout/panic.
 A profile may also log `teardown incomplete: ...`.
 
 A failed profile does not skip draining the others, final known DNS/IPv6 sysctl lease
@@ -1200,7 +1200,7 @@ already collected task diagnostics.
 
 `queue thread(s) did not stop` means a thread exceeded the three-second grace and may
 retain the device. Inspect earlier profile errors and the named TUN; this mechanism
-does not automatically retry TUN deletion. `teardown attempted` reports an attempt,
+releases its owned descriptors without deleting a device by name (see §6.49). `teardown attempted` reports an attempt,
 not proof that all NAT rules or old devices are absent. Earlier-generation errors after
 retry/replacement still require separate accounting.
 [Validation and limitations](../reports/AUDIT-Q14-PROFILE-SHUTDOWN.md).
@@ -1571,8 +1571,26 @@ process. Provide a separate TUN/TAP without VNET_HDR, with NO_PI and matching
 Supported ONE_QUEUE/NAPI/NAPI_FRAGS and queue mode are preserved; persistence is unchanged.
 The external manager must retain the device and stable framing during opening.
 Sysfs must describe the current network namespace. The guard does not prove the
-identity of a same-name replacement or fix name-based cleanup.
+identity of a same-name replacement. Descriptor-based release is described in §6.49;
+DNS/route identity during external replacement remains open.
 [Report, Linux tests and limits](../reports/AUDIT-Q25-TUN-ATTACH.md).
+
+---
+
+### 6.49 Linux: TUN release follows descriptor ownership
+
+Client disconnect/rollback and server profile teardown no longer run `ip tuntap del`.
+The client guard keeps the original descriptor until DNS/routes cleanup finishes;
+the server guard retains one original after worker-fd duplication through host cleanup
+and worker stop. A non-persistent device disappears after all attached descriptors close.
+Attach mode closes
+only the borrowed descriptor; it does not clear the external device's persistence.
+
+If a device remains, inspect its actual owner and earlier queue-stop errors. External
+holders, changed persistence or a timed-out server worker can retain it. Qeli does not
+force deletion of the name. A privileged external rename/delete can still invalidate
+name-based DNS/route cleanup; that ownership work remains open.
+[Tests and precise boundaries](../reports/AUDIT-Q25-TUN-LIFETIME.md).
 
 ---
 
