@@ -1112,30 +1112,23 @@ fn cleanup_routing_features(
     lan_subnet: &str,
     lan_subnet_ipv6: &str,
 ) -> anyhow::Result<()> {
-    let mut errors = Vec::new();
-    // Keep the kill-switch in place until forwarding/NAT state has been removed. This
-    // preserves fail-closed egress throughout teardown instead of opening the host first.
-    if gateway_enabled || exit_node {
-        if let Err(error) = gateway::disengage_plan(
-            tun_if,
-            lan_subnet,
-            lan_subnet_ipv6,
-            gateway_enabled,
-            exit_node,
-        ) {
-            errors.push(error.to_string());
-        }
-    }
-    if kill_switch {
-        if let Err(error) = killswitch::disengage(tun_if) {
-            errors.push(error.to_string());
-        }
-    }
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        anyhow::bail!("host firewall cleanup failed: {}", errors.join("; "))
-    }
+    crate::client_cleanup::routing(
+        kill_switch,
+        || {
+            if gateway_enabled || exit_node {
+                gateway::disengage_plan(
+                    tun_if,
+                    lan_subnet,
+                    lan_subnet_ipv6,
+                    gateway_enabled,
+                    exit_node,
+                )
+            } else {
+                Ok(())
+            }
+        },
+        || killswitch::disengage(tun_if),
+    )
 }
 
 /// The packet/session code is platform-neutral. This is the deliberately small boundary

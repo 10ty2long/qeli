@@ -84,7 +84,9 @@ pub mod transport;
 #[path = "hooks/process.rs"]
 mod hook_process;
 
-// Headless credential I/O and final task publication also have portable host tests.
+// Headless credential I/O, shutdown ordering and cleanup policy have portable host tests.
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod client_cleanup;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod client_tasks;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]

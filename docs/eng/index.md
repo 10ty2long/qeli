@@ -70,6 +70,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-Q33-CONFIG-TRUST.md](reports/AUDIT-Q14-Q33-CONFIG-TRUST.md) | Config snapshot trust, file races and ready-generation cleanup |
 | [AUDIT-Q25-CREDENTIAL-COMMANDS.md](reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md) | Bounded password_command, secret-safe errors, early stop and feature isolation |
 | [AUDIT-Q25-PASSWORD-FILES.md](reports/AUDIT-Q25-PASSWORD-FILES.md) | Bounded password files, shared secret buffer and final client status |
+| [AUDIT-Q25-NETWORK-CLEANUP.md](reports/AUDIT-Q25-NETWORK-CLEANUP.md) | Keep the kill-switch after failed forwarding cleanup |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Control socket ownership, API bounds, handler shutdown and hook pairing |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, Child/PID ownership, commands and termination deadlines |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Profile shutdown, early startup errors, DNS listeners and socket release |

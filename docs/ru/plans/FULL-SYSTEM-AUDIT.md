@@ -505,6 +505,12 @@ watchers/sampler, включая ошибки после инициализац�
 два Unix-теста только cross-check. Неотменяемый I/O может превышать бюджет 30 секунд.
 Startup/network rollback, мониторинг фоновых ошибок и Linux E2E ещё открыты.
 
+**Fail-closed очистка сети, 23 сентября 2026:**
+[Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup должен
+завершиться успешно до снятия включённого kill-switch; ошибка сохраняет защиту и её причину.
+899 host Rust tests PASS, включая четыре переносимых fault-injection сценария. Linux
+пока только cross-check; live firewall/E2E и ранний begin_connection rollback ещё открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -747,6 +753,12 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 watchers/sampler, включая ошибки после инициализации reporter. 895 host Rust tests PASS;
 два Unix-теста только cross-check. Неотменяемый I/O может превышать бюджет 30 секунд.
 Startup/network rollback, мониторинг фоновых ошибок и Linux E2E ещё открыты.
+
+**Fail-closed очистка сети, 23 сентября 2026:**
+[Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup должен
+завершиться успешно до снятия включённого kill-switch; ошибка сохраняет защиту и её причину.
+899 host Rust tests PASS, включая четыре переносимых fault-injection сценария. Linux
+пока только cross-check; live firewall/E2E и ранний begin_connection rollback ещё открыты.
 
 ### 26. Общий C# и managed/native граница
 

@@ -957,6 +957,17 @@ of a terminal status after SIGKILL or forced cancellation of the entire client f
 
 ---
 
+### 6.18 Linux: kill-switch retained after cleanup failure
+
+`kill-switch retained because forwarding/NAT cleanup did not complete` means the earlier
+error prevented reliable gateway/exit-node cleanup. Qeli deliberately keeps the enabled
+kill-switch. Fix the reported firewall/tool failure and retry normal cleanup or controlled
+administrator recovery; network access can remain restricted until then. The message does
+not appear when kill_switch is disabled. An error while removing the kill-switch itself
+has a different meaning: removal may have partially succeeded, so retention is not claimed.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

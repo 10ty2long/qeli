@@ -1877,6 +1877,11 @@ manual wiring or watchdog entrypoint needed.
 
 ## Kill-switch (`kill_switch`)
 
+On Linux, successful gateway/exit-node forwarding cleanup is required before releasing
+an enabled kill-switch. If that cleanup fails, Qeli reports `kill-switch retained` and
+keeps the egress barrier. Resolve the reported cleanup failure before retrying cleanup
+or performing administrator recovery. A failed stop is not a successful network reset.
+
 A fail-closed firewall on the client, **full-tunnel only**: while the tunnel is down, all
 egress except loopback / tun / DHCP / the server IP is blocked, so a drop can't leak onto
 the physical interface. Enabled with `kill_switch = true` in `[qeli]`.

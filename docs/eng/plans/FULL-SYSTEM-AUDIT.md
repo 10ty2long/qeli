@@ -500,6 +500,12 @@ watchers/sampler, including initialized startup-error paths. 895 host Rust tests
 two Unix tests cross-checked only. Non-interruptible I/O may exceed the 30-second budget.
 Startup/network rollback, background fault monitoring and Linux E2E remain open.
 
+**Fail-closed network cleanup, 23 September 2026:**
+[Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup must succeed
+before an enabled kill-switch is removed; failures retain the barrier and report why.
+899 host Rust tests PASS, including four portable fault-injection scenarios. Linux is
+cross-checked only; real firewall/E2E and early begin_connection rollback remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -740,6 +746,12 @@ reject FIFO and await active I/O on ordinary stop/deadline. The final status fol
 watchers/sampler, including initialized startup-error paths. 895 host Rust tests PASS;
 two Unix tests cross-checked only. Non-interruptible I/O may exceed the 30-second budget.
 Startup/network rollback, background fault monitoring and Linux E2E remain open.
+
+**Fail-closed network cleanup, 23 September 2026:**
+[Q25-F003](../reports/AUDIT-Q25-NETWORK-CLEANUP.md): forwarding/NAT cleanup must succeed
+before an enabled kill-switch is removed; failures retain the barrier and report why.
+899 host Rust tests PASS, including four portable fault-injection scenarios. Linux is
+cross-checked only; real firewall/E2E and early begin_connection rollback remain open.
 
 ### 26. Shared C# and managed/native boundary
 
