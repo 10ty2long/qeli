@@ -267,3 +267,50 @@ fn finite_oversized_output_is_rejected_instead_of_returned_to_parser() {
         "oversized output must not reach the parser"
     );
 }
+
+#[tokio::test]
+async fn generation_stop_joins_timed_out_command_without_late_observation() {
+    use crate::transport_core::tasks::TaskGroup;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let mut command = fixture("hang");
+    command.inner.env(
+        "QELI_SYSTEM_TEST_WITNESS",
+        listener.local_addr().unwrap().to_string(),
+    );
+    let mut group = TaskGroup::default();
+    let sampler = group.spawner();
+    let returned = Arc::new(AtomicBool::new(false));
+    let published = Arc::new(AtomicBool::new(false));
+    let command_returned = returned.clone();
+    let observation_published = published.clone();
+    group.spawner().spawn(async move {
+        let result = sampler
+            .blocking(move || {
+                let result = command.output_with_limits(CHILD_DEADLINE, OUTPUT_LIMIT);
+                assert_eq!(result.unwrap_err().kind(), io::ErrorKind::TimedOut);
+                command_returned.store(true, Ordering::Release);
+            })
+            .await;
+        if result.is_some() {
+            observation_published.store(true, Ordering::Release);
+        }
+    });
+    let peer = ready(&listener).await;
+    // Closing the group aborts the async collector, but its owned blocking command must
+    // finish and reap the child before network cleanup can follow generation teardown.
+    tokio::time::timeout(TEST_DEADLINE, group.finish())
+        .await
+        .unwrap();
+    assert!(
+        returned.load(Ordering::Acquire),
+        "command detached from generation"
+    );
+    assert!(
+        !published.load(Ordering::Acquire),
+        "late observation after stop"
+    );
+    closed(peer).await;
+}

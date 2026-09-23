@@ -62,7 +62,8 @@ leaving its process group is outside group-termination guarantees. Two existing 
 group tests were compiler-checked; Linux signal delivery was not executed here.
 
 Preflight is subsequently migrated in [Q05-F001](AUDIT-Q05-PREFLIGHT.md).
-Client routes/kill-switch/gateway/path-monitor commands are not migrated by this pass. Q14-F027, older-generation resources, overall network-operation deadlines
+Read-only path monitoring is subsequently migrated in [Q25-F020](AUDIT-Q25-PATH-MONITOR.md).
+Client routes/kill-switch/gateway commands are not migrated by this pass. Q14-F027, older-generation resources, overall network-operation deadlines
 and persistent DNS journaling remain open. Checks/deletions are not atomic against an
 external firewall manager. Actual Linux firewall/TUN/sysctl/systemd, devices, native
 release and benchmarks were not run.

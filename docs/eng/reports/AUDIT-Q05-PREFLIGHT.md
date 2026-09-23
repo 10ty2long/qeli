@@ -70,7 +70,8 @@ Spawn/kill/reap and uninterruptible kernel waits have no hard aggregate upper bo
 Linux process-group signals were not executed here; a descendant that leaves the group
 has no group-termination guarantee. A multi-command snapshot is not atomic against network changes.
 
-Client route/kill-switch/gateway/path-monitor commands still require migration with
+Read-only path monitoring is subsequently migrated in [Q25-F020](AUDIT-Q25-PATH-MONITOR.md).
+Client route/kill-switch/gateway commands still require migration with
 ownership checks after uncertain mutations. Older profile/TUN generations, Linux
 API/restart/restore, actual firewall/sysctl/systemd, devices, native release and a new
 benchmark are not closed by this pass.

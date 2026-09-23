@@ -64,7 +64,8 @@ process group, не покрывается гарантией её заверш�
 проверены компилятором; доставка Linux-сигналов здесь не исполнялась.
 
 Preflight позднее перенесён в [Q05-F001](AUDIT-Q05-PREFLIGHT.md).
-Клиентские routes/kill-switch/gateway/path monitor этим проходом не перенесены.
+Read-only path monitor позднее перенесён в [Q25-F020](AUDIT-Q25-PATH-MONITOR.md).
+Клиентские routes/kill-switch/gateway этим проходом не перенесены.
 Q14-F027, ресурсы старых поколений, общий срок всей сетевой операции и постоянный DNS
 journal остаются открытыми. Проверки/удаления не атомарны относительно внешнего firewall.
 Реальные Linux firewall/TUN/sysctl/systemd, устройства, native release и бенчмарки не запускались.

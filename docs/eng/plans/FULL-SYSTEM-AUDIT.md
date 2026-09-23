@@ -984,6 +984,12 @@ teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new 
 969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
 was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
+**Linux monitor commands, 23 September 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+three read-only route/address queries use the shared runner with a 15-second deadline
+and output limits. TaskGroup retains the blocking command during stop; failed samples
+do not publish PathUpdate. 1098 Rust tests and 23 production-adapter scenarios PASS.
+Route mutations, overall shutdown deadlines and actual Linux handover remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1020,6 +1026,12 @@ The TCP group starts before connect and joins drivers/bridges; the native runner
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
 cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
 Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
+
+**Linux monitor commands, 23 September 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+three read-only route/address queries use the shared runner with a 15-second deadline
+and output limits. TaskGroup retains the blocking command during stop; failed samples
+do not publish PathUpdate. 1098 Rust tests and 23 production-adapter scenarios PASS.
+Route mutations, overall shutdown deadlines and actual Linux handover remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1166,6 +1178,12 @@ use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS owne
 that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
+
+**Linux monitor commands, 23 September 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+three read-only route/address queries use the shared runner with a 15-second deadline
+and output limits. TaskGroup retains the blocking command during stop; failed samples
+do not publish PathUpdate. 1098 Rust tests and 23 production-adapter scenarios PASS.
+Route mutations, overall shutdown deadlines and actual Linux handover remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1442,7 +1460,7 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with remaining route/kill-switch/gateway/path-monitor
+**Next work:** continue 25 with remaining route/kill-switch/gateway
 commands, then older TUN generations and platform rollback/ACK. Section 05 still needs
 transaction-wide preflight deadlines and removal of synchronous waits in async handlers. Outstanding 01–07, Linux
 restart/restore/manual+NDP E2E and platform certification remain queued. A new full benchmark

@@ -5,11 +5,11 @@
 //! addresses instead of asking a resolver which may itself be routed through a failed tunnel.
 
 use super::{carrier_candidate_ips, LinuxPathController};
+use crate::system_command::Command;
 use crate::transport_core::path::{PathResolution, PathUpdate, PathUpdateFlags, PathUpdateReason};
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::net::IpAddr;
-use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -88,6 +88,8 @@ struct AddressInfo {
     flags: Vec<String>,
 }
 
+// A generation must be able to join this blocking sampler when an ip child stalls.
+// Reuse the shared deadline/output bounds; an error must never become a path snapshot.
 fn ip_json(args: &[&str]) -> anyhow::Result<Vec<u8>> {
     let output = Command::new("ip").args(args).output()?;
     if !output.status.success() {

@@ -1278,6 +1278,21 @@ waiting in panel handlers remains. There are no new INI keys.
 [Scope and limitations](../reports/AUDIT-Q05-PREFLIGHT.md).
 
 
+### 6.37 Linux client: path observation failure or delayed stop
+
+The debug message `Linux roaming path sample failed` means the monitor could not obtain
+a usable route/address observation. Its three read-only `ip` queries now each have
+a 15-second deadline and separate 16 MiB stdout/stderr limits. Timeout or output overflow
+returns an error; partial data is not published as a new path. Internal iproute2 output
+does not change the INI format of user profiles.
+
+During orderly stop, the generation owner waits for an already running command even
+when the async monitor is cancelled. This is not an overall stop deadline: queries are
+sequential, process waiting may extend the call, and route-mutating commands still need
+separate bounds. Check iproute2 availability and earlier debug logs when troubleshooting.
+[Validation and boundaries](../reports/AUDIT-Q25-PATH-MONITOR.md).
+
+
 ---
 
 ## 7. Reference

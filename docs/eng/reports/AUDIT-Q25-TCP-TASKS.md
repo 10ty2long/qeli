@@ -63,8 +63,10 @@ SSH, systemd restart, Actions, release-native rebuilds and new benchmarks were n
 ## Remaining work
 
 Forced cancellation of the entire future, process panic or SIGKILL cannot guarantee async
-joining; abort cannot stop a running blocking job. Deadlines for ip/iptables/resolvectl remain
-separate work: normal joining can wait for those commands. Nested transport-library/connector
+joining; abort cannot stop a running blocking job. TUN/DNS deadlines were subsequently
+added in [Q25-F016](AUDIT-Q25-SYSTEM-COMMANDS.md), and read-only monitor deadlines in
+[Q25-F020](AUDIT-Q25-PATH-MONITOR.md). Route mutations and client firewall commands
+remain open; there is no overall join deadline. Nested transport-library/connector
 tasks, UDP candidate/receive/draining lifetime, TUN-shutdown cancellation and Linux fault
 injection require subsequent passes. The full audit remains open.
 

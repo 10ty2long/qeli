@@ -70,8 +70,8 @@ Spawn/kill/reap и непрерываемые kernel waits не имеют жё�
 Linux process-group сигналы здесь не исполнялись; потомок, покинувший группу, не покрыт
 гарантией её завершения. Snapshot из нескольких команд не атомарен к изменениям сети.
 
-Остальные команды клиентских routes/kill-switch/gateway/path monitor ещё требуют
-переноса с проверкой ownership при неизвестном результате мутации. Старые поколения
+Read-only path monitor позднее перенесён в [Q25-F020](AUDIT-Q25-PATH-MONITOR.md).
+Остальные команды клиентских routes/kill-switch/gateway ещё требуют переноса с проверкой ownership при неизвестном результате мутации. Старые поколения
 профилей/TUN, Linux API/restart/restore, реальные firewall/sysctl/systemd, устройства,
 native release и новый бенчмарк не закрыты этим проходом.
 

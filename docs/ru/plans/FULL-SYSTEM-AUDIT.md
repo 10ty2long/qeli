@@ -991,6 +991,12 @@ teardown; flush отказа сохраняет pre-auth slot до освобо�
 969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
 кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
+**Команды Linux-монитора, 23 сентября 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+три read-only запроса маршрутов/адресов используют общий runner со сроком 15 секунд
+и лимитами вывода. TaskGroup сохраняет владение blocking-командой при остановке;
+ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
+Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1027,6 +1033,12 @@ TCP-группа создаётся до connect и ждёт driver/bridge; nati
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
 Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
 Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+
+**Команды Linux-монитора, 23 сентября 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+три read-only запроса маршрутов/адресов используют общий runner со сроком 15 секунд
+и лимитами вывода. TaskGroup сохраняет владение blocking-командой при остановке;
+ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
+Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1173,6 +1185,12 @@ Q14-F027, сроки команд и реальные backend/runtime прове
 DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
+
+**Команды Linux-монитора, 23 сентября 2026:** [Q25-F020](../reports/AUDIT-Q25-PATH-MONITOR.md):
+три read-only запроса маршрутов/адресов используют общий runner со сроком 15 секунд
+и лимитами вывода. TaskGroup сохраняет владение blocking-командой при остановке;
+ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
+Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1451,8 +1469,8 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: оставшиеся команды routes/kill-switch/gateway/path
-monitor, затем старые поколения TUN и platform rollback/ACK. В 05 остаются общий срок
+**Ближайшая работа:** продолжить 25: оставшиеся команды routes/kill-switch/gateway,
+затем старые поколения TUN и platform rollback/ACK. В 05 остаются общий срок
 preflight-транзакции и синхронные ожидания в async handlers. Сохраняется очередь
 незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
 Новый полный бенчмарк выполняется после стабилизации исправлений.

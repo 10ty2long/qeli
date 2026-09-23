@@ -63,8 +63,9 @@ SSH, systemd restart, Actions, пересборка release native и новый
 ## Что осталось
 
 При принудительной отмене всей future, panic процесса или SIGKILL async join не гарантирован;
-уже исполняемую blocking-операцию нельзя остановить через abort. Сроки системных команд
-ip/iptables/resolvectl остаются отдельной задачей: штатный join может ждать их завершения.
+уже исполняемую blocking-операцию нельзя остановить через abort. Сроки TUN/DNS-команд позднее добавлены в [Q25-F016](AUDIT-Q25-SYSTEM-COMMANDS.md),
+read-only команд монитора — в [Q25-F020](AUDIT-Q25-PATH-MONITOR.md).
+Мутации маршрутов и клиентский firewall ещё открыты; общего срока join нет.
 Вложенные задачи транспортных библиотек/connector, UDP candidate/receive/draining lifetime,
 отмена TUN shutdown и Linux fault injection требуют следующих проходов. Полный аудит открыт.
 
