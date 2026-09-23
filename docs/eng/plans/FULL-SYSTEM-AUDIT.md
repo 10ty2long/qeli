@@ -606,6 +606,11 @@ includes 4 new tests and 20 existing preflight tests; 1097 Rust tests and 21 pro
 scenarios PASS. Linux HTTP/restart/restore, transaction-wide deadlines and synchronous
 waiting in async handlers remain open.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): unknown sysctl owners are retained and
+acquire/recovery reports an error; failed sysctl observation preserves original values
+for retry. Eight baseline regressions fixed, 1362 Rust tests PASS. Journal namespace
+identity, actual Linux runtime and full section PASS remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -731,6 +736,11 @@ permits skipping IPv6 firewall; the shared lease reserves every Linux client's T
 including gateway/exit without kill-switch and dev_attach. 17 new host tests,
 3 baseline FAIL → PASS. Linux runtime and full section PASS remain open.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): unknown sysctl owners are retained and
+acquire/recovery reports an error; failed sysctl observation preserves original values
+for retry. Eight baseline regressions fixed, 1362 Rust tests PASS. Journal namespace
+identity, actual Linux runtime and full section PASS remain open.
+
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -818,6 +828,11 @@ Linux runtime for the new lease tests remains open; section status is unchanged.
 permits skipping IPv6 firewall; the shared lease reserves every Linux client's TUN,
 including gateway/exit without kill-switch and dev_attach. 17 new host tests,
 3 baseline FAIL → PASS. Linux runtime and full section PASS remain open.
+
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): unknown sysctl owners are retained and
+acquire/recovery reports an error; failed sysctl observation preserves original values
+for retry. Eight baseline regressions fixed, 1362 Rust tests PASS. Journal namespace
+identity, actual Linux runtime and full section PASS remain open.
 
 ### 19. Server and client DNS
 
@@ -1473,6 +1488,11 @@ permits skipping IPv6 firewall; the shared lease reserves every Linux client's T
 including gateway/exit without kill-switch and dev_attach. 17 new host tests,
 3 baseline FAIL → PASS. Linux runtime and full section PASS remain open.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): unknown sysctl owners are retained and
+acquire/recovery reports an error; failed sysctl observation preserves original values
+for retry. Eight baseline regressions fixed, 1362 Rust tests PASS. Journal namespace
+identity, actual Linux runtime and full section PASS remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1748,10 +1768,9 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with unknown owner state in the sysctl journal,
-network-namespace isolation of that journal, and safe TUN recovery with incomplete
-/proc inspection. Q25-F048–F049 addresses positively disabled IPv6 module handling
-and configured client TUN reservations within the checked scope.
+**Next work:** continue section 25 with PID/network namespace identity in the
+sysctl journal and safe TUN recovery with incomplete /proc inspection. Q25-F050–F051
+fixes unknown-owner handling and preserves retry data within the checked scope.
 Real Linux lease/attach/reconnect scenarios, iptables-nft/legacy and IPv6-disabled
 hosts, IPv6 appearing after startup, DNS/carrier globals, overall deadlines, durable
 crash recovery, Q14-F027 workers/FD and synchronous preflight waits remain open.

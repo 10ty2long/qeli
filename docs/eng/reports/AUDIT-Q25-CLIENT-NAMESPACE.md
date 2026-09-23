@@ -86,3 +86,6 @@ during TUN-owner discovery, DNS/carrier globals, deadlines and crash recovery.
 The shared sysctl journal is not yet separated by network namespace: isolated leases
 do not prove isolation of every subsystem. Native certification, a new benchmark
 and the full audit remain unfinished.
+
+Follow-up: [Q25-F050–F051](AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) fixes unknown-owner handling and preserves
+entries after inconclusive sysctl inspection; namespace identity remains open.

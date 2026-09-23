@@ -60,3 +60,6 @@ deadlines need separate passes. Server NAT command deadlines are added in
 devices, native release and benchmarks were not run.
 
 Previous pass: [profile tasks and TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md).
+
+Follow-up: [Q25-F050–F051](AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) fixes unknown-owner handling and preserves
+entries after inconclusive sysctl inspection; namespace identity remains open.

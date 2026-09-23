@@ -89,3 +89,6 @@ dev_attach и reconnect ещё не проверен. Отсутствующий
 recovery. Общий sysctl journal пока не разделён по network namespaces: изоляция
 lease не является доказательством изоляции всех подсистем. Native certification,
 новый benchmark и полный аудит остаются незавершёнными.
+
+Продолжение: [Q25-F050–F051](AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) исправляет обработку неизвестных владельцев
+и сохранение записей при недостоверной проверке sysctl; namespace identity ещё открыта.

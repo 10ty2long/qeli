@@ -11,6 +11,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+#[path = "sysctl/host.rs"]
+mod host;
 
 const JOURNAL_VERSION: u8 = 1;
 const JOURNAL_LIMIT: u64 = 128 * 1024;
@@ -61,21 +63,31 @@ fn current_boot_id() -> anyhow::Result<String> {
     Ok(value.to_string())
 }
 
-fn process_start_time(pid: u32) -> anyhow::Result<String> {
+fn process_start_time(pid: u32) -> std::io::Result<String> {
     let path = format!("/proc/{pid}/stat");
-    let stat = std::fs::read_to_string(&path)
-        .map_err(|error| anyhow::anyhow!("cannot read {path}: {error}"))?;
+    let stat = host::read(&path)?;
+    let invalid = || {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("{path} contains an invalid process identity"),
+        )
+    };
+    let (reported_pid, command) = stat.split_once(" (").ok_or_else(invalid)?;
+    if reported_pid.parse::<u32>().ok() != Some(pid) || !command.contains(')') {
+        return Err(invalid());
+    }
     // `comm` is parenthesized and may itself contain spaces or `)`, so split after the last
     // closing parenthesis. The remaining fields start at field 3; starttime is field 22.
-    let close = stat
-        .rfind(')')
-        .ok_or_else(|| anyhow::anyhow!("{path} has no process-name terminator"))?;
+    let close = stat.rfind(')').ok_or_else(invalid)?;
     let start = stat[close + 1..]
         .split_whitespace()
         .nth(19)
-        .ok_or_else(|| anyhow::anyhow!("{path} has no start-time field"))?;
-    if start.is_empty() || !start.bytes().all(|byte| byte.is_ascii_digit()) {
-        anyhow::bail!("{path} contains an invalid start-time field");
+        .ok_or_else(invalid)?;
+    if start.is_empty()
+        || !start.bytes().all(|byte| byte.is_ascii_digit())
+        || start.parse::<u64>().is_err()
+    {
+        return Err(invalid());
     }
     Ok(start.to_string())
 }
@@ -88,16 +100,50 @@ fn owner_id(scope: &str) -> anyhow::Result<String> {
     Ok(format!("{pid}:{}:{scope}", process_start_time(pid)?))
 }
 
-fn owner_is_alive(owner: &str) -> bool {
+fn parse_owner(owner: &str) -> Option<(u32, &str)> {
     let mut parts = owner.splitn(3, ':');
-    let Some(pid) = parts.next().and_then(|value| value.parse::<u32>().ok()) else {
-        return false;
-    };
-    let Some(expected_start) = parts.next() else {
-        return false;
-    };
-    parts.next().is_some_and(valid_scope)
-        && process_start_time(pid).is_ok_and(|actual| actual == expected_start)
+    let pid = parts.next()?.parse::<u32>().ok()?;
+    let start = parts.next()?;
+    if pid == 0
+        || pid > i32::MAX as u32
+        || start.is_empty()
+        || !start.bytes().all(|byte| byte.is_ascii_digit())
+        || start.parse::<u64>().is_err()
+        || !parts.next().is_some_and(valid_scope)
+    {
+        return None;
+    }
+    Some((pid, start))
+}
+
+/// Only a different observed generation or confirmed process absence proves death.
+/// NotFound alone can also mean an invisible process under procfs restrictions.
+fn owner_is_alive(owner: &str) -> anyhow::Result<bool> {
+    let (pid, expected) = parse_owner(owner)
+        .ok_or_else(|| anyhow::anyhow!("invalid sysctl owner identity {owner:?}"))?;
+    match process_start_time(pid) {
+        Ok(actual) => Ok(actual == expected),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            if !host::process_exists(pid)? {
+                Ok(false)
+            } else {
+                anyhow::bail!("PID {pid} exists but its start time cannot be inspected");
+            }
+        }
+        Err(error) => Err(anyhow::anyhow!(
+            "cannot inspect PID {pid} start time: {error}"
+        )),
+    }
+}
+
+fn require_known_owners(uncertain: &[String]) -> anyhow::Result<()> {
+    if !uncertain.is_empty() {
+        anyhow::bail!(
+            "cannot verify host sysctl owner(s): {}",
+            uncertain.join("; ")
+        );
+    }
+    Ok(())
 }
 
 fn valid_scope(scope: &str) -> bool {
@@ -152,17 +198,10 @@ fn validate(journal: &SysctlJournal) -> anyhow::Result<()> {
             || !valid_value(&entry.original)
             || !valid_value(&entry.managed)
             || entry.owners.len() > 256
-            || entry.owners.iter().any(|owner| {
-                let mut parts = owner.splitn(3, ':');
-                parts
-                    .next()
-                    .and_then(|value| value.parse::<u32>().ok())
-                    .is_none()
-                    || !parts.next().is_some_and(|start| {
-                        !start.is_empty() && start.bytes().all(|byte| byte.is_ascii_digit())
-                    })
-                    || !parts.next().is_some_and(valid_scope)
-            })
+            || entry
+                .owners
+                .iter()
+                .any(|owner| parse_owner(owner).is_none())
         {
             anyhow::bail!("invalid host sysctl journal entry for {path:?}");
         }
@@ -213,14 +252,19 @@ fn persist(path: &Path, journal: &SysctlJournal) -> anyhow::Result<()> {
     crate::util::write_atomic_private(path, &bytes)
 }
 
-fn read_value(path: &str) -> anyhow::Result<String> {
-    std::fs::read_to_string(path)
-        .map(|value| value.trim().to_string())
-        .map_err(|error| anyhow::anyhow!("cannot read {path}: {error}"))
+fn read_value(path: &str) -> std::io::Result<String> {
+    let value = host::read(path)?.trim().to_string();
+    if !valid_value(&value) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("{path} contains an invalid sysctl value"),
+        ));
+    }
+    Ok(value)
 }
 
 fn write_value(path: &str, value: &str) -> anyhow::Result<()> {
-    std::fs::write(path, format!("{value}\n"))
+    host::write(path, &format!("{value}\n"))
         .map_err(|error| anyhow::anyhow!("cannot write {path}={value}: {error}"))?;
     let actual = read_value(path)?;
     if actual != value {
@@ -232,10 +276,29 @@ fn write_value(path: &str, value: &str) -> anyhow::Result<()> {
 /// Restore only while the kernel still contains our managed value. An administrator's
 /// deliberate change made while qeli was active wins and is never overwritten.
 fn restore_if_owned(path: &str, entry: &ManagedSysctl) -> anyhow::Result<()> {
-    if !Path::new(path).exists() {
-        return Ok(());
-    }
-    let current = read_value(path)?;
+    let current = match read_value(path) {
+        Ok(current) => current,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            let fields: Vec<_> = path
+                .strip_prefix("/proc/sys/net/")
+                .unwrap_or_default()
+                .split('/')
+                .collect();
+            if let [_, "conf", interface, _] = fields.as_slice() {
+                if !["all", "default"].contains(interface) && !host::interface_exists(interface)? {
+                    return Ok(());
+                }
+            }
+            return Err(anyhow::anyhow!(
+                "cannot inspect saved sysctl {path}: {error}"
+            ));
+        }
+        Err(error) => {
+            return Err(anyhow::anyhow!(
+                "cannot inspect saved sysctl {path}: {error}"
+            ))
+        }
+    };
     if current != entry.managed || current == entry.original {
         if current != entry.managed {
             log::warn!(
@@ -248,9 +311,18 @@ fn restore_if_owned(path: &str, entry: &ManagedSysctl) -> anyhow::Result<()> {
     write_value(path, &entry.original)
 }
 
-fn prune_dead_owners(journal: &mut SysctlJournal) {
-    for entry in journal.entries.values_mut() {
-        entry.owners.retain(|owner| owner_is_alive(owner));
+fn prune_dead_owners(journal: &mut SysctlJournal) -> Vec<String> {
+    let mut uncertain = Vec::new();
+    for (path, entry) in &mut journal.entries {
+        entry.owners.retain(|owner| match owner_is_alive(owner) {
+            Ok(alive) => alive,
+            Err(error) => {
+                let message = format!("{path}, owner {owner}: {error}");
+                log::warn!("host networking: retaining unverified owner: {message}");
+                uncertain.push(message);
+                true
+            }
+        });
     }
     let empty: Vec<String> = journal
         .entries
@@ -271,10 +343,11 @@ fn prune_dead_owners(journal: &mut SysctlJournal) {
             );
         }
     }
+    uncertain
 }
 
 fn with_locked_journal<T>(
-    body: impl FnOnce(&Path, &mut SysctlJournal) -> anyhow::Result<T>,
+    body: impl FnOnce(&Path, &mut SysctlJournal, Vec<String>) -> anyhow::Result<T>,
 ) -> anyhow::Result<T> {
     let _local = IN_PROCESS_LOCK
         .lock()
@@ -288,15 +361,16 @@ fn with_locked_journal<T>(
     let _file_lock = crate::util::FileLock::acquire(&path)?;
     let boot_id = current_boot_id()?;
     let mut journal = load(&path, &boot_id)?;
-    prune_dead_owners(&mut journal);
+    let uncertain = prune_dead_owners(&mut journal);
     // Commit stale-owner recovery independently from the requested operation. In particular,
     // a failed acquire must never be retried implicitly and persisted as a live owner.
     persist(&path, &journal)?;
-    body(&path, &mut journal)
+    body(&path, &mut journal, uncertain)
 }
 
 pub fn acquire_checked(path: &str, value: &str, scope: &str) -> anyhow::Result<()> {
-    with_locked_journal(|journal_path, journal| {
+    with_locked_journal(|journal_path, journal, uncertain| {
+        require_known_owners(&uncertain)?;
         if !valid_sysctl_path(path) || !valid_value(value) {
             anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");
         }
@@ -355,31 +429,37 @@ pub fn acquire(path: &str, value: &str, scope: &str) -> bool {
     }
 }
 
-pub fn release_scope(scope: &str) -> anyhow::Result<()> {
-    with_locked_journal(|journal_path, journal| {
-        let owner = owner_id(scope)?;
-        for entry in journal.entries.values_mut() {
-            entry.owners.remove(&owner);
-        }
-        let empty: Vec<String> = journal
-            .entries
-            .iter()
-            .filter(|(_, entry)| entry.owners.is_empty())
-            .map(|(path, _)| path.clone())
-            .collect();
-        let mut failures = Vec::new();
-        for path in empty {
-            let restored = match journal.entries.get(&path) {
-                Some(entry) => restore_if_owned(&path, entry),
-                None => continue,
-            };
-            match restored {
-                Ok(()) => {
-                    journal.entries.remove(&path);
-                }
-                Err(error) => failures.push(format!("{path}: {error}")),
+fn release_owner(
+    journal: &mut SysctlJournal,
+    owner: &str,
+    mut failures: Vec<String>,
+) -> Vec<String> {
+    for entry in journal.entries.values_mut() {
+        entry.owners.remove(owner);
+    }
+    let empty: Vec<String> = journal
+        .entries
+        .iter()
+        .filter(|(_, entry)| entry.owners.is_empty())
+        .map(|(path, _)| path.clone())
+        .collect();
+    for path in empty {
+        match restore_if_owned(&path, &journal.entries[&path]) {
+            Ok(()) => {
+                journal.entries.remove(&path);
             }
+            Err(error) => failures.push(format!("{path}: {error}")),
         }
+    }
+    failures
+}
+
+pub fn release_scope(scope: &str) -> anyhow::Result<()> {
+    with_locked_journal(|journal_path, journal, uncertain| {
+        let owner = owner_id(scope)?;
+        // Release our known identity even when another owner is uninspectable.
+        // Its records remain, unrelated cleanup continues, and uncertainty is reported.
+        let failures = release_owner(journal, &owner, uncertain);
         persist(journal_path, journal)?;
         if failures.is_empty() {
             Ok(())
@@ -387,7 +467,7 @@ pub fn release_scope(scope: &str) -> anyhow::Result<()> {
             anyhow::bail!(
                 "could not restore host sysctl value(s): {}",
                 failures.join(", ")
-            )
+            );
         }
     })
 }
@@ -396,7 +476,8 @@ pub fn release_scope(scope: &str) -> anyhow::Result<()> {
 /// Called at server-worker startup; ordinary acquire/release operations perform the same pass.
 #[cfg(feature = "server")]
 pub fn recover() -> anyhow::Result<()> {
-    with_locked_journal(|_, journal| {
+    with_locked_journal(|_, journal, uncertain| {
+        require_known_owners(&uncertain)?;
         // The locked pre-pass already attempted every stale entry and persisted any
         // failures for retry. Live owners are expected; ownerless entries are not success.
         let unresolved: Vec<&str> = journal
@@ -433,3 +514,7 @@ mod tests {
         assert!(!valid_scope("qeli:0"));
     }
 }
+
+#[cfg(test)]
+#[path = "sysctl/ownership_tests.rs"]
+mod ownership_tests;

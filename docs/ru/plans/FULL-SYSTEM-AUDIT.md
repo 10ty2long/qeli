@@ -611,6 +611,11 @@ Fail-open IPv4 и независимый частичный IPv6 snapshot сох
 production-adapter сценарий PASS. Linux HTTP/restart/restore, общий срок транзакции
 и синхронное ожидание в async handlers остаются открытыми.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): неизвестные владельцы sysctl сохраняются,
+acquire/recovery сообщают ошибку; недостоверное наблюдение sysctl не теряет original
+для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
+identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -736,6 +741,11 @@ ipv6.disable=1 разрешает пропустить IPv6 firewall; общий
 Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
 3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): неизвестные владельцы sysctl сохраняются,
+acquire/recovery сообщают ошибку; недостоверное наблюдение sysctl не теряет original
+для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
+identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -823,6 +833,11 @@ Linux runtime новых lease-тестов остаётся открытым; �
 ipv6.disable=1 разрешает пропустить IPv6 firewall; общий lease резервирует TUN всех
 Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
 3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
+
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): неизвестные владельцы sysctl сохраняются,
+acquire/recovery сообщают ошибку; недостоверное наблюдение sysctl не теряет original
+для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
+identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
 
 ### 19. DNS сервера и клиентов
 
@@ -1480,6 +1495,11 @@ ipv6.disable=1 разрешает пропустить IPv6 firewall; общий
 Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
 3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
 
+[Q25-F050–F051](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md): неизвестные владельцы sysctl сохраняются,
+acquire/recovery сообщают ошибку; недостоверное наблюдение sysctl не теряет original
+для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
+identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1757,11 +1777,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: неизвестное состояние владельцев в журнале
-sysctl, его разделение по network namespaces и безопасное восстановление TUN при
-неполном чтении /proc. Q25-F048–F049 закрывает обработку подтверждённого
-отключения модуля IPv6 и резервирование клиентского имени TUN в проверенных пределах.
-Реальные Linux-сценарии lease/attach/reconnect, iptables-nft/legacy и IPv6-disabled,
-появление IPv6 после запуска, DNS/carrier globals, общий deadline, постоянный
-crash recovery, Q14-F027 workers/FD и синхронные preflight waits остаются открыты.
+**Ближайшая работа:** продолжить 25: идентичность PID/network namespace журнала
+sysctl и безопасное восстановление TUN при неполном чтении /proc. Q25-F050–F051
+исправляет обработку неизвестных владельцев и сохраняет данные для retry в проверенных
+пределах. Реальные Linux-сценарии lease/attach/reconnect, iptables-nft/legacy и
+IPv6-disabled, появление IPv6 после запуска, DNS/carrier globals, общий deadline,
+постоянный crash recovery, Q14-F027 workers/FD и синхронные preflight waits остаются открыты.
 Native certification и новый benchmark не выполнялись; статус целых разделов не изменён.

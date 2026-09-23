@@ -1221,6 +1221,19 @@ previous owner, preventing recovery from restoring the original value beneath an
 component. Supervisor restart policy is unchanged.
 [Report and validation boundaries](../reports/AUDIT-Q14-SYSCTL-RECOVERY.md).
 
+`cannot verify host sysctl owner(s)` means that a recorded owner's state cannot be
+verified. Check service access to `/proc/<pid>/stat`, procfs restrictions and PID/network
+namespace consistency with journal owners. Denied access, malformed contents and hidden
+existing processes retain the owner; new acquisition and startup recovery return an
+error. During release, independent cleanup may finish, but unknown co-owners remain
+and are included in the resulting error.
+
+Missing global sysctls and malformed/empty values also retain entries for retry. The
+exception is a confirmed disappeared named interface; an inventory failure does not
+prove disappearance. Resolve the observation failure and retry; do not delete the
+journal to bypass the check. Journal namespace isolation is not yet implemented.
+[New checks and limitations](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
+
 ---
 
 ### 6.34 Server: IPv6 sysctl acquisition failed — rollback incomplete

@@ -61,3 +61,6 @@ cleanup, ресурсы старых поколений, постоянный DN
 устройства, native release и бенчмарки не запускались.
 
 Предыдущий этап: [задачи профиля и TUN teardown](AUDIT-Q14-PROFILE-SHUTDOWN.md).
+
+Продолжение: [Q25-F050–F051](AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) исправляет обработку неизвестных владельцев
+и сохранение записей при недостоверной проверке sysctl; namespace identity ещё открыта.

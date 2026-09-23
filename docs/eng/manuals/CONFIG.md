@@ -2199,7 +2199,19 @@ The host-wide forwarding, `rp_filter`, and IPv6 `accept_ra` values use a locked 
 owner journal shared by standalone client processes and in-daemon client profiles. Ownership is
 registered even when the kernel already has the requested value. A clean stop restores the
 pristine value only after the last `PID + process-start-time + TUN` owner exits; the next client
-operation prunes SIGKILLed owners safely, and a journal from another kernel boot is discarded.
+operation prunes confirmed dead owners, and a journal from another kernel boot is discarded.
+
+Unreadable or malformed `/proc/<pid>/stat` does not prove that an owner died. If its
+state cannot be confirmed, the entry remains and new acquisition or startup recovery
+reports `cannot verify host sysctl owner(s)`. Releasing a verified scope continues
+independent cleanup and reports remaining failures. Failed sysctl reads/writes retain
+the original value for retry. A missing named-interface setting can be forgotten only
+after confirming that the interface disappeared; global settings and `all`/`default`
+are excluded.
+
+The journal still assumes one PID/network namespace and a consistent procfs view;
+isolation across distinct namespaces is not implemented. Sharing a state directory
+in that arrangement does not provide isolation. [Verification details](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
 
 ### Caveats
 

@@ -125,7 +125,11 @@ mod server_usage;
 // One cross-process ownership journal for every Linux component that changes host-wide
 // forwarding sysctls. The full daemon can run server profiles and panel-managed outbound
 // clients at the same time, so separate server/client snapshots would race on teardown.
-#[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 #[path = "client/sysctl.rs"]
 pub(crate) mod sysctl;
 
