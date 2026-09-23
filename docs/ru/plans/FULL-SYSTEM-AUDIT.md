@@ -1019,6 +1019,14 @@ Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/
 baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
 атомарная identity, сроки команд и реальный Linux остаются открытыми.
 
+**Изоляция маршрутов, 23 сентября 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): уникальный owner передаётся setup,
+guards и roaming; cleanup закрывает приём и обрабатывает только его записи.
+Другой Qeli owner не может заимствовать маршрут; повтор имени TUN заблокирован до
+завершения прежнего lease. 17 новых регрессий, 1161 Rust tests PASS; baseline — два
+целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
+осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1077,6 +1085,14 @@ Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/
 16 новых регрессий; 1144 Rust tests PASS. Те же adapter-тесты воспроизводят 15 отказов
 baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
 атомарная identity, сроки команд и реальный Linux остаются открытыми.
+
+**Изоляция маршрутов, 23 сентября 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): уникальный owner передаётся setup,
+guards и roaming; cleanup закрывает приём и обрабатывает только его записи.
+Другой Qeli owner не может заимствовать маршрут; повтор имени TUN заблокирован до
+завершения прежнего lease. 17 новых регрессий, 1161 Rust tests PASS; baseline — два
+целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
+осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1251,6 +1267,14 @@ Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/
 16 новых регрессий; 1144 Rust tests PASS. Те же adapter-тесты воспроизводят 15 отказов
 baseline и один control. Общий для процесса ownership, неизвестные pending мутации,
 атомарная identity, сроки команд и реальный Linux остаются открытыми.
+
+**Изоляция маршрутов, 23 сентября 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): уникальный owner передаётся setup,
+guards и roaming; cleanup закрывает приём и обрабатывает только его записи.
+Другой Qeli owner не может заимствовать маршрут; повтор имени TUN заблокирован до
+завершения прежнего lease. 17 новых регрессий, 1161 Rust tests PASS; baseline — два
+целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
+осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1529,10 +1553,9 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: ownership маршрутов по TUN/generation, неизвестные
-pending мутации и постоянный recovery. Q25-F025/F026 добавляет переданные identity selectors
-и проверку cleanup, не полную изоляцию или атомарное восстановление. Затем ограничить
-команды routes/kill-switch/gateway. Старые поколения TUN и platform rollback/ACK остаются
-в очереди. В 05 нужны общий preflight deadline и устранение синхронных ожиданий в async
-handlers. Сохраняются незакрытые 01–07, Linux E2E restart/restore/manual+NDP и платформенная
-сертификация. Полный benchmark выполняется после стабилизации исправлений.
+**Ближайшая работа:** продолжить 25: подтверждение retirement/restore, контракт неизвестных
+pending мутаций и recovery осиротевших записей. Q25-F027/F028 изолирует живых владельцев
+маршрутов внутри процесса, но не завершает Q14-F027 TUN workers или crash/restart recovery.
+Затем ограничить команды routes/kill-switch/gateway. В 05 остаются общий preflight deadline
+и sync waits в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
+межпроцессная изоляция, native certification и полный benchmark остаются в плане.

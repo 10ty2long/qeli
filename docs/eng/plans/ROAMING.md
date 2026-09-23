@@ -1,5 +1,13 @@
 # Client roaming (seamless network change) — implementation plan
-<!-- normative-sync: roaming-v47-platform-gates-only -->
+<!-- normative-sync: roaming-v48-linux-route-owner -->
+
+> Audit update, 23 September 2026: the Linux route adapter uses a connection owner lease;
+> cleanup closes admission for new mutations. `dev_attach=true` does not supply
+> `ROAMING_PATH` because an external manager owns routes. `auto` uses reconnect;
+> `required` is unavailable. [Q25-F027/F028 and limits](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
+> Live results below belong to earlier passes; this fix was checked with host tests
+> and Linux cross-checks, without a new device run.
+
 
 > **Status: design complete; Phases 0–2A and the shared Phase 2B TCP handover are
 > implemented under the internal `experimental-roaming` compile gate, which is included in all

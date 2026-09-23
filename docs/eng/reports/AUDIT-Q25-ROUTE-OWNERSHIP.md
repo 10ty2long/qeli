@@ -81,3 +81,7 @@ need a separate fix. No blind registration of an uncertain add was introduced.
 Commands and whole operations are still unbounded. Real Linux TUN/firewall/handover,
 crash/restart, devices, native release and new benchmarks were not run.
 Previous pass: [mutation outcomes](AUDIT-Q25-ROUTE-OUTCOME.md).
+
+
+Follow-up: [Q25-F027/F028 — connection owners](AUDIT-Q25-ROUTE-SCOPE.md) separates journals
+and closes admission on cleanup; the historical limits above describe this report’s baseline.

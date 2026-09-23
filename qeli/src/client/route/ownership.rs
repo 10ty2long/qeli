@@ -7,6 +7,15 @@ pub(super) fn route_key(args: &[String]) -> &[String] {
     &args[..end]
 }
 
+// Kernel-equivalent host notation must not bypass another owner's reservation.
+pub(super) fn same_route_key(left: &[String], right: &[String]) -> bool {
+    let left = route_key(left);
+    let right = route_key(right);
+    left.first().is_some_and(|s| s == "-6") == right.first().is_some_and(|s| s == "-6")
+        && left.iter().any(|s| s == "blackhole") == right.iter().any(|s| s == "blackhole")
+        && left.last().and_then(|s| prefix(s)) == right.last().and_then(|s| prefix(s))
+}
+
 pub(super) fn delete_spec(command: &[String]) -> Vec<String> {
     let mut undo = command.to_vec();
     let action = 1 + usize::from(undo.first().is_some_and(|arg| arg == "-6"));

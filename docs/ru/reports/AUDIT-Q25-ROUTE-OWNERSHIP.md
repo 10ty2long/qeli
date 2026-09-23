@@ -81,3 +81,7 @@ multipath/VRF, проверка результата retirement/restore, pending
 Сроки отдельных команд и всей операции не ограничены. Реальные Linux TUN/firewall/
 handover, crash/restart, устройства, native release и новый benchmark не запускались.
 Предыдущий этап: [результаты мутаций](AUDIT-Q25-ROUTE-OUTCOME.md).
+
+
+Продолжение: [Q25-F027/F028 — владельцы подключений](AUDIT-Q25-ROUTE-SCOPE.md) разделяет журнал
+и закрывает приём после cleanup; ограничения исходного отчёта выше относятся к его baseline.

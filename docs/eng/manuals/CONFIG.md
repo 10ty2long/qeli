@@ -1320,6 +1320,12 @@ On Android, a failure after `setUnderlyingNetworks()` succeeds, including a JNI 
 also stops the generation immediately. `required` fails closed instead of silently
 continuing on an unverified path.
 
+On Linux, `dev_attach=true` leaves routes to the external manager, so the adapter does
+not advertise `ROAMING_PATH`: `roaming=auto` uses reconnect and `required` lacks the necessary
+platform contract. A Qeli-managed interface's routes belong to a particular connection;
+late commits after cleanup are rejected.
+[Owner diagnostics](TROUBLESHOOTING.md#641-linux-route-owner-stopped-expired-or-still-reserved).
+
 The grace and orphan limits govern TCP hard-resume. UDP uses the same profile opt-in and
 authenticated capability negotiation for every UDP camouflage mode, but keeps its own
 short-lived candidate and anti-amplification bounds. `perf.connection.max_clients` and

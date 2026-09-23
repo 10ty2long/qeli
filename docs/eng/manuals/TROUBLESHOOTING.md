@@ -1341,10 +1341,27 @@ Unreadable, malformed or ambiguous snapshots likewise fail cleanup; the specific
 is retained for retry. A lost command result can still complete cleanup if a subsequent
 query confirms absence. Roaming updates cleanup parameters after a successful route change.
 
-The journal remains in memory and shared by the process. This does not guarantee
-cross-profile/generation isolation, crash recovery or atomic protection against every
-concurrent route change. Commands still need deadlines. No new INI parameters.
-[Checks and boundaries](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md).
+The journal remains in memory, with records now separated by connection owner (see 6.41).
+Crash recovery, atomic protection against other processes and command deadlines remain open.
+No new INI parameters. [Selector checks](../reports/AUDIT-Q25-ROUTE-OWNERSHIP.md).
+
+### 6.41 Linux: route owner stopped, expired or still reserved
+
+`route owner is stopped/has expired` means an old prepare/commit cannot mutate routes
+after cleanup starts or its owner is released. A new plan needs its own owner; repeating
+a generation number does not revive the old one.
+
+`still live or has pending cleanup` means a live guard or unconfirmed cleanup reserves
+the interface name. A live guard retries only its own cleanup. Once the final guard
+has been released with leftovers, automatic adoption/recovery is not implemented.
+Inspect the original error and affected routes first; restarting the process alone
+does not prove that those routes were removed.
+
+`belongs to another Qeli owner` reports a carrier/exclude/blackhole conflict with another
+connection in this process. Shared ownership of that route is unsupported.
+`dev_attach=true` leaves routes to the external manager: Linux does not advertise
+`ROAMING_PATH`; `roaming=auto` uses reconnect and `required` is unavailable.
+[Regressions and limits](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
 
 ---
 

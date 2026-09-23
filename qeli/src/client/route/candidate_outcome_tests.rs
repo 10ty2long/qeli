@@ -53,6 +53,7 @@ struct Kernel {
     fail_rollback: bool,
     extra_snapshot: Option<String>,
     query_error: bool,
+    flush_error: bool,
     post_delete_query_error: bool,
     lie_delete: Option<bool>,
     race_before_delete: Option<(String, Vec<String>)>,
@@ -69,9 +70,9 @@ impl Kernel {
         assert_eq!(args[0], "route");
         let verb = args[1].as_str();
         if verb == "flush" {
-            return output(true, "");
+            return output(!self.flush_error, "fixture flush result");
         }
-        let remote = &args[if verb == "show" && args[2] == "exact" {
+        let remote = &args[if (verb == "show" && args[2] == "exact") || args[2] == "blackhole" {
             3
         } else {
             2
@@ -170,6 +171,9 @@ impl Kernel {
                 self.query_error = true;
             }
         } else {
+            if verb == "add" && self.routes.contains_key(remote) {
+                return output(false, "RTNETLINK answers: File exists");
+            }
             self.routes.insert(remote.clone(), args[2..].to_vec());
         }
         if fail {
@@ -190,7 +194,7 @@ struct Fixture {
 impl Fixture {
     fn new(routes: Vec<Vec<String>>, fail: Option<(&str, IpAddr, Fault)>) -> Self {
         let guard = ROUTE_TEST_SERIAL.lock().unwrap_or_else(|p| p.into_inner());
-        let _ = take_created();
+        reset_test_owner();
         let kernel = Arc::new(Mutex::new(Kernel {
             routes: routes.into_iter().map(|r| (r[0].clone(), r)).collect(),
             calls: Vec::new(),
@@ -200,6 +204,7 @@ impl Fixture {
             fail_rollback: false,
             extra_snapshot: None,
             query_error: false,
+            flush_error: false,
             post_delete_query_error: false,
             lie_delete: None,
             race_before_delete: None,
@@ -232,7 +237,7 @@ impl Fixture {
 impl Drop for Fixture {
     fn drop(&mut self) {
         EXECUTOR.with(|slot| *slot.borrow_mut() = None);
-        let _ = take_created();
+        reset_test_owner();
     }
 }
 
@@ -265,6 +270,7 @@ fn plan(routes: Vec<LinuxCandidateRoute>) -> LinuxPreparedPathRoutes {
     LinuxPreparedPathRoutes {
         generation: 7,
         candidate_id: 41,
+        owner: test_owner().scope(),
         routes,
         tunnel_interface: "qtest".into(),
     }
@@ -306,7 +312,7 @@ fn failed(action: &str, ipv6: bool, fault: Fault, expect_unknown: bool) {
     assert!(fixture.kernel.lock().unwrap().fired);
     // An uncertain add cannot claim a prefix which a concurrent operator could have installed.
     assert_eq!(
-        created_by_us_owned(&carrier_route_undo(target)),
+        created_by_us_owned(&test_owner(), &carrier_route_undo(target)),
         action != "add"
     );
     assert_eq!(
@@ -344,7 +350,10 @@ fn failed(action: &str, ipv6: bool, fault: Fault, expect_unknown: bool) {
             !state.routes.contains_key(&added.to_string()),
             "new family must roll back"
         );
-        assert!(!created_by_us_owned(&carrier_route_undo(added)));
+        assert!(!created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(added)
+        ));
     }
 }
 
@@ -435,7 +444,10 @@ fn earlier_success_is_rolled_back_when_later_mutation_outcome_is_unknown() {
     let state = fixture.kernel.lock().unwrap();
     assert!(!state.routes.contains_key(&first.remote.to_string()));
     assert!(state.routes.contains_key(&second.remote.to_string()));
-    assert!(!created_by_us_owned(&carrier_route_undo(first.remote)));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(first.remote)
+    ));
 }
 #[test]
 fn earlier_rollback_failure_remains_unknown_even_when_current_step_is_unchanged() {
@@ -447,7 +459,10 @@ fn earlier_rollback_failure_remains_unknown_even_when_current_step_is_unchanged(
         .commit(&[])
         .unwrap_err();
     assert!(unknown(&error), "{error}");
-    assert!(created_by_us_owned(&carrier_route_undo(first.remote)));
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(first.remote)
+    ));
     let state = fixture.kernel.lock().unwrap();
     assert!(state.routes.contains_key(&first.remote.to_string()));
     assert!(!state.routes.contains_key(&second.remote.to_string()));
@@ -480,7 +495,10 @@ fn successful_add_replace_and_retirement_keep_existing_contract() {
                     &[]
                 })
                 .unwrap();
-            assert!(created_by_us_owned(&carrier_route_undo(desired.remote)));
+            assert!(created_by_us_owned(
+                &test_owner(),
+                &carrier_route_undo(desired.remote)
+            ));
             assert!(fixture.mutations().contains(&candidate_route_command(
                 if action == "replace" {
                     "replace"
@@ -490,7 +508,10 @@ fn successful_add_replace_and_retirement_keep_existing_contract() {
                 &desired
             )));
             if action == "del" {
-                assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+                assert!(!created_by_us_owned(
+                    &test_owner(),
+                    &carrier_route_undo(route.remote)
+                ));
                 assert!(!fixture
                     .kernel
                     .lock()
@@ -515,7 +536,10 @@ fn operator_owned_match_and_conflict_do_not_mutate_or_claim_routes() {
             let result = plan(vec![route.clone()]).commit(&[]);
             assert_eq!(result.is_ok(), matches);
             assert!(fixture.mutations().is_empty());
-            assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+            assert!(!created_by_us_owned(
+                &test_owner(),
+                &carrier_route_undo(route.remote)
+            ));
         }
     }
 }
@@ -536,7 +560,10 @@ fn ambiguous_initial_snapshot_rejects_before_any_mutation() {
             fixture.kernel.lock().unwrap().routes[&route.remote.to_string()],
             previous(route.remote)
         );
-        assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
     }
 }
 
@@ -560,9 +587,18 @@ fn earlier_retirement_is_restored_when_later_retirement_loses_its_result() {
     assert_eq!(state.routes[&first.to_string()], previous(first));
     assert!(!state.routes.contains_key(&second.to_string()));
     assert!(!state.routes.contains_key(&new.remote.to_string()));
-    assert!(created_by_us_owned(&carrier_route_undo(first)));
-    assert!(created_by_us_owned(&carrier_route_undo(second)));
-    assert!(!created_by_us_owned(&carrier_route_undo(new.remote)));
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(first)
+    ));
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(second)
+    ));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(new.remote)
+    ));
 }
 
 // Seed pre-existing ownership with selectors, just like successful production installation.
@@ -570,13 +606,14 @@ fn seed_owned(remote: IpAddr) {
     let snapshot = exact_route_tokens(remote).unwrap().unwrap();
     let mut undo = carrier_route_undo(remote);
     undo.extend(snapshot.into_iter().skip(1));
-    note_created_owned(undo);
+    note_created_owned(&test_owner(), undo);
 }
 
 fn install_owned(ipv6: bool) -> (Fixture, LinuxCandidateRoute) {
     let route = candidate(ipv6);
     let fixture = Fixture::new(Vec::new(), None);
     pin_carrier_route(
+        &test_owner(),
         route.remote,
         &PhysicalPath {
             gateway: route.gateway.clone(),
@@ -591,14 +628,17 @@ fn install_owned(ipv6: bool) -> (Fixture, LinuxCandidateRoute) {
 fn ownership_cleanup_removes_unchanged_route_for_both_families() {
     for ipv6 in [false, true] {
         let (fixture, route) = install_owned(ipv6);
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert!(!fixture
             .kernel
             .lock()
             .unwrap()
             .routes
             .contains_key(&route.remote.to_string()));
-        assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(!created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
         let calls = fixture.mutations();
         let deletion = calls
             .iter()
@@ -630,10 +670,13 @@ fn ownership_cleanup_preserves_operator_replacement() {
                 };
                 current.clone()
             };
-            cleanup_routes("qtest", "", &[]).unwrap();
+            cleanup_routes(&test_owner()).unwrap();
             assert_eq!(fixture.kernel.lock().unwrap().routes[&key], replacement);
             assert_eq!(fixture.mutations().len(), 1, "only original add");
-            assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+            assert!(!created_by_us_owned(
+                &test_owner(),
+                &carrier_route_undo(route.remote)
+            ));
         }
     }
 }
@@ -645,12 +688,15 @@ fn ownership_delete_selectors_preserve_replacement_between_check_and_delete() {
         let replacement = vec![route.remote.to_string(), "dev".into(), "operator0".into()];
         fixture.kernel.lock().unwrap().race_before_delete =
             Some((route.remote.to_string(), replacement.clone()));
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert_eq!(
             fixture.kernel.lock().unwrap().routes[&route.remote.to_string()],
             replacement
         );
-        assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(!created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
     }
 }
 
@@ -659,8 +705,11 @@ fn ownership_cleanup_verifies_success_and_absent_error_before_forgetting() {
     for status in [true, false] {
         let (fixture, route) = install_owned(false);
         fixture.kernel.lock().unwrap().lie_delete = Some(status);
-        assert!(cleanup_routes("qtest", "", &[]).is_err());
-        assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(cleanup_routes(&test_owner()).is_err());
+        assert!(created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
         assert!(fixture
             .kernel
             .lock()
@@ -668,14 +717,17 @@ fn ownership_cleanup_verifies_success_and_absent_error_before_forgetting() {
             .routes
             .contains_key(&route.remote.to_string()));
         fixture.kernel.lock().unwrap().lie_delete = None;
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert!(!fixture
             .kernel
             .lock()
             .unwrap()
             .routes
             .contains_key(&route.remote.to_string()));
-        assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(!created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
     }
 }
 
@@ -688,14 +740,17 @@ fn ownership_cleanup_accepts_confirmed_absence_after_lost_delete_result() {
             route.remote.to_string(),
             Fault::ApplyThenIo(io::ErrorKind::BrokenPipe),
         ));
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert!(!fixture
             .kernel
             .lock()
             .unwrap()
             .routes
             .contains_key(&route.remote.to_string()));
-        assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+        assert!(!created_by_us_owned(
+            &test_owner(),
+            &carrier_route_undo(route.remote)
+        ));
     }
 }
 
@@ -703,19 +758,25 @@ fn ownership_cleanup_accepts_confirmed_absence_after_lost_delete_result() {
 fn ownership_cleanup_retains_unreadable_snapshot_without_deleting() {
     let (fixture, route) = install_owned(false);
     fixture.kernel.lock().unwrap().query_error = true;
-    assert!(cleanup_routes("qtest", "", &[]).is_err());
-    assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(cleanup_routes(&test_owner()).is_err());
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
     assert_eq!(fixture.mutations().len(), 1);
     fixture.kernel.lock().unwrap().query_error = false;
-    cleanup_routes("qtest", "", &[]).unwrap();
+    cleanup_routes(&test_owner()).unwrap();
 }
 
 #[test]
 fn ownership_cleanup_retries_after_unreadable_delete_verification() {
     let (fixture, route) = install_owned(true);
     fixture.kernel.lock().unwrap().post_delete_query_error = true;
-    assert!(cleanup_routes("qtest", "", &[]).is_err());
-    assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(cleanup_routes(&test_owner()).is_err());
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
     assert!(!fixture
         .kernel
         .lock()
@@ -724,21 +785,27 @@ fn ownership_cleanup_retries_after_unreadable_delete_verification() {
         .contains_key(&route.remote.to_string()));
     fixture.kernel.lock().unwrap().query_error = false;
     let calls = fixture.mutations().len();
-    cleanup_routes("qtest", "", &[]).unwrap();
+    cleanup_routes(&test_owner()).unwrap();
     assert_eq!(
         fixture.mutations().len(),
         calls,
         "confirmed absence needs no repeated delete"
     );
-    assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
 }
 
 #[test]
 fn ownership_cleanup_retains_ambiguous_snapshot() {
     let (fixture, route) = install_owned(false);
     fixture.kernel.lock().unwrap().extra_snapshot = Some(format!("{} dev other0", route.remote));
-    assert!(cleanup_routes("qtest", "", &[]).is_err());
-    assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(cleanup_routes(&test_owner()).is_err());
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
     assert_eq!(fixture.mutations().len(), 1);
 }
 
@@ -748,7 +815,7 @@ fn ownership_roaming_replaces_the_cleanup_selector_with_the_new_path() {
     route.interface = "wwan0".into();
     route.gateway = Some("192.0.2.99".into());
     plan(vec![route.clone()]).commit(&[]).unwrap();
-    cleanup_routes("qtest", "", &[]).unwrap();
+    cleanup_routes(&test_owner()).unwrap();
     assert!(!fixture
         .kernel
         .lock()
@@ -778,7 +845,10 @@ fn ownership_stale_record_does_not_authorize_replacing_operator_route() {
         replacement
     );
     assert_eq!(fixture.mutations().len(), 1);
-    assert!(!created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
 }
 
 #[test]
@@ -796,7 +866,10 @@ fn ownership_stale_record_does_not_authorize_retiring_operator_route() {
         fixture.kernel.lock().unwrap().routes[&old.remote.to_string()],
         replacement
     );
-    assert!(!created_by_us_owned(&carrier_route_undo(old.remote)));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(old.remote)
+    ));
 }
 
 #[test]
@@ -805,6 +878,7 @@ fn ownership_cleanup_handles_on_link_route_without_inventing_gateway() {
         let route = candidate(ipv6);
         let fixture = Fixture::new(Vec::new(), None);
         pin_carrier_route(
+            &test_owner(),
             route.remote,
             &PhysicalPath {
                 gateway: None,
@@ -812,7 +886,7 @@ fn ownership_cleanup_handles_on_link_route_without_inventing_gateway() {
             },
         )
         .unwrap();
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert!(!fixture
             .kernel
             .lock()
@@ -846,7 +920,10 @@ fn ownership_rollback_does_not_overwrite_operator_replacement() {
         replacement
     );
     assert!(unknown(&error));
-    assert!(!created_by_us_owned(&carrier_route_undo(first.remote)));
+    assert!(!created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(first.remote)
+    ));
 }
 
 #[test]
@@ -854,6 +931,7 @@ fn ownership_retirement_restore_does_not_overwrite_operator_replacement() {
     let (fixture, first) = install_owned(false);
     let second = candidate(true);
     pin_carrier_route(
+        &test_owner(),
         second.remote,
         &PhysicalPath {
             gateway: second.gateway.clone(),
@@ -897,7 +975,7 @@ fn ownership_cleanup_preserves_changed_preferred_source_of_candidate() {
             };
             current.clone()
         };
-        cleanup_routes("qtest", "", &[]).unwrap();
+        cleanup_routes(&test_owner()).unwrap();
         assert_eq!(
             fixture.kernel.lock().unwrap().routes[&route.remote.to_string()],
             replacement
@@ -914,8 +992,11 @@ fn ownership_cleanup_retains_malformed_snapshot_for_retry() {
         route.remote.to_string(),
         vec!["garbled".into(), "dev".into(), "eth0".into()],
     );
-    assert!(cleanup_routes("qtest", "", &[]).is_err());
-    assert!(created_by_us_owned(&carrier_route_undo(route.remote)));
+    assert!(cleanup_routes(&test_owner()).is_err());
+    assert!(created_by_us_owned(
+        &test_owner(),
+        &carrier_route_undo(route.remote)
+    ));
     assert_eq!(fixture.mutations().len(), 1);
     fixture
         .kernel
@@ -923,5 +1004,423 @@ fn ownership_cleanup_retains_malformed_snapshot_for_retry() {
         .unwrap()
         .routes
         .insert(route.remote.to_string(), original);
-    cleanup_routes("qtest", "", &[]).unwrap();
+    cleanup_routes(&test_owner()).unwrap();
+}
+
+#[test]
+fn scope_cleanup_other_tunnel_does_not_delete_current_carrier() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let route = candidate(false);
+    plan(vec![route.clone()]).commit(&[]).unwrap();
+    cleanup_routes(&RouteOwner::new("other-tun", 8).unwrap()).unwrap();
+    assert!(fixture
+        .kernel
+        .lock()
+        .unwrap()
+        .routes
+        .contains_key(&route.remote.to_string()));
+}
+
+#[test]
+fn scope_stale_prepared_commit_after_cleanup_is_rejected() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let prepared = plan(vec![candidate(false)]);
+    cleanup_routes(&test_owner()).unwrap();
+    let before = fixture.mutations().len();
+    assert!(prepared.commit(&[]).is_err());
+    assert_eq!(fixture.mutations().len(), before);
+}
+
+fn plan_for(owner: &RouteOwner, routes: Vec<LinuxCandidateRoute>) -> LinuxPreparedPathRoutes {
+    LinuxPreparedPathRoutes {
+        generation: owner.generation(),
+        candidate_id: 41,
+        owner: owner.scope(),
+        routes,
+        tunnel_interface: owner.interface().into(),
+    }
+}
+
+#[test]
+fn scope_two_owners_on_same_wan_clean_only_their_routes() {
+    for ipv6 in [false, true] {
+        let fixture = Fixture::new(Vec::new(), None);
+        let first = test_owner();
+        let second = RouteOwner::new("other-tun", 7).unwrap();
+        let a = candidate(ipv6);
+        let mut b = a.clone();
+        b.remote = if ipv6 {
+            "2001:db8::30"
+        } else {
+            "198.51.100.30"
+        }
+        .parse()
+        .unwrap();
+        plan_for(&first, vec![a.clone()]).commit(&[]).unwrap();
+        plan_for(&second, vec![b.clone()]).commit(&[]).unwrap();
+        cleanup_routes(&first).unwrap();
+        {
+            let state = fixture.kernel.lock().unwrap();
+            assert!(!state.routes.contains_key(&a.remote.to_string()));
+            assert!(state.routes.contains_key(&b.remote.to_string()));
+            assert!(state
+                .calls
+                .iter()
+                .filter(|c| c.iter().any(|s| s == "flush"))
+                .all(|c| c.last().unwrap() == "qtest"));
+        }
+        assert!(recorded_undo(&second, &carrier_route_undo(b.remote)).is_some());
+        cleanup_routes(&second).unwrap();
+        assert!(fixture.kernel.lock().unwrap().routes.is_empty());
+    }
+}
+
+#[test]
+fn scope_other_owner_cannot_replace_or_borrow_managed_route() {
+    for ipv6 in [false, true] {
+        let fixture = Fixture::new(Vec::new(), None);
+        let second = RouteOwner::new("other-tun", 7).unwrap();
+        let route = candidate(ipv6);
+        plan(vec![route.clone()]).commit(&[]).unwrap();
+        let before = fixture.mutations();
+        let error = plan_for(&second, vec![route.clone()])
+            .commit(&[])
+            .unwrap_err();
+        assert!(error.to_string().contains("another Qeli owner"));
+        assert!(pin_carrier_route(
+            &second,
+            route.remote,
+            &PhysicalPath {
+                gateway: route.gateway,
+                device: route.interface,
+            }
+        )
+        .is_err());
+        assert_eq!(fixture.mutations(), before);
+        cleanup_routes(&second).unwrap();
+        assert!(fixture
+            .kernel
+            .lock()
+            .unwrap()
+            .routes
+            .contains_key(&route.remote.to_string()));
+    }
+}
+
+#[test]
+fn scope_retirement_never_reads_another_owners_journal() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let a = candidate(false);
+    let b = candidate(true);
+    let second = RouteOwner::new("other-tun", 8).unwrap();
+    plan(vec![a.clone()]).commit(&[]).unwrap();
+    plan_for(&second, vec![b.clone()])
+        .commit(&[a.remote])
+        .unwrap();
+    let state = fixture.kernel.lock().unwrap();
+    assert!(state.routes.contains_key(&a.remote.to_string()));
+    assert!(state.routes.contains_key(&b.remote.to_string()));
+    assert!(!state.calls.iter().any(|c| c.iter().any(|s| s == "del")));
+}
+
+#[test]
+fn scope_cleanup_failure_does_not_steal_another_owners_retry() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let a = candidate(false);
+    let b = candidate(true);
+    let second = RouteOwner::new("other-tun", 8).unwrap();
+    plan(vec![a.clone()]).commit(&[]).unwrap();
+    plan_for(&second, vec![b.clone()]).commit(&[]).unwrap();
+    fixture.kernel.lock().unwrap().lie_delete = Some(true);
+    assert!(cleanup_routes(&test_owner()).is_err());
+    fixture.kernel.lock().unwrap().lie_delete = None;
+    cleanup_routes(&second).unwrap();
+    assert!(recorded_undo(&test_owner(), &carrier_route_undo(a.remote)).is_some());
+    assert!(fixture
+        .kernel
+        .lock()
+        .unwrap()
+        .routes
+        .contains_key(&a.remote.to_string()));
+    assert!(
+        plan(vec![a.clone()]).commit(&[]).is_err(),
+        "failed cleanup still closes admission"
+    );
+    cleanup_routes(&test_owner()).unwrap();
+    assert!(fixture.kernel.lock().unwrap().routes.is_empty());
+}
+
+#[test]
+fn scope_same_interface_cannot_be_reused_while_old_guard_lives() {
+    let _fixture = Fixture::new(Vec::new(), None);
+    let old = RouteOwner::new("reused-tun", 9).unwrap();
+    assert!(RouteOwner::new("reused-tun", 10).is_err());
+    cleanup_routes(&old).unwrap();
+    assert!(
+        RouteOwner::new("reused-tun", 10).is_err(),
+        "guard still protects TUN teardown"
+    );
+    drop(old);
+    assert!(RouteOwner::new("reused-tun", 10).is_ok());
+}
+
+#[test]
+fn scope_expired_candidate_cannot_target_reused_interface_and_generation() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let old = RouteOwner::new("reused-tun", 9).unwrap();
+    let stale = plan_for(&old, vec![candidate(false)]);
+    stale.commit(&[]).unwrap();
+    cleanup_routes(&old).unwrap();
+    drop(old);
+    let current = RouteOwner::new("reused-tun", 9).unwrap();
+    let before = fixture.kernel.lock().unwrap().calls.len();
+    assert!(stale
+        .commit(&[])
+        .unwrap_err()
+        .to_string()
+        .contains("expired"));
+    assert_eq!(fixture.kernel.lock().unwrap().calls.len(), before);
+    plan_for(&current, vec![candidate(true)])
+        .commit(&[])
+        .unwrap();
+    cleanup_routes(&current).unwrap();
+}
+
+#[test]
+fn scope_wrong_generation_is_rejected_before_any_command() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let mut prepared = plan(vec![candidate(false)]);
+    prepared.generation += 1;
+    assert!(prepared.commit(&[]).is_err());
+    assert!(fixture.kernel.lock().unwrap().calls.is_empty());
+}
+
+#[test]
+fn scope_dropped_owner_with_residual_route_cannot_be_adopted() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let old = RouteOwner::new("orphan-tun", 9).unwrap();
+    let remote = candidate(false).remote;
+    plan_for(&old, vec![candidate(false)]).commit(&[]).unwrap();
+    drop(old);
+    assert!(RouteOwner::new("orphan-tun", 10).is_err());
+    assert!(plan(vec![candidate(false)]).commit(&[]).is_err());
+    cleanup_routes(&test_owner()).unwrap();
+    assert!(fixture
+        .kernel
+        .lock()
+        .unwrap()
+        .routes
+        .contains_key(&remote.to_string()));
+}
+
+#[test]
+fn scope_failed_empty_flush_retains_reservation_until_retry_succeeds() {
+    let fixture = Fixture::new(Vec::new(), None);
+    let owner = RouteOwner::new("flush-tun", 9).unwrap();
+    fixture.kernel.lock().unwrap().flush_error = true;
+    assert!(cleanup_routes(&owner).is_err());
+    fixture.kernel.lock().unwrap().flush_error = false;
+    cleanup_routes(&owner).unwrap();
+    drop(owner);
+    assert!(RouteOwner::new("flush-tun", 10).is_ok());
+    let failed = RouteOwner::new("failed-flush-tun", 9).unwrap();
+    fixture.kernel.lock().unwrap().flush_error = true;
+    assert!(cleanup_routes(&failed).is_err());
+    drop(failed);
+    assert!(RouteOwner::new("failed-flush-tun", 10).is_err());
+}
+
+#[test]
+fn scope_host_prefix_notation_cannot_bypass_another_owners_claim() {
+    for ipv6 in [false, true] {
+        let fixture = Fixture::new(Vec::new(), None);
+        let other = RouteOwner::new("other-tun", 8).unwrap();
+        let route = candidate(ipv6);
+        let mut undo = delete_spec(&candidate_route_command("add", &route));
+        let destination = if ipv6 { 3 } else { 2 };
+        undo[destination] = format!("{}/{}", route.remote, if ipv6 { 128 } else { 32 });
+        note_created_owned(&other, undo);
+        assert!(plan(vec![route]).commit(&[]).is_err());
+        assert!(fixture.kernel.lock().unwrap().calls.is_empty());
+    }
+}
+
+#[test]
+fn scope_blackhole_is_not_borrowed_from_another_owner() {
+    for cidr in ["0.0.0.0/1", "::/1"] {
+        let fixture = Fixture::new(Vec::new(), None);
+        let other = RouteOwner::new("other-tun", 8).unwrap();
+        add_blackhole_half(&test_owner(), cidr).unwrap();
+        let before = fixture.mutations();
+        assert!(add_blackhole_half(&other, cidr).is_err());
+        assert_eq!(fixture.mutations(), before);
+        cleanup_routes(&other).unwrap();
+        assert!(fixture.kernel.lock().unwrap().routes.contains_key(cidr));
+        cleanup_routes(&test_owner()).unwrap();
+        assert!(fixture.kernel.lock().unwrap().routes.is_empty());
+    }
+}
+
+#[test]
+fn scope_failed_candidate_rollback_preserves_other_owner() {
+    let a = candidate(false);
+    let mut b = a.clone();
+    b.remote = "198.51.100.30".parse().unwrap();
+    let failing = candidate(true);
+    let fixture = Fixture::new(Vec::new(), Some(("add", failing.remote, Fault::Reject)));
+    let second = RouteOwner::new("other-tun", 8).unwrap();
+    plan(vec![a.clone()]).commit(&[]).unwrap();
+    let error = plan_for(&second, vec![b.clone(), failing])
+        .commit(&[])
+        .unwrap_err();
+    assert!(!unknown(&error));
+    let state = fixture.kernel.lock().unwrap();
+    assert!(state.routes.contains_key(&a.remote.to_string()));
+    assert!(!state.routes.contains_key(&b.remote.to_string()));
+    assert!(recorded_undo(&test_owner(), &carrier_route_undo(a.remote)).is_some());
+    assert!(recorded_undo(&second, &carrier_route_undo(b.remote)).is_none());
+}
+
+#[test]
+fn scope_network_plan_exclude_cannot_borrow_another_owners_carrier() {
+    let route = candidate(false);
+    let fixture = Fixture::new(Vec::new(), None);
+    plan(vec![route.clone()]).commit(&[]).unwrap();
+    let other = RouteOwner::new("other-tun", 8).unwrap();
+    let network = NetworkPlan {
+        generation: 8,
+        family_mode: crate::transport_core::NetworkFamilyMode::Ipv4,
+        addresses: vec![crate::transport_core::NetworkAddress {
+            family: NetworkAddressFamily::Ipv4,
+            address: "10.20.0.2".into(),
+            prefix_len: 24,
+            on_link_prefix_len: 24,
+            gateway: Some("10.20.0.1".into()),
+        }],
+        tunnel_address: "10.20.0.2".into(),
+        prefix_len: 24,
+        mtu: 1400,
+        tunnel_gateway: "10.20.0.1".into(),
+        carrier_address: None,
+        routes: Vec::new(),
+        pushed_routes: Vec::new(),
+        dns_servers: Vec::new(),
+        full_tunnel: false,
+        kill_switch: false,
+        allow_ipv4_leak: false,
+        allow_ipv6_leak: false,
+        max_streams: 1,
+        adaptive: false,
+        data_plane: Default::default(),
+        connection_log: Vec::new(),
+    };
+    let config = ClientRoutingConfig {
+        exclude: vec![format!("{}/32", route.remote)],
+        ..Default::default()
+    };
+    let before = fixture.mutations();
+    let error = setup_network_plan_routes(&other, &config, &network, &[route.remote], None, false)
+        .unwrap_err();
+    assert!(error.to_string().contains("another Qeli owner"), "{error}");
+    assert_eq!(fixture.mutations(), before);
+    cleanup_routes(&other).unwrap();
+    assert!(fixture
+        .kernel
+        .lock()
+        .unwrap()
+        .routes
+        .contains_key(&route.remote.to_string()));
+}
+
+#[test]
+fn scope_cleanup_and_late_commit_serialize_across_threads() {
+    use std::sync::mpsc;
+    use std::time::Duration;
+    let fixture = Fixture::new(Vec::new(), None);
+    let route = candidate(false);
+    let owner = test_owner();
+    let stale = plan(vec![route.clone()]);
+    stale.commit(&[]).unwrap();
+    let (entered_tx, entered_rx) = mpsc::channel();
+    let (release_tx, release_rx) = mpsc::channel();
+    let kernel = fixture.kernel.clone();
+    let cleanup = std::thread::spawn(move || {
+        let mut gate = Some((entered_tx, release_rx));
+        EXECUTOR.with(|slot| {
+            *slot.borrow_mut() = Some(Box::new(move |args| {
+                if args.iter().any(|s| s == "del") {
+                    if let Some((entered, release)) = gate.take() {
+                        entered.send(()).unwrap();
+                        release
+                            .recv_timeout(Duration::from_secs(5))
+                            .expect("release cleanup fixture");
+                    }
+                }
+                kernel.lock().unwrap().run(args)
+            }))
+        });
+        let result = cleanup_routes(&owner);
+        EXECUTOR.with(|slot| *slot.borrow_mut() = None);
+        result
+    });
+    entered_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    let kernel = fixture.kernel.clone();
+    let (started_tx, started_rx) = mpsc::channel();
+    let commit = std::thread::spawn(move || {
+        EXECUTOR.with(|slot| {
+            *slot.borrow_mut() = Some(Box::new(move |args| kernel.lock().unwrap().run(args)))
+        });
+        started_tx.send(()).unwrap();
+        let result = stale.commit(&[]);
+        EXECUTOR.with(|slot| *slot.borrow_mut() = None);
+        result
+    });
+    started_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    release_tx.send(()).unwrap();
+    cleanup.join().unwrap().unwrap();
+    assert!(commit
+        .join()
+        .unwrap()
+        .unwrap_err()
+        .to_string()
+        .contains("stopped"));
+    assert!(fixture.kernel.lock().unwrap().routes.is_empty());
+    assert_eq!(
+        fixture
+            .mutations()
+            .iter()
+            .filter(|c| c.iter().any(|s| s == "add"))
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn scope_platform_refresh_runs_only_inside_a_live_route_commit() {
+    use std::cell::Cell;
+    let fixture = Fixture::new(Vec::new(), None);
+    let prepared = plan(vec![candidate(false)]);
+    let refreshes = Cell::new(0);
+    prepared
+        .commit_with(&[], || {
+            assert!(fixture.mutations().is_empty());
+            refreshes.set(refreshes.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(refreshes.get(), 1);
+    cleanup_routes(&test_owner()).unwrap();
+    let before = fixture.kernel.lock().unwrap().calls.len();
+    assert!(prepared
+        .commit_with(&[], || {
+            refreshes.set(refreshes.get() + 1);
+            Ok(())
+        })
+        .is_err());
+    assert_eq!(
+        refreshes.get(),
+        1,
+        "late commit must not mutate the gateway first"
+    );
+    assert_eq!(fixture.kernel.lock().unwrap().calls.len(), before);
 }

@@ -1012,6 +1012,14 @@ Cleanup verifies absence and keeps failed entries for retry. Sixteen new regress
 control. Process-global ownership, pending unknown mutations, atomic identity, command
 deadlines and live Linux remain open.
 
+**Scoped route ownership, 23 September 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): setup, guards and roaming receive a
+unique owner; cleanup closes admission and handles only that owner's records.
+Other Qeli owners cannot borrow the route; interface reuse waits for the old lease.
+17 new regressions, 1161 Rust tests PASS; two targeted baseline failures reproduced.
+Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
+operations, TUN workers, deadlines and Linux runtime remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1070,6 +1078,14 @@ Cleanup verifies absence and keeps failed entries for retry. Sixteen new regress
 1144 Rust tests PASS. The same adapter tests reproduce 15 baseline failures and one
 control. Process-global ownership, pending unknown mutations, atomic identity, command
 deadlines and live Linux remain open.
+
+**Scoped route ownership, 23 September 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): setup, guards and roaming receive a
+unique owner; cleanup closes admission and handles only that owner's records.
+Other Qeli owners cannot borrow the route; interface reuse waits for the old lease.
+17 new regressions, 1161 Rust tests PASS; two targeted baseline failures reproduced.
+Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
+operations, TUN workers, deadlines and Linux runtime remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1244,6 +1260,14 @@ Cleanup verifies absence and keeps failed entries for retry. Sixteen new regress
 1144 Rust tests PASS. The same adapter tests reproduce 15 baseline failures and one
 control. Process-global ownership, pending unknown mutations, atomic identity, command
 deadlines and live Linux remain open.
+
+**Scoped route ownership, 23 September 2026:**
+[Q25-F027/F028](../reports/AUDIT-Q25-ROUTE-SCOPE.md): setup, guards and roaming receive a
+unique owner; cleanup closes admission and handles only that owner's records.
+Other Qeli owners cannot borrow the route; interface reuse waits for the old lease.
+17 new regressions, 1161 Rust tests PASS; two targeted baseline failures reproduced.
+Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
+operations, TUN workers, deadlines and Linux runtime remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1520,10 +1544,9 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with TUN/generation-scoped route ownership, pending unknown
-mutations and persistent recovery. Q25-F025/F026 adds supplied identity selectors and
-verified cleanup, not full isolation or atomic recovery. Then migrate route/kill-switch/
-gateway commands to bounded execution. Older TUN generations and platform rollback/ACK
-remain queued. Section 05 still needs transaction-wide preflight deadlines and removal
-of synchronous waits in async handlers. Outstanding 01–07, Linux restart/restore/manual+NDP
-E2E and platform certification remain queued. A full benchmark follows stabilization.
+**Next work:** continue 25 with verified retirement/restore, pending unknown mutations and
+orphan-record recovery. Q25-F027/F028 isolates live route owners within the process; it
+does not complete Q14-F027 TUN workers or crash/restart recovery. Then bound route/
+kill-switch/gateway commands. Section 05 still needs transaction-wide preflight deadlines
+and removal of synchronous waits in async handlers. Outstanding 01–07, Linux restart/
+restore/manual+NDP E2E, cross-process isolation, native certification and a full benchmark remain.

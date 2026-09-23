@@ -456,18 +456,6 @@ fn pinned_carrier_socket_addresses(port: u16) -> Option<Vec<std::net::SocketAddr
     })
 }
 
-/// The peer address to pin, as a literal; falls back to the configured address when the
-/// socket never reported one (should not happen after a successful connect).
-#[cfg(target_os = "linux")]
-fn pin_target(config: &crate::config::client::ClientConfig) -> String {
-    CONNECTED_PEER
-        .lock()
-        .ok()
-        .and_then(|g| *g)
-        .map(|ip| ip.to_string())
-        .unwrap_or_else(|| config.server.address.clone())
-}
-
 #[cfg(all(test, target_os = "linux"))]
 mod carrier_pin_tests {
     use super::{select_carrier_pin_targets, CarrierCandidateState};
@@ -1275,6 +1263,7 @@ pub(crate) struct LinuxPathController {
     shared: CorePathController,
     tunnel_interface: String,
     prepared_routes: std::sync::Mutex<Option<route::LinuxPreparedPathRoutes>>,
+    route_owner: std::sync::Mutex<Option<route::RouteScope>>,
     same_network_nat_failure_tx: std::sync::Mutex<Option<tokio::sync::mpsc::Sender<()>>>,
     dispatch_lock: std::sync::Mutex<()>,
 }
@@ -1287,6 +1276,7 @@ impl LinuxPathController {
             core,
             tunnel_interface,
             prepared_routes: std::sync::Mutex::new(None),
+            route_owner: std::sync::Mutex::new(None),
             same_network_nat_failure_tx: std::sync::Mutex::new(None),
             dispatch_lock: std::sync::Mutex::new(()),
         }
@@ -1315,8 +1305,11 @@ impl LinuxPathController {
         match command.action {
             PathCommandAction::PreparePath => {
                 let candidate = Self::command_candidate(command);
-                let prepared =
-                    route::prepare_candidate_path_routes(&candidate, &self.tunnel_interface)?;
+                let owner = crate::util::lock_or_recover(&self.route_owner, "client::route_owner")
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("Linux path has no managed route owner"))?
+                    .upgrade()?;
+                let prepared = route::prepare_candidate_path_routes(&candidate, &owner)?;
                 let mut current = crate::util::lock_or_recover(
                     &self.prepared_routes,
                     "client::linux_prepared_routes",
@@ -1382,8 +1375,9 @@ impl LinuxPathController {
                 // the authenticated carrier route; those interfaces may differ from the
                 // carrier and from each other. Failure leaves the previous route active and
                 // makes the core enqueue ABORT/reconnect.
-                gateway::refresh_exit_paths_if_active(&self.tunnel_interface)?;
-                prepared.commit(&previous_carriers)?;
+                prepared.commit_with(&previous_carriers, || {
+                    gateway::refresh_exit_paths_if_active(&self.tunnel_interface)
+                })?;
                 mark_carrier_candidates_pinned(&[address]);
                 note_connected_peer(address);
                 *current = None;
@@ -1906,6 +1900,7 @@ fn linux_roaming_path_supported(config: &crate::config::client::ClientConfig) ->
     let transport_supported = matches!(config.server.protocol.as_str(), "tcp" | "udp");
     // Explicit source settings are operator pins, not a path the observer may replace.
     config.roaming != ClientRoamingPolicy::Off
+        && !config.tun.attach_existing
         && transport_supported
         && config.server.local_address.is_none()
         && config.server.local_port == 0
@@ -2196,6 +2191,17 @@ impl ClientPlatform for LinuxCoreAdapter {
             }
             Ok((tunnel, hook_context))
         })?;
+        #[cfg(feature = "experimental-roaming")]
+        {
+            *crate::util::lock_or_recover(
+                &self.path_controller.prepared_routes,
+                "client::linux_prepared_routes",
+            ) = None;
+            *crate::util::lock_or_recover(
+                &self.path_controller.route_owner,
+                "client::route_owner",
+            ) = (!config.tun.attach_existing).then(|| tunnel.guard.routes.scope());
+        }
         self.hook_context = hook_context;
         self.connected_since
             .get_or_insert_with(std::time::Instant::now);
@@ -5331,8 +5337,6 @@ where
     #[cfg(target_os = "macos")]
     let is_tap = false;
     #[cfg(target_os = "linux")]
-    let server_addr = pin_target(config);
-    #[cfg(target_os = "linux")]
     let tunnel_tun = tunnel.tun;
     #[cfg(target_os = "linux")]
     let tap_mac = tunnel.tap_mac;
@@ -6297,13 +6301,7 @@ where
     // (we only borrowed the fd). Otherwise remove the device + routes we created.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(
-            &tun_name,
-            &server_addr,
-            &config.routing.exclude,
-            &tun_guard.failures,
-        )
-        .err()
+        cleanup_owned_tun(&tun_guard.routes, &tun_guard.failures).err()
     } else {
         None
     };
@@ -6825,8 +6823,7 @@ struct TunGuard {
     stop: Option<LinuxTunPumpStop>,
     /// Attach mode borrows an externally-owned device: pump packets, never tear down.
     owns_device: bool,
-    server_addr: String,
-    exclude: Vec<String>,
+    routes: route::RouteOwner,
     armed: bool,
 }
 
@@ -6835,8 +6832,7 @@ impl TunGuard {
     fn new(
         if_name: String,
         owns_device: bool,
-        server_addr: String,
-        exclude: Vec<String>,
+        routes: route::RouteOwner,
         failures: crate::client_cleanup::Failures,
     ) -> Self {
         Self {
@@ -6844,8 +6840,7 @@ impl TunGuard {
             if_name,
             stop: None,
             owns_device,
-            server_addr,
-            exclude,
+            routes,
             armed: true,
         }
     }
@@ -6866,15 +6861,14 @@ impl TunGuard {
 /// were removed.
 #[cfg(target_os = "linux")]
 fn cleanup_owned_tun(
-    if_name: &str,
-    server_addr: &str,
-    exclude: &[String],
+    routes: &route::RouteOwner,
     failures: &crate::client_cleanup::Failures,
 ) -> anyhow::Result<()> {
+    let if_name = routes.interface();
     let route_error = failures
         .observe(
             crate::client_cleanup::Resource::Routes,
-            route::cleanup_routes(if_name, server_addr, exclude),
+            route::cleanup_routes(routes),
         )
         .err();
     let tun_error = failures
@@ -6916,12 +6910,7 @@ impl Drop for TunGuard {
             log::error!("TUN guard DNS cleanup failed: {error}");
         }
         if self.owns_device {
-            if let Err(error) = cleanup_owned_tun(
-                &self.if_name,
-                &self.server_addr,
-                &self.exclude,
-                &self.failures,
-            ) {
+            if let Err(error) = cleanup_owned_tun(&self.routes, &self.failures) {
                 log::error!("TUN guard cleanup failed: {error}");
             }
         }
@@ -7790,8 +7779,7 @@ struct NetworkPlanApplyGuard {
     failures: crate::client_cleanup::Failures,
     if_name: String,
     owns_device: bool,
-    server_addr: String,
-    exclude: Vec<String>,
+    routes: route::RouteOwner,
     gateway_lan_ipv4: String,
     gateway_lan_ipv6: String,
     gateway_enabled: bool,
@@ -7808,14 +7796,14 @@ impl NetworkPlanApplyGuard {
         config: &crate::config::client::ClientConfig,
         if_name: &str,
         owns_device: bool,
+        routes: route::RouteOwner,
         failures: crate::client_cleanup::Failures,
     ) -> Self {
         Self {
             failures,
             if_name: if_name.to_string(),
             owns_device,
-            server_addr: pin_target(config),
-            exclude: config.routing.exclude.clone(),
+            routes,
             gateway_lan_ipv4: config.routing.lan_subnet.clone(),
             gateway_lan_ipv6: config.routing.lan_subnet_ipv6.clone(),
             gateway_enabled: config.routing.gateway_nat || config.routing.forward,
@@ -7865,7 +7853,7 @@ impl Drop for NetworkPlanApplyGuard {
         if self.routes_started && self.owns_device {
             if let Err(error) = self.failures.observe(
                 crate::client_cleanup::Resource::Routes,
-                route::cleanup_routes(&self.if_name, &self.server_addr, &self.exclude),
+                route::cleanup_routes(&self.routes),
             ) {
                 log::warn!("route rollback after NetworkPlan failure also failed: {error}");
             }
@@ -7955,6 +7943,7 @@ fn setup_tunnel(
     };
     log::info!("TUN MTU: {}", mtu);
 
+    let route_owner = route::RouteOwner::new(&if_name, plan.generation)?;
     let exists = std::path::Path::new(&format!("/sys/class/net/{}", if_name)).exists();
     if attach {
         // Attach to a PRE-EXISTING, externally-owned interface; we only open it for
@@ -8010,8 +7999,13 @@ fn setup_tunnel(
     // This transaction covers address/up, gateway and exit
     // firewall state, descriptor duplication, routes, DNS, and the final TAP MAC read.
     // The external interface in attach mode is borrowed and is therefore never deleted.
-    let mut plan_guard =
-        NetworkPlanApplyGuard::new(config, &if_name, !attach, cleanup_failures.clone());
+    let mut plan_guard = NetworkPlanApplyGuard::new(
+        config,
+        &if_name,
+        !attach,
+        route_owner.clone(),
+        cleanup_failures.clone(),
+    );
     if attach {
         // The interface owner sets L3 (address + link up) — some managers only route
         // through an interface they configured themselves, so if qeli sets the address
@@ -8139,9 +8133,9 @@ fn setup_tunnel(
             .map_err(|_| anyhow::anyhow!("invalid local carrier address"))?
             .map(crate::transport_core::carrier::canonical_carrier_ip);
         route::setup_network_plan_routes(
+            &route_owner,
             &config.routing,
             plan,
-            &if_name,
             &carrier_targets,
             carrier_local_address,
             is_tap,
@@ -8195,13 +8189,7 @@ fn setup_tunnel(
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
     publish_network_plan_state(plan)?;
-    let guard = TunGuard::new(
-        if_name.clone(),
-        !attach,
-        pin_target(config),
-        config.routing.exclude.clone(),
-        cleanup_failures,
-    );
+    let guard = TunGuard::new(if_name.clone(), !attach, route_owner, cleanup_failures);
     plan_guard.disarm();
     Ok(TunnelSetup {
         guard,
@@ -9947,8 +9935,6 @@ pub(crate) async fn run_udp_tunnel(
     let is_tap = tun_setup.is_tap;
     #[cfg(target_os = "macos")]
     let is_tap = false;
-    #[cfg(target_os = "linux")]
-    let server_addr = pin_target(config);
     #[cfg(target_os = "linux")]
     let tunnel_tun = tun_setup.tun;
     #[cfg(target_os = "linux")]
@@ -12143,13 +12129,7 @@ pub(crate) async fn run_udp_tunnel(
     // Attach mode: the interface + routes belong to an external owner — leave them.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_tun(
-            &tun_name,
-            &server_addr,
-            &config.routing.exclude,
-            &tun_guard.failures,
-        )
-        .err()
+        cleanup_owned_tun(&tun_guard.routes, &tun_guard.failures).err()
     } else {
         None
     };
@@ -12593,6 +12573,9 @@ mod lifecycle_adapter_tests {
 
         config.obfuscation.quic.enabled = false;
         assert!(linux_roaming_path_supported(&config));
+        config.tun.attach_existing = true;
+        assert!(!linux_roaming_path_supported(&config));
+        config.tun.attach_existing = false;
 
         config.roaming = crate::config::client::ClientRoamingPolicy::Off;
         assert!(!linux_roaming_path_supported(&config));

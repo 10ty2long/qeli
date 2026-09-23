@@ -1,5 +1,13 @@
 # Роуминг клиента: план полной реализации
-<!-- normative-sync: roaming-v47-platform-gates-only -->
+<!-- normative-sync: roaming-v48-linux-route-owner -->
+
+> Дополнение аудита 23 сентября 2026: Linux route adapter использует owner lease на
+> подключение; cleanup закрывает приём новых мутаций. `dev_attach=true` не предоставляет
+> `ROAMING_PATH`, поскольку маршруты принадлежат внешнему управляющему. `auto` использует
+> reconnect, `required` недоступен. [Q25-F027/F028 и границы](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
+> Приведённые ниже live результаты относятся к прежним проходам; этот фикс проверен
+> host-тестами и Linux cross-check, без нового запуска на устройствах.
+
 
 > Статус: проектирование завершено; этапы 0–2A и общий TCP handover этапа 2B реализованы
 > под внутренним compile gate `experimental-roaming`, который включён во все поддерживаемые
