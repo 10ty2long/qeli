@@ -77,3 +77,6 @@ release and new benchmarks were not run. The full audit remains open.
 
 Previous passes: [path monitor](AUDIT-Q25-PATH-MONITOR.md),
 [shared command runner](AUDIT-Q25-SYSTEM-COMMANDS.md).
+
+Follow-up: [Q25-F023/F024](AUDIT-Q25-ROUTE-OUTCOME.md) corrects failed route mutation
+outcomes; pending ownership/recovery and command deadlines remain open.

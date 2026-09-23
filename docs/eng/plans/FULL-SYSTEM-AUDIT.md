@@ -996,6 +996,14 @@ discovers a WAN only without remembered family targets. Seven new portable regre
 1105 Rust tests and 33 separate adapter scenarios PASS. Actual Linux firewall and
 uncertain mutation ownership remain open.
 
+**Failed route mutations, 23 September 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): a failed add/replace/retirement
+is reversible only after the failed destination is confirmed unchanged; unavailable,
+changed or multi-line snapshots produce unknown state. Fifteen new regressions plus
+eight existing route tests now run on host; 1128 Rust tests PASS. Baseline reproduction
+has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
+command deadlines and live Linux remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1038,6 +1046,14 @@ three read-only route/address queries use the shared runner with a 15-second dea
 and output limits. TaskGroup retains the blocking command during stop; failed samples
 do not publish PathUpdate. 1098 Rust tests and 23 production-adapter scenarios PASS.
 Route mutations, overall shutdown deadlines and actual Linux handover remain open.
+
+**Failed route mutations, 23 September 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): a failed add/replace/retirement
+is reversible only after the failed destination is confirmed unchanged; unavailable,
+changed or multi-line snapshots produce unknown state. Fifteen new regressions plus
+eight existing route tests now run on host; 1128 Rust tests PASS. Baseline reproduction
+has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
+command deadlines and live Linux remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1196,6 +1212,14 @@ IPv4/IPv6 default-route and fallback queries use the shared bounded runner; clea
 discovers a WAN only without remembered family targets. Seven new portable regressions,
 1105 Rust tests and 33 separate adapter scenarios PASS. Actual Linux firewall and
 uncertain mutation ownership remain open.
+
+**Failed route mutations, 23 September 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): a failed add/replace/retirement
+is reversible only after the failed destination is confirmed unchanged; unavailable,
+changed or multi-line snapshots produce unknown state. Fifteen new regressions plus
+eight existing route tests now run on host; 1128 Rust tests PASS. Baseline reproduction
+has 10 expected failures and 5 controls. Pending ownership/recovery of uncertain routes,
+command deadlines and live Linux remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1472,8 +1496,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with route mutations and kill-switch/gateway firewall
-commands (read-only WAN discovery is covered by Q25-F021/F022), then older TUN generations and platform rollback/ACK. Section 05 still needs
-transaction-wide preflight deadlines and removal of synchronous waits in async handlers. Outstanding 01–07, Linux
-restart/restore/manual+NDP E2E and platform certification remain queued. A new full benchmark
-follows stabilization of fixes.
+**Next work:** continue 25 with pending ownership and recovery of uncertain route
+mutations, then route/kill-switch/gateway command deadlines. Q25-F023/F024 fixes outcome
+classification, not complete recovery. Read-only WAN discovery is covered by Q25-F021/F022.
+Older TUN generations and platform rollback/ACK remain queued. Section 05 still needs
+transaction-wide preflight deadlines and removal of synchronous waits in async handlers.
+Outstanding 01–07, Linux restart/restore/manual+NDP E2E and platform certification remain
+queued. A new full benchmark follows stabilization of fixes.

@@ -5,6 +5,22 @@ use crate::transport_core::{NetworkAddressFamily, NetworkPlan, NetworkRoute};
 use ipnet::Ipv4Net;
 use std::net::IpAddr;
 
+// Keep the route transaction's command boundary injectable without changing process PATH.
+fn route_command_output(args: &[String]) -> std::io::Result<std::process::Output> {
+    #[cfg(all(test, feature = "experimental-roaming"))]
+    if let Some(output) = candidate_outcome_tests::command_output(args) {
+        return output;
+    }
+    std::process::Command::new("ip").args(args).output()
+}
+
+#[cfg(all(test, feature = "experimental-roaming"))]
+#[path = "route/candidate_outcome_tests.rs"]
+mod candidate_outcome_tests;
+
+#[cfg(test)]
+static ROUTE_TEST_SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Routes this process actually CREATED on the physical interface, so cleanup removes
 /// only those.
 ///
@@ -86,21 +102,25 @@ fn physical_path_query(
     source: Option<IpAddr>,
     output_interface: Option<&str>,
 ) -> Option<PhysicalPath> {
-    let mut command = std::process::Command::new("ip");
+    let mut args = Vec::<String>::new();
     if let Some(flag) = family_flag(destination.is_ipv6()) {
-        command.arg(flag);
+        args.push(flag.to_string());
     }
-    command.args(["route", "get", &destination.to_string()]);
+    args.extend([
+        "route".to_string(),
+        "get".to_string(),
+        destination.to_string(),
+    ]);
     if let Some(source) = source {
         if source.is_ipv4() != destination.is_ipv4() {
             return None;
         }
-        command.args(["from", &source.to_string()]);
+        args.extend(["from".to_string(), source.to_string()]);
     }
     if let Some(interface) = output_interface {
-        command.args(["oif", interface]);
+        args.extend(["oif".to_string(), interface.to_string()]);
     }
-    let output = command.output().ok()?;
+    let output = route_command_output(&args).ok()?;
     if !output.status.success() {
         return None;
     }
@@ -200,7 +220,7 @@ pub(crate) struct LinuxPreparedPathRoutes {
 /// Resolve every candidate carrier through the exact interface/source pair reported by the
 /// platform. PREPARE is deliberately read-only: the bound candidate socket can prove the new
 /// path before COMMIT replaces any qeli-owned host route.
-#[cfg(feature = "experimental-roaming")]
+#[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
 pub(crate) fn prepare_candidate_path_routes(
     candidate: &PreparedPathCandidate,
     tunnel_if: &str,
@@ -335,17 +355,37 @@ fn exact_route_tokens(remote: IpAddr) -> anyhow::Result<Option<Vec<String>>> {
         args.push("-6".to_string());
     }
     args.extend(["route".to_string(), "show".to_string(), remote.to_string()]);
-    let output = std::process::Command::new("ip").args(args).output()?;
+    let output = route_command_output(&args)?;
     if !output.status.success() {
         anyhow::bail!(
             "could not inspect existing carrier route {remote}: {}",
             String::from_utf8_lossy(&output.stderr).trim()
         );
     }
-    Ok(String::from_utf8_lossy(&output.stdout)
-        .lines()
-        .find(|line| !line.trim().is_empty())
-        .map(|line| line.split_whitespace().map(str::to_string).collect()))
+    let text = String::from_utf8_lossy(&output.stdout);
+    let mut lines = text.lines().filter(|line| !line.trim().is_empty());
+    let route = lines
+        .next()
+        .map(|line| line.split_whitespace().map(str::to_string).collect());
+    if lines.next().is_some() {
+        anyhow::bail!("ambiguous carrier route snapshot for {remote}");
+    }
+    Ok(route)
+}
+
+/// A failed command may have reached the kernel before its result was lost. Only an
+/// unchanged snapshot proves this step reversible. Do not undo an unproven add or replace:
+/// the route may belong to a concurrent operator. Unknown state stops the generation.
+#[cfg(feature = "experimental-roaming")]
+fn verify_failed_route_unchanged(
+    remote: IpAddr,
+    previous: Option<&[String]>,
+) -> anyhow::Result<()> {
+    let current = exact_route_tokens(remote)?;
+    if current.as_deref() != previous {
+        anyhow::bail!("failed route mutation for {remote} did not preserve the previous route");
+    }
+    Ok(())
 }
 
 #[cfg(feature = "experimental-roaming")]
@@ -359,7 +399,7 @@ fn candidate_route_expected_tokens(route: &LinuxCandidateRoute) -> Vec<String> {
 
 #[cfg(feature = "experimental-roaming")]
 fn run_ip_owned(args: &[String], description: &str) -> anyhow::Result<()> {
-    let output = std::process::Command::new("ip").args(args).output()?;
+    let output = route_command_output(args)?;
     if output.status.success() {
         return Ok(());
     }
@@ -378,7 +418,7 @@ fn rollback_candidate_route_steps(applied: &[CandidateRouteStep]) -> Vec<String>
             CandidateRouteMutation::Add {
                 undo,
                 journal_was_present,
-            } => match std::process::Command::new("ip").args(undo).output() {
+            } => match route_command_output(undo) {
                 Ok(output) if output.status.success() => {
                     if !journal_was_present {
                         forget_created_owned(undo);
@@ -415,6 +455,7 @@ fn rollback_candidate_route_steps(applied: &[CandidateRouteStep]) -> Vec<String>
 #[cfg(feature = "experimental-roaming")]
 #[derive(Debug)]
 struct RetiredCarrierRoute {
+    remote: IpAddr,
     undo: Vec<String>,
     ipv6: bool,
     previous: Vec<String>,
@@ -474,6 +515,7 @@ impl LinuxPreparedPathRoutes {
             }
             match exact_route_tokens(remote)? {
                 Some(previous) => retire.push(RetiredCarrierRoute {
+                    remote,
                     undo,
                     ipv6: remote.is_ipv6(),
                     previous,
@@ -538,7 +580,16 @@ impl LinuxPreparedPathRoutes {
                 }
             };
             if let Err(error) = result {
-                let rollback_errors = rollback_candidate_route_steps(&applied);
+                let mut rollback_errors = rollback_candidate_route_steps(&applied);
+                let previous = match &step.mutation {
+                    CandidateRouteMutation::Replace { previous, .. } => Some(previous.as_slice()),
+                    CandidateRouteMutation::Add { .. } | CandidateRouteMutation::None => None,
+                };
+                if let Err(verification) =
+                    verify_failed_route_unchanged(step.route.remote, previous)
+                {
+                    rollback_errors.push(verification.to_string());
+                }
                 if rollback_errors.is_empty() {
                     return Err(error);
                 }
@@ -574,7 +625,7 @@ impl LinuxPreparedPathRoutes {
 
         let mut retired = Vec::with_capacity(retire.len());
         for route in retire {
-            let output = std::process::Command::new("ip").args(&route.undo).output();
+            let output = route_command_output(&route.undo);
             match output {
                 Ok(output) if output.status.success() => {
                     forget_created_owned(&route.undo);
@@ -586,6 +637,11 @@ impl LinuxPreparedPathRoutes {
                 Ok(output) => {
                     let mut rollback_errors = restore_retired_carrier_routes(&retired);
                     rollback_errors.extend(rollback_candidate_route_steps(&applied));
+                    if let Err(verification) =
+                        verify_failed_route_unchanged(route.remote, Some(&route.previous))
+                    {
+                        rollback_errors.push(verification.to_string());
+                    }
                     let error = format!(
                         "could not retire previous carrier route: {}",
                         String::from_utf8_lossy(&output.stderr).trim()
@@ -602,6 +658,11 @@ impl LinuxPreparedPathRoutes {
                 Err(error) => {
                     let mut rollback_errors = restore_retired_carrier_routes(&retired);
                     rollback_errors.extend(rollback_candidate_route_steps(&applied));
+                    if let Err(verification) =
+                        verify_failed_route_unchanged(route.remote, Some(&route.previous))
+                    {
+                        rollback_errors.push(verification.to_string());
+                    }
                     if rollback_errors.is_empty() {
                         anyhow::bail!("could not retire previous carrier route: {error}");
                     }
@@ -2047,10 +2108,9 @@ mod tests {
 mod fault_injection {
     use super::*;
     use std::io::Write;
-    use std::sync::{Mutex, MutexGuard};
+    use std::sync::MutexGuard;
 
-    /// `PATH` is process-global, so shimmed tests must not overlap.
-    static SERIAL: Mutex<()> = Mutex::new(());
+    // Share serialization with the transaction fixtures: both use the ownership journal.
 
     struct Shim {
         dir: std::path::PathBuf,
@@ -2092,7 +2152,7 @@ mod fault_injection {
             route_show_cases: &[(&str, Option<&str>)],
             route_show: Option<&str>,
         ) -> Shim {
-            let guard = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
+            let guard = ROUTE_TEST_SERIAL.lock().unwrap_or_else(|p| p.into_inner());
             let dir = std::env::temp_dir().join(format!("qeli-shim-{tag}-{}", std::process::id()));
             let _ = std::fs::remove_dir_all(&dir);
             std::fs::create_dir_all(&dir).unwrap();

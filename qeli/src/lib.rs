@@ -34,6 +34,12 @@ mod server_preflight;
 #[path = "client/gateway/wan.rs"]
 mod gateway_wan;
 
+// Run route transaction fault injection on the host without invoking host networking.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)]
+#[path = "client/route.rs"]
+mod client_route;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

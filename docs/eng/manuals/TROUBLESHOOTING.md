@@ -1311,6 +1311,24 @@ longer, and gateway/kill-switch firewall commands still need separate bounds.
 There are no new INI parameters.
 [Validation and boundaries](../reports/AUDIT-Q25-GATEWAY-WAN.md).
 
+### 6.39 Linux roaming: route mutation left platform state unknown
+
+A failed `ip route add/replace/del` can have changed the route before returning an error.
+Qeli checks the failed destination after rolling back earlier steps. Only a confirmed
+unchanged snapshot permits ordinary rejection and retention of the previous path.
+Changed, unreadable or ambiguous state returns `PlatformStateUnknown` through the
+controller and requires stopping the current connection generation.
+
+The messages `failed route mutation ... did not preserve the previous route` and
+`ambiguous carrier route snapshot` explain failed verification. Inspect the affected
+IPv4/IPv6 destination and earlier command errors. Multiple nonempty snapshot lines
+are rejected; multipath snapshot reconstruction is not implemented.
+
+This is not a guarantee that every uncertain route was removed. An unsuccessful add
+does not prove ownership; such a route may remain for inspection. Pending-operation
+recovery and command deadlines remain separate work. No new INI fields are required.
+[Evidence and limits](../reports/AUDIT-Q25-ROUTE-OUTCOME.md).
+
 ---
 
 ## 7. Reference

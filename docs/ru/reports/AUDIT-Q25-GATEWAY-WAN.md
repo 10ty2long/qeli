@@ -80,3 +80,6 @@ native release и новый benchmark не запускались. Полный
 
 Предыдущие этапы: [path monitor](AUDIT-Q25-PATH-MONITOR.md),
 [общий command runner](AUDIT-Q25-SYSTEM-COMMANDS.md).
+
+Продолжение: [Q25-F023/F024](AUDIT-Q25-ROUTE-OUTCOME.md) исправляет результат failed route
+mutation; pending ownership/recovery и сроки команд остаются открытыми.

@@ -1003,6 +1003,14 @@ IPv4/IPv6 default-route и fallback используют общий runner с о
 регрессий, 1105 Rust tests и 33 отдельных adapter-сценария PASS. Реальный Linux firewall
 и ownership при неизвестном результате мутации остаются открытыми.
 
+**Неуспешные мутации маршрутов, 23 сентября 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): failed add/replace/retirement
+считается обратимым только после подтверждения неизменности destination; недоступный,
+изменённый или многострочный снимок даёт unknown state. 15 новых регрессий и восемь
+существующих route-тестов теперь исполняются на host; 1128 Rust tests PASS.
+Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
+маршрута, сроки команд и реальный Linux остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1045,6 +1053,14 @@ Standalone H2, ранний platform rollback, UDP cancellation и deadlines о�
 и лимитами вывода. TaskGroup сохраняет владение blocking-командой при остановке;
 ошибка sample не публикует PathUpdate. 1098 Rust tests и 23 production-adapter сценария PASS.
 Мутации маршрутов, общий срок остановки и реальный Linux handover остаются открытыми.
+
+**Неуспешные мутации маршрутов, 23 сентября 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): failed add/replace/retirement
+считается обратимым только после подтверждения неизменности destination; недоступный,
+изменённый или многострочный снимок даёт unknown state. 15 новых регрессий и восемь
+существующих route-тестов теперь исполняются на host; 1128 Rust tests PASS.
+Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
+маршрута, сроки команд и реальный Linux остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1203,6 +1219,14 @@ IPv4/IPv6 default-route и fallback используют общий runner с о
 ищет WAN только при отсутствии сохранённых целей семейства. Семь новых переносимых
 регрессий, 1105 Rust tests и 33 отдельных adapter-сценария PASS. Реальный Linux firewall
 и ownership при неизвестном результате мутации остаются открытыми.
+
+**Неуспешные мутации маршрутов, 23 сентября 2026:**
+[Q25-F023/F024](../reports/AUDIT-Q25-ROUTE-OUTCOME.md): failed add/replace/retirement
+считается обратимым только после подтверждения неизменности destination; недоступный,
+изменённый или многострочный снимок даёт unknown state. 15 новых регрессий и восемь
+существующих route-тестов теперь исполняются на host; 1128 Rust tests PASS.
+Baseline: 10 ожидаемых отказов и 5 controls. Pending ownership/recovery неопределённого
+маршрута, сроки команд и реальный Linux остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1481,9 +1505,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: мутации routes и firewall-команды kill-switch/gateway
-(read-only WAN discovery покрыт Q25-F021/F022),
-затем старые поколения TUN и platform rollback/ACK. В 05 остаются общий срок
-preflight-транзакции и синхронные ожидания в async handlers. Сохраняется очередь
-незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
-Новый полный бенчмарк выполняется после стабилизации исправлений.
+**Ближайшая работа:** продолжить 25: pending ownership и recovery неопределённых
+мутаций маршрута, затем сроки команд routes/kill-switch/gateway. Q25-F023/F024 исправляет
+классификацию результата, не полное recovery. Read-only WAN discovery покрыт Q25-F021/F022.
+Старые поколения TUN и platform rollback/ACK остаются в очереди. В 05 нужны общий срок
+preflight-транзакции и устранение синхронных ожиданий в async handlers.
+Сохраняются незакрытые 01–07, Linux E2E restart/restore/manual+NDP и платформенная
+сертификация. Новый полный бенчмарк выполняется после стабилизации исправлений.
