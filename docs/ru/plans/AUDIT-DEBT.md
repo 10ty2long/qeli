@@ -21,7 +21,7 @@
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | TODO | Восстановление после crash | Определить и реализовать безопасное восстановление exact firewall/DNS/routes, включая mixed nft, SIGKILL и удалённый профиль. Нельзя выдавать process-local registry за persistent journal. |
 | D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Убрать синхронный preflight из async handler/долгого config lock; ограничить последовательности команд и ожидания; проверить отмену и доступность соседних запросов. |
-| D06 | 21/22/23/25 | TODO | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. |
+| D06 | 21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | TODO | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
 | D09 | 14/15/25/32/33 | IN_PROGRESS | Linux lifecycle и системные отказы | Выполнить Linux tests для flock/permissions/control/hooks/process groups, worker/services/TUN/route/DNS; сохранить stdout, exit, SHA и before/after. Привилегированные ignored tests запускать явно. |
@@ -107,3 +107,5 @@
 D02/D05: [чтение sysctl-журнала и lock waits](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md) исправлены в описанных границах; остальные критерии строк остаются открыты.
 
 D03: [kill-switch namespace / reconnect](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md).
+
+D02/D06: [namespace-aware link observation](../reports/AUDIT-Q25-LINK-OBSERVATION.md).

@@ -56,21 +56,7 @@ pub(super) fn create_queues<T>(
 
 /// Query the calling thread's network namespace, without relying on a sysfs mount.
 #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
-pub(crate) fn interface_index(name: &str) -> io::Result<Option<u32>> {
-    let name = std::ffi::CString::new(name)
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "interface name contains NUL"))?;
-    // SAFETY: name is a valid, NUL-terminated string for the duration of the call.
-    let index = unsafe { libc::if_nametoindex(name.as_ptr()) };
-    if index != 0 {
-        return Ok(Some(index));
-    }
-    let error = io::Error::last_os_error();
-    if error.raw_os_error() == Some(libc::ENODEV) {
-        Ok(None)
-    } else {
-        Err(error)
-    }
-}
+pub(crate) use crate::network_interface::index as interface_index;
 
 #[cfg(test)]
 #[path = "open_tests.rs"]

@@ -1783,6 +1783,22 @@ that was never used. Cleanup without a live in-process owner does not claim cras
 [Report and boundaries](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md).
 
 
+### 6.57 Linux: interface exists but NDP/TAP inspection failed
+
+NDP proxy, TAP MAC discovery, hook ifindex, sysctl interface-presence checks and automatic
+panel TUN selection now query the calling network namespace through a kernel socket.
+An inherited `/sys/class/net` view no longer supplies these observations. For
+`cannot inspect NDP interface`, check the interface inside Qeli's own namespace, its
+Ethernet type/unicast MAC and access to control/packet sockets. `required` still refuses
+startup on an inspection/bind error; `auto` still reports the failure and continues.
+
+This does not change `off`, `manual`, `route` or `nat66` responsibilities. In particular,
+`manual` with required NDP can initialize without remounting sysfs, while the administrator
+still owns forwarding/routing/firewall. TUN/TAP `dev_attach` flag inspection remains dependent
+on a matching sysfs mount. A snapshot does not authorize restoring a replaced link by name.
+[Report and remaining scope](../reports/AUDIT-Q25-LINK-OBSERVATION.md).
+
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

@@ -70,6 +70,10 @@ mod tun_open;
 #[cfg(all(target_os = "linux", any(test, feature = "client")))]
 mod network_namespace;
 
+// Link identity queried in the calling network namespace, shared by client/server.
+#[cfg(all(target_os = "linux", any(test, feature = "client", feature = "server")))]
+mod network_interface;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

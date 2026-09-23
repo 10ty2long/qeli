@@ -9,7 +9,6 @@
 
 use crate::server::ProfileRuntime;
 use std::collections::HashMap;
-use std::ffi::CString;
 use std::io;
 use std::net::Ipv6Addr;
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
@@ -88,24 +87,12 @@ impl NdpProxy {
         {
             anyhow::bail!("invalid NDP proxy interface name '{interface}'");
         }
-        let c_name = CString::new(interface)
-            .map_err(|_| anyhow::anyhow!("invalid NDP proxy interface name"))?;
-        let ifindex = unsafe { libc::if_nametoindex(c_name.as_ptr()) };
-        if ifindex == 0 {
-            return Err(anyhow::anyhow!(
-                "interface '{interface}' does not exist: {}",
-                io::Error::last_os_error()
-            ));
+        let (ifindex, mac) = crate::network_interface::ethernet(interface).map_err(|error| {
+            anyhow::anyhow!("cannot inspect NDP interface '{interface}': {error}")
+        })?;
+        if mac == [0; 6] || mac[0] & 1 != 0 {
+            anyhow::bail!("interface '{interface}' has no usable unicast MAC address");
         }
-        let link_type = std::fs::read_to_string(format!("/sys/class/net/{interface}/type"))
-            .map_err(|error| anyhow::anyhow!("cannot read link type for '{interface}': {error}"))?;
-        if link_type.trim() != "1" {
-            anyhow::bail!(
-                "interface '{interface}' is not an Ethernet-compatible link (ARPHRD type {})",
-                link_type.trim()
-            );
-        }
-        let mac = read_mac(interface)?;
         let protocol = i32::from(ETH_P_IPV6.to_be());
         let raw = unsafe {
             libc::socket(
@@ -252,24 +239,6 @@ impl NdpProxy {
             }
         }
     }
-}
-
-fn read_mac(interface: &str) -> anyhow::Result<[u8; 6]> {
-    let text = std::fs::read_to_string(format!("/sys/class/net/{interface}/address"))
-        .map_err(|error| anyhow::anyhow!("cannot read MAC for '{interface}': {error}"))?;
-    let parts: Vec<&str> = text.trim().split(':').collect();
-    if parts.len() != 6 {
-        anyhow::bail!("interface '{interface}' has an unsupported MAC address");
-    }
-    let mut mac = [0u8; 6];
-    for (slot, part) in mac.iter_mut().zip(parts) {
-        *slot = u8::from_str_radix(part, 16)
-            .map_err(|_| anyhow::anyhow!("interface '{interface}' has an invalid MAC address"))?;
-    }
-    if mac == [0; 6] || mac[0] & 1 != 0 {
-        anyhow::bail!("interface '{interface}' has no usable unicast MAC address");
-    }
-    Ok(mac)
 }
 
 fn format_mac(mac: [u8; 6]) -> String {
@@ -717,5 +686,47 @@ mod tests {
         assert!(limiter.take_warning());
         assert!(limiter.allow(mac, start + RATE_WINDOW));
         assert!(!limiter.take_warning());
+    }
+}
+
+#[cfg(test)]
+mod native_network_view_tests {
+    use super::*;
+    #[test]
+    #[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN/CAP_NET_RAW and ip; isolated netns"]
+    fn native_ndp_bind_uses_calling_namespace_without_sysfs_remount() -> anyhow::Result<()> {
+        std::thread::spawn(|| -> anyhow::Result<()> {
+            // SAFETY: only this new disposable thread changes namespace.
+            if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+                return Err(io::Error::last_os_error().into());
+            }
+            let name = "qeli-view2";
+            anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
+            for args in [
+                vec!["link", "add", name, "type", "dummy"],
+                vec!["link", "set", name, "address", "02:12:34:56:78:9c"],
+                vec!["link", "set", name, "up"],
+            ] {
+                let output = crate::system_command::Command::new("ip")
+                    .args(args)
+                    .output()?;
+                anyhow::ensure!(
+                    output.status.success(),
+                    "ip fixture: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+            }
+            let runtime = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()?;
+            let _entered = runtime.enter();
+            let proxy = NdpProxy::bind(name)?;
+            anyhow::ensure!(proxy.ifindex > 0 && proxy.mac == [2, 0x12, 0x34, 0x56, 0x78, 0x9c]);
+            anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
+            drop(proxy);
+            Ok(())
+        })
+        .join()
+        .expect("native NDP view test panicked")
     }
 }

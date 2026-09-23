@@ -32,7 +32,7 @@ def main():
         if check and p.returncode:raise RuntimeError(f'{argv}: {p.returncode}: {p.stdout}')
         return p
     run(['mount','--make-rprivate','/'])
-    run(['mount','-t','sysfs','sysfs','/sys'])
+    # Keep inherited sysfs: NDP/link observations must use the calling network namespace.
     configdir=root/'etc-qeli';configdir.mkdir(mode=0o700)
     if not Path('/etc/qeli').is_dir():raise RuntimeError('/etc/qeli mount point required; host directory will not be created')
     run(['mount','--bind',str(configdir),'/etc/qeli'])

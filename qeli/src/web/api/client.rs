@@ -409,14 +409,22 @@ fn free_dev(exclude: &str) -> anyhow::Result<String> {
             }
         }
     }
-    (0..256)
-        .map(|i| format!("vpn{i}"))
-        .find(|d| {
-            // Skip a device that another client profile claims OR that already exists
-            // on the host (a server profile's tun, or any other live interface).
-            !used.contains(d) && !std::path::Path::new(&format!("/sys/class/net/{d}")).exists()
-        })
-        .ok_or_else(|| anyhow::anyhow!("no free client TUN device in vpn0..vpn255"))
+    select_free_dev(&used)
+}
+
+fn select_free_dev(used: &std::collections::HashSet<String>) -> anyhow::Result<String> {
+    for i in 0..256 {
+        let dev = format!("vpn{i}");
+        if used.contains(&dev) {
+            continue;
+        }
+        // A sysfs mount may still describe a different network namespace. Unknown
+        // kernel inspection is an error, not evidence that the name is available.
+        if crate::network_interface::index(&dev)?.is_none() {
+            return Ok(dev);
+        }
+    }
+    anyhow::bail!("no free client TUN device in vpn0..vpn255")
 }
 
 /// Ensure the profile has a distinct TUN device. If the INI already sets `dev`,
@@ -766,4 +774,30 @@ mod diagnostic_tests {
         assert!(ini.contains("allow_ipv4_leak = true\n"));
         assert!(ini.contains("allow_ipv6_leak = true\n"));
     }
+}
+
+#[cfg(test)]
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and ip; isolated netns"]
+fn native_panel_device_selection_uses_calling_namespace() -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        // SAFETY: only this new disposable thread changes namespace.
+        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+            return Err(std::io::Error::last_os_error().into());
+        }
+        anyhow::ensure!(
+            !std::path::Path::new("/sys/class/net/vpn0").exists(),
+            "fixture requires inherited sysfs without vpn0"
+        );
+        let output = crate::system_command::Command::new("ip")
+            .args(["link", "add", "vpn0", "type", "dummy"])
+            .output()?;
+        anyhow::ensure!(output.status.success());
+        let used = std::collections::HashSet::from(["vpn1".to_string()]);
+        anyhow::ensure!(select_free_dev(&used)? == "vpn2");
+        anyhow::ensure!(!std::path::Path::new("/sys/class/net/vpn0").exists());
+        Ok(())
+    })
+    .join()
+    .expect("native panel device test panicked")
 }

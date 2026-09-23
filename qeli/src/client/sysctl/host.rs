@@ -66,15 +66,40 @@ pub(super) fn interface_exists(name: &str) -> io::Result<bool> {
     }
     #[cfg(not(test))]
     {
-        // A complete successful inventory proves absence. A missing/denied sysfs
-        // root or an iteration error must not discard saved recovery values.
-        for entry in std::fs::read_dir("/sys/class/net")? {
-            if entry?.file_name() == name {
-                return Ok(true);
-            }
-        }
-        Ok(false)
+        live_interface_exists(name)
     }
+}
+
+#[cfg(target_os = "linux")]
+fn live_interface_exists(name: &str) -> io::Result<bool> {
+    crate::network_interface::index(name).map(|index| index.is_some())
+}
+#[cfg(all(test, target_os = "linux"))]
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and ip; isolated netns"]
+fn native_sysctl_absence_probe_uses_calling_namespace() -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        // SAFETY: only this new disposable thread changes namespace.
+        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+            return Err(io::Error::last_os_error().into());
+        }
+        let name = "qeli-view3";
+        anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
+        let output = crate::system_command::Command::new("ip")
+            .args(["link", "add", name, "type", "dummy"])
+            .output()?;
+        anyhow::ensure!(output.status.success());
+        anyhow::ensure!(live_interface_exists(name)?);
+        anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
+        let output = crate::system_command::Command::new("ip")
+            .args(["link", "del", name])
+            .output()?;
+        anyhow::ensure!(output.status.success());
+        anyhow::ensure!(!live_interface_exists(name)?);
+        Ok(())
+    })
+    .join()
+    .expect("native sysctl presence test panicked")
 }
 
 #[cfg(test)]

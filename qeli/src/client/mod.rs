@@ -587,8 +587,10 @@ fn hook_bool(value: bool) -> String {
 
 #[cfg(target_os = "linux")]
 fn hook_if_index(if_name: &str) -> String {
-    std::fs::read_to_string(format!("/sys/class/net/{if_name}/ifindex"))
-        .map(|value| value.trim().to_string())
+    crate::network_interface::index(if_name)
+        .ok()
+        .flatten()
+        .map(|value| value.to_string())
         .unwrap_or_default()
 }
 
@@ -8009,15 +8011,8 @@ fn setup_tunnel(
 
 #[cfg(target_os = "linux")]
 fn read_interface_mac(ifname: &str) -> anyhow::Result<[u8; 6]> {
-    let text = std::fs::read_to_string(format!("/sys/class/net/{ifname}/address"))?;
-    let bytes = text
-        .trim()
-        .split(':')
-        .map(|part| u8::from_str_radix(part, 16))
-        .collect::<Result<Vec<_>, _>>()?;
-    bytes
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("interface '{ifname}' has an invalid MAC address"))
+    let (_, mac) = crate::network_interface::ethernet(ifname)?;
+    Ok(mac)
 }
 
 #[cfg(target_os = "linux")]
@@ -13248,3 +13243,7 @@ mod udp_task_shutdown_tests {
         drop(active);
     }
 }
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "network_view_tests.rs"]
+mod network_view_tests;
