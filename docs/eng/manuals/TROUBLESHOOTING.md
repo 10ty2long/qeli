@@ -1095,7 +1095,8 @@ attempts to terminate the child and, on Linux, its group, then waits for exit; p
 is never accepted as a command result.
 
 Timeout does not prove that nothing changed. A failed `resolvectl revert` retains its marker
-for recovery retry. Immediate rollback failures now appear in the log; an attempted rollback
+for the owning guard's retry. Startup does not revert live links from a marker alone (see §6.50).
+Generation rollback failures appear in the log; an attempted rollback
 does not mean successful revert. Check the affected interface and systemd-resolved state.
 Total shutdown time still depends on other work: commands and verification queries are
 sequential, and kill/reap can wait on the kernel.
@@ -1591,6 +1592,36 @@ holders, changed persistence or a timed-out server worker can retain it. Qeli do
 force deletion of the name. A privileged external rename/delete can still invalidate
 name-based DNS/route cleanup; that ownership work remains open.
 [Tests and precise boundaries](../reports/AUDIT-Q25-TUN-LIFETIME.md).
+
+---
+
+### 6.50 Linux: DNS lease ownership and recovery markers
+
+Only a connection that acquired a DNS lease may revert its per-link DNS. `dns=off/system`,
+a plan without resolvers and a failed ownership acquisition perform no per-link cleanup.
+An active lease is retained through setup rollback and disconnect; DNS errors remain terminal.
+
+`DNS link already has an active owner` means another generation holds this link's lock.
+`unrecovered DNS ownership marker` means a prior record remains; it is not overwritten.
+New state uses `dns-link-v1-<boot>-<netns-device>-<netns-inode>-<ifindex>.state` plus `.lock`.
+Startup skips active/foreign owners, retains live indices and retires confirmed absent ones
+without a resolver command. A saved name/index alone never triggers revert of a live link.
+
+`legacy DNS marker ... needs administrator recovery` refers to old `dns-resolvectl-*`.
+Stop the affected owner, identify the actual interface, inspect `resolvectl status`, and
+restore DNS through the responsible network manager or revert a verified Qeli-owned link.
+Only then archive/remove the exact orphaned marker. Do not delete live `.lock` sidecars,
+remove all state files, or mix old/new DNS owners of the same interface. Recovery of a
+persistent external link after a crash may require this procedure.
+
+Managed DNS requires permitted `TUNGETIFF`/`TUNGETDEVNETNS`, CAP_NET_ADMIN for the namespace
+ioctl and usable namespace/boot procfs metadata. `cannot verify TUN namespace`,
+`DNS cleanup namespace changed`, `DNS link identity changed` or a changed marker refuse
+mutation and preserve evidence. DNS commands use the captured numeric index after checking
+the original fd; ordinary rename is supported and a detached original never authorizes
+revert on its replacement. The resolved service must manage the same network namespace.
+External mutation after the last check and external DNS writers remain limitations.
+[Findings, tests and boundaries](../reports/AUDIT-Q25-DNS-LEASES.md).
 
 ---
 

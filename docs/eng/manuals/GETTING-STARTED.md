@@ -1220,13 +1220,15 @@ the journal; see the migration procedure in
 [TROUBLESHOOTING.md §6.33](TROUBLESHOOTING.md).
 The state removal below applies only when uninstalling every component using it.
 
-A clean stop (Ctrl+C) **itself** restores `/etc/resolv.conf`, removes the kill-switch / NAT
-and deletes the tun. Do it by hand only if the client **crashed**:
+A clean stop (Ctrl+C) reverts only its owned per-link DNS, cleans NAT/routes and closes
+its TUN descriptors. The kill-switch is released only after successful cleanup. New
+sessions leave `/etc/resolv.conf` intact; legacy file backups have a separate recovery path.
+For DNS ownership and stale markers see [§6.50](TROUBLESHOOTING.md). After a crash:
 
 ```bash
 sudo pkill -f 'qeli client'                    # kill if it's stuck
-# DNS: the original lives in /var/lib/qeli/dns-backup.json — easiest is to start and
-#      cleanly stop the client (it restores resolv.conf itself), or restore from the backup.
+# DNS: inspect per-link state and ownership markers first (TROUBLESHOOTING §6.50).
+# /var/lib/qeli/dns-backup.json is a legacy resolver-file snapshot, not new-session DNS state.
 
 # Kill-switch (if kill_switch = true). The rules live in a DEDICATED
 # QELI_KS_<interface> chain — the name follows `dev = …` so several client instances

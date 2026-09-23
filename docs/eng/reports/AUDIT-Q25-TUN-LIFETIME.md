@@ -80,3 +80,5 @@ misses the three-second stop deadline still reports an error and may retain its 
 Q14-F027 remains open. The new lifetime does not promise disappearance in those cases.
 Actual Linux E2E, old kernels/OpenWrt, native certification and a new benchmark were not
 run. The 37-section plan remains 19 IN_PROGRESS, 18 TODO, no complete PASS.
+
+Follow-up: [Q25-F061–F062](AUDIT-Q25-DNS-LEASES.md) adds generation-owned DNS and descriptor/namespace observations; route identity and non-atomic resolver races remain open.

@@ -217,6 +217,75 @@ impl TunInterface {
         Ok(())
     }
 
+    /// Observe the device attached to this descriptor, including a renamed interface.
+    /// None means the original was externally unregistered; never resolve its saved name.
+    fn attached_name(&self) -> io::Result<Option<String>> {
+        let mut ifr = IfReq {
+            ifr_name: [0; 16],
+            ifr_flags: 0,
+            ifr_pad: [0; 22],
+        };
+        // SAFETY: the descriptor is owned, and ifr provides the complete writable ifreq.
+        if unsafe { libc::ioctl(self.as_raw_fd(), libc::TUNGETIFF as _, &mut ifr) } < 0 {
+            let error = io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::EBADFD) {
+                return Ok(None);
+            }
+            return Err(error);
+        }
+        let name = std::ffi::CStr::from_bytes_until_nul(&ifr.ifr_name)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?
+            .to_str()
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        Ok(Some(name.to_string()))
+    }
+
+    fn require_attached_namespace(&self) -> io::Result<bool> {
+        use std::os::unix::{fs::MetadataExt, io::FromRawFd};
+        // SAFETY: this ioctl returns a newly owned namespace fd on success.
+        let fd = unsafe { libc::ioctl(self.as_raw_fd(), libc::TUNGETDEVNETNS as _) };
+        if fd < 0 {
+            let error = io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::EBADFD) {
+                return Ok(false);
+            }
+            return Err(io::Error::new(
+                error.kind(),
+                format!("cannot verify TUN namespace with TUNGETDEVNETNS: {error}"),
+            ));
+        }
+        // SAFETY: the successful ioctl transferred this new fd, released on every exit.
+        let namespace = unsafe { File::from_raw_fd(fd) };
+        let original = namespace.metadata()?;
+        let current = std::fs::metadata("/proc/thread-self/ns/net")?;
+        if (original.dev(), original.ino()) != (current.dev(), current.ino()) {
+            return Err(io::Error::other(
+                "TUN belongs to a different network namespace",
+            ));
+        }
+        Ok(true)
+    }
+
+    pub(crate) fn attached_link(&self) -> io::Result<Option<(String, u32)>> {
+        if !self.require_attached_namespace()? {
+            return Ok(None);
+        }
+        let Some(name) = self.attached_name()? else {
+            return Ok(None);
+        };
+        let index = open::interface_index(&name)?;
+        let Some(after) = self.attached_name()? else {
+            return Ok(None);
+        };
+        if !self.require_attached_namespace()? {
+            return Ok(None);
+        }
+        if name != after || index.is_none() {
+            return Err(io::Error::other("TUN identity changed during observation"));
+        }
+        Ok(Some((name, index.expect("checked above"))))
+    }
+
     pub fn set_nonblocking(&self) -> io::Result<()> {
         let flags = unsafe { libc::fcntl(self.fd.as_raw_fd(), libc::F_GETFL, 0) };
         if flags < 0 {

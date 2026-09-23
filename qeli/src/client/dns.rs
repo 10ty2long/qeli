@@ -18,25 +18,40 @@ use std::path::Path;
 const RESOLV_PATH: &str = "/etc/resolv.conf";
 const STATE_DIR: &str = "/var/lib/qeli";
 const BACKUP_PATH: &str = "/var/lib/qeli/dns-backup.json";
-/// Records the interface a `resolvectl` config was applied to, so it can be
-/// reverted even on a later run.
-///
-/// PER-INTERFACE. A single shared path meant two clients (`vpn0` and `vpn1`) overwrote
-/// each other's marker, and the first one to disconnect then reverted the OTHER's link —
-/// or logged "Reverted resolvectl config on …" naming an interface it never touched. The
-/// kill-switch chain and the route journal are already keyed per instance
-/// (`chain_for(tun_if)`); this was the one piece of teardown state that was not.
-/// (Audit 2026-07-27, R7.)
-fn resolvectl_mark_path(ifname: &str) -> String {
-    // `ifname` comes from config and is used in `ip`/`resolvectl` argv already; keep the
-    // filename conservative regardless.
-    let safe: String = ifname
-        .chars()
-        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
-        .take(32)
-        .collect();
-    format!("/var/lib/qeli/dns-resolvectl-{safe}")
+pub(crate) struct DnsLease(crate::dns_lease::Lease);
+
+fn current_scope() -> anyhow::Result<crate::dns_lease::Scope> {
+    use std::os::unix::fs::MetadataExt;
+    let net = std::fs::metadata("/proc/thread-self/ns/net")?;
+    Ok(crate::dns_lease::Scope {
+        boot: std::fs::read_to_string("/proc/sys/kernel/random/boot_id")?
+            .trim()
+            .to_string(),
+        device: net.dev(),
+        inode: net.ino(),
+    })
 }
+
+fn target(
+    link: &crate::dns_lease::Link,
+    tun: &crate::tun::iface::TunInterface,
+) -> anyhow::Result<Option<String>> {
+    let scope = current_scope()?;
+    let attached = tun.attached_link()?.map(|(_, index)| index);
+    Ok(crate::dns_lease::command_target(link, &scope, attached)?.map(|index| index.to_string()))
+}
+
+impl DnsLease {
+    pub(crate) fn restore(&mut self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
+        self.0.cleanup(|link| {
+            if let Some(index) = target(link, tun)? {
+                revert_resolvectl_link(&index)?;
+            }
+            Ok(())
+        })
+    }
+}
+
 #[cfg(test)]
 const MARKER: &str = "# Managed by qeli VPN — original saved in /var/lib/qeli/dns-backup.json";
 
@@ -47,11 +62,15 @@ const REFCOUNT_PATH: &str = "/var/lib/qeli/dns-holders";
 
 /// Apply exactly the resolver set already validated into the shared NetworkPlan.
 /// Resolver selection and reachability routes belong to the core, for both IP families.
-pub fn setup_network_plan_dns(
+pub(crate) fn setup_network_plan_dns(
     config: &ClientDnsConfig,
     servers: &[NetworkDns],
-    ifname: &str,
+    tun: &crate::tun::iface::TunInterface,
+    owned: &mut Option<DnsLease>,
 ) -> anyhow::Result<()> {
+    if owned.is_some() {
+        anyhow::bail!("DNS plan already owns a lease");
+    }
     if config.mode != "tunnel" || servers.is_empty() {
         return Ok(());
     }
@@ -79,38 +98,33 @@ pub fn setup_network_plan_dns(
         );
     }
 
-    // Persist ownership before changing the link. This is essential for attach mode, where
-    // deleting qeli does not delete the externally owned interface and therefore does not
-    // automatically discard its per-link resolver state.
     ensure_state_dir()?;
-    let marker = resolvectl_mark_path(ifname);
-    crate::util::write_atomic_private(&marker, ifname.as_bytes()).map_err(|error| {
-        anyhow::anyhow!(
-            "cannot persist resolvectl ownership marker {}: {} — DNS was not changed",
-            marker,
-            error
-        )
-    })?;
-    if try_resolvectl_many(config, ifname, &resolver_args) {
-        log::info!(
-            "DNS set via resolvectl on {}: {}",
-            ifname,
-            resolver_args.join(", ")
-        );
-        return Ok(());
-    }
-    // Keep the marker after the immediate revert attempt. Generation cleanup will retry the
-    // revert and only remove the marker after a confirmed successful command.
-    anyhow::bail!(
-        "systemd-resolved is the active resolver, but per-link DNS could not be fully applied \
-         to {ifname}; rollback was attempted and the ownership marker is retained for retry. \
-         Qeli refused a persistent {RESOLV_PATH} takeover. Check the preceding resolvectl error, or set `dns = off`"
-    )
-}
-
-/// Revert the `resolvectl` per-link config recorded for one interface, if any.
-fn revert_resolvectl_marker(path: &std::path::Path) -> anyhow::Result<()> {
-    crate::dns_backup::revert_link_marker(path, revert_resolvectl_link)
+    let (name, index) = tun
+        .attached_link()?
+        .ok_or_else(|| anyhow::anyhow!("TUN disappeared before DNS setup"))?;
+    let link = crate::dns_lease::Link {
+        scope: current_scope()?,
+        index,
+        name,
+    };
+    let lease = crate::dns_lease::Lease::acquire(Path::new(STATE_DIR), link)?;
+    // Transfer ownership BEFORE the first resolver mutation, including partial failures.
+    *owned = Some(DnsLease(lease));
+    let lease = owned.as_ref().expect("lease just installed");
+    try_resolvectl_many(
+        config,
+        || {
+            target(lease.0.link(), tun)?
+                .ok_or_else(|| anyhow::anyhow!("TUN disappeared during DNS setup"))
+        },
+        &resolver_args,
+    )?;
+    log::info!(
+        "DNS set via resolvectl on ifindex {}: {}",
+        index,
+        resolver_args.join(", ")
+    );
+    Ok(())
 }
 
 fn revert_resolvectl_link(ifname: &str) -> anyhow::Result<()> {
@@ -128,89 +142,9 @@ fn revert_resolvectl_link(ifname: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Does a network interface with this name currently exist?
-fn link_exists(ifname: &str) -> bool {
-    std::path::Path::new(&format!("/sys/class/net/{ifname}")).exists()
-}
-
-/// Restore DNS to its pre-tunnel state. Safe to call repeatedly and even when
-/// nothing was changed (it becomes a no-op).
-///
-/// Prefer [`restore_dns_for`] when the caller knows its own interface: without a name
-/// this can only guess which marker belongs to it. (Audit 2026-07-27, R7.)
-pub fn restore_dns() -> anyhow::Result<()> {
-    restore_dns_inner(None)
-}
-
-/// Restore DNS, reverting the `resolvectl` config for THIS instance's `ifname` only.
-pub fn restore_dns_for(ifname: &str) -> anyhow::Result<()> {
-    restore_dns_inner(Some(ifname))
-}
-
-fn restore_dns_inner(ifname: Option<&str>) -> anyhow::Result<()> {
+/// Legacy resolver-file recovery is separate from per-generation link cleanup.
+fn restore_legacy_dns() -> anyhow::Result<()> {
     let mut errors = Vec::new();
-    // 1. Revert resolvectl per-link config.
-    //
-    // Markers are per-interface (see `resolvectl_mark_path`). With an explicit `ifname`
-    // only that instance's marker is touched. Without one, revert only markers whose
-    // interface is GONE — those are certainly stale. A live foreign link is left alone:
-    // reverting it would strip a RUNNING sibling client's DNS, which is precisely what the
-    // old single shared marker did.
-    match ifname {
-        Some(name) => {
-            let p = resolvectl_mark_path(name);
-            let p = std::path::Path::new(&p);
-            if p.exists() {
-                if let Err(error) = revert_resolvectl_marker(p) {
-                    errors.push(error.to_string());
-                }
-            }
-        }
-        None => {
-            let mut markers: Vec<std::path::PathBuf> = Vec::new();
-            match std::fs::read_dir(STATE_DIR) {
-                Ok(rd) => {
-                    for e in rd.flatten() {
-                        let name = e.file_name();
-                        let name = name.to_string_lossy();
-                        if let Some(iface) = name.strip_prefix("dns-resolvectl-") {
-                            if !iface.is_empty() {
-                                markers.push(e.path());
-                            }
-                        }
-                    }
-                }
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-                Err(error) => errors.push(format!("cannot inspect {STATE_DIR}: {error}")),
-            }
-            // Revert a marker only when its interface is GONE (or unnamed).
-            //
-            // There used to be an `only_one` short-circuit: a single marker was reverted
-            // without checking anything. But markers are REMOVED on a clean stop, so "exactly
-            // one marker" does not mean "leftover junk from a crash" — in practice it means
-            // "one client is running right now". Starting a second client (another profile,
-            // another server) therefore ran `resolvectl revert` on the FIRST one's live link:
-            // its tunnel resolver was stripped, every lookup fell back through the
-            // systemd-resolved stub to the physical network's resolvers in cleartext, and the
-            // first client — whose marker was also deleted — could no longer restore or even
-            // roll back its own DNS. It kept reporting a healthy tunnel throughout; only the
-            // second client's log mentioned the revert.
-            //
-            // That is exactly the behaviour the comment above says must not happen ("a live
-            // foreign link is left alone"), cancelled by the `||` in front of it.
-            // (Audit 2026-08-04.)
-            for p in markers {
-                let owner = std::fs::read_to_string(&p).unwrap_or_default();
-                let owner = owner.trim().to_string();
-                if owner.is_empty() || !link_exists(&owner) {
-                    if let Err(error) = revert_resolvectl_marker(&p) {
-                        errors.push(error.to_string());
-                    }
-                }
-            }
-        }
-    }
-
     // 2. Restore /etc/resolv.conf from a legacy persistent backup, but only when no older
     // client process still holds it. If the holder state cannot be locked or parsed, preserve
     // the backup and leave the host untouched rather than guessing that this process is last.
@@ -249,25 +183,61 @@ fn restore_dns_inner(ifname: Option<&str>) -> anyhow::Result<()> {
     }
 }
 
-/// Repair leftover state from a previous run that died without restoring
-/// (SIGKILL, power loss, panic). Call once at client startup. If a backup or
-/// resolvectl marker exists, the previous run did not clean up — restore now.
+/// Startup never reverts a live link from a durable marker alone. Only the generation
+/// holding the original TUN descriptor and DNS lease may issue a resolver mutation.
 pub fn recover_stale() -> anyhow::Result<()> {
-    let has_backup = Path::new(BACKUP_PATH).exists();
-    let has_mark = match std::fs::read_dir(STATE_DIR) {
-        Ok(rd) => rd.flatten().any(|e| {
-            e.file_name()
-                .to_string_lossy()
-                .starts_with("dns-resolvectl-")
-        }),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
-        Err(error) => anyhow::bail!("cannot inspect stale DNS state in {STATE_DIR}: {error}"),
+    let entries = match std::fs::read_dir(STATE_DIR) {
+        Ok(entries) => Some(entries),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.into()),
     };
-    if has_backup || has_mark {
-        log::warn!("Found stale DNS state from a previous run — restoring before connecting");
-        restore_dns()?;
+    let mut errors = Vec::new();
+    let mut scope = None;
+    if let Some(entries) = entries {
+        for entry in entries {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) => {
+                    errors.push(error.to_string());
+                    continue;
+                }
+            };
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if crate::dns_lease::is_marker(&name) {
+                if scope.is_none() {
+                    scope = Some(current_scope()?);
+                }
+                match crate::dns_lease::recover(&entry.path(),scope.as_ref().expect("scope initialized"), index_exists) {
+                    Ok(crate::dns_lease::Recovery::Live) => log::warn!("DNS marker {} still names a live index; automatic revert cannot prove device ownership",entry.path().display()),
+                    Ok(_) => {},
+                    Err(error) => errors.push(format!("DNS marker {} retained: {error}",entry.path().display())),
+                }
+            } else if name.starts_with("dns-resolvectl-") {
+                log::warn!("Legacy DNS marker {} retained for administrator recovery; a saved name is not ownership",entry.path().display());
+            }
+        }
+    }
+    if let Err(error) = restore_legacy_dns() {
+        errors.push(error.to_string());
+    }
+    if !errors.is_empty() {
+        anyhow::bail!("DNS recovery failed: {}", errors.join("; "));
     }
     Ok(())
+}
+
+fn index_exists(index: u32) -> anyhow::Result<bool> {
+    let mut name = [0 as libc::c_char; libc::IF_NAMESIZE];
+    // SAFETY: libc writes at most IF_NAMESIZE bytes to this initialized buffer.
+    if !unsafe { libc::if_indextoname(index, name.as_mut_ptr()) }.is_null() {
+        return Ok(true);
+    }
+    let error = std::io::Error::last_os_error();
+    if error.raw_os_error() == Some(libc::ENXIO) {
+        return Ok(false);
+    }
+    Err(error.into())
 }
 
 // ── resolvectl ────────────────────────────────────────────────────────────
@@ -350,87 +320,31 @@ fn routing_domains(config: &ClientDnsConfig) -> Vec<String> {
 
 #[cfg(test)]
 fn try_resolvectl(config: &ClientDnsConfig, ifname: &str, dns_addr: &str) -> bool {
-    try_resolvectl_many(config, ifname, &[dns_addr.to_string()])
+    try_resolvectl_many(config, || Ok(ifname.to_string()), &[dns_addr.to_string()]).is_ok()
 }
 
-// Immediate rollback is best-effort; the durable marker remains for generation cleanup.
-// Never report that rollback succeeded merely because the command was attempted.
-fn attempt_resolvectl_revert(ifname: &str) {
-    if let Err(error) = revert_resolvectl_link(ifname) {
-        log::warn!("{error} — ownership marker retained for retry");
-    }
-}
-
-fn try_resolvectl_many(config: &ClientDnsConfig, ifname: &str, dns_addrs: &[String]) -> bool {
-    let result = resolvectl_cmd()
-        .args(["dns", ifname])
-        .args(dns_addrs)
-        .output();
-    let applied = result
-        .as_ref()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-    if !applied {
-        let detail = result
-            .as_ref()
-            .ok()
-            .map(|o| String::from_utf8_lossy(&o.stderr).trim().to_string())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| "command unavailable or returned failure".to_string());
-        log::warn!(
-            "resolvectl refused DNS [{}] on {} ({}) — reverting the link state",
-            dns_addrs.join(", "),
-            ifname,
-            detail
-        );
-        attempt_resolvectl_revert(ifname);
-        return false;
-    }
-
-    // Routing domains decide which queries go to this link. `~.` is the
-    // catch-all that sends *all* DNS through the tunnel (full-tunnel mode).
-    //
-    // `~.` used to be gated on `config.redirect_all`, and NOTHING could set that field: the
-    // only client config format is the flat INI, and `ClientConfig::from_ini` populates just
-    // `dns.mode` and `dns.servers` — `redirect_all` and `search_domains` have no INI key at
-    // all (grep finds the field declaration and unit tests, nothing else). So the catch-all
-    // was never emitted, `domains` was always empty, and this whole block was skipped.
-    //
-    // The consequence was a silent leak on the most common desktop Linux there is. On a host
-    // with systemd-resolved this path is PREFERRED and /etc/resolv.conf is left alone, so the
-    // tunnel link got a DNS server but no routing domain — and resolved then splits queries
-    // between the tunnel resolver and the physical link's. A user running full-tunnel with
-    // `dns = tunnel` saw "DNS set via resolvectl" in the log while the Wi-Fi operator saw
-    // every domain they visited. For a censorship-circumvention tool that is precisely the
-    // metadata the tunnel exists to hide.
-    //
-    // So: whenever we are taking DNS over (`dns.mode = tunnel`, which is the default), claim
-    // the catch-all. Anything less is not "DNS through the VPN". (Audit 2026-08-04, H-01.)
+fn try_resolvectl_many(
+    config: &ClientDnsConfig,
+    mut current_target: impl FnMut() -> anyhow::Result<String>,
+    dns_addrs: &[String],
+) -> anyhow::Result<()> {
     let domains = routing_domains(config);
-    if !domains.is_empty() {
-        // The routing domains decide WHICH queries take this link — with `~.` they are
-        // the difference between "all DNS goes through the tunnel" and "almost none does".
-        // The result used to be discarded and the caller told the whole thing succeeded,
-        // so a failure here meant queries kept going to the physical resolver while the
-        // log said DNS was set: a silent leak in exactly the mode that exists to prevent
-        // one. Report it, so the caller reverts the partial state and refuses takeover.
-        let ok = resolvectl_cmd()
-            .args(["domain", ifname])
-            .args(&domains)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
-        if !ok {
-            log::warn!(
-                "resolvectl set the DNS server on {} but REFUSED the routing domains ({}) —                  queries would keep using the physical resolver; reverting and refusing the                  DNS takeover",
-                ifname,
-                domains.join(" ")
-            );
-            attempt_resolvectl_revert(ifname);
-            return false;
+    for (operation, values) in [("dns", dns_addrs), ("domain", domains.as_slice())] {
+        if values.is_empty() {
+            continue;
+        }
+        // Recheck the original descriptor before each mutation; use its captured numeric
+        // index so a rename does not redirect a later operation to a same-name replacement.
+        let index = current_target()?;
+        let output = resolvectl_cmd()
+            .args([operation, &index])
+            .args(values)
+            .output()?;
+        if !output.status.success() {
+            anyhow::bail!("resolvectl {operation} on {index} failed with {}: {}; generation rollback retains its DNS lease",output.status,String::from_utf8_lossy(&output.stderr).trim());
         }
     }
-    true
+    Ok(())
 }
 
 // ── /etc/resolv.conf capture & restore (pure file logic, path-injectable) ───
@@ -921,8 +835,8 @@ mod fault_injection {
             "a failed routing-domain call must report failure so the caller refuses takeover"
         );
         assert!(
-            rc.calls().contains("revert qtest"),
-            "the half-applied link config must be reverted, not left behind:\n{}",
+            !rc.calls().contains("revert qtest"),
+            "only the owning generation guard may revert partial state:\n{}",
             rc.calls()
         );
     }
@@ -954,9 +868,27 @@ mod fault_injection {
             rc.calls()
         );
         assert!(
-            rc.calls().contains("revert qtest"),
-            "a refused DNS call must leave no partial link state:\n{}",
+            !rc.calls().contains("revert qtest"),
+            "command failure must leave rollback to the generation guard:\n{}",
             rc.calls()
         );
+    }
+    #[test]
+    fn identity_change_between_dns_and_domain_stops_further_commands() {
+        let rc = Resolvectl::new("identity", &[]);
+        let mut calls = 0;
+        let result = try_resolvectl_many(
+            &redirect_all(),
+            || {
+                calls += 1;
+                if calls == 2 {
+                    anyhow::bail!("original TUN disappeared");
+                }
+                Ok("42".to_string())
+            },
+            &["10.0.0.1".to_string()],
+        );
+        assert!(result.is_err());
+        assert_eq!(rc.calls().trim(), "dns 42 10.0.0.1");
     }
 }

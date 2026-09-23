@@ -5290,7 +5290,7 @@ where
     let reader_fd = tunnel.reader_fd;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let writer_fd = tunnel.writer_fd;
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
     let tun_name = tunnel.if_name;
     #[cfg(any(target_os = "linux", target_os = "android"))]
     let is_tap = tunnel.is_tap;
@@ -6241,13 +6241,7 @@ where
     // (including Linux path workers) before restoring DNS or releasing the TUN.
     connection_tasks.finish().await;
     #[cfg(target_os = "linux")]
-    let dns_cleanup_error = tun_guard
-        .failures
-        .observe(
-            crate::client_cleanup::Resource::Dns,
-            dns::restore_dns_for(&tun_name),
-        )
-        .err();
+    let dns_cleanup_error = tun_guard.restore_dns().err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
     // TunGuard retains the original descriptor through DNS/routes cleanup and retries.
@@ -6773,6 +6767,7 @@ struct TunGuard {
     // A field stays alive throughout Drop, including retries after failed graceful cleanup.
     // Closing this owned File releases only this queue; never reopen a name for deletion.
     _tun: TunInterface,
+    dns: Option<dns::DnsLease>,
     failures: crate::client_cleanup::Failures,
     if_name: String,
     stop: Option<LinuxTunPumpStop>,
@@ -6786,6 +6781,7 @@ struct TunGuard {
 impl TunGuard {
     fn new(
         tun: TunInterface,
+        dns: Option<dns::DnsLease>,
         if_name: String,
         owns_device: bool,
         routes: route::RouteOwner,
@@ -6793,6 +6789,7 @@ impl TunGuard {
     ) -> Self {
         Self {
             _tun: tun,
+            dns,
             failures,
             if_name,
             stop: None,
@@ -6800,6 +6797,15 @@ impl TunGuard {
             routes,
             armed: true,
         }
+    }
+
+    fn restore_dns(&mut self) -> anyhow::Result<()> {
+        let result = self
+            .dns
+            .as_mut()
+            .map_or(Ok(()), |lease| lease.restore(&self._tun));
+        self.failures
+            .observe(crate::client_cleanup::Resource::Dns, result)
     }
 
     fn attach_pump(&mut self, stop: LinuxTunPumpStop) {
@@ -6842,10 +6848,7 @@ impl Drop for TunGuard {
         if let Some(stop) = &self.stop {
             stop.request_stop();
         }
-        if let Err(error) = self.failures.observe(
-            crate::client_cleanup::Resource::Dns,
-            dns::restore_dns_for(&self.if_name),
-        ) {
+        if let Err(error) = self.restore_dns() {
             log::error!("TUN guard DNS cleanup failed: {error}");
         }
         if self.owns_device {
@@ -7585,7 +7588,7 @@ struct NetworkPlanApplyGuard<'a> {
     exit_enabled: bool,
     platform_state_touched: bool,
     routes_started: bool,
-    dns_started: bool,
+    dns: Option<dns::DnsLease>,
     armed: bool,
 }
 
@@ -7609,7 +7612,7 @@ impl<'a> NetworkPlanApplyGuard<'a> {
             exit_enabled: config.routing.exit_node,
             platform_state_touched: false,
             routes_started: false,
-            dns_started: false,
+            dns: None,
             armed: true,
         }
     }
@@ -7620,10 +7623,6 @@ impl<'a> NetworkPlanApplyGuard<'a> {
 
     fn start_routes(&mut self) {
         self.routes_started = true;
-    }
-
-    fn start_dns(&mut self) {
-        self.dns_started = true;
     }
 
     fn disarm(&mut self) {
@@ -7641,10 +7640,10 @@ impl Drop for NetworkPlanApplyGuard<'_> {
             "Linux NetworkPlan failed before commit — rolling back platform state for {}",
             self.if_name
         );
-        if self.dns_started {
+        if let Some(lease) = self.dns.as_mut() {
             if let Err(error) = self.failures.observe(
                 crate::client_cleanup::Resource::Dns,
-                dns::restore_dns_for(&self.if_name),
+                lease.restore(self._tun),
             ) {
                 log::warn!("DNS rollback after NetworkPlan failure also failed: {error}");
             }
@@ -7932,21 +7931,8 @@ fn setup_tunnel(
     // environment intentionally owns DNS can set `dns = off` and receive an empty DNS plan.
     // Tunnel subnet, so a server-pushed resolver can be checked for reachability through
     // the tunnel instead of being written into the host resolver on trust.
-    plan_guard.start_dns();
-    let dns_result = dns::setup_network_plan_dns(&config.dns, &plan.dns_servers, &if_name);
-    if plan.dns_servers.is_empty() {
-        if let Err(e) = dns_result {
-            log::warn!(
-                "DNS was omitted from the network plan ({e}) — keeping the host resolver unchanged. \
-                 Configure dns_servers, let the server push a reachable resolver, or set `dns = off` \
-                 when the platform manages DNS itself."
-            );
-        }
-    } else if let Err(e) = dns_result {
-        return Err(anyhow::anyhow!(
-            "DNS network-plan step failed: {e}. Set `dns = off` only when the platform manages DNS itself"
-        ));
-    }
+    dns::setup_network_plan_dns(&config.dns, &plan.dns_servers, &tun, &mut plan_guard.dns)
+        .map_err(|error| anyhow::anyhow!("DNS network-plan step failed: {error}. Set `dns = off` only when the platform manages DNS itself"))?;
 
     // Past every fallible platform step — move the RAII descriptors to the caller, which
     // immediately hands them to the shared TUN backend. No raw integer ownership escapes.
@@ -7961,9 +7947,17 @@ fn setup_tunnel(
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
     publish_network_plan_state(plan)?;
+    let dns = plan_guard.dns.take();
     plan_guard.disarm();
     drop(plan_guard);
-    let guard = TunGuard::new(tun, if_name.clone(), !attach, route_owner, cleanup_failures);
+    let guard = TunGuard::new(
+        tun,
+        dns,
+        if_name.clone(),
+        !attach,
+        route_owner,
+        cleanup_failures,
+    );
     Ok(TunnelSetup {
         guard,
         reader_fd: owned_reader,
@@ -9701,7 +9695,7 @@ pub(crate) async fn run_udp_tunnel(
     let reader_fd = tun_setup.reader_fd;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let writer_fd = tun_setup.writer_fd;
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
     let tun_name = tun_setup.if_name;
     #[cfg(any(target_os = "linux", target_os = "android"))]
     let is_tap = tun_setup.is_tap;
@@ -11882,13 +11876,7 @@ pub(crate) async fn run_udp_tunnel(
     }
 
     #[cfg(target_os = "linux")]
-    let dns_cleanup_error = tun_guard
-        .failures
-        .observe(
-            crate::client_cleanup::Resource::Dns,
-            dns::restore_dns_for(&tun_name),
-        )
-        .err();
+    let dns_cleanup_error = tun_guard.restore_dns().err();
     drop(tun_write_tx);
     tun_pump.shutdown().await;
     // TunGuard retains the original descriptor through DNS/routes cleanup and retries.

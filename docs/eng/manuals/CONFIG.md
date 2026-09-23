@@ -1797,6 +1797,12 @@ rollback and server teardown do not delete a device by name or clear persistence
 External holders can keep it alive. DNS/route commands still require stable device
 identity during cleanup; see [diagnostics §6.49](TROUBLESHOOTING.md).
 
+Linux per-link DNS is owned by a generation lease with a nonblocking lock and a
+namespace/index recovery record. Disabled/empty DNS plans perform no per-link cleanup.
+Managed DNS requires `TUNGETIFF`/`TUNGETDEVNETNS` and readable namespace/boot metadata;
+old name-only markers and orphaned persistent-link state may require explicit recovery.
+See [DNS ownership and upgrade recovery §6.50](TROUBLESHOOTING.md).
+
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred

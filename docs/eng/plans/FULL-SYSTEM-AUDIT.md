@@ -635,6 +635,13 @@ borrows the device. 12 extracted-code harness scenarios PASS (baseline 7 FAIL / 
 1425 Rust PASS. Three added native Linux tests compiled only. External rename/delete,
 DNS-marker/route identity and Q14-F027 remain open.
 
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): only an acquired generation lease
+may revert DNS. Namespace/index records and nonblocking ownership locks replace name-only
+markers; original-fd checks precede numeric resolver commands. Startup never reverts a
+live link solely from a saved marker. 24 new host tests, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace test compiled only. Route identity,
+resolver service namespace and post-check index reuse remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -1049,6 +1056,13 @@ Client and server guards retain original descriptors through host cleanup; setup
 borrows the device. 12 extracted-code harness scenarios PASS (baseline 7 FAIL / 5 PASS),
 1425 Rust PASS. Three added native Linux tests compiled only. External rename/delete,
 DNS-marker/route identity and Q14-F027 remain open.
+
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): only an acquired generation lease
+may revert DNS. Namespace/index records and nonblocking ownership locks replace name-only
+markers; original-fd checks precede numeric resolver commands. Startup never reverts a
+live link solely from a saved marker. 24 new host tests, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace test compiled only. Route identity,
+resolver service namespace and post-check index reuse remain open.
 
 ### 22. Transport core, FFI/JNI and memory
 
@@ -1570,6 +1584,13 @@ borrows the device. 12 extracted-code harness scenarios PASS (baseline 7 FAIL / 
 1425 Rust PASS. Three added native Linux tests compiled only. External rename/delete,
 DNS-marker/route identity and Q14-F027 remain open.
 
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): only an acquired generation lease
+may revert DNS. Namespace/index records and nonblocking ownership locks replace name-only
+markers; original-fd checks precede numeric resolver commands. Startup never reverts a
+live link solely from a saved marker. 24 new host tests, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace test compiled only. Route identity,
+resolver service namespace and post-check index reuse remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1845,10 +1866,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue sections 25/21 with DNS-marker/route identity during external
-rename/delete, metadata from the correct namespace and consistent parser/backend names.
-Q25-F059–F060 removes TUN deletion by name and retains original fds through host cleanup.
-Run the six actual ioctl/lifetime tests on Linux.
+**Next work:** continue sections 25/21 with route cleanup identity during external rename/delete,
+resolver service/bus namespace identity and consistent parser/backend names. Q25-F061–F062
+adds generation-owned DNS and original-descriptor checks; post-check ifindex reuse and
+external DNS writers remain open. Run seven native ioctl tests plus Linux DNS/filesystem cases.
 Then address namespace identity after object destruction, journal file trust and
 lock deadlines. Actual Linux namespace/migration/reboot, lease/reconnect, iptables-nft/
 legacy and IPv6-disabled scenarios, IPv6 appearing after startup, DNS/carrier globals,

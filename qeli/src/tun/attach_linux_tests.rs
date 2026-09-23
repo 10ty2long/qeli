@@ -114,6 +114,11 @@ fn closing_renamed_device_preserves_persistent_replacement() -> io::Result<()> {
             let original =
                 TunInterface::open_device(name, 1400, open::flags(kind, true, OpenMode::Create))?;
             ip_link(&["set", "dev", name, "name", "qeli-moved"])?;
+            let original_index = open::interface_index("qeli-moved")?.expect("renamed device");
+            assert_eq!(
+                original.attached_link()?,
+                Some(("qeli-moved".to_string(), original_index))
+            );
             let replacement =
                 TunInterface::open_device(name, 1400, open::flags(kind, true, OpenMode::Create))?;
             persistent(&replacement)?;
@@ -135,6 +140,9 @@ fn closing_detached_queues_preserves_persistent_replacement() -> io::Result<()> 
         let name = "qeli-audit0";
         let original = TunInterface::create_multiqueue(name, 1400, DeviceType::Tun, 3)?;
         ip_link(&["del", "dev", name])?;
+        for queue in &original {
+            assert_eq!(queue.attached_link()?, None);
+        }
         assert_eq!(open::interface_index(name)?, None);
         let replacement = TunInterface::create_multiqueue(name, 1400, DeviceType::Tun, 2)?;
         persistent(&replacement[0])?;
@@ -170,6 +178,28 @@ fn duplicate_workers_close_before_original_descriptor_releases_name() -> io::Res
         drop(owner);
         assert_eq!(open::interface_index(name)?, None);
         drop(TunInterface::create(name, 1400)?);
+        Ok(())
+    })
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and /dev/net/tun; isolated netns"]
+fn descriptor_namespace_mismatch_does_not_resolve_same_name() -> io::Result<()> {
+    isolated(|| {
+        let name = "qeli-audit0";
+        let original = TunInterface::create(name, 1400)?;
+        let index = open::interface_index(name)?.expect("created original");
+        // This already-isolated disposable thread enters another private namespace.
+        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let replacement = TunInterface::create(name, 1400)?;
+        assert_eq!(open::interface_index(name)?, Some(index));
+        assert!(original.attached_link().is_err());
+        assert_eq!(
+            replacement.attached_link()?,
+            Some((name.to_string(), index))
+        );
         Ok(())
     })
 }

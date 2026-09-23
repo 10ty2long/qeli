@@ -180,6 +180,8 @@ mod credential_file;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod dns_backup;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod dns_lease;
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod secret_buffer;
 
 // Bind command authorization to the exact descriptor supplying Linux runtime INI bytes.

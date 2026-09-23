@@ -640,6 +640,13 @@ Guards клиента/сервера сохраняют исходные fd до
 Три новых native Linux-теста только скомпилированы. Внешние rename/delete,
 identity DNS-маркеров/маршрутов и Q14-F027 остаются открытыми.
 
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): DNS сбрасывает только владеющее им
+поколение. Namespace/index journal и неблокирующий lock заменяют маркеры по имени;
+перед числовыми resolver-командами проверяется исходный fd. Startup не сбрасывает живой
+link только по сохранённому маркеру. 24 новых host-теста, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace-тест только скомпилирован.
+Identity маршрутов, namespace resolver-сервиса и reuse индекса после проверки остаются открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -1056,6 +1063,13 @@ Guards клиента/сервера сохраняют исходные fd до
 устройство. 12 сценариев с извлечённым кодом PASS (baseline 7 FAIL / 5 PASS), 1425 Rust PASS.
 Три новых native Linux-теста только скомпилированы. Внешние rename/delete,
 identity DNS-маркеров/маршрутов и Q14-F027 остаются открытыми.
+
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): DNS сбрасывает только владеющее им
+поколение. Namespace/index journal и неблокирующий lock заменяют маркеры по имени;
+перед числовыми resolver-командами проверяется исходный fd. Startup не сбрасывает живой
+link только по сохранённому маркеру. 24 новых host-теста, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace-тест только скомпилирован.
+Identity маршрутов, namespace resolver-сервиса и reuse индекса после проверки остаются открыты.
 
 ### 22. Transport core, FFI/JNI и память
 
@@ -1577,6 +1591,13 @@ Guards клиента/сервера сохраняют исходные fd до
 Три новых native Linux-теста только скомпилированы. Внешние rename/delete,
 identity DNS-маркеров/маршрутов и Q14-F027 остаются открытыми.
 
+[Q25-F061–F062](../reports/AUDIT-Q25-DNS-LEASES.md): DNS сбрасывает только владеющее им
+поколение. Namespace/index journal и неблокирующий lock заменяют маркеры по имени;
+перед числовыми resolver-командами проверяется исходный fd. Startup не сбрасывает живой
+link только по сохранённому маркеру. 24 новых host-теста, 1446 Rust PASS; guard harness
+baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace-тест только скомпилирован.
+Identity маршрутов, namespace resolver-сервиса и reuse индекса после проверки остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1854,10 +1875,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25/21: identity DNS-маркеров/маршрутов при внешних
-rename/delete, metadata из правильного namespace и согласованность имён parser/backend.
-Q25-F059–F060 удаляет teardown TUN по имени и сохраняет исходные fd до очистки сети.
-Шесть реальных ioctl/lifetime-тестов нужно исполнить на Linux.
+**Ближайшая работа:** продолжить 25/21: identity route cleanup при внешних rename/delete,
+namespace resolver-сервиса/шины и согласованность имён parser/backend. Q25-F061–F062
+привязывает DNS к поколению и исходному fd; reuse ifindex после проверки и внешние DNS
+writers остаются открыты. Исполнить семь native ioctl-тестов и Linux DNS/filesystem cases.
 Далее — устойчивость namespace identity после уничтожения объекта, доверие к journal
 files и сроки блокировок. Реальные Linux namespace/migration/reboot, lease/reconnect,
 iptables-nft/legacy и IPv6-disabled, появление IPv6 после запуска, DNS/carrier globals,
