@@ -204,6 +204,15 @@ post_down may not have run and complete firewall rollback is not guaranteed.
 The next worker clears stale NAT rules during startup. The 60 seconds bounds the
 grace period, not an uninterruptible kernel wait after SIGKILL.
 
+`worker service 'usage sweep' failed: ...` (or `stopped unexpectedly`) means the
+required accounting/quota task has failed. The same rule applies to `UDP loss report`:
+the worker starts cleanup instead of silently continuing without that service. An
+unarmed packet trace is optional and may return normally. Graceful stop finishes the
+current periodic cycle before stopping profiles, then collects and persists final
+traffic while retaining exclusive worker ownership. `usage: shutdown flush failed`
+means the final write failed; inspect disk space, permissions and the preceding error.
+The worker reports failure, and unpersisted statistics are not guaranteed to survive.
+
 ### 2.2 The stages of one connection (by log)
 
 Localize the failure by the last successful line:

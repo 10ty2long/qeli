@@ -3459,6 +3459,10 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         bf_cfg.lockout_secs,
     )));
 
+    // Acquire exclusive worker ownership BEFORE loading a writable accounting snapshot.
+    // A rejected second worker must never flush its stale snapshot from UsageStore::Drop.
+    // Declaration order also keeps this lease alive until state has been dropped on error.
+    let mut control_socket = control::bind_control_server()?;
     let live_web = Arc::new(RwLock::new(config.web.clone()));
     let state = Arc::new(ServerState {
         config,
@@ -3479,7 +3483,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 
     // Control socket (shared across profiles) — the supervisor's panel reaches
     // live client data (list/kick/bandwidth) through this.
-    let mut control_socket = control::bind_control_server()?;
     // Fail before spawning services; the socket lease rolls back on startup errors.
     nat::cleanup_all()?;
     let control_listener = control_socket
@@ -3502,24 +3505,25 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 
     // (The web panel runs in the supervisor process, not here.)
 
-    // Tier-2 usage sweep: accrue per-user traffic + enforce data caps / expiry.
-    {
-        let usage_state = state.clone();
-        tokio::spawn(async move {
-            usage_sweep(usage_state).await;
-        });
-    }
-
-    // UDP loss report. The per-reason counters were already maintained by the datagram
-    // handler but nothing ever read the snapshot, so the server side of a loss was
-    // invisible: only the client published a breakdown, and half of a UDP path is not
-    // enough to tell an exhausted pool from a queue that cannot drain.
-    {
-        let drops_state = state.clone();
-        tokio::spawn(async move {
-            udp_drop_report(drops_state).await;
-        });
-    }
+    let mut worker_services = crate::profile_tasks::WorkerServices::new();
+    worker_services.spawn(
+        "usage sweep",
+        true,
+        usage_sweep(state.clone(), worker_services.subscribe()),
+    );
+    worker_services.spawn(
+        "UDP loss report",
+        true,
+        udp_drop_report(state.clone(), worker_services.subscribe()),
+    );
+    let mut trace_shutdown = worker_services.subscribe();
+    worker_services.spawn("packet trace", false, async move {
+        tokio::select! {
+            biased;
+            _ = wait_for_profile_shutdown(&mut trace_shutdown) => {},
+            _ = crate::trace::watch() => {},
+        }
+    });
 
     // Start one independent supervisor per profile. The JoinSet only watches for a
     // supervisor panic/return; ordinary profile failures are restarted in place.
@@ -3580,7 +3584,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // Wait for all profiles. SIGINT (ctrl-c) and SIGTERM (how the supervisor and
     // systemd stop us) both shut down gracefully so we can tear down host NAT;
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
-    tokio::spawn(crate::trace::watch());
 
     let mut via_signal = false;
     let mut fatal_reason: Option<String> = None;
@@ -3592,6 +3595,11 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                     Some(Err(e)) => format!("a profile supervisor failed: {e}"),
                     None => "no profile supervisors remain".to_string(),
                 };
+                log::error!("{reason}");
+                fatal_reason = Some(reason);
+                break;
+            },
+            reason = worker_services.next_failure() => {
                 log::error!("{reason}");
                 fatal_reason = Some(reason);
                 break;
@@ -3622,7 +3630,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 
     // Finish accepted administrative operations before profiles lose their resources.
     let _ = control_shutdown_tx.send(true);
+    worker_services.request_shutdown();
     let _ = control_task.await;
+    worker_services.shutdown().await;
 
     // Ask every generation to leave through its normal async cleanup path. Aborting the
     // supervisors dropped `ProfileTeardown` synchronously and could remove TUN/NAT while
@@ -3650,6 +3660,15 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         run_post_down(&state, &pcfg.name).await;
     }
 
+    // Every path (including service failure) collects counters after profile writers have
+    // stopped, and persists while the exclusive worker lease is still held.
+    let flush_failed = if let Err(error) = state.usage.flush() {
+        log::error!("usage: shutdown flush failed: {error}");
+        fatal_reason.get_or_insert_with(|| format!("usage: shutdown flush failed: {error}"));
+        true
+    } else {
+        false
+    };
     log::info!("Server shutdown complete");
     // On a signal-driven stop, exit the process directly. The data plane spawns
     // blocking TUN reader threads; a graceful runtime drop joins them and would hang
@@ -3657,16 +3676,10 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // "failed". The kernel reclaims the TUN devices / fds on exit, and NAT was already
     // torn down above.
     if via_signal {
-        // Persist the last usage deltas before the hard exit: process::exit skips
-        // UsageStore's Drop flush, so without this up to one sweep interval of traffic
-        // per user is lost from the counters.
-        if let Err(error) = state.usage.flush() {
-            log::error!("usage: shutdown flush failed: {error}");
-        }
         // process::exit skips Drop: release the pathname only after the final
         // usage flush, so a replacement worker cannot load stale counters.
         drop(control_socket);
-        std::process::exit(0);
+        std::process::exit(if flush_failed { 1 } else { 0 });
     }
     if let Some(reason) = fatal_reason {
         anyhow::bail!(reason);
@@ -3674,27 +3687,19 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Supervisor (`qeli server`): serves the web panel — the always-up control
-/// plane — and runs the data-plane as a child process (`qeli _worker`). Applying
-/// a config change restarts only the worker (clean OS teardown of TUN/sockets),
-/// so the panel never goes down. Live client data is read over the control
-/// socket; user edits write the users file and SIGHUP the worker to hot-reload.
-/// Tier-2 usage sweep (worker). Every few seconds: fold each live session's byte
-/// counters into the per-user lifetime total, persist the `usage.json` sidecar,
-/// and disconnect any user over their data cap or past expiry. Runs off the data
-/// path (O(sessions) per tick, reusing counters the data plane already maintains)
-/// so it adds zero per-packet cost — tunnel throughput is unaffected.
 /// Periodic per-profile UDP loss breakdown. Off the data path entirely: one snapshot of
 /// counters the handler already maintains, once per interval, per profile. Silent while
 /// nothing is lost, so a healthy server does not gain a log line.
-async fn udp_drop_report(state: Arc<ServerState>) {
+async fn udp_drop_report(
+    state: Arc<ServerState>,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
+) {
     use crate::transport_core::udp_buffer::UdpBufferSnapshot;
 
     let mut tick = tokio::time::interval(Duration::from_secs(10));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     let mut previous: HashMap<String, UdpBufferSnapshot> = HashMap::new();
-    loop {
-        tick.tick().await;
+    while crate::profile_tasks::worker_tick(&mut tick, &mut shutdown).await {
         let profiles = state.profiles.read().await;
         for (name, profile) in profiles.iter() {
             let now = profile.udp_buffer_counters.snapshot();
@@ -3721,14 +3726,16 @@ async fn udp_drop_report(state: Arc<ServerState>) {
     }
 }
 
-async fn usage_sweep(state: Arc<ServerState>) {
+/// Collect live and retired session counters, persist usage, and enforce quotas/expiry.
+/// A stop finishes the current cycle before profiles can tear down its resources.
+async fn usage_sweep(state: Arc<ServerState>, mut shutdown: tokio::sync::watch::Receiver<bool>) {
     let mut tick = tokio::time::interval(Duration::from_secs(10));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     // One bit per warning threshold, scoped to a concrete session id. Reconnects receive a
     // fresh notice while a long-lived session is not spammed every ten seconds.
     let mut management_notices: HashMap<u64, u8> = HashMap::new();
-    loop {
-        tick.tick().await;
+    while crate::profile_tasks::worker_tick(&mut tick, &mut shutdown).await {
+        state.usage.collect();
 
         // Per-user caps snapshot from the (hot-reloadable) users DB.
         let (limit_gb, expire): (HashMap<String, u64>, HashMap<String, Option<i64>>) = {
@@ -3756,11 +3763,7 @@ async fn usage_sweep(state: Arc<ServerState>) {
             for (pname, profile) in profiles.iter() {
                 let sessions = profile.sessions.read().await;
                 for (ip, s) in sessions.by_ip.iter() {
-                    // Fold download (server→client) and upload (client→server)
-                    // separately; the cap is enforced on download only.
-                    let down = s.bytes_sent.load(std::sync::atomic::Ordering::Relaxed);
-                    let up = s.bytes_recv.load(std::sync::atomic::Ordering::Relaxed);
-                    state.usage.fold(s.session_id, &s.username, down, up);
+                    // All tracked sessions were folded before checking download-only caps.
                     live.insert(s.session_id);
 
                     let gb = limit_gb.get(&s.username).copied().unwrap_or(0);
@@ -3868,7 +3871,6 @@ async fn usage_sweep(state: Arc<ServerState>) {
             }
         }
 
-        state.usage.prune(&live);
         if let Err(error) = state.usage.flush() {
             log::error!("usage: periodic flush failed: {error}");
         }

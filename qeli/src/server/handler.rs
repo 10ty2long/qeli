@@ -1462,6 +1462,12 @@ where
                 // the report stays here, and both surfaces show it as unknown.
                 client_info: Arc::new(std::sync::Mutex::new(None)),
             });
+            server_state.usage.track(
+                session.session_id,
+                &session.username,
+                session.bytes_sent.clone(),
+                session.bytes_recv.clone(),
+            );
             let mut replaced_session = None;
             let mut replaced_routes = Vec::new();
             {

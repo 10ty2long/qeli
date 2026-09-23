@@ -144,7 +144,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 12 | Transports and wire camouflage | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding and shaping | H02, H07–H08 | TODO |
 | 14 | Supervisor, workers and profiles | H02–H03, H08 | IN_PROGRESS |
-| 15 | Sessions, IP pools and limits | H01, H03–H04, H08 | TODO |
+| 15 | Sessions, IP pools and limits | H01, H03–H04, H08 | IN_PROGRESS |
 | 16 | ACL, pushed routes and site-to-site | H03–H04, H06 | TODO |
 | 17 | IPv4 NAT, forwarding and sysctls | H02, H04, H08 | TODO |
 | 18 | IPv6 off/manual/route/nat66 and NDP | H06, H11 | TODO |
@@ -461,6 +461,13 @@ while preserving intentional redirected background services. 828 host Rust tests
 four new Linux group tests compiled only. Next: startup rollback, background worker
 services and binding trusted config to parsed contents. Linux E2E remains open.
 
+**Worker services and accounting, 23 September 2026:**
+[Q14-F016–F017 / Q15-F001](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md): owned and monitored
+periodic tasks, draining before profile cleanup, writable accounting only after acquiring
+the worker lease, final persistence on both stop paths. Short sessions and final counter
+tails now survive registry removal. 848 host Rust tests PASS; Linux cross-check only.
+Notification tasks, forced outer cancellation and Linux E2E remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -475,7 +482,12 @@ Concurrent allocate/auth/reconnect/evict/reap/revoke/quota, atomic v4+v6, reserv
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Accounting subpass:** [Q15-F001](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md) covers
+short TCP/UDP sessions, writer tails, reset baselines and counter retirement. 14 portable
+accounting tests pass. Pool allocation, concurrent authentication/reconnect/revoke and
+real Linux quota enforcement still need the remaining section-15 scenarios.
 
 ### 16. ACL, pushed routes and site-to-site
 

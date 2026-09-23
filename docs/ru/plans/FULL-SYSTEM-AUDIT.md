@@ -149,7 +149,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 12 | Транспорты и wire-маскировка | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding и shaping | H02, H07–H08 | TODO |
 | 14 | Supervisor, workers и профили | H02–H03, H08 | IN_PROGRESS |
-| 15 | Сессии, IP-пулы и лимиты | H01, H03–H04, H08 | TODO |
+| 15 | Сессии, IP-пулы и лимиты | H01, H03–H04, H08 | IN_PROGRESS |
 | 16 | ACL, push routes и site-to-site | H03–H04, H06 | TODO |
 | 17 | IPv4 NAT, forwarding и sysctl | H02, H04, H08 | TODO |
 | 18 | IPv6 off/manual/route/nat66 и NDP | H06, H11 | TODO |
@@ -466,6 +466,13 @@ forced cancellation остаются открытыми; далее — hook pro
 4 новых Linux group tests только скомпилированы. Следующие участки: startup rollback,
 фоновые worker services и связь trusted config с parsed contents. Linux E2E ещё открыт.
 
+**Службы worker и учёт трафика, 23 сентября 2026:**
+[Q14-F016–F017 / Q15-F001](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md): владение и контроль
+периодических задач, их завершение до очистки профилей, writable accounting только после
+захвата права worker, финальное сохранение на обоих путях остановки. Короткие сессии и
+последние байты учитываются после удаления из реестра. 848 host Rust tests PASS;
+Linux только cross-check. Уведомления, forced outer cancellation и Linux E2E ещё открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -480,7 +487,12 @@ Allocate/auth/reconnect/evict/reap/revoke/quota под конкуренцией,
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Проход учёта трафика:** [Q15-F001](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md) закрывает
+короткие TCP/UDP-сессии, последние байты writer, baseline при reset и удаление счётчиков.
+14 переносимых accounting-тестов проходят. IP-пулы, конкурентные auth/reconnect/revoke
+и фактическое отключение по квоте на Linux ещё требуют остальных сценариев раздела 15.
 
 ### 16. ACL, push routes и site-to-site
 

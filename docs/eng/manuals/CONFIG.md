@@ -1424,6 +1424,15 @@ The file is flat-INI, written atomically by `add-client` and the web panel. Full
 | `expire_at` | — | account expiry as a Unix timestamp (seconds); absent = never expires. Past it the user is rejected at auth and disconnected by the sweep |
 | `metadata.<key>` | — | free-form string annotations (repeatable, one per `<key>`); stored as-is, not interpreted by the server |
 
+Traffic counters are collected and persisted every ten seconds. Completed TCP/UDP
+sessions remain accounted for even when they start and end between sweeps; shutdown
+collects their final bytes after profile tasks stop. Resetting a user's usage also
+advances active-session baselines, so earlier unswept traffic is not charged again.
+The quota applies to download and is enforced periodically, so it may be exceeded
+between checks. A crash/SIGKILL can lose changes since the last successful write.
+`usage.json` is internal accounting state, not a configuration format; configuration
+files remain INI. See [worker/accounting audit](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md).
+
 **`[group:<name>]` keys** — a template inherited by members via the user's `group` key (a user's own value always wins when set):
 
 | Key | Default | Purpose |

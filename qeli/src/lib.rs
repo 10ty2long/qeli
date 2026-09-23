@@ -46,6 +46,11 @@ mod dns_test_support;
 #[path = "server/dns.rs"]
 mod dns_listeners;
 
+// Accounting uses portable counters and atomic file writes; exercise it on the host too.
+#[cfg(all(test, not(all(target_os = "linux", feature = "server"))))]
+#[path = "server/usage.rs"]
+mod server_usage;
+
 // One cross-process ownership journal for every Linux component that changes host-wide
 // forwarding sysctls. The full daemon can run server profiles and panel-managed outbound
 // clients at the same time, so separate server/client snapshots would race on teardown.

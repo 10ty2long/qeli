@@ -4851,6 +4851,12 @@ async fn handle_udp_auth(
         revoked,
         closing: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
     });
+    server_state.usage.track(
+        session.session_id,
+        &session.username,
+        session.bytes_sent.clone(),
+        session.bytes_recv.clone(),
+    );
     // The writer task outlives this function and needs the rate bucket + byte
     // counter, but `session` is moved into the profile map below — clone first.
     let writer_session = session.clone();
