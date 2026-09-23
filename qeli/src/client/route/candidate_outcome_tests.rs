@@ -1487,3 +1487,6 @@ mod command_bounds_tests;
 
 #[path = "tunnel_plan_tests.rs"]
 mod tunnel_plan_tests;
+
+#[path = "cleanup_identity_tests.rs"]
+mod cleanup_identity_tests;

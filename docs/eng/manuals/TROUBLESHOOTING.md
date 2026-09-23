@@ -1589,8 +1589,9 @@ only the borrowed descriptor; it does not clear the external device's persistenc
 
 If a device remains, inspect its actual owner and earlier queue-stop errors. External
 holders, changed persistence or a timed-out server worker can retain it. Qeli does not
-force deletion of the name. A privileged external rename/delete can still invalidate
-name-based DNS/route cleanup; that ownership work remains open.
+force deletion of the name. DNS and route cleanup additionally verify the original fd
+and namespace (see §6.50–6.51). Privileged external changes between check and command
+remain a limitation.
 [Tests and precise boundaries](../reports/AUDIT-Q25-TUN-LIFETIME.md).
 
 ---
@@ -1622,6 +1623,43 @@ the original fd; ordinary rename is supported and a detached original never auth
 revert on its replacement. The resolved service must manage the same network namespace.
 External mutation after the last check and external DNS writers remain limitations.
 [Findings, tests and boundaries](../reports/AUDIT-Q25-DNS-LEASES.md).
+
+---
+
+### 6.51 Linux: original TUN ... was renamed, detached or changed
+
+`route owner network namespace changed; refusing route commands` means the current
+thread is outside the saved route namespace. `original TUN ... was renamed, detached
+or changed; preserving route reservations` means the original name/index or device
+attachment is lost. Metadata/ioctl errors also refuse cleanup. Qeli does not delete
+routes using a name that may already belong to a replacement device.
+
+Checks cover TCP/UDP disconnect, error-path Drop and partial setup rollback. Independent
+physical bypass/blackhole records can still be deleted when namespace is proven;
+borrowed physical routes survive. A namespace mismatch blocks even queries that could
+incorrectly release reservations. Existing cleanup policy still applies: an attempted
+cleanup alone does not authorize releasing a retained kill-switch.
+
+Do not rename or move a Qeli-managed TUN during a session. Inspect names/indices with
+`ip -o link show`, both families with `ip route show` and `ip -6 route show`, and namespace
+with `/proc/<pid>/task/<tid>/ns/net`; inspect the thread performing the operation. First
+stop the external manager changing this interface and end the affected session. Remove
+only leftovers whose ownership is verified; a broad flush of the saved name is unsafe.
+Creating a new device with the same name does not restore an externally deleted original.
+
+A live original guard can retry when its identity is proven again. Once that guard is
+lost, an unconfirmed flush keeps the name in the process registry until process exit.
+After inspecting/recovering routes and remaining protective rules, restarting the affected
+Qeli process may be necessary. End its other active sessions first when using the daemon;
+restart alone is not proof that network state was recovered.
+
+`actual TUN name ... differs from route owner ...; refusing setup` requires an exact
+supported `dev`. Managed routes need CAP_NET_ADMIN, permitted `TUNGETIFF`/`TUNGETDEVNETNS`
+and procfs namespace metadata even with `dns=off`. Attach does not install/clean managed
+routes. DNS rename support does not imply rename support for the whole network plan.
+Observations and iproute2 are not atomic; physical uplinks and other setup/gateway/firewall
+operations still need a separate pass.
+[Findings and verification](../reports/AUDIT-Q25-ROUTE-IDENTITY.md).
 
 ---
 

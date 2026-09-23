@@ -6249,7 +6249,7 @@ where
     // (we only borrowed the fd). Otherwise remove our routes before the guard closes its fd.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_routes(&tun_guard.routes, &tun_guard.failures).err()
+        cleanup_owned_routes(&tun_guard.routes, &tun_guard._tun, &tun_guard.failures).err()
     } else {
         None
     };
@@ -6824,11 +6824,12 @@ impl TunGuard {
 #[cfg(target_os = "linux")]
 fn cleanup_owned_routes(
     routes: &route::RouteOwner,
+    tun: &TunInterface,
     failures: &crate::client_cleanup::Failures,
 ) -> anyhow::Result<()> {
     failures.observe(
         crate::client_cleanup::Resource::Routes,
-        route::cleanup_routes(routes),
+        route::cleanup_routes_for_tun(routes, tun),
     )
 }
 
@@ -6852,7 +6853,7 @@ impl Drop for TunGuard {
             log::error!("TUN guard DNS cleanup failed: {error}");
         }
         if self.owns_device {
-            if let Err(error) = cleanup_owned_routes(&self.routes, &self.failures) {
+            if let Err(error) = cleanup_owned_routes(&self.routes, &self._tun, &self.failures) {
                 log::error!("TUN guard cleanup failed: {error}");
             }
         }
@@ -7651,7 +7652,7 @@ impl Drop for NetworkPlanApplyGuard<'_> {
         if self.routes_started && self.owns_device {
             if let Err(error) = self.failures.observe(
                 crate::client_cleanup::Resource::Routes,
-                route::cleanup_routes(&self.routes),
+                route::cleanup_routes_for_tun(&self.routes, self._tun),
             ) {
                 log::warn!("route rollback after NetworkPlan failure also failed: {error}");
             }
@@ -7765,6 +7766,9 @@ fn setup_tunnel(
             e
         )
     })?;
+    if !attach {
+        route_owner.bind_tun(&tun)?;
+    }
     // Cover partial setup with a local transaction. A completed TunGuard is transferred
     // into TunnelSetup before returning, so a failed core ACK cannot leave a gap.
     // This transaction covers address/up, gateway and exit
@@ -11883,7 +11887,7 @@ pub(crate) async fn run_udp_tunnel(
     // Attach mode: the interface + routes belong to an external owner — leave them.
     #[cfg(target_os = "linux")]
     let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_routes(&tun_guard.routes, &tun_guard.failures).err()
+        cleanup_owned_routes(&tun_guard.routes, &tun_guard._tun, &tun_guard.failures).err()
     } else {
         None
     };

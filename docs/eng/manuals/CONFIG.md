@@ -1803,6 +1803,13 @@ Managed DNS requires `TUNGETIFF`/`TUNGETDEVNETNS` and readable namespace/boot me
 old name-only markers and orphaned persistent-link state may require explicit recovery.
 See [DNS ownership and upgrade recovery §6.50](TROUBLESHOOTING.md).
 
+Managed Linux routes also require these TUN ioctls and usable `/proc/thread-self/ns/net`,
+including with `dns=off`. Setup requires the actual name to match `dev`; name templates or
+truncation are not silently accepted. Cleanup checks the original fd, name, index and held
+namespace before each command. External rename/delete refuses TUN route cleanup and retains
+reservations; physical bypass cleanup remains independent when namespace is proven.
+`dev_attach=true` still leaves routing to its external owner.
+See [route ownership recovery §6.51](TROUBLESHOOTING.md).
 
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred

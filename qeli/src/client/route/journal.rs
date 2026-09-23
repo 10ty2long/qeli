@@ -9,7 +9,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 pub(crate) struct RouteOwner(Arc<Lease>);
 #[derive(Debug)]
 struct Lease {
+    #[cfg(target_os = "linux")]
+    tun_index: std::sync::OnceLock<u32>,
     id: u64,
+    #[cfg(target_os = "linux")]
+    namespace: Arc<super::identity::Namespace>,
     interface: String,
     generation: u64,
 }
@@ -19,6 +23,8 @@ pub(crate) struct RouteScope(Weak<Lease>);
 
 struct Entry {
     id: u64,
+    #[cfg(target_os = "linux")]
+    namespace: Arc<super::identity::Namespace>,
     interface: String,
     generation: u64,
     accepting: bool,
@@ -48,6 +54,8 @@ fn registry() -> MutexGuard<'static, Registry> {
 impl RouteOwner {
     pub(crate) fn new(interface: &str, generation: u64) -> anyhow::Result<Self> {
         let _operation = OPERATIONS.lock().unwrap_or_else(|e| e.into_inner());
+        #[cfg(target_os = "linux")]
+        let namespace = Arc::new(super::identity::Namespace::capture()?);
         let recovery = {
             let state = registry();
             if let Some(previous) = state.entries.iter().find(|e| e.interface == interface) {
@@ -57,6 +65,8 @@ impl RouteOwner {
                         previous.generation
                     );
                 }
+                #[cfg(target_os = "linux")]
+                previous.namespace.verify()?;
                 Some((
                     previous.id,
                     previous
@@ -94,6 +104,8 @@ impl RouteOwner {
         let id = state.next_id;
         state.entries.push(Entry {
             id,
+            #[cfg(target_os = "linux")]
+            namespace: namespace.clone(),
             interface: interface.into(),
             generation,
             accepting: true,
@@ -105,9 +117,56 @@ impl RouteOwner {
         });
         Ok(Self(Arc::new(Lease {
             id,
+            #[cfg(target_os = "linux")]
+            namespace,
+            #[cfg(target_os = "linux")]
+            tun_index: std::sync::OnceLock::new(),
             interface: interface.into(),
             generation,
         })))
+    }
+
+    #[cfg(target_os = "linux")]
+    pub(super) fn verify_namespace(&self) -> anyhow::Result<()> {
+        self.0.namespace.verify()
+    }
+
+    // Capture only once, before any managed link/route setup. Attach mode has no
+    // managed routes and never binds. No later connection can rebind this owner.
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    pub(crate) fn bind_tun(&self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
+        let _operation = self.operation()?;
+        let (name, index) = tun
+            .attached_link()?
+            .ok_or_else(|| anyhow::anyhow!("original TUN unavailable before route setup"))?;
+        if name != self.interface() {
+            anyhow::bail!(
+                "actual TUN name {name} differs from route owner {}; refusing setup",
+                self.interface()
+            );
+        }
+        self.0
+            .tun_index
+            .set(index)
+            .map_err(|_| anyhow::anyhow!("route owner already bound to a TUN"))?;
+        Ok(())
+    }
+
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    pub(super) fn verify_tun(&self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
+        let index = self
+            .0
+            .tun_index
+            .get()
+            .ok_or_else(|| anyhow::anyhow!("route owner has no original TUN identity"))?;
+        let attached = tun.attached_link()?;
+        match attached {
+            Some((name, current)) if name == self.interface() && current == *index => Ok(()),
+            _ => anyhow::bail!(
+                "original TUN {} was renamed, detached or changed; preserving route reservations",
+                self.interface()
+            ),
+        }
     }
 
     pub(crate) fn interface(&self) -> &str {
@@ -131,6 +190,8 @@ impl RouteOwner {
         {
             anyhow::bail!("route owner is stopped; rejecting stale route operation");
         }
+        #[cfg(target_os = "linux")]
+        self.verify_namespace()?;
         Ok(guard)
     }
 
@@ -270,7 +331,10 @@ pub(super) fn note_pending(owner: &RouteOwner, spec: Vec<String>) {
 
 /// Called under the operation lock after cleanup of previously proven owned records.
 /// A matching pending route could have been installed by another process: do not delete it.
-pub(super) fn reconcile_pending(owner: &RouteOwner) -> Vec<String> {
+pub(super) fn reconcile_pending(
+    owner: &RouteOwner,
+    inspect: impl Fn(&[String]) -> anyhow::Result<Option<Vec<String>>>,
+) -> Vec<String> {
     let records = registry()
         .entries
         .iter()
@@ -280,7 +344,7 @@ pub(super) fn reconcile_pending(owner: &RouteOwner) -> Vec<String> {
         .clone();
     let mut errors = Vec::new();
     for spec in records {
-        match recorded_route(&spec) {
+        match inspect(&spec) {
             Ok(None) => {
                 let mut state = registry();
                 let entry = state.entries.iter_mut().find(|e| e.id == owner.0.id)

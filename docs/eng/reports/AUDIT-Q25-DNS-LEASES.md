@@ -107,3 +107,7 @@ review and preserve independent physical bypass cleanup. DNS server address sele
 attach sysfs provenance, parser/backend names, whole-operation deadlines and Q14-F027
 remain open. No Linux E2E, native certification or new benchmark. Plan: 37 sections,
 19 IN_PROGRESS, 18 TODO, no complete PASS.
+
+Follow-up: [Q25-F063–F064](AUDIT-Q25-ROUTE-IDENTITY.md) adds original-TUN and held-namespace
+evidence to route cleanup while preserving independent physical cleanup.
+Post-check races and setup/roaming remain open.

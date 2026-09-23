@@ -10,10 +10,12 @@ use std::net::IpAddr;
 
 #[path = "route/ownership.rs"]
 mod ownership;
-use ownership::{
-    delete_spec, recorded_route, remove_recorded_route, route_matches_spec,
-    verify_interface_routes_absent,
-};
+#[cfg(feature = "experimental-roaming")]
+use ownership::remove_recorded_route;
+use ownership::{delete_spec, recorded_route, route_matches_spec};
+#[cfg(target_os = "linux")]
+#[path = "route/identity.rs"]
+mod identity;
 #[path = "route/journal.rs"]
 mod journal;
 #[cfg(all(test, feature = "experimental-roaming"))]
@@ -1665,15 +1667,45 @@ fn physical_dev_for(server_addr: &str) -> Option<String> {
     None
 }
 
-pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
+#[cfg(test)]
+fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
+    cleanup_routes_with_checks(owner, || Ok(()), || Ok(()))
+}
+
+#[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+pub(crate) fn cleanup_routes_for_tun(
+    owner: &RouteOwner,
+    tun: &crate::tun::iface::TunInterface,
+) -> anyhow::Result<()> {
+    cleanup_routes_with_checks(owner, || owner.verify_namespace(), || owner.verify_tun(tun))
+}
+
+// Each command needs fresh evidence, including queries whose result can release a
+// reservation. Checks are not atomic with iproute2; privileged external races remain.
+fn cleanup_routes_with_checks(
+    owner: &RouteOwner,
+    namespace: impl Fn() -> anyhow::Result<()>,
+    tunnel: impl Fn() -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
     let _operation = owner.cleanup_operation();
     let ifname = owner.interface();
-    // Delete only verified records belonging to this plan owner. Borrowed physical routes
-    // are preserved. Routes on the owned TUN/TAP are also covered by the interface flush below.
+    let command = |args: &[String], needs_tunnel: bool| {
+        namespace().map_err(std::io::Error::other)?;
+        if needs_tunnel {
+            tunnel().map_err(std::io::Error::other)?;
+        }
+        route_command_output(args)
+    };
+    let is_tunnel = |spec: &[String]| {
+        spec.windows(2)
+            .any(|pair| pair[0] == "dev" && pair[1] == ifname)
+    };
+    // Physical bypasses remain independently removable if the original namespace is
+    // proven. A lost/renamed TUN must not authorize commands on a replacement name.
     let mut failed = Vec::new();
     let mut errors = Vec::new();
     for args in take_created(owner) {
-        match remove_recorded_route(&args) {
+        match ownership::remove_recorded_route_with(&args, &|raw| command(raw, is_tunnel(&args))) {
             Ok(true) => {}
             Ok(false) => {
                 log::info!(
@@ -1706,8 +1738,10 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
             args.push("-6".to_string());
         }
         args.extend(["route", "flush", "dev", ifname].map(str::to_string));
-        let completion = route_command_output(&args);
-        if let Err(error) = verify_interface_routes_absent(ifname, ipv6) {
+        let completion = command(&args, true);
+        if let Err(error) =
+            ownership::verify_interface_routes_absent_with(ifname, ipv6, &|raw| command(raw, true))
+        {
             errors.push(format!(
                 "ip {}: {error}; {}",
                 args.join(" "),
@@ -1719,7 +1753,9 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
     let interface_flushed = errors.len() == errors_before_flush;
     // Pending never grants a destination delete. The independently owned interface can
     // still be flushed; reconcile afterwards so its now-absent routes release reservations.
-    errors.extend(reconcile_pending(owner));
+    errors.extend(reconcile_pending(owner, |spec| {
+        ownership::recorded_route_with(spec, &|raw| command(raw, is_tunnel(spec)))
+    }));
     owner.cleanup_result(!errors.is_empty(), interface_flushed);
     if errors.is_empty() {
         Ok(())
@@ -2653,3 +2689,7 @@ exit 0
         ));
     }
 }
+
+#[cfg(all(test, target_os = "linux", any(feature = "client", feature = "server")))]
+#[path = "route/identity_linux_tests.rs"]
+mod identity_linux_tests;

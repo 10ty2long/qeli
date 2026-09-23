@@ -100,6 +100,13 @@ fn snapshot_prefix(
 }
 
 pub(super) fn recorded_route(spec: &[String]) -> anyhow::Result<Option<Vec<String>>> {
+    recorded_route_with(spec, &route_command_output)
+}
+
+pub(super) fn recorded_route_with(
+    spec: &[String],
+    command: &dyn Fn(&[String]) -> std::io::Result<std::process::Output>,
+) -> anyhow::Result<Option<Vec<String>>> {
     let key = route_key(spec);
     let destination = key.last().expect("route destination");
     let mut query = Vec::new();
@@ -112,7 +119,7 @@ pub(super) fn recorded_route(spec: &[String]) -> anyhow::Result<Option<Vec<Strin
         "exact".into(),
         destination.clone(),
     ]);
-    let output = route_command_output(&query)?;
+    let output = command(&query)?;
     if !output.status.success() {
         anyhow::bail!(
             "could not inspect owned route {destination}: {}",
@@ -148,15 +155,23 @@ pub(super) fn parse_route_snapshot(
 
 /// True means the recorded route is absent; false means its identity changed.
 /// A failed or lying delete never discards the entry while its matching route is visible.
+#[cfg(feature = "experimental-roaming")]
 pub(super) fn remove_recorded_route(spec: &[String]) -> anyhow::Result<bool> {
-    let Some(current) = recorded_route(spec)? else {
+    remove_recorded_route_with(spec, &route_command_output)
+}
+
+pub(super) fn remove_recorded_route_with(
+    spec: &[String],
+    command: &dyn Fn(&[String]) -> std::io::Result<std::process::Output>,
+) -> anyhow::Result<bool> {
+    let Some(current) = recorded_route_with(spec, command)? else {
         return Ok(true);
     };
     if !route_matches_spec(spec, &current) {
         return Ok(false);
     }
-    let deletion = route_command_output(spec);
-    match recorded_route(spec)? {
+    let deletion = command(spec);
+    match recorded_route_with(spec, command)? {
         None => Ok(true),
         Some(current) if !route_matches_spec(spec, &current) => Ok(false),
         Some(_) => {
@@ -175,19 +190,27 @@ pub(super) fn remove_recorded_route(spec: &[String]) -> anyhow::Result<bool> {
 // A missing interface also has no routes. A failed route query alone is not proof:
 // enumerate links successfully before accepting that case, including on cleanup retry.
 pub(super) fn verify_interface_routes_absent(interface: &str, ipv6: bool) -> anyhow::Result<()> {
+    verify_interface_routes_absent_with(interface, ipv6, &route_command_output)
+}
+
+pub(super) fn verify_interface_routes_absent_with(
+    interface: &str,
+    ipv6: bool,
+    command: &dyn Fn(&[String]) -> std::io::Result<std::process::Output>,
+) -> anyhow::Result<()> {
     let mut args = Vec::new();
     if ipv6 {
         args.push("-6".to_string());
     }
     args.extend(["route", "show", "dev", interface].map(str::to_string));
-    let output = route_command_output(&args)?;
+    let output = command(&args)?;
     if output.status.success() {
         if std::str::from_utf8(&output.stdout)?.trim().is_empty() {
             return Ok(());
         }
         anyhow::bail!("interface routes remain for {interface} (IPv6={ipv6})");
     }
-    let links = route_command_output(&["-o", "link", "show"].map(str::to_string))?;
+    let links = command(&["-o", "link", "show"].map(str::to_string))?;
     if !links.status.success() {
         anyhow::bail!("could not confirm empty interface routes for {interface} (IPv6={ipv6})");
     }

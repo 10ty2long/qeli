@@ -109,3 +109,7 @@ identity с сохранением независимой очистки физ�
 sysfs при attach, имена parser/backend, общий deadline и Q14-F027 остаются открытыми.
 Linux E2E, native certification и новый benchmark не выполнялись. План: 37 разделов,
 19 IN_PROGRESS, 18 TODO, полного PASS нет.
+
+Продолжение: [Q25-F063–F064](AUDIT-Q25-ROUTE-IDENTITY.md) добавляет проверки исходного
+TUN и удерживаемого namespace в route cleanup с независимым physical cleanup.
+Гонка после проверки и setup/roaming остаются открыты.
