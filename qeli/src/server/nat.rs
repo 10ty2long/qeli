@@ -59,7 +59,7 @@ pub fn iptables_path() -> Option<String> {
     None
 }
 
-pub fn ip6tables_path() -> Option<String> {
+fn installed_ip6tables() -> Option<String> {
     for path in [
         "/usr/sbin/ip6tables",
         "/sbin/ip6tables",
@@ -70,12 +70,33 @@ pub fn ip6tables_path() -> Option<String> {
             return Some(path.to_string());
         }
     }
-    Command::new("ip6tables")
-        .args(["--version"])
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .map(|_| "ip6tables".to_string())
+    None
+}
+
+pub fn ip6tables_path() -> Option<String> {
+    installed_ip6tables().or_else(|| {
+        Command::new("ip6tables")
+            .args(["--version"])
+            .output()
+            .ok()
+            .filter(|output| output.status.success())
+            .map(|_| "ip6tables".to_string())
+    })
+}
+
+pub async fn ip6tables_path_async(until: tokio::time::Instant) -> Option<String> {
+    if let Some(path) = installed_ip6tables() {
+        return Some(path);
+    }
+    crate::hook_process::run_output(
+        tokio::process::Command::new("ip6tables").arg("--version"),
+        until,
+        64 * 1024,
+    )
+    .await
+    .ok()
+    .filter(|output| output.status.success())
+    .map(|_| "ip6tables".to_string())
 }
 
 /// Whether `iptables` is available on this host (used by the panel to warn).

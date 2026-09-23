@@ -32,15 +32,23 @@ impl Command {
     }
 
     pub(crate) fn output(&mut self) -> io::Result<Output> {
+        self.output_until(Instant::now() + DEADLINE)
+    }
+
+    pub(crate) fn output_until(&mut self, until: Instant) -> io::Result<Output> {
         #[cfg(test)]
         if let Some(action) = test_support::intercept(self.inner.as_std()) {
             return action.run();
         }
-        self.output_with_limits(DEADLINE, OUTPUT_LIMIT)
+        self.output_before(until, OUTPUT_LIMIT)
     }
 
+    #[cfg(test)]
     fn output_with_limits(&mut self, deadline: Duration, limit: usize) -> io::Result<Output> {
-        let until = Instant::now() + deadline;
+        self.output_before(Instant::now() + deadline, limit)
+    }
+
+    fn output_before(&mut self, until: Instant, limit: usize) -> io::Result<Output> {
         std::thread::scope(|scope| {
             std::thread::Builder::new()
                 .name("qeli-system-command".to_string())

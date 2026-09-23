@@ -1931,3 +1931,5 @@ TUN ioctl tests and Linux DNS/filesystem/firewall cases. Physical uplinks, resol
 namespace, parser/backend names, procfs/sysfs/journal trust, deadlines, crash recovery, dynamic
 IPv6, DNS/carrier globals, Q14-F027 workers/FD and preflight waits remain open. Native
 certification and a new benchmark were not run; full section statuses are unchanged.
+
+**24 September, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight before config locking, shared probe budget, stale-snapshot refusal, owned guard for cancelled backup/restore and bounded restart dispatch. Sections remain IN_PROGRESS; archive operations and full HTTP/systemd E2E remain open.

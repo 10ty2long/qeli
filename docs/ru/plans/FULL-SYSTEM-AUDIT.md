@@ -1941,3 +1941,5 @@ resolver service/bus namespace, имена parser/backend, procfs/sysfs/journal 
 crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 workers/FD и preflight waits
 остаются открыты. Native certification и новый benchmark не выполнялись; статусы целых
 разделов не изменены.
+
+**24 сентября, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight до config lock, общий бюджет проб, отказ устаревшего snapshot, owned guard для отменяемого backup/restore, bounded restart dispatch. Разделы остаются IN_PROGRESS; архивные операции и полный HTTP/systemd E2E не закрыты.

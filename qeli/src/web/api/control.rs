@@ -18,11 +18,15 @@ fn validate_restart_candidate(
     })
 }
 
-async fn preflight_restart(state: &Arc<ServerState>) -> Result<(), String> {
+async fn preflight_restart(
+    state: &Arc<ServerState>,
+) -> Result<tokio::sync::OwnedMutexGuard<()>, String> {
+    let (guard, observed) = super::preflight::lock(state, false).await?;
     let config = super::current_server_config(state)
         .await
         .map_err(|error| format!("restart refused: {error}"))?;
-    validate_restart_candidate(&config, crate::server::preflight::run)
+    validate_restart_candidate(&config, |config| observed.check(config))?;
+    Ok(guard)
 }
 
 /// Apply config changes by restarting the data-plane worker process. The
@@ -38,7 +42,10 @@ pub async fn restart(
     // already preflight, but the file can also be edited by hand between save and restart.
     // Refusing here preserves the currently-working VPN instead of killing it and only then
     // discovering that the replacement would collide with the host's LAN/default gateway.
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let (_config_write_guard, observed) = match super::preflight::lock(&state, false).await {
+        Ok(value) => value,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     let config = match super::current_server_config(&state).await {
         Ok(config) => config,
         Err(error) => return Ok(Json(super::err_json(format!("restart refused: {error}")))),
@@ -50,14 +57,14 @@ pub async fn restart(
             "error": "The saved panel settings require a full process restart; a worker restart cannot apply them.",
         })));
     }
-    if let Err(error) = validate_restart_candidate(&config, crate::server::preflight::run) {
+    if let Err(error) = validate_restart_candidate(&config, |config| observed.check(config)) {
         return Ok(Json(super::err_json(error)));
     }
     match &state.worker_tx {
         Some(tx) => {
-            if tx.send(WorkerCmd::Restart).await.is_err() {
+            if tx.try_send(WorkerCmd::Restart).is_err() {
                 return Ok(Json(super::err_json(
-                    "supervisor is not accepting commands",
+                    "supervisor command queue is busy or closed; retry the restart",
                 )));
             }
             Ok(Json(json!({"ok": true, "message": "worker restarting"})))
@@ -110,9 +117,9 @@ pub async fn full_restart(
     State(state): State<Arc<ServerState>>,
     _guard: auth::AuthGuard,
 ) -> Result<Json<Value>, AuthError> {
-    let _config_write_guard = state.config_write_lock.lock().await;
-    if let Err(error) = preflight_restart(&state).await {
-        return Ok(Json(super::err_json(error)));
+    match preflight_restart(&state).await {
+        Ok(guard) => drop(guard),
+        Err(error) => return Ok(Json(super::err_json(error))),
     }
     // A fresh attempt supersedes any stale failure from a previous one.
     if let Ok(mut g) = LAST_RESTART_FAILURE.lock() {
@@ -129,16 +136,21 @@ pub async fn full_restart(
                 tokio::time::sleep(std::time::Duration::from_millis(800)).await;
                 // A config edit or network change during the response delay must not kill
                 // the healthy process. Keep writes excluded through command dispatch.
-                let _write_guard = state_bg.config_write_lock.lock().await;
-                if let Err(error) = preflight_restart(&state_bg).await {
-                    log::error!("full-restart: {error}");
-                    record_restart_failure(error);
-                    return;
-                }
-                match tokio::process::Command::new("systemctl")
-                    .args(["restart", &unit_bg])
-                    .status()
-                    .await
+                let _write_guard = match preflight_restart(&state_bg).await {
+                    Ok(guard) => guard,
+                    Err(error) => {
+                        log::error!("full-restart: {error}");
+                        record_restart_failure(error);
+                        return;
+                    }
+                };
+                match crate::hook_process::run_output(
+                    tokio::process::Command::new("systemctl").args(["restart", &unit_bg]),
+                    tokio::time::Instant::now() + std::time::Duration::from_secs(15),
+                    64 * 1024,
+                )
+                .await
+                .map(|output| output.status)
                 {
                     Ok(s) if s.success() => {} // being replaced — nothing more to do
                     Ok(s) => {
@@ -150,12 +162,11 @@ pub async fn full_restart(
                     }
                     Err(e) => {
                         log::error!(
-                            "full-restart: could not run systemctl ({e}) — run \
-                             `systemctl restart {unit_bg}` manually"
+                            "full-restart: systemctl result unknown ({e}); check {unit_bg} before retrying"
                         );
                         record_restart_failure(format!(
-                            "could not run systemctl ({e}) — the server is still running the OLD \
-                             configuration. Run `systemctl restart {unit_bg}` manually."
+                            "could not confirm `systemctl restart {unit_bg}` ({e}). The request may \
+                             already be queued in systemd; check the service status and journal before retrying."
                         ));
                     }
                 }

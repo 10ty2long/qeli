@@ -288,24 +288,89 @@ pub fn parse_ipv6_route_lines(out: &str) -> (Vec<Ipv6Addr>, Vec<String>, Vec<(St
 /// Read the host's IPv4/IPv6 state using the shared command deadline/output limits.
 /// `None` if an IPv4 probe fails; the caller warns and follows the fail-open policy.
 /// Unavailable IPv6 observations do not discard the successfully observed host state.
+pub const PROBE_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
+const PROBE_OUTPUT_LIMIT: usize = 16 * 1024 * 1024;
+const PROBES: [&[&str]; 4] = [
+    &["-4", "-o", "addr", "show"],
+    &["-4", "route", "show"],
+    &["-6", "-o", "addr", "show"],
+    &["-6", "route", "show"],
+];
+
 pub fn gather_host_net() -> Option<HostNet> {
-    gather_host_net_with(|args| Command::new("ip").args(args).output())
+    let until = std::time::Instant::now() + PROBE_BUDGET;
+    gather_host_net_with(|args| Command::new("ip").args(args).output_until(until))
+}
+
+/// Direct async children: cancellation kills the owned command without leaving a
+/// detached blocking probe behind. All four commands share the caller's deadline.
+pub async fn gather_host_net_async(until: tokio::time::Instant) -> Option<HostNet> {
+    gather_host_net_async_commands(until, |args| {
+        let mut command = tokio::process::Command::new("ip");
+        command.args(args);
+        command
+    })
+    .await
+}
+
+async fn gather_host_net_async_commands(
+    until: tokio::time::Instant,
+    mut command: impl FnMut(&'static [&'static str]) -> tokio::process::Command,
+) -> Option<HostNet> {
+    gather_host_net_async_with(|args| {
+        let mut command = command(args);
+        async move { crate::hook_process::run_output(&mut command, until, PROBE_OUTPUT_LIMIT).await }
+    }).await
+}
+
+async fn gather_host_net_async_with<F, Fut>(mut run: F) -> Option<HostNet>
+where
+    F: FnMut(&'static [&'static str]) -> Fut,
+    Fut: std::future::Future<Output = std::io::Result<std::process::Output>>,
+{
+    let addr_out = run(PROBES[0]).await.ok()?;
+    let route_out = run(PROBES[1]).await.ok()?;
+    if !addr_out.status.success() || !route_out.status.success() {
+        return None;
+    }
+    let ipv6_addr_out = run(PROBES[2]).await.ok();
+    let ipv6_route_out = run(PROBES[3]).await.ok();
+    Some(parse_observations(
+        addr_out,
+        route_out,
+        ipv6_addr_out,
+        ipv6_route_out,
+    ))
 }
 
 fn gather_host_net_with(
     mut run: impl FnMut(&[&str]) -> std::io::Result<std::process::Output>,
 ) -> Option<HostNet> {
-    let addr_out = run(&["-4", "-o", "addr", "show"]).ok()?;
-    let route_out = run(&["-4", "route", "show"]).ok()?;
+    let addr_out = run(PROBES[0]).ok()?;
+    let route_out = run(PROBES[1]).ok()?;
     if !addr_out.status.success() || !route_out.status.success() {
         return None;
     }
-    let (gateways, routes) = parse_route_lines(&String::from_utf8_lossy(&route_out.stdout));
     // Keep the useful IPv4 safety snapshot when an old/minimal `ip` cannot report
     // IPv6. Each unavailable IPv6 part stays empty independently, following the
     // documented fail-open policy only for state we could not observe.
-    let ipv6_addr_out = run(&["-6", "-o", "addr", "show"]).ok();
-    let ipv6_route_out = run(&["-6", "route", "show"]).ok();
+    let ipv6_addr_out = run(PROBES[2]).ok();
+    let ipv6_route_out = run(PROBES[3]).ok();
+    Some(parse_observations(
+        addr_out,
+        route_out,
+        ipv6_addr_out,
+        ipv6_route_out,
+    ))
+}
+
+fn parse_observations(
+    addr_out: std::process::Output,
+    route_out: std::process::Output,
+    ipv6_addr_out: Option<std::process::Output>,
+    ipv6_route_out: Option<std::process::Output>,
+) -> HostNet {
+    let (gateways, routes) = parse_route_lines(&String::from_utf8_lossy(&route_out.stdout));
     let ipv6_addr_text = ipv6_addr_out
         .as_ref()
         .filter(|output| output.status.success())
@@ -323,7 +388,7 @@ fn gather_host_net_with(
         .filter(|output| output.status.success())
         .map(|output| parse_ipv6_route_lines(&String::from_utf8_lossy(&output.stdout)))
         .unwrap_or_default();
-    Some(HostNet {
+    HostNet {
         addrs: parse_addr_lines(&String::from_utf8_lossy(&addr_out.stdout)),
         gateways,
         routes,
@@ -332,7 +397,7 @@ fn gather_host_net_with(
         ipv6_gateways,
         ipv6_default_interfaces,
         ipv6_routes,
-    })
+    }
 }
 
 /// The verdict. PURE — no IO, so every branch is unit-testable.
@@ -520,8 +585,12 @@ pub fn check(config: &ServerConfig, host: &HostNet) -> anyhow::Result<()> {
 
 /// Gather + check. The entry point callers use; see module docs for the fail-open rule.
 pub fn run(config: &ServerConfig) -> anyhow::Result<()> {
-    match gather_host_net() {
-        Some(host) => check(config, &host),
+    check_observed(config, gather_host_net().as_ref())
+}
+
+pub fn check_observed(config: &ServerConfig, host: Option<&HostNet>) -> anyhow::Result<()> {
+    match host {
+        Some(host) => check(config, host),
         None => {
             log::warn!(
                 "pre-flight: could not read the host's network state (`ip` missing or \

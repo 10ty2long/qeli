@@ -78,3 +78,5 @@ benchmark are not closed by this pass.
 
 Previous passes: [NAT commands](AUDIT-Q14-NAT-COMMANDS.md) and
 [shared runner](AUDIT-Q25-SYSTEM-COMMANDS.md).
+
+24 September update: the four-probe budget, async handlers and config lock were addressed in [Q05-F002–F004](AUDIT-Q05-PANEL-TRANSACTIONS.md). Historical limits above describe the older snapshot; the overall backup/restore deadline remains open.

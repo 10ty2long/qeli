@@ -240,7 +240,7 @@ pub async fn download_backup(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<crate::server::ServerState>>,
     _guard: auth::AuthGuard,
 ) -> Result<Response, AuthError> {
-    let _write_guard = state.config_write_lock.lock().await;
+    let write_guard = state.config_write_lock.clone().lock_owned().await;
     let config_path = state
         .config_path
         .lock()
@@ -264,7 +264,7 @@ pub async fn download_backup(
     if let Err(error) = validate_critical_sources(&critical_paths) {
         return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response());
     }
-    let out = tokio::task::spawn_blocking(|| {
+    let out = crate::config_transaction::blocking(write_guard, || {
         // Non-critical local artefacts may be unreadable; the critical set is preflighted and
         // then verified against the actual archive member list below.
         let mut command = std::process::Command::new("tar");
@@ -277,9 +277,9 @@ pub async fn download_backup(
     // tar exits non-zero (1/2) when it skipped unreadable files, yet still produces
     // a valid archive — accept any non-empty gzip stream (magic 1f 8b).
     let is_gzip = |b: &[u8]| b.len() > 2 && b[0] == 0x1f && b[1] == 0x8b;
-    let o = match out {
-        Ok(Ok(o)) => o,
-        Ok(Err(e)) => {
+    let (write_guard, o) = match out {
+        Ok((guard, Ok(o))) => (guard, o),
+        Ok((_, Err(e))) => {
             return Ok((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("tar spawn error: {e}"),
@@ -306,21 +306,26 @@ pub async fn download_backup(
     let tar_stderr = String::from_utf8_lossy(&o.stderr).trim().to_string();
     let archived_config_path = managed_archive_path(&config_path, "server config")
         .map_err(|error| (StatusCode::CONFLICT, Json(super::err_json(error))))?;
-    let inspected = tokio::task::spawn_blocking(move || -> Result<_, String> {
-        let (bytes, members) = inspect_backup_archive(o.stdout)?;
-        let (bytes, archived_raw) = read_backup_member(bytes, &archived_config_path)?;
-        if archived_raw != current_raw {
-            return Err("server config changed while creating backup; retry the download".into());
-        }
-        let config = crate::config::parse_server_config(&archived_raw)
-            .map_err(|error| format!("archived server config is invalid: {error}"))?;
-        let required = critical_backup_paths(&config, &config_path)?;
-        Ok((bytes, members, required))
-    })
-    .await;
+    let inspected =
+        crate::config_transaction::blocking(write_guard, move || -> Result<_, String> {
+            let (bytes, members) = inspect_backup_archive(o.stdout)?;
+            let (bytes, archived_raw) = read_backup_member(bytes, &archived_config_path)?;
+            if archived_raw != current_raw {
+                return Err(
+                    "server config changed while creating backup; retry the download".into(),
+                );
+            }
+            let config = crate::config::parse_server_config(&archived_raw)
+                .map_err(|error| format!("archived server config is invalid: {error}"))?;
+            let required = critical_backup_paths(&config, &config_path)?;
+            Ok((bytes, members, required))
+        })
+        .await;
     let (bytes, members, critical_paths) = match inspected {
-        Ok(Ok(value)) => value,
-        Ok(Err(error)) => return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response()),
+        Ok((_, Ok(value))) => value,
+        Ok((_, Err(error))) => {
+            return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response())
+        }
         Err(error) => {
             return Ok((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -431,7 +436,7 @@ pub async fn restore_backup(
     axum::extract::Query(q): axum::extract::Query<RestoreQuery>,
     body: Bytes,
 ) -> Result<Response, AuthError> {
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let write_guard = state.config_write_lock.clone().lock_owned().await;
     let config_path = state
         .config_path
         .lock()
@@ -457,13 +462,15 @@ pub async fn restore_backup(
     // OVERLAY: exact restore removes data, and that must never be what a plain "Restore"
     // click does. (Р1)
     let exact = q.exact.unwrap_or(false);
-    let result =
-        tokio::task::spawn_blocking(move || restore_blocking(&body, exact, &config_path)).await;
+    let result = crate::config_transaction::blocking(write_guard, move || {
+        restore_blocking(&body, exact, &config_path)
+    })
+    .await;
     // A failed restore used to answer 200 {ok:false}: the panel rendered the error, but
     // every non-browser caller (curl, a deploy script, uptime monitoring) read "success".
     // The body shape is unchanged — the panel's apiFetch parses JSON on any status. (S-13)
     let (status, payload) = match result {
-        Ok(Ok(msg)) => {
+        Ok((_, Ok(msg))) => {
             // Notify (Tier-3): a successful restore changed /etc/qeli on disk.
             crate::server::notify::fire(
                 crate::server::notify::Event::Restore,
@@ -471,7 +478,7 @@ pub async fn restore_backup(
             );
             (StatusCode::OK, json!({ "ok": true, "message": msg }))
         }
-        Ok(Err(e)) => (restore_error_status(&e), json!({ "ok": false, "error": e })),
+        Ok((_, Err(e))) => (restore_error_status(&e), json!({ "ok": false, "error": e })),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             json!({ "ok": false, "error": format!("task error: {e}") }),

@@ -149,3 +149,137 @@ fn successful_empty_output_is_an_observation_not_a_command_failure() {
     assert!(host.ipv6_default_interfaces.is_empty());
     assert!(host.ipv6_routes.is_empty());
 }
+
+#[tokio::test]
+async fn async_snapshot_preserves_sync_failure_policy_and_collision_data() {
+    for failed in [None, Some(0), Some(1), Some(2), Some(3)] {
+        for kind in [
+            None,
+            Some(io::ErrorKind::TimedOut),
+            Some(io::ErrorKind::NotFound),
+        ] {
+            let mut index = 0;
+            let asynchronous = gather_host_net_async_with(|_| {
+                let current = index;
+                index += 1;
+                std::future::ready(if failed == Some(current) {
+                    failure(kind, current)
+                } else {
+                    Ok(output(true, OBSERVATIONS[current]))
+                })
+            })
+            .await;
+            let async_calls = index;
+            index = 0;
+            let synchronous = gather_host_net_with(|_| {
+                let current = index;
+                index += 1;
+                if failed == Some(current) {
+                    failure(kind, current)
+                } else {
+                    Ok(output(true, OBSERVATIONS[current]))
+                }
+            });
+            assert_eq!(index, async_calls);
+            assert_eq!(format!("{asynchronous:?}"), format!("{synchronous:?}"));
+        }
+    }
+}
+
+// Run only in an isolated child executable, with optional loopback lifetime witness.
+#[test]
+fn probe_fixture() {
+    use std::io::{Read, Write};
+    let Ok(index) = std::env::var("QELI_PREFLIGHT_FIXTURE_INDEX") else {
+        return;
+    };
+    let index: usize = index.parse().unwrap();
+    if let Ok(address) = std::env::var("QELI_PREFLIGHT_FIXTURE_WITNESS") {
+        let mut peer = std::net::TcpStream::connect(address).unwrap();
+        peer.write_all(b"ready").unwrap();
+        let _ = peer.read(&mut [0]);
+    }
+    std::io::stdout()
+        .write_all(OBSERVATIONS[index].as_bytes())
+        .unwrap();
+    std::io::stdout().flush().unwrap();
+    std::process::exit(0);
+}
+
+fn fixture(index: usize, witness: Option<std::net::SocketAddr>) -> tokio::process::Command {
+    let mut command = tokio::process::Command::new(std::env::current_exe().unwrap());
+    let module = module_path!().split_once("::").unwrap().1;
+    command.args([
+        "--exact",
+        &format!("{module}::probe_fixture"),
+        "--nocapture",
+    ]);
+    command.env("QELI_PREFLIGHT_FIXTURE_INDEX", index.to_string());
+    if let Some(witness) = witness {
+        command.env("QELI_PREFLIGHT_FIXTURE_WITNESS", witness.to_string());
+    }
+    command
+}
+
+#[tokio::test]
+async fn asynchronous_probe_leaves_executor_responsive_and_cancellation_stops_child() {
+    use std::time::Duration;
+    use tokio::io::AsyncReadExt;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let until = tokio::time::Instant::now() + Duration::from_secs(5);
+    let task = tokio::spawn(gather_host_net_async_commands(until, move |_| {
+        fixture(0, Some(address))
+    }));
+    let (mut peer, _) = tokio::time::timeout(Duration::from_secs(3), listener.accept())
+        .await
+        .unwrap()
+        .unwrap();
+    let mut ready = [0; 5];
+    peer.read_exact(&mut ready).await.unwrap();
+    assert_eq!(&ready, b"ready");
+    tokio::time::sleep(Duration::from_millis(1)).await;
+    assert!(
+        !task.is_finished(),
+        "preflight must still be pending on the child"
+    );
+    task.abort();
+    assert!(task.await.unwrap_err().is_cancelled());
+    let result = tokio::time::timeout(Duration::from_secs(3), peer.read(&mut [0]))
+        .await
+        .unwrap();
+    assert!(
+        matches!(result, Ok(0))
+            || result.is_err_and(|error| matches!(
+                error.kind(),
+                io::ErrorKind::ConnectionReset | io::ErrorKind::ConnectionAborted
+            ))
+    );
+}
+
+#[tokio::test]
+async fn later_ipv6_probes_share_one_deadline_and_keep_observed_ipv4() {
+    use std::time::Duration;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let start = tokio::time::Instant::now();
+    let until = start + Duration::from_secs(2);
+    let mut index = 0;
+    let host = gather_host_net_async_commands(until, move |_| {
+        let current = index;
+        index += 1;
+        fixture(current, (current >= 2).then_some(address))
+    })
+    .await
+    .expect("IPv6 timeout must not discard observed IPv4");
+    assert_eq!(
+        host.gateways,
+        vec!["192.0.2.1".parse::<Ipv4Addr>().unwrap()]
+    );
+    assert!(host.ipv6_addrs.is_empty());
+    assert!(host.ipv6_routes.is_empty());
+    assert!(
+        start.elapsed() < Duration::from_secs(4),
+        "deadline renewed for the next probe"
+    );
+}

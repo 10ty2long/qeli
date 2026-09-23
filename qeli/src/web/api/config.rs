@@ -1039,12 +1039,15 @@ pub async fn get_quickstart_profile(
         Ok(config) => config,
         Err(error) => return Ok(Json(super::err_json(error))),
     };
-    let host = crate::server::preflight::gather_host_net();
+    let observed = match super::preflight::observe(true).await {
+        Ok(observed) => observed,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     match quickstart_profile_for_current(
         &mode,
         &current,
-        host.as_ref(),
-        crate::server::nat::ip6tables_path().is_some(),
+        observed.host.as_ref(),
+        observed.ipv6_firewall_available,
         None,
     ) {
         Ok((profile, short_id, obfs_key, reused)) => Ok(Json(json!({
@@ -1068,7 +1071,10 @@ pub async fn apply_quickstart_profile(
     _guard: auth::AuthGuard,
     Json(body): Json<Value>,
 ) -> Result<Json<Value>, AuthError> {
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let (_config_write_guard, observed) = match super::preflight::lock(&state, true).await {
+        Ok(value) => value,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     let Some(target) = state.config_path.lock().await.clone() else {
         return Ok(Json(super::err_json(
             "config_path not set — running from in-memory config",
@@ -1097,12 +1103,11 @@ pub async fn apply_quickstart_profile(
             ))))
         }
     };
-    let host = crate::server::preflight::gather_host_net();
     let (profile, short_id, obfs_key, reused) = match quickstart_profile_for_current(
         &mode,
         &current,
-        host.as_ref(),
-        crate::server::nat::ip6tables_path().is_some(),
+        observed.host.as_ref(),
+        observed.ipv6_firewall_available,
         requested_ip_mode,
     ) {
         Ok(result) => result,
@@ -1132,12 +1137,10 @@ pub async fn apply_quickstart_profile(
             "Quick Start conflicts with existing static user addresses: {error}"
         ))));
     }
-    if let Some(host) = host.as_ref() {
-        if let Err(error) = crate::server::preflight::check(&reparsed, host) {
-            return Ok(Json(super::err_json(format!(
-                "Quick Start conflicts with host networking: {error}"
-            ))));
-        }
+    if let Err(error) = observed.check(&reparsed) {
+        return Ok(Json(super::err_json(format!(
+            "Quick Start conflicts with host networking: {error}"
+        ))));
     }
     match external_write_conflict(&canon, &current_raw) {
         Ok(Some(conflict)) => return Ok(Json(conflict)),
@@ -1187,7 +1190,10 @@ pub async fn put_config(
     // Serialize the entire read-modify-write sequence, not just the final atomic rename.
     // The expected revision is checked while this guard is held, closing the last-writer-wins
     // window between two panel tabs or Configuration and Quick Start.
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let (_config_write_guard, observed) = match super::preflight::lock(&state, false).await {
+        Ok(value) => value,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     let revision_path = state.config_path.lock().await.clone();
     let current_raw_for_revision = revision_path
         .as_deref()
@@ -1540,7 +1546,7 @@ pub async fn put_config(
     // before Quick Start asks the supervisor to kill the current worker. Structural validation
     // cannot see a LAN/default-gateway/other-VPN collision; discovering it only in the new
     // worker is too late because the known-good data plane has already been stopped.
-    if let Err(e) = crate::server::preflight::run(&reparsed) {
+    if let Err(e) = observed.check(&reparsed) {
         return Ok(Json(json!({
             "ok": false,
             "error": format!("refusing to save a config that conflicts with host networking: {}", e),
@@ -1846,7 +1852,10 @@ pub async fn put_config_raw(
         None => return Ok(Json(super::err_json("raw field required"))),
     };
 
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let (_config_write_guard, observed) = match super::preflight::lock(&state, false).await {
+        Ok(value) => value,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     let revision_path = state.config_path.lock().await.clone();
     let current_raw_for_revision = revision_path
         .as_deref()
@@ -1991,7 +2000,7 @@ pub async fn put_config_raw(
         ))));
     }
 
-    if let Err(e) = crate::server::preflight::run(&parsed) {
+    if let Err(e) = observed.check(&parsed) {
         return Ok(Json(super::err_json(format!(
             "refusing to write a config that conflicts with host networking: {}",
             e
@@ -2117,7 +2126,10 @@ pub async fn restore_config_history(
     if !valid_history_id(&id) {
         return Ok(Json(super::err_json("invalid config history id")));
     }
-    let _config_write_guard = state.config_write_lock.lock().await;
+    let (_config_write_guard, observed) = match super::preflight::lock(&state, false).await {
+        Ok(value) => value,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     let Some(target) = state.config_path.lock().await.clone() else {
         return Ok(Json(super::err_json(
             "config_path not set — running from in-memory config",
@@ -2206,7 +2218,7 @@ pub async fn restore_config_history(
             "snapshot conflicts with existing static user addresses: {error}"
         ))));
     }
-    if let Err(error) = crate::server::preflight::run(&parsed) {
+    if let Err(error) = observed.check(&parsed) {
         return Ok(Json(super::err_json(format!(
             "snapshot conflicts with current host networking: {error}"
         ))));

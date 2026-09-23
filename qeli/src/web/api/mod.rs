@@ -8,6 +8,7 @@ mod login;
 mod logs;
 mod notify;
 mod paths;
+mod preflight;
 mod share;
 mod status;
 mod system;

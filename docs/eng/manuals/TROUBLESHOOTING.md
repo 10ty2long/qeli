@@ -1969,3 +1969,23 @@ An unreadable file or an unloaded module is not evidence that IPv6 is disabled.
 Do not substitute sysfs contents or disable IPv6 to evade checks; restore diagnostic
 access and investigate the original error.
 [Report and limitations](../reports/AUDIT-Q25-CLIENT-NAMESPACE.md).
+
+
+### 6.58. Panel: busy config, expired preflight and cancelled restore
+
+`network preflight is busy`, `config is busy` or `network preflight expired` means
+this save/restart attempt did not reach writing/dispatch. Let the preceding operation
+finish, refresh the panel config and retry. Network probes share 15 seconds; after
+observation, five seconds cover config-lock admission and candidate preparation.
+This is not a deadline for all filesystem operations.
+
+Closing the tab or cancelling a request may leave an already started restore running.
+Its blocking worker retains the config lease until completion. Inspect actual files
+and snapshots before another restore. Cancellation does not mean rollback.
+
+`could not confirm systemctl restart` means the outcome is unknown. Inspect
+`systemctl status <unit>` and the journal: systemd may have accepted the request.
+Do not automatically repeat restart based on a timeout alone. A busy worker restart
+queue returns an immediate error; retry after the queue becomes available.
+
+[Analysis](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).

@@ -125,6 +125,11 @@ mod notify_tasks;
 #[path = "server/notify.rs"]
 mod server_notify;
 
+// A blocking config transaction retains its lock even when its async caller is cancelled.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/config_transaction.rs"]
+mod config_transaction;
+
 // Control protocol bounds are shared by the Unix server and its CLI client.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/control_io.rs"]

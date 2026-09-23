@@ -77,3 +77,5 @@ native release и новый бенчмарк не закрыты этим пр�
 
 Предыдущие этапы: [NAT-команды](AUDIT-Q14-NAT-COMMANDS.md) и
 [общий runner](AUDIT-Q25-SYSTEM-COMMANDS.md).
+
+Обновление 24 сентября: общий бюджет четырёх проб, async handlers и config lock исправлены в [Q05-F002–F004](AUDIT-Q05-PANEL-TRANSACTIONS.md). Исторические ограничения выше описывают прежний снимок; общий срок backup/restore остаётся открытым.

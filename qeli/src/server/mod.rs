@@ -1044,7 +1044,7 @@ pub struct ServerState {
     /// each individual write crash-safe, but without a process-level lock two panel tabs
     /// could both read the same revision and the later rename would silently erase the
     /// earlier edit. Handlers also compare a content revision while holding this lock.
-    pub config_write_lock: Mutex<()>,
+    pub config_write_lock: Arc<Mutex<()>>,
     pub profiles: Arc<RwLock<HashMap<String, Arc<ProfileRuntime>>>>,
     /// Actual per-generation values exported to lifecycle hooks. In particular WAN names are
     /// the interfaces selected by auto-detection, not the placeholder text from the config.
@@ -1148,7 +1148,7 @@ pub(crate) fn test_api_state(
         users_db: Arc::new(RwLock::new(UsersDb::default())),
         dummy_password_hashes: Arc::new(RwLock::new(Vec::new())),
         config_path: Mutex::new(Some(config_path.to_string_lossy().into_owned())),
-        config_write_lock: Mutex::new(()),
+        config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
         failed_auth: Arc::new(Mutex::new(FailedAuthTracker::new(true, 5, 300, 900))),
@@ -3478,7 +3478,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         users_db,
         dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
-        config_write_lock: Mutex::new(()),
+        config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
         failed_auth,
@@ -4053,7 +4053,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
         users_db,
         dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
-        config_write_lock: Mutex::new(()),
+        config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
         failed_auth,

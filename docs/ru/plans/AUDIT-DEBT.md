@@ -109,3 +109,5 @@ D02/D05: [чтение sysctl-журнала и lock waits](../reports/AUDIT-Q25
 D03: [kill-switch namespace / reconnect](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md).
 
 D02/D06: [namespace-aware link observation](../reports/AUDIT-Q25-LINK-OBSERVATION.md).
+
+D05: [async preflight и время жизни транзакции панели](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md). Открыты общий бюджет backup/restore и остальных сетевых последовательностей.
