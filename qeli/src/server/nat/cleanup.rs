@@ -11,13 +11,13 @@ const CHAINS: [(&str, &str); 5] = [
 ];
 
 #[derive(Default)]
-struct Errors {
+pub(crate) struct Errors {
     messages: Vec<String>,
     omitted: usize,
 }
 
 impl Errors {
-    fn record(&mut self, context: &str, result: anyhow::Result<()>) {
+    pub(crate) fn record(&mut self, context: &str, result: anyhow::Result<()>) {
         if let Err(error) = result {
             if self.messages.len() < 8 {
                 let detail: String = error.to_string().chars().take(2048).collect();
@@ -28,7 +28,7 @@ impl Errors {
         }
     }
 
-    fn finish(self) -> anyhow::Result<()> {
+    pub(crate) fn finish(self) -> anyhow::Result<()> {
         if self.messages.is_empty() {
             return Ok(());
         }

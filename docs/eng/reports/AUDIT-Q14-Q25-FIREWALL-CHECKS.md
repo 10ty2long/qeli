@@ -84,3 +84,6 @@ produce inspection errors. Linux runtime, real firewall/TUN/DNS, devices, native
 builds, SSH/systemd/Actions and benchmarks were not run.
 
 Previous pass: [finite NAT sweep](AUDIT-Q14-NAT-CLEANUP.md).
+
+Follow-up: [Q14-F028](AUDIT-Q14-DNS-OWNERSHIP.md) preserves exact ownership after failed
+Drop/rollback in worker memory and adds retry. Q14-F027 and restart recovery remain open.

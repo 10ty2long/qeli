@@ -86,3 +86,7 @@ Linux runtime, реальные firewall/TUN/DNS, устройства, native r
 SSH/systemd/Actions и бенчмарки не запускались.
 
 Предыдущий этап: [конечный NAT sweep](AUDIT-Q14-NAT-CLEANUP.md).
+
+Продолжение: [Q14-F028](AUDIT-Q14-DNS-OWNERSHIP.md) сохраняет точное владение после
+неудачного Drop/rollback в памяти worker и добавляет retry. Q14-F027 и восстановление
+после перезапуска остаются открытыми.

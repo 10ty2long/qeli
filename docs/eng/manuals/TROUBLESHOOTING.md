@@ -1133,6 +1133,25 @@ cleanup: propagating DNS lease errors into final shutdown status remains open.
 
 ---
 
+### 6.30 Server: exact DNS INPUT ownership retained for retry
+
+DNS permit removal is unconfirmed, but the worker retained the complete specification
+for retry. Inspect the preceding cause: `iptables`/`ip6tables` availability, permissions,
+backend and exact check/delete results. Later profile cleanup and new DNS installation
+attempts retry pending cleanup first. New DNS permits for that profile are not installed
+until its pending cleanup succeeds.
+
+`DNS INPUT ownership limit reached (4096)` means the registry is full of active and
+pending rule sets. Each resolver occupies one UDP+TCP set; IPv4/IPv6 use separate sets.
+Resolve cleanup failures first; successful retirement releases capacity without
+automatically evicting existing records.
+
+The evidence lives only in the current worker's memory. Do not assume retries survive
+crashes or process restarts; there is no separate persistent journal yet. Successful
+server exit also does not yet establish cleanup. [Report and limits](../reports/AUDIT-Q14-DNS-OWNERSHIP.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

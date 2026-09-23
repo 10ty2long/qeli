@@ -23,6 +23,7 @@
 #[cfg(test)]
 use crate::nat_cleanup::exact_delete_args;
 use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_comment};
+use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInputRules};
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
@@ -957,101 +958,70 @@ fn chain_policy_from_output(output: &[u8], chain: &str) -> Option<ChainPolicy> {
     })
 }
 
-fn dns_input_rule(
-    profile: &str,
-    tun: &str,
-    pool_cidr: &str,
-    listen: &str,
-    port: u16,
-    proto: &str,
-) -> Vec<String> {
-    vec![
-        "-i".into(),
-        tun.into(),
-        "-s".into(),
-        pool_cidr.into(),
-        "-p".into(),
-        proto.into(),
-        "-d".into(),
-        listen.into(),
-        "--dport".into(),
-        port.to_string(),
-        "-m".into(),
-        "comment".into(),
-        "--comment".into(),
-        tag(profile),
-        "-j".into(),
-        "ACCEPT".into(),
-    ]
+fn dns_input_registry() -> &'static Mutex<DnsInputRegistry> {
+    static REGISTRY: OnceLock<Mutex<DnsInputRegistry>> = OnceLock::new();
+    REGISTRY.get_or_init(|| Mutex::new(DnsInputRegistry::default()))
 }
 
-fn cleanup_dns_input_with(
-    path: &str,
-    profile: &str,
-    tun: &str,
-    pool_cidr: &str,
-    listen: &str,
-    port: u16,
-) -> anyhow::Result<()> {
-    let rules = ["udp", "tcp"].map(|proto| {
-        (
-            proto,
-            dns_input_rule(profile, tun, pool_cidr, listen, port, proto),
-        )
-    });
+/// Caller holds firewall_program_lock; this function must not re-enter the registry.
+fn cleanup_dns_rules(owned: &DnsInputRules) -> anyhow::Result<()> {
+    let path = if owned.ipv6 {
+        ip6tables_path()
+    } else {
+        iptables_path()
+    }
+    .ok_or_else(|| {
+        anyhow::anyhow!("cannot remove DNS INPUT permits because the firewall tool is unavailable")
+    })?;
     cleanup_exact_rules_with(
         "filter",
         "INPUT",
-        rules.iter().map(|(proto, rule)| (*proto, rule.as_slice())),
-        |args| ipt(path, args),
+        ["udp", "tcp"]
+            .into_iter()
+            .zip(owned.rules.iter().map(Vec::as_slice)),
+        |args| ipt(&path, args),
     )
     .map_err(|error| anyhow::anyhow!("DNS INPUT cleanup failed: {error}"))
 }
 
-/// Exact ownership token for the INPUT permits installed by [`enable_dns_input`].
-///
-/// The ordinary tag sweep remains useful on compatible hosts and at worker startup. This lease
-/// is the graceful-teardown authority on hosts whose mixed native nftables chain cannot be listed
-/// through `iptables-nft -S`, even though exact `-C`/`-D` operations work.
+/// Caller holds firewall_program_lock. Failed records stay in the registry for retry.
+fn retry_dns_input(profile: Option<&str>) -> anyhow::Result<()> {
+    dns_input_registry()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .retry(profile, cleanup_dns_rules)
+}
+
+/// A generation token for its exact DNS INPUT rules. The worker registry owns the
+/// specifications, so destroying this lease cannot discard failed cleanup evidence.
+/// This is process-local recovery; restart/crash persistence needs a separate journal.
 #[derive(Debug)]
 pub(crate) struct DnsInputLease {
+    id: Option<DnsInputId>,
     profile: String,
-    tun: String,
-    pool_cidr: String,
-    listen: String,
-    port: u16,
+}
+
+impl DnsInputLease {
+    fn cleanup(&mut self) -> anyhow::Result<()> {
+        let Some(id) = self.id else {
+            return Ok(());
+        };
+        let _firewall_guard = firewall_program_lock()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        dns_input_registry()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .finish(id, cleanup_dns_rules)?;
+        self.id = None;
+        Ok(())
+    }
 }
 
 impl Drop for DnsInputLease {
     fn drop(&mut self) {
-        let _firewall_guard = firewall_program_lock()
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        let ipv6 = self
-            .listen
-            .parse::<std::net::IpAddr>()
-            .is_ok_and(|address| address.is_ipv6());
-        let path = if ipv6 {
-            ip6tables_path()
-        } else {
-            iptables_path()
-        };
-        let Some(path) = path else {
-            log::error!(
-                "Profile '{}': cannot remove DNS INPUT permits because the firewall tool disappeared",
-                self.profile
-            );
-            return;
-        };
-        if let Err(error) = cleanup_dns_input_with(
-            &path,
-            &self.profile,
-            &self.tun,
-            &self.pool_cidr,
-            &self.listen,
-            self.port,
-        ) {
-            log::error!("Profile '{}': {error}", self.profile);
+        if let Err(error) = self.cleanup() {
+            log::error!("Profile '{}': {error}; exact DNS INPUT ownership retained for retry in this worker", self.profile);
         }
     }
 }
@@ -1068,80 +1038,82 @@ pub(crate) fn enable_dns_input(
     listen: &str,
     port: u16,
 ) -> anyhow::Result<DnsInputLease> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let ipv6 = listen
-        .parse::<std::net::IpAddr>()
-        .is_ok_and(|address| address.is_ipv6());
-    let tool = if ipv6 { "ip6tables" } else { "iptables" };
-    let path = if ipv6 {
-        ip6tables_path()
-    } else {
-        iptables_path()
-    };
-    let path = path.ok_or_else(|| {
-        anyhow::anyhow!("{tool} is required to verify INPUT access to DNS {listen}:{port} on {tun}")
-    })?;
-    let mut unapplied = Vec::new();
-    for proto in ["udp", "tcp"] {
-        let args = dns_input_rule(profile, tun, pool_cidr, listen, port, proto);
-        // Insert before operator catch-all DROP rules. The match is restricted to the exact
-        // qeli TUN/pool/destination, so it cannot make a public listener reachable.
-        let mut argv = vec![
-            "-t".to_string(),
-            "filter".to_string(),
-            "-I".to_string(),
-            "INPUT".to_string(),
-            "1".to_string(),
-        ];
-        argv.extend(args.clone());
-        let refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-        let _ = ipt(&path, &refs);
-        if !rule_present(&path, "filter", "INPUT", &args) {
-            unapplied.push(proto);
+    // Outer ownership outlives the inner lock scope: a setup error drops the lock
+    // before the lease retries exact cleanup, avoiding recursive mutex acquisition.
+    let lease;
+    {
+        let _firewall_guard = firewall_program_lock()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let owned = DnsInputRules::new(profile, tun, pool_cidr, listen, port)?;
+        let tool = if owned.ipv6 { "ip6tables" } else { "iptables" };
+        let path = if owned.ipv6 {
+            ip6tables_path()
+        } else {
+            iptables_path()
         }
-    }
-    if !unapplied.is_empty() {
-        let status = input_policy(&path);
-        if status
-            .as_ref()
-            .is_some_and(|value| value.unconditionally_accepts)
-        {
-            log::warn!(
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "{tool} is required to verify INPUT access to DNS {listen}:{port} on {tun}"
+            )
+        })?;
+        let id = dns_input_registry()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .begin(owned, cleanup_dns_rules)?;
+        lease = DnsInputLease {
+            id: Some(id),
+            profile: profile.to_string(),
+        };
+        let mut unapplied = Vec::new();
+        for proto in ["udp", "tcp"] {
+            let args = dns_input_rule(profile, tun, pool_cidr, listen, port, proto);
+            // Insert before operator catch-all DROP rules. The match is restricted to the exact
+            // qeli TUN/pool/destination, so it cannot make a public listener reachable.
+            let mut argv = vec![
+                "-t".to_string(),
+                "filter".to_string(),
+                "-I".to_string(),
+                "INPUT".to_string(),
+                "1".to_string(),
+            ];
+            argv.extend(args.clone());
+            let refs: Vec<&str> = argv.iter().map(String::as_str).collect();
+            let _ = ipt(&path, &refs);
+            if !rule_present(&path, "filter", "INPUT", &args) {
+                unapplied.push(proto);
+            }
+        }
+        if !unapplied.is_empty() {
+            let status = input_policy(&path);
+            if status
+                .as_ref()
+                .is_some_and(|value| value.unconditionally_accepts)
+            {
+                log::warn!(
                 "Profile '{profile}': DNS INPUT rule(s) for {} could not be verified, but the \
                  empty built-in chain has policy ACCEPT. If you tighten it later, permit {listen}:{port} \
                  from {pool_cidr} on {tun} yourself.",
                 unapplied.join("+")
             );
-        } else {
-            if let Err(error) = cleanup_dns_input_with(&path, profile, tun, pool_cidr, listen, port)
-            {
-                log::error!(
-                    "Profile '{profile}': partial DNS INPUT rollback failed after setup refusal: {error}"
-                );
-            }
-            anyhow::bail!(
-                "could not install DNS INPUT rule(s) for {} on {} and the observed INPUT \
+            } else {
+                // The already-armed lease rolls back after the firewall lock is released.
+                anyhow::bail!(
+                    "could not install DNS INPUT rule(s) for {} on {} and the observed INPUT \
                  chain state is {} - clients would receive {} as their resolver but queries may \
                  be firewalled",
-                unapplied.join("+"),
-                tun,
-                status.as_ref().map_or("unknown", |value| value.summary()),
-                listen
-            );
+                    unapplied.join("+"),
+                    tun,
+                    status.as_ref().map_or("unknown", |value| value.summary()),
+                    listen
+                );
+            }
         }
-    }
-    log::info!(
+        log::info!(
         "Profile '{profile}': DNS INPUT permit {pool_cidr} via {tun} -> {listen}:{port}, udp+tcp"
     );
-    Ok(DnsInputLease {
-        profile: profile.to_string(),
-        tun: tun.to_string(),
-        pool_cidr: pool_cidr.to_string(),
-        listen: listen.to_string(),
-        port,
-    })
+    }
+    Ok(lease)
 }
 
 /// DNS follows the same IPv6 firewall ownership as transit. In manual mode the
@@ -1409,6 +1381,9 @@ pub fn cleanup(profile: &str) {
     let _firewall_guard = firewall_program_lock()
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if let Err(error) = retry_dns_input(Some(profile)) {
+        log::error!("Profile '{profile}': DNS INPUT retry incomplete: {error}");
+    }
     if let Some(path) = iptables_path() {
         cleanup_with(&path, profile);
     }
@@ -1427,6 +1402,9 @@ pub fn cleanup_all() -> anyhow::Result<()> {
     let _firewall_guard = firewall_program_lock()
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if let Err(error) = retry_dns_input(None) {
+        log::error!("DNS INPUT retry incomplete: {error}");
+    }
     crate::sysctl::recover()?;
     if let Some(path) = iptables_path() {
         cleanup_matching(&path, "qeli-nat:", false);

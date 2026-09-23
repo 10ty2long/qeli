@@ -566,6 +566,13 @@ kill-switch используют общий разбор presence/absence/errors
 1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
 Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
+**Владение DNS firewall, 23 сентября 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): реестр worker сохраняет точные правила
+при ошибке Drop/rollback; cleanup и новая установка повторяют очистку. Tokens защищают
+новое поколение от старого lease; активные записи не участвуют в точечном retry.
+12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
+baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -633,6 +640,13 @@ kill-switch используют общий разбор presence/absence/errors
 1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
 Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
 
+**Владение DNS firewall, 23 сентября 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): реестр worker сохраняет точные правила
+при ошибке Drop/rollback; cleanup и новая установка повторяют очистку. Tokens защищают
+новое поколение от старого lease; активные записи не участвуют в точечном retry.
+12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
+baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -662,6 +676,13 @@ kill-switch используют общий разбор presence/absence/errors
 проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
 1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
 Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
+
+**Владение DNS firewall, 23 сентября 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): реестр worker сохраняет точные правила
+при ошибке Drop/rollback; cleanup и новая установка повторяют очистку. Tokens защищают
+новое поколение от старого lease; активные записи не участвуют в точечном retry.
+12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
+baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -751,6 +772,13 @@ kill-switch используют общий разбор presence/absence/errors
 проверяет границу 1024 и продолжает TCP после отказа UDP. 17 новых host-тестов,
 1016 Rust tests PASS; два новых Unix/Linux сценария только cross-check.
 Q14-F027, сроки команд и реальные backend/runtime проверки остаются открытыми.
+
+**Владение DNS firewall, 23 сентября 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): реестр worker сохраняет точные правила
+при ошибке Drop/rollback; cleanup и новая установка повторяют очистку. Tokens защищают
+новое поколение от старого lease; активные записи не участвуют в точечном retry.
+12 новых host-тестов, 1028 Rust tests PASS; три adapter-регрессии отдельно сравнивают
+baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 

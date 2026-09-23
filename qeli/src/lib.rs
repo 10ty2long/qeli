@@ -34,6 +34,11 @@ mod firewall_check;
 #[path = "server/nat/cleanup.rs"]
 mod nat_cleanup;
 
+// Exact DNS firewall ownership survives failed cleanup within the running worker.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/nat/dns_input.rs"]
+mod nat_dns_input;
+
 // Profile ownership is platform-neutral and exercised without privileged network setup.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/tasks.rs"]

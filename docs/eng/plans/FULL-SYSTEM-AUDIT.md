@@ -561,6 +561,13 @@ kill-switch share presence/absence/error classification; exact DNS cleanup verif
 PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
 and actual backend/runtime validation remain open.
 
+**DNS firewall ownership, 23 September 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): a worker registry retains exact rules
+after failed Drop/rollback; cleanup and new installation retry pending retirement.
+Tokens protect replacements from stale leases; exact retry skips active entries.
+12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
+separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -628,6 +635,13 @@ kill-switch share presence/absence/error classification; exact DNS cleanup verif
 PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
 and actual backend/runtime validation remain open.
 
+**DNS firewall ownership, 23 September 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): a worker registry retains exact rules
+after failed Drop/rollback; cleanup and new installation retry pending retirement.
+Tokens protect replacements from stale leases; exact retry skips active entries.
+12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
+separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
+
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -657,6 +671,13 @@ kill-switch share presence/absence/error classification; exact DNS cleanup verif
 1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
 PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
 and actual backend/runtime validation remain open.
+
+**DNS firewall ownership, 23 September 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): a worker registry retains exact rules
+after failed Drop/rollback; cleanup and new installation retry pending retirement.
+Tokens protect replacements from stale leases; exact retry skips active entries.
+12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
+separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -744,6 +765,13 @@ kill-switch share presence/absence/error classification; exact DNS cleanup verif
 1024 boundary and continues TCP after UDP failure. 17 new host tests, 1016 Rust tests
 PASS; two new Unix/Linux scenarios cross-checked only. Q14-F027, command deadlines
 and actual backend/runtime validation remain open.
+
+**DNS firewall ownership, 23 September 2026:**
+[Q14-F028](../reports/AUDIT-Q14-DNS-OWNERSHIP.md): a worker registry retains exact rules
+after failed Drop/rollback; cleanup and new installation retry pending retirement.
+Tokens protect replacements from stale leases; exact retry skips active entries.
+12 new host tests, 1028 Rust tests PASS; three adapter regressions compare baseline/fix
+separately. Q14-F027, persistent journaling, deadlines and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 
