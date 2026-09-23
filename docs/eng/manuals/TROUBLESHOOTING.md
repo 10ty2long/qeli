@@ -1071,6 +1071,20 @@ when the entire runtime is destroyed. See [the report and scenarios](../reports/
 
 ---
 
+### 6.26 Server HTTP/2: profile shutdown and rejected requests
+
+A `reality-tls` profile tracks its H2 driver, bridge and bounded rejection flush alongside
+session tasks. Normal teardown waits for their release; cancelling a shutdown wait preserves
+the ability to join again. A zero peer window must not block cancellation.
+
+An invalid H2 request still receives its HTTP status. Its pre-auth slot remains occupied
+while the connection sends the rejection; the flush has a one-second limit. H2 200 does not
+mean inner AUTH has succeeded. This does not guarantee an overall shutdown deadline or
+joining when the runtime is destroyed. Linux runtime validation remains open;
+[report and reproducers](../reports/AUDIT-Q14-H2-TASKS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

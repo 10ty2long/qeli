@@ -78,6 +78,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-UDP-TASKS.md](reports/AUDIT-Q25-UDP-TASKS.md) | UDP task ownership, path transfer and joining before rollback |
 | [AUDIT-Q25-TUN-WORKERS.md](reports/AUDIT-Q25-TUN-WORKERS.md) | Shared TUN/Wintun worker ownership across cancelled shutdown |
 | [AUDIT-Q25-H2-TASKS.md](reports/AUDIT-Q25-H2-TASKS.md) | H2 driver/bridge ownership from connect through TCP-generation shutdown |
+| [AUDIT-Q14-H2-TASKS.md](reports/AUDIT-Q14-H2-TASKS.md) | Server-profile H2 tasks, joining before teardown and rejected-connection admission |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Control socket ownership, API bounds, handler shutdown and hook pairing |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, Child/PID ownership, commands and termination deadlines |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Profile shutdown, early startup errors, DNS listeners and socket release |

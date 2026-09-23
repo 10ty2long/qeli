@@ -31,16 +31,20 @@ const H2_WINDOW: u32 = 2 * 1024 * 1024;
 const CARRIER_PATH: &str = "/v1/events/stream";
 const GRPC_MEDIA_TYPE: &str = "application/grpc";
 
-// A client generation retains joins even after Carrier Drop requests cancellation.
-// Standalone/server carriers keep their existing owner-driven cancellation behavior.
+// A generation retains joins after Carrier Drop requests cancellation. Standalone
+// callers keep their existing cancellation behavior without a generation registry.
 #[derive(Default)]
-struct TaskSpawner {
+enum TaskSpawner {
+    #[default]
+    Standalone,
     #[cfg(any(
         test,
         all(target_os = "linux", feature = "client"),
         feature = "transport-core-ffi"
     ))]
-    connection: Option<crate::transport_core::tasks::Spawner>,
+    Connection(crate::transport_core::tasks::Spawner),
+    #[cfg(any(test, all(target_os = "linux", feature = "server")))]
+    Profile(crate::profile_tasks::ProfileSpawner),
 }
 
 impl TaskSpawner {
@@ -48,17 +52,20 @@ impl TaskSpawner {
         &self,
         future: impl std::future::Future<Output = ()> + Send + 'static,
     ) -> io::Result<tokio::task::AbortHandle> {
-        #[cfg(any(
-            test,
-            all(target_os = "linux", feature = "client"),
-            feature = "transport-core-ffi"
-        ))]
-        if let Some(connection) = &self.connection {
-            return connection.spawn_abortable(future).ok_or_else(|| {
-                io::Error::new(io::ErrorKind::Interrupted, "HTTP/2 task owner has stopped")
-            });
-        }
-        Ok(tokio::spawn(future).abort_handle())
+        let abort = match self {
+            Self::Standalone => Some(tokio::spawn(future).abort_handle()),
+            #[cfg(any(
+                test,
+                all(target_os = "linux", feature = "client"),
+                feature = "transport-core-ffi"
+            ))]
+            Self::Connection(owner) => owner.spawn_abortable(future),
+            #[cfg(any(test, all(target_os = "linux", feature = "server")))]
+            Self::Profile(owner) => owner.spawn_abortable(future),
+        };
+        abort.ok_or_else(|| {
+            io::Error::new(io::ErrorKind::Interrupted, "HTTP/2 task owner has stopped")
+        })
     }
 }
 
@@ -333,14 +340,7 @@ pub(crate) async fn connect_owned<S>(
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
-    connect_with_tasks(
-        io,
-        authority,
-        TaskSpawner {
-            connection: Some(owner.clone()),
-        },
-    )
-    .await
+    connect_with_tasks(io, authority, TaskSpawner::Connection(owner.clone())).await
 }
 
 async fn connect_with_tasks<S>(io: S, authority: &str, spawner: TaskSpawner) -> io::Result<Carrier>
@@ -395,6 +395,57 @@ pub async fn accept<S>(io: S) -> io::Result<Carrier>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
+    accept_with_tasks(io, TaskSpawner::default(), ())
+        .await
+        .map(|(carrier, ())| carrier)
+}
+
+/// Keep the driver, bridge and bounded rejection flush in the profile's task registry.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+pub(crate) async fn accept_owned<S, G>(
+    io: S,
+    owner: &crate::profile_tasks::ProfileSpawner,
+    admission: G,
+) -> io::Result<(Carrier, G)>
+where
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    G: Send + 'static,
+{
+    // Success hands admission to the inner authentication handler. Rejection transfers
+    // it to the bounded response flush, so a live pre-auth socket remains accounted for.
+    accept_with_tasks(io, TaskSpawner::Profile(owner.clone()), admission).await
+}
+
+// Field order releases the connection before its admission guard, including when the
+// registered future is cancelled before its first poll or rejected by a closed profile.
+struct RejectionFlush<S, G> {
+    connection: h2::server::Connection<S, Bytes>,
+    _admission: G,
+}
+
+async fn flush_rejection<S, G>(mut pending: RejectionFlush<S, G>)
+where
+    S: AsyncRead + AsyncWrite + Unpin,
+{
+    let _ = tokio::time::timeout(Duration::from_secs(1), async {
+        while let Some(next) = pending.connection.accept().await {
+            if next.is_err() {
+                break;
+            }
+        }
+    })
+    .await;
+}
+
+async fn accept_with_tasks<S, G>(
+    io: S,
+    spawner: TaskSpawner,
+    admission: G,
+) -> io::Result<(Carrier, G)>
+where
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    G: Send + 'static,
+{
     let mut connection = configure_server()
         .handshake::<_, Bytes>(io)
         .await
@@ -421,16 +472,10 @@ where
         // `send_response` only queues the frame. Keep polling the connection briefly so
         // an authenticated but invalid request receives the deliberate HTTP status rather
         // than an incidental reset when this function returns its local validation error.
-        tokio::spawn(async move {
-            let _ = tokio::time::timeout(Duration::from_secs(1), async {
-                while let Some(next) = connection.accept().await {
-                    if next.is_err() {
-                        break;
-                    }
-                }
-            })
-            .await;
-        });
+        spawner.spawn(flush_rejection(RejectionFlush {
+            connection,
+            _admission: admission,
+        }))?;
         return Err(io::Error::new(io::ErrorKind::InvalidData, message));
     }
 
@@ -445,7 +490,7 @@ where
         .map_err(|error| h2_error("HTTP/2 response send failed", error))?;
     let recv = request.into_body();
 
-    let driver = tokio::spawn(async move {
+    let driver = spawner.spawn(async move {
         while let Some(next) = connection.accept().await {
             match next {
                 Ok((_request, mut respond)) => {
@@ -463,13 +508,8 @@ where
                 }
             }
         }
-    });
-    bridge(
-        send,
-        recv,
-        Tasks(vec![driver.abort_handle()]),
-        &TaskSpawner::default(),
-    )
+    })?;
+    bridge(send, recv, Tasks(vec![driver]), &spawner).map(|carrier| (carrier, admission))
 }
 
 #[cfg(test)]
@@ -567,3 +607,9 @@ mod hardening_tests;
 
 #[cfg(test)]
 mod ownership_tests;
+
+#[cfg(test)]
+mod test_support;
+
+#[cfg(test)]
+mod server_ownership_tests;

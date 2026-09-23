@@ -2579,6 +2579,12 @@ These rules apply to both client and server hooks:
 
 ### Server hooks
 
+Normal shutdown of a `reality-tls` profile joins internal H2 drivers/bridges and rejection
+flush tasks before releasing profile resources. A rejected H2 connection retains its
+pre-auth slot until its I/O is released; the flush still has a one-second limit. Successful
+H2 accept hands admission to inner authentication, which releases it after AUTH.
+This does not set an overall shutdown deadline; [details and limits](../reports/AUDIT-Q14-H2-TASKS.md).
+
 Server hooks remain a separate per-profile contract:
 
 - `routing.post_up`: after the profile TUN and NAT/routed state are up;

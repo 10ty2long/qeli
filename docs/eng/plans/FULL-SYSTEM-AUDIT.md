@@ -138,9 +138,9 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 06 | Users, groups and provisioning | H01, H04, H09–H10 | TODO |
 | 07 | Backup, restore and history | H03–H04, H08, H10 | TODO |
 | 08 | Cryptography, identity and keys | H01, H04, H08 | TODO |
-| 09 | Handshake and TCP/UDP pre-auth | H01, H04, H08 | TODO |
+| 09 | Handshake and TCP/UDP pre-auth | H01, H04, H08 | IN_PROGRESS |
 | 10 | PacketCodec, replay and control framing | H01, H04, H08 | TODO |
-| 11 | REALITY, TLS 1.3 and HTTP/2 | H07–H08 | TODO |
+| 11 | REALITY, TLS 1.3 and HTTP/2 | H07–H08 | IN_PROGRESS |
 | 12 | Transports and wire camouflage | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding and shaping | H02, H07–H08 | TODO |
 | 14 | Supervisor, workers and profiles | H02–H03, H08 | IN_PROGRESS |
@@ -350,7 +350,13 @@ Truncation/replay/reorder/slow peers and invalid PQ/proof/password. Permits befo
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Server H2 and pre-auth, 23 September 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): the profile joins nested H2 tasks before
+teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new regressions,
+969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
+was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
 ### 10. PacketCodec, replay and control framing
 
@@ -382,7 +388,13 @@ Transcripts/replay/decoys and TLS key budgets. H2 zero/small windows, SETTINGS/W
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Server H2 and pre-auth, 23 September 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): the profile joins nested H2 tasks before
+teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new regressions,
+969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
+was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
 ### 12. Transports and wire camouflage
 
@@ -521,6 +533,12 @@ successful signal stop or release the enabled kill-switch. TunnelSetup owns its 
 core ACK; terminal kick types survive combined cleanup errors. Eight new host tests pass;
 two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
 command deadlines and complete generation-task joining remain open.
+
+**Server H2 and pre-auth, 23 September 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): the profile joins nested H2 tasks before
+teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new regressions,
+969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
+was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -742,8 +760,14 @@ other section scenarios remain unverified; the full audit is still open.
 **Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 The TCP group starts before connect and joins drivers/bridges; the native runner retains
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
-cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
-deadlines remain open.
+cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
+
+**Server H2 and pre-auth, 23 September 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): the profile joins nested H2 tasks before
+teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new regressions,
+969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
+was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
 ### 23. Roaming, resume and CONTROL_V2
 
@@ -779,8 +803,8 @@ cancellation, command deadlines and platform fault injection remain open.
 **Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 The TCP group starts before connect and joins drivers/bridges; the native runner retains
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
-cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
-deadlines remain open.
+cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -816,8 +840,8 @@ cancellation, command deadlines and platform fault injection remain open.
 **Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 The TCP group starts before connect and joins drivers/bridges; the native runner retains
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
-cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
-deadlines remain open.
+cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
 
 ### 25. Linux CLI and network recovery
 
@@ -904,8 +928,8 @@ other section scenarios remain unverified; the full audit is still open.
 **Nested H2 tasks, 23 September 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 The TCP group starts before connect and joins drivers/bridges; the native runner retains
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
-cross-checked only. Server/standalone H2, early platform rollback, UDP cancellation and
-deadlines remain open.
+cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
 
 ### 26. Shared C# and managed/native boundary
 

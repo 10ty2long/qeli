@@ -68,7 +68,11 @@ platform rollback. ABI remains 1.16; see [the report](../reports/AUDIT-Q25-TUN-W
 H2 lifetime (23 September 2026): the TCP-generation group starts before connect and retains
 joins for primary/additional carrier drivers and bridges. TaskScope closes admission and
 requests abort before destroying a cancelled attempt; the native runner joins before
-finish_generation. Standalone/server behavior is unchanged. ABI 1.16; [report](../reports/AUDIT-Q25-H2-TASKS.md).
+finish_generation. ABI 1.16; [client report](../reports/AUDIT-Q25-H2-TASKS.md).
+Server accept_owned uses a weak ProfileSpawner: drivers/bridges and bounded rejection flushes
+are joined by the profile. A flush retains pre-auth admission until I/O release, while a
+successful accept returns it to inner AUTH. Public standalone accept/connect retain their
+previous cancellation contract; [server report](../reports/AUDIT-Q14-H2-TASKS.md).
 
 ---
 

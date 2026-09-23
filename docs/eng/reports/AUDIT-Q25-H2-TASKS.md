@@ -77,3 +77,7 @@ its forced cancellation is not fixed by this pass.
 
 Next: server-profile and standalone H2 task ownership, system-command deadlines, platform
 fault injection and fresh native builds with validation on real devices.
+
+Follow-up on 23 September: [Q14-F022/F023](AUDIT-Q14-H2-TASKS.md) adds profile joining
+for server H2 drivers/bridges and rejection flushes, retaining pre-auth admission until
+a rejected connection is released. Standalone API behavior and other limits remain.

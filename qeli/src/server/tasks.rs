@@ -15,9 +15,55 @@ pub(crate) struct ProfileTasks {
     shutdown_lock: Arc<tokio::sync::Mutex<()>>,
 }
 
+/// A nested worker must not retain its own task registry through a strong reference.
+#[derive(Clone)]
+pub(crate) struct ProfileSpawner {
+    profile: Arc<str>,
+    inner: std::sync::Weak<std::sync::Mutex<ProfileTasksInner>>,
+}
+
+impl ProfileSpawner {
+    pub(crate) fn spawn_abortable(
+        &self,
+        future: impl std::future::Future<Output = ()> + Send + 'static,
+    ) -> Option<tokio::task::AbortHandle> {
+        let inner = self.inner.upgrade()?;
+        spawn(&inner, &self.profile, future)
+    }
+}
+
 struct ProfileTasksInner {
     stopping: bool,
     tasks: JoinSet<()>,
+}
+
+fn report_result(profile: &str, result: Result<(), tokio::task::JoinError>) {
+    if let Err(error) = result {
+        if !error.is_cancelled() {
+            log::error!("Profile '{}': child task failed: {}", profile, error);
+        }
+    }
+}
+
+fn spawn(
+    shared: &std::sync::Mutex<ProfileTasksInner>,
+    profile: &str,
+    future: impl std::future::Future<Output = ()> + Send + 'static,
+) -> Option<tokio::task::AbortHandle> {
+    let mut inner = shared
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if inner.stopping {
+        // A rejected capture may use the same registry from Drop.
+        drop(inner);
+        return None;
+    }
+    // Reap completions without scanning live sessions. Admission and actual spawning
+    // share the shutdown lock; Tokio never polls this future synchronously here.
+    while let Some(result) = inner.tasks.try_join_next() {
+        report_result(profile, result);
+    }
+    Some(inner.tasks.spawn(future))
 }
 
 impl ProfileTasks {
@@ -32,11 +78,10 @@ impl ProfileTasks {
         }
     }
 
-    fn report_result(&self, result: Result<(), tokio::task::JoinError>) {
-        if let Err(error) = result {
-            if !error.is_cancelled() {
-                log::error!("Profile '{}': child task failed: {}", self.profile, error);
-            }
+    pub(crate) fn spawner(&self) -> ProfileSpawner {
+        ProfileSpawner {
+            profile: self.profile.clone(),
+            inner: Arc::downgrade(&self.inner),
         }
     }
 
@@ -44,20 +89,7 @@ impl ProfileTasks {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        let mut inner = self
-            .inner
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        if inner.stopping {
-            return false;
-        }
-        // Reap notified completions rather than scanning every live session for every DNS
-        // query. Keep panic diagnostics instead of silently dropping finished JoinHandles.
-        while let Some(result) = inner.tasks.try_join_next() {
-            self.report_result(result);
-        }
-        inner.tasks.spawn(future);
-        true
+        spawn(&self.inner, &self.profile, future).is_some()
     }
 
     pub(crate) fn abort_all(&self) {
@@ -81,7 +113,7 @@ impl ProfileTasks {
         })
         .await
         {
-            self.report_result(result);
+            report_result(&self.profile, result);
         }
     }
 }
@@ -494,5 +526,62 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn weak_spawner_cannot_keep_its_registry_alive() {
+        let tasks = ProfileTasks::new("weak-owner");
+        let spawner = tasks.spawner();
+        let (send, released) = tokio::sync::oneshot::channel();
+        struct Release(Option<tokio::sync::oneshot::Sender<()>>);
+        impl Drop for Release {
+            fn drop(&mut self) {
+                let _ = self.0.take().unwrap().send(());
+            }
+        }
+        let guard = Release(Some(send));
+        let nested = spawner.clone();
+        assert!(spawner
+            .spawn_abortable(async move {
+                let _guard = guard;
+                let _nested = nested;
+                std::future::pending::<()>().await;
+            })
+            .is_some());
+        drop(tasks);
+        assert!(spawner.inner.upgrade().is_none());
+        tokio::time::timeout(std::time::Duration::from_secs(5), released)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(spawner
+            .spawn_abortable(async { panic!("owner is gone") })
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn rejected_nested_capture_can_use_registry_from_drop() {
+        struct Reenter(ProfileSpawner, Arc<std::sync::atomic::AtomicBool>);
+        impl Drop for Reenter {
+            fn drop(&mut self) {
+                assert!(self
+                    .0
+                    .spawn_abortable(async { panic!("closed registry") })
+                    .is_none());
+                self.1.store(true, std::sync::atomic::Ordering::Release);
+            }
+        }
+        let tasks = ProfileTasks::new("rejected-capture");
+        let spawner = tasks.spawner();
+        tasks.shutdown().await;
+        let released = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let guard = Reenter(spawner.clone(), released.clone());
+        assert!(spawner
+            .spawn_abortable(async move {
+                let _guard = guard;
+                std::future::pending::<()>().await;
+            })
+            .is_none());
+        assert!(released.load(std::sync::atomic::Ordering::Acquire));
     }
 }

@@ -80,3 +80,7 @@ TUN thread shutdown, external interoperability, sustained load/RSS/fd, DNSSEC/RR
 and OS DNS apply/restore remain open. No live OS networking, external SSH lab or
 unchanged native clients were used. The next pass covers supervisor, watch/control
 shutdown and startup failure recovery in section 14.
+
+Follow-up on 23 September: [Q14-F022/F023](AUDIT-Q14-H2-TASKS.md) adds profile joining
+for server H2 drivers/bridges and rejection flushes, retaining pre-auth admission until
+a rejected connection is released. Standalone API behavior and other limits remain.

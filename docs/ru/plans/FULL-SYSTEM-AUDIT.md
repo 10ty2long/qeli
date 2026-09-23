@@ -143,9 +143,9 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 06 | Пользователи, группы и выдача доступа | H01, H04, H09–H10 | TODO |
 | 07 | Backup, restore и history | H03–H04, H08, H10 | TODO |
 | 08 | Криптография, identity и ключи | H01, H04, H08 | TODO |
-| 09 | Handshake и pre-auth TCP/UDP | H01, H04, H08 | TODO |
+| 09 | Handshake и pre-auth TCP/UDP | H01, H04, H08 | IN_PROGRESS |
 | 10 | PacketCodec, replay и control framing | H01, H04, H08 | TODO |
-| 11 | REALITY, TLS 1.3 и HTTP/2 | H07–H08 | TODO |
+| 11 | REALITY, TLS 1.3 и HTTP/2 | H07–H08 | IN_PROGRESS |
 | 12 | Транспорты и wire-маскировка | H02, H07–H08 | TODO |
 | 13 | Recordizer, padding и shaping | H02, H07–H08 | TODO |
 | 14 | Supervisor, workers и профили | H02–H03, H08 | IN_PROGRESS |
@@ -355,7 +355,13 @@ Truncation/replay/reorder/slow peer и неверный PQ/proof/password. Permi
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Серверный H2 и pre-auth, 23 сентября 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): профиль ждёт вложенные H2-задачи перед
+teardown; flush отказа сохраняет pre-auth slot до освобождения I/O. 13 новых регрессий,
+969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
+кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
 ### 10. PacketCodec, replay и control framing
 
@@ -387,7 +393,13 @@ Transcript/replay/decoy, TLS key budget. H2 zero/small window, SETTINGS/WINDOW_U
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Серверный H2 и pre-auth, 23 сентября 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): профиль ждёт вложенные H2-задачи перед
+teardown; flush отказа сохраняет pre-auth slot до освобождения I/O. 13 новых регрессий,
+969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
+кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
 ### 12. Транспорты и wire-маскировка
 
@@ -526,6 +538,12 @@ Live Linux lifecycle/firewall и полный rollback маршрутов/DNS е
 ядра; тип terminal kick сохраняется при сопутствующих ошибках. Восемь новых host-тестов
 проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
 E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
+
+**Серверный H2 и pre-auth, 23 сентября 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): профиль ждёт вложенные H2-задачи перед
+teardown; flush отказа сохраняет pre-auth slot до освобождения I/O. 13 новых регрессий,
+969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
+кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -749,7 +767,14 @@ Unix-тест дескрипторов только кросс-компилир�
 **Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
-Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+
+**Серверный H2 и pre-auth, 23 сентября 2026:**
+[Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md): профиль ждёт вложенные H2-задачи перед
+teardown; flush отказа сохраняет pre-auth slot до освобождения I/O. 13 новых регрессий,
+969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
+кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
 ### 23. Роуминг, resume и CONTROL_V2
 
@@ -785,7 +810,8 @@ workers, принудительная отмена, сроки команд и �
 **Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
-Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -821,7 +847,8 @@ workers, принудительная отмена, сроки команд и �
 **Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
-Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 25. Linux CLI и восстановление сети
 
@@ -908,7 +935,8 @@ Unix-тест дескрипторов только кросс-компилир�
 **Вложенные H2-задачи, 23 сентября 2026:** [Q25-F015](../reports/AUDIT-Q25-H2-TASKS.md).
 TCP-группа создаётся до connect и ждёт driver/bridge; native runner сохраняет её при
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
-Server/standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
+Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 

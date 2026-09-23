@@ -90,9 +90,10 @@ where
     let stream = crate::protocol::realtls::server::PrefixedStream::new(prefix.to_vec(), stream);
 
     if prefix.as_slice() == crate::protocol::h2_carrier::CLIENT_PREFACE {
-        let h2 = tokio::time::timeout(
+        let carrier_tasks = profile.tasks.spawner();
+        let (h2, pre_auth_permit) = tokio::time::timeout(
             handshake_timeout,
-            crate::protocol::h2_carrier::accept(stream),
+            crate::protocol::h2_carrier::accept_owned(stream, &carrier_tasks, pre_auth_permit),
         )
         .await
         .map_err(|_| anyhow::anyhow!("REALITY HTTP/2 carrier timed out for {addr}"))?
