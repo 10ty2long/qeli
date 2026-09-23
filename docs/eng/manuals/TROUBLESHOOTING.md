@@ -984,6 +984,21 @@ as proof of a clean network reset. User hook scripts can make their own firewall
 
 ---
 
+### 6.20 Linux: legacy resolver recovery failed; backup kept
+
+`failed to restore /etc/resolv.conf ... (backup kept at ...)` reports an unsuccessful
+recovery of a snapshot from an older Qeli release. Failed file deletion/replacement or
+permission restoration keeps that snapshot available for retry. A `file` snapshot without
+content, an invalid symlink target, an unknown kind or malformed data is rejected; it does
+not silently replace the resolver with an empty file. Explicitly empty file content is valid.
+
+Check the reported filesystem error and the saved original before recovery. Do not delete
+the snapshot to suppress the error. If restoration succeeded but backup removal failed,
+the diagnostic says so separately. New sessions use per-link systemd-resolved DNS; this
+compatibility path does not enable direct resolver-file takeover for new connections.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

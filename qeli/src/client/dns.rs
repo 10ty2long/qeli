@@ -10,8 +10,9 @@
 //! snapshot or write `/etc/resolv.conf` directly.
 
 use crate::config::client::ClientDnsConfig;
+#[cfg(test)]
+use crate::dns_backup::{restore_resolv, DnsBackup};
 use crate::transport_core::NetworkDns;
-use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 const RESOLV_PATH: &str = "/etc/resolv.conf";
@@ -43,19 +44,6 @@ const MARKER: &str = "# Managed by qeli VPN — original saved in /var/lib/qeli/
 /// connections use per-link systemd-resolved state and never create this file, but recovery
 /// must still honour it while an older client process may be alive.
 const REFCOUNT_PATH: &str = "/var/lib/qeli/dns-holders";
-
-/// Snapshot of `/etc/resolv.conf` before qeli touched it.
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-struct DnsBackup {
-    /// "symlink" | "file" | "absent" | "managed-no-original"
-    kind: String,
-    /// Link target for `kind == "symlink"`.
-    target: Option<String>,
-    /// File content for `kind == "file"`.
-    content: Option<String>,
-    /// Unix permission bits for `kind == "file"`.
-    mode: Option<u32>,
-}
 
 /// Apply exactly the resolver set already validated into the shared NetworkPlan.
 /// Resolver selection and reachability routes belong to the core, for both IP families.
@@ -273,23 +261,9 @@ fn restore_dns_inner(ifname: Option<&str>) -> anyhow::Result<()> {
         }
     }
     if backup.exists() {
-        match restore_resolv(Path::new(RESOLV_PATH), backup) {
-            Ok(()) => {
-                log::info!("Restored /etc/resolv.conf to its original state");
-                if let Err(error) = std::fs::remove_file(backup) {
-                    if error.kind() != std::io::ErrorKind::NotFound {
-                        errors.push(format!(
-                            "restored {RESOLV_PATH}, but could not remove backup {BACKUP_PATH}: {error}"
-                        ));
-                    }
-                }
-            }
-            Err(e) => {
-                // Keep the backup so a later restore (or recover_stale) can retry.
-                errors.push(format!(
-                    "failed to restore {RESOLV_PATH}: {e} (backup kept at {BACKUP_PATH})"
-                ));
-            }
+        match crate::dns_backup::restore_and_remove(Path::new(RESOLV_PATH), backup) {
+            Ok(()) => log::info!("Restored /etc/resolv.conf to its original state"),
+            Err(error) => errors.push(error.to_string()),
         }
     }
     if errors.is_empty() {
@@ -610,52 +584,6 @@ fn capture_original(resolv: &Path, backup: &Path, marker: &str) -> anyhow::Resul
     Ok(())
 }
 
-/// Rebuild `/etc/resolv.conf` exactly as captured in `backup`.
-fn restore_resolv(resolv: &Path, backup: &Path) -> anyhow::Result<()> {
-    let json = std::fs::read_to_string(backup)?;
-    let snap: DnsBackup = serde_json::from_str(&json)?;
-
-    match snap.kind.as_str() {
-        "symlink" => {
-            let target = snap
-                .target
-                .ok_or_else(|| anyhow::anyhow!("symlink backup without target"))?;
-            // Remove whatever is there now (our regular file) then recreate the link.
-            let _ = std::fs::remove_file(resolv);
-            #[cfg(unix)]
-            std::os::unix::fs::symlink(&target, resolv)
-                .map_err(|e| anyhow::anyhow!("recreate symlink -> {}: {}", target, e))?;
-            Ok(())
-        }
-        "file" => {
-            let content = snap.content.unwrap_or_default();
-            write_atomic(resolv, content.as_bytes())?;
-            #[cfg(unix)]
-            if let Some(mode) = snap.mode {
-                use std::os::unix::fs::PermissionsExt;
-                let _ = std::fs::set_permissions(resolv, std::fs::Permissions::from_mode(mode));
-            }
-            Ok(())
-        }
-        "absent" => {
-            // There was no resolv.conf before us; remove ours if still present.
-            if resolv.exists() {
-                let _ = std::fs::remove_file(resolv);
-            }
-            Ok(())
-        }
-        "managed-no-original" => {
-            // We never knew the original. Leave a working public resolver
-            // rather than a dead tunnel address.
-            let content =
-                "# Restored by qeli (original unknown)\nnameserver 1.1.1.1\nnameserver 8.8.8.8\n";
-            write_atomic(resolv, content.as_bytes())?;
-            Ok(())
-        }
-        other => Err(anyhow::anyhow!("unknown backup kind: {}", other)),
-    }
-}
-
 #[cfg(test)]
 fn write_managed_resolv(
     resolv: &Path,
@@ -691,6 +619,7 @@ fn write_managed_resolv_many(
 /// `O_NOFOLLOW` against symlink pre-planting (H-5) and preserves the target's
 /// mode. Replacing a symlink with the renamed regular file is intentional —
 /// `restore_resolv` recreates the link from the backup.
+#[cfg(test)]
 fn write_atomic(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
     crate::util::write_atomic(path, bytes)
 }

@@ -635,6 +635,12 @@ are host-testable and no longer take an unused ServerState. Seven listener plus
 pass. Shared lifecycle fixes are Q14-F001–F002; real Linux runtime and sustained
 load remain open.
 
+**Legacy resolver recovery, 23 September 2026:**
+[Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): failed unlink/chmod and invalid snapshot
+payloads no longer count as successful recovery and cannot retire the recovery record.
+Eight new Windows host tests pass; three Unix-specific cases are cross-checked only.
+913 host Rust tests PASS. Live Linux DNS and propagation of lower-level cleanup errors remain open.
+
 ### 20. DHCP and lease lifecycle
 
 **Source:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.
@@ -768,6 +774,12 @@ kill-switch while still attempting forwarding cleanup. Six new host regressions 
 real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-checked only.
 Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
 
+
+**Legacy resolver recovery, 23 September 2026:**
+[Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): failed unlink/chmod and invalid snapshot
+payloads no longer count as successful recovery and cannot retire the recovery record.
+Eight new Windows host tests pass; three Unix-specific cases are cross-checked only.
+913 host Rust tests PASS. Live Linux DNS and propagation of lower-level cleanup errors remain open.
 
 ### 26. Shared C# and managed/native boundary
 

@@ -642,6 +642,12 @@ TTL всех возвращаемых секций, структуру расп�
 Общий lifecycle исправлен в Q14-F001–F002; реальный Linux runtime и длительная
 нагрузка остаются открытыми.
 
+**Восстановление старого resolver, 23 сентября 2026:**
+[Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): ошибки unlink/chmod и некорректный снимок
+больше не считаются успешным восстановлением и не приводят к удалению записи восстановления.
+Восемь новых Windows host-тестов проходят; три Unix-сценария только cross-check.
+913 host Rust tests PASS. Live Linux DNS и передача ошибок нижележащей очистки ещё открыты.
+
 ### 20. DHCP и lease lifecycle
 
 **Код:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.
@@ -775,6 +781,12 @@ cleanup/post_down; ошибка остановки завершается отк
 ClientCore при полной очереди. 905 host Rust tests PASS; Linux только cross-check.
 Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
 
+
+**Восстановление старого resolver, 23 сентября 2026:**
+[Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): ошибки unlink/chmod и некорректный снимок
+больше не считаются успешным восстановлением и не приводят к удалению записи восстановления.
+Восемь новых Windows host-тестов проходят; три Unix-сценария только cross-check.
+913 host Rust tests PASS. Live Linux DNS и передача ошибок нижележащей очистки ещё открыты.
 
 ### 26. Общий C# и managed/native граница
 
