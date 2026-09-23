@@ -1,5 +1,9 @@
 //! Exercise production gateway entry points without touching host networking.
 use super::*;
+#[cfg(all(target_os = "linux", feature = "client"))]
+use crate::client::killswitch as kill_switch;
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+use crate::client_killswitch as kill_switch;
 use crate::system_command::test_support::{arguments, with_commands, Action};
 use host::test_support::{with_sysctls, Operation};
 use std::{cell::RefCell, collections::BTreeMap, io, process::Output, rc::Rc, sync::Mutex};
@@ -291,7 +295,9 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
     with_commands(
         move |cmd| Action::Reply(commands.borrow_mut().command(cmd)),
         || {
-            with_sysctls(move |op| knobs.borrow_mut().sysctl(op), || test(kernel));
+            kill_switch::ipv6_state::test_support::with_disabled(false, || {
+                with_sysctls(move |op| knobs.borrow_mut().sysctl(op), || test(kernel));
+            });
         },
     );
 }

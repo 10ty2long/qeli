@@ -1657,3 +1657,20 @@ of `ip -6 address show scope global`. Empty output with a failing status is insu
 `allow_ipv6_leak = true` explicitly accepts leakage. If IPv4 rollback also failed,
 do not assume the remaining firewall was cleaned up.
 [Checks and limits](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md).
+
+### Linux: TUN name already reserved
+
+`cannot reserve TUN` with `Address already in use` means another updated Linux client
+already uses this `dev` in the same network namespace, even during a reconnect gap
+when the interface is absent. Stop its owner or choose another name. This applies with
+`kill_switch = false` and `dev_attach = true`: a shared multi-queue interface is not
+for two independent Qeli sessions. AF_UNIX/sandbox/resource failures also refuse startup,
+before DNS recovery or network changes. A failed kill-switch claim releases the failed
+startup's temporary TUN reservation.
+
+If IPv6 was disabled with `ipv6.disable=1`, a readable exact `1` in
+`/sys/module/ipv6/parameters/disable` permits skipping IPv6 firewall access.
+An unreadable file or an unloaded module is not evidence that IPv6 is disabled.
+Do not substitute sysfs contents or disable IPv6 to evade checks; restore diagnostic
+access and investigate the original error.
+[Report and limitations](../reports/AUDIT-Q25-CLIENT-NAMESPACE.md).

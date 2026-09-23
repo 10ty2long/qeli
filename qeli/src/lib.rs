@@ -46,6 +46,12 @@ mod client_route;
 #[path = "client/killswitch.rs"]
 mod client_killswitch;
 
+// Exercise the same client reservation coordinator with an isolated host backend.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)]
+#[path = "client/network_lease.rs"]
+mod client_network_lease;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

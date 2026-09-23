@@ -52,10 +52,8 @@ use std::path::Path;
 
 #[path = "killswitch/admission.rs"]
 mod admission;
-
-#[cfg(target_os = "linux")]
-#[path = "killswitch/lease.rs"]
-pub(crate) mod lease;
+#[path = "killswitch/ipv6_state.rs"]
+pub(crate) mod ipv6_state;
 
 // Serializes individual firewall operations. The Linux client also holds a
 // namespace lease for its whole session, before DNS recovery and the first engage.
@@ -106,6 +104,11 @@ fn resolve_ips(server_addr: &str, server_port: u16) -> Vec<String> {
 /// approach as `server::nat::iptables_path` (duplicated because the server module is
 /// `cfg`-excluded from the client/.so builds).
 pub(crate) fn ipt_path(bin: &str) -> Option<String> {
+    // A positively disabled module has no IPv6 firewall to own or clean up.
+    // Missing/denied/malformed evidence does not bypass filter admission.
+    if bin == "ip6tables" && ipv6_state::globally_disabled() {
+        return None;
+    }
     // Explicit override, searched first: `QELI_IPT_DIR=/opt/sbin`. Useful where the
     // binaries live off the usual paths (a stripped container, a router with its own
     // prefix), and it is also the seam the fault-injection tests use — the absolute-path
@@ -467,6 +470,9 @@ fn engage_family(
 /// an inaccessible/missing procfs or a failed command is not an IPv4-only host.
 /// The shared command boundary bounds runtime and output, including partial replies.
 fn host_may_have_global_ipv6() -> bool {
+    if ipv6_state::globally_disabled() {
+        return false;
+    }
     Command::new("ip")
         .args(["-6", "address", "show", "scope", "global"])
         .output()
@@ -585,7 +591,7 @@ pub fn engage(
             );
         }
         log::warn!(
-            "kill-switch: IPv6 egress is NOT restricted (global IPv6 inventory verified empty, \
+            "kill-switch: IPv6 egress is NOT restricted (IPv6 module disabled, global IPv6 inventory verified empty, \
              or allow_ipv6_leak is set)"
         );
     }

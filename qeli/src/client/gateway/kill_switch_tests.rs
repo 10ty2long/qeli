@@ -229,13 +229,15 @@ fn concurrent_public_start_admits_only_one_policy() {
             let kernel = kernel.clone();
             let barrier = barrier.clone();
             std::thread::spawn(move || {
-                with_commands(
-                    move |cmd| Action::Reply(kernel.lock().unwrap().command(cmd)),
-                    || {
-                        barrier.wait();
-                        protect(tun, ip).is_ok()
-                    },
-                )
+                ks::ipv6_state::test_support::with_disabled(false, || {
+                    with_commands(
+                        move |cmd| Action::Reply(kernel.lock().unwrap().command(cmd)),
+                        || {
+                            barrier.wait();
+                            protect(tun, ip).is_ok()
+                        },
+                    )
+                })
             })
         })
         .collect();
@@ -352,5 +354,74 @@ fn explicit_ipv6_leak_override_allows_unknown_evidence() {
             .borrow()
             .rules
             .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+    });
+}
+
+#[test]
+fn regression_module_disabled_allows_ipv4_without_ipv6_filter_inventory() {
+    run(|k| {
+        k.borrow_mut().inventory_failure = Some(true);
+        ks::ipv6_state::test_support::with_disabled(true, || {
+            protect("ks_a", "203.0.113.7").unwrap();
+            assert!(allow_egress(
+                &k.borrow(),
+                "OUTPUT",
+                "wan0",
+                "203.0.113.7",
+                0
+            ));
+        });
+    });
+}
+#[test]
+fn regression_module_disabled_lifecycle_never_touches_ipv6_tables() {
+    run(|k| {
+        ks::ipv6_state::test_support::with_disabled(true, || {
+            protect("ks_a", "203.0.113.7").unwrap();
+            ks::refresh_server_ips("203.0.113.8", 443, "ks_a").unwrap();
+            ks::disengage("ks_a").unwrap();
+            assert!(!k.borrow().rules.keys().any(|(ipv6, _, _)| *ipv6));
+        });
+    });
+}
+#[test]
+fn regression_module_disabled_does_not_require_an_ipv6_address_probe() {
+    run(|k| {
+        failed_ipv6(&k, Err(io::ErrorKind::Unsupported.into()));
+        ks::ipv6_state::test_support::with_disabled(true, || {
+            protect("ks_a", "203.0.113.7").unwrap();
+            assert!(
+                k.borrow().ipv6_observation.is_some(),
+                "disabled module needs no address query"
+            );
+        });
+    });
+}
+#[test]
+fn absent_disabled_evidence_keeps_inventory_failure_fatal() {
+    run(|k| {
+        k.borrow_mut().inventory_failure = Some(true);
+        assert!(protect("ks_a", "203.0.113.7").is_err());
+        assert_eq!(k.borrow().mutations(), 0);
+    });
+}
+#[test]
+fn module_disabled_does_not_bypass_ipv4_ownership_conflict() {
+    run(|k| {
+        seed(&mut k.borrow_mut(), false, "QELI_KS_other");
+        ks::ipv6_state::test_support::with_disabled(true, || {
+            assert!(protect("ks_a", "203.0.113.7").is_err());
+            assert_eq!(k.borrow().mutations(), 0);
+        });
+    });
+}
+#[test]
+fn module_disabled_does_not_bypass_unknown_ipv4_inventory() {
+    run(|k| {
+        k.borrow_mut().inventory_failure = Some(false);
+        ks::ipv6_state::test_support::with_disabled(true, || {
+            assert!(protect("ks_a", "203.0.113.7").is_err());
+            assert_eq!(k.borrow().mutations(), 0);
+        });
     });
 }

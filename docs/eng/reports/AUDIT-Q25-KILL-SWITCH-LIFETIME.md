@@ -90,3 +90,8 @@ ownership. The IPv6 snapshot is not continuous monitoring; link-local without gl
 addresses allows skipping protection under the current contract. The sysctl journal
 is unchanged. Remaining audit work, DNS/carrier globals, native certification and a new
 benchmark remain open. This run does not certify leak prevention on a real Linux host.
+
+Follow-up: [Q25-F048–F049](AUDIT-Q25-CLIENT-NAMESPACE.md) adds positive module-wide
+IPv6 disablement evidence and moves leases into the shared Linux client module.
+Gateway/exit without kill-switch and dev_attach now also reserve the configured TUN.
+The limitations above describe this report's baseline.

@@ -731,6 +731,11 @@ helper-теста удалены. 1315 Rust tests и девять команд �
 межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
 Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
 
+[Q25-F048–F049](../reports/AUDIT-Q25-CLIENT-NAMESPACE.md): положительное доказательство
+ipv6.disable=1 разрешает пропустить IPv6 firewall; общий lease резервирует TUN всех
+Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
+3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -813,6 +818,11 @@ helper-теста удалены. 1315 Rust tests и девять команд �
 Продолжение: [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) —
 межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
 Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
+
+[Q25-F048–F049](../reports/AUDIT-Q25-CLIENT-NAMESPACE.md): положительное доказательство
+ipv6.disable=1 разрешает пропустить IPv6 firewall; общий lease резервирует TUN всех
+Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
+3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
 
 ### 19. DNS сервера и клиентов
 
@@ -1465,6 +1475,11 @@ helper-теста удалены. 1315 Rust tests и девять команд �
 межпроцессное владение защищённой сессией и отказ при неизвестном IPv6.
 Linux runtime новых lease-тестов остаётся открытым; статус раздела не меняется.
 
+[Q25-F048–F049](../reports/AUDIT-Q25-CLIENT-NAMESPACE.md): положительное доказательство
+ipv6.disable=1 разрешает пропустить IPv6 firewall; общий lease резервирует TUN всех
+Linux-клиентов, включая gateway/exit без kill-switch и dev_attach. 17 новых host-тестов,
+3 исходных FAIL → PASS. Runtime Linux и полный PASS раздела остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1742,11 +1757,11 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: Linux runtime для lease и обеих firewall-семей,
-совместимость IPv6-disabled с установленным ip6tables, владение TUN у gateway/exit
-без kill-switch и изменение IPv6 после старта. [Q25-F046–F047](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md)
-добавляет lifetime lease защищённого клиента и fail-closed IPv6 evidence.
-DNS/carrier globals, общий deadline, постоянный crash recovery, Q14-F027 TUN workers/FD
-и синхронные preflight waits раздела 05 открыты. Linux E2E restart/restore/manual+NDP,
-native certification и новый benchmark остаются в плане; целый раздел этот прогон
-не переводит в PASS.
+**Ближайшая работа:** продолжить 25: неизвестное состояние владельцев в журнале
+sysctl, его разделение по network namespaces и безопасное восстановление TUN при
+неполном чтении /proc. Q25-F048–F049 закрывает обработку подтверждённого
+отключения модуля IPv6 и резервирование клиентского имени TUN в проверенных пределах.
+Реальные Linux-сценарии lease/attach/reconnect, iptables-nft/legacy и IPv6-disabled,
+появление IPv6 после запуска, DNS/carrier globals, общий deadline, постоянный
+crash recovery, Q14-F027 workers/FD и синхронные preflight waits остаются открыты.
+Native certification и новый benchmark не выполнялись; статус целых разделов не изменён.

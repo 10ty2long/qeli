@@ -1257,7 +1257,9 @@ rm -f ~/qeli-client.conf                        # your client config path
 sudo rm -rf /var/lib/qeli                       # device-id + dns-backup
 ```
 
-Before manual recovery, establish that the live protected client has stopped.
+Before manual recovery, establish that the owning client has stopped. The TUN name
+is now reserved even without a kill-switch, including `dev_attach`; independent client
+sessions must use distinct `dev` names in one network namespace.
 The Linux lease rejects another startup with the same or another TUN until the owner
 exits; release after a crash does not remove the remaining firewall.
 [Ownership and IPv6 troubleshooting](TROUBLESHOOTING.md).

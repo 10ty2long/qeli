@@ -4,6 +4,8 @@ pub mod dns;
 pub mod gateway;
 #[cfg(target_os = "linux")]
 pub mod killswitch;
+#[cfg(target_os = "linux")]
+mod network_lease;
 #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
 mod roaming_linux;
 #[cfg(target_os = "linux")]
@@ -2418,7 +2420,7 @@ async fn run_client_inner(
     // See `config::parse_client_config_strict`. (Audit 2026-08-01, §4/§5.)
     // Declare before the adapter so cancellation/unwinding drops network owners
     // before releasing the namespace claim.
-    let _kill_switch_lease;
+    let _network_lease;
     let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
     *final_report = Some((
         core_adapter.diagnostics.clone(),
@@ -2538,19 +2540,11 @@ async fn run_client_inner(
         return Ok(());
     }
 
-    // Claim the namespace before any shared network recovery/setup. Keep this guard
-    // across every reconnect and all terminal cleanup/post_down paths. A competing
-    // process (including one using the same TUN name) must not rebuild our live chain.
+    // Reserve the configured TUN for every client, including gateway/exit without
+    // a kill-switch. Protected clients additionally claim the namespace-wide policy.
+    // Both guards survive reconnect and all terminal cleanup/post_down paths.
     let ks_on = killswitch::should_engage(&config.routing);
-    _kill_switch_lease = if ks_on {
-        Some(killswitch::lease::acquire().map_err(|error| {
-            anyhow::anyhow!(
-                "kill-switch: cannot exclusively own this network namespace: {error}. Another protected Qeli client may be active; stop it or use a separate network namespace. No firewall rules were changed by this startup"
-            )
-        })?)
-    } else {
-        None
-    };
+    _network_lease = network_lease::acquire(&config.tun.name, ks_on)?;
 
     // Repair any DNS state left behind by a previous run that died without
     // restoring (SIGKILL / power loss / panic). Must run before we touch DNS.

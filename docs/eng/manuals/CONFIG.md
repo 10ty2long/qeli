@@ -1545,7 +1545,7 @@ failed roam.
 
 | Key | Default | CLI | Win | mac | And | iOS | Purpose |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
-| `dev` | CLI: `vpn0`; Win: profile name | ✓ | ✓ | — | — | — | explicit interface name; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
+| `dev` | CLI: `vpn0`; Win: profile name | ✓ | ✓ | — | — | — | explicit interface name; Linux reserves it for the entire client session, including `dev_attach`; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
 | `device_type` | `tun` | ✓ | — | — | — | — | Linux interface kind: `tun` (L3) or `tap` (local L2 emulation); non-Linux clients preserve the key but reject TAP at connect time |
 | `dev_attach` | `false` | ✓ | — | — | — | — | attach to a pre-existing interface (don't create one) |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
@@ -1931,6 +1931,15 @@ policy also survives a clean stop and remains until the user or MDM disables it 
 
 ### Linux (`iptables`)
 
+Every Linux client reserves its configured TUN/TAP name before DNS recovery and network
+setup, including gateway/exit and `dev_attach` without a kill-switch.
+One `dev` in one network namespace can belong to only one client session. Distinct names
+remain independent; a kill-switch additionally requires the sole namespace policy claim.
+Reservations span reconnect and are released after terminal cleanup; they require AF_UNIX.
+Qeli servers, external interface owners and old clients do not participate: this does not
+replace existing-device checks or authorize deletion of another owner's TUN.
+
+
 How it works (matters for manual teardown and for several instances on one host):
 
 - Rules use a **separate chain per interface**, `QELI_KS_<tun_if>` (for example
@@ -1964,6 +1973,11 @@ How it works (matters for manual teardown and for several instances on one host)
 - In **router mode** (`gateway_nat`) the chain is also hooked from **FORWARD** — routed
   LAN traffic behind the client never traverses OUTPUT, so without the FORWARD hook it
   would be unprotected during a reconnect.
+- With positively verified `/sys/module/ipv6/parameters/disable = 1`, Qeli skips
+  IPv6 firewall and address inspection during startup, refresh and cleanup. This disables
+  module functionality (`ipv6.disable=1`), unlike `net.ipv6.conf.*.disable_ipv6`.
+  A missing/unreadable file, any other content or an empty address list does not authorize
+  bypassing failed firewall ownership inspection. IPv4 checks remain in force.
 - IPv6 is programmed symmetrically (`ip6tables`). If installation is unavailable or fails,
   skipping IPv6 protection requires a successful empty
   `ip -6 address show scope global` result or explicit `allow_ipv6_leak = true`.
