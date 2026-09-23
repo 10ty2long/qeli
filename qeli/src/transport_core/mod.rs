@@ -101,6 +101,13 @@ pub(crate) mod udp_receive;
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) mod network;
 
+#[cfg(any(
+    test,
+    all(target_os = "linux", feature = "client"),
+    feature = "transport-core-ffi"
+))]
+pub(crate) mod tasks;
+
 pub mod path;
 
 #[cfg(feature = "experimental-roaming")]

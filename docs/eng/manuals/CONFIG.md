@@ -2287,6 +2287,11 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   remains installed even if a later guard retry succeeds; that retry does not erase the
   previously reported failure. The record belongs to this client run and is not reset between
   attempts. Inspect the log and current network state before administrator recovery.
+- Normal TCP shutdown closes background-task admission and joins readers/writers, the
+  pipeline and connection-maintenance tasks before DNS restoration and TUN cleanup.
+  Management-event errors follow the same path. The Linux TCP/UDP path monitor also waits
+  for its running blocking jobs. This does not bound system commands or guarantee async
+  joining on forced cancellation of the entire future; see [validation limits](../reports/AUDIT-Q25-TCP-TASKS.md).
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and

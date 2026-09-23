@@ -64,3 +64,5 @@ injection remain open. The record observes reported cleanup errors; it is not a 
 verification or a substitute for joining background work. Forced cancellation of the entire
 client and SIGKILL still cannot promise final status or hook delivery. Other OS adapters and
 legacy DNS recovery concurrency require their own audit; the full audit remains in progress.
+
+Follow-up: [TCP and Linux path workers](AUDIT-Q25-TCP-TASKS.md) adds closed admission and task joining on normal teardown. Full UDP ownership and forced cancellation still need auditing.

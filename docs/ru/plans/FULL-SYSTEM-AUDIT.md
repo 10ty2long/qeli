@@ -157,8 +157,8 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 20 | DHCP и lease lifecycle | H02, H05 | TODO |
 | 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | TODO |
 | 22 | Transport core, FFI/JNI и память | H06, H08 | IN_PROGRESS |
-| 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | TODO |
-| 24 | Multipath, bonding и общий бюджет | H04, H06, H08 | TODO |
+| 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | IN_PROGRESS |
+| 24 | Multipath, bonding и общий бюджет | H04, H06, H08 | IN_PROGRESS |
 | 25 | Linux CLI и восстановление сети | H01, H04, H08 | IN_PROGRESS |
 | 26 | Общий C# и managed/native граница | H04, H06, H08 | TODO |
 | 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | TODO |
@@ -719,6 +719,13 @@ Create/start/PREPARE/APPLY/COMMIT/stop/free, callbacks, buffers, queues, cancell
 DNS proxy/cache, реальные OS apply/rollback и конкурентный lifecycle остаются открыты.
 
 
+**Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
+до abort/join. TCP reader/writer/pipeline и producers завершаются до сетевой очистки;
+ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
+учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
+UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -733,7 +740,14 @@ TCP make-before-break/UDP migration: proof/path validation, anti-amplification, 
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
+до abort/join. TCP reader/writer/pipeline и producers завершаются до сетевой очистки;
+ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
+учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
+UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -749,7 +763,14 @@ JOIN proof, stream caps, asymmetric RTT/loss, отказ одного/всех �
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
+до abort/join. TCP reader/writer/pipeline и producers завершаются до сетевой очистки;
+ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
+учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
+UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
 
 ### 25. Linux CLI и восстановление сети
 
@@ -811,6 +832,13 @@ Live Linux lifecycle/firewall и полный rollback маршрутов/DNS е
 ядра; тип terminal kick сохраняется при сопутствующих ошибках. Восемь новых host-тестов
 проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
 E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
+
+**Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
+до abort/join. TCP reader/writer/pipeline и producers завершаются до сетевой очистки;
+ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
+учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
+UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1083,6 +1111,7 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** раздел 01, затем 02–07; отдельно сохранять очередь Linux E2E
-restart/restore/manual+NDP и платформенной сертификации. Новый полный бенчмарк
-выполняется после стабилизации исправлений, а не заменяет функциональный аудит.
+**Ближайшая работа:** продолжить 22–25: UDP candidate/receive/draining, вложенные задачи
+транспортов и отмена TUN shutdown; затем сроки системных команд. Сохраняется очередь
+незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
+Новый полный бенчмарк выполняется после стабилизации исправлений.

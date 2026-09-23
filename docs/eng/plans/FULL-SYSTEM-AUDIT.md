@@ -152,8 +152,8 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 20 | DHCP and lease lifecycle | H02, H05 | TODO |
 | 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | TODO |
 | 22 | Transport core, FFI/JNI and memory | H06, H08 | IN_PROGRESS |
-| 23 | Roaming, resume and CONTROL_V2 | H06, H08 | TODO |
-| 24 | Multipath, bonding and shared budgets | H04, H06, H08 | TODO |
+| 23 | Roaming, resume and CONTROL_V2 | H06, H08 | IN_PROGRESS |
+| 24 | Multipath, bonding and shared budgets | H04, H06, H08 | IN_PROGRESS |
 | 25 | Linux CLI and network recovery | H01, H04, H08 | IN_PROGRESS |
 | 26 | Shared C# and managed/native boundary | H04, H06, H08 | TODO |
 | 27 | Windows GUI, service and drivers | H01, H04, H08 | TODO |
@@ -712,6 +712,13 @@ This validates the shared planner, not the entire module. DNS proxy/cache, actua
 OS apply/rollback and concurrent lifecycle checks remain open.
 
 
+**TCP and Linux path-monitor ownership, 23 September 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
+abort/join. TCP reader/writer/pipeline and producers finish before network cleanup;
+management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
+TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
+transport workers, forced cancellation and command deadlines remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -726,7 +733,14 @@ TCP make-before-break/UDP migration: proof/path validation, anti-amplification, 
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**TCP and Linux path-monitor ownership, 23 September 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
+abort/join. TCP reader/writer/pipeline and producers finish before network cleanup;
+management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
+TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
+transport workers, forced cancellation and command deadlines remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -742,7 +756,14 @@ JOIN proof, stream caps, asymmetric RTT/loss, one/all path failures and ordering
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**TCP and Linux path-monitor ownership, 23 September 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
+abort/join. TCP reader/writer/pipeline and producers finish before network cleanup;
+management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
+TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
+transport workers, forced cancellation and command deadlines remain open.
 
 ### 25. Linux CLI and network recovery
 
@@ -804,6 +825,13 @@ successful signal stop or release the enabled kill-switch. TunnelSetup owns its 
 core ACK; terminal kick types survive combined cleanup errors. Eight new host tests pass;
 two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
 command deadlines and complete generation-task joining remain open.
+
+**TCP and Linux path-monitor ownership, 23 September 2026:**
+[Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
+abort/join. TCP reader/writer/pipeline and producers finish before network cleanup;
+management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
+TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
+transport workers, forced cancellation and command deadlines remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1074,6 +1102,7 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** section 01, then 02–07; retain the Linux restart/restore/manual+NDP E2E
-and platform-certification backlog. Run the full new benchmark after fixes stabilize;
-performance results do not replace a functional audit.
+**Next work:** continue 22–25 with UDP candidate/receive/draining, nested transport tasks
+and TUN-shutdown cancellation, then system-command deadlines. Outstanding 01–07, Linux
+restart/restore/manual+NDP E2E and platform certification remain queued. A new full benchmark
+follows stabilization of fixes.

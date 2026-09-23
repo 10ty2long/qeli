@@ -47,6 +47,13 @@ the wire capability is enabled. This keeps a pre-1.15 GUI safe if it loads a new
 core: the server cannot send event kinds that the GUI does not understand.
 The fixed 48-byte event header, statistics prefixes and export counts remain unchanged.
 
+
+TCP lifetime (23 September 2026): a shared TaskGroup owns stream tasks and producers;
+normal finish closes admission and joins before network cleanup. The Linux path monitor
+registers blocking work with that owner (UDP uses a separate group of the same type).
+ABI remains 1.16. Forced cancellation and other UDP workers still need review; see
+[the report](../reports/AUDIT-Q25-TCP-TASKS.md).
+
 ---
 
 ## 1. The verdict: what justifies this, and what does not

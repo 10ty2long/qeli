@@ -3940,11 +3940,10 @@ fn decode_hex_array<const N: usize>(value: &str) -> Option<[u8; N]> {
 mod tcp_resume_client_tests {
     use super::{
         decode_hex_array, mark_tcp_slot_started, mark_tcp_slot_stopped, path_ack_future,
-        path_ack_is_explicit_rejection, publish_tcp_path_handover, register_tcp_stream_task,
-        select_tcp_stream_index, should_defer_tcp_resume_for_handover, tcp_handover_failure_action,
-        ClientStreamSender, PathCommandFailure, TcpActiveSlots, TcpHandoverCommitPhase,
-        TcpHandoverFailureAction, TcpResumeContext, TcpSecondaryAttach, PATH_ACK_TIMEOUT,
-        TCP_HANDOVER_PREPARE_GRACE,
+        path_ack_is_explicit_rejection, publish_tcp_path_handover, select_tcp_stream_index,
+        should_defer_tcp_resume_for_handover, tcp_handover_failure_action, ClientStreamSender,
+        PathCommandFailure, TcpActiveSlots, TcpHandoverCommitPhase, TcpHandoverFailureAction,
+        TcpResumeContext, TcpSecondaryAttach, PATH_ACK_TIMEOUT, TCP_HANDOVER_PREPARE_GRACE,
     };
     use portable_atomic::AtomicU64;
     use std::{sync::Arc, time::Duration};
@@ -4067,40 +4066,6 @@ mod tcp_resume_client_tests {
         outputs.sort_unstable_by_key(|entry| entry.logical_slot_id);
         assert_eq!(selected_slot(&outputs, 2), 2);
         assert_eq!(selected_slot(&outputs, 1), 1);
-    }
-
-    #[tokio::test]
-    async fn replacement_stream_reaps_completed_task_handles() {
-        let tasks = Arc::new(std::sync::Mutex::new(Vec::new()));
-        register_tcp_stream_task(&tasks, tokio::spawn(async {}));
-
-        for _ in 0..100 {
-            if crate::util::lock_or_recover(&tasks, "test::stream_tasks")[0].is_finished() {
-                break;
-            }
-            tokio::task::yield_now().await;
-        }
-        assert!(crate::util::lock_or_recover(&tasks, "test::stream_tasks")[0].is_finished());
-
-        register_tcp_stream_task(&tasks, tokio::spawn(std::future::pending::<()>()));
-        let registered = crate::util::lock_or_recover(&tasks, "test::stream_tasks");
-        assert_eq!(
-            registered.len(),
-            1,
-            "a completed carrier task must not remain registered until tunnel teardown"
-        );
-        drop(registered);
-
-        register_tcp_stream_task(&tasks, tokio::spawn(std::future::pending::<()>()));
-        let mut registered = crate::util::lock_or_recover(&tasks, "test::stream_tasks");
-        assert_eq!(
-            registered.len(),
-            2,
-            "active carrier tasks must remain registered for safe tunnel teardown"
-        );
-        for task in registered.drain(..) {
-            task.abort();
-        }
     }
 
     #[test]
@@ -4422,16 +4387,7 @@ fn deliver_client_tcp_plaintext(
 }
 
 type TcpActiveSlots = Arc<std::sync::Mutex<std::collections::BTreeMap<u32, usize>>>;
-type TcpStreamTasks = Arc<std::sync::Mutex<Vec<tokio::task::JoinHandle<()>>>>;
-
-fn register_tcp_stream_task(tasks: &TcpStreamTasks, task: tokio::task::JoinHandle<()>) {
-    let mut registered = crate::util::lock_or_recover(tasks, "client::stream_tasks");
-    // A successful handover deliberately keeps the tunnel generation alive, so teardown cannot
-    // be the only place that drops completed task allocations. Tasks still finishing after their
-    // sender was retired stay registered and are collected by the following carrier spawn.
-    registered.retain(|registered_task| !registered_task.is_finished());
-    registered.push(task);
-}
+type TcpStreamTasks = crate::transport_core::tasks::Spawner;
 
 #[cfg(feature = "experimental-roaming")]
 fn publish_tcp_path_handover(
@@ -4566,11 +4522,7 @@ fn spawn_stream<R, W>(
     logical_slot_id: u32,
     active_slots: Option<TcpActiveSlots>,
     last_live_lost_at: Option<Arc<std::sync::Mutex<Option<tokio::time::Instant>>>>,
-    // Every task this stream spawns is registered here so the teardown can abort them.
-    // Without it the caller had no handle at all: a reader parked in `read_record` on a
-    // half-open connection outlived its connection generation, retaining its socket,
-    // codecs and outbound channel. The shared TUN pump can now stop despite sender
-    // clones, but the obsolete stream tasks still must not survive a reconnect.
+    // The generation owns reader, writer and optional decrypt pipeline through shutdown.
     tasks: TcpStreamTasks,
     cfg: StreamPump,
 ) -> ClientStreamSender
@@ -4669,7 +4621,7 @@ where
             // `rec_tx`. Never blocks (the TUN send is drop-on-full), so it always
             // drains the FIFO — the reader's backpressure send can therefore
             // always make progress (no deadlock).
-            let __h = tokio::spawn(async move {
+            tasks.spawn(async move {
                 let mut unsupported_downlink_drops = 0u64;
                 while let Some(mut record) = rec_rx.recv().await {
                     match inner_rx_codec.decrypt_packet_in_place(record.as_vec_mut()) {
@@ -4700,7 +4652,6 @@ where
                     }
                 }
             });
-            register_tcp_stream_task(&tasks, __h);
             RxSink::Pipe(rec_tx)
         } else {
             RxSink::Inline {
@@ -4711,7 +4662,7 @@ where
         };
 
         // Stage A: socket read (+ outer decrypt/framing for reality-tls) → sink.
-        let __h = tokio::spawn(async move {
+        tasks.spawn(async move {
             let mut unsupported_downlink_drops = 0u64;
             loop {
                 let mut record = match record_pool.acquire().await {
@@ -4796,7 +4747,6 @@ where
                 last_live_lost_at.as_ref(),
             );
         });
-        register_tcp_stream_task(&tasks, __h);
     }
 
     // Writer + heartbeat: outgoing plaintext → encrypt → socket.
@@ -4809,7 +4759,7 @@ where
         let last_live_lost_at = last_live_lost_at.clone();
         let stream_stop_tx = stream_stop_tx.clone();
         let mut stream_stop_rx = stream_stop_tx.subscribe();
-        let __h = tokio::spawn(async move {
+        tasks.spawn(async move {
             let mut idle_tick = tokio::time::interval(Duration::from_secs(5));
             idle_tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
             let mut last_tick_wall = std::time::SystemTime::now();
@@ -5101,7 +5051,6 @@ where
                 last_live_lost_at.as_ref(),
             );
         });
-        register_tcp_stream_task(&tasks, __h);
     }
 
     stream_sender
@@ -5496,8 +5445,9 @@ where
     let (dead_tx, mut dead_rx) = mpsc::channel::<()>(1);
     // Live outgoing channels — one per active stream; the distributor round-robins
     // across them. The adaptive ramp task grows this Vec at runtime.
-    // Handles for every task the bonded streams spawn, so the teardown can stop them.
-    let stream_tasks: TcpStreamTasks = Arc::new(std::sync::Mutex::new(Vec::new()));
+    // Own all stream tasks, their producers, and Linux path workers through teardown.
+    let mut connection_tasks = crate::transport_core::tasks::TaskGroup::default();
+    let stream_tasks = connection_tasks.spawner();
     let outs: Arc<std::sync::Mutex<Vec<ClientStreamSender>>> =
         Arc::new(std::sync::Mutex::new(Vec::new()));
     let active_slots = tcp_resume.as_ref().map(|_| {
@@ -5646,10 +5596,6 @@ where
     let next_join_index = Arc::new(std::sync::atomic::AtomicUsize::new(target.max(1)));
     let join_in_flight = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    // Handle of the adaptive ramp task (if any) so teardown can abort it. Otherwise it
-    // keeps opening bonded streams for an obsolete connection generation.
-    let mut ramp_handle: Option<tokio::task::JoinHandle<()>> = None;
-
     if bonding && !adaptive {
         // FIXED: open the remaining streams now.
         for idx in 1..target {
@@ -5726,7 +5672,7 @@ where
         let resume_r = tcp_resume.clone();
         let active_slots_r = active_slots.clone();
         let last_live_lost_at_r = last_live_lost_at.clone();
-        ramp_handle = Some(tokio::spawn(async move {
+        stream_tasks.spawn(async move {
             let mut last_bytes = 0u64;
             let mut best_rate = 0u64;
             let mut grace = 0u32;
@@ -5819,13 +5765,13 @@ where
                 }
                 joining_r.store(false, Ordering::Release);
             }
-        }));
+        });
     }
 
     // Restore lost members of an established bond. Previously a dead secondary
     // merely reduced `live`; once the ramp task had ended nothing ever recreated
     // it, so a long-lived multipath session silently degraded to one stream.
-    let maintenance_handle = if bonding || tcp_resume.is_some() {
+    if bonding || tcp_resume.is_some() {
         let outs_m = outs.clone();
         let stream_tasks_m = stream_tasks.clone();
         let total_m = total_tx.clone();
@@ -5849,7 +5795,7 @@ where
         let path_controller_m = path_controller.clone();
         #[cfg(feature = "experimental-roaming")]
         let handover_enabled_m = tcp_handover_enabled;
-        Some(tokio::spawn(async move {
+        stream_tasks.spawn(async move {
             let mut tick = tokio::time::interval(TCP_RESUME_MAINTENANCE_TICK);
             tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
             loop {
@@ -5996,13 +5942,11 @@ where
                     break;
                 }
             }
-        }))
-    } else {
-        None
-    };
+        });
+    }
 
     #[cfg(feature = "experimental-roaming")]
-    let handover_handle = path_controller.map(|path_controller| {
+    if let Some(path_controller) = path_controller {
         let handover_enabled = tcp_handover_enabled;
         let outs_h = outs.clone();
         let stream_tasks_h = stream_tasks.clone();
@@ -6021,7 +5965,7 @@ where
         let resume_h = tcp_resume.clone();
         let active_slots_h = active_slots.clone();
         let last_live_lost_at_h = last_live_lost_at.clone();
-        tokio::spawn(async move {
+        stream_tasks.spawn(async move {
             let mut tick = tokio::time::interval(TCP_HANDOVER_POLL);
             tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
             loop {
@@ -6198,19 +6142,24 @@ where
                 }
                 joining_h.store(false, Ordering::Release);
             }
-        })
-    });
+        });
+    }
 
     #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    let path_monitor_handle = linux_path_controller.map(|path_controller| {
-        roaming_linux::spawn(path_controller, tun_name.clone(), path_generation)
-    });
+    if let Some(path_controller) = linux_path_controller {
+        stream_tasks.spawn(roaming_linux::run(
+            path_controller,
+            tun_name.clone(),
+            path_generation,
+            stream_tasks.clone(),
+        ));
+    }
 
     // Distributor: FLOW-PIN TUN packets across the live bonded streams (by inner
     // 5-tuple) so each connection stays in order. Each stream's tasks own
     // encrypt/heartbeat/idle; a dead stream fires dead_rx.
     let mut unsupported_inner_drops = 0u64;
-    let mut terminal_kick: Option<crate::protocol::control_v2::Kick> = None;
+    let mut result = Ok(());
     loop {
         tokio::select! {
             biased;
@@ -6221,9 +6170,15 @@ where
                 if changed.is_err() { break; }
                 let event = management_rx.borrow_and_update().clone();
                 if let Some(event) = event {
-                    core.management_event(&event)?;
+                    if let Err(error) = core.management_event(&event) {
+                        result = Err(error);
+                        break;
+                    }
                     if let crate::protocol::control_v2::ManagementEvent::Kick(kick) = event {
-                        terminal_kick = Some(kick);
+                        result = Err(ServerKickError {
+                            message: kick.message,
+                            reconnect_allowed: kick.reconnect_allowed,
+                        }.into());
                         break;
                     }
                 }
@@ -6281,8 +6236,6 @@ where
         }
     }
 
-    // Stop the adaptive ramp task first: it loops indefinitely trying to add bonded
-    // streams and must not create sockets for an obsolete connection generation.
     // Only an intentional application shutdown is terminal. A carrier failure must retain the
     // server session so hard resume can reuse the existing NetworkPlan and TUN.
     #[cfg(feature = "experimental-roaming")]
@@ -6290,26 +6243,9 @@ where
         send_tcp_close_session(&outs).await;
     }
 
-    if let Some(h) = ramp_handle {
-        h.abort();
-    }
-    if let Some(h) = maintenance_handle {
-        h.abort();
-    }
-    #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    if let Some(h) = path_monitor_handle {
-        h.abort();
-    }
-    #[cfg(feature = "experimental-roaming")]
-    if let Some(h) = handover_handle {
-        h.abort();
-    }
-    // Same reasoning for the per-stream tasks. A reader can sit in `read_record` on a
-    // half-open socket forever; abort cancels it at that await point before the shared
-    // TUN backend releases this generation's descriptors.
-    for h in crate::util::lock_or_recover(&stream_tasks, "client::stream_tasks").drain(..) {
-        h.abort();
-    }
+    // Seal admission before aborting producers and streams together. Await every task
+    // (including Linux path workers) before restoring DNS or releasing the TUN.
+    connection_tasks.finish().await;
     #[cfg(target_os = "linux")]
     let dns_cleanup_error = tun_guard
         .failures
@@ -6338,14 +6274,6 @@ where
         .err()
     } else {
         None
-    };
-    let result = match terminal_kick {
-        Some(kick) => Err(ServerKickError {
-            message: kick.message,
-            reconnect_allowed: kick.reconnect_allowed,
-        }
-        .into()),
-        None => Ok(()),
     };
     #[cfg(target_os = "linux")]
     let result = {
@@ -10340,13 +10268,19 @@ pub(crate) async fn run_udp_tunnel(
     let mut udp_receive_task =
         spawn_client_udp_receive_pump(socket.clone(), 0, received_tx.clone());
     #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    let path_monitor_handle = if udp_handover_enabled {
-        linux_path_controller.map(|path_controller| {
-            roaming_linux::spawn(path_controller, tun_name.clone(), path_generation)
-        })
-    } else {
-        None
-    };
+    let mut path_monitor_tasks = crate::transport_core::tasks::TaskGroup::default();
+    #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
+    if udp_handover_enabled {
+        if let Some(path_controller) = linux_path_controller {
+            let tasks = path_monitor_tasks.spawner();
+            tasks.spawn(roaming_linux::run(
+                path_controller,
+                tun_name.clone(),
+                path_generation,
+                tasks.clone(),
+            ));
+        }
+    }
     let (_candidate_connect_tx, mut candidate_connect_rx) =
         mpsc::channel::<(PreparedPathCandidate, anyhow::Result<UdpSocket>)>(1);
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
@@ -12132,9 +12066,7 @@ pub(crate) async fn run_udp_tunnel(
     }
 
     #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    if let Some(task) = path_monitor_handle {
-        task.abort();
-    }
+    path_monitor_tasks.finish().await;
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
     let connect_was_in_flight = if let Some(task) = candidate_connect_task.take() {
         task.abort();
@@ -13250,5 +13182,125 @@ mod device_id_tests {
         assert_eq!(std::fs::read(&path).unwrap(), ids[0]);
         let _ = std::fs::remove_file(&path);
         let _ = std::fs::remove_file(format!("{}.lock", path.display()));
+    }
+}
+
+// The host fixture uses the same stream pumps as every native client, with an in-memory TUN.
+#[cfg(all(test, any(target_os = "windows", target_os = "ios")))]
+mod tcp_task_shutdown_tests {
+    use super::*;
+    use std::pin::Pin;
+    use std::task::{Context, Poll};
+    use tokio::io::{AsyncReadExt, ReadBuf};
+
+    struct ObservedRead<R> {
+        inner: R,
+        started: Option<tokio::sync::oneshot::Sender<()>>,
+    }
+    impl<R: AsyncRead + Unpin> AsyncRead for ObservedRead<R> {
+        fn poll_read(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+            buf: &mut ReadBuf<'_>,
+        ) -> Poll<std::io::Result<()>> {
+            if let Some(started) = self.started.take() {
+                let _ = started.send(());
+            }
+            Pin::new(&mut self.inner).poll_read(cx, buf)
+        }
+    }
+
+    async fn stopped_stream(pipeline_rx: bool) {
+        let mut tasks = crate::transport_core::tasks::TaskGroup::default();
+        let (socket, mut peer) = tokio::io::duplex(128);
+        let (read, write) = tokio::io::split(socket);
+        let (started, ready) = tokio::sync::oneshot::channel();
+        let read = ObservedRead {
+            inner: read,
+            started: Some(started),
+        };
+        let (to_tun, from_stream) = std::sync::mpsc::sync_channel(2);
+        let pool = crate::transport_core::buffer_pool::BufferPool::new(4, 2048).unwrap();
+        let tun = TunWriter::from_parts(to_tun, pool);
+        let (dead, _) = mpsc::channel(1);
+        let shaping = crate::protocol::ShapingConfig::default();
+        let cover_budget =
+            crate::protocol::Shaper::shared_budget(&shaping, std::time::Instant::now());
+        let (management_tx, _) = tokio::sync::watch::channel(None);
+        let sender = spawn_stream(
+            read,
+            write,
+            PacketCodec::new_raw([1; 32]),
+            PacketCodec::new_raw([2; 32]),
+            tun,
+            dead,
+            Arc::new(AtomicU64::new(0)),
+            Arc::new(AtomicU64::new(0)),
+            Arc::new(RuntimeCounters::default()),
+            Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+            0,
+            None,
+            None,
+            tasks.spawner(),
+            StreamPump {
+                framing: Framing::Raw,
+                family_mode: crate::transport_core::NetworkFamilyMode::Ipv4,
+                heartbeat_enabled: false,
+                heartbeat_interval: Duration::from_secs(60),
+                idle_timeout: Duration::from_secs(60),
+                tun_mtu: 1400,
+                hb_data: 0,
+                hb_jitter: 0,
+                padding_enabled: false,
+                padding_min: 0,
+                padding_max: 0,
+                padding_randomize: false,
+                padding_prob: 0.0,
+                norm_enabled: false,
+                norm_sizes: vec![],
+                shaping,
+                recordizer: None,
+                cover_budget,
+                pipeline_rx,
+                management_v1: false,
+                management_reassembler: Arc::new(std::sync::Mutex::new(
+                    crate::protocol::control_v2::Reassembler::new(),
+                )),
+                management_tx,
+            },
+        );
+        tokio::time::timeout(Duration::from_secs(5), ready)
+            .await
+            .unwrap()
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(5), tasks.finish())
+            .await
+            .unwrap();
+        assert!(sender.sender.is_closed(), "writer still owns its queue");
+        assert!(
+            matches!(
+                from_stream.try_recv(),
+                Err(std::sync::mpsc::TryRecvError::Disconnected)
+            ),
+            "reader/pipeline still owns TUN"
+        );
+        assert_eq!(
+            tokio::time::timeout(Duration::from_secs(5), peer.read(&mut [0; 1]))
+                .await
+                .unwrap()
+                .unwrap(),
+            0,
+            "socket halves still alive"
+        );
+    }
+
+    #[tokio::test]
+    async fn shutdown_releases_inline_stream_socket_queues_and_tun() {
+        stopped_stream(false).await;
+    }
+
+    #[tokio::test]
+    async fn shutdown_releases_pipeline_stream_socket_queues_and_tun() {
+        stopped_stream(true).await;
     }
 }

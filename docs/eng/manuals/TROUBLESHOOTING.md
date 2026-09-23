@@ -1016,6 +1016,20 @@ history of every retry. User hook scripts may still change firewall state indepe
 
 ---
 
+### 6.22 TCP: shutdown waits for background work
+
+Normal shutdown closes TCP-task admission and joins readers/writers, the decrypt pipeline
+and connection-maintenance tasks before network cleanup. Management-event errors follow
+the same sequence. The Linux TCP and UDP path monitor also waits for running route reads
+or path updates. Shutdown can therefore wait for a system command to finish; those commands
+do not yet have a finite execution deadline.
+
+If shutdown is delayed, inspect logs and child ip/iptables/resolvectl processes. A stop
+request alone does not prove network cleanup is complete. Forcing process termination cannot
+guarantee joining, network restoration or post_down. See [the report and validation limits](../reports/AUDIT-Q25-TCP-TASKS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)
