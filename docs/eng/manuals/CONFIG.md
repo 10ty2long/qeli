@@ -2577,6 +2577,18 @@ These rules apply to both client and server hooks:
   a group change have no group-termination guarantee. Qeli does not manage such a service.
   Do not rely on the temporary `QELI_CONTEXT_FILE` after the hook returns.
 
+### Linux TUN and DNS system commands
+
+Built-in TUN setup/removal commands (`ip` in the interface adapter) and client `resolvectl`
+calls have a 15-second execution deadline and a 16 MiB limit for each stdout/stderr stream.
+Timeout or output overflow returns an error after attempting to terminate and wait for the
+process. Partial output is not used. The DNS marker remains until confirmed revert; timeout
+does not mean that the command made no changes.
+
+These are internal bounds, with no new INI key. User-hook deadlines are unchanged. Route
+and firewall commands are not migrated yet; 15 seconds does not define total shutdown time.
+[Scope and limitations](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+
 ### Server hooks
 
 Normal shutdown of a `reality-tls` profile joins internal H2 drivers/bridges and rejection

@@ -545,6 +545,13 @@ teardown; flush отказа сохраняет pre-auth slot до освобо�
 969 Rust tests PASS. H2/ProfileTasks/semaphore проверены на host, production Linux только
 кросс-компилирован. Остальные сценарии раздела и live Linux E2E остаются открытыми.
 
+**Системные команды TUN/DNS, 23 сентября 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 секунд на команду, полный
+вывод с лимитом 16 МиБ на поток, завершение дочернего процесса и сохранение DNS marker
+при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
+PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
+Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -682,6 +689,13 @@ TTL всех возвращаемых секций, структуру расп�
 проходят, два Linux adapter-теста только cross-check. 921 host Rust tests PASS. Live Linux
 E2E, сроки выполнения команд и полное ожидание задач поколения ещё открыты.
 
+**Системные команды TUN/DNS, 23 сентября 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 секунд на команду, полный
+вывод с лимитом 16 МиБ на поток, завершение дочернего процесса и сохранение DNS marker
+при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
+PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
+Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
+
 ### 20. DHCP и lease lifecycle
 
 **Код:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.
@@ -719,6 +733,13 @@ TUN host prefixes, TAP ARP/NDP/RA/DAD, unsupported EtherType/VLAN/multicast. MTU
 начатого shutdown и занятый blocking pool. Семь новых host-регрессий; 947 Rust tests PASS.
 Unix-тест дескрипторов только кросс-компилирован. Реальные устройства/драйверы и остальные
 сценарии раздела не проверены; полный аудит остаётся открытым.
+
+**Системные команды TUN/DNS, 23 сентября 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 секунд на команду, полный
+вывод с лимитом 16 МиБ на поток, завершение дочернего процесса и сохранение DNS marker
+при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
+PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
+Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
 
 ### 22. Transport core, FFI/JNI и память
 
@@ -937,6 +958,13 @@ TCP-группа создаётся до connect и ждёт driver/bridge; nati
 отмене попытки. Девять новых регрессий, 956 Rust tests PASS; Linux только cross-check.
 Серверный H2 проверен далее в [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
 Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
+
+**Системные команды TUN/DNS, 23 сентября 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 секунд на команду, полный
+вывод с лимитом 16 МиБ на поток, завершение дочернего процесса и сохранение DNS marker
+при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
+PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
+Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
 
 ### 26. Общий C# и managed/native граница
 

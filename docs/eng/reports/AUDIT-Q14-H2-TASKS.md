@@ -83,3 +83,7 @@ deadlines, other pre-auth/TLS scenarios and target-device validation remain open
 
 Previous passes: [profile lifecycle](AUDIT-Q14-Q19-LIFECYCLE.md) and
 [client H2 tasks](AUDIT-Q25-H2-TASKS.md).
+
+Follow-up on 23 September: [Q25-F016/F017](AUDIT-Q25-SYSTEM-COMMANDS.md) bounds
+TUN/resolvectl commands and tests DNS-marker retention on errors. Route/firewall commands
+and an overall shutdown deadline remain open.

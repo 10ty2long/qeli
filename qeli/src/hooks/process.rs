@@ -1,8 +1,12 @@
-//! Owned command lifetime for Linux hooks and credential suppliers.
+//! Owned command lifetime for Linux hooks, credential suppliers and network commands.
 //! Hooks keep diagnostic tails; credential output is collected separately and never logged.
+#[path = "output.rs"]
+mod output;
 #[cfg(any(test, feature = "client"))]
 #[path = "secret.rs"]
 pub(crate) mod secret;
+pub(crate) use output::run as run_output;
+
 use std::collections::VecDeque;
 use std::io;
 use std::process::{ExitStatus, Stdio};

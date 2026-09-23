@@ -1022,7 +1022,8 @@ Normal shutdown closes TCP-task admission and joins readers/writers, the decrypt
 and connection-maintenance tasks before network cleanup. Management-event errors follow
 the same sequence. The Linux TCP and UDP path monitor also waits for running route reads
 or path updates. Shutdown can therefore wait for a system command to finish; those commands
-do not yet have a finite execution deadline.
+do not yet have a finite execution deadline for route operations. TUN and resolvectl commands
+have separate [bounds](#627-linux-system-command-timed-out-or-output-limit-exceeded).
 
 If shutdown is delayed, inspect logs and child ip/iptables/resolvectl processes. A stop
 request alone does not prove network cleanup is complete. Forcing process termination cannot
@@ -1082,6 +1083,21 @@ while the connection sends the rejection; the flush has a one-second limit. H2 2
 mean inner AUTH has succeeded. This does not guarantee an overall shutdown deadline or
 joining when the runtime is destroyed. Linux runtime validation remains open;
 [report and reproducers](../reports/AUDIT-Q14-H2-TASKS.md).
+
+---
+
+### 6.27 Linux: system command timed out or output limit exceeded
+
+For TUN-interface commands and client `resolvectl`, these errors mean exceeding 15 seconds
+or 16 MiB on one output stream. Spawn errors and nonzero exit codes remain distinct. Qeli
+attempts to terminate the child and, on Linux, its group, then waits for exit; partial output
+is never accepted as a command result.
+
+Timeout does not prove that nothing changed. A failed `resolvectl revert` retains its marker
+for recovery retry. Immediate rollback failures now appear in the log; an attempted rollback
+does not mean successful revert. Check the affected interface and systemd-resolved state.
+Total shutdown time still depends on other work: route/firewall commands retain the previous
+runner, and kill/reap can wait on the kernel. [Report and tests](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
 
 ---
 

@@ -540,6 +540,13 @@ teardown; a rejection flush retains its pre-auth slot until I/O release. 13 new 
 969 Rust tests PASS. H2/ProfileTasks/semaphores were exercised on the host; production Linux
 was cross-compiled only. Other section scenarios and live Linux E2E remain open.
 
+**TUN/DNS system commands, 23 September 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 seconds per command, complete
+output capped at 16 MiB per stream, child termination and DNS-marker retention on failure.
+Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
+process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
+overall shutdown deadline remain open; section status stays IN_PROGRESS.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -675,6 +682,13 @@ core ACK; terminal kick types survive combined cleanup errors. Eight new host te
 two Linux adapter cases are cross-checked only. 921 host Rust tests PASS. Live Linux E2E,
 command deadlines and complete generation-task joining remain open.
 
+**TUN/DNS system commands, 23 September 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 seconds per command, complete
+output capped at 16 MiB per stream, child termination and DNS-marker retention on failure.
+Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
+process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
+overall shutdown deadline remain open; section status stays IN_PROGRESS.
+
 ### 20. DHCP and lease lifecycle
 
 **Source:** `qeli/src/server/dhcp.rs`, `qeli/src/config/server.rs`.
@@ -712,6 +726,13 @@ Shared TunWorkers retains Unix TUN/Wintun thread ownership through joining, incl
 cancelled shutdown and a saturated blocking pool. Seven new host regressions; 947 Rust
 tests PASS. The Unix descriptor test was cross-compiled only. Real devices/drivers and
 other section scenarios remain unverified; the full audit is still open.
+
+**TUN/DNS system commands, 23 September 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 seconds per command, complete
+output capped at 16 MiB per stream, child termination and DNS-marker retention on failure.
+Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
+process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
+overall shutdown deadline remain open; section status stays IN_PROGRESS.
 
 ### 22. Transport core, FFI/JNI and memory
 
@@ -930,6 +951,13 @@ The TCP group starts before connect and joins drivers/bridges; the native runner
 it across attempt cancellation. Nine new regressions, 956 Rust tests PASS; Linux is
 cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../reports/AUDIT-Q14-H2-TASKS.md).
 Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
+
+**TUN/DNS system commands, 23 September 2026:**
+[Q25-F016/F017](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md): 15 seconds per command, complete
+output capped at 16 MiB per stream, child termination and DNS-marker retention on failure.
+Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
+process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
+overall shutdown deadline remain open; section status stays IN_PROGRESS.
 
 ### 26. Shared C# and managed/native boundary
 

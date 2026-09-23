@@ -83,3 +83,7 @@ Public standalone accept/connect сохраняют отмену из Drop бе�
 
 Предыдущие этапы: [жизненный цикл профиля](AUDIT-Q14-Q19-LIFECYCLE.md) и
 [клиентские H2-задачи](AUDIT-Q25-H2-TASKS.md).
+
+Продолжение от 23 сентября: [Q25-F016/F017](AUDIT-Q25-SYSTEM-COMMANDS.md) ограничивает
+команды TUN/resolvectl и проверяет сохранение DNS marker при ошибках. Маршрутные/firewall
+команды и общий срок остановки остаются открытыми.

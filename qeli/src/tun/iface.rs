@@ -185,7 +185,7 @@ impl TunInterface {
                 ),
             ));
         }
-        let output = std::process::Command::new("ip")
+        let output = crate::system_command::Command::new("ip")
             .args([
                 "addr",
                 "add",
@@ -205,7 +205,7 @@ impl TunInterface {
     }
 
     pub fn set_up(ifname: &str, mtu: i32) -> io::Result<()> {
-        let output = std::process::Command::new("ip")
+        let output = crate::system_command::Command::new("ip")
             .args(["link", "set", "dev", ifname, "up", "mtu", &mtu.to_string()])
             .output()?;
 
@@ -223,7 +223,7 @@ impl TunInterface {
             .map(|byte| format!("{byte:02x}"))
             .collect::<Vec<_>>()
             .join(":");
-        let output = std::process::Command::new("ip")
+        let output = crate::system_command::Command::new("ip")
             .args(["link", "set", "dev", ifname, "address", &address])
             .output()?;
         if !output.status.success() {
@@ -235,7 +235,7 @@ impl TunInterface {
     }
 
     pub fn set_queue_len(ifname: &str, len: u32) -> io::Result<()> {
-        let output = std::process::Command::new("ip")
+        let output = crate::system_command::Command::new("ip")
             .args(["link", "set", "dev", ifname, "txqueuelen", &len.to_string()])
             .output()?;
 
@@ -273,7 +273,9 @@ impl TunInterface {
                     args.push("multi_queue");
                 }
                 args.extend(["name", ifname]);
-                let output = std::process::Command::new("ip").args(&args).output()?;
+                let output = crate::system_command::Command::new("ip")
+                    .args(&args)
+                    .output()?;
                 if output.status.success() {
                     return Ok(());
                 }

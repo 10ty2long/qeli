@@ -1,6 +1,38 @@
-//! Recovery of snapshots written by older Linux clients. New sessions use per-link DNS.
+//! DNS recovery records: per-link ownership markers and legacy resolver snapshots.
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+/// Keep per-link ownership until the adapter confirms revert. The callback lets the same
+/// file/command ordering be tested on the host without changing system DNS.
+pub(crate) fn revert_link_marker(
+    path: &Path,
+    revert: impl FnOnce(&str) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let ifname = match std::fs::read_to_string(path) {
+        Ok(ifname) => ifname,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => anyhow::bail!(
+            "cannot read DNS ownership marker {}: {error}",
+            path.display()
+        ),
+    };
+    let ifname = ifname.trim();
+    if !ifname.is_empty() {
+        revert(ifname).map_err(|error| {
+            anyhow::anyhow!(
+                "DNS revert on {ifname} failed: {error} — marker kept at {} for a later retry",
+                path.display()
+            )
+        })?;
+        log::info!("Reverted resolvectl config on {}", ifname);
+    }
+    remove_if_present(path).map_err(|error| {
+        anyhow::anyhow!(
+            "cannot retire DNS ownership marker {} after revert: {error}",
+            path.display()
+        )
+    })
+}
 
 /// Snapshot of `/etc/resolv.conf` before qeli touched it.
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -277,5 +309,67 @@ mod tests {
             0o640
         );
         assert!(!f.backup.exists());
+    }
+    #[test]
+    fn link_marker_survives_timeout_overflow_spawn_and_revert_failures() {
+        for kind in [
+            std::io::ErrorKind::TimedOut,
+            std::io::ErrorKind::InvalidData,
+            std::io::ErrorKind::NotFound,
+            std::io::ErrorKind::Other,
+        ] {
+            let f = Fixture::new(serde_json::json!({}));
+            std::fs::write(&f.resolv, b" vpn-test \n").unwrap();
+            let error = revert_link_marker(&f.resolv, |ifname| {
+                assert_eq!(ifname, "vpn-test");
+                Err(std::io::Error::new(kind, "fixture command failure").into())
+            })
+            .unwrap_err();
+            assert!(error.to_string().contains("marker kept"));
+            assert_eq!(std::fs::read(&f.resolv).unwrap(), b" vpn-test \n");
+            revert_link_marker(&f.resolv, |ifname| {
+                assert_eq!(ifname, "vpn-test");
+                Ok(())
+            })
+            .unwrap();
+            assert!(!f.resolv.exists());
+        }
+    }
+
+    #[test]
+    fn link_marker_is_retired_only_after_success_and_absence_is_idempotent() {
+        let f = Fixture::new(serde_json::json!({}));
+        std::fs::write(&f.resolv, b"vpn-test").unwrap();
+        revert_link_marker(&f.resolv, |ifname| {
+            assert_eq!(ifname, "vpn-test");
+            assert_eq!(std::fs::read(&f.resolv).unwrap(), b"vpn-test");
+            Ok(())
+        })
+        .unwrap();
+        assert!(!f.resolv.exists());
+        revert_link_marker(&f.resolv, |_| {
+            panic!("absent marker must not run a command")
+        })
+        .unwrap();
+        std::fs::write(&f.resolv, b" \n").unwrap();
+        revert_link_marker(&f.resolv, |_| panic!("empty marker must not run a command")).unwrap();
+        assert!(!f.resolv.exists());
+    }
+
+    #[test]
+    fn invalid_link_marker_and_failed_retirement_report_errors() {
+        let f = Fixture::new(serde_json::json!({}));
+        std::fs::write(&f.resolv, [0xff]).unwrap();
+        assert!(revert_link_marker(&f.resolv, |_| panic!("invalid marker")).is_err());
+        assert_eq!(std::fs::read(&f.resolv).unwrap(), [0xff]);
+        std::fs::write(&f.resolv, b"vpn-test").unwrap();
+        let error = revert_link_marker(&f.resolv, |_| {
+            std::fs::remove_file(&f.resolv).unwrap();
+            std::fs::create_dir(&f.resolv).unwrap();
+            Ok(())
+        })
+        .unwrap_err();
+        assert!(error.to_string().contains("cannot retire"));
+        assert!(f.resolv.is_dir());
     }
 }

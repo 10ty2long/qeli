@@ -74,6 +74,13 @@ are joined by the profile. A flush retains pre-auth admission until I/O release,
 successful accept returns it to inner AUTH. Public standalone accept/connect retain their
 previous cancellation contract; [server report](../reports/AUDIT-Q14-H2-TASKS.md).
 
+
+Linux system commands (23 September 2026): the shared TUN adapter and client resolvectl
+use one runner with a 15-second deadline, complete output up to 16 MiB per stream and
+Child ownership through termination. DNS markers survive timeout/failure. This is the
+Linux setup/rollback layer, with no ABI or GUI native-library changes; route/firewall
+migration remains open. [Report](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+
 ---
 
 ## 1. The verdict: what justifies this, and what does not

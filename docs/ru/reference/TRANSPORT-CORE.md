@@ -75,6 +75,13 @@ ABI 1.16; [клиентский отчёт](../reports/AUDIT-Q25-H2-TASKS.md).
 успешный accept возвращает его внутренней AUTH. Public standalone accept/connect сохраняют
 прежний контракт отмены; [серверный отчёт](../reports/AUDIT-Q14-H2-TASKS.md).
 
+
+Linux system commands (23 сентября 2026): общий адаптер TUN и клиентский resolvectl
+используют один runner с 15-секундным deadline, полным выводом до 16 МиБ на поток и
+владением Child до завершения. DNS marker сохраняется при timeout/ошибке. Это Linux
+setup/rollback слой, без изменения ABI и GUI native-библиотек; маршруты/firewall ещё
+требуют переноса. [Отчёт](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+
 ---
 
 ## 1. Вердикт: чем это оправдано, а чем — нет

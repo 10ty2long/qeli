@@ -103,53 +103,29 @@ pub fn setup_network_plan_dns(
     // revert and only remove the marker after a confirmed successful command.
     anyhow::bail!(
         "systemd-resolved is the active resolver, but per-link DNS could not be fully applied \
-         to {ifname}; the partial change was reverted and qeli refused a persistent \
-         {RESOLV_PATH} takeover. Check the preceding resolvectl error, or set `dns = off`"
+         to {ifname}; rollback was attempted and the ownership marker is retained for retry. \
+         Qeli refused a persistent {RESOLV_PATH} takeover. Check the preceding resolvectl error, or set `dns = off`"
     )
 }
 
 /// Revert the `resolvectl` per-link config recorded for one interface, if any.
 fn revert_resolvectl_marker(path: &std::path::Path) -> anyhow::Result<()> {
-    let ifname = match std::fs::read_to_string(path) {
-        Ok(ifname) => ifname,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => anyhow::bail!(
-            "cannot read DNS ownership marker {}: {error}",
-            path.display()
-        ),
-    };
-    let ifname = ifname.trim();
-    if ifname.is_empty() {
-        std::fs::remove_file(path).map_err(|error| {
-            anyhow::anyhow!("cannot remove empty DNS marker {}: {error}", path.display())
-        })?;
-        return Ok(());
-    }
+    crate::dns_backup::revert_link_marker(path, revert_resolvectl_link)
+}
+
+fn revert_resolvectl_link(ifname: &str) -> anyhow::Result<()> {
     let output = resolvectl_cmd()
         .args(["revert", ifname])
         .output()
         .map_err(|error| anyhow::anyhow!("cannot run resolvectl revert {ifname}: {error}"))?;
     if !output.status.success() {
-        // Keep the marker: dropping it discarded the only record that this link
-        // still carries our DNS config, so nothing would ever retry — matching
-        // how a failed resolv.conf restore keeps its backup.
         anyhow::bail!(
-            "resolvectl revert {} failed with {}: {} — marker kept at {} for a later retry",
-            ifname,
+            "resolvectl revert {ifname} failed with {}: {}",
             output.status,
-            String::from_utf8_lossy(&output.stderr).trim(),
-            path.display()
+            String::from_utf8_lossy(&output.stderr).trim()
         );
     }
-    log::info!("Reverted resolvectl config on {}", ifname);
-    match std::fs::remove_file(path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => anyhow::bail!(
-            "DNS was reverted on {ifname}, but marker {} could not be removed: {error}",
-            path.display()
-        ),
-    }
+    Ok(())
 }
 
 /// Does a network interface with this name currently exist?
@@ -354,8 +330,10 @@ fn which_resolvectl() -> Option<String> {
 /// spawn, the caller read that as "resolvectl did not work". Falls back to the bare name
 /// when the binary is somewhere unusual, so
 /// a working `PATH` still succeeds. (Audit 2026-07-30.)
-fn resolvectl_cmd() -> std::process::Command {
-    std::process::Command::new(which_resolvectl().unwrap_or_else(|| "resolvectl".to_string()))
+fn resolvectl_cmd() -> crate::system_command::Command {
+    crate::system_command::Command::new(
+        which_resolvectl().unwrap_or_else(|| "resolvectl".to_string()),
+    )
 }
 
 /// The `resolvectl domain` list for the tunnel link.
@@ -373,6 +351,14 @@ fn routing_domains(config: &ClientDnsConfig) -> Vec<String> {
 #[cfg(test)]
 fn try_resolvectl(config: &ClientDnsConfig, ifname: &str, dns_addr: &str) -> bool {
     try_resolvectl_many(config, ifname, &[dns_addr.to_string()])
+}
+
+// Immediate rollback is best-effort; the durable marker remains for generation cleanup.
+// Never report that rollback succeeded merely because the command was attempted.
+fn attempt_resolvectl_revert(ifname: &str) {
+    if let Err(error) = revert_resolvectl_link(ifname) {
+        log::warn!("{error} — ownership marker retained for retry");
+    }
 }
 
 fn try_resolvectl_many(config: &ClientDnsConfig, ifname: &str, dns_addrs: &[String]) -> bool {
@@ -397,7 +383,7 @@ fn try_resolvectl_many(config: &ClientDnsConfig, ifname: &str, dns_addrs: &[Stri
             ifname,
             detail
         );
-        let _ = resolvectl_cmd().args(["revert", ifname]).output();
+        attempt_resolvectl_revert(ifname);
         return false;
     }
 
@@ -440,7 +426,7 @@ fn try_resolvectl_many(config: &ClientDnsConfig, ifname: &str, dns_addrs: &[Stri
                 ifname,
                 domains.join(" ")
             );
-            let _ = resolvectl_cmd().args(["revert", ifname]).output();
+            attempt_resolvectl_revert(ifname);
             return false;
         }
     }

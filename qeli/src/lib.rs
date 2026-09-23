@@ -84,6 +84,13 @@ pub mod transport;
 #[path = "hooks/process.rs"]
 mod hook_process;
 
+// Synchronous Linux network setup/rollback commands share the owned process runner.
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+mod system_command;
+
 // Headless credential I/O, shutdown ordering and cleanup policy have portable host tests.
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod client_cleanup;
