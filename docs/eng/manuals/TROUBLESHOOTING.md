@@ -1314,13 +1314,16 @@ There are no new INI parameters.
 ### 6.39 Linux roaming: route mutation left platform state unknown
 
 A failed `ip route add/replace/del` can have changed the route before returning an error.
-Qeli checks the failed destination after rolling back earlier steps. Only a confirmed
-unchanged snapshot permits ordinary rejection and retention of the previous path.
-Changed, unreadable or ambiguous state returns `PlatformStateUnknown` through the
-controller and requires stopping the current connection generation.
+For a failed add/replace, Qeli checks the destination after rolling back earlier steps:
+ordinary rejection retaining the previous path requires confirmation of the previous state.
+Deletion and restoration use the subsequent snapshot regardless of command status:
+confirmed absence completes retirement, and an exact previous snapshot confirms restoration
+(see 6.42). Failure to confirm the previous state when rejecting a transaction returns
+`PlatformStateUnknown` through the controller and requires stopping the current connection
+generation.
 
 The messages `failed route mutation ... did not preserve the previous route` and
-`ambiguous carrier route snapshot` explain failed verification. Inspect the affected
+`ambiguous route snapshot` explain failed verification. Inspect the affected
 IPv4/IPv6 destination and earlier command errors. Multiple nonempty snapshot lines
 are rejected; multipath snapshot reconstruction is not implemented.
 
@@ -1362,6 +1365,27 @@ connection in this process. Shared ownership of that route is unsupported.
 `dev_attach=true` leaves routes to the external manager: Linux does not advertise
 `ROAMING_PATH`; `roaming=auto` uses reconnect and `required` is unavailable.
 [Regressions and limits](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
+
+### 6.42 Linux roaming: deletion or restoration was not confirmed
+
+`carrier route ... remains after retirement` means a route survived delete even if the
+command reported success or already absent. `changed before retirement` means the saved
+snapshot changed before deletion: Qeli does not delete the observed replacement or
+recreate a route that disappeared before that step.
+
+`could not restore carrier route ... snapshot differs` means the subsequent snapshot
+did not match the saved one; `could not verify restored carrier route` means the
+post-restoration check failed. Successful exit status alone is insufficient. A confirmed
+previous snapshot completes restoration even after a lost command result. Likewise,
+confirmed absence completes deletion.
+
+After a failure, Qeli verifies rollback of the completed steps. If the previous path's
+state cannot be established, the generation must stop instead of continuing on an assumed
+restoration. Inspect the affected destination, current snapshot and preceding errors;
+automatic recovery of unconfirmed/orphaned records is not implemented. Full semantic
+comparison of every attribute and atomic protection against external changes remain
+unsupported. There are no new INI parameters.
+[Regressions and limits](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md).
 
 ---
 

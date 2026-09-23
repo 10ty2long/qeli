@@ -94,19 +94,26 @@ fn recorded_route(spec: &[String]) -> anyhow::Result<Option<Vec<String>>> {
             String::from_utf8_lossy(&output.stderr).trim()
         );
     }
-    let text = String::from_utf8(output.stdout)?;
+    parse_route_snapshot(destination, &output.stdout)
+}
+
+pub(super) fn parse_route_snapshot(
+    destination: &str,
+    stdout: &[u8],
+) -> anyhow::Result<Option<Vec<String>>> {
+    let text = std::str::from_utf8(stdout)?;
     let mut lines = text.lines().filter(|line| !line.trim().is_empty());
     let route: Option<Vec<String>> = lines
         .next()
         .map(|line| line.split_whitespace().map(str::to_string).collect());
     if lines.next().is_some() {
-        anyhow::bail!("ambiguous owned route snapshot for {destination}");
+        anyhow::bail!("ambiguous route snapshot for {destination}");
     }
     if let Some(tokens) = &route {
         let index = usize::from(tokens.first().is_some_and(|s| s == "blackhole"));
         let observed = tokens.get(index).and_then(|s| prefix(s));
         if observed.is_none() || observed != prefix(destination) {
-            anyhow::bail!("invalid owned route snapshot for {destination}");
+            anyhow::bail!("invalid route snapshot for {destination}");
         }
     }
     Ok(route)

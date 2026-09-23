@@ -297,23 +297,31 @@ fn failed(action: &str, ipv6: bool, fault: Fault, expect_unknown: bool) {
     } else {
         current.clone()
     }]);
-    let error = prepared
-        .commit(if action == "del" {
-            std::slice::from_ref(&target)
-        } else {
-            &[]
-        })
-        .unwrap_err();
-    assert_eq!(
-        unknown(&error),
-        expect_unknown,
-        "{action} IPv6={ipv6}: {error}"
-    );
+    let completed_retirement =
+        action == "del" && matches!(fault, Fault::ApplyThenFail | Fault::ApplyThenIo(_));
+    let outcome = prepared.commit(if action == "del" {
+        std::slice::from_ref(&target)
+    } else {
+        &[]
+    });
+    if completed_retirement {
+        assert!(!expect_unknown);
+        outcome.unwrap();
+    } else {
+        let error = outcome.unwrap_err();
+        assert_eq!(
+            unknown(&error),
+            expect_unknown,
+            "{action} IPv6={ipv6}: {error}"
+        );
+    }
     assert!(fixture.kernel.lock().unwrap().fired);
     // An uncertain add cannot claim a prefix which a concurrent operator could have installed.
     assert_eq!(
         created_by_us_owned(&test_owner(), &carrier_route_undo(target)),
         action != "add"
+            && !completed_retirement
+            && !(action == "del" && matches!(fault, Fault::Foreign))
     );
     assert_eq!(
         fixture
@@ -346,14 +354,15 @@ fn failed(action: &str, ipv6: bool, fault: Fault, expect_unknown: bool) {
     }
     if action == "del" {
         let added = candidate(!ipv6).remote;
-        assert!(
-            !state.routes.contains_key(&added.to_string()),
-            "new family must roll back"
+        assert_eq!(
+            state.routes.contains_key(&added.to_string()),
+            completed_retirement,
+            "new family remains only after verified retirement"
         );
-        assert!(!created_by_us_owned(
-            &test_owner(),
-            &carrier_route_undo(added)
-        ));
+        assert_eq!(
+            created_by_us_owned(&test_owner(), &carrier_route_undo(added)),
+            completed_retirement
+        );
     }
 }
 
@@ -370,13 +379,13 @@ fn failed_replace_that_changed_kernel_state_is_not_reversible() {
     }
 }
 #[test]
-fn failed_retirement_that_deleted_the_route_is_not_reversible() {
+fn retirement_with_verified_absence_completes_despite_negative_status() {
     for ipv6 in [false, true] {
-        failed("del", ipv6, Fault::ApplyThenFail, true);
+        failed("del", ipv6, Fault::ApplyThenFail, false);
     }
 }
 #[test]
-fn lost_command_result_after_mutation_requires_unknown_outcome() {
+fn lost_result_is_unknown_unless_retirement_absence_is_confirmed() {
     for kind in [
         io::ErrorKind::TimedOut,
         io::ErrorKind::InvalidData,
@@ -384,7 +393,7 @@ fn lost_command_result_after_mutation_requires_unknown_outcome() {
     ] {
         for action in ["add", "replace", "del"] {
             for ipv6 in [false, true] {
-                failed(action, ipv6, Fault::ApplyThenIo(kind), true);
+                failed(action, ipv6, Fault::ApplyThenIo(kind), action != "del");
             }
         }
     }
@@ -568,14 +577,14 @@ fn ambiguous_initial_snapshot_rejects_before_any_mutation() {
 }
 
 #[test]
-fn earlier_retirement_is_restored_when_later_retirement_loses_its_result() {
+fn earlier_retirement_is_restored_when_later_verification_fails() {
     let first = candidate(false).remote;
     let second = candidate(true).remote;
     let mut new = candidate(false);
     new.remote = "203.0.113.20".parse().unwrap();
     let fixture = Fixture::new(
         vec![previous(first), previous(second)],
-        Some(("del", second, Fault::ApplyThenFail)),
+        Some(("del", second, Fault::Unreadable)),
     );
     seed_owned(first);
     seed_owned(second);
@@ -585,7 +594,7 @@ fn earlier_retirement_is_restored_when_later_retirement_loses_its_result() {
     assert!(unknown(&error), "{error}");
     let state = fixture.kernel.lock().unwrap();
     assert_eq!(state.routes[&first.to_string()], previous(first));
-    assert!(!state.routes.contains_key(&second.to_string()));
+    assert_eq!(state.routes[&second.to_string()], previous(second));
     assert!(!state.routes.contains_key(&new.remote.to_string()));
     assert!(created_by_us_owned(
         &test_owner(),
@@ -1424,3 +1433,6 @@ fn scope_platform_refresh_runs_only_inside_a_live_route_commit() {
     );
     assert_eq!(fixture.kernel.lock().unwrap().calls.len(), before);
 }
+
+#[path = "postcondition_tests.rs"]
+mod postcondition_tests;

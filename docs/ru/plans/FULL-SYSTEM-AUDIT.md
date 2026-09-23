@@ -1027,6 +1027,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
 осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
 
+**Дополнение 2026-09-23 — результаты retirement/restore:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): удаление требует
+подтверждённого отсутствия, восстановление — полного прежнего снимка. Потерянный
+результат не отменяет подтверждённое действие, ложный успех не подтверждает откат.
+16 новых baseline failures → 16 PASS; общий набор 1177 Rust tests, девять команд
+матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
+межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1093,6 +1101,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 завершения прежнего lease. 17 новых регрессий, 1161 Rust tests PASS; baseline — два
 целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
 осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — результаты retirement/restore:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): удаление требует
+подтверждённого отсутствия, восстановление — полного прежнего снимка. Потерянный
+результат не отменяет подтверждённое действие, ложный успех не подтверждает откат.
+16 новых baseline failures → 16 PASS; общий набор 1177 Rust tests, девять команд
+матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
+межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1275,6 +1291,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 завершения прежнего lease. 17 новых регрессий, 1161 Rust tests PASS; baseline — два
 целевых отказа. Attach-mode не объявляет managed roaming. Межпроцессная изоляция,
 осиротевшие/pending операции, TUN workers, deadlines и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — результаты retirement/restore:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): удаление требует
+подтверждённого отсутствия, восстановление — полного прежнего снимка. Потерянный
+результат не отменяет подтверждённое действие, ложный успех не подтверждает откат.
+16 новых baseline failures → 16 PASS; общий набор 1177 Rust tests, девять команд
+матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
+межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1553,9 +1577,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: подтверждение retirement/restore, контракт неизвестных
-pending мутаций и recovery осиротевших записей. Q25-F027/F028 изолирует живых владельцев
-маршрутов внутри процесса, но не завершает Q14-F027 TUN workers или crash/restart recovery.
-Затем ограничить команды routes/kill-switch/gateway. В 05 остаются общий preflight deadline
-и sync waits в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
-межпроцессная изоляция, native certification и полный benchmark остаются в плане.
+**Ближайшая работа:** продолжить 25: контракт неизвестных pending мутаций и recovery
+осиротевших записей. Q25-F029/F030 подтверждает retirement/restore в границах проверяемых
+снимков; Q25-F027/F028 изолирует живых владельцев внутри процесса. Это не завершает
+Q14-F027 TUN workers или crash/restart recovery. Затем ограничить команды routes/
+kill-switch/gateway. В 05 остаются общий preflight deadline и sync waits в async handlers.
+Незакрытые 01–07, Linux E2E restart/restore/manual+NDP, межпроцессная изоляция,
+native certification и полный benchmark остаются в плане.

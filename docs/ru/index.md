@@ -84,6 +84,7 @@
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Конечная очистка NAT, проверка результата, диагностика и открытые ошибки teardown |
 | [AUDIT-Q25-ROUTE-OWNERSHIP.md](reports/AUDIT-Q25-ROUTE-OWNERSHIP.md) | Q25-F025/F026: сохранение заменённых маршрутов и проверка cleanup перед сбросом ownership |
+| [AUDIT-Q25-ROUTE-POSTCONDITIONS.md](reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md) | Q25-F029/F030: проверка удаления и восстановления carrier-маршрутов |
 | [AUDIT-Q25-ROUTE-SCOPE.md](reports/AUDIT-Q25-ROUTE-SCOPE.md) | Q25-F027/F028: изоляция route journal и запрет commit после начала очистки |
 | [AUDIT-Q25-ROUTE-OUTCOME.md](reports/AUDIT-Q25-ROUTE-OUTCOME.md) | Q25-F023/F024: проверка неуспешной мутации маршрута и отказ при неоднозначном снимке |
 | [AUDIT-Q25-GATEWAY-WAN.md](reports/AUDIT-Q25-GATEWAY-WAN.md) | Q25-F021/F022: ограничение WAN-запросов и очистка сохранённых интерфейсов без лишнего discovery |

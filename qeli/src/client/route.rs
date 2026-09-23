@@ -297,7 +297,6 @@ enum CandidateRouteMutation {
         journal_was_present: bool,
     },
     Replace {
-        ipv6: bool,
         previous: Vec<String>,
         previous_undo: Vec<String>,
     },
@@ -364,15 +363,7 @@ fn exact_route_tokens(remote: IpAddr) -> anyhow::Result<Option<Vec<String>>> {
             String::from_utf8_lossy(&output.stderr).trim()
         );
     }
-    let text = String::from_utf8_lossy(&output.stdout);
-    let mut lines = text.lines().filter(|line| !line.trim().is_empty());
-    let route = lines
-        .next()
-        .map(|line| line.split_whitespace().map(str::to_string).collect());
-    if lines.next().is_some() {
-        anyhow::bail!("ambiguous carrier route snapshot for {remote}");
-    }
-    Ok(route)
+    ownership::parse_route_snapshot(&remote.to_string(), &output.stdout)
 }
 
 /// A failed command may have reached the kernel before its result was lost. Only an
@@ -435,40 +426,18 @@ fn rollback_candidate_route_steps(
                 Err(error) => errors.push(error.to_string()),
             },
             CandidateRouteMutation::Replace {
-                ipv6,
                 previous,
                 previous_undo,
             } => {
                 let expected = delete_spec(&candidate_route_command("add", &step.route));
-                let action = match exact_route_tokens(step.route.remote) {
-                    Ok(Some(current)) if current == *previous => {
-                        note_created_owned(owner, previous_undo.clone());
-                        continue;
-                    }
-                    Ok(Some(current)) if route_matches_spec(&expected, &current) => "replace",
-                    Ok(None) => "add",
-                    Ok(Some(_)) => {
-                        forget_created_owned(owner, &expected);
-                        errors.push(format!(
-                            "carrier route {} ownership changed before rollback",
-                            step.route.remote
-                        ));
-                        continue;
-                    }
-                    Err(error) => {
-                        errors.push(error.to_string());
-                        continue;
-                    }
-                };
-                let mut restore = Vec::new();
-                if *ipv6 {
-                    restore.push("-6".to_string());
-                }
-                restore.extend(["route".to_string(), action.to_string()]);
-                restore.extend(previous.iter().cloned());
-                match run_ip_owned(&restore, "could not restore carrier route") {
-                    Ok(()) => note_created_owned(owner, previous_undo.clone()),
-                    Err(error) => errors.push(error.to_string()),
+                if let Err(error) = restore_carrier_snapshot(
+                    owner,
+                    step.route.remote,
+                    previous,
+                    previous_undo,
+                    Some(&expected),
+                ) {
+                    errors.push(error.to_string());
                 }
             }
         }
@@ -481,7 +450,6 @@ fn rollback_candidate_route_steps(
 struct RetiredCarrierRoute {
     remote: IpAddr,
     undo: Vec<String>,
-    ipv6: bool,
     previous: Vec<String>,
 }
 
@@ -492,36 +460,93 @@ fn restore_retired_carrier_routes(
 ) -> Vec<String> {
     let mut errors = Vec::new();
     for route in retired.iter().rev() {
-        match exact_route_tokens(route.remote) {
-            Ok(Some(current)) if current == route.previous => {
-                note_created_owned(owner, route.undo.clone());
-                continue;
-            }
-            Ok(None) => {}
-            Ok(Some(_)) => {
-                errors.push(format!(
-                    "retired carrier {} was replaced before restoration",
-                    route.remote
-                ));
-                continue;
-            }
-            Err(error) => {
-                errors.push(error.to_string());
-                continue;
-            }
-        }
-        let mut restore = Vec::new();
-        if route.ipv6 {
-            restore.push("-6".to_string());
-        }
-        restore.extend(["route".to_string(), "add".to_string()]);
-        restore.extend(route.previous.iter().cloned());
-        match run_ip_owned(&restore, "could not restore retired carrier route") {
-            Ok(()) => note_created_owned(owner, route.undo.clone()),
-            Err(error) => errors.push(error.to_string()),
+        if let Err(error) =
+            restore_carrier_snapshot(owner, route.remote, &route.previous, &route.undo, None)
+        {
+            errors.push(error.to_string());
         }
     }
     errors
+}
+
+#[cfg(feature = "experimental-roaming")]
+fn completion_detail(result: &std::io::Result<std::process::Output>) -> String {
+    match result {
+        Ok(output) if output.status.success() => {
+            "command succeeded but postcondition was not met".into()
+        }
+        Ok(output) => String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        Err(error) => error.to_string(),
+    }
+}
+
+/// Restore only into an absent destination or over our observed candidate. Command status
+/// is not evidence of restoration: re-read the complete validated pre-transaction snapshot.
+#[cfg(feature = "experimental-roaming")]
+fn restore_carrier_snapshot(
+    owner: &RouteOwner,
+    remote: IpAddr,
+    previous: &[String],
+    previous_undo: &[String],
+    replace_if: Option<&[String]>,
+) -> anyhow::Result<()> {
+    let current = exact_route_tokens(remote)?;
+    if current.as_deref() == Some(previous) {
+        note_created_owned(owner, previous_undo.to_vec());
+        return Ok(());
+    }
+    let action = match current {
+        None => "add",
+        Some(current) if replace_if.is_some_and(|spec| route_matches_spec(spec, &current)) => {
+            "replace"
+        }
+        Some(_) => {
+            forget_created_owned(owner, previous_undo);
+            anyhow::bail!("carrier route {remote} ownership changed before restoration");
+        }
+    };
+    let mut restore = Vec::new();
+    if remote.is_ipv6() {
+        restore.push("-6".to_string());
+    }
+    restore.extend(["route".to_string(), action.to_string()]);
+    restore.extend_from_slice(previous);
+    let completion = route_command_output(&restore);
+    let current = exact_route_tokens(remote).map_err(|error| {
+        anyhow::anyhow!("could not verify restored carrier route {remote}: {error}")
+    })?;
+    if current.as_deref() == Some(previous) {
+        note_created_owned(owner, previous_undo.to_vec());
+        return Ok(());
+    }
+    // Keep the previous proven journal entry, if any. Do not claim a restore that was
+    // not observed, and do not rewrite an unexpected current route to force a match.
+    anyhow::bail!(
+        "could not restore carrier route {remote}: snapshot differs; {}",
+        completion_detail(&completion)
+    )
+}
+
+#[cfg(feature = "experimental-roaming")]
+fn retire_carrier_route(owner: &RouteOwner, route: &RetiredCarrierRoute) -> anyhow::Result<()> {
+    if exact_route_tokens(route.remote)?.as_ref() != Some(&route.previous) {
+        forget_created_owned(owner, &route.undo);
+        anyhow::bail!("carrier route {} changed before retirement", route.remote);
+    }
+    let completion = route_command_output(&route.undo);
+    match exact_route_tokens(route.remote)? {
+        None => Ok(()),
+        Some(current) => {
+            if current != route.previous {
+                forget_created_owned(owner, &route.undo);
+            }
+            anyhow::bail!(
+                "carrier route {} remains after retirement; {}",
+                route.remote,
+                completion_detail(&completion)
+            )
+        }
+    }
 }
 
 #[cfg(feature = "experimental-roaming")]
@@ -584,7 +609,6 @@ impl LinuxPreparedPathRoutes {
                     retire.push(RetiredCarrierRoute {
                         remote,
                         undo,
-                        ipv6: remote.is_ipv6(),
                         previous,
                     })
                 }
@@ -607,7 +631,6 @@ impl LinuxPreparedPathRoutes {
             let expected = candidate_route_expected_tokens(route);
             let mutation = match existing {
                 Some(previous) if owned => CandidateRouteMutation::Replace {
-                    ipv6: route.remote.is_ipv6(),
                     previous,
                     previous_undo: recorded.expect("matched ownership"),
                 },
@@ -704,35 +727,12 @@ impl LinuxPreparedPathRoutes {
 
         let mut retired = Vec::with_capacity(retire.len());
         for route in retire {
-            let output = route_command_output(&route.undo);
-            match output {
-                Ok(output) if output.status.success() => {
+            match retire_carrier_route(owner, &route) {
+                Ok(()) => {
                     forget_created_owned(owner, &route.undo);
+                    // Even a lost/negative command result is a completed retirement when
+                    // absence is verified. Include it in rollback if a later route fails.
                     retired.push(route);
-                }
-                Ok(output) if route_is_already_absent(&String::from_utf8_lossy(&output.stderr)) => {
-                    forget_created_owned(owner, &route.undo);
-                }
-                Ok(output) => {
-                    let mut rollback_errors = restore_retired_carrier_routes(owner, &retired);
-                    rollback_errors.extend(rollback_candidate_route_steps(owner, &applied));
-                    if let Err(verification) =
-                        verify_failed_route_unchanged(route.remote, Some(&route.previous))
-                    {
-                        rollback_errors.push(verification.to_string());
-                    }
-                    let error = format!(
-                        "could not retire previous carrier route: {}",
-                        String::from_utf8_lossy(&output.stderr).trim()
-                    );
-                    if rollback_errors.is_empty() {
-                        anyhow::bail!(error);
-                    }
-                    return Err(RouteCommitStateUnknown::new(format!(
-                        "{error}; route rollback failed: {}",
-                        rollback_errors.join("; ")
-                    ))
-                    .into());
                 }
                 Err(error) => {
                     let mut rollback_errors = restore_retired_carrier_routes(owner, &retired);
@@ -748,8 +748,7 @@ impl LinuxPreparedPathRoutes {
                     return Err(RouteCommitStateUnknown::new(format!(
                         "could not retire previous carrier route: {error}; route rollback failed: {}",
                         rollback_errors.join("; ")
-                    ))
-                    .into());
+                    )).into());
                 }
             }
         }
@@ -2234,6 +2233,22 @@ mod fault_injection {
 
             let state = dir.join("routes");
             std::fs::create_dir_all(&state).unwrap();
+            for route in route_show
+                .into_iter()
+                .chain(route_show_cases.iter().filter_map(|(_, value)| *value))
+            {
+                let tokens = route.split_whitespace().collect::<Vec<_>>();
+                let Some(destination) =
+                    tokens.get(usize::from(tokens.first() == Some(&"blackhole")))
+                else {
+                    continue;
+                };
+                if destination.parse::<IpAddr>().is_ok() {
+                    let family = if destination.contains(':') { 6 } else { 4 };
+                    let key = destination.replace(['/', ':'], "_");
+                    std::fs::write(state.join(format!("{family}-{key}")), route).unwrap();
+                }
+            }
             let mut script = format!(
                 r#"#!/bin/sh
 echo "$@" >> '{log}'
@@ -2248,6 +2263,14 @@ if [ "$1" = "route" ] && [ "$2" = "show" ] && [ "$3" = "exact" ]; then
   if [ -f "$record" ]; then cat "$record"; fi
   exit 0
 fi
+# Carrier snapshots track mutable host state. Keep legacy subnet FIB stubs for lie tests.
+case "$destination" in
+  */*) ;;
+  *) if [ "$1" = "route" ] && [ "$2" = "show" ] && [ -f "$record" ]; then
+       cat "$record"
+       exit 0
+     fi;;
+esac
 case "$original" in
 "#,
                 log = log.display(),
@@ -2256,7 +2279,7 @@ case "$original" in
             for cond in fail_on {
                 // An "already absent" fixture models an actual absent route too.
                 let absent = if route_is_already_absent(stderr_text) {
-                    "if [ \"$2\" = \"del\" ]; then rm -f \"$record\"; fi; "
+                    "if [ \"$2\" = \"del\" ]; then : > \"$record\"; fi; "
                 } else {
                     ""
                 };
@@ -2286,7 +2309,7 @@ case "$original" in
 if [ "$1" = "route" ]; then
   case "$2" in
     add|replace) shift 2; printf '%s\n' "$*" > "$record";;
-    del) rm -f "$record";;
+    del) : > "$record";;
   esac
 fi
 exit 0
@@ -2644,7 +2667,12 @@ exit 0
     #[cfg(feature = "experimental-roaming")]
     #[test]
     fn candidate_commit_rejects_operator_conflict_before_mutation() {
-        let shim = Shim::new("candidate-conflict", &[], "");
+        let shim = Shim::new_with_route_show(
+            "candidate-conflict",
+            &[],
+            "",
+            Some("198.51.100.20 dev qtest"),
+        );
         let prepared =
             prepare_candidate_path_routes_on(&ipv4_candidate(), &test_owner(), "eth0").unwrap();
         let error = prepared.commit(&[]).unwrap_err().to_string();

@@ -1020,6 +1020,14 @@ Other Qeli owners cannot borrow the route; interface reuse waits for the old lea
 Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
 operations, TUN workers, deadlines and Linux runtime remain open.
 
+**2026-09-23 follow-up — retirement/restore outcomes:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): deletion requires
+confirmed absence; restoration requires the complete previous snapshot. Lost completion
+does not negate a confirmed action, and apparent success cannot prove rollback.
+16 new baseline failures → 16 PASS; 1177 Rust tests total and nine matrix commands PASS.
+Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
+command deadlines remain open; the section status is unchanged.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1086,6 +1094,14 @@ Other Qeli owners cannot borrow the route; interface reuse waits for the old lea
 17 new regressions, 1161 Rust tests PASS; two targeted baseline failures reproduced.
 Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
 operations, TUN workers, deadlines and Linux runtime remain open.
+
+**2026-09-23 follow-up — retirement/restore outcomes:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): deletion requires
+confirmed absence; restoration requires the complete previous snapshot. Lost completion
+does not negate a confirmed action, and apparent success cannot prove rollback.
+16 new baseline failures → 16 PASS; 1177 Rust tests total and nine matrix commands PASS.
+Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
+command deadlines remain open; the section status is unchanged.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1268,6 +1284,14 @@ Other Qeli owners cannot borrow the route; interface reuse waits for the old lea
 17 new regressions, 1161 Rust tests PASS; two targeted baseline failures reproduced.
 Attach mode does not advertise managed roaming. Cross-process isolation, orphan/pending
 operations, TUN workers, deadlines and Linux runtime remain open.
+
+**2026-09-23 follow-up — retirement/restore outcomes:**
+[Q25-F029/F030](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md): deletion requires
+confirmed absence; restoration requires the complete previous snapshot. Lost completion
+does not negate a confirmed action, and apparent success cannot prove rollback.
+16 new baseline failures → 16 PASS; 1177 Rust tests total and nine matrix commands PASS.
+Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
+command deadlines remain open; the section status is unchanged.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1544,9 +1568,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with verified retirement/restore, pending unknown mutations and
-orphan-record recovery. Q25-F027/F028 isolates live route owners within the process; it
-does not complete Q14-F027 TUN workers or crash/restart recovery. Then bound route/
-kill-switch/gateway commands. Section 05 still needs transaction-wide preflight deadlines
-and removal of synchronous waits in async handlers. Outstanding 01–07, Linux restart/
-restore/manual+NDP E2E, cross-process isolation, native certification and a full benchmark remain.
+**Next work:** continue 25 with pending unknown mutations and orphan-record recovery.
+Q25-F029/F030 verifies retirement/restore within observable snapshot boundaries;
+Q25-F027/F028 isolates live owners within the process. Neither completes Q14-F027 TUN
+workers or crash/restart recovery. Then bound route/kill-switch/gateway commands.
+Section 05 still needs transaction-wide preflight deadlines and removal of synchronous
+waits in async handlers. Outstanding 01–07, Linux restart/restore/manual+NDP E2E,
+cross-process isolation, native certification and a full benchmark remain.

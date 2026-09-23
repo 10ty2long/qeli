@@ -82,3 +82,8 @@ Previous pass: [gateway WAN](AUDIT-Q25-GATEWAY-WAN.md).
 
 Follow-up: [Q25-F025/F026](AUDIT-Q25-ROUTE-OWNERSHIP.md) adds supplied delete selectors,
 changed-route checks and verified cleanup. Global/pending ownership and atomic recovery remain open.
+
+Follow-up: [Q25-F029/F030](AUDIT-Q25-ROUTE-POSTCONDITIONS.md) verifies retirement/restore
+outcomes. Confirmed absence or exact restoration is now accepted even with negative/lost
+completion; apparent success alone is not proof. Pending unknown/orphan recovery and
+command deadlines remain open.

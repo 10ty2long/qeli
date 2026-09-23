@@ -86,3 +86,8 @@ still lack deadlines; the operation mutex means a hung command delays other rout
 in the process. No real Linux TUN/firewall/handover, native release, devices or new benchmark
 were run here.
 Previous pass: [selectors and verified cleanup](AUDIT-Q25-ROUTE-OWNERSHIP.md).
+
+Follow-up: [Q25-F029/F030](AUDIT-Q25-ROUTE-POSTCONDITIONS.md) verifies retirement/restore
+outcomes. Confirmed absence or exact restoration is now accepted even with negative/lost
+completion; apparent success alone is not proof. Pending unknown/orphan recovery and
+command deadlines remain open.
