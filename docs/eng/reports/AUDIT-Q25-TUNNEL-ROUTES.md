@@ -104,3 +104,5 @@ Linux E2E restart/restore/manual+NDP, native certification and a new benchmark.
 The full audit is not complete.
 
 Previous pass: [command bounds and IPv4 protection](AUDIT-Q25-CLIENT-COMMANDS.md).
+
+Gateway follow-up: [scope rollback and firewall inspection](AUDIT-Q25-GATEWAY-ROLLBACK.md).

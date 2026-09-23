@@ -101,3 +101,5 @@ Linux E2E restart/restore/manual+NDP, native certification и новый benchma
 Полный аудит не завершён.
 
 Предыдущий этап: [ограничения команд и IPv4-защита](AUDIT-Q25-CLIENT-COMMANDS.md).
+
+Продолжение gateway: [откат по scope и проверки firewall](AUDIT-Q25-GATEWAY-ROLLBACK.md).

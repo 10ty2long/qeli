@@ -1609,3 +1609,17 @@ adb shell appops set com.qeli ACTIVATE_VPN allow   # if supported
 *This document is based on the current code (`qeli/src/**`, `qeli-shared`, `qeli-win`,
 `qeli-mac`, `qeli-android`) on the `dev` branch. Error strings are checked against the
 sources; if behavior diverges, trust the code and update this file.*
+
+### Gateway cleanup or kill-switch order errors
+
+`gateway cleanup failed` retains failed TUN/family records for retry in the running
+process. Inspect the reported firewall error; successful cleanup of another profile
+does not prove this one is clean. A sysctl restore error is reported alongside rule
+errors. Do not lift a retained kill-switch merely because forwarding was restored.
+
+`cannot inspect router kill-switch protection` or a jump-order error prevents the
+permit from being inserted or reused without verified protection. Check access to
+iptables/ip6tables and the actual FORWARD chain order. After a process crash the
+in-memory rule registry is gone; review leftover `qeli-gw-nat` rules for the affected
+interface/subnet before manual recovery.
+[Evidence and limitations](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md).

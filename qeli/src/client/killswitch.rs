@@ -148,7 +148,7 @@ fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
     candidate.filter(|chain| *chain == LEGACY_CHAIN || chain.starts_with("QELI_KS_"))
 }
 
-/// Presence check for teardown paths, where "absent" and "could not inspect the
+/// Presence check for guarded setup and teardown, where "absent" and "could not inspect the
 /// firewall" must not collapse into the same `false` result.
 pub(crate) fn present_checked(path: &str, args: &[&str]) -> anyhow::Result<bool> {
     let output = ipt(path, args)

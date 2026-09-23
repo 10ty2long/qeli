@@ -1098,21 +1098,13 @@ fn cleanup_routing_features(
     gateway_enabled: bool,
     exit_node: bool,
     tun_if: &str,
-    lan_subnet: &str,
-    lan_subnet_ipv6: &str,
 ) -> anyhow::Result<()> {
     crate::client_cleanup::routing(
         checks,
         kill_switch,
         || {
             if gateway_enabled || exit_node {
-                gateway::disengage_plan(
-                    tun_if,
-                    lan_subnet,
-                    lan_subnet_ipv6,
-                    gateway_enabled,
-                    exit_node,
-                )
+                gateway::disengage_plan(tun_if, gateway_enabled, exit_node)
             } else {
                 Ok(())
             }
@@ -2559,8 +2551,6 @@ async fn run_client_inner(
     // both.
     let exit_on = config.routing.exit_node;
     let tun_if = config.tun.name.clone();
-    let lan_subnet = config.routing.lan_subnet.clone();
-    let lan_subnet_ipv6 = config.routing.lan_subnet_ipv6.clone();
     // Config validation already rejects exit_node + every full-tunnel spelling. Its own
     // internet must remain on the physical WAN so forwarded traffic has an egress path.
 
@@ -2653,15 +2643,7 @@ async fn run_client_inner(
             // reported by Drop guards before the connection future returned.
             let (reason, error_code) =
                 failure_reason.unwrap_or(("core_start_failed", "core_start"));
-            let cleanup = cleanup_routing_features(
-                checks,
-                ks_on,
-                gw_on,
-                exit_on,
-                &tun_if,
-                &lan_subnet,
-                &lan_subnet_ipv6,
-            );
+            let cleanup = cleanup_routing_features(checks, ks_on, gw_on, exit_on, &tun_if);
             let terminal = crate::client_cleanup::with_cleanup_error(result, cleanup);
             let message = terminal
                 .as_ref()
@@ -2677,15 +2659,7 @@ async fn run_client_inner(
                 .downcast_ref::<ServerKickError>()
                 .is_some_and(|kick| !kick.reconnect_allowed)
             {
-                let cleanup = cleanup_routing_features(
-                    Ok(()),
-                    ks_on,
-                    gw_on,
-                    exit_on,
-                    &tun_if,
-                    &lan_subnet,
-                    &lan_subnet_ipv6,
-                );
+                let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
                 run_client_post_down(
                     &core_adapter,
                     &post_down,
@@ -2703,15 +2677,7 @@ async fn run_client_inner(
         }
 
         if shutdown_requested.load(Ordering::Acquire) {
-            let cleanup = cleanup_routing_features(
-                Ok(()),
-                ks_on,
-                gw_on,
-                exit_on,
-                &tun_if,
-                &lan_subnet,
-                &lan_subnet_ipv6,
-            );
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
             let transport_error = result
                 .as_ref()
                 .err()
@@ -2751,15 +2717,7 @@ async fn run_client_inner(
         if stop_reason == Some("disabled") {
             // Clean exit (reconnect disabled): lift the kill-switch / gateway NAT so
             // the host isn't left firewalled or NAT'ing after the client returns.
-            let cleanup = cleanup_routing_features(
-                Ok(()),
-                ks_on,
-                gw_on,
-                exit_on,
-                &tun_if,
-                &lan_subnet,
-                &lan_subnet_ipv6,
-            );
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
             let (error_code, error_message) = match result.as_ref() {
                 Ok(()) => ("", String::new()),
                 Err(error) => ("transport_error", error.to_string()),
@@ -2784,15 +2742,7 @@ async fn run_client_inner(
         }
 
         if stop_reason == Some("retry_limit") {
-            let cleanup = cleanup_routing_features(
-                Ok(()),
-                ks_on,
-                gw_on,
-                exit_on,
-                &tun_if,
-                &lan_subnet,
-                &lan_subnet_ipv6,
-            );
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
             let transport_error = result
                 .as_ref()
                 .err()
@@ -7780,8 +7730,6 @@ struct NetworkPlanApplyGuard {
     if_name: String,
     owns_device: bool,
     routes: route::RouteOwner,
-    gateway_lan_ipv4: String,
-    gateway_lan_ipv6: String,
     gateway_enabled: bool,
     exit_enabled: bool,
     platform_state_touched: bool,
@@ -7804,8 +7752,6 @@ impl NetworkPlanApplyGuard {
             if_name: if_name.to_string(),
             owns_device,
             routes,
-            gateway_lan_ipv4: config.routing.lan_subnet.clone(),
-            gateway_lan_ipv6: config.routing.lan_subnet_ipv6.clone(),
             gateway_enabled: config.routing.gateway_nat || config.routing.forward,
             exit_enabled: config.routing.exit_node,
             platform_state_touched: false,
@@ -7864,13 +7810,7 @@ impl Drop for NetworkPlanApplyGuard {
             // idempotent and remove their IPv4 and IPv6 family halves independently.
             if let Err(error) = self.failures.observe(
                 crate::client_cleanup::Resource::Forwarding,
-                gateway::disengage_plan(
-                    &self.if_name,
-                    &self.gateway_lan_ipv4,
-                    &self.gateway_lan_ipv6,
-                    self.gateway_enabled,
-                    self.exit_enabled,
-                ),
+                gateway::disengage_plan(&self.if_name, self.gateway_enabled, self.exit_enabled),
             ) {
                 log::warn!("router rollback after NetworkPlan failure also failed: {error}");
             }

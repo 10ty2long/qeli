@@ -17,12 +17,19 @@
 //!
 //! LIFECYCLE: the active IPv4/IPv6 halves are installed after the authenticated
 //! NetworkPlan creates the TUN and are re-verified on reconnect (the rules are by
-//! interface name, so a recreated `tun` can reuse them). [`disengage`] removes them on
-//! a clean stop. A crash leaves them in place (fail-safe) — clear manually with the
-//! commands logged on engage.
+//! interface name, so a recreated `tun` can reuse them). [`disengage_plan`] removes them on
+//! a clean stop. Rule ownership is in memory; a crash can leave rules behind. Inspect
+//! the tagged rules for this interface/subnet before manual recovery.
 
-use super::killswitch::{ipt, ipt_path, present, present_checked, valid_ifname};
+#[cfg(all(target_os = "linux", feature = "client"))]
+use super::killswitch::{ipt, ipt_path, present_checked, valid_ifname};
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+use crate::client_killswitch::{ipt, ipt_path, present_checked, valid_ifname};
 
+#[path = "gateway/host.rs"]
+mod host;
+
+#[path = "gateway/wan.rs"]
 mod wan;
 use wan::{cleanup_wans, detect_wan, detect_wan_ipv6};
 
@@ -32,7 +39,7 @@ const TAG: &str = "qeli-gw-nat";
 /// Acquire a host sysctl for one TUN-scoped router plan. This registers ownership even
 /// when the knob already has the requested value, so sibling profiles cannot restore it.
 fn managed_sysctl(path: &str, val: &str, tun_if: &str) -> bool {
-    crate::sysctl::acquire(path, val, tun_if)
+    host::acquire(path, val, tun_if)
 }
 
 /// Should the gateway firewall run for this config? True for NAT (`gateway_nat`) OR
@@ -75,8 +82,35 @@ static EXIT_WANS_V4: std::sync::Mutex<ExitWansByTun> =
     std::sync::Mutex::new(std::collections::BTreeMap::new());
 static EXIT_WANS_V6: std::sync::Mutex<ExitWansByTun> =
     std::sync::Mutex::new(std::collections::BTreeMap::new());
-static GATEWAY_V4_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-static GATEWAY_V6_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+// Serialize each public router operation, including sysctl release, so cleanup cannot
+// forget a concurrent acquisition. This is not a transaction around the entire NetworkPlan.
+static ROUTER_OPERATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+fn router_operation() -> std::sync::MutexGuard<'static, ()> {
+    ROUTER_OPERATION
+        .lock()
+        .unwrap_or_else(|error| error.into_inner())
+}
+
+#[derive(Default)]
+struct GatewayScope {
+    ipv4: std::collections::BTreeSet<String>,
+    ipv6: std::collections::BTreeSet<String>,
+}
+static GATEWAY_SCOPES: std::sync::Mutex<std::collections::BTreeMap<String, GatewayScope>> =
+    std::sync::Mutex::new(std::collections::BTreeMap::new());
+
+fn remember_gateway(tun_if: &str, subnet: &str, ipv6: bool) {
+    let mut scopes = GATEWAY_SCOPES
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let scope = scopes.entry(tun_if.to_owned()).or_default();
+    let subnets = if ipv6 {
+        &mut scope.ipv6
+    } else {
+        &mut scope.ipv4
+    };
+    subnets.insert(subnet.to_owned());
+}
 
 fn remember_exit_wan(store: &std::sync::Mutex<ExitWansByTun>, tun_if: &str, wan: &str) {
     let mut by_tun = store.lock().unwrap_or_else(|error| error.into_inner());
@@ -119,7 +153,7 @@ fn forward_policy_accepts(path: &str) -> bool {
         .ok()
         .filter(|output| output.status.success())
         .is_some_and(|output| {
-            policy_output_accepts_forward(&String::from_utf8_lossy(&output.stdout))
+            std::str::from_utf8(&output.stdout).is_ok_and(policy_output_accepts_forward)
         })
 }
 
@@ -144,7 +178,8 @@ fn kill_switch_hook_is_first(path: &str, chain: &str) -> bool {
         .ok()
         .filter(|output| output.status.success())
         .is_some_and(|output| {
-            policy_output_has_first_forward_jump(&String::from_utf8_lossy(&output.stdout), chain)
+            std::str::from_utf8(&output.stdout)
+                .is_ok_and(|text| policy_output_has_first_forward_jump(text, chain))
         })
 }
 
@@ -154,25 +189,49 @@ fn kill_switch_hook_is_first(path: &str, chain: &str) -> bool {
 fn ensure_rule(path: &str, tun_if: &str, table: &str, chain: &str, rule: &[&str]) -> bool {
     let mut check: Vec<&str> = vec!["-t", table, "-C", chain];
     check.extend_from_slice(rule);
-    if !present(path, &check) {
-        let insert = table == "filter" && chain == "FORWARD";
-        let mut add: Vec<&str> = vec!["-t", table, if insert { "-I" } else { "-A" }, chain];
-        let kill_switch_chain = format!("QELI_KS_{tun_if}");
-        if insert {
-            let hooked = present(path, &["-C", "FORWARD", "-j", kill_switch_chain.as_str()]);
-            if hooked && !kill_switch_hook_is_first(path, &kill_switch_chain) {
-                log::error!(
-                    "qeli kill-switch jump {kill_switch_chain} is not the first FORWARD rule; \
-                     refusing to insert a router permit ahead of it"
-                );
+    let exists = match present_checked(path, &check) {
+        Ok(exists) => exists,
+        Err(error) => {
+            log::error!("cannot inspect router rule before installation: {error}");
+            return false;
+        }
+    };
+    let insert = table == "filter" && chain == "FORWARD";
+    let kill_switch_chain = format!("QELI_KS_{tun_if}");
+    let hooked = if insert {
+        match present_checked(path, &["-C", "FORWARD", "-j", kill_switch_chain.as_str()]) {
+            Ok(hooked) => hooked,
+            Err(error) => {
+                log::error!("cannot inspect router kill-switch protection: {error}");
                 return false;
             }
+        }
+    } else {
+        false
+    };
+    // Reconnect may reuse an existing permit, but never one ahead of our protection.
+    if hooked && !kill_switch_hook_is_first(path, &kill_switch_chain) {
+        log::error!(
+            "qeli kill-switch jump {kill_switch_chain} is not the first FORWARD rule; \
+             refusing to install or reuse a router permit ahead of it"
+        );
+        return false;
+    }
+    if !exists {
+        let mut add: Vec<&str> = vec!["-t", table, if insert { "-I" } else { "-A" }, chain];
+        if insert {
             add.push(forward_insert_position(hooked));
         }
         add.extend_from_slice(rule);
         let _ = ipt(path, &add);
     }
-    present(path, &check)
+    match present_checked(path, &check) {
+        Ok(present) => present,
+        Err(error) => {
+            log::error!("cannot verify installed router rule: {error}");
+            false
+        }
+    }
 }
 
 fn exit_mark_rule<'a>(tun_if: &'a str, wan_if: &'a str) -> Vec<&'a str> {
@@ -268,7 +327,7 @@ fn exit_mss(tun_if: &str) -> Vec<&str> {
 /// Program this host as an internet exit for other tunnel clients: `ip_forward`, a
 /// MASQUERADE of tun-forwarded traffic out the WAN, a FORWARD accept both ways, and an
 /// MSS-clamp. Idempotent; installs by interface name so it survives reconnects (rules
-/// stay while the tun is recreated), and is removed on a clean stop by [`disengage_exit`].
+/// stay while the tun is recreated), and is removed on a clean stop by [`disengage_plan`].
 /// Relax `rp_filter` on the tunnel interface, once it EXISTS.
 ///
 /// Historically `engage` / `engage_exit` ran before the connect loop, i.e. before
@@ -286,6 +345,7 @@ fn exit_mss(tun_if: &str) -> Vec<&str> {
 /// Called from `setup_tunnel` after the interface is up, on every connect.
 /// (Audit 2026-07-27, R1.)
 pub fn apply_tun_rp_filter(tun_if: &str) {
+    let _operation = router_operation();
     if !managed_sysctl(
         &format!("/proc/sys/net/ipv4/conf/{tun_if}/rp_filter"),
         "0",
@@ -298,6 +358,7 @@ pub fn apply_tun_rp_filter(tun_if: &str) {
 }
 
 pub fn engage_exit(tun_if: &str) -> anyhow::Result<()> {
+    let _operation = router_operation();
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node: invalid TUN interface name {tun_if:?}");
     }
@@ -331,7 +392,7 @@ fn engage_exit_on(tun_if: &str, wan: &str) -> anyhow::Result<()> {
     let forwarding_path = "/proc/sys/net/ipv4/ip_forward";
     let forwarding_enabled = managed_sysctl(forwarding_path, "1", tun_if)
         && matches!(
-            std::fs::read_to_string(forwarding_path),
+            host::read(forwarding_path),
             Ok(value) if value.trim() == "1"
         );
     if !forwarding_enabled {
@@ -407,6 +468,7 @@ fn engage_exit_on(tun_if: &str, wan: &str) -> anyhow::Result<()> {
 /// WAN interfaces, and an `ipv6 = auto` client must not require `ip6tables` when the
 /// server ultimately assigns IPv4 only.
 pub fn engage_exit_ipv6(tun_if: &str) -> anyhow::Result<()> {
+    let _operation = router_operation();
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node IPv6: invalid TUN interface name {tun_if:?}");
     }
@@ -446,7 +508,7 @@ fn engage_exit_ipv6_on(tun_if: &str, requested_wan: &str) -> anyhow::Result<()> 
     let forwarding_path = "/proc/sys/net/ipv6/conf/all/forwarding";
     let forwarding_enabled = managed_sysctl(forwarding_path, "1", tun_if)
         && matches!(
-            std::fs::read_to_string(forwarding_path),
+            host::read(forwarding_path),
             Ok(value) if value.trim() == "1"
         );
     if !forwarding_enabled {
@@ -529,6 +591,14 @@ fn engage_exit_ipv6_on(tun_if: &str, requested_wan: &str) -> anyhow::Result<()> 
 /// lossy. They are narrow `-i/-o` rules, harmless once that interface is no longer selected,
 /// and the existing remembered-WAN cleanup removes every generation on a clean stop.
 pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
+    // Ordinary clients must not wait for another profile's router commands. Recheck
+    // active families under the operation lock below in case cleanup wins the race.
+    if exit_wans_for(&EXIT_WANS_V4, tun_if).is_empty()
+        && exit_wans_for(&EXIT_WANS_V6, tun_if).is_empty()
+    {
+        return Ok(());
+    }
+    let _operation = router_operation();
     let ipv4_active = !exit_wans_for(&EXIT_WANS_V4, tun_if).is_empty();
     let ipv6_active = !exit_wans_for(&EXIT_WANS_V6, tun_if).is_empty();
     if !ipv4_active && !ipv6_active {
@@ -644,18 +714,6 @@ fn remove_exit_rules(tun_if: &str) -> anyhow::Result<()> {
     }
 }
 
-pub fn disengage_exit(tun_if: &str) -> anyhow::Result<()> {
-    let rules = remove_exit_rules(tun_if);
-    let sysctls = restore_sysctls(tun_if);
-    match (rules, sysctls) {
-        (Ok(()), Ok(())) => Ok(()),
-        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
-        (Err(rules), Err(sysctls)) => {
-            anyhow::bail!("exit-node cleanup failed: {rules}; {sysctls}")
-        }
-    }
-}
-
 /// The MASQUERADE rule body (optionally restricted to a source subnet), tagged.
 fn masq_rule<'a>(tun_if: &'a str, lan_subnet: &'a str) -> Vec<&'a str> {
     let mut r: Vec<&str> = Vec::new();
@@ -747,6 +805,7 @@ fn mss(tun_if: &str) -> Vec<&str> {
 /// unrestricted so the far side can initiate to the LAN. Idempotent. Empty `lan_subnet`
 /// masquerades everything leaving the tun.
 pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Result<()> {
+    let _operation = router_operation();
     if !valid_ifname(tun_if) {
         anyhow::bail!("gateway-nat: invalid TUN interface name {tun_if:?}");
     }
@@ -754,7 +813,7 @@ pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Resul
         anyhow::anyhow!("gateway-nat: `iptables` is not installed (apt install iptables)")
     })?;
     // Mark before the first host mutation so rollback also covers a partially applied plan.
-    GATEWAY_V4_ACTIVE.store(true, std::sync::atomic::Ordering::Release);
+    remember_gateway(tun_if, lan_subnet, false);
 
     // Forwarding + relaxed reverse-path filter (the LAN↔tun path is asymmetric).
     // Verify the effective value: accepting a firewall plan while forwarding remains off
@@ -762,7 +821,7 @@ pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Resul
     let forwarding_path = "/proc/sys/net/ipv4/ip_forward";
     let forwarding_enabled = managed_sysctl(forwarding_path, "1", tun_if)
         && matches!(
-            std::fs::read_to_string(forwarding_path),
+            host::read(forwarding_path),
             Ok(value) if value.trim() == "1"
         );
     if !forwarding_enabled {
@@ -847,6 +906,7 @@ pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Resul
 /// keep working with an IPv4-only server without requiring ip6tables, while a negotiated
 /// dual/IPv6 plan still fails closed if the router cannot actually forward that family.
 pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> anyhow::Result<()> {
+    let _operation = router_operation();
     if !valid_ifname(tun_if) {
         anyhow::bail!("gateway IPv6: invalid TUN interface name {tun_if:?}");
     }
@@ -855,7 +915,7 @@ pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> any
             "gateway IPv6 requires `ip6tables`; refusing a negotiated IPv6 plan that would not forward LAN traffic"
         )
     })?;
-    GATEWAY_V6_ACTIVE.store(true, std::sync::atomic::Ordering::Release);
+    remember_gateway(tun_if, lan_subnet_ipv6, true);
 
     // Linux stops accepting Router Advertisements when forwarding is enabled unless
     // accept_ra=2. Preserve native outer IPv6 on the default-route interface before
@@ -871,7 +931,7 @@ pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> any
     let forwarding_path = "/proc/sys/net/ipv6/conf/all/forwarding";
     let forwarding_enabled = managed_sysctl(forwarding_path, "1", tun_if)
         && matches!(
-            std::fs::read_to_string(forwarding_path),
+            host::read(forwarding_path),
             Ok(value) if value.trim() == "1"
         );
     if !forwarding_enabled {
@@ -943,55 +1003,61 @@ pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> any
     Ok(())
 }
 
-/// Remove every gateway rule for the families that this process actually engaged. A
-/// family remains marked active after failure so cleanup can be retried safely.
-fn remove_gateway_rules(
-    tun_if: &str,
-    lan_subnet: &str,
-    lan_subnet_ipv6: &str,
-) -> anyhow::Result<()> {
-    fn remove_family(path: &str, tun_if: &str, subnet: &str) -> anyhow::Result<()> {
+/// Remove rules using the saved installation selectors, independently for each TUN
+/// and family. Keep failed families (including all old subnets) available for retry.
+/// The caller holds ROUTER_OPERATION through subsequent sysctl release.
+fn remove_gateway_rules(tun_if: &str) -> anyhow::Result<()> {
+    fn remove_family(
+        binary: &str,
+        tun_if: &str,
+        subnets: &mut std::collections::BTreeSet<String>,
+    ) -> anyhow::Result<()> {
+        if subnets.is_empty() {
+            return Ok(());
+        }
+        let path = ipt_path(binary).ok_or_else(|| {
+            anyhow::anyhow!("'{binary}' is unavailable; gateway rules on {tun_if} may remain")
+        })?;
         let mut errors = Vec::new();
+        for subnet in subnets.iter() {
+            if let Err(error) = remove_rule(&path, "nat", "POSTROUTING", &masq_rule(tun_if, subnet))
+            {
+                errors.push(error.to_string());
+            }
+        }
         for result in [
-            remove_rule(path, "nat", "POSTROUTING", &masq_rule(tun_if, subnet)),
-            remove_rule(path, "filter", "FORWARD", &fwd_out(tun_if)),
-            remove_rule(path, "filter", "FORWARD", &fwd_in(tun_if)),
-            remove_rule(path, "filter", "FORWARD", &fwd_in_open(tun_if)),
-            remove_rule(path, "mangle", "FORWARD", &mss(tun_if)),
+            remove_rule(&path, "filter", "FORWARD", &fwd_out(tun_if)),
+            remove_rule(&path, "filter", "FORWARD", &fwd_in(tun_if)),
+            remove_rule(&path, "filter", "FORWARD", &fwd_in_open(tun_if)),
+            remove_rule(&path, "mangle", "FORWARD", &mss(tun_if)),
         ] {
             if let Err(error) = result {
                 errors.push(error.to_string());
             }
         }
         if errors.is_empty() {
+            subnets.clear();
             Ok(())
         } else {
             anyhow::bail!("{}", errors.join("; "))
         }
     }
 
+    let mut scopes = GATEWAY_SCOPES
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let Some(scope) = scopes.get_mut(tun_if) else {
+        return Ok(());
+    };
     let mut errors = Vec::new();
-    if GATEWAY_V4_ACTIVE.load(std::sync::atomic::Ordering::Acquire) {
-        let result = ipt_path("iptables")
-            .ok_or_else(|| anyhow::anyhow!("`iptables` is unavailable; IPv4 qeli rules may remain"))
-            .and_then(|path| remove_family(&path, tun_if, lan_subnet));
-        match result {
-            Ok(()) => GATEWAY_V4_ACTIVE.store(false, std::sync::atomic::Ordering::Release),
-            Err(error) => errors.push(format!("IPv4: {error}")),
-        }
+    if let Err(error) = remove_family("iptables", tun_if, &mut scope.ipv4) {
+        errors.push(format!("IPv4: {error}"));
     }
-    if GATEWAY_V6_ACTIVE.load(std::sync::atomic::Ordering::Acquire) {
-        let result = ipt_path("ip6tables")
-            .ok_or_else(|| {
-                anyhow::anyhow!("`ip6tables` is unavailable; IPv6 qeli rules may remain")
-            })
-            .and_then(|path| remove_family(&path, tun_if, lan_subnet_ipv6));
-        match result {
-            Ok(()) => GATEWAY_V6_ACTIVE.store(false, std::sync::atomic::Ordering::Release),
-            Err(error) => errors.push(format!("IPv6: {error}")),
-        }
+    if let Err(error) = remove_family("ip6tables", tun_if, &mut scope.ipv6) {
+        errors.push(format!("IPv6: {error}"));
     }
     if errors.is_empty() {
+        scopes.remove(tun_if);
         log::info!("Gateway forwarding rules disengaged on {tun_if}");
         Ok(())
     } else {
@@ -999,29 +1065,18 @@ fn remove_gateway_rules(
     }
 }
 
-pub fn disengage(tun_if: &str, lan_subnet: &str, lan_subnet_ipv6: &str) -> anyhow::Result<()> {
-    let rules = remove_gateway_rules(tun_if, lan_subnet, lan_subnet_ipv6);
-    let sysctls = restore_sysctls(tun_if);
-    match (rules, sysctls) {
-        (Ok(()), Ok(())) => Ok(()),
-        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
-        (Err(rules), Err(sysctls)) => anyhow::bail!("{rules}; {sysctls}"),
-    }
-}
-
-/// Tear down a complete client router plan atomically. Firewall permits/NAT are removed
-/// for every enabled feature before host-wide forwarding, rp_filter and accept_ra values
-/// are restored. This is used for both a clean process stop and a rejected NetworkPlan.
+/// Attempt every enabled router cleanup, then release this scope's sysctl ownership.
+/// Failures are aggregated and failed rule records retained for retry. This is used for
+/// both a clean process stop and a rejected NetworkPlan; kernel changes are not atomic.
 pub fn disengage_plan(
     tun_if: &str,
-    lan_subnet: &str,
-    lan_subnet_ipv6: &str,
     gateway_enabled: bool,
     exit_enabled: bool,
 ) -> anyhow::Result<()> {
+    let _operation = router_operation();
     let mut errors = Vec::new();
     if gateway_enabled {
-        if let Err(error) = remove_gateway_rules(tun_if, lan_subnet, lan_subnet_ipv6) {
+        if let Err(error) = remove_gateway_rules(tun_if) {
             errors.push(error.to_string());
         }
     }
@@ -1043,7 +1098,7 @@ pub fn disengage_plan(
 }
 
 fn restore_sysctls(tun_if: &str) -> anyhow::Result<()> {
-    crate::sysctl::release_scope(tun_if)
+    host::release(tun_if)
 }
 
 #[cfg(test)]
@@ -1109,3 +1164,7 @@ mod tests {
         assert!(exit_wans_for(&store, "exit0").is_empty());
     }
 }
+
+#[cfg(test)]
+#[path = "gateway/rollback_tests.rs"]
+mod rollback_tests;

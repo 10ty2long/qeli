@@ -704,6 +704,16 @@ that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
 
+**Gateway rollback and protection, 23 September 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): TUN/family/subnet records
+replace global flags and config-based undo. Failed families retain retry state;
+unknown firewall inspection cannot authorize insertion, and reused permits also
+verify kill-switch order. Router operations include sysctl release under the same
+process lock. Eight baseline failures → PASS; 25 new tests and five existing tests
+newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
+Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
+races, overall deadlines and Linux runtime remain open.
+
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -764,6 +774,16 @@ use the shared runner (15 s; 16 MiB per output stream). Timeout retains DNS owne
 that pass's matrix of 1073 Rust tests and six separate adapter checks PASS.
 Generic NAT outcome, old generations/retry backoff, restart policy, persistent journaling,
 overall operation deadlines, remaining system commands and live Linux remain open.
+
+**Gateway rollback and protection, 23 September 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): TUN/family/subnet records
+replace global flags and config-based undo. Failed families retain retry state;
+unknown firewall inspection cannot authorize insertion, and reused permits also
+verify kill-switch order. Router operations include sysctl release under the same
+process lock. Eight baseline failures → PASS; 25 new tests and five existing tests
+newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
+Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
+races, overall deadlines and Linux runtime remain open.
 
 ### 19. Server and client DNS
 
@@ -1392,6 +1412,16 @@ independent flush of the Qeli-owned interface. 10 reproducing regressions and 13
 1257 Rust tests and nine matrix commands PASS. Gateway rollback, globals, overall
 deadlines, crash recovery and Linux runtime remain open.
 
+**Gateway rollback and protection, 23 September 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): TUN/family/subnet records
+replace global flags and config-based undo. Failed families retain retry state;
+unknown firewall inspection cannot authorize insertion, and reused permits also
+verify kill-switch order. Router operations include sysctl release under the same
+process lock. Eight baseline failures → PASS; 25 new tests and five existing tests
+newly enabled on host; 1287 Rust tests and nine matrix commands PASS.
+Shared exit-node WAN/NAT ownership, multiple kill-switch chains, cross-process
+races, overall deadlines and Linux runtime remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1667,10 +1697,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with full gateway rollback, partial firewall/sysctl
-setup failures and global-state isolation, then evidence used to require IPv6 protection.
-Q25-F037–F039 unifies active TUN/pushed/local installation and removes unused legacy
-implementations. Overall transaction deadlines, durable crash recovery, cross-process
-races and Q14-F027 TUN workers/FD remain open. Section 05 still needs an overall
-preflight deadline and review of synchronous waits in async handlers. Unfinished 01–07,
-Linux E2E restart/restore/manual+NDP, native certification and the full benchmark remain planned.
+**Next work:** continue section 25 with shared exit-node WAN/MASQUERADE ownership
+and interaction of multiple kill-switch chains; then IPv6-protection evidence.
+Q25-F040–F042 covers gateway scope/subnet rollback and checked permit insertion.
+Overall deadlines, durable crash recovery, cross-process races and Q14-F027 TUN
+workers/FD remain open. Section 05 still needs an overall preflight deadline and
+review of synchronous waits in async handlers. Unfinished 01–07, Linux E2E
+restart/restore/manual+NDP, native certification and a new benchmark remain planned.

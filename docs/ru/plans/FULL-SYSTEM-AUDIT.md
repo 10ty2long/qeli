@@ -709,6 +709,16 @@ DNS ownership; матрица этого этапа 1073 Rust tests и шест�
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
 
+**Откат gateway и защита, 23 сентября 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): записи TUN/семья/подсеть
+заменяют общие флаги и undo по текущему конфигу. Ошибка семьи сохраняет состояние
+для повтора; ошибка проверки firewall запрещает вставку, повторно используемый
+permit тоже проверяет порядок kill-switch. Router-операции удерживают общую
+блокировку процесса до release sysctl. Восемь исходных FAIL → PASS; 25 новых теста
+и пять существующих, впервые включённых на host; 1287 Rust tests и девять команд
+матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
+гонки, общий deadline и Linux runtime остаются открытыми.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -769,6 +779,16 @@ sysctl recovery и потеря существующего owner при неуд
 DNS ownership; матрица этого этапа 1073 Rust tests и шесть отдельных adapter checks PASS.
 Открыты generic NAT outcome, старые поколения/retry backoff, restart policy, persistent
 journal, общий срок всей операции, остальные системные команды и live Linux.
+
+**Откат gateway и защита, 23 сентября 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): записи TUN/семья/подсеть
+заменяют общие флаги и undo по текущему конфигу. Ошибка семьи сохраняет состояние
+для повтора; ошибка проверки firewall запрещает вставку, повторно используемый
+permit тоже проверяет порядок kill-switch. Router-операции удерживают общую
+блокировку процесса до release sysctl. Восемь исходных FAIL → PASS; 25 новых теста
+и пять существующих, впервые включённых на host; 1287 Rust tests и девять команд
+матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
+гонки, общий deadline и Linux runtime остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -1399,6 +1419,16 @@ default route требует защиты при отсутствии явног
 13 controls; 1257 Rust tests и девять команд матрицы PASS. Gateway rollback, globals,
 общий deadline, crash recovery и Linux runtime остаются открытыми.
 
+**Откат gateway и защита, 23 сентября 2026:**
+[Q25-F040–F042](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md): записи TUN/семья/подсеть
+заменяют общие флаги и undo по текущему конфигу. Ошибка семьи сохраняет состояние
+для повтора; ошибка проверки firewall запрещает вставку, повторно используемый
+permit тоже проверяет порядок kill-switch. Router-операции удерживают общую
+блокировку процесса до release sysctl. Восемь исходных FAIL → PASS; 25 новых теста
+и пять существующих, впервые включённых на host; 1287 Rust tests и девять команд
+матрицы PASS. Общий WAN/NAT exit-node, несколько kill-switch chains, межпроцессные
+гонки, общий deadline и Linux runtime остаются открытыми.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1676,10 +1706,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: полный gateway rollback, ошибки частичной установки
-firewall/sysctl и изоляция globals; затем доказательства необходимости IPv6-защиты.
-Q25-F037–F039 объединяет активную установку TUN/pushed/local routes и удаляет старые
-невызываемые реализации. Общий deadline транзакции, постоянный crash recovery,
-межпроцессные гонки и Q14-F027 TUN workers/FD остаются открытыми.
-В 05 остаются общий preflight deadline и sync waits в async handlers. Незакрытые 01–07,
-Linux E2E restart/restore/manual+NDP, native certification и полный benchmark остаются в плане.
+**Ближайшая работа:** продолжить 25: владение общим WAN/MASQUERADE exit-node
+и взаимодействие нескольких kill-switch chains; затем доказательства IPv6-защиты.
+Q25-F040–F042 закрывает откат gateway по scope/подсети и проверяемую вставку permit.
+Общий deadline, постоянный crash recovery, межпроцессные гонки и Q14-F027 TUN
+workers/FD остаются открытыми. В 05 остаются общий preflight deadline и sync waits
+в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
+native certification и новый benchmark остаются в плане.

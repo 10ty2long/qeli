@@ -1845,9 +1845,19 @@ reconnect / container restart.
 - a `FORWARD` accept both ways;
 - a TCP **MSS-clamp** (without it pings pass but sites hang — the tunnel MTU is < 1500).
 
-All rules carry a `qeli-gw-nat` comment, are verified with `iptables -C`, persist
-across reconnects, and are removed on a **clean** stop. A crash leaves them (fail-safe;
-clear them like the kill-switch).
+All rules carry a `qeli-gw-nat` comment and are verified with `iptables -C`.
+Within the running process, Qeli records attempted rules by TUN, IP family and LAN
+subnet; cleanup removes saved subnet variants even after configuration changes.
+A successful cleanup of one TUN/family does not clear another's retry state.
+Failures are reported, both families are attempted, and sysctl ownership is released
+through the shared journal without releasing another profile's lease.
+The rule registry is in memory: after a crash, inspect leftover tagged rules before
+manual recovery; cleanup of an old subnet across process restarts is not guaranteed.
+
+New and reused FORWARD permits check the order of the detected Qeli kill-switch.
+An inspection failure cannot authorize insertion ahead of it. MSS-clamp remains
+best-effort: failure logs a warning and requires working Path-MTU Discovery.
+[Validation and remaining limits](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md).
 
 **Example — a Mikrotik container as the gateway for `192.168.254.0/24`:**
 
@@ -1871,15 +1881,15 @@ level = info
 ```
 
 `chmod 600 client.conf` — and the client keeps `ip_forward` + `MASQUERADE -s
-192.168.254.0/24 -o vpn0` consistent across every reconnect and container restart. No
-manual wiring or watchdog entrypoint needed.
+192.168.254.0/24 -o vpn0` configured across reconnects. After a crash or forced stop,
+check for leftover rules before reusing the interface.
 
 > On `iptables-nft` hosts the `filter` table's `FORWARD` chain can be legacy-
 > incompatible (same as `server/nat.rs`) — then it's installed best-effort and
 > forwarding may continue only when qeli verifies an otherwise empty `FORWARD` chain whose
 > built-in policy is `ACCEPT` (a warning is logged). Any explicit rule/jump or an unreadable
 > chain fails router-mode setup instead of risking a silent black hole.
-> `MASQUERADE` and the MSS-clamp are mandatory.
+> `MASQUERADE` is required in NAT mode; an unverified MSS-clamp produces a warning.
 
 ## Kill-switch (`kill_switch`)
 
