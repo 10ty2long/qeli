@@ -79,7 +79,8 @@ A descendant can deliberately escape its group. Successful, explicitly redirecte
 services keep the existing hook behavior. The shell is fixed; commands inside it still use
 the operator's PATH and script trust chain. The helper is not a sandbox for untrusted commands.
 
-password_file still reads synchronously and without a raw-size/non-regular-source bound;
-that is the next credential pass. Client final task drain/rollback, supervisor tasks, real
-Linux SIGINT/SIGTERM/systemd execution, release provenance and the wider feature matrix
-remain open. Sections 14/25/33/34 and the full audit are not complete.
+Follow-up: [password files and final status](AUDIT-Q25-PASSWORD-FILES.md) adds bounded
+regular-file reading, shared zeroizing storage and a joined final publication boundary.
+Client network rollback, background fault monitoring, supervisor tasks, real Linux
+SIGINT/SIGTERM/systemd, release provenance and the wider feature matrix remain open.
+Sections 14/25/33/34 and the full audit are not complete.

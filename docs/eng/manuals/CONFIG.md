@@ -1687,8 +1687,19 @@ pass = secret
 ```
 The password can be supplied three ways in the `[qeli]` section (precedence high → low):
 - `pass = <secret>` — inline plaintext (wins if present and non-empty).
-- `password_file = <path>` — read the password from a file (its content is trimmed). Used only
-  when `pass` is absent. Good for headless clients that keep the secret out of the config.
+- `password_file = <path>` — read the password from a regular file; a symlink to a regular
+  file is supported. Used only when `pass` is absent. Raw input is limited to **16 KiB**,
+  decoded as strict UTF-8 and trimmed at the edges, using the same zeroizing buffer as
+  `password_command`. Oversized input and detected changes while reading reject the
+  password; it is never truncated. FIFO, device and directory sources are rejected.
+  Reading runs outside the async runtime workers, with at most one queued/active file
+  job per process. Its **30-second budget** includes admission wait. Stop/deadline signals
+  cancel queued work and request cancellation between filesystem calls; an already-running
+  syscall cannot be force-cancelled, so ordinary stop/timeout waits for that job to finish.
+  A stalled filesystem can therefore exceed 30 seconds. Forced future cancellation leaves
+  that job holding its slot and zeroizing buffers until I/O returns, preventing accumulated
+  reads. These are file-reading rules; the config-command ownership policy does not apply
+  to a password file. The operator remains responsible for its access permissions.
 - `password_command = <cmd>` — obtain the password by running a command via `sh -c` (its stdout is
   trimmed). Used only when both `pass` and `password_file` are absent. **Runs as the client
   process (typically root)**, so it requires a regular non-symlink config owned by root or
@@ -1707,7 +1718,7 @@ The password can be supplied three ways in the `[qeli]` section (precedence high
   Descendants that deliberately leave the group and uninterruptible kernel waits remain
   outside this cleanup guarantee. Successful commands may retain explicitly redirected
   background services, as with hooks. Raw retained output and the returned password use
-  zeroizing buffers. These execution limits apply to `password_command`, not `password_file`.
+  zeroizing buffers. File reading follows the separate cancellation rules described above.
 
 On the **server**, users can be kept inline — as
 `[user:<name>]` sections right in server.conf (with Argon2 hashes) — or in the

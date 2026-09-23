@@ -936,6 +936,27 @@ SIGINT/SIGTERM while waiting for the supplier cancel startup and clean up its pr
 
 ---
 
+### 6.17 Linux: password_file rejected or stop waits for file I/O
+
+`auth.password_file must resolve to a regular file` rejects a FIFO, device or directory.
+Use a regular secret file; symlinks used by secret stores remain supported. `exceeds 16384
+bytes`, `is not valid UTF-8` and `changed while reading` reject the whole credential.
+Remove unwanted output, correct encoding, or finish/atomically replace the secret file
+before retrying. Error messages do not include the password.
+
+`auth.password_file exceeded its read deadline` uses a 30-second admission/read budget.
+A queued read can be cancelled; an already-running filesystem syscall must return before
+ordinary stop/timeout finishes. Check filesystem/mount health if shutdown is still waiting.
+Repeated caller cancellation cannot launch more simultaneous reads: the running job keeps
+its sole per-process slot. It releases buffers when the syscall returns and it can exit.
+
+The final client status is written after the sampler and signal watchers are aborted and
+joined. This prevents an older sampler write from replacing `stopped`/`failed`; a blocked
+synchronous diagnostic write can also delay that final publication. This is not a guarantee
+of a terminal status after SIGKILL or forced cancellation of the entire client future.
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

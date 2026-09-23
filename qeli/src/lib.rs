@@ -84,6 +84,14 @@ pub mod transport;
 #[path = "hooks/process.rs"]
 mod hook_process;
 
+// Headless credential I/O and final task publication also have portable host tests.
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod client_tasks;
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod credential_file;
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod secret_buffer;
+
 // Bind command authorization to the exact descriptor supplying Linux runtime INI bytes.
 #[cfg(any(
     test,

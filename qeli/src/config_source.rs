@@ -30,7 +30,7 @@ impl ConfigSnapshot {
 }
 
 #[derive(PartialEq, Eq)]
-struct Stamp {
+pub(crate) struct Stamp {
     len: u64,
     modified: Option<SystemTime>,
     readonly: bool,
@@ -38,7 +38,7 @@ struct Stamp {
     unix: (u64, u64, u32, u32, u32, i64, i64, i64, i64),
 }
 impl Stamp {
-    fn of(md: &Metadata) -> Self {
+    pub(crate) fn of(md: &Metadata) -> Self {
         #[cfg(unix)]
         use std::os::unix::fs::MetadataExt;
         Self {

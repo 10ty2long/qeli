@@ -492,6 +492,14 @@ features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked
 Server-only check has 23 existing transport dead-code warnings. password_file bounds,
 final client task drain and Linux runtime/release checks remain open.
 
+**File credentials and final status, 23 September 2026:**
+[Q25-F002 / Q14-F021](../reports/AUDIT-Q25-PASSWORD-FILES.md): file/command share a 16 KiB
+zeroizing buffer; regular-file reads use one owned blocking job, keep symlink support,
+reject FIFO and await active I/O on ordinary stop/deadline. The final status follows joined
+watchers/sampler, including initialized startup-error paths. 895 host Rust tests PASS;
+two Unix tests cross-checked only. Non-interruptible I/O may exceed the 30-second budget.
+Startup/network rollback, background fault monitoring and Linux E2E remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -724,6 +732,14 @@ client watchers/sampler have a scoped owner. Server-only TUN gate fixed and both
 features checked in CI. 883 host Rust tests PASS; four Linux tests cross-checked only.
 Server-only check has 23 existing transport dead-code warnings. password_file bounds,
 final client task drain and Linux runtime/release checks remain open.
+
+**File credentials and final status, 23 September 2026:**
+[Q25-F002 / Q14-F021](../reports/AUDIT-Q25-PASSWORD-FILES.md): file/command share a 16 KiB
+zeroizing buffer; regular-file reads use one owned blocking job, keep symlink support,
+reject FIFO and await active I/O on ordinary stop/deadline. The final status follows joined
+watchers/sampler, including initialized startup-error paths. 895 host Rust tests PASS;
+two Unix tests cross-checked only. Non-interruptible I/O may exceed the 30-second budget.
+Startup/network rollback, background fault monitoring and Linux E2E remain open.
 
 ### 26. Shared C# and managed/native boundary
 

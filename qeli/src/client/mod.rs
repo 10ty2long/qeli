@@ -2366,8 +2366,26 @@ async fn wait_for_reconnect(delay: Duration, shutdown: &AtomicBool, wakeup: &tok
 
 #[cfg(target_os = "linux")]
 pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
-    // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     let mut client_tasks = tokio::task::JoinSet::new();
+    let mut final_report = None;
+    let result = run_client_inner(config_path, &mut client_tasks, &mut final_report).await;
+    crate::client_tasks::finish(&mut client_tasks, || {
+        if let Some((reporter, counters)) = final_report {
+            reporter.terminal(result.as_ref().err());
+            reporter.publish(&counters);
+        }
+    })
+    .await;
+    result
+}
+
+#[cfg(target_os = "linux")]
+async fn run_client_inner(
+    config_path: &str,
+    client_tasks: &mut tokio::task::JoinSet<()>,
+    final_report: &mut Option<(ClientStatusReporter, Arc<RuntimeCounters>)>,
+) -> anyhow::Result<()> {
+    // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     client_tasks.spawn(trace::watch());
 
     let (config_content, config_command_trust) =
@@ -2376,12 +2394,16 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // only `check-config` reported them, while the real start substituted defaults in silence.
     // See `config::parse_client_config_strict`. (Audit 2026-08-01, §4/§5.)
     let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
+    *final_report = Some((
+        core_adapter.diagnostics.clone(),
+        core_adapter.counters.clone(),
+    ));
     core_adapter
         .diagnostics
-        .start_sampler(core_adapter.counters.clone(), &mut client_tasks);
+        .start_sampler(core_adapter.counters.clone(), client_tasks);
     // Register synchronously before any credential command is spawned. One stop token
-    // covers startup, the active carrier and reconnect backoff. JoinSet owns watchers
-    // and the sampler, aborting them on startup error/return/cancellation.
+    // covers startup, the active carrier and reconnect backoff. The outer wrapper
+    // joins watchers/sampler before final publication, even on an early startup error.
     use tokio::signal::unix::{signal, SignalKind};
     let mut term = signal(SignalKind::terminate())?;
     let mut interrupt = signal(SignalKind::interrupt())?;
@@ -2435,7 +2457,16 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     let password = if let Some(ref pw) = config.auth.password {
         zeroize::Zeroizing::new(pw.clone())
     } else if let Some(ref pw_file) = config.auth.password_file {
-        zeroize::Zeroizing::new(std::fs::read_to_string(pw_file)?.trim().to_string())
+        let stop = async {
+            if !shutdown_requested.load(Ordering::Acquire) {
+                shutdown_wakeup.notified().await;
+            }
+        };
+        match crate::credential_file::password(pw_file, stop).await {
+            Ok(password) => password,
+            Err(crate::credential_file::FileError::Cancelled) => return Ok(()),
+            Err(error) => return Err(error.into()),
+        }
     } else if let Some(ref pw_cmd) = config.auth.password_command {
         // SECURITY: password_command runs `sh -c` as us (typically root). Honour it
         // ONLY from a trusted (not group/world-writable) config file, exactly like
@@ -2597,8 +2628,6 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
                     Ok(()) => anyhow::anyhow!("{error}"),
                     Err(cleanup) => anyhow::anyhow!("{error}; teardown also failed: {cleanup}"),
                 };
-                core_adapter.diagnostics.terminal(Some(&terminal));
-                core_adapter.diagnostics.publish(&core_adapter.counters);
                 return Err(terminal);
             }
         }
@@ -2627,8 +2656,6 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             .await;
             let result = cleanup
                 .map_err(|error| anyhow::anyhow!("shutdown network cleanup failed: {error}"));
-            core_adapter.diagnostics.terminal(result.as_ref().err());
-            core_adapter.diagnostics.publish(&core_adapter.counters);
             return result;
         }
 
@@ -2681,8 +2708,6 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
                     Err(anyhow::anyhow!("{error}; teardown also failed: {cleanup}"))
                 }
             };
-            core_adapter.diagnostics.terminal(result.as_ref().err());
-            core_adapter.diagnostics.publish(&core_adapter.counters);
             return result;
         }
 
@@ -2716,8 +2741,6 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
                     cleanup
                 ),
             };
-            core_adapter.diagnostics.terminal(Some(&error));
-            core_adapter.diagnostics.publish(&core_adapter.counters);
             return Err(error);
         }
 

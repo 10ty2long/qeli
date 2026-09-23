@@ -73,5 +73,6 @@ loading and supervisor/client startup task ownership need separate passes.
 
 Follow-up: [credential command audit](AUDIT-Q25-CREDENTIAL-COMMANDS.md) fixes the blocking,
 unbounded password_command path, secret-bearing stderr and early signal cancellation.
-password_file and final client task drain remain open, along with Linux runtime/signal/
-systemd integration. Sections 14/33 and the full audit are not complete.
+The later [file/status audit](AUDIT-Q25-PASSWORD-FILES.md) also adds password_file bounds
+and joins client background tasks before final publication. Network rollback and Linux
+runtime/signal/systemd integration remain open. Sections 14/33 and the full audit are not complete.

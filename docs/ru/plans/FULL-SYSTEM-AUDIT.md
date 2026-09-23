@@ -497,6 +497,14 @@ features проверяются в CI. 883 host Rust tests PASS; четыре Li
 Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
 финальный drain клиента и Linux runtime/release checks ещё открыты.
 
+**Файловый пароль и финальный статус, 23 сентября 2026:**
+[Q25-F002 / Q14-F021](../reports/AUDIT-Q25-PASSWORD-FILES.md): общий zeroizing-буфер 16 KiB
+для файла/команды, одна управляемая blocking-задача чтения обычного файла, поддержка symlink,
+отказ FIFO и ожидание активного I/O при штатном stop/deadline. Final пишется после join
+watchers/sampler, включая ошибки после инициализации reporter. 895 host Rust tests PASS;
+два Unix-теста только cross-check. Неотменяемый I/O может превышать бюджет 30 секунд.
+Startup/network rollback, мониторинг фоновых ошибок и Linux E2E ещё открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -731,6 +739,14 @@ watchers/sampler клиента имеют владельца. Исправле�
 features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
 Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
 финальный drain клиента и Linux runtime/release checks ещё открыты.
+
+**Файловый пароль и финальный статус, 23 сентября 2026:**
+[Q25-F002 / Q14-F021](../reports/AUDIT-Q25-PASSWORD-FILES.md): общий zeroizing-буфер 16 KiB
+для файла/команды, одна управляемая blocking-задача чтения обычного файла, поддержка symlink,
+отказ FIFO и ожидание активного I/O при штатном stop/deadline. Final пишется после join
+watchers/sampler, включая ошибки после инициализации reporter. 895 host Rust tests PASS;
+два Unix-теста только cross-check. Неотменяемый I/O может превышать бюджет 30 секунд.
+Startup/network rollback, мониторинг фоновых ошибок и Linux E2E ещё открыты.
 
 ### 26. Общий C# и managed/native граница
 

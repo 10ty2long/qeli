@@ -1,12 +1,9 @@
 //! Full bounded credential output. Never reuse a hook's truncated/loggable output tail.
 use super::OwnedProcess;
+use crate::secret_buffer::{SecretBuffer, SecretDataError, MAX_SECRET_BYTES};
 use std::{io, process::ExitStatus, process::Stdio, time::Duration};
 use tokio::{io::AsyncRead, io::AsyncReadExt, process::Command};
 use zeroize::Zeroizing;
-
-// Includes whitespace before trim. The existing, smaller AUTH wire budget is still
-// checked by the caller after loading the effective credential.
-const MAX_SECRET_BYTES: usize = 16 * 1024;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum SecretError {
@@ -28,6 +25,15 @@ pub(crate) enum SecretError {
     InvalidUtf8,
 }
 
+impl From<SecretDataError> for SecretError {
+    fn from(error: SecretDataError) -> Self {
+        match error {
+            SecretDataError::TooLarge => Self::TooLarge,
+            SecretDataError::InvalidUtf8 => Self::InvalidUtf8,
+        }
+    }
+}
+
 #[cfg(all(target_os = "linux", feature = "client"))]
 pub(crate) async fn password(
     command: &str,
@@ -41,7 +47,7 @@ pub(crate) async fn password(
 
 async fn read_secret(
     mut reader: impl AsyncRead + Unpin,
-    output: &mut Zeroizing<Vec<u8>>,
+    output: &mut SecretBuffer,
 ) -> Result<(), SecretError> {
     let mut buffer = Zeroizing::new([0u8; 4096]);
     loop {
@@ -52,18 +58,8 @@ async fn read_secret(
         if count == 0 {
             return Ok(());
         }
-        if count > MAX_SECRET_BYTES - output.len() {
-            return Err(SecretError::TooLarge);
-        }
-        // The caller preallocates the entire finite budget: no realloc leaves an old
-        // secret-bearing allocation behind. Both this buffer and output wipe on Drop.
-        output.extend_from_slice(&buffer[..count]);
+        output.append(&buffer[..count])?;
     }
-}
-
-fn decode(output: &[u8]) -> Result<Zeroizing<String>, SecretError> {
-    let text = std::str::from_utf8(output).map_err(|_| SecretError::InvalidUtf8)?;
-    Ok(Zeroizing::new(text.trim().to_owned()))
 }
 
 #[cfg(test)]
@@ -105,7 +101,7 @@ async fn collect_until_stopped(
     stop: impl std::future::Future<Output = ()>,
 ) -> Result<Zeroizing<String>, SecretError> {
     let stdout = process.child.stdout.take().expect("piped command stdout");
-    let mut output = Zeroizing::new(Vec::with_capacity(MAX_SECRET_BYTES));
+    let mut output = SecretBuffer::new();
     let completed = tokio::select! {
         biased;
         _ = stop => Err(SecretError::Cancelled),
@@ -125,7 +121,7 @@ async fn collect_until_stopped(
     if !status.success() {
         return Err(SecretError::Failed(status));
     }
-    decode(&output)
+    output.decode().map_err(Into::into)
 }
 
 #[cfg(test)]
@@ -137,29 +133,33 @@ mod tests {
     #[tokio::test]
     async fn exact_limit_is_preserved_and_overflow_is_rejected_not_truncated() {
         let source = vec![b'x'; MAX_SECRET_BYTES];
-        let mut output = Zeroizing::new(Vec::with_capacity(MAX_SECRET_BYTES));
+        let mut output = SecretBuffer::new();
         read_secret(&source[..], &mut output).await.unwrap();
-        assert_eq!(&**output, &source);
+        assert_eq!(output.bytes(), &source);
         assert_eq!(output.capacity(), MAX_SECRET_BYTES);
-        output.clear();
+        let mut output = SecretBuffer::new();
         let too_large = vec![b'x'; MAX_SECRET_BYTES + 1];
         assert!(matches!(
             read_secret(&too_large[..], &mut output).await,
             Err(SecretError::TooLarge)
         ));
-        assert!(output.len() <= MAX_SECRET_BYTES);
+        assert!(output.bytes().len() <= MAX_SECRET_BYTES);
         assert_eq!(output.capacity(), MAX_SECRET_BYTES);
     }
 
     #[test]
     fn decoding_is_strict_and_only_trims_outer_whitespace() {
-        let secret = decode(" \tпароль with space\r\n".as_bytes()).unwrap();
-        assert_eq!(secret.as_str(), "пароль with space");
-        assert_eq!(decode(b" \r\n").unwrap().as_str(), "");
-        assert!(matches!(
-            decode(b"secret\xff"),
-            Err(SecretError::InvalidUtf8)
-        ));
+        for (raw, expected) in [
+            (" \tпароль with space\r\n", "пароль with space"),
+            (" \r\n", ""),
+        ] {
+            let mut output = SecretBuffer::new();
+            output.append(raw.as_bytes()).unwrap();
+            assert_eq!(output.decode().unwrap().as_str(), expected);
+        }
+        let mut output = SecretBuffer::new();
+        output.append(b"secret\xff").unwrap();
+        assert!(matches!(output.decode(), Err(SecretDataError::InvalidUtf8)));
     }
 
     #[tokio::test]
@@ -299,8 +299,8 @@ mod tests {
                 std::task::Poll::Ready(Err(io::Error::other("fixture read error")))
             }
         }
-        let mut output = Zeroizing::new(Vec::with_capacity(MAX_SECRET_BYTES));
-        output.extend_from_slice(b"partial-fixture-secret");
+        let mut output = SecretBuffer::new();
+        output.append(b"partial-fixture-secret").unwrap();
         let error = read_secret(Broken, &mut output).await.unwrap_err();
         assert!(matches!(error, SecretError::Io(_)));
         assert!(!format!("{error:?}").contains("partial-fixture-secret"));

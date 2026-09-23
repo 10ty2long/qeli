@@ -75,5 +75,6 @@ post_down. Удаление или изменение прав могло мол
 
 Продолжение: [аудит команды пароля](AUDIT-Q25-CREDENTIAL-COMMANDS.md) исправляет блокирующий
 неограниченный password_command, раскрытие stderr и раннюю отмену по сигналу.
-password_file, финальный drain клиента и Linux runtime/signal/systemd integration ещё
-открыты. Разделы 14/33 и полный аудит не завершены.
+Следующий [аудит файла/статуса](AUDIT-Q25-PASSWORD-FILES.md) также ограничивает password_file
+и дожидается клиентских фоновых задач перед final. Network rollback и Linux runtime/
+signal/systemd integration ещё открыты. Разделы 14/33 и полный аудит не завершены.
