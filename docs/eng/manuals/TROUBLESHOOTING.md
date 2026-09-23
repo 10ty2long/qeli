@@ -1328,8 +1328,9 @@ IPv4/IPv6 destination and earlier command errors. Multiple nonempty snapshot lin
 are rejected; multipath snapshot reconstruction is not implemented.
 
 This is not a guarantee that every uncertain route was removed. An unsuccessful add
-does not prove ownership; such a route may remain for inspection. Pending-operation
-recovery and command deadlines remain separate work. No new INI fields are required.
+does not prove ownership; such a route may remain for inspection. Unknown roaming
+operations retain separate pending reservations without delete authority (see 6.43).
+Durable crash recovery and command deadlines remain separate work. No new INI fields are required.
 [Evidence and limits](../reports/AUDIT-Q25-ROUTE-OUTCOME.md).
 
 ### 6.40 Linux: changed route ownership or cleanup retry
@@ -1356,9 +1357,10 @@ a generation number does not revive the old one.
 
 `still live or has pending cleanup` means a live guard or unconfirmed cleanup reserves
 the interface name. A live guard retries only its own cleanup. Once the final guard
-has been released with leftovers, automatic adoption/recovery is not implemented.
-Inspect the original error and affected routes first; restarting the process alone
-does not prove that those routes were removed.
+has been released with leftovers, a new connection may release the reservation only
+after read-only confirmation of absence and the conditions in 6.43. There is no automatic
+adoption/deletion of an unconfirmed route. Inspect the original error and affected routes
+first; restarting the process alone does not prove that those routes were removed.
 
 `belongs to another Qeli owner` reports a carrier/exclude/blackhole conflict with another
 connection in this process. Shared ownership of that route is unsupported.
@@ -1382,10 +1384,37 @@ confirmed absence completes deletion.
 After a failure, Qeli verifies rollback of the completed steps. If the previous path's
 state cannot be established, the generation must stop instead of continuing on an assumed
 restoration. Inspect the affected destination, current snapshot and preceding errors;
-automatic recovery of unconfirmed/orphaned records is not implemented. Full semantic
+pending tracking and release of absent orphans are described in 6.43. Full semantic
 comparison of every attribute and atomic protection against external changes remain
 unsupported. There are no new INI parameters.
 [Regressions and limits](../reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md).
+
+### 6.43 Linux roaming: pending reservation after an unknown outcome
+
+`unresolved route mutation; destination remains reserved without delete authority`
+means command completion did not establish ownership and the destination is still
+present. Qeli retains the operation record and cleanup error but does not delete the
+route on the authority of pending alone. Matching plan parameters do not prove who
+installed it. `could not verify pending route` means no valid snapshot was obtained.
+
+An unknown commit result immediately closes new route operations for that owner,
+including gateway refresh. A live guard can retry cleanup; pending clears only after
+confirmed destination absence. Successful cleanup leaves the old owner stopped;
+a new one becomes possible after the final guard is released.
+
+After guard release, a new connection in the same process performs a read-only orphan
+check only if the previous IPv4/IPv6 interface flushes completed successfully. All
+recorded destinations must be absent and both families' interface routes empty.
+`orphan route reservation ... is still present` and
+`could not confirm empty orphan interface routes` mean release is blocked.
+Other query errors also retain the reservation; routes are not overwritten.
+
+Inspect the destinations, interface and original error. Unconfirmed routes are not
+automatically deleted. Without previous cleanup, after failed interface flush or with
+a live guard, automatic release is unavailable. This mechanism operates within the
+process and does not restore the journal after crash/restart. Initial carrier/exclude/
+blackhole setup still needs a separate lost-result audit. No INI parameters were added.
+[Report and limits](../reports/AUDIT-Q25-ROUTE-PENDING.md).
 
 ---
 

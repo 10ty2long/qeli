@@ -1028,6 +1028,14 @@ does not negate a confirmed action, and apparent success cannot prove rollback.
 Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
 command deadlines remain open; the section status is unchanged.
 
+**2026-09-23 follow-up — pending and orphan records:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): unknown roaming operations retain
+reservations without delete authority; every unknown commit closes admission.
+Cleanup/reconnect releases pending/orphan entries only after confirmed absence, with
+separate final-lease and interface-flush conditions. 17 new regressions/controls;
+1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
+durable crash recovery, deadlines and Linux runtime remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1102,6 +1110,14 @@ does not negate a confirmed action, and apparent success cannot prove rollback.
 16 new baseline failures → 16 PASS; 1177 Rust tests total and nine matrix commands PASS.
 Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
 command deadlines remain open; the section status is unchanged.
+
+**2026-09-23 follow-up — pending and orphan records:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): unknown roaming operations retain
+reservations without delete authority; every unknown commit closes admission.
+Cleanup/reconnect releases pending/orphan entries only after confirmed absence, with
+separate final-lease and interface-flush conditions. 17 new regressions/controls;
+1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
+durable crash recovery, deadlines and Linux runtime remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1292,6 +1308,14 @@ does not negate a confirmed action, and apparent success cannot prove rollback.
 16 new baseline failures → 16 PASS; 1177 Rust tests total and nine matrix commands PASS.
 Linux runtime was not run. Pending unknown/orphan recovery, cross-process races and
 command deadlines remain open; the section status is unchanged.
+
+**2026-09-23 follow-up — pending and orphan records:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): unknown roaming operations retain
+reservations without delete authority; every unknown commit closes admission.
+Cleanup/reconnect releases pending/orphan entries only after confirmed absence, with
+separate final-lease and interface-flush conditions. 17 new regressions/controls;
+1194 Rust tests and nine matrix commands PASS. Initial setup mutations, flush postconditions,
+durable crash recovery, deadlines and Linux runtime remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1568,10 +1592,11 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with pending unknown mutations and orphan-record recovery.
-Q25-F029/F030 verifies retirement/restore within observable snapshot boundaries;
-Q25-F027/F028 isolates live owners within the process. Neither completes Q14-F027 TUN
-workers or crash/restart recovery. Then bound route/kill-switch/gateway commands.
-Section 05 still needs transaction-wide preflight deadlines and removal of synchronous
-waits in async handlers. Outstanding 01–07, Linux restart/restore/manual+NDP E2E,
-cross-process isolation, native certification and a full benchmark remain.
+**Next work:** continue 25 with unknown initial carrier/exclude/blackhole setup outcomes
+and interface-flush postconditions. Q25-F031/F032 adds roaming pending records and
+read-only release of absent orphans within the process; durable crash/restart recovery
+and external route authorship remain unresolved. Then address route/kill-switch/gateway
+deadlines, overall gateway rollback and Q14-F027 TUN workers/FD. Section 05 still needs
+an overall preflight deadline and removal of synchronous waits in async handlers.
+Outstanding 01–07, Linux restart/restore/manual+NDP E2E, cross-process isolation,
+native certification and a full benchmark remain.

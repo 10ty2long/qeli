@@ -91,3 +91,8 @@ Follow-up: [Q25-F029/F030](AUDIT-Q25-ROUTE-POSTCONDITIONS.md) verifies retiremen
 outcomes. Confirmed absence or exact restoration is now accepted even with negative/lost
 completion; apparent success alone is not proof. Pending unknown/orphan recovery and
 command deadlines remain open.
+
+Follow-up: [Q25-F031/F032](AUDIT-Q25-ROUTE-PENDING.md) retains separate pending reservations
+for unknown roaming outcomes and closes admission on every unknown commit result.
+Read-only orphan release is possible after confirming absent leftovers within the process;
+durable crash recovery remains open.

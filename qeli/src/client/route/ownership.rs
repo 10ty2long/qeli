@@ -74,7 +74,7 @@ fn prefix(value: &str) -> Option<(std::net::IpAddr, u8)> {
     }
 }
 
-fn recorded_route(spec: &[String]) -> anyhow::Result<Option<Vec<String>>> {
+pub(super) fn recorded_route(spec: &[String]) -> anyhow::Result<Option<Vec<String>>> {
     let key = route_key(spec);
     let destination = key.last().expect("route destination");
     let mut query = Vec::new();

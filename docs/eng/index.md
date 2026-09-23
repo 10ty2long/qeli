@@ -84,6 +84,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |
 | [AUDIT-Q25-ROUTE-OWNERSHIP.md](reports/AUDIT-Q25-ROUTE-OWNERSHIP.md) | Q25-F025/F026: preserve changed routes and verify cleanup before forgetting ownership |
+| [AUDIT-Q25-ROUTE-PENDING.md](reports/AUDIT-Q25-ROUTE-PENDING.md) | Q25-F031/F032: pending mutations and release of absent orphan routes |
 | [AUDIT-Q25-ROUTE-POSTCONDITIONS.md](reports/AUDIT-Q25-ROUTE-POSTCONDITIONS.md) | Q25-F029/F030: verified carrier-route retirement and restoration |
 | [AUDIT-Q25-ROUTE-SCOPE.md](reports/AUDIT-Q25-ROUTE-SCOPE.md) | Q25-F027/F028: scoped route journal and rejection of commits after cleanup starts |
 | [AUDIT-Q25-ROUTE-OUTCOME.md](reports/AUDIT-Q25-ROUTE-OUTCOME.md) | Q25-F023/F024: verify failed route mutations before reversible rejection; reject ambiguous snapshots |

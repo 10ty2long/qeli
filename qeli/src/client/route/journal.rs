@@ -1,6 +1,7 @@
 //! Explicit ownership for one Linux network-plan lifetime.
 //! Entries surviving failed teardown stay reserved; a new connection cannot adopt them.
-use super::ownership::{route_key, same_route_key};
+use super::ownership::{recorded_route, route_key, same_route_key};
+use super::route_command_output;
 #[cfg(feature = "experimental-roaming")]
 use std::sync::Weak;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -23,6 +24,10 @@ struct Entry {
     generation: u64,
     accepting: bool,
     cleanup_failed: bool,
+    interface_flushed: bool,
+    orphaned: bool,
+    // Reservations for unknown mutation outcomes are not delete authority.
+    pending: Vec<Vec<String>>,
     routes: Vec<Vec<String>>,
 }
 struct Registry {
@@ -43,13 +48,44 @@ fn registry() -> MutexGuard<'static, Registry> {
 
 impl RouteOwner {
     pub(crate) fn new(interface: &str, generation: u64) -> anyhow::Result<Self> {
-        let mut state = registry();
-        if let Some(previous) = state.entries.iter().find(|e| e.interface == interface) {
-            anyhow::bail!(
-                "route owner for {interface} generation {} is still live or has pending cleanup",
-                previous.generation
-            );
+        let _operation = OPERATIONS.lock().unwrap_or_else(|e| e.into_inner());
+        let recovery = {
+            let state = registry();
+            if let Some(previous) = state.entries.iter().find(|e| e.interface == interface) {
+                if !previous.orphaned || !previous.interface_flushed {
+                    anyhow::bail!(
+                        "route owner for {interface} generation {} is still live or has pending cleanup",
+                        previous.generation
+                    );
+                }
+                Some((
+                    previous.id,
+                    previous
+                        .routes
+                        .iter()
+                        .chain(&previous.pending)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                ))
+            } else {
+                None
+            }
+        };
+        if let Some((id, records)) = recovery {
+            // Never adopt or delete orphan records. Only absence releases the reservation.
+            // Do not hold the registry mutex while running an external query.
+            for spec in records {
+                if recorded_route(&spec)?.is_some() {
+                    anyhow::bail!(
+                        "orphan route reservation for {interface} is still present: {}",
+                        spec.join(" ")
+                    );
+                }
+            }
+            verify_interface_routes_absent(interface)?;
+            registry().entries.retain(|e| e.id != id);
         }
+        let mut state = registry();
         state.next_id = state
             .next_id
             .checked_add(1)
@@ -61,6 +97,9 @@ impl RouteOwner {
             generation,
             accepting: true,
             cleanup_failed: false,
+            interface_flushed: false,
+            orphaned: false,
+            pending: Vec::new(),
             routes: Vec::new(),
         });
         Ok(Self(Arc::new(Lease {
@@ -107,14 +146,25 @@ impl RouteOwner {
         guard
     }
 
-    pub(super) fn cleanup_result(&self, failed: bool) {
-        let mut state = registry();
-        state
+    #[cfg(feature = "experimental-roaming")]
+    pub(super) fn stop_admission(&self) {
+        registry()
             .entries
             .iter_mut()
             .find(|e| e.id == self.0.id)
             .expect("live route owner is registered")
-            .cleanup_failed = failed;
+            .accepting = false;
+    }
+
+    pub(super) fn cleanup_result(&self, failed: bool, interface_flushed: bool) {
+        let mut state = registry();
+        let entry = state
+            .entries
+            .iter_mut()
+            .find(|e| e.id == self.0.id)
+            .expect("live route owner is registered");
+        entry.cleanup_failed = failed;
+        entry.interface_flushed = interface_flushed;
     }
 }
 
@@ -132,7 +182,8 @@ impl Drop for Lease {
         let mut state = registry();
         if let Some(entry) = state.entries.iter_mut().find(|e| e.id == self.id) {
             entry.accepting = false;
-            if entry.routes.is_empty() && !entry.cleanup_failed {
+            entry.orphaned = true;
+            if entry.routes.is_empty() && entry.pending.is_empty() && !entry.cleanup_failed {
                 state.entries.retain(|e| e.id != self.id);
             }
         }
@@ -144,7 +195,13 @@ impl Drop for Lease {
 pub(super) fn ensure_unclaimed(owner: &RouteOwner, spec: &[String]) -> anyhow::Result<()> {
     let state = registry();
     for entry in &state.entries {
-        if entry.id != owner.0.id && entry.routes.iter().any(|r| same_route_key(r, spec)) {
+        if entry.id != owner.0.id
+            && entry
+                .routes
+                .iter()
+                .chain(&entry.pending)
+                .any(|r| same_route_key(r, spec))
+        {
             anyhow::bail!(
                 "route {} belongs to another Qeli owner ({} generation {}); shared route borrowing is unsupported",
                 route_key(spec).last().expect("destination"), entry.interface, entry.generation
@@ -194,6 +251,67 @@ pub(super) fn take_created(owner: &RouteOwner) -> Vec<Vec<String>> {
         .find(|e| e.id == owner.0.id)
         .expect("live route owner is registered");
     std::mem::take(&mut entry.routes)
+}
+
+/// An unknown result stops admission immediately but grants no new route ownership.
+#[cfg(feature = "experimental-roaming")]
+pub(super) fn note_pending(owner: &RouteOwner, spec: Vec<String>) {
+    let mut state = registry();
+    let entry = state
+        .entries
+        .iter_mut()
+        .find(|e| e.id == owner.0.id)
+        .expect("live route owner is registered");
+    entry.accepting = false;
+    if !entry.pending.iter().any(|r| same_route_key(r, &spec)) {
+        entry.pending.push(spec);
+    }
+}
+
+/// Called under the operation lock after cleanup of previously proven owned records.
+/// A matching pending route could have been installed by another process: do not delete it.
+pub(super) fn reconcile_pending(owner: &RouteOwner) -> Vec<String> {
+    let records = registry()
+        .entries
+        .iter()
+        .find(|e| e.id == owner.0.id)
+        .expect("live route owner is registered")
+        .pending
+        .clone();
+    let mut errors = Vec::new();
+    for spec in records {
+        match recorded_route(&spec) {
+            Ok(None) => {
+                let mut state = registry();
+                let entry = state.entries.iter_mut().find(|e| e.id == owner.0.id)
+                    .expect("live route owner is registered");
+                entry.pending.retain(|r| !same_route_key(r, &spec));
+            }
+            Ok(Some(_)) => errors.push(format!(
+                "unresolved route mutation; destination remains reserved without delete authority: {}",
+                spec.join(" ")
+            )),
+            Err(error) => errors.push(format!("could not verify pending route {}: {error}", spec.join(" "))),
+        }
+    }
+    errors
+}
+
+fn verify_interface_routes_absent(interface: &str) -> anyhow::Result<()> {
+    for ipv6 in [false, true] {
+        let mut args = Vec::new();
+        if ipv6 {
+            args.push("-6".to_string());
+        }
+        args.extend(["route", "show", "dev", interface].map(str::to_string));
+        let output = route_command_output(&args)?;
+        if !output.status.success() || !std::str::from_utf8(&output.stdout)?.trim().is_empty() {
+            anyhow::bail!(
+                "could not confirm empty orphan interface routes for {interface} (IPv6={ipv6})"
+            );
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

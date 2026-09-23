@@ -14,8 +14,6 @@ use ownership::{delete_spec, remove_recorded_route};
 mod journal;
 #[cfg(all(test, feature = "experimental-roaming"))]
 use journal::created_by_us_owned;
-#[cfg(feature = "experimental-roaming")]
-use journal::forget_created_owned;
 #[cfg(test)]
 use journal::note_created;
 #[cfg(any(test, feature = "experimental-roaming"))]
@@ -23,7 +21,9 @@ use journal::recorded_undo;
 pub(crate) use journal::RouteOwner;
 #[cfg(feature = "experimental-roaming")]
 pub(crate) use journal::RouteScope;
-use journal::{ensure_unclaimed, note_created_owned, take_created};
+use journal::{ensure_unclaimed, note_created_owned, reconcile_pending, take_created};
+#[cfg(feature = "experimental-roaming")]
+use journal::{forget_created_owned, note_pending};
 
 #[cfg(test)]
 thread_local! {
@@ -513,11 +513,15 @@ fn restore_carrier_snapshot(
     restore.extend_from_slice(previous);
     let completion = route_command_output(&restore);
     let current = exact_route_tokens(remote).map_err(|error| {
+        note_pending(owner, previous_undo.to_vec());
         anyhow::anyhow!("could not verify restored carrier route {remote}: {error}")
     })?;
     if current.as_deref() == Some(previous) {
         note_created_owned(owner, previous_undo.to_vec());
         return Ok(());
+    }
+    if current.is_some() {
+        note_pending(owner, previous_undo.to_vec());
     }
     // Keep the previous proven journal entry, if any. Do not claim a restore that was
     // not observed, and do not rewrite an unexpected current route to force a match.
@@ -580,6 +584,23 @@ impl LinuxPreparedPathRoutes {
         let lease = self.owner.upgrade()?;
         let owner = &lease;
         let _operation = owner.operation()?;
+        let result = self.commit_locked(owner, previous_carriers, refresh_platform);
+        if result
+            .as_ref()
+            .err()
+            .is_some_and(|error| error.downcast_ref::<RouteCommitStateUnknown>().is_some())
+        {
+            owner.stop_admission();
+        }
+        result
+    }
+
+    fn commit_locked(
+        &self,
+        owner: &RouteOwner,
+        previous_carriers: &[IpAddr],
+        refresh_platform: impl FnOnce() -> anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
         if self.generation != owner.generation() || self.tunnel_interface != owner.interface() {
             anyhow::bail!("prepared path does not match route owner");
         }
@@ -690,6 +711,10 @@ impl LinuxPreparedPathRoutes {
                 if let Err(verification) =
                     verify_failed_route_unchanged(step.route.remote, previous)
                 {
+                    note_pending(
+                        owner,
+                        delete_spec(&candidate_route_command("add", &step.route)),
+                    );
                     rollback_errors.push(verification.to_string());
                 }
                 if rollback_errors.is_empty() {
@@ -740,6 +765,7 @@ impl LinuxPreparedPathRoutes {
                     if let Err(verification) =
                         verify_failed_route_unchanged(route.remote, Some(&route.previous))
                     {
+                        note_pending(owner, route.undo.clone());
                         rollback_errors.push(verification.to_string());
                     }
                     if rollback_errors.is_empty() {
@@ -1971,6 +1997,9 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
         }
     }
 
+    errors.extend(reconcile_pending(owner));
+    let errors_before_flush = errors.len();
+
     // The tun device's own routes go with the device, so flushing by interface can only
     // ever touch ours.
     match route_command_output(&["route", "flush", "dev", ifname].map(str::to_string)) {
@@ -1994,7 +2023,7 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
         Err(error) => errors.push(format!("ip -6 route flush dev {ifname}: {error}")),
     }
 
-    owner.cleanup_result(!errors.is_empty());
+    owner.cleanup_result(!errors.is_empty(), errors.len() == errors_before_flush);
     if errors.is_empty() {
         Ok(())
     } else {

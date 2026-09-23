@@ -1035,6 +1035,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
 межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
 
+**Дополнение 2026-09-23 — pending и orphan:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): неопределённая roaming-операция
+сохраняет reservation без права delete; любой неизвестный commit закрывает admission.
+Cleanup/reconnect освобождает pending/orphan только после подтверждения отсутствия,
+с отдельными условиями для финального lease и interface flush. 17 новых регрессий/
+controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
+flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1109,6 +1117,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 16 новых baseline failures → 16 PASS; общий набор 1177 Rust tests, девять команд
 матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
 межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
+
+**Дополнение 2026-09-23 — pending и orphan:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): неопределённая roaming-операция
+сохраняет reservation без права delete; любой неизвестный commit закрывает admission.
+Cleanup/reconnect освобождает pending/orphan только после подтверждения отсутствия,
+с отдельными условиями для финального lease и interface flush. 17 новых регрессий/
+controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
+flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1299,6 +1315,14 @@ guards и roaming; cleanup закрывает приём и обрабатыва
 16 новых baseline failures → 16 PASS; общий набор 1177 Rust tests, девять команд
 матрицы PASS. Linux runtime не запускался. Pending unknown/orphan recovery,
 межпроцессные гонки и сроки команд остаются открытыми; статус раздела не изменён.
+
+**Дополнение 2026-09-23 — pending и orphan:**
+[Q25-F031/F032](../reports/AUDIT-Q25-ROUTE-PENDING.md): неопределённая roaming-операция
+сохраняет reservation без права delete; любой неизвестный commit закрывает admission.
+Cleanup/reconnect освобождает pending/orphan только после подтверждения отсутствия,
+с отдельными условиями для финального lease и interface flush. 17 новых регрессий/
+controls; 1194 Rust tests и девять команд матрицы PASS. Initial setup mutations,
+flush postconditions, постоянный crash recovery, deadlines и Linux runtime остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1577,10 +1601,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: контракт неизвестных pending мутаций и recovery
-осиротевших записей. Q25-F029/F030 подтверждает retirement/restore в границах проверяемых
-снимков; Q25-F027/F028 изолирует живых владельцев внутри процесса. Это не завершает
-Q14-F027 TUN workers или crash/restart recovery. Затем ограничить команды routes/
-kill-switch/gateway. В 05 остаются общий preflight deadline и sync waits в async handlers.
-Незакрытые 01–07, Linux E2E restart/restore/manual+NDP, межпроцессная изоляция,
-native certification и полный benchmark остаются в плане.
+**Ближайшая работа:** продолжить 25: неизвестные результаты initial setup carrier/exclude/
+blackhole и подтверждение interface flush. Q25-F031/F032 добавляет pending учёт roaming
+и read-only освобождение отсутствующих orphan в пределах процесса; постоянный crash/restart
+recovery и авторство внешних маршрутов этим не решены. Далее сроки route/kill-switch/gateway,
+общий gateway rollback и Q14-F027 TUN workers/FD. В 05 остаются общий preflight deadline
+и sync waits в async handlers. Незакрытые 01–07, Linux E2E restart/restore/manual+NDP,
+межпроцессная изоляция, native certification и полный benchmark остаются в плане.

@@ -442,3 +442,6 @@ fn postcondition_malformed_matching_snapshot_is_not_accepted_before_mutation() {
     assert!(plan(vec![route]).commit(&[]).is_err());
     assert!(fixture.mutations().is_empty());
 }
+
+#[path = "pending_tests.rs"]
+mod pending_tests;
