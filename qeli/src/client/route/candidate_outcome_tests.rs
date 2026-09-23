@@ -1484,3 +1484,6 @@ mod setup_flush_tests;
 
 #[path = "command_bounds_tests.rs"]
 mod command_bounds_tests;
+
+#[path = "tunnel_plan_tests.rs"]
+mod tunnel_plan_tests;

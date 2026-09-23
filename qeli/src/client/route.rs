@@ -2,7 +2,9 @@ use crate::config::client::ClientRoutingConfig;
 use crate::system_command::Command;
 #[cfg(feature = "experimental-roaming")]
 use crate::transport_core::path::PreparedPathCandidate;
-use crate::transport_core::{NetworkAddressFamily, NetworkPlan, NetworkRoute};
+use crate::transport_core::{NetworkAddressFamily, NetworkPlan};
+#[cfg(test)]
+use crate::util::is_valid_cidr;
 use ipnet::Ipv4Net;
 use std::net::IpAddr;
 
@@ -786,12 +788,15 @@ impl LinuxPreparedPathRoutes {
 }
 
 fn add_tunnel_route(
+    owner: &RouteOwner,
     cidr: &str,
     gateway: &str,
-    ifname: &str,
     metric: u32,
     is_tap: bool,
 ) -> anyhow::Result<()> {
+    if !crate::util::is_valid_cidr(cidr) {
+        anyhow::bail!("invalid network-plan route '{cidr}'");
+    }
     let destination = cidr
         .split_once('/')
         .and_then(|(address, _)| address.parse::<IpAddr>().ok())
@@ -803,39 +808,13 @@ fn add_tunnel_route(
         anyhow::bail!("route {cidr} and gateway {gateway} use different families");
     }
     let ipv6 = destination.is_ipv6();
-    let direct_interface_route = !is_tap;
     // An L3 TUN is point-to-point for BOTH families. NetworkPlan v2 deliberately assigns
     // host prefixes (/32 and /128), so `via <gateway>` would require ARP/NDP reachability
     // that does not exist and Linux rejects the IPv4 next hop as invalid. A direct device
     // route sends the inner packet to qeli without neighbour discovery. TAP is real L2 and
     // retains the gateway route.
-    let args = tunnel_route_args(ipv6, cidr, gateway, ifname, metric, is_tap);
-    let output = route_command_output(&args)?;
-    if output.status.success() {
-        return Ok(());
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stderr.contains("File exists") {
-        let dev = format!("dev {ifname}");
-        let route_matches = if direct_interface_route {
-            existing_route_satisfies_all(ipv6, cidr, &[&dev])
-        } else {
-            let via = format!("via {gateway}");
-            existing_route_satisfies_all(ipv6, cidr, &[&via, &dev])
-        };
-        if route_matches == Some(true) {
-            return Ok(());
-        }
-    }
-    let route_description = if direct_interface_route {
-        format!("{cidr} dev {ifname}")
-    } else {
-        format!("{cidr} via {gateway} dev {ifname}")
-    };
-    anyhow::bail!(
-        "network-plan route {route_description} was not applied: {}",
-        stderr.trim()
-    )
+    let args = tunnel_route_args(ipv6, cidr, gateway, owner.interface(), metric, is_tap);
+    install_initial_route(owner, &args)
 }
 
 fn tunnel_route_args(
@@ -846,6 +825,9 @@ fn tunnel_route_args(
     metric: u32,
     is_tap: bool,
 ) -> Vec<String> {
+    // Linux maps an IPv6 add with metric 0 to IP6_RT_PRIO_USER (1024).
+    // Record the effective priority so verification and deletion use the same identity.
+    let metric = if ipv6 && metric == 0 { 1024 } else { metric };
     let mut args = Vec::with_capacity(10);
     if let Some(flag) = family_flag(ipv6) {
         args.push(flag.to_string());
@@ -923,22 +905,42 @@ fn connected_rfc1918_prefixes(ifname: &str) -> anyhow::Result<Vec<Ipv4Net>> {
             String::from_utf8_lossy(&output.stderr).trim()
         );
     }
+    let text = std::str::from_utf8(&output.stdout).map_err(|error| {
+        anyhow::anyhow!("invalid connected IPv4 address snapshot for route_local: {error}")
+    })?;
     let mut prefixes = std::collections::BTreeSet::new();
-    for line in String::from_utf8_lossy(&output.stdout).lines() {
+    for (line_number, line) in text
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| !line.trim().is_empty())
+    {
         let fields = line.split_whitespace().collect::<Vec<_>>();
-        let Some(device) = fields.get(1).and_then(|value| value.split('@').next()) else {
-            continue;
-        };
+        let index = fields
+            .first()
+            .and_then(|s| s.strip_suffix(':'))
+            .and_then(|s| s.parse::<u32>().ok());
+        let device = fields
+            .get(1)
+            .and_then(|value| value.split('@').next())
+            .filter(|s| !s.is_empty());
+        let cidr = fields
+            .get(3)
+            .and_then(|value| value.parse::<Ipv4Net>().ok());
+        if index.is_none_or(|index| index == 0)
+            || fields.get(2) != Some(&"inet")
+            || device.is_none()
+            || cidr.is_none()
+        {
+            anyhow::bail!(
+                "invalid connected IPv4 address snapshot for route_local at line {}",
+                line_number + 1
+            );
+        }
+        let device = device.expect("validated device");
+        let cidr = cidr.expect("validated IPv4 address");
         if device == ifname {
             continue;
         }
-        let Some(cidr) = fields
-            .windows(2)
-            .find(|pair| pair[0] == "inet")
-            .and_then(|pair| pair[1].parse::<Ipv4Net>().ok())
-        else {
-            continue;
-        };
         let canonical = Ipv4Net::new(cidr.network(), cidr.prefix_len())?;
         if is_rfc1918_prefix(&canonical) {
             prefixes.insert((u32::from(canonical.network()), canonical.prefix_len()));
@@ -981,10 +983,11 @@ fn connected_tunnel_cidr(address: IpAddr, prefix: u8) -> anyhow::Result<String> 
     }
 }
 
-/// Shared initial physical-route installation. A pre-existing matching snapshot is borrowed,
+/// Shared initial route installation for physical bypasses, blackholes and TUN/TAP.
+/// A pre-existing matching snapshot is borrowed,
 /// never claimed. After an attempted add, only a successful result AND matching snapshot
 /// grant ownership; a lost result reserves any possible leftover without delete authority.
-fn install_physical_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<()> {
+fn install_initial_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<()> {
     let undo = delete_spec(args);
     ensure_unclaimed(owner, &undo)?;
     if let Some(previous) = recorded_route(&undo)? {
@@ -1035,7 +1038,7 @@ fn add_blackhole_half(owner: &RouteOwner, cidr: &str) -> anyhow::Result<()> {
         "blackhole".into(),
         cidr.into(),
     ]);
-    install_physical_route(owner, &args)
+    install_initial_route(owner, &args)
 }
 
 fn pin_carrier_route(
@@ -1068,7 +1071,7 @@ fn pin_carrier_route(
         ]);
     }
 
-    install_physical_route(owner, &args)
+    install_initial_route(owner, &args)
 }
 
 /// Apply the already validated, generation-scoped dual-family network plan on Linux.
@@ -1146,7 +1149,7 @@ pub(crate) fn setup_network_plan_routes(
         })?;
         let cidr = connected_tunnel_cidr(address, assigned.on_link_prefix_len)?;
         let gateway = assigned.gateway.as_deref().unwrap_or(&assigned.address);
-        add_tunnel_route(&cidr, gateway, ifname, 0, is_tap)?;
+        add_tunnel_route(owner, &cidr, gateway, 0, is_tap)?;
     }
 
     if plan.full_tunnel {
@@ -1168,7 +1171,7 @@ pub(crate) fn setup_network_plan_routes(
                 anyhow::anyhow!("full tunnel address '{}' has no gateway", address.address)
             })?;
             for &prefix in full_tunnel_prefixes(address.family) {
-                add_tunnel_route(prefix, gateway, ifname, FULL_TUNNEL_ROUTE_METRIC, is_tap)?;
+                add_tunnel_route(owner, prefix, gateway, FULL_TUNNEL_ROUTE_METRIC, is_tap)?;
             }
         }
         if !has_ipv4 && !config.allow_ipv4_leak {
@@ -1183,7 +1186,7 @@ pub(crate) fn setup_network_plan_routes(
     }
 
     for route in &plan.routes {
-        add_tunnel_route(&route.cidr, &route.gateway, ifname, route.metric, is_tap)?;
+        add_tunnel_route(owner, &route.cidr, &route.gateway, route.metric, is_tap)?;
     }
 
     if !route_local_captures.is_empty() {
@@ -1194,7 +1197,7 @@ pub(crate) fn setup_network_plan_routes(
             .ok_or_else(|| anyhow::anyhow!("route_local has no IPv4 tunnel address"))?;
         let gateway = address.gateway.as_deref().unwrap_or(&address.address);
         for cidr in &route_local_captures {
-            add_tunnel_route(cidr, gateway, ifname, 0, is_tap)?;
+            add_tunnel_route(owner, cidr, gateway, 0, is_tap)?;
         }
         log::info!(
             "route_local: installed {} connected-prefix override route(s) without replacing physical routes",
@@ -1223,7 +1226,7 @@ pub(crate) fn setup_network_plan_routes(
         } else {
             args.extend(["dev".into(), device.clone(), "scope".into(), "link".into()]);
         }
-        install_physical_route(owner, &args)?;
+        install_initial_route(owner, &args)?;
     }
     if plan.full_tunnel {
         // `ip route add` success is not the final truth when source-policy rules or several
@@ -1566,114 +1569,6 @@ pub(crate) fn setup_routes(
     Ok(())
 }
 
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
-struct PushedRoute {
-    cidr: String,
-    #[serde(default)]
-    gateway: Option<String>,
-    #[serde(default)]
-    metric: Option<u32>,
-}
-
-/// Convert the server push into the exact route records exported by the shared core.
-/// Invalid and policy-forbidden entries are absent from the plan and therefore are never
-/// acknowledged as applied. `apply_pushed_routes` repeats the same checks immediately
-/// before invoking `ip`, keeping the platform boundary defensive against a hostile peer.
-pub fn planned_pushed_routes(
-    routes_json: &str,
-    default_gateway: &str,
-) -> anyhow::Result<Vec<NetworkRoute>> {
-    crate::transport_core::network::planned_pushed_routes(routes_json, default_gateway)
-}
-
-/// Apply the subnets the server advertised, plus — only when
-/// `routing.route_local_networks` is on — the broad RFC1918 ranges.
-///
-/// The two are deliberately NOT gated together. A server-pushed route is a
-/// *specific* CIDR an admin explicitly configured (`route = …` on the profile,
-/// or a per-user route), so it is always honoured — exactly like OpenVPN's
-/// `push "route …"`. Every pushed value is validated in `apply_pushed_routes`
-/// before it reaches `ip`, so a hostile server still cannot smuggle anything.
-/// `route_local_networks` gates only the *blanket* 10/8 + 172.16/12 +
-/// 192.168/16 pull, which stays off by default because it would hijack the
-/// client's OWN LAN (printers, NAS, local router).
-///
-/// Until 0.7.12 the pushed routes sat behind the same flag, so a correctly
-/// configured `route =` was silently dropped on every default client.
-pub fn apply_local_networks(
-    routing: &ClientRoutingConfig,
-    routes_json: &str,
-    ifname: &str,
-    gateway: &str,
-) -> anyhow::Result<()> {
-    // Specific subnets the server advertised — always honoured.
-    apply_pushed_routes(routes_json, ifname, gateway)?;
-    if !routing.route_local_networks {
-        return Ok(());
-    }
-    // Broad routes cover remote private destinations. Child routes override every
-    // directly connected RFC1918 prefix without mutating its physical route.
-    let connected = connected_rfc1918_prefixes(ifname)?;
-    let mut cidrs = vec![
-        "10.0.0.0/8".to_string(),
-        "172.16.0.0/12".to_string(),
-        "192.168.0.0/16".to_string(),
-    ];
-    cidrs.extend(route_local_capture_cidrs(&connected, &routing.exclude)?);
-    for cidr in cidrs {
-        let output = Command::new("ip")
-            .args([
-                "route",
-                "add",
-                cidr.as_str(),
-                "via",
-                gateway,
-                "dev",
-                ifname,
-                "metric",
-                "100",
-            ])
-            .output();
-        match output {
-            Ok(o) if o.status.success() => {}
-            Ok(o) => {
-                let stderr = String::from_utf8_lossy(&o.stderr);
-                if !stderr.contains("File exists") {
-                    anyhow::bail!(
-                        "could not route requested local network {} through {}: {}",
-                        cidr,
-                        ifname,
-                        stderr.trim()
-                    );
-                } else {
-                    // A route already exists — but pointing where? A pre-existing
-                    // `10.0.0.0/8 via <LAN gw>` is the normal case on a router, and
-                    // swallowing it made the "routing local networks through the tunnel"
-                    // line below a lie for that range.
-                    let dev = format!("dev {ifname}");
-                    match existing_route_satisfies(false, &cidr, &dev) {
-                        Some(true) => {}
-                        Some(false) => anyhow::bail!(
-                            "requested local network {} already has a route that does not use {}",
-                            cidr,
-                            ifname
-                        ),
-                        None => anyhow::bail!(
-                            "requested local network {} already has a route that could not be verified",
-                            cidr
-                        ),
-                    }
-                }
-            }
-            Err(e) => anyhow::bail!("could not add local network route {cidr}: {e}"),
-        }
-    }
-    log::info!("Routing local networks (RFC1918 blanket) through the tunnel");
-    Ok(())
-}
-
 /// Does the route the kernel ALREADY has for `cidr` satisfy what we wanted?
 ///
 /// `ip route add` answers `File exists` for any pre-existing route to that prefix — it says
@@ -1686,10 +1581,12 @@ pub fn apply_local_networks(
 ///
 /// `None` = could not tell (no `ip`, unparsable output); the caller warns rather than
 /// silently assuming either way.
+#[cfg(test)]
 fn existing_route_satisfies(v6: bool, cidr: &str, want: &str) -> Option<bool> {
     existing_route_satisfies_all(v6, cidr, &[want])
 }
 
+#[cfg(test)]
 fn existing_route_satisfies_all(v6: bool, cidr: &str, wants: &[&str]) -> Option<bool> {
     let mut args: Vec<&str> = Vec::new();
     if v6 {
@@ -1710,6 +1607,7 @@ fn existing_route_satisfies_all(v6: bool, cidr: &str, wants: &[&str]) -> Option<
 /// Require every expected token sequence on one concrete route. Substring matching made
 /// `dev eth0` accept `dev eth01`, and searching the complete multi-line output could combine
 /// a gateway from one route with an interface from another.
+#[cfg(any(test, feature = "experimental-roaming"))]
 fn route_output_satisfies_all(output: &str, wants: &[&str]) -> bool {
     output.lines().any(|line| {
         let fields: Vec<&str> = line.split_whitespace().collect();
@@ -1721,171 +1619,6 @@ fn route_output_satisfies_all(output: &str, wants: &[&str]) -> bool {
                     .any(|window| window == expected.as_slice())
         })
     })
-}
-
-pub fn apply_pushed_routes(
-    routes_json: &str,
-    ifname: &str,
-    default_gateway: &str,
-) -> anyhow::Result<()> {
-    let trimmed = routes_json.trim();
-    if trimmed == "[]" || trimmed.is_empty() {
-        return Ok(());
-    }
-
-    let routes: Vec<PushedRoute> = match serde_json::from_str(trimmed) {
-        Ok(r) => r,
-        Err(e) => {
-            anyhow::bail!("failed to parse pushed routes: {e}");
-        }
-    };
-
-    for route in &routes {
-        let gateway = route.gateway.as_deref().unwrap_or(default_gateway);
-        let metric = route.metric.unwrap_or(100);
-
-        // Report the route EXACTLY as it arrived, BEFORE we touch it, so the log answers
-        // "what did the server actually send?" on its own. NB: the server resolves the
-        // defaults itself (`gateway` falls back to the profile's tun address and `metric`
-        // to 100 in build_auth_ok), so every pushed route carries both fields — we cannot
-        // tell an admin-set gateway from a server-defaulted one, and must not pretend to.
-        log::info!(
-            "pushed route received: {} gateway={} metric={}",
-            if route.cidr.is_empty() {
-                "<empty>"
-            } else {
-                &route.cidr
-            },
-            gateway,
-            metric,
-        );
-
-        // A malicious server could push a bogus/hostile CIDR or gateway that
-        // ends up as an argument to `ip route add`. Validate both as real IP
-        // values (and reject any option-looking string) before use; skip+log
-        // anything that does not parse.
-        if !is_valid_cidr(&route.cidr) {
-            log::warn!("Ignoring pushed route with invalid CIDR: {}", route.cidr);
-            continue;
-        }
-        if !is_valid_gateway(gateway) {
-            log::warn!(
-                "Ignoring pushed route {} with invalid gateway: {}",
-                route.cidr,
-                gateway
-            );
-            continue;
-        }
-        // The SERVER must not get to decide that this client is full-tunnel.
-        //
-        // `is_valid_cidr` accepts any legal family prefix, and `apply_pushed_routes` runs
-        // unconditionally — before the `routing.route_local_networks` check and on both the
-        // TCP and UDP paths — so a split-tunnel client (the default: `gateway = false`)
-        // applied whatever the server sent. Pushing `0.0.0.0/1` + `128.0.0.0/1` captures all
-        // traffic while being MORE SPECIFIC than any physical default route, so it wins
-        // regardless of metric; `0.0.0.0/0 metric 0` beats a NetworkManager default at 100.
-        // Either way the user asked for split-tunnel and silently got everything routed to
-        // the server, with no bypass /32 for the server address (setup_routes only adds that
-        // in full-tunnel mode).
-        //
-        // IPv4 /8 and IPv6 /3 are the broadest legitimate site-to-site/global aggregates
-        // accepted by the shared planner. A wider route is a policy decision that belongs
-        // to the user, not to the peer.
-        // (Audit 2026-08-04.)
-        let route_address = route
-            .cidr
-            .split_once('/')
-            .and_then(|(address, _)| address.parse::<IpAddr>().ok())
-            .expect("CIDR was validated above");
-        let gateway_address = gateway
-            .parse::<IpAddr>()
-            .expect("gateway was validated above");
-        if route_address.is_ipv4() != gateway_address.is_ipv4() {
-            log::warn!(
-                "Ignoring pushed route {} with cross-family gateway {}",
-                route.cidr,
-                gateway
-            );
-            continue;
-        }
-        let prefix = route
-            .cidr
-            .rsplit_once('/')
-            .and_then(|(_, p)| p.parse::<u8>().ok())
-            .unwrap_or(if route_address.is_ipv4() { 32 } else { 128 });
-        if !crate::transport_core::network::pushed_route_prefix_is_allowed(route_address, prefix) {
-            log::warn!(
-                "REFUSING pushed route {}: a /{} covers the whole default route, and a server                  may not turn a split-tunnel client into a full-tunnel one. Set                  'routing.mode = full-tunnel' locally if that is what you want.",
-                route.cidr,
-                prefix
-            );
-            continue;
-        }
-
-        let mut args: Vec<String> = Vec::new();
-        if route_address.is_ipv6() {
-            args.push("-6".into());
-        }
-        args.extend([
-            "route".into(),
-            "add".into(),
-            route.cidr.clone(),
-            "via".into(),
-            gateway.into(),
-            "dev".into(),
-            ifname.into(),
-            "metric".into(),
-            metric.to_string(),
-        ]);
-        let output = Command::new("ip").args(&args).output();
-
-        match output {
-            Ok(o) if o.status.success() => {
-                log::info!(
-                    "Pushed route applied: {} via {} dev {} metric {}",
-                    route.cidr,
-                    gateway,
-                    ifname,
-                    metric
-                );
-            }
-            Ok(o) => {
-                let stderr = String::from_utf8_lossy(&o.stderr);
-                if stderr.contains("File exists") {
-                    let via = format!("via {gateway}");
-                    let dev = format!("dev {ifname}");
-                    let metric = format!("metric {metric}");
-                    if existing_route_satisfies_all(
-                        route_address.is_ipv6(),
-                        &route.cidr,
-                        &[&via, &dev, &metric],
-                    ) == Some(true)
-                    {
-                        continue;
-                    }
-                }
-                anyhow::bail!(
-                    "pushed route {} via {} was not applied: {} — refusing to acknowledge a partial network plan",
-                    route.cidr,
-                    gateway,
-                    stderr.trim()
-                );
-            }
-            Err(e) => anyhow::bail!("pushed route {} error: {}", route.cidr, e),
-        }
-    }
-    Ok(())
-}
-
-/// Validate a server-pushed CIDR — shared with the config parser and the panel
-/// API so the same rule rejects a bad route wherever it is authored.
-fn is_valid_cidr(s: &str) -> bool {
-    crate::util::is_valid_cidr(s)
-}
-
-/// Validate a server-pushed gateway: a bare `IpAddr`, never a subnet.
-fn is_valid_gateway(s: &str) -> bool {
-    crate::util::is_valid_gateway(s)
 }
 
 /// The physical default gateway used to reach `server_addr` (parsed from
@@ -1935,9 +1668,8 @@ fn physical_dev_for(server_addr: &str) -> Option<String> {
 pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
     let _operation = owner.cleanup_operation();
     let ifname = owner.interface();
-    // Only the routes this process put on the PHYSICAL interface (server bypass, exclude
-    // bypasses, IPv6 blackholes) belonging to this plan owner. Anything that was already there
-    // when we started stays; it was not ours to remove.
+    // Delete only verified records belonging to this plan owner. Borrowed physical routes
+    // are preserved. Routes on the owned TUN/TAP are also covered by the interface flush below.
     let mut failed = Vec::new();
     let mut errors = Vec::new();
     for args in take_created(owner) {
@@ -1964,7 +1696,6 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
         }
     }
 
-    errors.extend(reconcile_pending(owner));
     let errors_before_flush = errors.len();
 
     // The interface belongs to this owner. Verify each family independently, including
@@ -1985,7 +1716,11 @@ pub(crate) fn cleanup_routes(owner: &RouteOwner) -> anyhow::Result<()> {
         }
     }
 
-    owner.cleanup_result(!errors.is_empty(), errors.len() == errors_before_flush);
+    let interface_flushed = errors.len() == errors_before_flush;
+    // Pending never grants a destination delete. The independently owned interface can
+    // still be flushed; reconcile afterwards so its now-absent routes release reservations.
+    errors.extend(reconcile_pending(owner));
+    owner.cleanup_result(!errors.is_empty(), interface_flushed);
     if errors.is_empty() {
         Ok(())
     } else {
@@ -2009,10 +1744,11 @@ fn route_is_already_absent(stderr: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        connected_tunnel_cidr, full_tunnel_prefixes, is_valid_cidr, is_valid_gateway,
-        planned_pushed_routes, route_local_capture_cidrs, route_output_satisfies_all,
-        tunnel_route_args, IPV6_CAPTURE_PREFIXES,
+        connected_tunnel_cidr, full_tunnel_prefixes, route_local_capture_cidrs,
+        route_output_satisfies_all, tunnel_route_args, IPV6_CAPTURE_PREFIXES,
     };
+    use crate::transport_core::network::planned_pushed_routes;
+    use crate::util::{is_valid_cidr, is_valid_gateway};
     use std::net::IpAddr;
 
     #[test]

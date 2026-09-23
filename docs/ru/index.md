@@ -84,6 +84,7 @@
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Конечная очистка NAT, проверка результата, диагностика и открытые ошибки teardown |
 | [AUDIT-Q25-ROUTE-OWNERSHIP.md](reports/AUDIT-Q25-ROUTE-OWNERSHIP.md) | Q25-F025/F026: сохранение заменённых маршрутов и проверка cleanup перед сбросом ownership |
+| [AUDIT-Q25-TUNNEL-ROUTES.md](reports/AUDIT-Q25-TUNNEL-ROUTES.md) | Q25-F037–F039: общий TUN/TAP installer, строгий route_local и удаление старых парсеров |
 | [AUDIT-Q25-CLIENT-COMMANDS.md](reports/AUDIT-Q25-CLIENT-COMMANDS.md) | Q25-F035/F036: пределы route/firewall-команд и защита при неизвестном IPv4-пути |
 | [AUDIT-Q25-SETUP-FLUSH.md](reports/AUDIT-Q25-SETUP-FLUSH.md) | Q25-F033/F034: общий initial setup и подтверждение IPv4/IPv6 flush |
 | [AUDIT-Q25-ROUTE-PENDING.md](reports/AUDIT-Q25-ROUTE-PENDING.md) | Q25-F031/F032: учёт неизвестных операций и освобождение отсутствующих orphan-маршрутов |

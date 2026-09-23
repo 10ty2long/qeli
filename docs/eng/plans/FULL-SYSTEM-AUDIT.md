@@ -1040,7 +1040,7 @@ durable crash recovery, deadlines and Linux runtime remain open.
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
 exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
 families require confirmed empty state or a missing interface verified by link inventory.
-8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+8 baseline failures → PASS plus 13 controls; 1214 Rust tests and nine matrix commands
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
 
@@ -1051,6 +1051,15 @@ bounds through the iptables helper. Unknown outcomes preserve pending/verificati
 unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
 20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
 deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
+
+**2026-09-23 follow-up — TUN/TAP, pushed and local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): the active NetworkPlan installer
+shares exact pre/post checks, metric verification and ownership/pending tracking.
+Unused pushed/local implementations and the second parser were removed.
+Malformed route_local inventory prevents mutations. Pending is reconciled after the
+independent flush of the Qeli-owned interface. 10 reproducing regressions and 13 controls;
+1257 Rust tests and nine matrix commands PASS. Gateway rollback, globals, overall
+deadlines, crash recovery and Linux runtime remain open.
 
 ### 23. Roaming, resume and CONTROL_V2
 
@@ -1139,7 +1148,7 @@ durable crash recovery, deadlines and Linux runtime remain open.
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
 exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
 families require confirmed empty state or a missing interface verified by link inventory.
-8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+8 baseline failures → PASS plus 13 controls; 1214 Rust tests and nine matrix commands
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
 
@@ -1150,6 +1159,15 @@ bounds through the iptables helper. Unknown outcomes preserve pending/verificati
 unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
 20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
 deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
+
+**2026-09-23 follow-up — TUN/TAP, pushed and local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): the active NetworkPlan installer
+shares exact pre/post checks, metric verification and ownership/pending tracking.
+Unused pushed/local implementations and the second parser were removed.
+Malformed route_local inventory prevents mutations. Pending is reconciled after the
+independent flush of the Qeli-owned interface. 10 reproducing regressions and 13 controls;
+1257 Rust tests and nine matrix commands PASS. Gateway rollback, globals, overall
+deadlines, crash recovery and Linux runtime remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1353,7 +1371,7 @@ durable crash recovery, deadlines and Linux runtime remain open.
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole share
 exact pre/post checks and pending tracking for unknown outcomes. Both interface-flush
 families require confirmed empty state or a missing interface verified by link inventory.
-8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
+8 baseline failures → PASS plus 13 controls; 1214 Rust tests and nine matrix commands
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
 
@@ -1364,6 +1382,15 @@ bounds through the iptables helper. Unknown outcomes preserve pending/verificati
 unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
 20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
 deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
+
+**2026-09-23 follow-up — TUN/TAP, pushed and local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): the active NetworkPlan installer
+shares exact pre/post checks, metric verification and ownership/pending tracking.
+Unused pushed/local implementations and the second parser were removed.
+Malformed route_local inventory prevents mutations. Pending is reconciled after the
+independent flush of the Qeli-owned interface. 10 reproducing regressions and 13 controls;
+1257 Rust tests and nine matrix commands PASS. Gateway rollback, globals, overall
+deadlines, crash recovery and Linux runtime remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1640,10 +1667,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with ownership/postcondition unification for the
-remaining TUN/pushed/local route mutations, then full gateway rollback and global-state
-isolation. Q25-F035/F036 bounds route/kill-switch/gateway commands, not whole transactions.
-Durable crash recovery, cross-process races and Q14-F027 TUN workers/FD remain open.
-Section 05 still needs an overall preflight deadline and review of sync waits in async
-handlers. Unfinished 01–07 work, Linux E2E restart/restore/manual+NDP, native certification
-and the full benchmark remain in the plan.
+**Next work:** continue section 25 with full gateway rollback, partial firewall/sysctl
+setup failures and global-state isolation, then evidence used to require IPv6 protection.
+Q25-F037–F039 unifies active TUN/pushed/local installation and removes unused legacy
+implementations. Overall transaction deadlines, durable crash recovery, cross-process
+races and Q14-F027 TUN workers/FD remain open. Section 05 still needs an overall
+preflight deadline and review of synchronous waits in async handlers. Unfinished 01–07,
+Linux E2E restart/restore/manual+NDP, native certification and the full benchmark remain planned.

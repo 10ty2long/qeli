@@ -84,6 +84,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |
 | [AUDIT-Q25-ROUTE-OWNERSHIP.md](reports/AUDIT-Q25-ROUTE-OWNERSHIP.md) | Q25-F025/F026: preserve changed routes and verify cleanup before forgetting ownership |
+| [AUDIT-Q25-TUNNEL-ROUTES.md](reports/AUDIT-Q25-TUNNEL-ROUTES.md) | Q25-F037–F039: shared TUN/TAP installer, strict route_local and obsolete parser removal |
 | [AUDIT-Q25-CLIENT-COMMANDS.md](reports/AUDIT-Q25-CLIENT-COMMANDS.md) | Q25-F035/F036: route/firewall command bounds and protection for an unknown IPv4 path |
 | [AUDIT-Q25-SETUP-FLUSH.md](reports/AUDIT-Q25-SETUP-FLUSH.md) | Q25-F033/F034: shared initial setup and verified IPv4/IPv6 flush |
 | [AUDIT-Q25-ROUTE-PENDING.md](reports/AUDIT-Q25-ROUTE-PENDING.md) | Q25-F031/F032: pending mutations and release of absent orphan routes |

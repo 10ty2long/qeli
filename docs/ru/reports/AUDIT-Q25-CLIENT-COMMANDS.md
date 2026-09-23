@@ -80,3 +80,5 @@ ownership и постусловий. Далее: эти операции, общ
 Нет новых измерений throughput и заявления о завершении полного аудита.
 
 Предыдущий этап: [начальная установка и flush](AUDIT-Q25-SETUP-FLUSH.md).
+
+Следующий проход: [TUN/TAP и route_local](AUDIT-Q25-TUNNEL-ROUTES.md). Уточнение call graph: старые apply_pushed_routes/apply_local_networks не вызывались; активные pushed/local routes уже применялись через NetworkPlan. Неиспользуемые дубли удалены в следующем этапе.

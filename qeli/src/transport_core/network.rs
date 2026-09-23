@@ -870,6 +870,7 @@ pub(crate) fn pushed_route_prefix_is_allowed(address: IpAddr, prefix: u8) -> boo
 }
 
 /// Parse and validate server-pushed routes before they cross the platform boundary.
+#[cfg(test)]
 pub(crate) fn planned_pushed_routes(
     routes_json: &str,
     default_gateway: &str,

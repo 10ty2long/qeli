@@ -80,3 +80,5 @@ recovery, policy tables/VRFs and native certification remain open. There are no 
 throughput measurements or claims that the full audit is complete.
 
 Previous pass: [initial setup and flush](AUDIT-Q25-SETUP-FLUSH.md).
+
+Next pass: [TUN/TAP and route_local](AUDIT-Q25-TUNNEL-ROUTES.md). Call-graph clarification: old apply_pushed_routes/apply_local_networks were unused; active pushed/local routes already used NetworkPlan. Those obsolete duplicates were removed in the next pass.

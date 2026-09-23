@@ -1047,7 +1047,7 @@ flush postconditions, постоянный crash recovery, deadlines и Linux ru
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
 общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
 flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
-link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+link inventory. 8 baseline failures → PASS, ещё 13 controls; 1214 Rust tests и девять
 команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
 постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
 
@@ -1058,6 +1058,15 @@ link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust test
 default route требует защиты при отсутствии явного allow_ipv4_leak.
 20 новых тестов; 1234 Rust tests и девять команд матрицы PASS. Общий deadline транзакции,
 прочие route ownership paths, gateway rollback и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — TUN/TAP, pushed и local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): активный NetworkPlan installer
+использует общие exact pre/post checks, проверку метрик и ownership/pending.
+Старые невызываемые pushed/local implementations и второй parser удалены.
+Повреждённый inventory route_local запрещает мутации. Pending сверяется после
+независимого flush принадлежащего Qeli интерфейса. 10 воспроизводящих регрессий и
+13 controls; 1257 Rust tests и девять команд матрицы PASS. Gateway rollback, globals,
+общий deadline, crash recovery и Linux runtime остаются открытыми.
 
 ### 23. Роуминг, resume и CONTROL_V2
 
@@ -1146,7 +1155,7 @@ flush postconditions, постоянный crash recovery, deadlines и Linux ru
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
 общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
 flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
-link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+link inventory. 8 baseline failures → PASS, ещё 13 controls; 1214 Rust tests и девять
 команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
 постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
 
@@ -1157,6 +1166,15 @@ link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust test
 default route требует защиты при отсутствии явного allow_ipv4_leak.
 20 новых тестов; 1234 Rust tests и девять команд матрицы PASS. Общий deadline транзакции,
 прочие route ownership paths, gateway rollback и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — TUN/TAP, pushed и local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): активный NetworkPlan installer
+использует общие exact pre/post checks, проверку метрик и ownership/pending.
+Старые невызываемые pushed/local implementations и второй parser удалены.
+Повреждённый inventory route_local запрещает мутации. Pending сверяется после
+независимого flush принадлежащего Qeli интерфейса. 10 воспроизводящих регрессий и
+13 controls; 1257 Rust tests и девять команд матрицы PASS. Gateway rollback, globals,
+общий deadline, crash recovery и Linux runtime остаются открытыми.
 
 ### 24. Multipath, bonding и общий бюджет
 
@@ -1360,7 +1378,7 @@ flush postconditions, постоянный crash recovery, deadlines и Linux ru
 [Q25-F033/F034](../reports/AUDIT-Q25-SETUP-FLUSH.md): carrier/exclude/blackhole используют
 общие exact pre/post checks и pending при неизвестном результате. Обе семьи interface
 flush требуют подтверждения пустого состояния либо отсутствующего интерфейса через
-link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust tests и девять
+link inventory. 8 baseline failures → PASS, ещё 13 controls; 1214 Rust tests и девять
 команд матрицы PASS. Linux runtime, command deadlines, остальные route paths,
 постоянный crash recovery и Q14-F027 workers/FD остаются открытыми.
 
@@ -1371,6 +1389,15 @@ link inventory. 8 baseline failures → PASS, ещё 12 controls; 1214 Rust test
 default route требует защиты при отсутствии явного allow_ipv4_leak.
 20 новых тестов; 1234 Rust tests и девять команд матрицы PASS. Общий deadline транзакции,
 прочие route ownership paths, gateway rollback и Linux runtime остаются открытыми.
+
+**Дополнение 2026-09-23 — TUN/TAP, pushed и local routes:**
+[Q25-F037–F039](../reports/AUDIT-Q25-TUNNEL-ROUTES.md): активный NetworkPlan installer
+использует общие exact pre/post checks, проверку метрик и ownership/pending.
+Старые невызываемые pushed/local implementations и второй parser удалены.
+Повреждённый inventory route_local запрещает мутации. Pending сверяется после
+независимого flush принадлежащего Qeli интерфейса. 10 воспроизводящих регрессий и
+13 controls; 1257 Rust tests и девять команд матрицы PASS. Gateway rollback, globals,
+общий deadline, crash recovery и Linux runtime остаются открытыми.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1649,10 +1676,10 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: унификация ownership и постусловий остальных
-TUN/pushed/local route mutations, затем полный gateway rollback и изоляция globals.
-Q25-F035/F036 ограничивает команды route/kill-switch/gateway, но не всю транзакцию.
-Постоянный crash recovery, межпроцессные гонки и Q14-F027 TUN workers/FD остаются
-открытыми. В 05 остаются общий preflight deadline и sync waits в async handlers.
-Незакрытые 01–07, Linux E2E restart/restore/manual+NDP, native certification и полный
-benchmark остаются в плане.
+**Ближайшая работа:** продолжить 25: полный gateway rollback, ошибки частичной установки
+firewall/sysctl и изоляция globals; затем доказательства необходимости IPv6-защиты.
+Q25-F037–F039 объединяет активную установку TUN/pushed/local routes и удаляет старые
+невызываемые реализации. Общий deadline транзакции, постоянный crash recovery,
+межпроцессные гонки и Q14-F027 TUN workers/FD остаются открытыми.
+В 05 остаются общий preflight deadline и sync waits в async handlers. Незакрытые 01–07,
+Linux E2E restart/restore/manual+NDP, native certification и полный benchmark остаются в плане.

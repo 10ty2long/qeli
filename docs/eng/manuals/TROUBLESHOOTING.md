@@ -1413,16 +1413,16 @@ recorded destinations must be absent and both families' interface routes empty.
 `could not confirm empty interface routes` mean release is blocked.
 Other query errors also retain the reservation; routes are not overwritten.
 
-Inspect the destinations, interface and original error. Unconfirmed routes are not
-automatically deleted. Without previous cleanup, after unconfirmed interface flush or
+Inspect the destinations, interface and original error. Pending grants no route-delete authority.
+Independent cleanup of a Qeli-owned interface is described in 6.46. Without previous cleanup, after unconfirmed interface flush or
 with a live guard, automatic release is unavailable. This mechanism operates within the
 process and does not restore the journal after crash/restart. Pending also covers initial
-carrier/exclude/blackhole setup with possible leftovers (see 6.44). No INI parameters were added.
+carrier/exclude/blackhole and TUN/TAP setup with possible leftovers (see 6.44–6.46). No INI parameters were added.
 [Report and limits](../reports/AUDIT-Q25-ROUTE-PENDING.md).
 
 ### 6.44 Linux: verifying initial setup and interface-route cleanup
 
-Before installing carrier/exclude/blackhole routes, Qeli checks the exact destination
+Before installing carrier/exclude/blackhole and TUN/TAP routes, Qeli checks the exact destination
 snapshot. A matching existing route is used without a claim. `initial route conflicts
 with an existing route` reports a conflict before writing. Query failure also prevents add.
 
@@ -1456,7 +1456,7 @@ a bound returns an error without partial output. This is not a 15-second limit f
 the entire setup, cleanup or reconnect: verification and process exit also take time.
 
 If a command could have changed the network, timeout does not undo that change.
-An unconfirmed carrier/exclude/blackhole add remains pending without deletion authority.
+An unconfirmed add remains pending without deletion authority from that record.
 Flush requires verification that routes are absent; failed verification requires retry.
 An unreadable firewall chain is not considered absent either. Inspect preceding errors,
 iproute2/iptables availability and the affected interface; child exit alone does not
@@ -1471,6 +1471,36 @@ That option permits an IPv4 leak; it does not restore the firewall.
 No configuration keys were added. Linux runtime, complete gateway rollback and an
 overall transaction deadline remain separate checks.
 [Report and evidence](../reports/AUDIT-Q25-CLIENT-COMMANDS.md).
+
+### 6.46 Linux: unconfirmed TUN/TAP route or malformed route_local inventory
+
+Connected pools, full-tunnel capture, pushed/include/DNS routes and local-network
+overrides use one installer. `initial route conflicts with an existing route` means
+the exact prefix already has another interface, gateway or metric. Direct L3 TUN routes
+do not borrow a gateway route. Successful exit status is insufficient: add is followed
+by an actual snapshot check. Unknown outcomes fail setup and close route admission
+for that owner.
+
+Compare the current entry with the expected plan. Do not delete a conflicting route
+solely because its prefix matches: another configuration or Qeli owner may own it.
+IPv4 metric zero may be omitted from output; IPv6 metric zero has the effective value
+1024. Qeli handles these forms and checks other explicitly requested metrics.
+
+During cleanup, pending does not authorize a separate `route del`. The Qeli-owned
+TUN/TAP is independently flushed by interface, including routes on it that were
+previously borrowed. After flush, Qeli checks pending destinations for absence.
+A leftover removed this way releases its reservation; a route on another interface
+or an unreadable snapshot retains failure. This does not authorize taking over an
+interface opened with `dev_attach`.
+
+`invalid connected IPv4 address snapshot for route_local` means malformed output from
+`ip -4 -o address show up scope global`. Qeli refuses to treat it as an empty inventory
+and stops setup before route mutations. Inspect iproute2 availability and output.
+A valid empty response is permitted; addresses on the owned TUN and non-RFC1918
+networks do not produce overrides.
+
+User configuration remains INI; no keys were added.
+[Validation and limits](../reports/AUDIT-Q25-TUNNEL-ROUTES.md).
 
 ---
 

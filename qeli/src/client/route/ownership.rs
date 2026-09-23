@@ -32,7 +32,13 @@ pub(super) fn route_matches_spec(spec: &[String], tokens: &[String]) -> bool {
         return false;
     }
     let destination_index = usize::from(blackhole);
-    if tokens.get(destination_index).and_then(|s| prefix(s)) != key.last().and_then(|s| prefix(s)) {
+    let expected_destination = key.last().and_then(|s| prefix(s));
+    if expected_destination.is_none()
+        || tokens
+            .get(destination_index)
+            .and_then(|s| snapshot_prefix(s, expected_destination))
+            != expected_destination
+    {
         return false;
     }
     let attrs = &spec[key.len()..];
@@ -55,6 +61,14 @@ pub(super) fn route_matches_spec(spec: &[String], tokens: &[String]) -> bool {
             .find(|pair| pair[0] == name)
             .map(|pair| &pair[1]);
         if let Some(expected) = expected {
+            // Linux omits RTA_PRIORITY (and therefore displayed metric) for IPv4 zero.
+            if name == "metric"
+                && expected == "0"
+                && spec[0] != "-6"
+                && !tokens.iter().any(|token| token == "metric")
+            {
+                continue;
+            }
             if value(name) != Some(expected) {
                 return false;
             }
@@ -71,6 +85,17 @@ fn prefix(value: &str) -> Option<(std::net::IpAddr, u8)> {
     } else {
         let ip: std::net::IpAddr = value.parse().ok()?;
         Some((ip, if ip.is_ipv4() { 32 } else { 128 }))
+    }
+}
+
+fn snapshot_prefix(
+    value: &str,
+    expected: Option<(std::net::IpAddr, u8)>,
+) -> Option<(std::net::IpAddr, u8)> {
+    if value == "default" {
+        expected.filter(|(_, bits)| *bits == 0)
+    } else {
+        prefix(value)
     }
 }
 
@@ -111,7 +136,9 @@ pub(super) fn parse_route_snapshot(
     }
     if let Some(tokens) = &route {
         let index = usize::from(tokens.first().is_some_and(|s| s == "blackhole"));
-        let observed = tokens.get(index).and_then(|s| prefix(s));
+        let observed = tokens
+            .get(index)
+            .and_then(|s| snapshot_prefix(s, prefix(destination)));
         if observed.is_none() || observed != prefix(destination) {
             anyhow::bail!("invalid route snapshot for {destination}");
         }
