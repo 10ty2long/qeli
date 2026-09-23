@@ -67,6 +67,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-HOOKS.md](reports/AUDIT-Q14-HOOKS.md) | Bounded stdout/stderr, timeout/cancellation and lifecycle hook descendants |
 | [AUDIT-Q14-Q15-WORKER-USAGE.md](reports/AUDIT-Q14-Q15-WORKER-USAGE.md) | Worker service ownership, shutdown persistence and short-session accounting |
 | [AUDIT-Q14-Q32-NOTIFICATIONS.md](reports/AUDIT-Q14-Q32-NOTIFICATIONS.md) | Bounded notification delivery, panel probes and shutdown |
+| [AUDIT-Q14-Q33-CONFIG-TRUST.md](reports/AUDIT-Q14-Q33-CONFIG-TRUST.md) | Config snapshot trust, file races and ready-generation cleanup |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Control socket ownership, API bounds, handler shutdown and hook pairing |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, Child/PID ownership, commands and termination deadlines |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Profile shutdown, early startup errors, DNS listeners and socket release |

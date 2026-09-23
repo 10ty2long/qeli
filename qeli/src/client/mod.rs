@@ -2369,7 +2369,8 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     tokio::spawn(trace::watch());
 
-    let config_content = std::fs::read_to_string(config_path)?;
+    let (config_content, config_command_trust) =
+        crate::config_source::load(config_path)?.into_parts();
     // STRICT: a misspelled key name and an unreadable value both used to fail open here —
     // only `check-config` reported them, while the real start substituted defaults in silence.
     // See `config::parse_client_config_strict`. (Audit 2026-08-01, §4/§5.)
@@ -2384,8 +2385,8 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     // `qeli://` link into an editor under the default umask — which yields 0644. The client
     // then started without a word, and any local user could read the credential. Permissions
     // are narrowed on WRITE (`write_atomic_private`), so this only ever bit hand-made files —
-    // i.e. the common case. The only existing mode check, `hooks::config_is_trusted`, looks
-    // at WRITABILITY and runs only when hooks are configured.
+    // i.e. the common case. Snapshot command authorization checks ownership/writability,
+    // whereas this advisory check concerns readability of the credential.
     //
     // A warning rather than a refusal: an operator with a 0644 config and no better option
     // should still be able to bring the tunnel up, and OpenSSH's precedent (refuse) applies
@@ -2422,7 +2423,8 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
         // execution. Fail closed (the user explicitly asked to source the password this
         // way, so a refusal must be loud, not a silent skip). The panel never persists
         // this field; see web/api/client.rs::persist.
-        crate::hooks::config_is_trusted(config_path)
+        config_command_trust
+            .check()
             .map_err(|why| anyhow::anyhow!("refusing to run auth.password_command — {why}"))?;
         let output = std::process::Command::new("sh")
             .args(["-c", pw_cmd])
@@ -2484,7 +2486,7 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
         if config.routing.post_up.is_empty() && config.routing.post_down.is_empty() {
             (String::new(), String::new())
         } else {
-            match crate::hooks::config_is_trusted(config_path) {
+            match config_command_trust.check() {
                 Ok(()) => (
                     config.routing.post_up.clone(),
                     config.routing.post_down.clone(),

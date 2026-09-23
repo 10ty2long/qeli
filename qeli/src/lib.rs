@@ -84,8 +84,15 @@ pub mod transport;
 #[path = "hooks/process.rs"]
 mod hook_process;
 
-// Lifecycle hooks (post_up/post_down) + the file-trust guard; used by both the
-// client and the server, Linux-only.
+// Bind command authorization to the exact descriptor supplying Linux runtime INI bytes.
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+mod config_source;
+
+// Lifecycle hooks (post_up/post_down); used by both the client and server, Linux-only.
+// Command trust is supplied by config_source above.
 #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
 pub mod hooks;
 

@@ -1691,9 +1691,11 @@ The password can be supplied three ways in the `[qeli]` section (precedence high
   when `pass` is absent. Good for headless clients that keep the secret out of the config.
 - `password_command = <cmd>` — obtain the password by running a command via `sh -c` (its stdout is
   trimmed). Used only when both `pass` and `password_file` are absent. **Runs as the client
-  process (typically root)**, so it is honored ONLY from a trusted (not group/world-writable)
-  config file — otherwise the client refuses to start (fail-closed), same rule as `post_up`. The
-  panel never persists this key.
+  process (typically root)**, so it requires a regular non-symlink config owned by root or
+  the process's effective UID, with no group/world write bits. Trust is checked on the same
+  opened file that supplies the parsed bytes; otherwise the client refuses to start
+  (fail-closed). After fixing permissions, start the client again. The panel never persists
+  this key. See the [hook security rules](#security) for the shared file policy.
 
 On the **server**, users can be kept inline — as
 `[user:<name>]` sections right in server.conf (with Argon2 hashes) — or in the
@@ -2479,7 +2481,16 @@ set -eu
 
 1. A config containing hooks must be a regular non-symlink file, owned by root or the process's
    effective UID, and have no group/world write bits (`mode & 0022 == 0`). Otherwise both hooks
-   are ignored and the reason is logged. `0600` is the usual mode.
+   are ignored and the reason is logged. `0600` is the usual mode. Ownership, permissions
+   and contents come from one opened file descriptor; detected changes during reading
+   reject the load. Non-regular sources, including FIFO, are rejected before reading.
+   A symlink to a regular config remains readable for operation without file commands.
+   The resulting command permission belongs to those startup bytes. Changing permissions
+   or replacing the file later cannot authorize old commands: restart the client or server
+   worker to load them again. Profile retry and SIGHUP do not refresh hook authorization.
+   Likewise, a previously authorized server `post_down` keeps the command and environment
+   of its ready generation even if the config is removed/replaced before cleanup; changing
+   the file is not a way to revoke that already-armed cleanup.
 2. The panel/API deliberately cannot create or change `post_up`, `post_down` or
    `password_command`: remote shell-command editing would turn the panel into an RCE path.
 3. Protect the called script and everything it reads. Qeli warns about a world-writable executable

@@ -167,7 +167,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | IN_PROGRESS |
-| 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | TODO |
+| 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | IN_PROGRESS |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | TODO |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
 | 36 | Бенчмарки и методика измерения | H07 | TODO |
@@ -479,6 +479,14 @@ Linux только cross-check. Уведомления, forced outer cancellatio
 до 10 секунд после завершения производителей. Detached-обёртки уведомлений удалены.
 864 host Rust tests PASS; Linux только all-targets cross-check. Владение panel/metrics/
 autostart supervisor, доверие конфигу и Linux E2E ещё открыты.
+
+**Доверие прочитанному конфигу, 23 сентября 2026:**
+[Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): владелец/права и данные
+для парсера получаются из одного дескриптора; исходное разрешение не меняется при
+повторах профиля и не перепроверяет путь. Очистка готового поколения сохраняет команду
+и окружение после удаления/замены конфига. 874 host Rust tests PASS; четыре новых Unix/
+Linux-теста только cross-checked. Лимиты password_command, владение startup-задачами,
+installer/update/restore и Linux runtime integration ещё открыты.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -827,7 +835,7 @@ autostart supervisor, доверие конфигу и Linux E2E ещё откр
 
 ### 33. Установка, обновление, файловые права и hooks
 
-**Код:** `qeli/debian`, `qeli/src/server/update.rs`, `qeli/src/util.rs`, `qeli/src/hooks.rs`, `release/docker`.
+**Код:** `qeli/debian`, `qeli/src/server/update.rs`, `qeli/src/util.rs`, `qeli/src/hooks.rs`, `qeli/src/config_source.rs`, `release/docker`.
 
 Fresh install/upgrade/downgrade/remove, systemd sandbox, identity/users preservation, checksums/attestation, atomic replace. Docker digest/recreate/health/rollback. File locks/symlinks/hardlinks/owners/ENOSPC, PATH hijack, panel/restore command injection и SSH timeouts.
 
@@ -839,7 +847,15 @@ Fresh install/upgrade/downgrade/remove, systemd sandbox, identity/users preserva
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**Доверие прочитанному конфигу, 23 сентября 2026:**
+[Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): владелец/права и данные
+для парсера получаются из одного дескриптора; исходное разрешение не меняется при
+повторах профиля и не перепроверяет путь. Очистка готового поколения сохраняет команду
+и окружение после удаления/замены конфига. 874 host Rust tests PASS; четыре новых Unix/
+Linux-теста только cross-checked. Лимиты password_command, владение startup-задачами,
+installer/update/restore и Linux runtime integration ещё открыты.
 
 ### 34. CI, зависимости, native provenance и релиз
 

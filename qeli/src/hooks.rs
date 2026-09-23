@@ -3,8 +3,9 @@
 //!
 //! **SECURITY.** A hook runs an arbitrary command as the process user (typically
 //! root). It is therefore honoured ONLY from a *trusted* local config file:
-//!  * [`config_is_trusted`] refuses to run hooks when the config file is group- or
-//!    world-writable (anyone who can edit it would otherwise run code as us);
+//!  * the runtime config loader checks the owner/mode of the SAME opened file that
+//!    supplies the parsed bytes; an untrusted snapshot never gains command permission
+//!    from a later replacement of its pathname;
 //!  * the web panel / API must NEVER write these fields (see `web/api/config.rs`),
 //!    so a panel compromise can't turn into remote code execution.
 //!
@@ -54,71 +55,6 @@ pub fn script_paths(cmd: &str) -> Vec<String> {
         }
     }
     out
-}
-
-/// Reject hooks from a config file others can write (privilege-escalation guard).
-/// `Ok(())` = safe to run hooks; `Err(reason)` = refuse. Non-Linux: always `Ok`
-/// (hooks are a Linux-only feature).
-#[cfg(target_os = "linux")]
-pub fn config_is_trusted(path: &str) -> Result<(), String> {
-    use std::os::unix::fs::MetadataExt;
-    // Judge the file we can actually OPEN, and refuse a symlink outright.
-    //
-    // This used to be `std::fs::metadata(path)` — a lookup by NAME, following symlinks, and
-    // a SECOND trip to the filesystem: the config contents were read (and the hook strings
-    // parsed out of them) well before this ran. Anything that could swap the path between
-    // those two calls decided what root executed. The window is not theoretical — the
-    // scenario the comment below describes, a machine-generated config in a directory the
-    // service account can write, is exactly where a rename loop wins: put your own file
-    // there with `post_up = curl … | sh`, wait for the read, put the root-owned 0600
-    // original back before the stat.
-    //
-    // Opening with O_NOFOLLOW and stat'ing THAT descriptor removes the second lookup and
-    // the symlink. A truly race-free design would read the contents from this same fd; that
-    // is a larger change to the config loader, and closing the symlink + double-lookup holes
-    // is the part that matters most. (Audit 2026-08-04.)
-    use std::os::unix::fs::OpenOptionsExt;
-    let f = std::fs::OpenOptions::new()
-        .read(true)
-        .custom_flags(libc::O_NOFOLLOW)
-        .open(path)
-        .map_err(|e| format!("cannot open config '{path}' for trust check: {e}"))?;
-    let md = f
-        .metadata()
-        .map_err(|e| format!("cannot stat config '{path}': {e}"))?;
-    if !md.is_file() {
-        return Err(format!(
-            "config '{path}' is not a regular file; refusing to run hooks"
-        ));
-    }
-    // Group- or world-writable (0o022) means a non-owner could inject a hook.
-    if md.mode() & 0o022 != 0 {
-        return Err(format!(
-            "config '{path}' is group/world-writable (mode {:o}); refusing to run hooks — `chmod 600 {path}`",
-            md.mode() & 0o777
-        ));
-    }
-    // Mode alone is not trust. A hook runs as THIS process (root under systemd/procd),
-    // so a config owned by anyone else is a config someone else can rewrite at will —
-    // 0600 owned by an unprivileged account passes the check above and still hands
-    // that account root. This matters for machine-generated configs in particular:
-    // the OpenWrt init script renders /var/run/qeli/client.conf at 0600, and the only
-    // thing that makes it trustworthy is that root wrote it.
-    let uid = unsafe { libc::geteuid() };
-    if md.uid() != uid && md.uid() != 0 {
-        return Err(format!(
-            "config '{path}' is owned by uid {} (we run as {}); refusing to run hooks — \
-             a config we do not own can be rewritten by someone else",
-            md.uid(),
-            uid
-        ));
-    }
-    Ok(())
-}
-
-#[cfg(not(target_os = "linux"))]
-pub fn config_is_trusted(_path: &str) -> Result<(), String> {
-    Ok(())
 }
 
 /// Result of one lifecycle-hook invocation. Callers currently treat hooks as best-effort,
@@ -213,7 +149,7 @@ pub async fn run_with_context(
     if cmd.trim().is_empty() {
         return HookStatus::Skipped;
     }
-    // Best-effort warning: the config file is verified 0600 (config_is_trusted), but the
+    // Best-effort warning: callers authorize the loaded config snapshot, but the
     // SCRIPT it points to is not. If the command is a bare path to an existing
     // world-writable file, a local non-owner could swap its contents -- flag it.
     {

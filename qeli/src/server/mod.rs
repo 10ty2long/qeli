@@ -1032,6 +1032,8 @@ pub use crate::server_supervisor::WorkerCmd;
 /// socket; `worker_tx = Some` to drive the worker child).
 pub struct ServerState {
     pub config: ServerConfig,
+    /// Authorization derived from the descriptor supplying the immutable startup config.
+    config_command_trust: crate::config_source::CommandTrust,
     pub users_db: Arc<RwLock<UsersDb>>,
     /// Valid representative Argon2 hashes for unknown-user verification. Rebuilt only when
     /// the users database changes, so hostile unknown logins cannot scan and parse every PHC
@@ -1080,6 +1082,8 @@ struct ProfileHookEnv {
     wan_ipv4: String,
     wan_ipv6: String,
     bind_port: String,
+    /// Command from the same ready generation as these interface/pool values.
+    post_down: String,
 }
 
 impl ProfileHookEnv {
@@ -1109,6 +1113,7 @@ impl ProfileHookEnv {
             wan_ipv4,
             wan_ipv6,
             bind_port: pcfg.bind.port.to_string(),
+            post_down: pcfg.routing.post_down.clone(),
         }
     }
 
@@ -1137,6 +1142,9 @@ pub(crate) fn test_api_state(
         live_web: Arc::new(RwLock::new(config.web.clone())),
         udp_buffer_budget: server_udp_buffer_budget(&config).unwrap(),
         config,
+        config_command_trust: crate::config_source::CommandTrust::denied(
+            "test config has no authorized source",
+        ),
         users_db: Arc::new(RwLock::new(UsersDb::default())),
         dummy_password_hashes: Arc::new(RwLock::new(Vec::new())),
         config_path: Mutex::new(Some(config_path.to_string_lossy().into_owned())),
@@ -3383,7 +3391,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
     let mut sigint = signal(SignalKind::interrupt())
         .map_err(|e| anyhow::anyhow!("failed to install SIGINT handler: {}", e))?;
-    let config_content = std::fs::read_to_string(cfg_path)?;
+    let (config_content, config_command_trust) = crate::config_source::load(cfg_path)?.into_parts();
     let (config, bad_values): (ServerConfig, Vec<String>) =
         crate::config::parse_server_config_reporting(&config_content)?;
     reject_bad_config_values(&bad_values)?;
@@ -3466,6 +3474,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     let live_web = Arc::new(RwLock::new(config.web.clone()));
     let state = Arc::new(ServerState {
         config,
+        config_command_trust,
         users_db,
         dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
@@ -3983,7 +3992,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     let mut sigint = signal(SignalKind::interrupt())
         .map_err(|e| anyhow::anyhow!("failed to install SIGINT handler: {}", e))?;
     // Validate the config parses and has at least one profile before starting.
-    let config_content = std::fs::read_to_string(cfg_path)?;
+    let (config_content, config_command_trust) = crate::config_source::load(cfg_path)?.into_parts();
     let (config, bad_values): (ServerConfig, Vec<String>) =
         crate::config::parse_server_config_reporting(&config_content)?;
     reject_bad_config_values(&bad_values)?;
@@ -4029,6 +4038,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     let udp_buffer_budget = server_udp_buffer_budget(&config)?;
     let state = Arc::new(ServerState {
         config,
+        config_command_trust,
         users_db,
         dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
@@ -4210,7 +4220,8 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
 
     // Like startup, reload rejects every parser finding. A rejected reload keeps
     // the currently running configuration and reports the problem to the operator.
-    let new_config: ServerConfig = match std::fs::read_to_string(&cfg_path)
+    let new_config: ServerConfig = match crate::config_source::load(&cfg_path)
+        .map(|snapshot| snapshot.into_parts().0)
         .map_err(|e| anyhow::anyhow!("{}", e))
         .and_then(|s| crate::config::parse_server_config_reporting(&s))
     {
@@ -4694,29 +4705,21 @@ impl Drop for ProfileTeardown {
 /// Claim the ready generation's snapshot once, atomically. Disabled profiles and
 /// failures before routing/NDP setup have nothing to tear down. A generation that
 /// reached post_up remains armed even if that hook failed or was interrupted.
-/// Trusted file-only hooks retain the same permission guard as post_up.
+/// Both hooks use the startup snapshot's authorization, not a fresh pathname lookup.
 async fn run_post_down(state: &Arc<ServerState>, profile: &str) {
-    let Some(pcfg) = state.config.profiles.iter().find(|p| p.name == profile) else {
-        return;
-    };
     let Some(hook_env) = state.profile_hook_env.lock().await.remove(profile) else {
         return;
     };
-    if pcfg.routing.post_down.is_empty() {
+    if hook_env.post_down.is_empty() {
         return;
     }
-    let trusted = {
-        let p = state.config_path.lock().await.clone();
-        p.as_deref()
-            .map(|p| crate::hooks::config_is_trusted(p).is_ok())
-            .unwrap_or(false)
-    };
-    if !trusted {
+    if let Err(why) = state.config_command_trust.check() {
+        log::error!("Profile '{profile}': ignoring post_down — {why}");
         return;
     }
     crate::hooks::run(
         &format!("post_down:{profile}"),
-        &pcfg.routing.post_down,
+        &hook_env.post_down,
         &hook_env.variables(),
     )
     .await;
@@ -5012,9 +5015,8 @@ async fn run_profile_generation(
     // post_up hook: after this profile's TUN + NAT are up. Honoured ONLY from a
     // trusted config file (the panel/API never writes it — RCE guard).
     if !pcfg.routing.post_up.is_empty() {
-        let cfg_path = { state.config_path.lock().await.clone() };
-        match cfg_path.as_deref().map(crate::hooks::config_is_trusted) {
-            Some(Ok(())) => {
+        match state.config_command_trust.check() {
+            Ok(()) => {
                 crate::hooks::run(
                     &format!("post_up:{name}"),
                     &pcfg.routing.post_up,
@@ -5022,8 +5024,7 @@ async fn run_profile_generation(
                 )
                 .await;
             }
-            Some(Err(why)) => log::error!("Profile '{name}': ignoring post_up — {why}"),
-            None => log::error!("Profile '{name}': ignoring post_up — no config path recorded"),
+            Err(why) => log::error!("Profile '{name}': ignoring post_up — {why}"),
         }
     }
 
@@ -6654,7 +6655,19 @@ mod tests {
         let mut early_failure = ready.clone();
         early_failure.name = "early".into();
         config.profiles = vec![ready.clone(), disabled, early_failure];
-        let state = test_api_state(config, &config_path);
+        std::fs::write(&config_path, config.to_ini_string()).unwrap();
+        let (contents, trust) = crate::config_source::load(&config_path)
+            .unwrap()
+            .into_parts();
+        trust.check().unwrap();
+        let mut state = test_api_state(
+            crate::config::parse_server_config(&contents).unwrap(),
+            &config_path,
+        );
+        Arc::get_mut(&mut state).unwrap().config_command_trust = trust;
+        // Removal/replacement after startup cannot suppress the authorized cleanup or
+        // substitute another command for a generation that is already running.
+        std::fs::remove_file(&config_path).unwrap();
         for profile in ["disabled", "early", "ready"] {
             run_post_down(&state, profile).await;
         }
@@ -6683,7 +6696,61 @@ mod tests {
         );
         assert!(state.profile_hook_env.lock().await.is_empty());
         drop(state);
-        std::fs::remove_dir_all(dir).unwrap();
+        std::fs::remove_file(&marker).unwrap();
+        std::fs::remove_dir(dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn post_down_cannot_gain_trust_after_config_permissions_are_fixed() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-untrusted-hooks-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let config_path = dir.join("server.conf");
+        let marker = dir.join("events");
+        let mut config = ServerConfig::default();
+        let mut profile = ProfileConfig::baseline();
+        profile.name = "untrusted".into();
+        profile.routing.post_down = format!("printf executed >> '{}'", marker.display());
+        config.profiles = vec![profile.clone()];
+        std::fs::write(&config_path, config.to_ini_string()).unwrap();
+        std::fs::set_permissions(&config_path, std::fs::Permissions::from_mode(0o666)).unwrap();
+        let (contents, trust) = crate::config_source::load(&config_path)
+            .unwrap()
+            .into_parts();
+        assert!(trust.check().is_err());
+        let mut state = test_api_state(
+            crate::config::parse_server_config(&contents).unwrap(),
+            &config_path,
+        );
+        Arc::get_mut(&mut state).unwrap().config_command_trust = trust;
+        std::fs::set_permissions(&config_path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        // A fresh read would now permit commands. This running generation must retain
+        // the denial attached to its original bytes, including after profile retry.
+        crate::config_source::load(&config_path)
+            .unwrap()
+            .into_parts()
+            .1
+            .check()
+            .unwrap();
+        for _ in 0..2 {
+            state.profile_hook_env.lock().await.insert(
+                profile.name.clone(),
+                ProfileHookEnv::new(&profile, "wan".into(), String::new()),
+            );
+            run_post_down(&state, &profile.name).await;
+            assert!(state.profile_hook_env.lock().await.is_empty());
+            assert!(
+                !marker.exists(),
+                "chmod must not authorize already-loaded bytes"
+            );
+        }
+        drop(state);
+        std::fs::remove_file(config_path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
     }
 
     #[test]

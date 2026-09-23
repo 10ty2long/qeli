@@ -899,6 +899,26 @@ In 0.7.15 the daemon stores Connect intent separately from installation, verifie
 
 ---
 
+### 6.15 Linux: hooks ignored or password_command refused after chmod
+
+Messages containing `ignoring post_up`, `ignoring post_down` or
+`refusing to run auth.password_command` include the reason for command refusal.
+Use a regular config rather than a symlink, owned by root or the service's effective UID,
+and remove group/world write bits (normally `chmod 600 /path/to/config`). Keep the file
+readable by the actual service user. Check scripts and their dependencies too.
+
+Then restart the client or server worker. Permission repair alone, a profile retry or
+SIGHUP cannot grant commands permission for a configuration already loaded as untrusted.
+Authorized cleanup from the old running generation can still execute its saved
+`post_down` after the path changes; a new config applies on the next worker startup.
+
+`configuration changed while reading; retry with a stable file` means the loader detected
+changed content or metadata. Finish writing the file and retry; prefer atomic replacement
+when saving. `configuration must be a regular file` rejects directories/devices/FIFOs.
+See [configuration security](CONFIG.md#security).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

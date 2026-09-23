@@ -162,7 +162,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | IN_PROGRESS |
-| 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | TODO |
+| 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | IN_PROGRESS |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | TODO |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | TODO |
 | 36 | Benchmarks and measurement methodology | H07 | TODO |
@@ -474,6 +474,14 @@ Notification tasks, forced outer cancellation and Linux E2E remain open.
 10-second drain after producers stop. No detached notification wrappers remain.
 864 host Rust tests PASS; Linux all-targets cross-check only. Supervisor panel/metrics/
 autostart ownership, config trust and Linux runtime E2E remain open.
+
+**Config snapshot trust, 23 September 2026:**
+[Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): owner/mode and parsed
+bytes now come from the same descriptor; immutable startup authorization survives
+profile retries without path rechecks. Ready-generation cleanup keeps its command and
+environment after config removal/replacement. 874 host Rust tests PASS; four new Unix/
+Linux tests cross-checked only. password_command process bounds, startup ownership,
+installer/update/restore and Linux runtime integration remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -820,7 +828,7 @@ autostart ownership, config trust and Linux runtime E2E remain open.
 
 ### 33. Installation, updates, file permissions and hooks
 
-**Source:** `qeli/debian`, `qeli/src/server/update.rs`, `qeli/src/util.rs`, `qeli/src/hooks.rs`, `release/docker`.
+**Source:** `qeli/debian`, `qeli/src/server/update.rs`, `qeli/src/util.rs`, `qeli/src/hooks.rs`, `qeli/src/config_source.rs`, `release/docker`.
 
 Install/upgrade/downgrade/remove, systemd sandbox, identity/user preservation, checksums/attestation and atomic replacement. Docker digest/recreation/health/rollback. File locks/links/owners/ENOSPC, PATH hijacking, panel/restore command injection and SSH deadlines.
 
@@ -832,7 +840,15 @@ Install/upgrade/downgrade/remove, systemd sandbox, identity/user preservation, c
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**Status: IN_PROGRESS.**
+
+**Config snapshot trust, 23 September 2026:**
+[Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): owner/mode and parsed
+bytes now come from the same descriptor; immutable startup authorization survives
+profile retries without path rechecks. Ready-generation cleanup keeps its command and
+environment after config removal/replacement. 874 host Rust tests PASS; four new Unix/
+Linux tests cross-checked only. password_command process bounds, startup ownership,
+installer/update/restore and Linux runtime integration remain open.
 
 ### 34. CI, dependencies, native provenance and release
 
