@@ -1,6 +1,7 @@
 //! A journal group belongs to one network namespace and one PID coordinate system.
 use super::host;
 
+#[derive(PartialEq, Eq)]
 pub(super) struct Context {
     pub network: String,
     pub pid: String,

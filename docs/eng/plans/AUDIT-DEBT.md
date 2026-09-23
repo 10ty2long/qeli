@@ -17,10 +17,10 @@ Connections to both Linux VMs were verified; the running server and its files we
 | ID | Sections | Status | Debt | Closure criteria / current evidence |
 |---|---|---|---|---|
 | D01 | 14/17/18/25 | DONE | NAT and retired-generation failures | Retain exact rules before mutation; retry and final failure; prevent restart after incomplete cleanup; release IPv4 forwarding. Unit/cross, 18 native and 8 worker E2E PASS; baseline IPv4 leak reproduced. [Report](../reports/AUDIT-Q14-RETAINED-CLEANUP.md). |
-| D02 | 14/25 | TODO | Internal sysctl boundaries | Verify namespace after lock waits and across I/O/pruning; protect journal reads; distinguish original and replaced links. Identity-loss regressions and native restore. |
+| D02 | 14/25 | IN_PROGRESS | Internal sysctl boundaries | Verify namespace after lock waits and across I/O/pruning; protect journal reads; distinguish original and replaced links. Identity-loss regressions and native restore. |
 | D03 | 22/25 | TODO | Standalone kill switch | Bind startup/cleanup to the original namespace; verify protection across reconnect, command failure and identity loss. |
 | D04 | 14/19/22/25 | TODO | Crash recovery | Define and implement safe exact firewall/DNS/route recovery, including mixed nft, SIGKILL and deleted profiles. A process-local registry is not a persistent journal. |
-| D05 | 05/14/25 | TODO | Whole-operation deadlines and locks | Move synchronous preflight out of async handlers/long config locks; bound command sequences and waits; verify cancellation and sibling request availability. |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and locks | Move synchronous preflight out of async handlers/long config locks; bound command sequences and waits; verify cancellation and sibling request availability. |
 | D06 | 21/22/23/25 | TODO | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | TODO | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -103,3 +103,5 @@ and must not produce false success.
 - [AUDIT-Q25-TUN-WORKERS](../reports/AUDIT-Q25-TUN-WORKERS.md)
 - [AUDIT-Q25-TUNNEL-ROUTES](../reports/AUDIT-Q25-TUNNEL-ROUTES.md)
 - [AUDIT-Q25-UDP-TASKS](../reports/AUDIT-Q25-UDP-TASKS.md)
+
+D02/D05: [sysctl journal reads and lock waits](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md) are fixed within the stated scope; remaining row criteria are open.

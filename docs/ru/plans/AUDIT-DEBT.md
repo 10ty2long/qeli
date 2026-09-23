@@ -17,10 +17,10 @@
 | ID | Разделы | Статус | Долг | Критерий закрытия / текущее свидетельство |
 |---|---|---|---|---|
 | D01 | 14/17/18/25 | DONE | Ошибки NAT и старого поколения | Точные спецификации правил до изменения firewall; retry и итоговая ошибка; запрет restart после неполной очистки; возврат IPv4 forwarding. Unit/cross, 18 native и 8 worker E2E PASS; baseline IPv4 leak воспроизведён. [Отчёт](../reports/AUDIT-Q14-RETAINED-CLEANUP.md). |
-| D02 | 14/25 | TODO | Внутренние границы sysctl | Проверять namespace после ожидания lock и на границах I/O/prune, защищать чтение журнала, различать старый и заменённый интерфейс. Регрессии смены identity и native restore. |
+| D02 | 14/25 | IN_PROGRESS | Внутренние границы sysctl | Проверять namespace после ожидания lock и на границах I/O/prune, защищать чтение журнала, различать старый и заменённый интерфейс. Регрессии смены identity и native restore. |
 | D03 | 22/25 | TODO | Самостоятельный kill-switch | Привязать startup/cleanup к исходному namespace; проверить сохранение защиты через reconnect, ошибку команды и потерю identity. |
 | D04 | 14/19/22/25 | TODO | Восстановление после crash | Определить и реализовать безопасное восстановление exact firewall/DNS/routes, включая mixed nft, SIGKILL и удалённый профиль. Нельзя выдавать process-local registry за persistent journal. |
-| D05 | 05/14/25 | TODO | Срок всей операции и блокировки | Убрать синхронный preflight из async handler/долгого config lock; ограничить последовательности команд и ожидания; проверить отмену и доступность соседних запросов. |
+| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Убрать синхронный preflight из async handler/долгого config lock; ограничить последовательности команд и ожидания; проверить отмену и доступность соседних запросов. |
 | D06 | 21/22/23/25 | TODO | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | TODO | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
@@ -103,3 +103,5 @@
 - [AUDIT-Q25-TUN-WORKERS](../reports/AUDIT-Q25-TUN-WORKERS.md)
 - [AUDIT-Q25-TUNNEL-ROUTES](../reports/AUDIT-Q25-TUNNEL-ROUTES.md)
 - [AUDIT-Q25-UDP-TASKS](../reports/AUDIT-Q25-UDP-TASKS.md)
+
+D02/D05: [чтение sysctl-журнала и lock waits](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md) исправлены в описанных границах; остальные критерии строк остаются открыты.

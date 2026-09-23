@@ -512,3 +512,60 @@ fn failed_restore_is_reported_and_retained_until_retry_in_original_namespace() {
         assert_eq!(f.kernel.borrow().values[&10], "0\n");
     });
 }
+
+#[cfg(unix)]
+#[test]
+fn untrusted_journal_modes_cannot_authorize_stale_sysctl_restoration() {
+    use std::os::unix::fs::PermissionsExt;
+    run(|f| {
+        seed_owned(f);
+        let before = std::fs::read(&f.path).unwrap();
+        std::fs::set_permissions(&f.path, std::fs::Permissions::from_mode(0o666)).unwrap();
+        assert!(
+            recover_at(f).is_err(),
+            "a writable journal cannot authorize kernel restoration"
+        );
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+    });
+}
+
+#[cfg(unix)]
+#[test]
+fn hardlinked_journal_cannot_authorize_stale_sysctl_restoration() {
+    run(|f| {
+        seed_owned(f);
+        let before = std::fs::read(&f.path).unwrap();
+        let other = f.path.with_extension("other");
+        std::fs::hard_link(&f.path, &other).unwrap();
+        assert!(
+            recover_at(f).is_err(),
+            "a multiply-linked journal cannot authorize kernel restoration"
+        );
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+        assert_eq!(std::fs::read(other).unwrap(), before);
+    });
+}
+
+#[test]
+fn namespace_change_across_lock_wait_refuses_before_pruning_or_persisting() {
+    run(|f| {
+        seed_owned(f);
+        let before = std::fs::read(&f.path).unwrap();
+        let admitted = namespace::current().unwrap();
+        f.kernel.borrow_mut().net = 11;
+        assert!(with_journal_context(&f.path, BOOT, admitted, recover_in).is_err());
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+    });
+}
+
+#[test]
+fn local_journal_lock_has_a_deadline_without_stealing_ownership() {
+    let lock = Mutex::new(());
+    let held = lock.lock().unwrap();
+    assert!(wait_local_lock(&lock, std::time::Instant::now()).is_err());
+    drop(held);
+    assert!(wait_local_lock(&lock, std::time::Instant::now()).is_ok());
+}

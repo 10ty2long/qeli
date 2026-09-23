@@ -383,6 +383,23 @@ pub struct FileLock(#[allow(dead_code)] std::fs::File);
 impl FileLock {
     #[cfg(unix)]
     pub fn acquire(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+        Self::acquire_inner(path, None)
+    }
+
+    /// Bound advisory-lock contention without changing ordinary file opens/writes.
+    #[cfg(unix)]
+    pub fn acquire_timeout(
+        path: impl AsRef<Path>,
+        timeout: std::time::Duration,
+    ) -> anyhow::Result<Self> {
+        Self::acquire_inner(path, Some(timeout))
+    }
+
+    #[cfg(unix)]
+    fn acquire_inner(
+        path: impl AsRef<Path>,
+        timeout: Option<std::time::Duration>,
+    ) -> anyhow::Result<Self> {
         use std::os::unix::fs::OpenOptionsExt;
         use std::os::unix::io::AsRawFd;
         let lock_path = format!("{}.lock", path.as_ref().display());
@@ -406,7 +423,7 @@ impl FileLock {
             .truncate(false)
             .write(true)
             .mode(0o600)
-            .custom_flags(libc::O_NOFOLLOW)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
             .open(&lock_path)
             .map_err(|e| anyhow::anyhow!("cannot open the lock {}: {}", lock_path, e))?;
         // A lock file is always a plain file with exactly one link. Anything else — a FIFO
@@ -425,12 +442,30 @@ impl FileLock {
                 ));
             }
         }
-        if unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX) } != 0 {
-            return Err(anyhow::anyhow!(
-                "cannot lock {}: {}",
-                lock_path,
-                std::io::Error::last_os_error()
-            ));
+        let started = std::time::Instant::now();
+        let flags = libc::LOCK_EX | if timeout.is_some() { libc::LOCK_NB } else { 0 };
+        loop {
+            if unsafe { libc::flock(f.as_raw_fd(), flags) } == 0 {
+                break;
+            }
+            let error = std::io::Error::last_os_error();
+            if let Some(timeout) = timeout {
+                if error.kind() == std::io::ErrorKind::WouldBlock
+                    || error.kind() == std::io::ErrorKind::Interrupted
+                {
+                    let remaining = timeout.saturating_sub(started.elapsed());
+                    if remaining.is_zero() {
+                        anyhow::bail!(
+                            "timed out waiting for lock {} after {:?}",
+                            lock_path,
+                            timeout
+                        );
+                    }
+                    std::thread::sleep(remaining.min(std::time::Duration::from_millis(25)));
+                    continue;
+                }
+            }
+            return Err(anyhow::anyhow!("cannot lock {}: {}", lock_path, error));
         }
         // Hand the lock to whoever owns the file it guards. The CLI (`qeli add-client`)
         // is normally run with sudo while the daemon runs as an unprivileged account, so
@@ -460,6 +495,14 @@ impl FileLock {
             }
         }
         Ok(FileLock(f))
+    }
+
+    #[cfg(not(unix))]
+    pub fn acquire_timeout(
+        path: impl AsRef<Path>,
+        _timeout: std::time::Duration,
+    ) -> anyhow::Result<Self> {
+        Self::acquire(path)
     }
 
     #[cfg(not(unix))]
@@ -801,5 +844,77 @@ pub fn lock_or_recover<'a, T>(
             log::warn!("mutex poisoned in {} — recovering", where_);
             poisoned.into_inner()
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod file_lock_tests {
+    use super::*;
+    use std::{
+        os::unix::fs::OpenOptionsExt,
+        time::{Duration, Instant},
+    };
+    struct Fixture(std::path::PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let dir = std::env::temp_dir().join(format!(
+                "qeli-file-lock-{}-{}",
+                std::process::id(),
+                rand::random::<u64>()
+            ));
+            std::fs::create_dir(&dir).unwrap();
+            Self(dir)
+        }
+        fn path(&self) -> std::path::PathBuf {
+            self.0.join("state")
+        }
+    }
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    #[test]
+    fn contention_deadline_preserves_owner_and_release_allows_retry() {
+        let f = Fixture::new();
+        let owner = FileLock::acquire(f.path()).unwrap();
+        let started = Instant::now();
+        assert!(FileLock::acquire_timeout(f.path(), Duration::from_millis(30)).is_err());
+        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(FileLock::acquire_timeout(f.path(), Duration::ZERO).is_err());
+        drop(owner);
+        FileLock::acquire_timeout(f.path(), Duration::ZERO).unwrap();
+    }
+    #[test]
+    fn fifo_lock_is_rejected_before_waiting_for_a_peer() {
+        let f = Fixture::new();
+        let fifo = f.path().with_extension("lock");
+        let c = std::ffi::CString::new(fifo.as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(c.as_ptr(), 0o600) }, 0);
+        let path = f.path();
+        let (send, receive) = std::sync::mpsc::channel();
+        let child = std::thread::spawn(move || {
+            send.send(FileLock::acquire(path).is_err()).unwrap();
+        });
+        let immediate = receive.recv_timeout(Duration::from_millis(300));
+        // Unblock the old O_WRONLY FIFO implementation so a failing regression cannot hang.
+        let _reader = if immediate.is_err() {
+            Some(
+                std::fs::OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_NONBLOCK)
+                    .open(&fifo)
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        child.join().unwrap();
+        assert_eq!(
+            immediate,
+            Ok(true),
+            "FIFO open waited before metadata rejection"
+        );
+        assert_eq!(std::fs::symlink_metadata(&fifo).unwrap().len(), 0);
     }
 }

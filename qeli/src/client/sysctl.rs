@@ -14,6 +14,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 #[path = "sysctl/host.rs"]
 mod host;
+#[path = "sysctl/journal_file.rs"]
+mod journal_file;
 #[path = "sysctl/namespace.rs"]
 mod namespace;
 
@@ -23,6 +25,26 @@ const BOOT_ID_PATH: &str = "/proc/sys/kernel/random/boot_id";
 const JOURNAL_NAME: &str = "sysctls.state";
 
 static IN_PROCESS_LOCK: Mutex<()> = Mutex::new(());
+const LOCK_WAIT: std::time::Duration = std::time::Duration::from_secs(15);
+
+fn wait_local_lock(
+    lock: &Mutex<()>,
+    deadline: std::time::Instant,
+) -> anyhow::Result<std::sync::MutexGuard<'_, ()>> {
+    loop {
+        match lock.try_lock() {
+            Ok(guard) => return Ok(guard),
+            Err(std::sync::TryLockError::Poisoned(error)) => return Ok(error.into_inner()),
+            Err(std::sync::TryLockError::WouldBlock) => {
+                let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+                if remaining.is_zero() {
+                    anyhow::bail!("timed out waiting for the in-process host sysctl journal lock");
+                }
+                std::thread::sleep(remaining.min(std::time::Duration::from_millis(10)));
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct ManagedSysctl {
@@ -350,22 +372,13 @@ fn decode_store(bytes: &[u8], boot_id: &str) -> anyhow::Result<JournalStore> {
 }
 
 fn load(path: &Path, boot_id: &str) -> anyhow::Result<JournalStore> {
-    let metadata = match std::fs::symlink_metadata(path) {
-        Ok(metadata) => metadata,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(JournalStore::empty(boot_id.to_string()));
-        }
-        Err(error) => anyhow::bail!("cannot inspect {}: {error}", path.display()),
+    let opened = journal_file::Opened::open(path, JOURNAL_LIMIT)
+        .map_err(|error| anyhow::anyhow!("cannot open {}: {error}", path.display()))?;
+    let Some(opened) = opened else {
+        return Ok(JournalStore::empty(boot_id.to_string()));
     };
-    if !metadata.file_type().is_file() || metadata.len() > JOURNAL_LIMIT {
-        anyhow::bail!(
-            "refusing invalid host sysctl journal {} (regular={}, size={})",
-            path.display(),
-            metadata.file_type().is_file(),
-            metadata.len()
-        );
-    }
-    let bytes = std::fs::read(path)
+    let bytes = opened
+        .read()
         .map_err(|error| anyhow::anyhow!("cannot read {}: {error}", path.display()))?;
     decode_store(&bytes, boot_id)
         .map_err(|error| anyhow::anyhow!("cannot load {}: {error}", path.display()))
@@ -490,28 +503,45 @@ fn prune_dead_owners(journal: &mut SysctlJournal) -> Vec<String> {
 fn with_locked_journal<T>(
     body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
 ) -> anyhow::Result<T> {
-    let _local = IN_PROCESS_LOCK
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let deadline = std::time::Instant::now() + LOCK_WAIT;
+    let context = namespace::current()?;
+    let _local = wait_local_lock(&IN_PROCESS_LOCK, deadline)?;
     let path = journal_path();
     let parent = path
         .parent()
         .ok_or_else(|| anyhow::anyhow!("host sysctl journal has no parent"))?;
     std::fs::create_dir_all(parent)
         .map_err(|error| anyhow::anyhow!("cannot create {}: {error}", parent.display()))?;
-    let _file_lock = crate::util::FileLock::acquire(&path)?;
+    let _file_lock = crate::util::FileLock::acquire_timeout(
+        &path,
+        deadline.saturating_duration_since(std::time::Instant::now()),
+    )?;
     let boot_id = current_boot_id()?;
-    with_journal(&path, &boot_id, body)
+    with_journal_context(&path, &boot_id, context, body)
 }
 
 // Kept below the lock boundary so portable tests can exercise real journal I/O
 // with isolated namespace/sysctl observations, without pretending to test flock.
+#[cfg(test)]
 fn with_journal<T>(
     path: &Path,
     boot_id: &str,
     body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
 ) -> anyhow::Result<T> {
-    let context = namespace::current()?;
+    with_journal_context(path, boot_id, namespace::current()?, body)
+}
+
+fn with_journal_context<T>(
+    path: &Path,
+    boot_id: &str,
+    context: namespace::Context,
+    body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
+) -> anyhow::Result<T> {
+    if namespace::current()? != context {
+        anyhow::bail!(
+            "host sysctl namespace changed while waiting for journal locks; no recovery attempted"
+        );
+    }
     let mut store = load(path, boot_id)?;
     // Admission precedes pruning, kernel I/O and persistence. Foreign groups are
     // never probed: their PIDs and sysctl paths have meaning only in their namespace.

@@ -1748,6 +1748,23 @@ Stopping one profile does not release this global lease. No INI setting is requi
 [Report](../reports/AUDIT-Q14-RETAINED-CLEANUP.md).
 
 
+### 6.55 Linux: sysctl journal read or lock wait refused
+
+`sysctls.state` must be a regular file without extra hardlinks, group/world write
+permission or content exceeding 128 KiB. Symlinks/FIFOs, growth, truncation or changed
+snapshots are refused before restoring kernel sysctls. Saved original values are
+preserved. Inspect the state file and directory owner; do not replace the journal
+with an empty file just to allow startup.
+
+`timed out waiting for ... host sysctl journal lock` / `timed out waiting for lock`
+means the shared 15-second mutex/flock contention budget expired. Find the holder and
+finish its operation/process normally. Deleting an active `.lock` creates a different
+inode and breaks mutual exclusion; it does not release the held lock. A namespace
+change during the wait also stops recovery before sysctl writes. This budget is not
+a deadline for complete network setup or file I/O.
+[Report](../reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md).
+
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)
