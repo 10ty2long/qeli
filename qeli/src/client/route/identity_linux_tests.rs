@@ -58,6 +58,12 @@ fn native_cleanup_rename_preserves_replacement_and_cleans_physical_bypass() -> a
         add_owned(&owner, "10.42.0.0/16", "qeli-physical")?;
         ip(&["link", "set", owner.interface(), "down"])?;
         ip(&["link", "set", owner.interface(), "name", "qeli-renamed"])?;
+        // NETDEV_DOWN may have flushed the original route before rename. Seed and
+        // verify the protected route again, so absence after cleanup cannot be blamed
+        // on fixture setup and the test actually exercises preservation.
+        ip(&["link", "set", "qeli-renamed", "up"])?;
+        ip(&["route", "replace", "10.41.0.0/16", "dev", "qeli-renamed"])?;
+        assert!(ip(&["route", "show", "exact", "10.41.0.0/16"])?.contains("qeli-renamed"));
         dummy(owner.interface())?;
         ip(&["route", "add", "10.43.0.0/16", "dev", owner.interface()])?;
         assert!(cleanup_routes_for_tun(&owner, &tun).is_err());

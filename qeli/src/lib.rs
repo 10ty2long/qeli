@@ -78,6 +78,11 @@ mod firewall_check;
 #[path = "server/nat/cleanup.rs"]
 mod nat_cleanup;
 
+// Retain exact generic NAT/routing rules across failed cleanup attempts.
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[path = "server/nat/owned_rules.rs"]
+mod nat_owned_rules;
+
 // IPv6 sysctl rollback keeps partial acquisitions visible until release succeeds.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/nat/ipv6_sysctl.rs"]

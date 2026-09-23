@@ -89,3 +89,40 @@ fn timeout_does_not_block_join_and_still_reports_finished_thread_panic() {
         "{error}"
     );
 }
+
+#[test]
+fn transient_setup_failure_can_restart_only_after_successful_cleanup() {
+    let outcome = Outcome::new(Err(anyhow::anyhow!("port busy")), Ok(()));
+    assert!(outcome.can_restart());
+    assert!(outcome.result().is_err());
+    assert!(outcome
+        .into_result()
+        .unwrap_err()
+        .to_string()
+        .contains("port busy"));
+}
+
+#[test]
+fn old_cleanup_failure_reaches_worker_instead_of_entering_backoff() {
+    let outcome = Outcome::new(Ok(()), Err(anyhow::anyhow!("TUN thread retains fd")));
+    assert!(!outcome.can_restart());
+    assert!(outcome
+        .into_result()
+        .unwrap_err()
+        .to_string()
+        .contains("retains fd"));
+}
+
+#[test]
+fn primary_error_does_not_hide_unsafe_cleanup() {
+    let outcome = Outcome::new(
+        Err(anyhow::anyhow!("listener failed")),
+        Err(anyhow::anyhow!("NAT remains")),
+    );
+    assert!(!outcome.can_restart());
+    let error = outcome.into_result().unwrap_err().to_string();
+    assert!(error.contains("listener failed") && error.contains("NAT remains"));
+    let healthy = Outcome::new(Ok(()), Ok(()));
+    assert!(healthy.can_restart());
+    assert!(healthy.into_result().is_ok());
+}

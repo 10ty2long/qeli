@@ -1730,6 +1730,24 @@ review. Independent kill-switch operations are also outside the gateway context.
 ---
 
 
+### 6.54 Server: a generation does not restart after cleanup failure
+
+If a profile leaves unverified NAT/DNS/sysctl resources or a TUN queue fails to stop,
+the worker reports a shutdown error and stops. Another generation within that worker
+is refused. Check the original firewall/sysctl/TUN error in the log; a successful
+accounting flush does not prove that network resources were released.
+
+Exact NAT/FORWARD/MSS/DNS REDIRECT rules remain in memory until verified absent.
+Cleanup can retry while the worker is alive; a missing firewall tool is not evidence
+that rules are absent. SIGKILL loses this registry, and historical sweeps cannot
+guarantee recovery for unlistable mixed nft chains.
+
+A clean full-worker stop also releases its IPv4 forwarding lease. The original value
+is restored only when no other owners remain and the current value is still managed.
+Stopping one profile does not release this global lease. No INI setting is required.
+[Report](../reports/AUDIT-Q14-RETAINED-CLEANUP.md).
+
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

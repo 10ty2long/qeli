@@ -113,3 +113,5 @@ Q14-F027 **не закрыта**: generic NAT cleanup и незавершённ�
 SSH/systemd/Actions и бенчмарки не запускались.
 
 Предыдущий этап: [сохранение DNS ownership](AUDIT-Q14-DNS-OWNERSHIP.md).
+
+Продолжение: [24 сентября — generic NAT, старые поколения и IPv4 lease](AUDIT-Q14-RETAINED-CLEANUP.md).

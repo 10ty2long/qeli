@@ -111,3 +111,5 @@ commands; the complete final verification still lacks an overall deadline. Linux
 SSH/systemd/Actions and benchmarks were not run.
 
 Previous pass: [retained DNS ownership](AUDIT-Q14-DNS-OWNERSHIP.md).
+
+Follow-up: [24 September — generic NAT, retired generations and IPv4 lease](AUDIT-Q14-RETAINED-CLEANUP.md).

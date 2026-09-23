@@ -3562,15 +3562,18 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
                     run_profile(state.clone(), pcfg.clone(), profile_shutdown.clone()).await;
                 let stopping = *profile_shutdown.borrow();
                 if !stopping {
-                    match &result {
+                    match result.result() {
                         Ok(()) => log::warn!("Profile '{}' stopped unexpectedly", pname),
                         Err(e) => log::error!("Profile '{}' error: {}", pname, e),
                     }
                 }
                 run_post_down(&state, &pname).await;
-                // Stop can arrive while post_down awaits; preserve the last generation.
-                if *profile_shutdown.borrow() {
-                    return result.map_err(|error| anyhow::anyhow!("profile '{pname}': {error}"));
+                // Never launch a replacement over an incompletely released generation.
+                // This also keeps its error visible if stop arrives during retry backoff.
+                if !result.can_restart() || *profile_shutdown.borrow() {
+                    return result
+                        .into_result()
+                        .map_err(|error| anyhow::anyhow!("profile '{pname}': {error}"));
                 }
 
                 // Reset the backoff after a stable generation; persistent setup
@@ -3666,7 +3669,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         // there is nothing to delete, so running it always is strictly safer — it also
         // covers a profile whose NAT was toggled off while running.
         // (Audit 2026-07-27, B6.)
-        nat::cleanup(&pcfg.name);
+        if let Err(error) = nat::cleanup(&pcfg.name) {
+            log::error!("Profile '{}': final sweep incomplete: {error}", pcfg.name);
+        }
         // Skips any profile whose hook already ran when that profile ended on its own — the
         // snapshot claim lives in `run_post_down`, so a shutdown racing a dying profile cannot fire
         // the hook twice.
@@ -4600,7 +4605,8 @@ impl Drop for ProfileTeardown {
 
         // iptables first: the rules reference the interface by name, so removing them before
         // the device keeps the window where a rule points at a vanished device closed.
-        nat::cleanup(&self.profile);
+        self.failures
+            .record("NAT/routing", nat::cleanup(&self.profile));
 
         // Stop workers before the original queue descriptors (fields of this guard) close.
         // A timed-out worker still owns its fd; report that failure, never delete by name.
@@ -4712,7 +4718,7 @@ async fn run_profile(
     state: Arc<ServerState>,
     pcfg: ProfileConfig,
     mut shutdown: tokio::sync::watch::Receiver<bool>,
-) -> anyhow::Result<()> {
+) -> crate::profile_teardown::Outcome {
     let name = pcfg.name.clone();
     log::info!(
         "Starting profile '{}' ({}://{}:{})",
@@ -4751,9 +4757,8 @@ async fn run_profile(
     let service_cleanup = services.shutdown(&tasks).await;
     teardown.unregister().await;
     drop(teardown);
-    failures.record("generation", result);
     failures.record("profile tasks/services", service_cleanup);
-    failures.result()
+    crate::profile_teardown::Outcome::new(result, failures.result())
 }
 
 async fn run_profile_generation(
@@ -4890,7 +4895,7 @@ async fn run_profile_generation(
     // Host NAT (iptables) for full-tunnel egress. Always clear any rules we left
     // behind first (covers an unclean exit, or routing.nat toggled off then a
     // restart), then (re)install if this profile requests masquerading.
-    nat::cleanup(&pcfg.name);
+    nat::cleanup(&pcfg.name)?;
     let peer_tuns: Vec<String> = state
         .config
         .profiles

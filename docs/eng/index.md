@@ -52,6 +52,7 @@ Active development direction and implementation plans. These are not end-user in
 | [IPV6-IMPLEMENTATION-PLAN.md](plans/IPV6-IMPLEMENTATION-PLAN.md) | IPv6 architecture, stages and release gates |
 | [CLIENT-CONFIG-CORE.md](plans/CLIENT-CONFIG-CORE.md) | Shared Rust INI/URI APIs, removed client duplicates and remaining checks |
 | [FULL-SYSTEM-AUDIT.md](plans/FULL-SYSTEM-AUDIT.md) | Audit history, 37-section test plan, environments and progress |
+| [AUDIT-DEBT.md](plans/AUDIT-DEBT.md) | Required fixes and verification before starting new audit sections |
 
 ## Reports (`reports/`)
 
@@ -75,6 +76,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-DNS-RECOVERY.md](reports/AUDIT-Q25-DNS-RECOVERY.md) | Legacy DNS recovery: checked operations and retained snapshots |
 | [AUDIT-Q25-TUN-CLEANUP.md](reports/AUDIT-Q25-TUN-CLEANUP.md) | TUN/DNS/route cleanup errors, guarded plan handoff and terminal kick preservation |
 | [AUDIT-Q14-OWNED-SHUTDOWN.md](reports/AUDIT-Q14-OWNED-SHUTDOWN.md) | Final DNS/IPv6 sysctl lease checks and worker/supervisor error propagation; partial Q14-F027 fix |
+| [AUDIT-Q14-RETAINED-CLEANUP.md](reports/AUDIT-Q14-RETAINED-CLEANUP.md) | Exact NAT rules, retired-generation failures and verified Linux lifecycle |
 | [AUDIT-Q14-PROFILE-SHUTDOWN.md](reports/AUDIT-Q14-PROFILE-SHUTDOWN.md) | Profile task failures, TUN queue timeout/panic and TUN deletion errors in shutdown outcome; partial Q14-F027 |
 | [AUDIT-Q14-SYSCTL-RECOVERY.md](reports/AUDIT-Q14-SYSCTL-RECOVERY.md) | Q14-F029/F030: sysctl recovery failures and preserving prior ownership on repeated acquisition |
 | [AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md](reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) | Q14-F031: track partial IPv6 acquisition and retry rollback until release succeeds |

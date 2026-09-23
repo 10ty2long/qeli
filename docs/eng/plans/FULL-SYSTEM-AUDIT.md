@@ -1,5 +1,8 @@
 # Full Qeli audit: previous coverage and sequential test plan
 
+**Priority from 24 September:** close [debt from started audits](AUDIT-DEBT.md) first;
+do not start new sections yet. Existing statuses do not imply that debt verification is complete.
+
 <!-- normative-sync: full-system-audit-v1 -->
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit

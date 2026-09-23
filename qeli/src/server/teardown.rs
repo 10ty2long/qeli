@@ -23,6 +23,36 @@ impl Report {
     }
 }
 
+/// A transient generation failure may be retried only after its resource cleanup succeeded.
+/// Cleanup failure must reach the worker: otherwise a backoff/replacement loses old evidence.
+pub(crate) struct Outcome {
+    result: anyhow::Result<()>,
+    restart_safe: bool,
+}
+
+impl Outcome {
+    pub(crate) fn new(run: anyhow::Result<()>, cleanup: anyhow::Result<()>) -> Self {
+        let restart_safe = cleanup.is_ok();
+        let mut failures = Failures::default();
+        failures.record("generation", run);
+        failures.record("generation cleanup", cleanup);
+        Self {
+            result: failures.result(),
+            restart_safe,
+        }
+    }
+
+    pub(crate) fn can_restart(&self) -> bool {
+        self.restart_safe
+    }
+    pub(crate) fn result(&self) -> &anyhow::Result<()> {
+        &self.result
+    }
+    pub(crate) fn into_result(self) -> anyhow::Result<()> {
+        self.result
+    }
+}
+
 /// Caller raises stop flags and wakes channels first. Retain all handles during wakes
 /// so pthread identifiers cannot be reused before the final wake; join only finished threads.
 pub(crate) fn stop_threads(

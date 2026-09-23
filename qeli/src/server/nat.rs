@@ -112,8 +112,8 @@ fn detect_wan() -> Option<String> {
 }
 
 /// Acquire `net.ipv4.ip_forward = 1` for the server worker through the common host journal.
-/// The lease deliberately lasts for the worker lifetime, matching the long-standing policy of
-/// not flipping a host-global knob off when one server profile stops. A panel-managed client
+/// The lease lasts until final worker cleanup; stopping one profile must not flip a
+/// host-global knob off beneath its siblings. A panel-managed client
 /// can therefore stop without restoring `0` underneath an active NAT44/routed server profile.
 fn enable_ip_forward() -> bool {
     let path = "/proc/sys/net/ipv4/ip_forward";
@@ -417,7 +417,35 @@ fn forward_permit_position(path: &str) -> Option<usize> {
     ))
 }
 
-fn install_rule(path: &str, rule: &Rule) -> bool {
+fn owned_rules() -> &'static Mutex<crate::nat_owned_rules::Registry> {
+    static REGISTRY: OnceLock<Mutex<crate::nat_owned_rules::Registry>> = OnceLock::new();
+    REGISTRY.get_or_init(Default::default)
+}
+
+/// Caller holds firewall_program_lock, including while recording/retrying ownership.
+fn retry_owned_rules(profile: Option<&str>) -> anyhow::Result<()> {
+    owned_rules()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .cleanup(profile, |rule| {
+            let path = if rule.ipv6 {
+                ip6tables_path()
+            } else {
+                iptables_path()
+            }
+            .ok_or_else(|| {
+                anyhow::anyhow!("firewall tool unavailable; exact ownership retained")
+            })?;
+            cleanup_exact_rules_with(
+                &rule.table,
+                &rule.chain,
+                [("managed rule", rule.args.as_slice())],
+                |args| ipt(&path, args),
+            )
+        })
+}
+
+fn install_rule(profile: &str, ipv6: bool, path: &str, rule: &Rule) -> bool {
     let insert = rule.table == "filter" && rule.chain == "FORWARD";
     let mut args = vec![
         "-t".to_string(),
@@ -437,6 +465,23 @@ fn install_rule(path: &str, rule: &Rule) -> bool {
         args.push(position.to_string());
     }
     args.extend(rule.args.clone());
+    // A command can mutate and then time out or fail its postcondition. Never lose its spec.
+    if let Err(error) = owned_rules()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .retain(
+            profile,
+            crate::nat_owned_rules::Rule {
+                ipv6,
+                table: rule.table.into(),
+                chain: rule.chain.into(),
+                args: rule.args.clone(),
+            },
+        )
+    {
+        log::error!("Profile '{profile}': {error}");
+        return false;
+    }
     let refs: Vec<&str> = args.iter().map(String::as_str).collect();
     let _ = ipt(path, &refs);
     rule_present(path, rule.table, rule.chain, &rule.args)
@@ -487,7 +532,7 @@ pub fn setup(
     let mss = (mtu - 40).max(536);
     let mut forward_unapplied = false;
     for r in rules(profile, &wan, tun, pool_cidr, peer_tuns, mss) {
-        if !install_rule(&path, &r) {
+        if !install_rule(profile, false, &path, &r) {
             if r.essential {
                 cleanup_with(&path, profile); // roll back the partial set
                 anyhow::bail!(
@@ -733,7 +778,7 @@ pub fn setup_ipv6(
         // Verification is mandatory: falling back to a permissive FORWARD policy would be
         // the exact cross-profile leak this mode exists to prevent.
         for rule in ipv6_off_rules(profile, tun) {
-            if !install_rule(&path, &rule) {
+            if !install_rule(profile, true, &path, &rule) {
                 cleanup_with(&path, profile);
                 anyhow::bail!(
                     "ip6tables could not enforce routing.ipv6.mode = off for profile '{profile}'; refusing an IPv6 plan that could inherit Internet forwarding"
@@ -782,7 +827,7 @@ pub fn setup_ipv6(
         (mtu - 60).max(1220),
         mode,
     ) {
-        if !install_rule(&path, &rule) {
+        if !install_rule(profile, true, &path, &rule) {
             if rule.essential {
                 cleanup_with(&path, profile);
                 release_ipv6_sysctls(profile);
@@ -1145,7 +1190,7 @@ pub fn enable_routing(
         )
     };
     for rule in cross_profile_drop_rules(profile, tun, peer_tuns) {
-        if !install_rule(&path, &rule) {
+        if !install_rule(profile, false, &path, &rule) {
             cleanup_with(&path, profile);
             anyhow::bail!("could not enforce cross-profile isolation for {tun}");
         }
@@ -1164,7 +1209,7 @@ pub fn enable_routing(
         // VERIFY instead of assuming. The whole set was applied with `let _ =` and then
         // reported as success, so a host that refused every rule still logged "FORWARD ACCEPT
         // for tun0" — the operator had no way to tell routing from silence.
-        if !install_rule(&path, &rule) {
+        if !install_rule(profile, false, &path, &rule) {
             if insert {
                 forward_unapplied = true;
             } else {
@@ -1270,19 +1315,13 @@ pub fn enable_dns_redirect(profile: &str, tun: &str, listen: &str, port: u16) ->
             "--to-ports".into(),
             port.to_string(),
         ];
-        let mut argv = vec![
-            "-t".to_string(),
-            "nat".to_string(),
-            "-A".to_string(),
-            "PREROUTING".to_string(),
-        ];
-        argv.extend(args.clone());
-        let refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-        let _ = ipt(&path, &refs);
-
-        // VERIFY rather than trust the exit code — `iptables-nft` can report success for a rule
-        // it did not install, which is why every other rule here is checked the same way.
-        if !rule_present(&path, "nat", "PREROUTING", &args) {
+        let rule = Rule {
+            table: "nat",
+            chain: "PREROUTING",
+            args,
+            essential: true,
+        };
+        if !install_rule(profile, ipv6, &path, &rule) {
             log::error!(
                 "Profile '{profile}': FAILED to install the DNS redirect {listen}:53/{proto} -> \
                  :{port} on {tun}. Clients would be handed a resolver they cannot reach — set \
@@ -1298,27 +1337,28 @@ pub fn enable_dns_redirect(profile: &str, tun: &str, listen: &str, port: u16) ->
     true
 }
 
-/// Remove every NAT rule tagged for `profile` (idempotent; a no-op if none exist or
-/// iptables is absent).
-pub fn cleanup(profile: &str) {
+/// Sweep historical tags, then verify every exact specification retained by this worker.
+/// Missing tools are an error when rules remain owned; an unmanaged profile is a no-op.
+pub fn cleanup(profile: &str) -> anyhow::Result<()> {
     let _firewall_guard = firewall_program_lock()
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    if let Err(error) = retry_dns_input(Some(profile)) {
-        log::error!("Profile '{profile}': DNS INPUT retry incomplete: {error}");
-    }
+    let mut errors = crate::nat_cleanup::Errors::default();
+    errors.record("DNS INPUT", retry_dns_input(Some(profile)));
     if let Some(path) = iptables_path() {
         cleanup_with(&path, profile);
     }
     if let Some(path) = ip6tables_path() {
         cleanup_with(&path, profile);
     }
-    release_ipv6_sysctls(profile);
+    errors.record("exact NAT/routing rules", retry_owned_rules(Some(profile)));
+    errors.record("IPv6 sysctls", release_ipv6_sysctls_checked(profile));
+    errors.finish()
 }
 
 /// Final verification of resources whose exact ownership is retained by this worker.
 /// Call only AFTER all profile supervisors have stopped and the generic tag sweeps ran.
-/// This does not claim to verify generic NAT rules, TUNs, or a previous worker's journal.
+/// Includes NAT/routing/DNS redirects; historical rules without a saved spec need the tag sweep.
 pub(crate) fn finish_owned_cleanup() -> anyhow::Result<()> {
     let _firewall_guard = firewall_program_lock()
         .lock()
@@ -1327,16 +1367,26 @@ pub(crate) fn finish_owned_cleanup() -> anyhow::Result<()> {
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .profiles();
-    crate::nat_cleanup::finish_owned_cleanup_with(
-        || {
-            dns_input_registry()
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .finish_shutdown(cleanup_dns_rules)
-        },
-        &profiles,
-        release_ipv6_sysctls_checked,
-    )
+    let mut errors = crate::nat_cleanup::Errors::default();
+    errors.record("exact NAT/routing rules", retry_owned_rules(None));
+    errors.record(
+        "DNS and IPv6 sysctls",
+        crate::nat_cleanup::finish_owned_cleanup_with(
+            || {
+                dns_input_registry()
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .finish_shutdown(cleanup_dns_rules)
+            },
+            &profiles,
+            release_ipv6_sysctls_checked,
+        ),
+    );
+    errors.record(
+        "IPv4 forwarding",
+        crate::sysctl::release_scope("server-ipv4"),
+    );
+    errors.finish()
 }
 
 /// Restore a killed worker's host-wide IPv6 sysctls, then remove EVERY qeli-managed NAT rule
@@ -1812,3 +1862,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "nat/native_tests.rs"]
+mod native_tests;
