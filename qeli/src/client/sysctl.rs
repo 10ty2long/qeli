@@ -5,7 +5,8 @@
 //! first component that stops restore a value still required by another one. The journal
 //! below is locked across processes, records the pristine value before mutation, and
 //! identifies an owner by PID + `/proc/<pid>/stat` start time + TUN scope so PID reuse and
-//! same-process multi-profile operation are both handled. The journal follows the state
+//! same-process multi-profile operation are both handled. Network namespaces have separate
+//! journal groups; each group requires the same PID namespace/procfs view. The journal follows the state
 //! directory's ownership, so a manual root client cannot lock a later User=qeli service out.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -13,8 +14,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 #[path = "sysctl/host.rs"]
 mod host;
+#[path = "sysctl/namespace.rs"]
+mod namespace;
 
-const JOURNAL_VERSION: u8 = 1;
+const JOURNAL_VERSION: u8 = 2;
 const JOURNAL_LIMIT: u64 = 128 * 1024;
 const BOOT_ID_PATH: &str = "/proc/sys/kernel/random/boot_id";
 const JOURNAL_NAME: &str = "sysctls.state";
@@ -28,20 +31,83 @@ struct ManagedSysctl {
     owners: BTreeSet<String>,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 struct SysctlJournal {
-    version: u8,
-    boot_id: String,
+    pid_namespace: String,
+    time_namespace: Option<String>,
     entries: BTreeMap<String, ManagedSysctl>,
 }
 
 impl SysctlJournal {
+    fn empty(pid_namespace: String) -> Self {
+        Self {
+            pid_namespace,
+            time_namespace: None,
+            entries: BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JournalStore {
+    version: u8,
+    boot_id: String,
+    namespaces: BTreeMap<String, SysctlJournal>,
+}
+impl JournalStore {
     fn empty(boot_id: String) -> Self {
         Self {
             version: JOURNAL_VERSION,
             boot_id,
-            entries: BTreeMap::new(),
+            namespaces: BTreeMap::new(),
         }
+    }
+
+    fn select(&mut self, context: &namespace::Context) -> anyhow::Result<&mut SysctlJournal> {
+        let journal = self
+            .namespaces
+            .entry(context.network.clone())
+            .or_insert_with(|| {
+                let mut journal = SysctlJournal::empty(context.pid.clone());
+                journal.time_namespace = context.time.clone();
+                journal
+            });
+        if journal.pid_namespace != context.pid {
+            anyhow::bail!(
+                "host sysctl PID namespace mismatch for network namespace {}: saved {}, current {}; keep sysctls.state and recover from the original PID namespace",
+                context.network, journal.pid_namespace, context.pid
+            );
+        }
+        if journal.time_namespace != context.time {
+            anyhow::bail!(
+                "host sysctl time namespace mismatch for network namespace {}; keep sysctls.state and recover from the original time namespace",
+                context.network
+            );
+        }
+        Ok(journal)
+    }
+}
+
+struct JournalTransaction<'a> {
+    path: &'a Path,
+    store: JournalStore,
+    network: String,
+}
+impl JournalTransaction<'_> {
+    #[cfg(any(test, feature = "server"))]
+    fn current(&self) -> &SysctlJournal {
+        &self.store.namespaces[&self.network]
+    }
+    fn current_mut(&mut self) -> &mut SysctlJournal {
+        self.store
+            .namespaces
+            .get_mut(&self.network)
+            .expect("selected sysctl namespace")
+    }
+    fn persist(&self) -> anyhow::Result<()> {
+        persist(self.path, &self.store)
     }
 }
 
@@ -184,16 +250,15 @@ fn valid_value(value: &str) -> bool {
     matches!(value, "0" | "1" | "2")
 }
 
-fn validate(journal: &SysctlJournal) -> anyhow::Result<()> {
-    if journal.version != JOURNAL_VERSION
-        || journal.boot_id.is_empty()
-        || journal.boot_id.len() > 128
-        || journal.boot_id.chars().any(char::is_control)
-        || journal.entries.len() > 256
-    {
-        anyhow::bail!("invalid host sysctl journal header");
+fn valid_boot_id(boot_id: &str) -> bool {
+    !boot_id.is_empty() && boot_id.len() <= 128 && !boot_id.chars().any(char::is_control)
+}
+
+fn validate_entries(entries: &BTreeMap<String, ManagedSysctl>) -> anyhow::Result<()> {
+    if entries.len() > 256 {
+        anyhow::bail!("too many host sysctl journal entries");
     }
-    for (path, entry) in &journal.entries {
+    for (path, entry) in entries {
         if !valid_sysctl_path(path)
             || !valid_value(&entry.original)
             || !valid_value(&entry.managed)
@@ -209,11 +274,86 @@ fn validate(journal: &SysctlJournal) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn load(path: &Path, boot_id: &str) -> anyhow::Result<SysctlJournal> {
+fn validate(journal: &SysctlJournal) -> anyhow::Result<()> {
+    if !namespace::valid_identity(&journal.pid_namespace) {
+        anyhow::bail!("invalid host sysctl PID namespace identity");
+    }
+    if journal
+        .time_namespace
+        .as_ref()
+        .is_some_and(|identity| !namespace::valid_identity(identity))
+    {
+        anyhow::bail!("invalid host sysctl time namespace identity");
+    }
+    validate_entries(&journal.entries)
+}
+
+fn validate_store(store: &JournalStore) -> anyhow::Result<()> {
+    if store.version != JOURNAL_VERSION
+        || !valid_boot_id(&store.boot_id)
+        || store.namespaces.len() > 256
+        || store
+            .namespaces
+            .values()
+            .map(|journal| journal.entries.len())
+            .sum::<usize>()
+            > 256
+    {
+        anyhow::bail!("invalid host sysctl journal header");
+    }
+    for (network, journal) in &store.namespaces {
+        if !namespace::valid_identity(network) {
+            anyhow::bail!("invalid host sysctl network namespace identity");
+        }
+        validate(journal)?;
+    }
+    Ok(())
+}
+
+fn decode_store(bytes: &[u8], boot_id: &str) -> anyhow::Result<JournalStore> {
+    #[derive(serde::Deserialize)]
+    struct Header {
+        version: u8,
+    }
+    let header: Header = serde_json::from_slice(bytes)?;
+    if header.version == 1 {
+        #[derive(serde::Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct LegacyJournal {
+            version: u8,
+            boot_id: String,
+            entries: BTreeMap<String, ManagedSysctl>,
+        }
+        let old: LegacyJournal = serde_json::from_slice(bytes)?;
+        if old.version != 1 || !valid_boot_id(&old.boot_id) {
+            anyhow::bail!("invalid legacy host sysctl journal header");
+        }
+        validate_entries(&old.entries)?;
+        if old.boot_id == boot_id && !old.entries.is_empty() {
+            // Even a dead/ownerless legacy entry has no provable network namespace.
+            // Never guess a namespace or lose its saved original value on upgrade.
+            anyhow::bail!("legacy host sysctl journal has no namespace identity; keep sysctls.state and complete recovery with the previous version in its original namespaces before upgrading");
+        }
+        return Ok(JournalStore::empty(boot_id.to_string()));
+    }
+    if header.version != JOURNAL_VERSION {
+        anyhow::bail!("unsupported host sysctl journal version {}", header.version);
+    }
+    let store: JournalStore = serde_json::from_slice(bytes)?;
+    validate_store(&store)?;
+    if store.boot_id == boot_id {
+        Ok(store)
+    } else {
+        // A new boot has reloaded kernel policy; never replay an earlier boot's values.
+        Ok(JournalStore::empty(boot_id.to_string()))
+    }
+}
+
+fn load(path: &Path, boot_id: &str) -> anyhow::Result<JournalStore> {
     let metadata = match std::fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(SysctlJournal::empty(boot_id.to_string()));
+            return Ok(JournalStore::empty(boot_id.to_string()));
         }
         Err(error) => anyhow::bail!("cannot inspect {}: {error}", path.display()),
     };
@@ -227,28 +367,29 @@ fn load(path: &Path, boot_id: &str) -> anyhow::Result<SysctlJournal> {
     }
     let bytes = std::fs::read(path)
         .map_err(|error| anyhow::anyhow!("cannot read {}: {error}", path.display()))?;
-    let journal: SysctlJournal = serde_json::from_slice(&bytes)
-        .map_err(|error| anyhow::anyhow!("cannot parse {}: {error}", path.display()))?;
-    validate(&journal)?;
-    if journal.boot_id == boot_id {
-        Ok(journal)
-    } else {
-        // `/var/lib` survives a reboot, but the kernel has already reloaded its own sysctl
-        // policy. Values from an earlier boot must never be replayed into the new one.
-        Ok(SysctlJournal::empty(boot_id.to_string()))
-    }
+    decode_store(&bytes, boot_id)
+        .map_err(|error| anyhow::anyhow!("cannot load {}: {error}", path.display()))
 }
 
-fn persist(path: &Path, journal: &SysctlJournal) -> anyhow::Result<()> {
-    validate(journal)?;
-    if journal.entries.is_empty() {
+fn persist(path: &Path, store: &JournalStore) -> anyhow::Result<()> {
+    validate_store(store)?;
+    // The selected empty group remains available to the transaction's acquire body,
+    // but must not reserve a PID namespace on disk after its final lease is gone.
+    let mut snapshot = store.clone();
+    snapshot
+        .namespaces
+        .retain(|_, journal| !journal.entries.is_empty());
+    if snapshot.namespaces.is_empty() {
         return match std::fs::remove_file(path) {
             Ok(()) => Ok(()),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
             Err(error) => Err(anyhow::anyhow!("cannot remove {}: {error}", path.display())),
         };
     }
-    let bytes = serde_json::to_vec(journal)?;
+    let bytes = serde_json::to_vec(&snapshot)?;
+    if bytes.len() as u64 > JOURNAL_LIMIT {
+        anyhow::bail!("host sysctl journal exceeds its size limit");
+    }
     crate::util::write_atomic_private(path, &bytes)
 }
 
@@ -347,7 +488,7 @@ fn prune_dead_owners(journal: &mut SysctlJournal) -> Vec<String> {
 }
 
 fn with_locked_journal<T>(
-    body: impl FnOnce(&Path, &mut SysctlJournal, Vec<String>) -> anyhow::Result<T>,
+    body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
 ) -> anyhow::Result<T> {
     let _local = IN_PROCESS_LOCK
         .lock()
@@ -360,63 +501,92 @@ fn with_locked_journal<T>(
         .map_err(|error| anyhow::anyhow!("cannot create {}: {error}", parent.display()))?;
     let _file_lock = crate::util::FileLock::acquire(&path)?;
     let boot_id = current_boot_id()?;
-    let mut journal = load(&path, &boot_id)?;
-    let uncertain = prune_dead_owners(&mut journal);
-    // Commit stale-owner recovery independently from the requested operation. In particular,
-    // a failed acquire must never be retried implicitly and persisted as a live owner.
-    persist(&path, &journal)?;
-    body(&path, &mut journal, uncertain)
+    with_journal(&path, &boot_id, body)
+}
+
+// Kept below the lock boundary so portable tests can exercise real journal I/O
+// with isolated namespace/sysctl observations, without pretending to test flock.
+fn with_journal<T>(
+    path: &Path,
+    boot_id: &str,
+    body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
+) -> anyhow::Result<T> {
+    let context = namespace::current()?;
+    let mut store = load(path, boot_id)?;
+    // Admission precedes pruning, kernel I/O and persistence. Foreign groups are
+    // never probed: their PIDs and sysctl paths have meaning only in their namespace.
+    store.select(&context)?;
+    let mut transaction = JournalTransaction {
+        path,
+        store,
+        network: context.network,
+    };
+    let uncertain = prune_dead_owners(transaction.current_mut());
+    transaction.persist()?;
+    body(&mut transaction, uncertain)
 }
 
 pub fn acquire_checked(path: &str, value: &str, scope: &str) -> anyhow::Result<()> {
-    with_locked_journal(|journal_path, journal, uncertain| {
-        require_known_owners(&uncertain)?;
-        if !valid_sysctl_path(path) || !valid_value(value) {
-            anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");
-        }
-        let owner = owner_id(scope)?;
-        let current = read_value(path)?;
-        let new_owner = if let Some(entry) = journal.entries.get_mut(path) {
-            if entry.managed != value {
-                anyhow::bail!(
-                    "{path} is already managed as {} by another qeli client",
-                    entry.managed
-                );
-            }
-            entry.owners.insert(owner.clone())
-        } else {
-            journal.entries.insert(
-                path.to_string(),
-                ManagedSysctl {
-                    original: current.clone(),
-                    managed: value.to_string(),
-                    owners: BTreeSet::from([owner.clone()]),
-                },
-            );
-            true
-        };
-        // Persist the pristine value and owner BEFORE changing the kernel. A SIGKILL after
-        // the write can then be recovered by the next qeli client operation.
-        persist(journal_path, journal)?;
-        if current != value {
-            if let Err(error) = write_value(path, value) {
-                // Undo only ownership added by this call. A failed idempotent reacquire
-                // must not discard an earlier successful lease of the same live component.
-                // Retain empty entries: write verification may fail after changing the knob.
-                if new_owner {
-                    journal
-                        .entries
-                        .get_mut(path)
-                        .expect("acquired sysctl entry")
-                        .owners
-                        .remove(&owner);
-                }
-                persist(journal_path, journal)?;
-                return Err(error);
-            }
-        }
-        Ok(())
+    with_locked_journal(|transaction, uncertain| {
+        acquire_in(transaction, &uncertain, path, value, scope)
     })
+}
+
+fn acquire_in(
+    transaction: &mut JournalTransaction<'_>,
+    uncertain: &[String],
+    path: &str,
+    value: &str,
+    scope: &str,
+) -> anyhow::Result<()> {
+    require_known_owners(uncertain)?;
+    if !valid_sysctl_path(path) || !valid_value(value) {
+        anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");
+    }
+    let owner = owner_id(scope)?;
+    let current = read_value(path)?;
+    let journal = transaction.current_mut();
+    let new_owner = if let Some(entry) = journal.entries.get_mut(path) {
+        if entry.managed != value {
+            anyhow::bail!(
+                "{path} is already managed as {} by another qeli client",
+                entry.managed
+            );
+        }
+        entry.owners.insert(owner.clone())
+    } else {
+        journal.entries.insert(
+            path.to_string(),
+            ManagedSysctl {
+                original: current.clone(),
+                managed: value.to_string(),
+                owners: BTreeSet::from([owner.clone()]),
+            },
+        );
+        true
+    };
+    // Persist the pristine value and owner BEFORE changing the kernel. A SIGKILL after
+    // the write can then be recovered by the next qeli client operation.
+    transaction.persist()?;
+    if current != value {
+        if let Err(error) = write_value(path, value) {
+            // Undo only ownership added by this call. A failed idempotent reacquire
+            // must not discard an earlier successful lease of the same live component.
+            // Retain empty entries: write verification may fail after changing the knob.
+            if new_owner {
+                transaction
+                    .current_mut()
+                    .entries
+                    .get_mut(path)
+                    .expect("acquired sysctl entry")
+                    .owners
+                    .remove(&owner);
+            }
+            transaction.persist()?;
+            return Err(error);
+        }
+    }
+    Ok(())
 }
 
 pub fn acquire(path: &str, value: &str, scope: &str) -> bool {
@@ -455,45 +625,58 @@ fn release_owner(
 }
 
 pub fn release_scope(scope: &str) -> anyhow::Result<()> {
-    with_locked_journal(|journal_path, journal, uncertain| {
-        let owner = owner_id(scope)?;
-        // Release our known identity even when another owner is uninspectable.
-        // Its records remain, unrelated cleanup continues, and uncertainty is reported.
-        let failures = release_owner(journal, &owner, uncertain);
-        persist(journal_path, journal)?;
-        if failures.is_empty() {
-            Ok(())
-        } else {
-            anyhow::bail!(
-                "could not restore host sysctl value(s): {}",
-                failures.join(", ")
-            );
-        }
-    })
+    with_locked_journal(|transaction, uncertain| release_in(transaction, uncertain, scope))
+}
+
+fn release_in(
+    transaction: &mut JournalTransaction<'_>,
+    uncertain: Vec<String>,
+    scope: &str,
+) -> anyhow::Result<()> {
+    let owner = owner_id(scope)?;
+    // Release our known identity even when another owner is uninspectable.
+    // Its records remain, unrelated cleanup continues, and uncertainty is reported.
+    let failures = release_owner(transaction.current_mut(), &owner, uncertain);
+    transaction.persist()?;
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        anyhow::bail!(
+            "could not restore host sysctl value(s): {}",
+            failures.join(", ")
+        );
+    }
 }
 
 /// Prune owners left by killed qeli processes and restore entries that no live component owns.
 /// Called at server-worker startup; ordinary acquire/release operations perform the same pass.
 #[cfg(feature = "server")]
 pub fn recover() -> anyhow::Result<()> {
-    with_locked_journal(|_, journal, uncertain| {
-        require_known_owners(&uncertain)?;
-        // The locked pre-pass already attempted every stale entry and persisted any
-        // failures for retry. Live owners are expected; ownerless entries are not success.
-        let unresolved: Vec<&str> = journal
-            .entries
-            .iter()
-            .filter(|(_, entry)| entry.owners.is_empty())
-            .map(|(path, _)| path.as_str())
-            .collect();
-        if !unresolved.is_empty() {
-            anyhow::bail!(
-                "could not restore stale host sysctl value(s): {}",
-                unresolved.join(", ")
-            );
-        }
-        Ok(())
-    })
+    with_locked_journal(recover_in)
+}
+
+#[cfg(any(test, feature = "server"))]
+fn recover_in(
+    transaction: &mut JournalTransaction<'_>,
+    uncertain: Vec<String>,
+) -> anyhow::Result<()> {
+    require_known_owners(&uncertain)?;
+    // The locked pre-pass already attempted every stale entry and persisted any
+    // failures for retry. Live owners are expected; ownerless entries are not success.
+    let unresolved: Vec<&str> = transaction
+        .current()
+        .entries
+        .iter()
+        .filter(|(_, entry)| entry.owners.is_empty())
+        .map(|(path, _)| path.as_str())
+        .collect();
+    if !unresolved.is_empty() {
+        anyhow::bail!(
+            "could not restore stale host sysctl value(s): {}",
+            unresolved.join(", ")
+        );
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -518,3 +701,7 @@ mod tests {
 #[cfg(test)]
 #[path = "sysctl/ownership_tests.rs"]
 mod ownership_tests;
+
+#[cfg(test)]
+#[path = "sysctl/namespace_tests.rs"]
+mod namespace_tests;

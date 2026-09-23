@@ -46,6 +46,19 @@ pub(super) fn process_exists(pid: u32) -> io::Result<bool> {
         }
     }
 }
+pub(super) fn namespace_identity(path: &str) -> io::Result<String> {
+    #[cfg(test)]
+    {
+        test_support::call(test_support::Operation::Namespace(path))
+    }
+    #[cfg(all(not(test), target_os = "linux"))]
+    {
+        use std::os::unix::fs::MetadataExt;
+        // Follow the procfs namespace link; the link itself is not the namespace.
+        let metadata = std::fs::metadata(path)?;
+        Ok(format!("{}:{}", metadata.dev(), metadata.ino()))
+    }
+}
 pub(super) fn interface_exists(name: &str) -> io::Result<bool> {
     #[cfg(test)]
     {
@@ -69,6 +82,7 @@ pub(super) mod test_support {
     use std::{cell::RefCell, io};
     pub(crate) enum Operation<'a> {
         Read(&'a str),
+        Namespace(&'a str),
         Write(&'a str, &'a str),
         ProcessExists(u32),
         InterfaceExists(&'a str),

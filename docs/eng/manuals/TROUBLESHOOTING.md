@@ -1231,8 +1231,25 @@ and are included in the resulting error.
 Missing global sysctls and malformed/empty values also retain entries for retry. The
 exception is a confirmed disappeared named interface; an inventory failure does not
 prove disappearance. Resolve the observation failure and retry; do not delete the
-journal to bypass the check. Journal namespace isolation is not yet implemented.
-[New checks and limitations](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
+journal to bypass the check.
+[Owner-observation checks](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
+
+Version 2 now separates groups by network namespace. `host sysctl PID namespace mismatch`
+or `host sysctl time namespace mismatch` means the same network is being accessed from
+a different process-observation context; recover in the original PID/time namespace.
+`procfs PID namespace mismatch or unavailable NStgid` requires procfs for the current
+PID namespace and a kernel exposing the required data. Missing/unreadable net/pid
+namespace metadata also stops the operation. Minimal kernels without these interfaces
+have not been qualified.
+
+`legacy host sysctl journal has no namespace identity` retains nonempty v1 state from
+the current boot. Complete recovery with the previous version in the original namespaces
+before upgrading. If impossible, combine transition with a planned host reboot and run
+the new version afterward; restarting Qeli alone does not change boot-id. Stopping an
+old server does not always clear its IPv4 lease. Do not manually change version/boot-id
+or delete the journal: that loses recovery data. Old binaries do not support nonempty v2.
+Current recovery retains foreign network groups, so success in one namespace does not
+prove cleanup of the others. [Migration and limitations](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md).
 
 ---
 

@@ -16,6 +16,7 @@ struct Kernel {
 impl Kernel {
     fn command(&mut self, op: Operation<'_>) -> io::Result<String> {
         match op {
+            Operation::Namespace(_) => panic!("ownership unit tests do not inspect namespaces"),
             Operation::Read(path) => self
                 .reads
                 .get(path)
@@ -54,7 +55,7 @@ fn stat(pid: u32, start: &str) -> String {
     format!("{pid} (name with ) parentheses) {}", fields.join(" "))
 }
 fn journal(owned: bool) -> SysctlJournal {
-    let mut journal = SysctlJournal::empty("test-boot".into());
+    let mut journal = SysctlJournal::empty("4:20".into());
     journal.entries.insert(
         KNOB.into(),
         ManagedSysctl {

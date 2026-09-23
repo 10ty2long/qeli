@@ -79,3 +79,6 @@ namespace. Их изоляция — следующий этап, вместе �
 DNS/carrier globals, deadlines, постоянный crash recovery, Q14-F027 workers/FD,
 native certification и новый benchmark остаются открыты. Из 37 разделов плана
 19 IN_PROGRESS, 18 TODO, полного PASS нет; подготовительный этап 00 завершён.
+
+Продолжение: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) разделяет журнал по network namespace,
+проверяет PID/time контекст и описывает миграцию v1 → v2. Runtime-границы сохранены.

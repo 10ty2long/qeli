@@ -2209,9 +2209,19 @@ the original value for retry. A missing named-interface setting can be forgotten
 after confirming that the interface disappeared; global settings and `all`/`default`
 are excluded.
 
-The journal still assumes one PID/network namespace and a consistent procfs view;
-isolation across distinct namespaces is not implemented. Sharing a state directory
-in that arrangement does not provide isolation. [Verification details](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
+Internal `sysctls.state` version 2 separates entries by network namespace. Each group
+also records PID and exposed time namespace identity; mismatch stops the operation
+before checking owners or changing settings. Foreign network groups remain intact and
+their PIDs are not probed. Participants in one network must share a state directory
+and PID/time context; separate directories do not replace coordination. Procfs must
+match the current PID namespace and expose `NStgid` and namespace metadata.
+
+A nonempty v1 journal from the current boot is not migrated automatically: original
+values remain and `legacy host sysctl journal has no namespace identity` is reported.
+Complete recovery using the previous version in the original namespaces before upgrading,
+or combine transition with a planned host reboot. Empty v1 or valid previous-boot state
+allows transition; old settings are not replayed after reboot. Old and new binaries
+sharing one journal are unsupported. [Migration and limits](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md).
 
 ### Caveats
 

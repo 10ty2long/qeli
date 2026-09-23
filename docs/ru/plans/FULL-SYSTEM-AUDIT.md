@@ -616,6 +616,11 @@ acquire/recovery сообщают ошибку; недостоверное на�
 для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
 identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
 
+[Q25-F052–F053](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md): sysctl journal v2 разделяет network namespaces,
+проверяет PID/time контекст и procfs до prune; непустой v1 текущего boot-id сохраняется
+с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
+устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -746,6 +751,11 @@ acquire/recovery сообщают ошибку; недостоверное на�
 для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
 identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
 
+[Q25-F052–F053](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md): sysctl journal v2 разделяет network namespaces,
+проверяет PID/time контекст и procfs до prune; непустой v1 текущего boot-id сохраняется
+с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
+устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
+
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/server/ndp_proxy.rs`, `qeli/src/config/server.rs`.
@@ -838,6 +848,11 @@ Linux-клиентов, включая gateway/exit без kill-switch и dev_at
 acquire/recovery сообщают ошибку; недостоверное наблюдение sysctl не теряет original
 для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
 identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
+
+[Q25-F052–F053](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md): sysctl journal v2 разделяет network namespaces,
+проверяет PID/time контекст и procfs до prune; непустой v1 текущего boot-id сохраняется
+с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
+устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
 
 ### 19. DNS сервера и клиентов
 
@@ -1500,6 +1515,11 @@ acquire/recovery сообщают ошибку; недостоверное на�
 для retry. Восемь baseline-регрессий исправлены, 1362 Rust tests PASS. Namespace
 identity журнала, реальный Linux runtime и полный PASS раздела остаются открыты.
 
+[Q25-F052–F053](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md): sysctl journal v2 разделяет network namespaces,
+проверяет PID/time контекст и procfs до prune; непустой v1 текущего boot-id сохраняется
+с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
+устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1777,10 +1797,11 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: идентичность PID/network namespace журнала
-sysctl и безопасное восстановление TUN при неполном чтении /proc. Q25-F050–F051
-исправляет обработку неизвестных владельцев и сохраняет данные для retry в проверенных
-пределах. Реальные Linux-сценарии lease/attach/reconnect, iptables-nft/legacy и
-IPv6-disabled, появление IPv6 после запуска, DNS/carrier globals, общий deadline,
-постоянный crash recovery, Q14-F027 workers/FD и синхронные preflight waits остаются открыты.
-Native certification и новый benchmark не выполнялись; статус целых разделов не изменён.
+**Ближайшая работа:** продолжить 25: полнота /proc при восстановлении TUN,
+устойчивость namespace identity после уничтожения объекта, доверие к journal files
+и сроки блокировок. Q25-F052–F053 изолирует sysctl network groups и проверяет PID/time
+контекст в описанных пределах. Реальные Linux namespace/migration/reboot,
+lease/attach/reconnect, iptables-nft/legacy и IPv6-disabled, появление IPv6 после запуска,
+DNS/carrier globals, общий deadline, постоянный crash recovery, Q14-F027 workers/FD
+и синхронные preflight waits остаются открыты. Native certification и новый benchmark
+не выполнялись; статус целых разделов не изменён.

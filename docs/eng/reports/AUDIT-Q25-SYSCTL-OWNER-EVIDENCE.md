@@ -78,3 +78,6 @@ namespaces. Their isolation is next, together with incomplete /proc during TUN-o
 inspection. DNS/carrier globals, deadlines, durable crash recovery, Q14-F027 workers/FD,
 native certification and a new benchmark remain open. Of 37 plan sections, 19 are
 IN_PROGRESS and 18 TODO; none has full PASS. Preparation stage 00 is complete.
+
+Follow-up: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) isolates network journal groups,
+checks PID/time context and documents v1 → v2 migration. Runtime limits remain.

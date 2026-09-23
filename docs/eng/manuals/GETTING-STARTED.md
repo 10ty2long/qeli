@@ -1207,6 +1207,13 @@ sudo netfilter-persistent save 2>/dev/null; true
 
 ### 13.2. Client — Linux (Rust CLI)
 
+`sysctls.state` may hold recovery entries for several network namespaces. Restore
+settings in their original network/PID/time context and preserve the shared state directory
+while any client or server still needs it. When upgrading with nonempty v1 state, keep
+the journal; see the migration procedure in
+[TROUBLESHOOTING.md §6.33](TROUBLESHOOTING.md).
+The state removal below applies only when uninstalling every component using it.
+
 A clean stop (Ctrl+C) **itself** restores `/etc/resolv.conf`, removes the kill-switch / NAT
 and deletes the tun. Do it by hand only if the client **crashed**:
 
@@ -1260,8 +1267,9 @@ sudo rm -rf /var/lib/qeli                       # device-id + dns-backup
 Before manual recovery, establish that the owning client has stopped. The TUN name
 is now reserved even without a kill-switch, including `dev_attach`; independent client
 sessions must use distinct `dev` names in one network namespace.
-The Linux lease rejects another startup with the same or another TUN until the owner
-exits; release after a crash does not remove the remaining firewall.
+The TUN lease rejects another startup with the same name until the owner exits;
+kill-switch additionally restricts conflicting sessions with other TUNs. Releasing
+a lease after a crash does not remove the remaining firewall.
 [Ownership and IPv6 troubleshooting](TROUBLESHOOTING.md).
 
 > **Never drop the kill-switch with `iptables -F`.** Without a chain name that command

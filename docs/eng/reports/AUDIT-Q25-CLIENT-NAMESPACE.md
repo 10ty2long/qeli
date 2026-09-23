@@ -89,3 +89,6 @@ and the full audit remain unfinished.
 
 Follow-up: [Q25-F050–F051](AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) fixes unknown-owner handling and preserves
 entries after inconclusive sysctl inspection; namespace identity remains open.
+
+Follow-up: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) isolates network journal groups,
+checks PID/time context and documents v1 → v2 migration. Runtime limits remain.
