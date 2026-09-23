@@ -719,6 +719,14 @@ management-event errors also follow teardown. Linux monitor blocking jobs are tr
 TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
 transport workers, forced cancellation and command deadlines remain open.
 
+**UDP ownership and rollback ordering, 23 September 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect and the Linux monitor share one group. Management-event errors follow
+normal cleanup; the group finishes before platform-candidate inspection/rollback. TaskHandle
+preserves join ownership across cancelled waits and path transfer. Nine new regressions;
+940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
+cancellation, command deadlines and platform fault injection remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -742,6 +750,14 @@ management-event errors also follow teardown. Linux monitor blocking jobs are tr
 TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
 transport workers, forced cancellation and command deadlines remain open.
 
+**UDP ownership and rollback ordering, 23 September 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect and the Linux monitor share one group. Management-event errors follow
+normal cleanup; the group finishes before platform-candidate inspection/rollback. TaskHandle
+preserves join ownership across cancelled waits and path transfer. Nine new regressions;
+940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
+cancellation, command deadlines and platform fault injection remain open.
+
 ### 24. Multipath, bonding and shared budgets
 
 **Source:** `qeli/src/transport_core/carrier.rs`, `qeli/src/transport_core/session.rs`, `qeli/src/server/handler.rs`.
@@ -764,6 +780,14 @@ abort/join. TCP reader/writer/pipeline and producers finish before network clean
 management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
 TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
 transport workers, forced cancellation and command deadlines remain open.
+
+**UDP ownership and rollback ordering, 23 September 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect and the Linux monitor share one group. Management-event errors follow
+normal cleanup; the group finishes before platform-candidate inspection/rollback. TaskHandle
+preserves join ownership across cancelled waits and path transfer. Nine new regressions;
+940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
+cancellation, command deadlines and platform fault injection remain open.
 
 ### 25. Linux CLI and network recovery
 
@@ -832,6 +856,14 @@ abort/join. TCP reader/writer/pipeline and producers finish before network clean
 management-event errors also follow teardown. Linux monitor blocking jobs are tracked for
 TCP and UDP. 931 host Rust tests PASS; Linux is cross-checked only. Other UDP tasks, nested
 transport workers, forced cancellation and command deadlines remain open.
+
+**UDP ownership and rollback ordering, 23 September 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect and the Linux monitor share one group. Management-event errors follow
+normal cleanup; the group finishes before platform-candidate inspection/rollback. TaskHandle
+preserves join ownership across cancelled waits and path transfer. Nine new regressions;
+940 host Rust tests PASS, Linux is cross-checked only. Nested transport workers, forced
+cancellation, command deadlines and platform fault injection remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1102,7 +1134,7 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 22–25 with UDP candidate/receive/draining, nested transport tasks
-and TUN-shutdown cancellation, then system-command deadlines. Outstanding 01–07, Linux
+**Next work:** continue 22–25 with nested H2/transport workers and TUN-shutdown
+cancellation, then system-command deadlines and platform rollback/ACK. Outstanding 01–07, Linux
 restart/restore/manual+NDP E2E and platform certification remain queued. A new full benchmark
 follows stabilization of fixes.

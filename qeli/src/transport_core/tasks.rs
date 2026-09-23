@@ -16,6 +16,49 @@ pub(crate) struct TaskGroup(Arc<Mutex<State>>);
 #[derive(Clone)]
 pub(crate) struct Spawner(Weak<Mutex<State>>);
 
+/// Per-path cancellation, while the generation retains the authoritative join handle.
+/// Moving this handle transfers the path; dropping it requests cancellation, never detach.
+pub(crate) struct TaskHandle {
+    abort: Option<tokio::task::AbortHandle>,
+    completed: Option<tokio::sync::oneshot::Receiver<()>>,
+}
+
+impl TaskHandle {
+    pub(crate) async fn finish(&mut self) {
+        if let Some(abort) = &self.abort {
+            abort.abort();
+        }
+        if let Some(completed) = self.completed.as_mut() {
+            let _ = completed.await;
+            self.completed = None;
+        }
+    }
+}
+
+impl Drop for TaskHandle {
+    fn drop(&mut self) {
+        if let Some(abort) = &self.abort {
+            abort.abort();
+        }
+    }
+}
+
+// Construct this before spawning, so even a never-polled task releases its captures before
+// notifying a path waiter. Explicit drop order also covers cancellation and panic unwinding.
+struct TaskCompletion<F> {
+    future: Option<std::pin::Pin<Box<F>>>,
+    completed: Option<tokio::sync::oneshot::Sender<()>>,
+}
+
+impl<F> Drop for TaskCompletion<F> {
+    fn drop(&mut self) {
+        drop(self.future.take());
+        if let Some(completed) = self.completed.take() {
+            let _ = completed.send(());
+        }
+    }
+}
+
 fn report(result: Result<(), tokio::task::JoinError>) {
     if result.is_err_and(|error| !error.is_cancelled()) {
         // Do not copy a possibly sensitive panic payload into connection diagnostics.
@@ -88,6 +131,30 @@ impl Spawner {
         self.admit(|tasks| {
             tasks.spawn(future);
         })
+    }
+
+    pub(crate) fn spawn_owned(
+        &self,
+        future: impl Future<Output = ()> + Send + 'static,
+    ) -> TaskHandle {
+        let (send, receive) = tokio::sync::oneshot::channel();
+        let mut completion = TaskCompletion {
+            future: Some(Box::pin(future)),
+            completed: Some(send),
+        };
+        let mut abort = None;
+        self.admit(|tasks| {
+            abort = Some(tasks.spawn(async move {
+                completion.future.as_mut().expect("owned task future").await;
+                drop(completion);
+            }));
+        });
+        // A rejected admission has already dropped completion and its future. The handle
+        // remains safely awaitable, without spawning an obsolete task or panicking at shutdown.
+        TaskHandle {
+            abort,
+            completed: Some(receive),
+        }
     }
 
     #[cfg(any(test, all(target_os = "linux", feature = "experimental-roaming")))]
@@ -335,5 +402,131 @@ mod tests {
             std::future::pending::<()>().await;
         }));
         assert!(dropped.load(Ordering::Acquire));
+    }
+    #[tokio::test]
+    async fn never_polled_and_rejected_owned_tasks_release_captures() {
+        let mut group = TaskGroup::default();
+        let (send, receive) = tokio::sync::oneshot::channel();
+        let lease = Lease(Some(send));
+        let mut handle = group.spawner().spawn_owned(async move {
+            let _lease = lease;
+            panic!("aborted before first poll");
+        });
+        handle.finish().await;
+        await_release(receive).await;
+        handle.finish().await; // Repeated per-path cleanup is also safe.
+        group.finish().await;
+        let (send, receive) = tokio::sync::oneshot::channel();
+        let lease = Lease(Some(send));
+        let mut rejected = group.spawner().spawn_owned(async move {
+            let _lease = lease;
+            panic!("closed generation must reject before spawn");
+        });
+        assert!(rejected.abort.is_none());
+        rejected.finish().await;
+        await_release(receive).await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn per_path_wait_finishes_after_captured_resource_destructor() {
+        struct BlockingDrop {
+            started: Option<tokio::sync::oneshot::Sender<()>>,
+            release: std::sync::mpsc::Receiver<()>,
+            released: Arc<AtomicBool>,
+        }
+        impl Drop for BlockingDrop {
+            fn drop(&mut self) {
+                self.started.take().unwrap().send(()).unwrap();
+                let _ = self.release.recv();
+                self.released.store(true, Ordering::Release);
+            }
+        }
+        let mut group = TaskGroup::default();
+        let (started, ready) = tokio::sync::oneshot::channel();
+        let (release, blocked) = std::sync::mpsc::channel();
+        let released = Arc::new(AtomicBool::new(false));
+        let lease = BlockingDrop {
+            started: Some(started),
+            release: blocked,
+            released: released.clone(),
+        };
+        let mut handle = group.spawner().spawn_owned(async move {
+            let _lease = lease;
+            std::future::pending::<()>().await;
+        });
+        handle.abort.as_ref().unwrap().abort();
+        await_release(ready).await;
+        assert!(tokio::time::timeout(PROBE, handle.finish()).await.is_err());
+        assert!(!released.load(Ordering::Acquire));
+        release.send(()).unwrap();
+        tokio::time::timeout(DEADLINE, handle.finish())
+            .await
+            .unwrap();
+        assert!(
+            released.load(Ordering::Acquire),
+            "rollback cannot precede resource Drop"
+        );
+        group.finish().await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn cancelled_path_wait_and_dropped_handle_keep_group_join_ownership() {
+        let mut group = TaskGroup::default();
+        let (started, ready) = tokio::sync::oneshot::channel();
+        let (release, blocked) = std::sync::mpsc::channel();
+        let committed = Arc::new(AtomicBool::new(false));
+        let worker_commit = committed.clone();
+        let mut handle = group.spawner().spawn_owned(async move {
+            started.send(()).unwrap();
+            let _ = blocked.recv();
+            worker_commit.store(true, Ordering::Release);
+        });
+        await_release(ready).await;
+        assert!(tokio::time::timeout(PROBE, handle.finish()).await.is_err());
+        drop(handle);
+        assert!(tokio::time::timeout(PROBE, group.finish()).await.is_err());
+        release.send(()).unwrap();
+        tokio::time::timeout(DEADLINE, group.finish())
+            .await
+            .unwrap();
+        assert!(
+            committed.load(Ordering::Acquire),
+            "path lookup/rollback must follow connect completion"
+        );
+    }
+
+    #[tokio::test]
+    async fn successful_and_panicked_owned_tasks_are_waitable() {
+        let mut group = TaskGroup::default();
+        for panics in [false, true] {
+            let (send, receive) = tokio::sync::oneshot::channel();
+            let lease = Lease(Some(send));
+            let (started, ready) = tokio::sync::oneshot::channel();
+            let mut handle = group.spawner().spawn_owned(async move {
+                let _lease = lease;
+                started.send(()).unwrap();
+                assert!(!panics, "fixture panic");
+            });
+            await_release(ready).await;
+            tokio::time::timeout(DEADLINE, handle.finish())
+                .await
+                .unwrap();
+            await_release(receive).await;
+        }
+        group.finish().await;
+    }
+
+    #[tokio::test]
+    async fn owner_drop_cancels_task_even_with_surviving_path_handle() {
+        let group = TaskGroup::default();
+        let (send, receive) = tokio::sync::oneshot::channel();
+        let lease = Lease(Some(send));
+        let mut handle = group.spawner().spawn_owned(async move {
+            let _lease = lease;
+            std::future::pending::<()>().await;
+        });
+        drop(group);
+        await_release(receive).await;
+        handle.finish().await;
     }
 }

@@ -67,3 +67,5 @@ joining; abort cannot stop a running blocking job. Deadlines for ip/iptables/res
 separate work: normal joining can wait for those commands. Nested transport-library/connector
 tasks, UDP candidate/receive/draining lifetime, TUN-shutdown cancellation and Linux fault
 injection require subsequent passes. The full audit remains open.
+
+Follow-up: [UDP task ownership](AUDIT-Q25-UDP-TASKS.md) applies the same model to active/candidate/draining and candidate-connect, fixing early exits and joining before rollback. Forced cancellation and nested transport workers remain open.

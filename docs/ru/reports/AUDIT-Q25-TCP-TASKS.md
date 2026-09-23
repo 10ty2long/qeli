@@ -67,3 +67,5 @@ SSH, systemd restart, Actions, пересборка release native и новый
 ip/iptables/resolvectl остаются отдельной задачей: штатный join может ждать их завершения.
 Вложенные задачи транспортных библиотек/connector, UDP candidate/receive/draining lifetime,
 отмена TUN shutdown и Linux fault injection требуют следующих проходов. Полный аудит открыт.
+
+Продолжение: [UDP task ownership](AUDIT-Q25-UDP-TASKS.md) переносит active/candidate/draining и candidate-connect в ту же модель, исправляет ранний выход и порядок ожидания перед rollback. Принудительная отмена и вложенные transport workers остаются открытыми.

@@ -52,8 +52,14 @@ Native-адаптер также обязан объявить platform capabili
 
 TCP lifetime (23 сентября 2026): общий TaskGroup владеет stream-задачами и producers;
 штатный finish закрывает spawn и ждёт задачи до очистки сети. Linux path monitor регистрирует
-blocking-работы у того же владельца (в UDP — отдельная группа того же типа). ABI остаётся 1.16.
-Принудительная отмена и остальные UDP workers ещё требуют проверки; [отчёт](../reports/AUDIT-Q25-TCP-TASKS.md).
+blocking-работы у того же владельца; UDP также использует группу всего соединения. ABI остаётся 1.16.
+Принудительная отмена и вложенные transport workers ещё требуют проверки; [TCP-отчёт](../reports/AUDIT-Q25-TCP-TASKS.md).
+
+
+UDP lifetime (23 сентября 2026): тот же владелец объединяет active/candidate/draining receive,
+candidate-connect и Linux-монитор. Перемещаемый TaskHandle отменяет отдельную задачу,
+а группа сохраняет join; освобождение ресурсов ожидается до отката пути. Ранняя ошибка
+управляющего события проходит штатный teardown. ABI не меняется; [UDP-отчёт](../reports/AUDIT-Q25-UDP-TASKS.md).
 
 ---
 

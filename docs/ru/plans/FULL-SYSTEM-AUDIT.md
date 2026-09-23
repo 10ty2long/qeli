@@ -726,6 +726,14 @@ DNS proxy/cache, реальные OS apply/rollback и конкурентный 
 учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
 UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
 
+**Владение UDP-задачами и порядок отката, 23 сентября 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect и Linux-монитор принадлежат одной группе. Ошибка управляющего события
+проходит штатную очистку; группа завершается до проверки/отката платформенного кандидата.
+TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
+регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
+workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
+
 ### 23. Роуминг, resume и CONTROL_V2
 
 **Код:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -749,6 +757,14 @@ TCP make-before-break/UDP migration: proof/path validation, anti-amplification, 
 учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
 UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
 
+**Владение UDP-задачами и порядок отката, 23 сентября 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect и Linux-монитор принадлежат одной группе. Ошибка управляющего события
+проходит штатную очистку; группа завершается до проверки/отката платформенного кандидата.
+TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
+регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
+workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
+
 ### 24. Multipath, bonding и общий бюджет
 
 **Код:** `qeli/src/transport_core/carrier.rs`, `qeli/src/transport_core/session.rs`, `qeli/src/server/handler.rs`.
@@ -771,6 +787,14 @@ JOIN proof, stream caps, asymmetric RTT/loss, отказ одного/всех �
 ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
 учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
 UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
+
+**Владение UDP-задачами и порядок отката, 23 сентября 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect и Linux-монитор принадлежат одной группе. Ошибка управляющего события
+проходит штатную очистку; группа завершается до проверки/отката платформенного кандидата.
+TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
+регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
+workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
 
 ### 25. Linux CLI и восстановление сети
 
@@ -839,6 +863,14 @@ E2E, сроки выполнения команд и полное ожидани
 ошибка управляющего события также проходит teardown. Linux blocking-работы монитора
 учитываются для TCP и UDP. 931 host Rust tests PASS; Linux только cross-check. Остальные
 UDP-задачи, вложенные transport workers, полная отмена и сроки команд остаются открытыми.
+
+**Владение UDP-задачами и порядок отката, 23 сентября 2026:**
+[Q25-F012/F013](../reports/AUDIT-Q25-UDP-TASKS.md): active/candidate/draining receive,
+candidate-connect и Linux-монитор принадлежат одной группе. Ошибка управляющего события
+проходит штатную очистку; группа завершается до проверки/отката платформенного кандидата.
+TaskHandle сохраняет обязанность join при отмене ожидания или переносе пути. Девять новых
+регрессий; 940 host Rust tests PASS, Linux только cross-check. Открыты вложенные transport
+workers, принудительная отмена, сроки команд и платформенные fault-injection сценарии.
 
 ### 26. Общий C# и managed/native граница
 
@@ -1111,7 +1143,7 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 22–25: UDP candidate/receive/draining, вложенные задачи
-транспортов и отмена TUN shutdown; затем сроки системных команд. Сохраняется очередь
+**Ближайшая работа:** продолжить 22–25: вложенные H2/transport workers и отмена
+TUN shutdown, затем сроки системных команд и platform rollback/ACK. Сохраняется очередь
 незакрытых 01–07, Linux E2E restart/restore/manual+NDP и платформенной сертификации.
 Новый полный бенчмарк выполняется после стабилизации исправлений.

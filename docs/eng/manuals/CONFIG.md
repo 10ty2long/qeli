@@ -2292,6 +2292,10 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   Management-event errors follow the same path. The Linux TCP/UDP path monitor also waits
   for its running blocking jobs. This does not bound system commands or guarantee async
   joining on forced cancellation of the entire future; see [validation limits](../reports/AUDIT-Q25-TCP-TASKS.md).
+- UDP uses the same task owner: active/candidate/draining receive, candidate connection
+  and the Linux monitor finish before platform-path inspection/rollback, followed by DNS/TUN
+  cleanup. Management-event errors follow this sequence too. Cancelling a candidate stops
+  its receiver while the active path keeps running; see [details and validation limits](../reports/AUDIT-Q25-UDP-TASKS.md).
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and

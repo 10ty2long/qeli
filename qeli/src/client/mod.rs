@@ -8725,7 +8725,7 @@ struct UdpClientDrainingPath {
     epoch: u64,
     framing: crate::transport_core::udp_client_framing::UdpClientFraming,
     expires_at: tokio::time::Instant,
-    receive_task: tokio::task::JoinHandle<()>,
+    receive_task: crate::transport_core::tasks::TaskHandle,
 }
 
 /// One pooled datagram tagged by the path epoch of the socket that received it. The tag is local
@@ -8930,7 +8930,8 @@ fn spawn_client_udp_receive_pump(
     socket: Arc<crate::protocol::obfs::ObfsUdp>,
     path_epoch: u64,
     received_tx: mpsc::Sender<Vec<ClientUdpReceivedDatagram>>,
-) -> tokio::task::JoinHandle<()> {
+    tasks: &crate::transport_core::tasks::Spawner,
+) -> crate::transport_core::tasks::TaskHandle {
     let receive_slots = crate::transport_core::udp_receive::UDP_RECEIVE_QUEUE_PACKETS + 1;
     let (receive_recycler, mut recycled_receivers) = mpsc::channel(receive_slots);
     for _ in 0..receive_slots {
@@ -8940,7 +8941,7 @@ fn spawn_client_udp_receive_pump(
             ))
             .expect("fresh UDP receive recycler has exact advertised capacity");
     }
-    tokio::spawn(async move {
+    tasks.spawn_owned(async move {
         // One syscall per datagram was a measured UDP data-plane cost: at MTU 1400 a
         // 500 Mbit/s stream is ~45 000 `recvfrom` per second, and an `strace` of a live run
         // matched datagrams to calls almost exactly. The TCP transport never paid it — one
@@ -9056,10 +9057,10 @@ fn begin_udp_carrier_failure_recovery(
 
 #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
 struct UdpClientLiveCandidate {
-    prepared: Option<PreparedPathCandidate>,
+    prepared: PreparedPathCandidate,
     epoch: u64,
     socket: Arc<crate::protocol::obfs::ObfsUdp>,
-    receive_task: Option<tokio::task::JoinHandle<()>>,
+    receive_task: crate::transport_core::tasks::TaskHandle,
 }
 
 #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
@@ -9068,47 +9069,32 @@ impl UdpClientLiveCandidate {
         prepared: PreparedPathCandidate,
         epoch: u64,
         socket: Arc<crate::protocol::obfs::ObfsUdp>,
-        receive_task: tokio::task::JoinHandle<()>,
+        receive_task: crate::transport_core::tasks::TaskHandle,
     ) -> Self {
         Self {
-            prepared: Some(prepared),
+            prepared,
             epoch,
             socket,
-            receive_task: Some(receive_task),
+            receive_task,
         }
     }
 
     fn prepared(&self) -> &PreparedPathCandidate {
-        self.prepared
-            .as_ref()
-            .expect("live UDP candidate retains platform identity")
+        &self.prepared
     }
 
     fn into_active(
-        mut self,
+        self,
     ) -> (
         PreparedPathCandidate,
         Arc<crate::protocol::obfs::ObfsUdp>,
-        tokio::task::JoinHandle<()>,
+        crate::transport_core::tasks::TaskHandle,
     ) {
-        let prepared = self
-            .prepared
-            .take()
-            .expect("committed UDP candidate retains platform identity");
-        let receive_task = self
-            .receive_task
-            .take()
-            .expect("committed UDP candidate retains receive pump");
-        (prepared, self.socket.clone(), receive_task)
+        (self.prepared, self.socket, self.receive_task)
     }
-}
 
-#[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
-impl Drop for UdpClientLiveCandidate {
-    fn drop(&mut self) {
-        if let Some(task) = self.receive_task.take() {
-            task.abort();
-        }
+    async fn stop(mut self) {
+        self.receive_task.finish().await;
     }
 }
 
@@ -10261,18 +10247,13 @@ pub(crate) async fn run_udp_tunnel(
     // Drained one datagram at a time by the receive arm below, exactly like the early-data
     // queue beside it: the arm's body is unchanged and still handles a single datagram.
     let mut pending_batch = std::collections::VecDeque::<ClientUdpReceivedDatagram>::new();
-    #[cfg_attr(
-        not(all(feature = "experimental-roaming", any(unix, windows))),
-        allow(unused_mut)
-    )]
+    let mut connection_tasks = crate::transport_core::tasks::TaskGroup::default();
+    let tasks = connection_tasks.spawner();
     let mut udp_receive_task =
-        spawn_client_udp_receive_pump(socket.clone(), 0, received_tx.clone());
-    #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    let mut path_monitor_tasks = crate::transport_core::tasks::TaskGroup::default();
+        spawn_client_udp_receive_pump(socket.clone(), 0, received_tx.clone(), &tasks);
     #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
     if udp_handover_enabled {
         if let Some(path_controller) = linux_path_controller {
-            let tasks = path_monitor_tasks.spawner();
             tasks.spawn(roaming_linux::run(
                 path_controller,
                 tun_name.clone(),
@@ -10284,7 +10265,7 @@ pub(crate) async fn run_udp_tunnel(
     let (_candidate_connect_tx, mut candidate_connect_rx) =
         mpsc::channel::<(PreparedPathCandidate, anyhow::Result<UdpSocket>)>(1);
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
-    let mut candidate_connect_task: Option<tokio::task::JoinHandle<()>> = None;
+    let mut candidate_connect_task: Option<crate::transport_core::tasks::TaskHandle> = None;
     let mut candidate_tick = tokio::time::interval(Duration::from_millis(100));
     candidate_tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     candidate_tick.tick().await;
@@ -10302,7 +10283,7 @@ pub(crate) async fn run_udp_tunnel(
     let mut committed_early_data = std::collections::VecDeque::<ClientUdpReceivedDatagram>::new();
 
     let mut unsupported_inner_drops = 0u64;
-    let mut terminal_kick: Option<crate::protocol::control_v2::Kick> = None;
+    let mut result = Ok(());
     'udp: loop {
         let mux_deadline = udp_tx_recordizer
             .as_ref()
@@ -10314,9 +10295,15 @@ pub(crate) async fn run_udp_tunnel(
                 if changed.is_err() { break; }
                 let event = management_rx.borrow_and_update().clone();
                 if let Some(event) = event {
-                    core.management_event(&event)?;
+                    if let Err(error) = core.management_event(&event) {
+                        result = Err(error);
+                        break;
+                    }
                     if let crate::protocol::control_v2::ManagementEvent::Kick(kick) = event {
-                        terminal_kick = Some(kick);
+                        result = Err(ServerKickError {
+                            message: kick.message,
+                            reconnect_allowed: kick.reconnect_allowed,
+                        }.into());
                         break;
                     }
                 }
@@ -10337,10 +10324,10 @@ pub(crate) async fn run_udp_tunnel(
                     .as_ref()
                     .is_some_and(|draining| tokio::time::Instant::now() > draining.expires_at);
                 if drain_expired {
-                    let draining = draining_udp_path
+                    let mut draining = draining_udp_path
                         .take()
                         .expect("expired UDP receive drain was present");
-                    draining.receive_task.abort();
+                    draining.receive_task.finish().await;
                     log::debug!(
                         "UDP receive drain expired for path epoch {}",
                         draining.epoch
@@ -10361,7 +10348,7 @@ pub(crate) async fn run_udp_tunnel(
                         .as_mut()
                         .expect("negotiated UDP handover retains roaming state")
                         .abort_candidate(candidate_id);
-                    drop(candidate);
+                    candidate.stop().await;
                     log::info!(
                         "UDP candidate {} superseded before validation completed",
                         candidate_id
@@ -10396,7 +10383,7 @@ pub(crate) async fn run_udp_tunnel(
                                     .as_mut()
                                     .expect("negotiated UDP handover retains roaming state")
                                     .abort_candidate(prepared.candidate_id);
-                                drop(candidate);
+                                candidate.stop().await;
                                 abort_udp_platform_candidate(
                                     path_controller
                                         .as_deref()
@@ -10423,7 +10410,7 @@ pub(crate) async fn run_udp_tunnel(
                                 .as_mut()
                                 .expect("negotiated UDP handover retains roaming state")
                                 .abort_candidate(prepared.candidate_id);
-                            drop(candidate);
+                            candidate.stop().await;
                             abort_udp_platform_candidate(
                                 path_controller
                                     .as_deref()
@@ -10447,7 +10434,7 @@ pub(crate) async fn run_udp_tunnel(
                         let config = candidate_config.clone();
                         let controller = path_controller.clone();
                         let outcome_tx = _candidate_connect_tx.clone();
-                        candidate_connect_task = Some(tokio::spawn(async move {
+                        candidate_connect_task = Some(tasks.spawn_owned(async move {
                             let timeout = Duration::from_secs(
                                 config.server.connection_timeout_secs.max(1),
                             );
@@ -10473,7 +10460,9 @@ pub(crate) async fn run_udp_tunnel(
                 #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
                 {
                 let Some((prepared, result)) = connected else { continue; };
-                candidate_connect_task.take();
+                if let Some(mut task) = candidate_connect_task.take() {
+                    task.finish().await;
+                }
                 let raw_candidate = match result {
                     Ok(socket) => socket,
                     Err(error) => {
@@ -10551,6 +10540,7 @@ pub(crate) async fn run_udp_tunnel(
                     candidate_socket.clone(),
                     epoch,
                     received_tx.clone(),
+                    &tasks,
                 );
                 live_udp_candidate = Some(UdpClientLiveCandidate::new(
                     prepared.clone(),
@@ -10571,7 +10561,9 @@ pub(crate) async fn run_udp_tunnel(
                         .as_mut()
                         .expect("negotiated UDP handover retains roaming state")
                         .abort_candidate(prepared.candidate_id);
-                    drop(live_udp_candidate.take());
+                    if let Some(candidate) = live_udp_candidate.take() {
+                        candidate.stop().await;
+                    }
                     abort_udp_platform_candidate(
                         path_controller
                             .as_deref()
@@ -11252,7 +11244,7 @@ pub(crate) async fn run_udp_tunnel(
                                     .take()
                                     .expect("candidate receive retains live socket");
                                 let prepared = candidate.prepared().clone();
-                                drop(candidate);
+                                candidate.stop().await;
                                 let reason = format!("UDP candidate state expired: {error}");
                                 abort_udp_platform_candidate(
                                     path_controller
@@ -11290,7 +11282,7 @@ pub(crate) async fn run_udp_tunnel(
                                     .as_mut()
                                     .expect("candidate action retains roaming state")
                                     .abort_candidate(prepared.candidate_id);
-                                drop(candidate);
+                                candidate.stop().await;
                                 abort_udp_platform_candidate(
                                     path_controller
                                         .as_deref()
@@ -11324,7 +11316,7 @@ pub(crate) async fn run_udp_tunnel(
                                     .as_mut()
                                     .expect("superseded commit retains roaming state")
                                     .abort_candidate(prepared.candidate_id);
-                                drop(candidate);
+                                candidate.stop().await;
                                 log::info!(
                                     "UDP candidate {} superseded before platform commit",
                                     prepared.candidate_id
@@ -11406,8 +11398,8 @@ pub(crate) async fn run_udp_tunnel(
                                 .take()
                                 .expect("committed candidate retains live socket");
                             let (prepared, next_socket, next_receive_task) = candidate.into_active();
-                            if let Some(previous) = draining_udp_path.take() {
-                                previous.receive_task.abort();
+                            if let Some(mut previous) = draining_udp_path.take() {
+                                previous.receive_task.finish().await;
                             }
                             let old_receive_task =
                                 std::mem::replace(&mut udp_receive_task, next_receive_task);
@@ -11467,7 +11459,7 @@ pub(crate) async fn run_udp_tunnel(
                                 continue;
                             }
                             let prepared = candidate.prepared().clone();
-                            drop(candidate);
+                            candidate.stop().await;
                             let reason = format!("server rejected UDP candidate with code {code}");
                             abort_udp_platform_candidate(
                                 path_controller
@@ -12065,22 +12057,19 @@ pub(crate) async fn run_udp_tunnel(
         }
     }
 
-    #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
-    path_monitor_tasks.finish().await;
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
-    let connect_was_in_flight = if let Some(task) = candidate_connect_task.take() {
-        task.abort();
-        true
-    } else {
-        false
-    };
+    let connect_was_in_flight = candidate_connect_task.is_some();
+    // Join candidate connect and path-monitor workers before inspecting/rolling back the
+    // platform candidate. No background task may publish a later path or keep receiving.
+    connection_tasks.finish().await;
+    udp_receive_task.finish().await;
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
     if let Some(candidate) = live_udp_candidate.take() {
         let prepared = candidate.prepared().clone();
         if let Some(roaming) = udp_roaming.as_mut() {
             roaming.abort_candidate(prepared.candidate_id);
         }
-        drop(candidate);
+        candidate.stop().await;
         abort_udp_platform_candidate(
             path_controller
                 .as_deref()
@@ -12103,14 +12092,6 @@ pub(crate) async fn run_udp_tunnel(
             }
         }
     }
-
-    #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
-    if let Some(draining) = draining_udp_path.take() {
-        draining.receive_task.abort();
-        let _ = draining.receive_task.await;
-    }
-    udp_receive_task.abort();
-    let _ = udp_receive_task.await;
 
     #[cfg(target_os = "linux")]
     let dns_cleanup_error = tun_guard
@@ -12139,14 +12120,6 @@ pub(crate) async fn run_udp_tunnel(
         .err()
     } else {
         None
-    };
-    let result = match terminal_kick {
-        Some(kick) => Err(ServerKickError {
-            message: kick.message,
-            reconnect_allowed: kick.reconnect_allowed,
-        }
-        .into()),
-        None => Ok(()),
     };
     #[cfg(target_os = "linux")]
     let result = {
@@ -13302,5 +13275,166 @@ mod tcp_task_shutdown_tests {
     #[tokio::test]
     async fn shutdown_releases_pipeline_stream_socket_queues_and_tun() {
         stopped_stream(true).await;
+    }
+}
+
+#[cfg(all(test, feature = "experimental-roaming", any(unix, windows)))]
+mod udp_task_shutdown_tests {
+    use super::*;
+    use crate::transport_core::path::PathUpdate;
+    const DEADLINE: Duration = Duration::from_secs(5);
+
+    async fn socket_pair() -> (Arc<crate::protocol::obfs::ObfsUdp>, tokio::net::UdpSocket) {
+        let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let peer = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        socket.connect(peer.local_addr().unwrap()).await.unwrap();
+        peer.connect(socket.local_addr().unwrap()).await.unwrap();
+        (
+            Arc::new(crate::protocol::obfs::ObfsUdp::new(socket, None)),
+            peer,
+        )
+    }
+
+    fn prepared(candidate_id: u64) -> PreparedPathCandidate {
+        PreparedPathCandidate {
+            candidate_id,
+            update: PathUpdate {
+                generation: 1,
+                update_id: candidate_id,
+                platform_path_id: "fixture".into(),
+                reason: crate::transport_core::path::PathUpdateReason::ManualProbe,
+                network_token: None,
+                interface_index: None,
+                local_addresses: vec![],
+                resolved_addresses: vec![],
+                flags: Default::default(),
+            },
+        }
+    }
+
+    async fn receive_epoch(rx: &mut mpsc::Receiver<Vec<ClientUdpReceivedDatagram>>, epoch: u64) {
+        let packets = tokio::time::timeout(DEADLINE, rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(!packets.is_empty());
+        assert!(packets.iter().all(|packet| packet.path_epoch == epoch));
+    }
+
+    #[tokio::test]
+    async fn active_receive_shutdown_releases_socket_with_full_output_queue() {
+        let mut tasks = crate::transport_core::tasks::TaskGroup::default();
+        let (socket, peer) = socket_pair().await;
+        let (tx, mut rx) = mpsc::channel(1);
+        let mut active =
+            spawn_client_udp_receive_pump(socket.clone(), 0, tx.clone(), &tasks.spawner());
+        peer.send(b"first").await.unwrap();
+        tokio::time::timeout(DEADLINE, async {
+            while tx.capacity() != 0 {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        peer.send(b"second").await.unwrap();
+        tokio::task::yield_now().await;
+        drop(tx);
+        tokio::time::timeout(DEADLINE, tasks.finish())
+            .await
+            .unwrap();
+        active.finish().await;
+        assert_eq!(
+            Arc::strong_count(&socket),
+            1,
+            "receive pump retained its socket"
+        );
+        receive_epoch(&mut rx, 0).await;
+        assert!(
+            rx.recv().await.is_none(),
+            "producer remained after group shutdown"
+        );
+    }
+
+    #[tokio::test]
+    async fn candidate_cancellation_preserves_active_receive_path() {
+        let mut tasks = crate::transport_core::tasks::TaskGroup::default();
+        let (active_socket, active_peer) = socket_pair().await;
+        let (candidate_socket, candidate_peer) = socket_pair().await;
+        let (tx, mut rx) = mpsc::channel(4);
+        let active =
+            spawn_client_udp_receive_pump(active_socket.clone(), 0, tx.clone(), &tasks.spawner());
+        let candidate_task = spawn_client_udp_receive_pump(
+            candidate_socket.clone(),
+            1,
+            tx.clone(),
+            &tasks.spawner(),
+        );
+        let candidate =
+            UdpClientLiveCandidate::new(prepared(7), 1, candidate_socket.clone(), candidate_task);
+        candidate_peer.send(b"candidate").await.unwrap();
+        receive_epoch(&mut rx, 1).await;
+        tokio::time::timeout(DEADLINE, candidate.stop())
+            .await
+            .unwrap();
+        assert_eq!(Arc::strong_count(&candidate_socket), 1);
+        active_peer.send(b"active survives").await.unwrap();
+        receive_epoch(&mut rx, 0).await;
+        tasks.finish().await;
+        assert_eq!(Arc::strong_count(&active_socket), 1);
+        drop(active);
+    }
+
+    #[tokio::test]
+    async fn committed_candidate_transfers_task_while_old_receive_drains() {
+        let mut tasks = crate::transport_core::tasks::TaskGroup::default();
+        let (old_socket, old_peer) = socket_pair().await;
+        let (new_socket, new_peer) = socket_pair().await;
+        let (tx, mut rx) = mpsc::channel(4);
+        let mut active =
+            spawn_client_udp_receive_pump(old_socket.clone(), 0, tx.clone(), &tasks.spawner());
+        let candidate_task =
+            spawn_client_udp_receive_pump(new_socket.clone(), 1, tx.clone(), &tasks.spawner());
+        let candidate =
+            UdpClientLiveCandidate::new(prepared(8), 1, new_socket.clone(), candidate_task);
+        let (identity, committed_socket, next_receive) = candidate.into_active();
+        assert_eq!(identity.candidate_id, 8);
+        let mut draining = UdpClientDrainingPath {
+            epoch: 0,
+            framing: crate::transport_core::udp_client_framing::UdpClientFraming::legacy(
+                false, [0; 4],
+            ),
+            expires_at: tokio::time::Instant::now(),
+            receive_task: std::mem::replace(&mut active, next_receive),
+        };
+        old_peer.send(b"draining").await.unwrap();
+        receive_epoch(&mut rx, 0).await;
+        new_peer.send(b"committed").await.unwrap();
+        receive_epoch(&mut rx, 1).await;
+        tokio::time::timeout(DEADLINE, draining.receive_task.finish())
+            .await
+            .unwrap();
+        assert_eq!(Arc::strong_count(&old_socket), 1);
+        new_peer.send(b"after drain").await.unwrap();
+        receive_epoch(&mut rx, 1).await;
+        tasks.finish().await;
+        drop(committed_socket);
+        assert_eq!(Arc::strong_count(&new_socket), 1);
+    }
+
+    #[tokio::test]
+    async fn early_owner_drop_stops_live_receive_without_dropping_path_handle() {
+        let tasks = crate::transport_core::tasks::TaskGroup::default();
+        let (socket, peer) = socket_pair().await;
+        let (tx, mut rx) = mpsc::channel(1);
+        let active = spawn_client_udp_receive_pump(socket.clone(), 0, tx, &tasks.spawner());
+        peer.send(b"started").await.unwrap();
+        receive_epoch(&mut rx, 0).await;
+        drop(tasks); // Simulate an early return/cancel while a path handle is still alive.
+        assert!(tokio::time::timeout(DEADLINE, rx.recv())
+            .await
+            .unwrap()
+            .is_none());
+        assert_eq!(Arc::strong_count(&socket), 1);
+        drop(active);
     }
 }

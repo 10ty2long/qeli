@@ -50,9 +50,15 @@ The fixed 48-byte event header, statistics prefixes and export counts remain unc
 
 TCP lifetime (23 September 2026): a shared TaskGroup owns stream tasks and producers;
 normal finish closes admission and joins before network cleanup. The Linux path monitor
-registers blocking work with that owner (UDP uses a separate group of the same type).
-ABI remains 1.16. Forced cancellation and other UDP workers still need review; see
+registers blocking work with that owner; UDP also uses its whole-connection group.
+ABI remains 1.16. Forced cancellation and nested transport workers still need review; see
 [the report](../reports/AUDIT-Q25-TCP-TASKS.md).
+
+
+UDP lifetime (23 September 2026): the same owner groups active/candidate/draining receive,
+candidate-connect and the Linux monitor. A movable TaskHandle cancels an individual task
+while the group retains join ownership; resource release precedes path rollback.
+Management-event errors follow normal teardown. ABI is unchanged; see [the UDP report](../reports/AUDIT-Q25-UDP-TASKS.md).
 
 ---
 

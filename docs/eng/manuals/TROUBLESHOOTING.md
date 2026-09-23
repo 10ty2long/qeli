@@ -1030,6 +1030,20 @@ guarantee joining, network restoration or post_down. See [the report and validat
 
 ---
 
+### 6.23 UDP: candidate and old-path termination
+
+Connection shutdown waits for receive tasks, candidate connection and the Linux monitor
+before platform-path rollback and DNS/TUN cleanup. Candidate rejection or expiry finishes
+its receive pump while the active path keeps receiving. After commit the old receiver
+continues only for the designated drain window, then its task finishes.
+
+Termination must not depend on another packet arriving at an idle socket or free queue
+capacity. A delayed system blocking operation still needs separate investigation. Forced
+cancellation of the whole client does not confirm rollback or async joining.
+See [the report and tested scenarios](../reports/AUDIT-Q25-UDP-TASKS.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)
