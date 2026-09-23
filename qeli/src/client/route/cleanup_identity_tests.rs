@@ -150,7 +150,7 @@ fn cleanup_identity_pending_preserved_when_tun_is_unverifiable() {
     let fixture = Fixture::new(vec![], None);
     note_pending(&test_owner(), spec.clone());
     assert!(cleanup_routes_with_checks(&test_owner(), allowed, denied).is_err());
-    let other = RouteOwner::new("other-tun", 8).unwrap();
+    let other = RouteOwner::test_new("other-tun", 8).unwrap();
     assert!(ensure_unclaimed(&other, &spec).is_err());
     assert!(writes(&fixture).is_empty());
 }
@@ -216,7 +216,7 @@ fn cleanup_identity_physical_pending_absence_is_independent() {
     let fixture = Fixture::new(vec![], None);
     note_pending(&test_owner(), spec.clone());
     assert!(cleanup_routes_with_checks(&test_owner(), allowed, denied).is_err());
-    let other = RouteOwner::new("other-tun", 8).unwrap();
+    let other = RouteOwner::test_new("other-tun", 8).unwrap();
     ensure_unclaimed(&other, &spec).unwrap();
     assert!(writes(&fixture).is_empty());
 }
@@ -224,10 +224,10 @@ fn cleanup_identity_physical_pending_absence_is_independent() {
 #[test]
 fn cleanup_identity_failed_evidence_keeps_orphan_name_reserved() {
     let _fixture = Fixture::new(vec![], None);
-    let owner = RouteOwner::new("orphan-tun", 8).unwrap();
+    let owner = RouteOwner::test_new("orphan-tun", 8).unwrap();
     assert!(cleanup_routes_with_checks(&owner, allowed, denied).is_err());
     drop(owner);
-    assert!(RouteOwner::new("orphan-tun", 9).is_err());
+    assert!(RouteOwner::test_new("orphan-tun", 9).is_err());
 }
 
 #[test]

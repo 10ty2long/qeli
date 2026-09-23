@@ -103,3 +103,6 @@ Setup и roaming проверяют namespace при входе в operation, н
 sysfs attach, физические uplinks, общий deadline, Q14-F027 и Linux E2E.
 Native certification и новый benchmark не выполнялись. План: 37 разделов,
 19 IN_PROGRESS, 18 TODO, полного PASS нет.
+
+Продолжение: [Q25-F065–F066](AUDIT-Q25-SETUP-IDENTITY.md) переносит проверки в route
+setup/roaming и перед прямыми managed MAC/address/up; gateway/firewall остаются отдельной задачей.

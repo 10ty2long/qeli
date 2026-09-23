@@ -6766,7 +6766,7 @@ impl TunnelSetup {
 struct TunGuard {
     // A field stays alive throughout Drop, including retries after failed graceful cleanup.
     // Closing this owned File releases only this queue; never reopen a name for deletion.
-    _tun: TunInterface,
+    _tun: std::sync::Arc<TunInterface>,
     dns: Option<dns::DnsLease>,
     failures: crate::client_cleanup::Failures,
     if_name: String,
@@ -6780,7 +6780,7 @@ struct TunGuard {
 #[cfg(target_os = "linux")]
 impl TunGuard {
     fn new(
-        tun: TunInterface,
+        tun: std::sync::Arc<TunInterface>,
         dns: Option<dns::DnsLease>,
         if_name: String,
         owns_device: bool,
@@ -7766,6 +7766,7 @@ fn setup_tunnel(
             e
         )
     })?;
+    let tun = std::sync::Arc::new(tun);
     if !attach {
         route_owner.bind_tun(&tun)?;
     }
@@ -7794,11 +7795,14 @@ fn setup_tunnel(
         );
     } else {
         if is_tap {
+            route_owner.verify_plan()?;
             TunInterface::set_mac(&if_name, planned_tap_mac)?;
         }
         for address in &plan.addresses {
+            route_owner.verify_plan()?;
             TunInterface::set_address(&if_name, &address.address, address.prefix_len)?;
         }
+        route_owner.verify_plan()?;
         TunInterface::set_up(&if_name, mtu)?;
         log::info!(
             "{} {} is up (addresses: {})",
@@ -7950,6 +7954,9 @@ fn setup_tunnel(
     // Publish only after every fallible host-network step succeeded. A router wrapper
     // must never enable forwarding/NAT based on an authenticated plan that was rolled
     // back before becoming the active generation.
+    if !attach {
+        route_owner.verify_plan()?;
+    }
     publish_network_plan_state(plan)?;
     let dns = plan_guard.dns.take();
     plan_guard.disarm();

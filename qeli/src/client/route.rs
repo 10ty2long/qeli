@@ -10,9 +10,7 @@ use std::net::IpAddr;
 
 #[path = "route/ownership.rs"]
 mod ownership;
-#[cfg(feature = "experimental-roaming")]
-use ownership::remove_recorded_route;
-use ownership::{delete_spec, recorded_route, route_matches_spec};
+use ownership::{delete_spec, route_matches_spec};
 #[cfg(target_os = "linux")]
 #[path = "route/identity.rs"]
 mod identity;
@@ -45,7 +43,7 @@ fn test_owner() -> RouteOwner {
 fn reset_test_owner() {
     TEST_OWNER.with(|slot| *slot.borrow_mut() = None);
     journal::reset_tests();
-    TEST_OWNER.with(|slot| *slot.borrow_mut() = Some(RouteOwner::new("qtest", 7).unwrap()));
+    TEST_OWNER.with(|slot| *slot.borrow_mut() = Some(RouteOwner::test_new("qtest", 7).unwrap()));
 }
 
 // Keep the route transaction's command boundary injectable without changing process PATH.
@@ -99,6 +97,7 @@ fn family_flag(ipv6: bool) -> Option<&'static str> {
 }
 
 fn physical_path_query(
+    owner: &RouteOwner,
     destination: IpAddr,
     tunnel_if: &str,
     source: Option<IpAddr>,
@@ -122,7 +121,7 @@ fn physical_path_query(
     if let Some(interface) = output_interface {
         args.extend(["oif".to_string(), interface.to_string()]);
     }
-    let output = route_command_output(&args).ok()?;
+    let output = owner.command_output(&args, true).ok()?;
     if !output.status.success() {
         return None;
     }
@@ -140,11 +139,11 @@ fn physical_path_query(
 }
 
 fn physical_path_for(
+    owner: &RouteOwner,
     destination: IpAddr,
-    tunnel_if: &str,
     source: Option<IpAddr>,
 ) -> Option<PhysicalPath> {
-    physical_path_query(destination, tunnel_if, source, None)
+    physical_path_query(owner, destination, owner.interface(), source, None)
 }
 
 /// Resolve the actual non-tunnel carrier interface, next hop and selected source address for
@@ -192,12 +191,18 @@ pub(crate) fn hook_physical_path_for(
 
 #[cfg(feature = "experimental-roaming")]
 fn physical_path_for_interface(
+    owner: &RouteOwner,
     destination: IpAddr,
-    tunnel_if: &str,
     source: IpAddr,
     output_interface: &str,
 ) -> Option<PhysicalPath> {
-    let path = physical_path_query(destination, tunnel_if, Some(source), Some(output_interface))?;
+    let path = physical_path_query(
+        owner,
+        destination,
+        owner.interface(),
+        Some(source),
+        Some(output_interface),
+    )?;
     (path.device == output_interface).then_some(path)
 }
 
@@ -245,6 +250,7 @@ fn prepare_candidate_path_routes_on(
     interface: &str,
 ) -> anyhow::Result<LinuxPreparedPathRoutes> {
     let _operation = owner.operation()?;
+    owner.verify_plan()?;
     if candidate.update.generation != owner.generation() {
         anyhow::bail!("candidate generation does not match route owner");
     }
@@ -272,7 +278,7 @@ fn prepare_candidate_path_routes_on(
                 anyhow::anyhow!("candidate path has no source address for carrier {remote}")
             })?;
         let path =
-            physical_path_for_interface(remote, tunnel_if, source, interface).ok_or_else(|| {
+            physical_path_for_interface(owner, remote, source, interface).ok_or_else(|| {
                 anyhow::anyhow!(
                     "candidate carrier {remote} has no route from {source} through {interface}"
                 )
@@ -358,13 +364,17 @@ fn candidate_route_command(action: &str, route: &LinuxCandidateRoute) -> Vec<Str
 }
 
 #[cfg(feature = "experimental-roaming")]
-fn exact_route_tokens(remote: IpAddr) -> anyhow::Result<Option<Vec<String>>> {
+fn exact_route_tokens(
+    owner: &RouteOwner,
+    remote: IpAddr,
+    needs_tunnel: bool,
+) -> anyhow::Result<Option<Vec<String>>> {
     let mut args = Vec::<String>::new();
     if remote.is_ipv6() {
         args.push("-6".to_string());
     }
     args.extend(["route".to_string(), "show".to_string(), remote.to_string()]);
-    let output = route_command_output(&args)?;
+    let output = owner.command_output(&args, needs_tunnel)?;
     if !output.status.success() {
         anyhow::bail!(
             "could not inspect existing carrier route {remote}: {}",
@@ -379,10 +389,11 @@ fn exact_route_tokens(remote: IpAddr) -> anyhow::Result<Option<Vec<String>>> {
 /// the route may belong to a concurrent operator. Unknown state stops the generation.
 #[cfg(feature = "experimental-roaming")]
 fn verify_failed_route_unchanged(
+    owner: &RouteOwner,
     remote: IpAddr,
     previous: Option<&[String]>,
 ) -> anyhow::Result<()> {
-    let current = exact_route_tokens(remote)?;
+    let current = exact_route_tokens(owner, remote, false)?;
     if current.as_deref() != previous {
         anyhow::bail!("failed route mutation for {remote} did not preserve the previous route");
     }
@@ -399,8 +410,8 @@ fn candidate_route_expected_tokens(route: &LinuxCandidateRoute) -> Vec<String> {
 }
 
 #[cfg(feature = "experimental-roaming")]
-fn run_ip_owned(args: &[String], description: &str) -> anyhow::Result<()> {
-    let output = route_command_output(args)?;
+fn run_ip_owned(owner: &RouteOwner, args: &[String], description: &str) -> anyhow::Result<()> {
+    let output = owner.command_output(args, true)?;
     if output.status.success() {
         return Ok(());
     }
@@ -422,7 +433,9 @@ fn rollback_candidate_route_steps(
             CandidateRouteMutation::Add {
                 undo,
                 journal_was_present,
-            } => match remove_recorded_route(undo) {
+            } => match ownership::remove_recorded_route_with(undo, &|args| {
+                owner.command_output(args, false)
+            }) {
                 Ok(removed) => {
                     if !journal_was_present {
                         forget_created_owned(owner, undo);
@@ -497,7 +510,7 @@ fn restore_carrier_snapshot(
     previous_undo: &[String],
     replace_if: Option<&[String]>,
 ) -> anyhow::Result<()> {
-    let current = exact_route_tokens(remote)?;
+    let current = exact_route_tokens(owner, remote, false)?;
     if current.as_deref() == Some(previous) {
         note_created_owned(owner, previous_undo.to_vec());
         return Ok(());
@@ -518,8 +531,8 @@ fn restore_carrier_snapshot(
     }
     restore.extend(["route".to_string(), action.to_string()]);
     restore.extend_from_slice(previous);
-    let completion = route_command_output(&restore);
-    let current = exact_route_tokens(remote).map_err(|error| {
+    let completion = owner.command_output(&restore, false);
+    let current = exact_route_tokens(owner, remote, false).map_err(|error| {
         note_pending(owner, previous_undo.to_vec());
         anyhow::anyhow!("could not verify restored carrier route {remote}: {error}")
     })?;
@@ -540,12 +553,12 @@ fn restore_carrier_snapshot(
 
 #[cfg(feature = "experimental-roaming")]
 fn retire_carrier_route(owner: &RouteOwner, route: &RetiredCarrierRoute) -> anyhow::Result<()> {
-    if exact_route_tokens(route.remote)?.as_ref() != Some(&route.previous) {
+    if exact_route_tokens(owner, route.remote, true)?.as_ref() != Some(&route.previous) {
         forget_created_owned(owner, &route.undo);
         anyhow::bail!("carrier route {} changed before retirement", route.remote);
     }
-    let completion = route_command_output(&route.undo);
-    match exact_route_tokens(route.remote)? {
+    let completion = owner.command_output(&route.undo, true);
+    match exact_route_tokens(owner, route.remote, true)? {
         None => Ok(()),
         Some(current) => {
             if current != route.previous {
@@ -590,8 +603,27 @@ impl LinuxPreparedPathRoutes {
     ) -> anyhow::Result<()> {
         let lease = self.owner.upgrade()?;
         let owner = &lease;
-        let _operation = owner.operation()?;
-        let result = self.commit_locked(owner, previous_carriers, refresh_platform);
+        let _operation = owner.operation().map_err(|error| {
+            if owner.identity_failed() {
+                anyhow::Error::new(RouteCommitStateUnknown::new(format!(
+                    "route owner identity lost before path commit: {error}"
+                )))
+            } else {
+                error
+            }
+        })?;
+        let result = owner
+            .verify_plan()
+            .and_then(|()| self.commit_locked(owner, previous_carriers, refresh_platform));
+        if owner.identity_failed() {
+            return Err(RouteCommitStateUnknown::new(format!(
+                "route owner identity lost during path commit: {}",
+                result
+                    .err()
+                    .map_or_else(|| "final identity check failed".into(), |e| e.to_string())
+            ))
+            .into());
+        }
         if result
             .as_ref()
             .err()
@@ -616,7 +648,9 @@ impl LinuxPreparedPathRoutes {
         }
         // The Linux gateway refresh must not run before this owner's lifetime check
         // or race cleanup through a gap between validation and route commit.
-        refresh_platform()?;
+        let refreshed = refresh_platform();
+        owner.verify_plan()?;
+        refreshed?;
 
         let desired = self
             .routes
@@ -632,7 +666,7 @@ impl LinuxPreparedPathRoutes {
             let Some(undo) = recorded_undo(owner, &key) else {
                 continue;
             };
-            match exact_route_tokens(remote)? {
+            match exact_route_tokens(owner, remote, true)? {
                 Some(previous) if route_matches_spec(&undo, &previous) => {
                     retire.push(RetiredCarrierRoute {
                         remote,
@@ -647,7 +681,7 @@ impl LinuxPreparedPathRoutes {
         for route in &self.routes {
             let key = carrier_route_undo(route.remote);
             let recorded = recorded_undo(owner, &key);
-            let existing = exact_route_tokens(route.remote)?;
+            let existing = exact_route_tokens(owner, route.remote, true)?;
             let owned = recorded
                 .as_ref()
                 .zip(existing.as_ref())
@@ -696,7 +730,7 @@ impl LinuxPreparedPathRoutes {
                     journal_was_present,
                 } => {
                     let args = candidate_route_command("add", &step.route);
-                    run_ip_owned(&args, "could not add candidate carrier route").map(|()| {
+                    run_ip_owned(owner, &args, "could not add candidate carrier route").map(|()| {
                         if !journal_was_present {
                             note_created_owned(owner, undo.clone());
                         }
@@ -704,9 +738,11 @@ impl LinuxPreparedPathRoutes {
                 }
                 CandidateRouteMutation::Replace { .. } => {
                     let args = candidate_route_command("replace", &step.route);
-                    run_ip_owned(&args, "could not replace qeli-owned carrier route").map(|()| {
-                        note_created_owned(owner, delete_spec(&args));
-                    })
+                    run_ip_owned(owner, &args, "could not replace qeli-owned carrier route").map(
+                        |()| {
+                            note_created_owned(owner, delete_spec(&args));
+                        },
+                    )
                 }
             };
             if let Err(error) = result {
@@ -716,7 +752,7 @@ impl LinuxPreparedPathRoutes {
                     CandidateRouteMutation::Add { .. } | CandidateRouteMutation::None => None,
                 };
                 if let Err(verification) =
-                    verify_failed_route_unchanged(step.route.remote, previous)
+                    verify_failed_route_unchanged(owner, step.route.remote, previous)
                 {
                     note_pending(
                         owner,
@@ -740,8 +776,7 @@ impl LinuxPreparedPathRoutes {
                 gateway: route.gateway.clone(),
                 device: route.interface.clone(),
             };
-            let actual =
-                physical_path_for(route.remote, &self.tunnel_interface, Some(route.source));
+            let actual = physical_path_for(owner, route.remote, Some(route.source));
             if actual.as_ref() != Some(&expected) {
                 let rollback_errors = rollback_candidate_route_steps(owner, &applied);
                 let mut message = format!(
@@ -770,7 +805,7 @@ impl LinuxPreparedPathRoutes {
                     let mut rollback_errors = restore_retired_carrier_routes(owner, &retired);
                     rollback_errors.extend(rollback_candidate_route_steps(owner, &applied));
                     if let Err(verification) =
-                        verify_failed_route_unchanged(route.remote, Some(&route.previous))
+                        verify_failed_route_unchanged(owner, route.remote, Some(&route.previous))
                     {
                         note_pending(owner, route.undo.clone());
                         rollback_errors.push(verification.to_string());
@@ -784,6 +819,11 @@ impl LinuxPreparedPathRoutes {
                     )).into());
                 }
             }
+        }
+        if let Err(error) = owner.verify_plan() {
+            let mut errors = restore_retired_carrier_routes(owner, &retired);
+            errors.extend(rollback_candidate_route_steps(owner, &applied));
+            anyhow::bail!("{error}; final route rollback: {}", errors.join("; "));
         }
         Ok(())
     }
@@ -897,7 +937,9 @@ fn route_local_capture_cidrs(
         .collect())
 }
 
-fn connected_rfc1918_prefixes(ifname: &str) -> anyhow::Result<Vec<Ipv4Net>> {
+fn connected_rfc1918_prefixes(owner: &RouteOwner) -> anyhow::Result<Vec<Ipv4Net>> {
+    owner.verify_plan()?;
+    let ifname = owner.interface();
     let output = Command::new("ip")
         .args(["-4", "-o", "address", "show", "up", "scope", "global"])
         .output()?;
@@ -992,7 +1034,9 @@ fn connected_tunnel_cidr(address: IpAddr, prefix: u8) -> anyhow::Result<String> 
 fn install_initial_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<()> {
     let undo = delete_spec(args);
     ensure_unclaimed(owner, &undo)?;
-    if let Some(previous) = recorded_route(&undo)? {
+    if let Some(previous) =
+        ownership::recorded_route_with(&undo, &|raw| owner.command_output(raw, true))?
+    {
         if route_matches_spec(&undo, &previous) {
             return Ok(());
         }
@@ -1001,8 +1045,8 @@ fn install_initial_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<
             args.join(" ")
         );
     }
-    let completion = route_command_output(args);
-    let observed = recorded_route(&undo);
+    let completion = owner.command_output(args, true);
+    let observed = ownership::recorded_route_with(&undo, &|raw| owner.command_output(raw, true));
     match &observed {
         Ok(Some(current))
             if completion.as_ref().is_ok_and(|o| o.status.success())
@@ -1088,6 +1132,7 @@ pub(crate) fn setup_network_plan_routes(
     is_tap: bool,
 ) -> anyhow::Result<()> {
     let _operation = owner.operation()?;
+    owner.verify_plan()?;
     if plan.generation != owner.generation() {
         anyhow::bail!("network plan generation does not match route owner");
     }
@@ -1103,7 +1148,7 @@ pub(crate) fn setup_network_plan_routes(
         .map(|address| {
             (
                 address,
-                physical_path_for(address, ifname, carrier_local_address),
+                physical_path_for(owner, address, carrier_local_address),
             )
         })
         .collect();
@@ -1121,7 +1166,7 @@ pub(crate) fn setup_network_plan_routes(
             Some((
                 cidr.clone(),
                 address,
-                physical_path_for(address, ifname, None),
+                physical_path_for(owner, address, None),
             ))
         })
         .collect();
@@ -1132,7 +1177,7 @@ pub(crate) fn setup_network_plan_routes(
             .iter()
             .any(|address| address.family == NetworkAddressFamily::Ipv4)
     {
-        route_local_capture_cidrs(&connected_rfc1918_prefixes(ifname)?, &config.exclude)?
+        route_local_capture_cidrs(&connected_rfc1918_prefixes(owner)?, &config.exclude)?
     } else {
         Vec::new()
     };
@@ -1238,7 +1283,7 @@ pub(crate) fn setup_network_plan_routes(
             let expected = expected.ok_or_else(|| {
                 anyhow::anyhow!("full tunnel has no pre-capture physical path to {carrier}")
             })?;
-            let actual = physical_path_for(carrier, ifname, carrier_local_address)
+            let actual = physical_path_for(owner, carrier, carrier_local_address)
                 .ok_or_else(|| {
                     anyhow::anyhow!(
                         "full tunnel carrier {carrier} resolves through {ifname} or has no route after capture"
@@ -1253,7 +1298,7 @@ pub(crate) fn setup_network_plan_routes(
             }
         }
     }
-    Ok(())
+    owner.verify_plan()
 }
 
 /// Did WE install the route this undo-command would remove?
@@ -2409,7 +2454,7 @@ exit 0
         let candidate = prepared_candidate();
         assert!(prepare_candidate_path_routes_on(
             &candidate,
-            &RouteOwner::new("eth0", 7).unwrap(),
+            &RouteOwner::test_new("eth0", 7).unwrap(),
             "eth0"
         )
         .is_err());

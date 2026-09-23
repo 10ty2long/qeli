@@ -1011,6 +1011,12 @@ DISCOVER/OFFER/REQUEST/ACK/NAK/RELEASE, invalid requested_ip, duplicate xid/MAC,
 
 ### 21. TUN/TAP, IP, MTU/PMTU and fragmentation
 
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+verify the original TUN through Weak and its held namespace; physical rollback is independent.
+Identity loss is terminal, including callback and final FIB query. 13 new host tests,
+1472 Rust PASS; four new native tests compiled only. Gateway/firewall/sysctl callback
+internals, physical uplinks and post-check races remain open.
+
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup checks a held
 namespace and original TUN before each command; rename/delete/unknown retain reservations,
 while physical bypass cleanup remains independent. 13 new host tests, 1459 Rust PASS;
@@ -1071,6 +1077,12 @@ baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace test compiled only. Rou
 resolver service namespace and post-check index reuse remain open.
 
 ### 22. Transport core, FFI/JNI and memory
+
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+verify the original TUN through Weak and its held namespace; physical rollback is independent.
+Identity loss is terminal, including callback and final FIB query. 13 new host tests,
+1472 Rust PASS; four new native tests compiled only. Gateway/firewall/sysctl callback
+internals, physical uplinks and post-check races remain open.
 
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup checks a held
 namespace and original TUN before each command; rename/delete/unknown retain reservations,
@@ -1355,6 +1367,12 @@ cross-checked only. Server H2 is covered by the subsequent [Q14-F022/F023](../re
 Standalone H2, early platform rollback, UDP cancellation and deadlines remain open.
 
 ### 25. Linux CLI and network recovery
+
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+verify the original TUN through Weak and its held namespace; physical rollback is independent.
+Identity loss is terminal, including callback and final FIB query. 13 new host tests,
+1472 Rust PASS; four new native tests compiled only. Gateway/firewall/sysctl callback
+internals, physical uplinks and post-check races remain open.
 
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup checks a held
 namespace and original TUN before each command; rename/delete/unknown retain reservations,
@@ -1884,13 +1902,13 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25/21/22 with setup/roaming and other name-based commands,
-physical uplinks and resolver service/bus namespace identity. Q25-F063–F064 closes cleanup
-using stale names or the wrong namespace within the documented limits; the check/iproute2
-race remains. Reconcile parser/backend names. Run three new native route tests, seven
-ioctl tests and Linux DNS/filesystem cases. Then address sysctl namespace identity,
-journal file trust, lock and overall deadlines. Actual Linux namespace/migration/reboot,
-lease/reconnect, iptables-nft/legacy, IPv6-disabled and IPv6 appearing after startup,
-DNS/carrier globals, durable crash recovery, Q14-F027 workers/FD and synchronous preflight
-waits remain open. Native certification and a new benchmark were not run;
-full section statuses are unchanged.
+**Next work:** continue 25/21/22 with gateway/firewall/sysctl ownership and refresh
+callback internals, including rollback after TUN/namespace loss. Q25-F065–F066 checks
+setup/roaming route commands and direct managed MAC/address/up; other platform mutations
+are not complete. Then address physical uplinks, resolver service/bus namespace and
+parser/backend names. Run seven native route identity tests, seven TUN ioctl tests and
+Linux DNS/filesystem cases. Procfs/sysfs/journal trust, sysctl namespace identity, overall
+deadlines, crash recovery, dynamic IPv6, DNS/carrier globals, Q14-F027 workers/FD,
+preflight waits and actual Linux namespace/reboot/reconnect/firewall scenarios remain
+open. Native certification and a new benchmark were not run; full section statuses
+are unchanged.

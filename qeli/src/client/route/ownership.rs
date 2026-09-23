@@ -155,11 +155,6 @@ pub(super) fn parse_route_snapshot(
 
 /// True means the recorded route is absent; false means its identity changed.
 /// A failed or lying delete never discards the entry while its matching route is visible.
-#[cfg(feature = "experimental-roaming")]
-pub(super) fn remove_recorded_route(spec: &[String]) -> anyhow::Result<bool> {
-    remove_recorded_route_with(spec, &route_command_output)
-}
-
 pub(super) fn remove_recorded_route_with(
     spec: &[String],
     command: &dyn Fn(&[String]) -> std::io::Result<std::process::Output>,

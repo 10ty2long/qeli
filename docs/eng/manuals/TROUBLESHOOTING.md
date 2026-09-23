@@ -1663,6 +1663,40 @@ operations still need a separate pass.
 
 ---
 
+### 6.52 Linux: route owner identity lost during path commit
+
+`route owner identity lost before path commit`, `route owner identity lost during path
+commit`, and `route owner previously lost identity; refusing further setup` refuse further
+setup in the current generation. Read the nested cause: original TUN renamed/deleted,
+its owning object expired, namespace mismatch, or failed metadata/ioctl observation.
+This is not an ordinary transient failure of a candidate roaming route.
+
+Qeli checks the original TUN before setup/prepare/commit route commands, before/after
+the platform callback and before acknowledging a successful plan. Managed MAC/address/up
+also checks before each call. These checks do not establish the safety of arbitrary
+gateway/firewall/sysctl work inside a callback.
+
+When only TUN evidence is lost, the client independently attempts to roll back proven
+physical routes in the original namespace. Namespace loss blocks that rollback and
+retains journal evidence. Even successful rollback cannot resume a generation with lost
+identity. Restoring the name/namespace does not revive it. Uncertain installation outcomes
+remain pending and do not grant deletion authority.
+
+Resolve the conflict with the external interface manager and inspect routes/namespace as
+in §6.51. End the affected session; start a new generation after verified recovery. A new
+interface with the old name does not replace the original fd. A retained process reservation
+may require process shutdown as described in §6.51. Do not remove shared routes or protective
+rules merely to bypass this diagnostic.
+
+`route owner has no original TUN identity` means managed TUN binding was not established;
+`original TUN descriptor owner has expired` means its original object was released. Prepared
+paths and route journals do not prolong its life: they use Weak, not another queue.
+The final-check/command race, physical uplink identity and other gateway/firewall operations
+remain limitations.
+[Findings and verification](../reports/AUDIT-Q25-SETUP-IDENTITY.md).
+
+---
+
 ## 7. Reference
 
 ### 7.1 Tunnel statuses (clients)

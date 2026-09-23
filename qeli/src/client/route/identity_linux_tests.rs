@@ -50,7 +50,7 @@ fn add_owned(owner: &RouteOwner, prefix: &str, dev: &str) -> anyhow::Result<()> 
 fn native_cleanup_rename_preserves_replacement_and_cleans_physical_bypass() -> anyhow::Result<()> {
     isolated(|| {
         let owner = RouteOwner::new("qeli-audit0", 1)?;
-        let tun = TunInterface::create(owner.interface(), 1400)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
         owner.bind_tun(&tun)?;
         ip(&["link", "set", owner.interface(), "up"])?;
         add_owned(&owner, "10.41.0.0/16", owner.interface())?;
@@ -75,7 +75,7 @@ fn native_cleanup_rename_preserves_replacement_and_cleans_physical_bypass() -> a
 fn native_cleanup_deleted_original_does_not_delete_same_name_route() -> anyhow::Result<()> {
     isolated(|| {
         let owner = RouteOwner::new("qeli-audit0", 1)?;
-        let tun = TunInterface::create(owner.interface(), 1400)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
         owner.bind_tun(&tun)?;
         ip(&["link", "set", owner.interface(), "up"])?;
         add_owned(&owner, "10.41.0.0/16", owner.interface())?;
@@ -94,7 +94,7 @@ fn native_cleanup_namespace_change_preserves_foreign_physical_route() -> anyhow:
     isolated(|| {
         let original_namespace = std::fs::File::open("/proc/thread-self/ns/net")?;
         let owner = RouteOwner::new("qeli-audit0", 1)?;
-        let tun = TunInterface::create(owner.interface(), 1400)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
         owner.bind_tun(&tun)?;
         assert!(owner.bind_tun(&tun).is_err(), "an owner cannot be rebound");
         dummy("qeli-physical")?;
@@ -113,6 +113,100 @@ fn native_cleanup_namespace_change_preserves_foreign_physical_route() -> anyhow:
         }
         cleanup_routes_for_tun(&owner, &tun)?;
         assert!(ip(&["route", "show", "exact", "10.42.0.0/16"])?
+            .trim()
+            .is_empty());
+        Ok(())
+    })
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip and /dev/net/tun; isolated netns"]
+fn native_setup_rejects_renamed_tun_before_route_add() -> anyhow::Result<()> {
+    isolated(|| {
+        let owner = RouteOwner::new("qeli-audit0", 1)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
+        owner.bind_tun(&tun)?;
+        ip(&["link", "set", owner.interface(), "name", "qeli-renamed"])?;
+        dummy(owner.interface())?;
+        let args = ["route", "add", "10.41.0.0/16", "dev", owner.interface()].map(str::to_string);
+        assert!(install_initial_route(&owner, &args).is_err());
+        assert!(owner.identity_failed());
+        assert!(ip(&["route", "show", "exact", "10.41.0.0/16"])?
+            .trim()
+            .is_empty());
+        Ok(())
+    })
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip and /dev/net/tun; isolated netns"]
+fn native_route_scope_does_not_keep_original_tun_alive() -> anyhow::Result<()> {
+    isolated(|| {
+        let owner = RouteOwner::new("qeli-audit0", 1)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
+        owner.bind_tun(&tun)?;
+        owner.verify_plan()?;
+        let name = std::ffi::CString::new(owner.interface())?;
+        drop(tun);
+        // SAFETY: name is a valid terminated interface name; this is a read-only lookup.
+        assert_eq!(unsafe { libc::if_nametoindex(name.as_ptr()) }, 0);
+        dummy(owner.interface())?;
+        assert!(owner.verify_plan().is_err());
+        assert!(owner.identity_failed());
+        Ok(())
+    })
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip and /dev/net/tun; isolated netns"]
+fn native_unbound_route_owner_has_no_setup_authority() -> anyhow::Result<()> {
+    isolated(|| {
+        let owner = RouteOwner::new("qeli-audit0", 1)?;
+        dummy(owner.interface())?;
+        assert!(owner.verify_plan().is_err());
+        let args = ["route", "add", "10.41.0.0/16", "dev", owner.interface()].map(str::to_string);
+        assert!(install_initial_route(&owner, &args).is_err());
+        assert!(ip(&["route", "show", "exact", "10.41.0.0/16"])?
+            .trim()
+            .is_empty());
+        Ok(())
+    })
+}
+
+#[cfg(feature = "experimental-roaming")]
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip and /dev/net/tun; isolated netns"]
+fn native_roaming_namespace_change_in_callback_is_terminal() -> anyhow::Result<()> {
+    isolated(|| {
+        let owner = RouteOwner::new("qeli-audit0", 1)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
+        owner.bind_tun(&tun)?;
+        let plan = LinuxPreparedPathRoutes {
+            generation: 1,
+            candidate_id: 1,
+            owner: owner.scope(),
+            tunnel_interface: owner.interface().into(),
+            routes: vec![LinuxCandidateRoute {
+                remote: "198.51.100.7".parse()?,
+                source: "192.0.2.10".parse()?,
+                gateway: None,
+                interface: "qeli-physical".into(),
+            }],
+        };
+        let error = plan
+            .commit_with(&[], || {
+                // SAFETY: only the disposable isolated test thread changes namespace.
+                if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+                    return Err(std::io::Error::last_os_error().into());
+                }
+                dummy("qeli-physical")?;
+                ip(&["address", "add", "192.0.2.10/24", "dev", "qeli-physical"])?;
+                Ok(())
+            })
+            .unwrap_err();
+        assert!(error.downcast_ref::<RouteCommitStateUnknown>().is_some());
+        assert!(owner.identity_failed());
+        assert!(ip(&["route", "show", "exact", "198.51.100.7/32"])?
             .trim()
             .is_empty());
         Ok(())

@@ -333,7 +333,7 @@ fn tunnel_plan_lost_add_keeps_reservation_without_delete_authority() {
             assert!(case.run().is_err());
             assert!(take_created(&test_owner()).is_empty());
             assert!(test_owner().operation().is_err());
-            let other = RouteOwner::new("other-tun", 8).unwrap();
+            let other = RouteOwner::test_new("other-tun", 8).unwrap();
             let spec = delete_spec(&tunnel_route_args(
                 ipv6,
                 &case.target,
@@ -430,7 +430,7 @@ fn tunnel_plan_lost_tun_add_reconciles_after_owned_interface_flush() {
                 .mutations()
                 .iter()
                 .any(|cmd| cmd.iter().any(|a| a == "del")));
-            let other = RouteOwner::new("other-tun", 8).unwrap();
+            let other = RouteOwner::test_new("other-tun", 8).unwrap();
             let spec = delete_spec(&tunnel_route_args(
                 ipv6,
                 &case.target,
@@ -495,7 +495,7 @@ fn tunnel_plan_metric_zero_uses_kernel_effective_identity() {
 fn tunnel_plan_does_not_mutate_another_live_owners_route() {
     let case = Case::new(Origin::Configured, false, false);
     fixture_run(&case, Some(case.row(100)), Failure::None, |fixture| {
-        let other = RouteOwner::new("other-tun", 8).unwrap();
+        let other = RouteOwner::test_new("other-tun", 8).unwrap();
         note_created_owned(
             &other,
             delete_spec(&tunnel_route_args(

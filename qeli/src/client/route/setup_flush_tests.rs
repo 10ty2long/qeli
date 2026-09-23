@@ -467,7 +467,7 @@ fn setup_flush_on_link_request_does_not_accept_gateway_route() {
 fn setup_flush_pending_setup_closes_owner_and_blocks_another_owner() {
     let fixture = setup_fixture(SetupKind::Carrier, false, AddFault::AppliedIo);
     assert!(SetupKind::Carrier.run(false).is_err());
-    let other = RouteOwner::new("other-tun", 8).unwrap();
+    let other = RouteOwner::test_new("other-tun", 8).unwrap();
     let before = fixture.kernel.lock().unwrap().calls.len();
     assert!(plan(vec![candidate(false)]).commit(&[]).is_err());
     assert!(plan_for(&other, vec![candidate(false)])

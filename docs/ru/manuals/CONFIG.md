@@ -1765,6 +1765,12 @@ DNS нужны `TUNGETIFF`/`TUNGETDEVNETNS` и доступные namespace/boot
 независимо при доказанном namespace. `dev_attach=true` по-прежнему оставляет маршруты
 внешнему владельцу. См. [восстановление маршрутного владения §6.51](TROUBLESHOOTING.md).
 
+Проверки исходного TUN/namespace действуют также перед маршрутными командами setup и
+roaming и перед managed MAC/address/up. Потеря identity запрещает продолжать то же
+поколение, даже если physical rollback прошёл успешно. RouteOwner хранит Weak на
+исходный TUN и не удерживает устройство после завершения сессии. Gateway/firewall
+внутри platform callback требуют отдельного владения; см. [ошибки setup/roaming §6.52](TROUBLESHOOTING.md).
+
 На Android и iOS `allow_lan` также исключает IPv6 ULA, link-local и multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). Локальный GUA-префикс IPv6 безопасно угадать нельзя:
 добавьте его точно в `exclude`. Android 13+ использует `excludeRoute`, старые версии строят

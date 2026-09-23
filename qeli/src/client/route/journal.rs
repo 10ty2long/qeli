@@ -9,8 +9,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 pub(crate) struct RouteOwner(Arc<Lease>);
 #[derive(Debug)]
 struct Lease {
-    #[cfg(target_os = "linux")]
-    tun_index: std::sync::OnceLock<u32>,
+    #[cfg(test)]
+    evidence: Option<Arc<Mutex<TestEvidence>>>,
+    identity_failed: std::sync::atomic::AtomicBool,
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    tun: std::sync::OnceLock<BoundTun>,
     id: u64,
     #[cfg(target_os = "linux")]
     namespace: Arc<super::identity::Namespace>,
@@ -116,14 +119,38 @@ impl RouteOwner {
             routes: Vec::new(),
         });
         Ok(Self(Arc::new(Lease {
+            #[cfg(test)]
+            evidence: None,
             id,
             #[cfg(target_os = "linux")]
             namespace,
-            #[cfg(target_os = "linux")]
-            tun_index: std::sync::OnceLock::new(),
+            identity_failed: std::sync::atomic::AtomicBool::new(false),
+            #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+            tun: std::sync::OnceLock::new(),
             interface: interface.into(),
             generation,
         })))
+    }
+
+    #[cfg(test)]
+    pub(super) fn test_new(interface: &str, generation: u64) -> anyhow::Result<Self> {
+        let mut owner = Self::new(interface, generation)?;
+        Arc::get_mut(&mut owner.0)
+            .expect("new private lease")
+            .evidence = Some(Arc::new(Mutex::new(TestEvidence {
+            namespace: true,
+            tunnel: true,
+        })));
+        Ok(owner)
+    }
+
+    #[cfg(test)]
+    pub(super) fn test_evidence(&self) -> Arc<Mutex<TestEvidence>> {
+        self.0
+            .evidence
+            .as_ref()
+            .expect("synthetic route owner")
+            .clone()
     }
 
     #[cfg(target_os = "linux")]
@@ -134,7 +161,10 @@ impl RouteOwner {
     // Capture only once, before any managed link/route setup. Attach mode has no
     // managed routes and never binds. No later connection can rebind this owner.
     #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
-    pub(crate) fn bind_tun(&self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
+    pub(crate) fn bind_tun(
+        &self,
+        tun: &Arc<crate::tun::iface::TunInterface>,
+    ) -> anyhow::Result<()> {
         let _operation = self.operation()?;
         let (name, index) = tun
             .attached_link()?
@@ -146,27 +176,99 @@ impl RouteOwner {
             );
         }
         self.0
-            .tun_index
-            .set(index)
+            .tun
+            .set(BoundTun {
+                index,
+                descriptor: Arc::downgrade(tun),
+            })
             .map_err(|_| anyhow::anyhow!("route owner already bound to a TUN"))?;
         Ok(())
     }
 
     #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
     pub(super) fn verify_tun(&self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
-        let index = self
+        let bound = self
             .0
-            .tun_index
+            .tun
             .get()
             .ok_or_else(|| anyhow::anyhow!("route owner has no original TUN identity"))?;
         let attached = tun.attached_link()?;
         match attached {
-            Some((name, current)) if name == self.interface() && current == *index => Ok(()),
+            Some((name, current)) if name == self.interface() && current == bound.index => Ok(()),
             _ => anyhow::bail!(
                 "original TUN {} was renamed, detached or changed; preserving route reservations",
                 self.interface()
             ),
         }
+    }
+
+    fn observe_identity(&self, needs_tunnel: bool) -> anyhow::Result<()> {
+        #[cfg(test)]
+        if let Some(evidence) = &self.0.evidence {
+            let evidence = evidence.lock().unwrap();
+            anyhow::ensure!(evidence.namespace, "route namespace evidence unavailable");
+            anyhow::ensure!(
+                !needs_tunnel || evidence.tunnel,
+                "original TUN evidence unavailable"
+            );
+            return Ok(());
+        }
+        #[cfg(target_os = "linux")]
+        self.verify_namespace()?;
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if needs_tunnel {
+            let bound = self
+                .0
+                .tun
+                .get()
+                .ok_or_else(|| anyhow::anyhow!("route owner has no original TUN identity"))?;
+            let tun = bound
+                .descriptor
+                .upgrade()
+                .ok_or_else(|| anyhow::anyhow!("original TUN descriptor owner has expired"))?;
+            self.verify_tun(&tun)?;
+        }
+        // Production route adapters only exist with the Linux TUN backend. Portable
+        // command tests use explicit synthetic evidence, never this fallback.
+        #[cfg(not(all(target_os = "linux", any(feature = "client", feature = "server"))))]
+        if needs_tunnel {
+            anyhow::bail!("route owner has no TUN backend");
+        }
+        Ok(())
+    }
+
+    pub(super) fn identity_failed(&self) -> bool {
+        self.0
+            .identity_failed
+            .load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    fn check_identity(&self, needs_tunnel: bool) -> anyhow::Result<()> {
+        if needs_tunnel && self.identity_failed() {
+            anyhow::bail!("route owner previously lost identity; refusing further setup");
+        }
+        let result = self.observe_identity(needs_tunnel);
+        if result.is_err() {
+            self.0
+                .identity_failed
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+            self.stop_admission();
+        }
+        result
+    }
+
+    pub(crate) fn verify_plan(&self) -> anyhow::Result<()> {
+        self.check_identity(true)
+    }
+
+    pub(super) fn command_output(
+        &self,
+        args: &[String],
+        needs_tunnel: bool,
+    ) -> std::io::Result<std::process::Output> {
+        self.check_identity(needs_tunnel)
+            .map_err(std::io::Error::other)?;
+        super::route_command_output(args)
     }
 
     pub(crate) fn interface(&self) -> &str {
@@ -190,8 +292,7 @@ impl RouteOwner {
         {
             anyhow::bail!("route owner is stopped; rejecting stale route operation");
         }
-        #[cfg(target_os = "linux")]
-        self.verify_namespace()?;
+        self.check_identity(false)?;
         Ok(guard)
     }
 
@@ -208,7 +309,6 @@ impl RouteOwner {
         guard
     }
 
-    #[cfg(feature = "experimental-roaming")]
     pub(super) fn stop_admission(&self) {
         registry()
             .entries
@@ -364,4 +464,19 @@ pub(super) fn reconcile_pending(
 #[cfg(test)]
 pub(super) fn reset_tests() {
     registry().entries.clear();
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+pub(super) struct TestEvidence {
+    pub(super) namespace: bool,
+    pub(super) tunnel: bool,
+}
+
+// Weak evidence does not extend the TUN lifetime or keep orphaned devices alive.
+#[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+#[derive(Debug)]
+struct BoundTun {
+    index: u32,
+    descriptor: std::sync::Weak<crate::tun::iface::TunInterface>,
 }

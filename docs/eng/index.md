@@ -96,6 +96,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-TUN-LIFETIME.md](reports/AUDIT-Q25-TUN-LIFETIME.md) | Q25-F059–F060: retain original TUN descriptors through cleanup |
 | [AUDIT-Q25-DNS-LEASES.md](reports/AUDIT-Q25-DNS-LEASES.md) | Q25-F061–F062: generation-owned DNS and descriptor identity |
 | [AUDIT-Q25-ROUTE-IDENTITY.md](reports/AUDIT-Q25-ROUTE-IDENTITY.md) | Q25-F063–F064: original TUN/namespace evidence before route cleanup |
+| [AUDIT-Q25-SETUP-IDENTITY.md](reports/AUDIT-Q25-SETUP-IDENTITY.md) | Q25-F065–F066: original TUN during setup/roaming and terminal identity failure |
 | [AUDIT-Q25-CLIENT-COMMANDS.md](reports/AUDIT-Q25-CLIENT-COMMANDS.md) | Q25-F035/F036: route/firewall command bounds and protection for an unknown IPv4 path |
 | [AUDIT-Q25-SETUP-FLUSH.md](reports/AUDIT-Q25-SETUP-FLUSH.md) | Q25-F033/F034: shared initial setup and verified IPv4/IPv6 flush |
 | [AUDIT-Q25-ROUTE-PENDING.md](reports/AUDIT-Q25-ROUTE-PENDING.md) | Q25-F031/F032: pending mutations and release of absent orphan routes |

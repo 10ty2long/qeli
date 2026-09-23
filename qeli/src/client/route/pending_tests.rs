@@ -37,7 +37,7 @@ fn pending_unknown_add_cannot_be_borrowed_by_another_owner() {
             Some(("add", route.remote, Fault::ApplyThenFail)),
         );
         assert!(unknown(&plan(vec![route.clone()]).commit(&[]).unwrap_err()));
-        let other = RouteOwner::new("other-tun", 9).unwrap();
+        let other = RouteOwner::test_new("other-tun", 9).unwrap();
         let before = fixture.kernel.lock().unwrap().calls.len();
         assert!(plan_for(&other, vec![route]).commit(&[]).is_err());
         assert_eq!(fixture.kernel.lock().unwrap().calls.len(), before);
@@ -51,11 +51,11 @@ fn pending_unknown_add_survives_final_lease_drop() {
         Vec::new(),
         Some(("add", route.remote, Fault::ApplyThenFail)),
     );
-    let owner = RouteOwner::new("orphan-pending", 9).unwrap();
+    let owner = RouteOwner::test_new("orphan-pending", 9).unwrap();
     let stale = plan_for(&owner, vec![route]);
     assert!(unknown(&stale.commit(&[]).unwrap_err()));
     drop(owner);
-    assert!(RouteOwner::new("orphan-pending", 10).is_err());
+    assert!(RouteOwner::test_new("orphan-pending", 10).is_err());
     assert!(stale.commit(&[]).is_err());
     assert_eq!(fixture.mutations().len(), 1);
 }
@@ -73,7 +73,7 @@ fn pending_unknown_replace_cannot_be_forgotten_by_cleanup() {
         let before = fixture.mutations();
         assert!(cleanup_routes(&test_owner()).is_err());
         assert_eq!(fixture.mutations(), before);
-        let other = RouteOwner::new("other-tun", 9).unwrap();
+        let other = RouteOwner::test_new("other-tun", 9).unwrap();
         assert!(plan_for(&other, vec![route]).commit(&[]).is_err());
     }
 }
@@ -117,7 +117,7 @@ fn pending_unknown_result_immediately_closes_route_admission() {
 #[test]
 fn pending_orphan_owned_record_releases_only_after_verified_absence() {
     let fixture = Fixture::new(Vec::new(), None);
-    let owner = RouteOwner::new("orphan-recovery", 9).unwrap();
+    let owner = RouteOwner::test_new("orphan-recovery", 9).unwrap();
     let route = candidate(false);
     let stale = plan_for(&owner, vec![route.clone()]);
     stale.commit(&[]).unwrap();
@@ -125,9 +125,9 @@ fn pending_orphan_owned_record_releases_only_after_verified_absence() {
     assert!(cleanup_routes(&owner).is_err());
     drop(owner);
     let before = fixture.mutations();
-    assert!(RouteOwner::new("orphan-recovery", 10).is_err());
+    assert!(RouteOwner::test_new("orphan-recovery", 10).is_err());
     fixture.kernel.lock().unwrap().routes.clear();
-    let recovered = RouteOwner::new("orphan-recovery", 9)
+    let recovered = RouteOwner::test_new("orphan-recovery", 9)
         .expect("absent leftover can release a stopped orphan");
     assert_eq!(fixture.mutations(), before, "orphan recheck is read-only");
     assert!(
@@ -144,7 +144,7 @@ fn unknown_owner(ipv6: bool) -> (Fixture, RouteOwner, LinuxCandidateRoute) {
         Vec::new(),
         Some(("add", route.remote, Fault::ApplyThenFail)),
     );
-    let owner = RouteOwner::new("pending-control", 9).unwrap();
+    let owner = RouteOwner::test_new("pending-control", 9).unwrap();
     assert!(unknown(
         &plan_for(&owner, vec![route.clone()])
             .commit(&[])
@@ -163,12 +163,12 @@ fn pending_live_retry_releases_absent_destination_without_reopening_owner() {
         cleanup_routes(&owner).unwrap();
         assert!(plan_for(&owner, vec![route]).commit(&[]).is_err());
         assert!(
-            RouteOwner::new("pending-control", 10).is_err(),
+            RouteOwner::test_new("pending-control", 10).is_err(),
             "live lease protects teardown"
         );
         assert_eq!(fixture.mutations(), before);
         drop(owner);
-        RouteOwner::new("pending-control", 10).unwrap();
+        RouteOwner::test_new("pending-control", 10).unwrap();
     }
 }
 
@@ -178,10 +178,10 @@ fn pending_orphan_unknown_add_can_release_after_external_removal() {
         let (fixture, owner, route) = unknown_owner(ipv6);
         assert!(cleanup_routes(&owner).is_err());
         drop(owner);
-        assert!(RouteOwner::new("pending-control", 10).is_err());
+        assert!(RouteOwner::test_new("pending-control", 10).is_err());
         let before = fixture.mutations();
         fixture.kernel.lock().unwrap().routes.clear();
-        let recovered = RouteOwner::new("pending-control", 10).unwrap();
+        let recovered = RouteOwner::test_new("pending-control", 10).unwrap();
         assert_eq!(fixture.mutations(), before);
         assert!(recorded_undo(&recovered, &carrier_route_undo(route.remote)).is_none());
     }
@@ -245,13 +245,13 @@ fn pending_orphan_invalid_queries_retain_reservation_until_valid_absence() {
             }))
         });
         let before = fixture.mutations();
-        assert!(RouteOwner::new("pending-control", 10).is_err());
+        assert!(RouteOwner::test_new("pending-control", 10).is_err());
         assert_eq!(fixture.mutations(), before);
         let kernel = fixture.kernel.clone();
         EXECUTOR.with(|slot| {
             *slot.borrow_mut() = Some(Box::new(move |args| kernel.lock().unwrap().run(args)))
         });
-        RouteOwner::new("pending-control", 10).unwrap();
+        RouteOwner::test_new("pending-control", 10).unwrap();
     }
 }
 
@@ -261,7 +261,7 @@ fn pending_orphan_without_cleanup_does_not_release_even_if_route_disappeared() {
     drop(owner);
     fixture.kernel.lock().unwrap().routes.clear();
     let before = fixture.kernel.lock().unwrap().calls.len();
-    assert!(RouteOwner::new("pending-control", 10).is_err());
+    assert!(RouteOwner::test_new("pending-control", 10).is_err());
     assert_eq!(fixture.kernel.lock().unwrap().calls.len(), before);
 }
 
@@ -281,7 +281,7 @@ fn pending_orphan_failed_interface_flush_does_not_release() {
     drop(owner);
     fixture.kernel.lock().unwrap().routes.clear();
     fixture.kernel.lock().unwrap().flush_error = false;
-    assert!(RouteOwner::new("pending-control", 10).is_err());
+    assert!(RouteOwner::test_new("pending-control", 10).is_err());
 }
 
 #[test]
@@ -316,13 +316,13 @@ fn pending_orphan_requires_empty_interface_routes_in_both_families() {
                 }))
             });
             let before = fixture.mutations();
-            assert!(RouteOwner::new("pending-control", 10).is_err());
+            assert!(RouteOwner::test_new("pending-control", 10).is_err());
             assert_eq!(fixture.mutations(), before);
             let kernel = fixture.kernel.clone();
             EXECUTOR.with(|slot| {
                 *slot.borrow_mut() = Some(Box::new(move |args| kernel.lock().unwrap().run(args)))
             });
-            RouteOwner::new("pending-control", 10).unwrap();
+            RouteOwner::test_new("pending-control", 10).unwrap();
         }
     }
 }
@@ -342,7 +342,7 @@ fn pending_unchanged_rejection_does_not_reserve_or_close_owner() {
 #[test]
 fn pending_orphan_does_not_release_partial_set_or_touch_other_owner() {
     let (fixture, owner, route) = unknown_owner(false);
-    let other = RouteOwner::new("unrelated-tun", 1).unwrap();
+    let other = RouteOwner::test_new("unrelated-tun", 1).unwrap();
     let other_route = candidate(true);
     plan_for(&other, vec![other_route.clone()])
         .commit(&[])
@@ -350,7 +350,7 @@ fn pending_orphan_does_not_release_partial_set_or_touch_other_owner() {
     assert!(cleanup_routes(&owner).is_err());
     drop(owner);
     let before = fixture.mutations();
-    assert!(RouteOwner::new("pending-control", 10).is_err());
+    assert!(RouteOwner::test_new("pending-control", 10).is_err());
     assert_eq!(fixture.mutations(), before);
     fixture
         .kernel
@@ -358,7 +358,7 @@ fn pending_orphan_does_not_release_partial_set_or_touch_other_owner() {
         .unwrap()
         .routes
         .remove(&route.remote.to_string());
-    RouteOwner::new("pending-control", 10).unwrap();
+    RouteOwner::test_new("pending-control", 10).unwrap();
     assert!(fixture
         .kernel
         .lock()

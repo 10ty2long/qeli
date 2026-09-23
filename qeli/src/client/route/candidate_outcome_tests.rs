@@ -642,7 +642,9 @@ fn earlier_retirement_is_restored_when_later_verification_fails() {
 
 // Seed pre-existing ownership with selectors, just like successful production installation.
 fn seed_owned(remote: IpAddr) {
-    let snapshot = exact_route_tokens(remote).unwrap().unwrap();
+    let snapshot = exact_route_tokens(&test_owner(), remote, true)
+        .unwrap()
+        .unwrap();
     let mut undo = carrier_route_undo(remote);
     undo.extend(snapshot.into_iter().skip(1));
     note_created_owned(&test_owner(), undo);
@@ -1051,7 +1053,7 @@ fn scope_cleanup_other_tunnel_does_not_delete_current_carrier() {
     let fixture = Fixture::new(Vec::new(), None);
     let route = candidate(false);
     plan(vec![route.clone()]).commit(&[]).unwrap();
-    cleanup_routes(&RouteOwner::new("other-tun", 8).unwrap()).unwrap();
+    cleanup_routes(&RouteOwner::test_new("other-tun", 8).unwrap()).unwrap();
     assert!(fixture
         .kernel
         .lock()
@@ -1085,7 +1087,7 @@ fn scope_two_owners_on_same_wan_clean_only_their_routes() {
     for ipv6 in [false, true] {
         let fixture = Fixture::new(Vec::new(), None);
         let first = test_owner();
-        let second = RouteOwner::new("other-tun", 7).unwrap();
+        let second = RouteOwner::test_new("other-tun", 7).unwrap();
         let a = candidate(ipv6);
         let mut b = a.clone();
         b.remote = if ipv6 {
@@ -1118,7 +1120,7 @@ fn scope_two_owners_on_same_wan_clean_only_their_routes() {
 fn scope_other_owner_cannot_replace_or_borrow_managed_route() {
     for ipv6 in [false, true] {
         let fixture = Fixture::new(Vec::new(), None);
-        let second = RouteOwner::new("other-tun", 7).unwrap();
+        let second = RouteOwner::test_new("other-tun", 7).unwrap();
         let route = candidate(ipv6);
         plan(vec![route.clone()]).commit(&[]).unwrap();
         let before = fixture.mutations();
@@ -1151,7 +1153,7 @@ fn scope_retirement_never_reads_another_owners_journal() {
     let fixture = Fixture::new(Vec::new(), None);
     let a = candidate(false);
     let b = candidate(true);
-    let second = RouteOwner::new("other-tun", 8).unwrap();
+    let second = RouteOwner::test_new("other-tun", 8).unwrap();
     plan(vec![a.clone()]).commit(&[]).unwrap();
     plan_for(&second, vec![b.clone()])
         .commit(&[a.remote])
@@ -1167,7 +1169,7 @@ fn scope_cleanup_failure_does_not_steal_another_owners_retry() {
     let fixture = Fixture::new(Vec::new(), None);
     let a = candidate(false);
     let b = candidate(true);
-    let second = RouteOwner::new("other-tun", 8).unwrap();
+    let second = RouteOwner::test_new("other-tun", 8).unwrap();
     plan(vec![a.clone()]).commit(&[]).unwrap();
     plan_for(&second, vec![b.clone()]).commit(&[]).unwrap();
     fixture.kernel.lock().unwrap().lie_delete = Some(true);
@@ -1192,26 +1194,26 @@ fn scope_cleanup_failure_does_not_steal_another_owners_retry() {
 #[test]
 fn scope_same_interface_cannot_be_reused_while_old_guard_lives() {
     let _fixture = Fixture::new(Vec::new(), None);
-    let old = RouteOwner::new("reused-tun", 9).unwrap();
-    assert!(RouteOwner::new("reused-tun", 10).is_err());
+    let old = RouteOwner::test_new("reused-tun", 9).unwrap();
+    assert!(RouteOwner::test_new("reused-tun", 10).is_err());
     cleanup_routes(&old).unwrap();
     assert!(
-        RouteOwner::new("reused-tun", 10).is_err(),
+        RouteOwner::test_new("reused-tun", 10).is_err(),
         "guard still protects TUN teardown"
     );
     drop(old);
-    assert!(RouteOwner::new("reused-tun", 10).is_ok());
+    assert!(RouteOwner::test_new("reused-tun", 10).is_ok());
 }
 
 #[test]
 fn scope_expired_candidate_cannot_target_reused_interface_and_generation() {
     let fixture = Fixture::new(Vec::new(), None);
-    let old = RouteOwner::new("reused-tun", 9).unwrap();
+    let old = RouteOwner::test_new("reused-tun", 9).unwrap();
     let stale = plan_for(&old, vec![candidate(false)]);
     stale.commit(&[]).unwrap();
     cleanup_routes(&old).unwrap();
     drop(old);
-    let current = RouteOwner::new("reused-tun", 9).unwrap();
+    let current = RouteOwner::test_new("reused-tun", 9).unwrap();
     let before = fixture.kernel.lock().unwrap().calls.len();
     assert!(stale
         .commit(&[])
@@ -1237,11 +1239,11 @@ fn scope_wrong_generation_is_rejected_before_any_command() {
 #[test]
 fn scope_dropped_owner_with_residual_route_cannot_be_adopted() {
     let fixture = Fixture::new(Vec::new(), None);
-    let old = RouteOwner::new("orphan-tun", 9).unwrap();
+    let old = RouteOwner::test_new("orphan-tun", 9).unwrap();
     let remote = candidate(false).remote;
     plan_for(&old, vec![candidate(false)]).commit(&[]).unwrap();
     drop(old);
-    assert!(RouteOwner::new("orphan-tun", 10).is_err());
+    assert!(RouteOwner::test_new("orphan-tun", 10).is_err());
     assert!(plan(vec![candidate(false)]).commit(&[]).is_err());
     cleanup_routes(&test_owner()).unwrap();
     assert!(fixture
@@ -1255,7 +1257,7 @@ fn scope_dropped_owner_with_residual_route_cannot_be_adopted() {
 #[test]
 fn scope_unconfirmed_flush_retains_reservation_until_retry_succeeds() {
     let fixture = Fixture::new(Vec::new(), None);
-    let owner = RouteOwner::new("flush-tun", 9).unwrap();
+    let owner = RouteOwner::test_new("flush-tun", 9).unwrap();
     fixture.kernel.lock().unwrap().routes.insert(
         "10.88.0.0/24".into(),
         vec!["10.88.0.0/24".into(), "dev".into(), "flush-tun".into()],
@@ -1265,8 +1267,8 @@ fn scope_unconfirmed_flush_retains_reservation_until_retry_succeeds() {
     fixture.kernel.lock().unwrap().flush_error = false;
     cleanup_routes(&owner).unwrap();
     drop(owner);
-    assert!(RouteOwner::new("flush-tun", 10).is_ok());
-    let failed = RouteOwner::new("failed-flush-tun", 9).unwrap();
+    assert!(RouteOwner::test_new("flush-tun", 10).is_ok());
+    let failed = RouteOwner::test_new("failed-flush-tun", 9).unwrap();
     fixture.kernel.lock().unwrap().routes.insert(
         "10.88.0.0/24".into(),
         vec![
@@ -1278,14 +1280,14 @@ fn scope_unconfirmed_flush_retains_reservation_until_retry_succeeds() {
     fixture.kernel.lock().unwrap().flush_error = true;
     assert!(cleanup_routes(&failed).is_err());
     drop(failed);
-    assert!(RouteOwner::new("failed-flush-tun", 10).is_err());
+    assert!(RouteOwner::test_new("failed-flush-tun", 10).is_err());
 }
 
 #[test]
 fn scope_host_prefix_notation_cannot_bypass_another_owners_claim() {
     for ipv6 in [false, true] {
         let fixture = Fixture::new(Vec::new(), None);
-        let other = RouteOwner::new("other-tun", 8).unwrap();
+        let other = RouteOwner::test_new("other-tun", 8).unwrap();
         let route = candidate(ipv6);
         let mut undo = delete_spec(&candidate_route_command("add", &route));
         let destination = if ipv6 { 3 } else { 2 };
@@ -1300,7 +1302,7 @@ fn scope_host_prefix_notation_cannot_bypass_another_owners_claim() {
 fn scope_blackhole_is_not_borrowed_from_another_owner() {
     for cidr in ["0.0.0.0/1", "::/1"] {
         let fixture = Fixture::new(Vec::new(), None);
-        let other = RouteOwner::new("other-tun", 8).unwrap();
+        let other = RouteOwner::test_new("other-tun", 8).unwrap();
         add_blackhole_half(&test_owner(), cidr).unwrap();
         let before = fixture.mutations();
         assert!(add_blackhole_half(&other, cidr).is_err());
@@ -1319,7 +1321,7 @@ fn scope_failed_candidate_rollback_preserves_other_owner() {
     b.remote = "198.51.100.30".parse().unwrap();
     let failing = candidate(true);
     let fixture = Fixture::new(Vec::new(), Some(("add", failing.remote, Fault::Reject)));
-    let second = RouteOwner::new("other-tun", 8).unwrap();
+    let second = RouteOwner::test_new("other-tun", 8).unwrap();
     plan(vec![a.clone()]).commit(&[]).unwrap();
     let error = plan_for(&second, vec![b.clone(), failing])
         .commit(&[])
@@ -1337,7 +1339,7 @@ fn scope_network_plan_exclude_cannot_borrow_another_owners_carrier() {
     let route = candidate(false);
     let fixture = Fixture::new(Vec::new(), None);
     plan(vec![route.clone()]).commit(&[]).unwrap();
-    let other = RouteOwner::new("other-tun", 8).unwrap();
+    let other = RouteOwner::test_new("other-tun", 8).unwrap();
     let network = NetworkPlan {
         generation: 8,
         family_mode: crate::transport_core::NetworkFamilyMode::Ipv4,
@@ -1490,3 +1492,6 @@ mod tunnel_plan_tests;
 
 #[path = "cleanup_identity_tests.rs"]
 mod cleanup_identity_tests;
+
+#[path = "setup_identity_tests.rs"]
+mod setup_identity_tests;

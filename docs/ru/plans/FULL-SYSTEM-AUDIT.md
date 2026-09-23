@@ -1018,6 +1018,12 @@ DISCOVER/OFFER/REQUEST/ACK/NAK/RELEASE, bad requested_ip, duplicate xid/MAC, exp
 
 ### 21. TUN/TAP, IP, MTU/PMTU и фрагментация
 
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+проверяют исходный TUN через Weak и удерживаемый namespace; physical rollback независим.
+Потеря identity терминальна, включая callback и последний FIB query. 13 новых host tests,
+1472 Rust PASS; четыре новых native tests только скомпилированы. Gateway/firewall/sysctl
+внутри callback, physical uplinks и гонка после проверки остаются открыты.
+
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup проверяет
 удерживаемый namespace и исходный TUN перед каждой командой; rename/delete/unknown
 сохраняет reservations, physical bypass очищается независимо. 13 новых host tests,
@@ -1078,6 +1084,12 @@ baseline 3 FAIL / 3 PASS, fixed 6 PASS. Native namespace-тест только �
 Identity маршрутов, namespace resolver-сервиса и reuse индекса после проверки остаются открыты.
 
 ### 22. Transport core, FFI/JNI и память
+
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+проверяют исходный TUN через Weak и удерживаемый namespace; physical rollback независим.
+Потеря identity терминальна, включая callback и последний FIB query. 13 новых host tests,
+1472 Rust PASS; четыре новых native tests только скомпилированы. Gateway/firewall/sysctl
+внутри callback, physical uplinks и гонка после проверки остаются открыты.
 
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup проверяет
 удерживаемый namespace и исходный TUN перед каждой командой; rename/delete/unknown
@@ -1362,6 +1374,12 @@ TCP-группа создаётся до connect и ждёт driver/bridge; nati
 Standalone H2, ранний platform rollback, UDP cancellation и deadlines остаются открытыми.
 
 ### 25. Linux CLI и восстановление сети
+
+[Q25-F065–F066](../reports/AUDIT-Q25-SETUP-IDENTITY.md): setup/roaming route commands
+проверяют исходный TUN через Weak и удерживаемый namespace; physical rollback независим.
+Потеря identity терминальна, включая callback и последний FIB query. 13 новых host tests,
+1472 Rust PASS; четыре новых native tests только скомпилированы. Gateway/firewall/sysctl
+внутри callback, physical uplinks и гонка после проверки остаются открыты.
 
 [Q25-F063–F064](../reports/AUDIT-Q25-ROUTE-IDENTITY.md): route cleanup проверяет
 удерживаемый namespace и исходный TUN перед каждой командой; rename/delete/unknown
@@ -1893,13 +1911,13 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25/21/22: setup/roaming и другие команды по имени,
-физические uplinks и namespace resolver-сервиса/шины. Q25-F063–F064 закрывает очистку
-по устаревшему имени и в чужом namespace в описанных пределах; гонка между проверкой
-и iproute2 остаётся. Согласовать имена parser/backend. Исполнить три новых native route
-теста, семь ioctl-тестов и Linux DNS/filesystem cases. Далее — namespace identity sysctl,
-доверие к journal files, сроки блокировок и общий deadline. Реальные Linux
-namespace/migration/reboot, lease/reconnect, iptables-nft/legacy, IPv6-disabled и появление
-IPv6 после запуска, DNS/carrier globals, постоянный crash recovery, Q14-F027 workers/FD
-и синхронные preflight waits остаются открыты. Native certification и новый benchmark
-не выполнялись; статус целых разделов не изменён.
+**Ближайшая работа:** продолжить 25/21/22 с ownership gateway/firewall/sysctl и
+внутренностей refresh callback, включая rollback после потери TUN/namespace. Q25-F065–F066
+проверяет маршрутные команды setup/roaming и прямые managed MAC/address/up; остальные
+платформенные мутации не считаются закрытыми. Затем physical uplinks, resolver service/bus
+namespace и имена parser/backend. Исполнить семь native route identity tests, семь TUN
+ioctl tests и Linux DNS/filesystem cases. Procfs/sysfs/journal trust, sysctl namespace
+identity, общий deadline, crash recovery, динамический IPv6, DNS/carrier globals,
+Q14-F027 workers/FD, preflight waits и реальные Linux namespace/reboot/reconnect/firewall
+сценарии остаются открыты. Native certification и новый benchmark не выполнялись;
+статус целых разделов не изменён.

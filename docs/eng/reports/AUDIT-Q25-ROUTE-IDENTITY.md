@@ -97,3 +97,6 @@ the existing kill-switch retention policy.
 Next: setup/roaming and other name-based commands, resolver service/bus identity, sysfs
 attach, physical uplinks, overall deadlines, Q14-F027 and Linux E2E. Native certification
 and a new benchmark were not run. Plan: 37 sections, 19 IN_PROGRESS, 18 TODO, no full PASS.
+
+Follow-up: [Q25-F065–F066](AUDIT-Q25-SETUP-IDENTITY.md) adds checks to route setup/roaming
+and before direct managed MAC/address/up; gateway/firewall remain a separate task.

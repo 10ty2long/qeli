@@ -1811,6 +1811,12 @@ reservations; physical bypass cleanup remains independent when namespace is prov
 `dev_attach=true` still leaves routing to its external owner.
 See [route ownership recovery §6.51](TROUBLESHOOTING.md).
 
+Original TUN/namespace checks also apply before setup/roaming route commands and managed
+MAC/address/up. Identity loss prevents continuing the same generation even when physical
+rollback succeeds. RouteOwner holds Weak evidence and does not retain the TUN after the
+session ends. Gateway/firewall inside platform callbacks need separate ownership;
+see [setup/roaming errors §6.52](TROUBLESHOOTING.md).
+
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred
 safely; add that exact prefix to `exclude`. Android 13+ uses `excludeRoute`; older versions
