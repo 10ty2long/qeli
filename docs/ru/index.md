@@ -64,6 +64,7 @@
 | [AUDIT-Q19-DNS-PROXY.md](reports/AUDIT-Q19-DNS-PROXY.md) | Серверный DNS: CNAME/NODATA, сжатые имена, TCP failover и локальные сетевые тесты |
 | [AUDIT-Q19-DNS-CACHE.md](reports/AUDIT-Q19-DNS-CACHE.md) | Лимит памяти DNS-кеша, пересылка TSIG/SIG(0) и проверка запросов |
 | [AUDIT-Q19-DNS-EDNS.md](reports/AUDIT-Q19-DNS-EDNS.md) | EDNS, проверка записей, общий TTL ответа и тесты IPv6 upstream |
+| [AUDIT-Q14-HOOKS.md](reports/AUDIT-Q14-HOOKS.md) | Ограничение stdout/stderr, timeout/cancellation и потомки lifecycle hooks |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Владение control socket, границы API, shutdown handlers и парность hooks |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, владение Child/PID, команды и deadline завершения |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Завершение профиля, ранние ошибки запуска, DNS-слушатели и освобождение сокетов |

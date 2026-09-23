@@ -2243,8 +2243,8 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   able to repair its own stale state on the next start.
 - Current-generation network resources may already be gone by `post_down`. Use its snapshot to
   remove state created by the hook; do not assume the interface still exists.
-- Every invocation has a hard 30-second timeout. Exit status, spawn failure and timeout are
-  logged, but hook failure neither rejects the tunnel nor prevents normal cleanup.
+- Each invocation has a 30-second execution/output deadline. Hook failures are logged
+  without rejecting the tunnel; process cleanup details are described below.
 
 Minimal configuration:
 
@@ -2480,6 +2480,26 @@ set -eu
 5. A hook runs as the qeli process user. The packaged `.deb` service normally runs as `qeli` with
    networking capabilities: these cover many `ip`/firewall operations but not arbitrary writes to
    `/etc`. A manual root launch or root container also runs hooks as root.
+
+### Process execution and output
+
+These rules apply to both client and server hooks:
+
+- Command execution and output reading share a 30-second deadline. Stdout and stderr are
+  drained concurrently; memory retains only the last **8 KiB of each stream**, rather than
+  all output. Truncation is marked in the log. Reading continues after the retention limit,
+  so a full pipe cannot block the command. Timeout diagnostics retain the collected tails.
+- Each Linux hook gets an isolated process group. Timeout, read failure or cancellation
+  sends `SIGKILL` to that group, with a direct shell fallback. Timeout/error cleanup awaits
+  the shell; cancellation delegates eventual reaping to Tokio. This cannot guarantee a
+  30-second return when a process is stuck in uninterruptible kernel sleep.
+- Normal shell completion with closed stdout/stderr preserves intentionally launched
+  background services. Redirect both streams, for example to the service's own log, and
+  arrange its shutdown through your `post_down` or a service manager. A descendant keeping
+  an output pipe open holds the hook invocation until EOF or timeout, even after shell exit.
+- A process group is not a sandbox: descendants deliberately escaping through `setsid` or
+  a group change have no group-termination guarantee. Qeli does not manage such a service.
+  Do not rely on the temporary `QELI_CONTEXT_FILE` after the hook returns.
 
 ### Server hooks
 

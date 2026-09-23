@@ -9,8 +9,8 @@
 //!    so a panel compromise can't turn into remote code execution.
 //!
 //! A failing hook logs a warning but does not abort the tunnel. Each hook has a
-//! hard timeout (the child is killed on drop), so a hung command can't wedge
-//! startup or shutdown.
+//! 30-second execution/output deadline. Linux timeout/cancellation kills the isolated
+//! process group; bounded streaming tails prevent noisy hooks from exhausting memory.
 
 #[cfg(target_os = "linux")]
 use std::time::Duration;
@@ -129,6 +129,7 @@ pub enum HookStatus {
     Success,
     ExitFailure,
     SpawnFailure,
+    IoFailure,
     TimedOut,
 }
 
@@ -194,26 +195,6 @@ impl Drop for HookContextFile {
     }
 }
 
-#[cfg(target_os = "linux")]
-fn logged_output(stdout: &[u8], stderr: &[u8]) -> String {
-    // A hook is trusted code, but an accidentally noisy command must not emit an unbounded
-    // single log record. Keep the tail, where shell diagnostics normally live.
-    const MAX_LOG_BYTES: usize = 16 * 1024;
-    let joined = [stdout, b" ", stderr].concat();
-    let truncated = joined.len() > MAX_LOG_BYTES;
-    let kept = if truncated {
-        &joined[joined.len() - MAX_LOG_BYTES..]
-    } else {
-        &joined
-    };
-    let text = String::from_utf8_lossy(kept).trim().to_string();
-    if truncated {
-        format!("[output truncated to last {MAX_LOG_BYTES} bytes] {text}")
-    } else {
-        text
-    }
-}
-
 /// Run a hook through `/bin/sh -c` with an environment snapshot, optional positional
 /// parameters and an optional JSON context document.
 ///
@@ -271,8 +252,7 @@ pub async fn run_with_context(
         // POSIX sh assigns the first word after the command to $0. A stable synthetic $0
         // means the first real value is always $1 (interface) rather than disappearing.
         .arg("qeli-hook")
-        .args(positional_arguments)
-        .kill_on_drop(true);
+        .args(positional_arguments);
     for (key, value) in env {
         command.env(key, value);
     }
@@ -284,10 +264,13 @@ pub async fn run_with_context(
         .env("QELI_CONTEXT_FILE", &context_path)
         .env("QELI_NETWORK_PLAN_FILE", &context_path);
 
-    match tokio::time::timeout(HOOK_TIMEOUT, command.output()).await {
-        Ok(Ok(output)) => {
-            let tail = logged_output(&output.stdout, &output.stderr);
-            if output.status.success() {
+    match crate::hook_process::run(command, HOOK_TIMEOUT).await {
+        Ok(output) => {
+            let tail = output.logged_output();
+            if output.timed_out {
+                log::warn!("hook[{label}]: timed out after {}s -- process group termination requested; leader reaped -- {tail}", HOOK_TIMEOUT.as_secs());
+                HookStatus::TimedOut
+            } else if output.status.success() {
                 if tail.is_empty() {
                     log::info!("hook[{label}]: ok");
                 } else {
@@ -299,16 +282,13 @@ pub async fn run_with_context(
                 HookStatus::ExitFailure
             }
         }
-        Ok(Err(error)) => {
+        Err(crate::hook_process::RunError::Spawn(error)) => {
             log::warn!("hook[{label}]: failed to spawn /bin/sh: {error}");
             HookStatus::SpawnFailure
         }
-        Err(_) => {
-            log::warn!(
-                "hook[{label}]: timed out after {}s -- killed",
-                HOOK_TIMEOUT.as_secs()
-            );
-            HookStatus::TimedOut
+        Err(crate::hook_process::RunError::Io(error)) => {
+            log::warn!("hook[{label}]: process I/O or cleanup failed: {error}");
+            HookStatus::IoFailure
         }
     }
 }

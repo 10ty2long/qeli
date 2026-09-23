@@ -64,6 +64,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q19-DNS-PROXY.md](reports/AUDIT-Q19-DNS-PROXY.md) | Server DNS: CNAME/NODATA, compressed names, TCP failover and loopback network tests |
 | [AUDIT-Q19-DNS-CACHE.md](reports/AUDIT-Q19-DNS-CACHE.md) | DNS cache byte budget, TSIG/SIG(0) relay and request validation |
 | [AUDIT-Q19-DNS-EDNS.md](reports/AUDIT-Q19-DNS-EDNS.md) | EDNS, record validation, whole-message TTLs and IPv6 upstream tests |
+| [AUDIT-Q14-HOOKS.md](reports/AUDIT-Q14-HOOKS.md) | Bounded stdout/stderr, timeout/cancellation and lifecycle hook descendants |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Control socket ownership, API bounds, handler shutdown and hook pairing |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, Child/PID ownership, commands and termination deadlines |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Profile shutdown, early startup errors, DNS listeners and socket release |

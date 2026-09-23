@@ -423,7 +423,7 @@ Off/prefer/required и legacy peer; batch/reassembly caps, flush deadlines, canc
 
 ### 14. Supervisor, workers и профили
 
-**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Код:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`, `qeli/src/hooks/process.rs`.
 
 Start/stop/reload/crash/respawn, занятый bind/TUN, удаление/rename профиля, hook failure и умерший control client. Lock order, backoff, watchdog и tasks. Cleanup идемпотентен, ошибка одного профиля не затрагивает соседний.
 
@@ -458,6 +458,13 @@ Unix-сигналы и rollback на Linux остаются открытыми.
 до teardown профилей, post_down только для готового поколения. 819 host Rust tests
 PASS; 12 новых Unix tests только скомпилированы. Linux runtime/systemd/hooks и
 forced cancellation остаются открытыми; далее — hook processes/output и startup rollback.
+
+**Процессы hooks, 23 сентября 2026:**
+[Q14-F014–F015](../reports/AUDIT-Q14-HOOKS.md): общий server/client runner удерживает
+по 8 KiB stdout/stderr и завершает Linux process group при timeout/cancellation,
+сохраняя штатные фоновые службы с перенаправленным выводом. 828 host Rust tests PASS;
+4 новых Linux group tests только скомпилированы. Следующие участки: startup rollback,
+фоновые worker services и связь trusted config с parsed contents. Linux E2E ещё открыт.
 
 ### 15. Сессии, IP-пулы и лимиты
 

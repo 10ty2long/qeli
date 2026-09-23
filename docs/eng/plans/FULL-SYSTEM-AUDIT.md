@@ -418,7 +418,7 @@ Off/prefer/required and legacy peers; batch/reassembly caps, flush deadlines, ca
 
 ### 14. Supervisor, workers and profiles
 
-**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`.
+**Source:** `qeli/src/server/mod.rs`, `qeli/src/server/tasks.rs`, `qeli/src/server/supervisor.rs`, `qeli/src/server/control.rs`, `qeli/src/server/control_io.rs`, `qeli/src/server/control_socket.rs`, `qeli/src/main.rs`, `qeli/src/hooks.rs`, `qeli/src/hooks/process.rs`.
 
 Start/stop/reload/crash/respawn, occupied bind/TUN, profile deletion/rename, hook failures and dead control clients. Lock ordering, backoff, watchdogs and task ownership. Cleanup is idempotent and isolated between profiles.
 
@@ -453,6 +453,13 @@ safe runtime directory permissions, message bounds, deadlines, handler drain bef
 profile teardown, and post_down only for ready generations. 819 host Rust tests pass;
 12 new Unix tests compiled only. Linux runtime/systemd/hooks and forced cancellation
 remain open; next are hook processes/output and startup rollback.
+
+**Hook processes, 23 September 2026:**
+[Q14-F014–F015](../reports/AUDIT-Q14-HOOKS.md): shared server/client runner retains
+8 KiB per stdout/stderr stream and terminates Linux process groups on timeout/cancellation,
+while preserving intentional redirected background services. 828 host Rust tests pass;
+four new Linux group tests compiled only. Next: startup rollback, background worker
+services and binding trusted config to parsed contents. Linux E2E remains open.
 
 ### 15. Sessions, IP pools and limits
 

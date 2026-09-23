@@ -60,6 +60,15 @@ pub(crate) mod sysctl;
 #[allow(dead_code)]
 pub mod transport;
 
+// Exercise bounded hook process I/O with real host child fixtures. Linux clients and
+// servers use this same runner; native GUI release libraries do not include it.
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+#[path = "hooks/process.rs"]
+mod hook_process;
+
 // Lifecycle hooks (post_up/post_down) + the file-trust guard; used by both the
 // client and the server, Linux-only.
 #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
