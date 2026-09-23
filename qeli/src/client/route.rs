@@ -1,4 +1,5 @@
 use crate::config::client::ClientRoutingConfig;
+use crate::system_command::Command;
 #[cfg(feature = "experimental-roaming")]
 use crate::transport_core::path::PreparedPathCandidate;
 use crate::transport_core::{NetworkAddressFamily, NetworkPlan, NetworkRoute};
@@ -49,7 +50,7 @@ fn route_command_output(args: &[String]) -> std::io::Result<std::process::Output
     if let Some(output) = candidate_outcome_tests::command_output(args) {
         return output;
     }
-    std::process::Command::new("ip").args(args).output()
+    Command::new("ip").args(args).output()
 }
 
 #[cfg(all(test, feature = "experimental-roaming"))]
@@ -151,9 +152,9 @@ pub(crate) fn hook_physical_path_for(
     tunnel_if: &str,
     source: Option<IpAddr>,
 ) -> Option<HookPhysicalPath> {
-    let mut command = std::process::Command::new("ip");
+    let mut command = Command::new("ip");
     if let Some(flag) = family_flag(destination.is_ipv6()) {
-        command.arg(flag);
+        command.args([flag]);
     }
     command.args(["route", "get", &destination.to_string()]);
     if let Some(source) = source {
@@ -913,7 +914,7 @@ fn route_local_capture_cidrs(
 }
 
 fn connected_rfc1918_prefixes(ifname: &str) -> anyhow::Result<Vec<Ipv4Net>> {
-    let output = std::process::Command::new("ip")
+    let output = Command::new("ip")
         .args(["-4", "-o", "address", "show", "up", "scope", "global"])
         .output()?;
     if !output.status.success() {
@@ -1284,7 +1285,7 @@ pub(crate) fn setup_routes(
 
     if config.add_default_gateway || config.mode == "full-tunnel" || config.mode == "all" {
         if let Some(gw) = &physical_gw {
-            let output = std::process::Command::new("ip")
+            let output = Command::new("ip")
                 .args(["route", "add", server_addr, "via", gw])
                 .output()?;
             if output.status.success() {
@@ -1310,7 +1311,7 @@ pub(crate) fn setup_routes(
             // the server INTO the tunnel it carries — an immediate deadlock. Pin a scoped
             // `/32` on the physical dev instead: more specific than the halves, so the
             // carrier stays off the tunnel. (on-link bypass)
-            let output = std::process::Command::new("ip")
+            let output = Command::new("ip")
                 .args(["route", "add", server_addr, "dev", &dev, "scope", "link"])
                 .output()?;
             if output.status.success() {
@@ -1357,7 +1358,7 @@ pub(crate) fn setup_routes(
         // exposed everything — while the UI still said "connected, full tunnel". A refused
         // connection is the honest outcome; the caller tears down and retries.
         for half in ["0.0.0.0/1", "128.0.0.0/1"] {
-            let output = std::process::Command::new("ip")
+            let output = Command::new("ip")
                 .args(["route", "add", half, "via", gateway, "dev", ifname])
                 .output()?;
             if !output.status.success() {
@@ -1379,9 +1380,7 @@ pub(crate) fn setup_routes(
         // report success while silently doing nothing; `ip route` deserves the same
         // distrust, and here a false success is a full-traffic leak.
         for half in ["0.0.0.0/1", "128.0.0.0/1"] {
-            let shown = std::process::Command::new("ip")
-                .args(["route", "show", half])
-                .output()?;
+            let shown = Command::new("ip").args(["route", "show", half]).output()?;
             let text = String::from_utf8_lossy(&shown.stdout);
             if !text.contains(ifname) {
                 anyhow::bail!(
@@ -1400,7 +1399,7 @@ pub(crate) fn setup_routes(
         if !config.allow_ipv6_leak {
             let mut blocked = 0;
             for &half in IPV6_CAPTURE_PREFIXES {
-                let out = std::process::Command::new("ip")
+                let out = Command::new("ip")
                     .args(["-6", "route", "add", "blackhole", half])
                     .output();
                 match out {
@@ -1455,7 +1454,7 @@ pub(crate) fn setup_routes(
     // exactly which subnets must go through the tunnel, so a route that failed to install
     // is that subnet leaking in the clear. Fatal for the same reason.
     for subnet in &config.include {
-        let output = std::process::Command::new("ip")
+        let output = Command::new("ip")
             .args(["route", "add", subnet, "via", gateway, "dev", ifname])
             .output()?;
 
@@ -1522,7 +1521,7 @@ pub(crate) fn setup_routes(
             continue;
         }
         if let Some(gw) = &physical_gw {
-            let output = std::process::Command::new("ip")
+            let output = Command::new("ip")
                 .args(["route", "add", subnet, "via", gw])
                 .output();
             if let Ok(o) = output {
@@ -1549,7 +1548,7 @@ pub(crate) fn setup_routes(
             // reported, because silently not-excluding is worse than saying so.
             // (Audit 2026-07-27, R6.)
             if created_by_us(owner, &["route", "del", subnet]) {
-                let _ = std::process::Command::new("ip")
+                let _ = Command::new("ip")
                     .args(["route", "del", subnet, "dev", ifname])
                     .output();
             } else {
@@ -1624,7 +1623,7 @@ pub fn apply_local_networks(
     ];
     cidrs.extend(route_local_capture_cidrs(&connected, &routing.exclude)?);
     for cidr in cidrs {
-        let output = std::process::Command::new("ip")
+        let output = Command::new("ip")
             .args([
                 "route",
                 "add",
@@ -1697,7 +1696,7 @@ fn existing_route_satisfies_all(v6: bool, cidr: &str, wants: &[&str]) -> Option<
         args.push("-6");
     }
     args.extend_from_slice(&["route", "show", cidr]);
-    let out = std::process::Command::new("ip").args(&args).output().ok()?;
+    let out = Command::new("ip").args(&args).output().ok()?;
     if !out.status.success() {
         return None;
     }
@@ -1838,7 +1837,7 @@ pub fn apply_pushed_routes(
             "metric".into(),
             metric.to_string(),
         ]);
-        let output = std::process::Command::new("ip").args(&args).output();
+        let output = Command::new("ip").args(&args).output();
 
         match output {
             Ok(o) if o.status.success() => {
@@ -1893,7 +1892,7 @@ fn is_valid_gateway(s: &str) -> bool {
 /// `ip route get`). `None` if it can't be determined (e.g. an on-link server).
 #[cfg(test)]
 fn default_gateway(server_addr: &str) -> Option<String> {
-    let out = std::process::Command::new("ip")
+    let out = Command::new("ip")
         .args(["route", "get", server_addr])
         .output()
         .ok()?;
@@ -1914,7 +1913,7 @@ fn default_gateway(server_addr: &str) -> Option<String> {
 /// same subnet as the client, reached directly. (on-link bypass)
 #[cfg(test)]
 fn physical_dev_for(server_addr: &str) -> Option<String> {
-    let out = std::process::Command::new("ip")
+    let out = Command::new("ip")
         .args(["route", "get", server_addr])
         .output()
         .ok()?;

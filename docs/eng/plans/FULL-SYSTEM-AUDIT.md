@@ -1044,6 +1044,14 @@ families require confirmed empty state or a missing interface verified by link i
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
 
+**2026-09-23 follow-up — bounded route/firewall commands:**
+[Q25-F035/F036](../reports/AUDIT-Q25-CLIENT-COMMANDS.md): routes and kill-switch use the
+shared runner: 15 seconds per command, 16 MiB each for stdout/stderr. Gateway inherits
+bounds through the iptables helper. Unknown outcomes preserve pending/verification;
+unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
+20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
+deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
+
 ### 23. Roaming, resume and CONTROL_V2
 
 **Source:** `qeli/src/protocol/roaming.rs`, `qeli/src/protocol/control_v2.rs`, `qeli/src/transport_core`.
@@ -1134,6 +1142,14 @@ families require confirmed empty state or a missing interface verified by link i
 8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
+
+**2026-09-23 follow-up — bounded route/firewall commands:**
+[Q25-F035/F036](../reports/AUDIT-Q25-CLIENT-COMMANDS.md): routes and kill-switch use the
+shared runner: 15 seconds per command, 16 MiB each for stdout/stderr. Gateway inherits
+bounds through the iptables helper. Unknown outcomes preserve pending/verification;
+unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
+20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
+deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
 
 ### 24. Multipath, bonding and shared budgets
 
@@ -1340,6 +1356,14 @@ families require confirmed empty state or a missing interface verified by link i
 8 baseline failures → PASS plus 12 controls; 1214 Rust tests and nine matrix commands
 PASS. Linux runtime, command deadlines, other route paths, durable crash recovery
 and Q14-F027 workers/FD remain open.
+
+**2026-09-23 follow-up — bounded route/firewall commands:**
+[Q25-F035/F036](../reports/AUDIT-Q25-CLIENT-COMMANDS.md): routes and kill-switch use the
+shared runner: 15 seconds per command, 16 MiB each for stdout/stderr. Gateway inherits
+bounds through the iptables helper. Unknown outcomes preserve pending/verification;
+unknown IPv4 default routes require protection unless allow_ipv4_leak is explicit.
+20 new tests; 1234 Rust tests and nine matrix commands PASS. Overall transaction
+deadlines, other route ownership paths, gateway rollback and Linux runtime remain open.
 
 ### 26. Shared C# and managed/native boundary
 
@@ -1616,10 +1640,10 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25 with route/kill-switch/gateway deadlines and output bounds
-while retaining pending/ownership semantics, then other TUN/pushed/local-route paths
-and complete gateway rollback. Q25-F033/F034 closes the tested initial setup and flush
-within normal routing-table boundaries; durable crash recovery, cross-process races
-and Q14-F027 TUN workers/FD remain open. Section 05 still needs an overall preflight
-deadline and removal of synchronous waits in async handlers. Outstanding 01–07,
-Linux restart/restore/manual+NDP E2E, native certification and a full benchmark remain.
+**Next work:** continue section 25 with ownership/postcondition unification for the
+remaining TUN/pushed/local route mutations, then full gateway rollback and global-state
+isolation. Q25-F035/F036 bounds route/kill-switch/gateway commands, not whole transactions.
+Durable crash recovery, cross-process races and Q14-F027 TUN workers/FD remain open.
+Section 05 still needs an overall preflight deadline and review of sync waits in async
+handlers. Unfinished 01–07 work, Linux E2E restart/restore/manual+NDP, native certification
+and the full benchmark remain in the plan.

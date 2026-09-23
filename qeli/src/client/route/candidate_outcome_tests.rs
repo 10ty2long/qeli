@@ -1481,3 +1481,6 @@ mod postcondition_tests;
 
 #[path = "setup_flush_tests.rs"]
 mod setup_flush_tests;
+
+#[path = "command_bounds_tests.rs"]
+mod command_bounds_tests;

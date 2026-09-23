@@ -1021,9 +1021,9 @@ history of every retry. User hook scripts may still change firewall state indepe
 Normal shutdown closes TCP-task admission and joins readers/writers, the decrypt pipeline
 and connection-maintenance tasks before network cleanup. Management-event errors follow
 the same sequence. The Linux TCP and UDP path monitor also waits for running route reads
-or path updates. Shutdown can therefore wait for a system command to finish; those commands
-do not yet have a finite execution deadline for route operations. TUN and resolvectl commands
-have separate [bounds](#627-linux-system-command-timed-out-or-output-limit-exceeded).
+or path updates. Individual route, firewall, TUN and resolvectl commands have
+[bounds](#627-linux-system-command-timed-out-or-output-limit-exceeded); total stop time
+also depends on command count, verification queries and waiting for process exit.
 
 If shutdown is delayed, inspect logs and child ip/iptables/resolvectl processes. A stop
 request alone does not prove network cleanup is complete. Forcing process termination cannot
@@ -1088,7 +1088,8 @@ joining when the runtime is destroyed. Linux runtime validation remains open;
 
 ### 6.27 Linux: system command timed out or output limit exceeded
 
-For TUN-interface commands and client `resolvectl`, these errors mean exceeding 15 seconds
+For client route, kill-switch/gateway, TUN-interface and `resolvectl` commands, these
+errors mean exceeding 15 seconds
 or 16 MiB on one output stream. Spawn errors and nonzero exit codes remain distinct. Qeli
 attempts to terminate the child and, on Linux, its group, then waits for exit; partial output
 is never accepted as a command result.
@@ -1096,8 +1097,10 @@ is never accepted as a command result.
 Timeout does not prove that nothing changed. A failed `resolvectl revert` retains its marker
 for recovery retry. Immediate rollback failures now appear in the log; an attempted rollback
 does not mean successful revert. Check the affected interface and systemd-resolved state.
-Total shutdown time still depends on other work: route/firewall commands retain the previous
-runner, and kill/reap can wait on the kernel. [Report and tests](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+Total shutdown time still depends on other work: commands and verification queries are
+sequential, and kill/reap can wait on the kernel.
+[Original runner and tests](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md),
+[routes and firewall](../reports/AUDIT-Q25-CLIENT-COMMANDS.md).
 
 ---
 
@@ -1288,8 +1291,8 @@ does not change the INI format of user profiles.
 
 During orderly stop, the generation owner waits for an already running command even
 when the async monitor is cancelled. This is not an overall stop deadline: queries are
-sequential, process waiting may extend the call, and route-mutating commands still need
-separate bounds. Check iproute2 availability and earlier debug logs when troubleshooting.
+sequential and process waiting may extend the call. Route-mutating commands are also
+bounded individually. Check iproute2 availability and earlier debug logs when troubleshooting.
 [Validation and boundaries](../reports/AUDIT-Q25-PATH-MONITOR.md).
 
 
@@ -1444,6 +1447,30 @@ Inspect the address, interface and preceding log errors; a live guard can retry 
 This does not certify crash recovery, arbitrary policy tables/VRFs or completed TUN
 workers. No INI parameters were added.
 [Validation and limits](../reports/AUDIT-Q25-SETUP-FLUSH.md).
+
+### 6.45 Linux: route/firewall timeout and an unknown IPv4 path
+
+Client routing `ip` commands and kill-switch/gateway `iptables/ip6tables` commands
+share a 15-second per-call deadline and separate 16 MiB stdout/stderr limits. Exceeding
+a bound returns an error without partial output. This is not a 15-second limit for
+the entire setup, cleanup or reconnect: verification and process exit also take time.
+
+If a command could have changed the network, timeout does not undo that change.
+An unconfirmed carrier/exclude/blackhole add remains pending without deletion authority.
+Flush requires verification that routes are absent; failed verification requires retry.
+An unreadable firewall chain is not considered absent either. Inspect preceding errors,
+iproute2/iptables availability and the affected interface; child exit alone does not
+establish successful cleanup.
+
+`IPv4 egress is present or could not be ruled out` means the IPv4 firewall leg is
+unprotected and absence of an IPv4 default route has not been established. Spawn errors,
+negative status, timeout and overflow require protection. Only a successful empty listing
+permits skipping IPv4 protection without explicit `allow_ipv4_leak = true`.
+That option permits an IPv4 leak; it does not restore the firewall.
+
+No configuration keys were added. Linux runtime, complete gateway rollback and an
+overall transaction deadline remain separate checks.
+[Report and evidence](../reports/AUDIT-Q25-CLIENT-COMMANDS.md).
 
 ---
 

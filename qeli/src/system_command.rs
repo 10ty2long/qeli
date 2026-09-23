@@ -32,6 +32,10 @@ impl Command {
     }
 
     pub(crate) fn output(&mut self) -> io::Result<Output> {
+        #[cfg(test)]
+        if let Some(action) = test_support::intercept(self.inner.as_std()) {
+            return action.run();
+        }
         self.output_with_limits(DEADLINE, OUTPUT_LIMIT)
     }
 
@@ -58,3 +62,6 @@ impl Command {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+pub(crate) mod test_support;

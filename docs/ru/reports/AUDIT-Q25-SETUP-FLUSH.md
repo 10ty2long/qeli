@@ -96,3 +96,5 @@ pending-контракта. Общий operation mutex всё ещё может 
 Пользовательские INI, API и ABI не изменены.
 
 Предыдущий этап: [pending и orphan](AUDIT-Q25-ROUTE-PENDING.md).
+
+Следующий проход выполнен в заявленных границах: [лимиты команд и IPv4-защита](AUDIT-Q25-CLIENT-COMMANDS.md).

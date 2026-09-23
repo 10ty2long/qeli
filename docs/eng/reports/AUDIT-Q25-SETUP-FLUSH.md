@@ -96,3 +96,5 @@ No real Linux E2E, native certification, devices or new benchmark were run.
 User INI, API and ABI are unchanged.
 
 Previous pass: [pending and orphan records](AUDIT-Q25-ROUTE-PENDING.md).
+
+The next pass is complete within its stated scope: [command bounds and IPv4 protection](AUDIT-Q25-CLIENT-COMMANDS.md).

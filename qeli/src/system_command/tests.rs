@@ -61,7 +61,7 @@ fn command_fixture() {
     std::process::exit(0);
 }
 
-fn fixture(mode: &str) -> Command {
+pub(super) fn fixture(mode: &str) -> Command {
     let mut command = Command::new(std::env::current_exe().unwrap());
     command.args([
         "--exact",

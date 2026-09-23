@@ -46,9 +46,9 @@
 //! gates on that.
 
 use crate::firewall_check::{present as checked_presence, Query};
+use crate::system_command::Command;
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::Path;
-use std::process::Command;
 
 /// Dedicated chain (in the `filter` table) holding the kill-switch ruleset.
 /// Chain name for THIS instance.
@@ -109,7 +109,7 @@ pub(crate) fn ipt_path(bin: &str) -> Option<String> {
         }
     }
     if Command::new(bin)
-        .arg("--version")
+        .args(["--version"])
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
@@ -530,9 +530,9 @@ pub fn engage(
         None => false,
     };
     if !v4_protected {
-        if host_has_ipv4_default_route() && !allow_ipv4_leak {
+        if !allow_ipv4_leak && host_may_have_ipv4_default_route() {
             anyhow::bail!(
-                "kill-switch: this host has IPv4 egress but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
+                "kill-switch: IPv4 egress is present or could not be ruled out, but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
             );
         }
         log::warn!(
@@ -594,15 +594,15 @@ pub fn engage(
     Ok(())
 }
 
-/// Best-effort evidence that the host can send ordinary IPv4 traffic. `iproute2` is a
-/// required Linux client dependency and the default route is the relevant leak path; a
-/// link-local or tunnel-only address without a default is harmless here.
-fn host_has_ipv4_default_route() -> bool {
-    std::process::Command::new("ip")
+/// Only a successfully inspected empty default-route list permits skipping IPv4
+/// protection. Failed status, timeout, output overflow and spawn errors are unknown,
+/// not proof that an unprotected IPv4 path is absent.
+fn host_may_have_ipv4_default_route() -> bool {
+    Command::new("ip")
         .args(["-4", "route", "show", "default"])
         .output()
-        .map(|output| output.status.success() && !output.stdout.is_empty())
-        .unwrap_or(false)
+        .map(|output| !output.status.success() || !output.stdout.is_empty())
+        .unwrap_or(true)
 }
 
 /// Re-resolve the server hostname and ADD any newly-seen server IP(s) to the live
@@ -731,7 +731,7 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
 /// for server addresses, so the loopback / tun / DHCP / DNS allowances — which have
 /// interface or port matchers — are never returned and can never be withdrawn.
 fn live_server_allows(path: &str, chain: &str) -> anyhow::Result<Vec<String>> {
-    let out = std::process::Command::new(path)
+    let out = Command::new(path)
         .args(["-S", chain])
         .output()
         .map_err(|error| anyhow::anyhow!("cannot inspect {path} chain {chain}: {error}"))?;
@@ -1133,3 +1133,7 @@ mod fault_injection {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "killswitch/command_bounds_tests.rs"]
+mod command_bounds_tests;

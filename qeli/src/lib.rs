@@ -40,6 +40,12 @@ mod gateway_wan;
 #[path = "client/route.rs"]
 mod client_route;
 
+// Exercise the real firewall command boundary with isolated child processes on the host.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)]
+#[path = "client/killswitch.rs"]
+mod client_killswitch;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,
