@@ -621,6 +621,13 @@ identity журнала, реальный Linux runtime и полный PASS р�
 с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
 устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
 
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): удалено разрушающее восстановление TUN
+по неполному списку PID. Клиент пассивно ждёт освобождения имени и отказывает при
+ошибке lookup/смене ifindex; клиент и сервер создают первую очередь эксклюзивно.
+Остальные очереди используют её фактическое имя. 20 новых тестов, 7 baseline FAIL,
+1406 Rust tests PASS. Исправлена сборка Linux-тестов без server feature.
+Attach/teardown races и реальный Linux остаются открыты.
+
 ### 15. Сессии, IP-пулы и лимиты
 
 **Код:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -1018,6 +1025,13 @@ Unix-тест дескрипторов только кросс-компилир�
 при отказе. Диагностика больше не обещает неподтверждённый rollback. 986 host Rust tests
 PASS; два новых Linux process-group теста только cross-check. Маршруты/firewall, live
 Linux и общий deadline shutdown остаются открытыми; статус раздела IN_PROGRESS.
+
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): удалено разрушающее восстановление TUN
+по неполному списку PID. Клиент пассивно ждёт освобождения имени и отказывает при
+ошибке lookup/смене ifindex; клиент и сервер создают первую очередь эксклюзивно.
+Остальные очереди используют её фактическое имя. 20 новых тестов, 7 baseline FAIL,
+1406 Rust tests PASS. Исправлена сборка Linux-тестов без server feature.
+Attach/teardown races и реальный Linux остаются открыты.
 
 ### 22. Transport core, FFI/JNI и память
 
@@ -1520,6 +1534,13 @@ identity журнала, реальный Linux runtime и полный PASS р�
 с явной ошибкой миграции. 24 новых теста, 1386 Rust tests PASS. Реальный Linux,
 устойчивость namespace identity после уничтожения объекта и полный PASS остаются открыты.
 
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): удалено разрушающее восстановление TUN
+по неполному списку PID. Клиент пассивно ждёт освобождения имени и отказывает при
+ошибке lookup/смене ifindex; клиент и сервер создают первую очередь эксклюзивно.
+Остальные очереди используют её фактическое имя. 20 новых тестов, 7 baseline FAIL,
+1406 Rust tests PASS. Исправлена сборка Linux-тестов без server feature.
+Attach/teardown races и реальный Linux остаются открыты.
+
 ### 26. Общий C# и managed/native граница
 
 **Код:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1797,10 +1818,11 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25: полнота /proc при восстановлении TUN,
-устойчивость namespace identity после уничтожения объекта, доверие к journal files
-и сроки блокировок. Q25-F052–F053 изолирует sysctl network groups и проверяет PID/time
-контекст в описанных пределах. Реальные Linux namespace/migration/reboot,
+**Ближайшая работа:** продолжить 25/21: гонка исчезновения при dev_attach,
+проверка принадлежности TUN при cleanup, согласованность имён parser/backend.
+Q25-F054–F056 убирает удаление при recovery и делает создание первой очереди
+эксклюзивным. Далее — устойчивость namespace identity после уничтожения объекта,
+доверие к journal files и сроки блокировок. Реальные Linux namespace/migration/reboot,
 lease/attach/reconnect, iptables-nft/legacy и IPv6-disabled, появление IPv6 после запуска,
 DNS/carrier globals, общий deadline, постоянный crash recovery, Q14-F027 workers/FD
 и синхронные preflight waits остаются открыты. Native certification и новый benchmark

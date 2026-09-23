@@ -52,6 +52,20 @@ mod client_killswitch;
 #[path = "client/network_lease.rs"]
 mod client_network_lease;
 
+// TUN admission tests replace interface queries and waiting; no real device operations.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)]
+#[path = "client/tun_recovery.rs"]
+mod client_tun_recovery;
+
+// Linux ioctl opening policy can be tested without loading a platform TUN backend.
+#[cfg(all(
+    test,
+    not(all(target_os = "linux", any(feature = "client", feature = "server")))
+))]
+#[path = "tun/open.rs"]
+mod tun_open;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,

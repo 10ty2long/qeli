@@ -97,3 +97,7 @@ Next: incomplete /proc during TUN-owner discovery, durable namespace identity, f
 lock deadlines, DNS/carrier globals, crash recovery and Q14-F027 workers/FD. Native
 certification and a new benchmark were not run. Plan: 37 sections, 19 IN_PROGRESS,
 18 TODO, 0 full PASS; stage 00 is complete.
+
+Follow-up: [Q25-F054–F055](AUDIT-Q25-TUN-ADMISSION.md) removes partial procfs holder
+discovery and destructive recovery; the first queue is created exclusively.
+Attach/teardown identity and Linux runtime remain open.

@@ -493,7 +493,7 @@ retries; Android — `[SECURITY]` + stop):**
 | `could not route included subnet <cidr> … refusing to run` | Linux | fatal: a subnet listed in `include` would have left unencrypted |
 | `could not install blackhole <half>` | Linux | the negotiated full-tunnel plan lacks that address family and qeli could not enforce its fail-closed block. Fix `ip route`/privileges, use a dual profile, or deliberately set the matching `allow_ipv4_leak`/`allow_ipv6_leak` |
 | `kill-switch: could not install N allow rule(s) in QELI_KS_<if> …` | Linux | **since 0.7.12** the chain refuses to arm when an allow rule did not land (otherwise it would cut the host off from the very tunnel it protects). See the listed rules |
-| `interface '<dev>' already exists …` | Linux | see §6 — our own orphaned interface is reclaimed automatically; a refusal means it is held by **another** process, or is not a tuntap device |
+| `interface '<dev>' already exists …` | Linux | the client only waits for release; the server refuses immediately. Automatic recovery deletion is disabled; see §6.47 |
 
 ### 5.3 Liveness / reconnect (why it drops and reconnects)
 
@@ -1531,6 +1531,29 @@ networks do not produce overrides.
 
 User configuration remains INI; no keys were added.
 [Validation and limits](../reports/AUDIT-Q25-TUNNEL-ROUTES.md).
+
+### 6.47 Linux: occupied TUN/TAP name and creation refusal
+
+In normal creation mode, the Linux client waits approximately six seconds for an
+occupied `dev` to disappear (120 pauses of 50 ms plus query time). It does not
+delete the existing interface based on PID discovery or change its persistence.
+A non-persistent TUN disappears when its owner closes the last descriptor.
+
+- `still present after waiting for release` means the name remains occupied.
+  Stop the previous owner or choose another `dev`; for an externally managed
+  TUN/TAP, deliberately configure `dev_attach=true` and matching `device_type`.
+- `cannot inspect interface` means the kernel query failed. Resolve the reported
+  cause; an error is not treated as absence.
+- `was replaced while waiting for release` means another ifindex was observed
+  under the same name; the current attempt stops.
+- `Device or resource busy` during creation may mean a device appeared after
+  the check. Exclusive creation does not automatically attach to it.
+
+The server immediately refuses an occupied `tun.name`. The first client/server
+queue is created exclusively; later queues use the name returned by the kernel.
+`dev_attach` still requires a pre-created compatible interface. Disappearance
+between its check and open, and identity during later cleanup, remain separate
+audit items. [Validation and limits](../reports/AUDIT-Q25-TUN-ADMISSION.md).
 
 ---
 

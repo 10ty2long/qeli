@@ -97,3 +97,7 @@ inventory здесь не решены. Namespace объекты не удерж
 доверие к файлам/срок блокировки, DNS/carrier globals, crash recovery и Q14-F027 workers/FD.
 Native certification и новый benchmark не выполнены. План: 37 разделов, 19 IN_PROGRESS,
 18 TODO, 0 полного PASS; этап 00 завершён.
+
+Продолжение: [Q25-F054–F055](AUDIT-Q25-TUN-ADMISSION.md) удаляет поиск TUN-владельцев
+через неполный procfs и разрушающее recovery; создание первой очереди эксклюзивно.
+Attach/teardown identity и Linux runtime остаются открыты.

@@ -10,6 +10,8 @@ mod network_lease;
 mod roaming_linux;
 #[cfg(target_os = "linux")]
 pub mod route;
+#[cfg(target_os = "linux")]
+mod tun_recovery;
 
 use crate::crypto::{
     derive_data_frag_key, derive_keys, derive_keys_bound, derive_keys_hybrid,
@@ -6875,146 +6877,6 @@ impl Drop for TunGuard {
     }
 }
 
-/// PIDs holding an open `/dev/net/tun` fd attached to `if_name`.
-///
-/// A tun fd's `/proc/<pid>/fdinfo/<fd>` carries an `iff:` line naming the device it is
-/// attached to — the only reliable way to tell who owns an interface. Needs root (the
-/// client already requires it for TUN); entries we cannot read are skipped, so the
-/// result is "who we can PROVE holds it", which is why the caller treats an empty
-/// answer as "not ours" rather than "free to take".
-#[cfg(target_os = "linux")]
-fn tun_fd_holders(if_name: &str) -> Vec<u32> {
-    let mut pids = Vec::new();
-    let Ok(procs) = std::fs::read_dir("/proc") else {
-        return pids;
-    };
-    for proc in procs.flatten() {
-        let Some(pid) = proc
-            .file_name()
-            .to_str()
-            .and_then(|s| s.parse::<u32>().ok())
-        else {
-            continue; // not a pid entry
-        };
-        let Ok(fds) = std::fs::read_dir(format!("/proc/{}/fd", pid)) else {
-            continue; // process vanished mid-scan, or not inspectable
-        };
-        for fd in fds.flatten() {
-            // Cheap filter first: only a /dev/net/tun fd can be attached to a device,
-            // and a readlink is far cheaper than reading every fdinfo in the system.
-            if std::fs::read_link(fd.path())
-                .map(|t| t != std::path::Path::new("/dev/net/tun"))
-                .unwrap_or(true)
-            {
-                continue;
-            }
-            let Some(fd_num) = fd.file_name().to_str().map(str::to_string) else {
-                continue;
-            };
-            let Ok(info) = std::fs::read_to_string(format!("/proc/{}/fdinfo/{}", pid, fd_num))
-            else {
-                continue;
-            };
-            if info.lines().any(|l| {
-                l.strip_prefix("iff:")
-                    .map(|v| v.trim() == if_name)
-                    .unwrap_or(false)
-            }) {
-                pids.push(pid);
-                break; // one attached fd is enough to call this pid a holder
-            }
-        }
-    }
-    pids
-}
-
-/// Decide what to do about an interface that is already present when we are about to
-/// create one, and reclaim it when it is provably our own leftover.
-///
-/// This used to be an unconditional error, reasoning that our device is non-persistent
-/// and so cannot outlive us. That misses the case it most needs to handle: an in-process
-/// reconnect after the data plane exited on an error path, where a leaked reader thread
-/// in THIS process still holds the fd. The device is then very much alive, and refusing
-/// it means every later reconnect fails identically — forever.
-///
-/// The ownership test follows from non-persistence:
-///   * not a tuntap device -> someone else's (ethernet/WireGuard/…) -> refuse
-///   * held by another pid -> another app, or a second qeli -> refuse
-///   * held by nobody -> only a PERSISTENT device survives with no fd, and ours never
-///     are, so it was created by someone else -> refuse
-///   * held only by us -> our own leftover -> reclaim
-#[cfg(target_os = "linux")]
-fn reclaim_stale_tun(if_name: &str) -> anyhow::Result<()> {
-    let advice = "Set 'dev=<name>' in [qeli] to use a different interface name (or \
-                  'dev_attach=true' to attach to an externally-owned interface).";
-    // Only tuntap devices expose tun_flags, so its absence settles the question.
-    if !std::path::Path::new(&format!("/sys/class/net/{}/tun_flags", if_name)).exists() {
-        anyhow::bail!(
-            "interface '{}' already exists and is not a TUN/TAP device — refusing to touch \
-             it. {}",
-            if_name,
-            advice
-        );
-    }
-    let me = std::process::id();
-    let holders = tun_fd_holders(if_name);
-    let foreign: Vec<u32> = holders.iter().copied().filter(|&p| p != me).collect();
-    if !foreign.is_empty() {
-        anyhow::bail!(
-            "interface '{}' already exists and is held by another process (pid {:?}) — \
-             refusing to take it over. {}",
-            if_name,
-            foreign,
-            advice
-        );
-    }
-    if holders.is_empty() {
-        anyhow::bail!(
-            "interface '{}' already exists with no process attached, so it is a persistent \
-             device someone else created (ours never are) — refusing to delete it. {}",
-            if_name,
-            advice
-        );
-    }
-
-    // Held only by us: a previous connection in this process leaked it.
-    log::warn!(
-        "interface '{}' is left over from a previous connection in this process — reclaiming it",
-        if_name
-    );
-    // Best effort only: `ip tuntap del` fails with EINVAL while a queue is still attached,
-    // which is precisely the state we are in — the previous reader has not let go yet. It
-    // is the LAST fd closing that removes a non-persistent device, so this is a nudge (and
-    // clears the persist flag in the odd case one got set), not the mechanism.
-    if let Err(e) = TunInterface::delete(if_name) {
-        log::debug!(
-            "reclaiming '{}': still attached ({}) — waiting for the previous reader to \
-             close its fd",
-            if_name,
-            e
-        );
-    }
-
-    // The device goes away once its last fd closes, which the teardown guard guarantees by
-    // stopping that reader — so wait for it instead of racing it. Attaching while it still
-    // holds a queue would be worse than failing: the kernel would split arriving packets
-    // between the live reader and the dead one, silently blackholing half the tunnel.
-    // Blocking here is safe: what we wait on are plain threads, not tasks.
-    let sysfs = format!("/sys/class/net/{}", if_name);
-    for _ in 0..120 {
-        if !std::path::Path::new(&sysfs).exists() {
-            return Ok(());
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    }
-    anyhow::bail!(
-        "interface '{}' is still held open after reclaiming it (a previous reader thread has \
-         not exited) — not attaching, as sharing the device would blackhole traffic. {}",
-        if_name,
-        advice
-    )
-}
-
 /// Set the family-matched `IP*_MTU_DISCOVER` option. `PROBE` sets DF and ignores the
 /// kernel's cached PMTU (so we can probe freely); `DO` keeps DF for the data plane;
 /// `DONT` allows fragmentation (the behaviour we restore if probing can't complete).
@@ -7892,30 +7754,17 @@ fn setup_tunnel(
     log::info!("TUN MTU: {}", mtu);
 
     let route_owner = route::RouteOwner::new(&if_name, plan.generation)?;
-    let exists = std::path::Path::new(&format!("/sys/class/net/{}", if_name)).exists();
-    if attach {
-        // Attach to a PRE-EXISTING, externally-owned interface; we only open it for
-        // packet IO. If it's not there yet, error out and let the reconnect loop retry
-        // until the owner creates it.
-        if !exists {
-            anyhow::bail!(
-                "dev_attach is set but interface '{}' does not exist yet — waiting for its \
-                 owner to create it (the reconnect loop will retry).",
-                if_name
-            );
-        }
-        log::info!("Attaching to existing {} interface {}", dev_label, if_name);
-    } else {
-        // An interface that already exists is usually someone else's, and clobbering it
-        // would be destructive — but it can also be OUR OWN leftover from a connection
-        // that died on an error path, in which case refusing would wedge every reconnect
-        // from here on. Only that provably-ours case is reclaimed; everything else still
-        // errors out and tells the operator to pick a distinct name via `dev=`.
-        if exists {
-            reclaim_stale_tun(&if_name)?;
-        }
-        log::info!("Creating {} interface {}", dev_label, if_name);
-    }
+    tun_recovery::prepare(&if_name, attach)?;
+    log::info!(
+        "{} {} interface {}",
+        if attach {
+            "Attaching to existing"
+        } else {
+            "Creating"
+        },
+        dev_label,
+        if_name
+    );
 
     // Attach mode must mirror the existing device's IFF_MULTI_QUEUE flag. Opening a
     // multi-queue TUN/TAP without it fails with EINVAL, while adding it to a single-queue
@@ -8034,9 +7883,8 @@ fn setup_tunnel(
     // Own the dups through the rest of this function. They used to be bare `i32`s, and
     // everything below can still fail: a `?` from `setup_routes` or the DNS setup left
     // both of them open with nothing to close them. The device is non-persistent, so it
-    // then survived on those two fds — and `reclaim_stale_tun` could not recover it
-    // either, because the holder it found was OUR OWN pid and the fds were never going
-    // to be released, so every later reconnect timed out waiting and bailed. `OwnedFd`
+    // then survived on those two fds. Waiting for the non-persistent device could never
+    // succeed because those descriptors were not going to be released. `OwnedFd`
     // closes them on any early return; ownership passes to the caller only on success.
     // F_DUPFD_CLOEXEC, not dup(2).
     //

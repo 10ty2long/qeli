@@ -4801,10 +4801,18 @@ async fn run_profile_generation(
     // Never delete a pre-existing device here: there is no ownership marker proving it is
     // ours, and qeli-created devices are non-persistent and disappear with their last fd.
     // It can therefore be another qeli process, another application, or an operator-owned
-    // persistent TUN. Worse, create_multiqueue may ATTACH to an existing multi-queue device
-    // instead of returning EEXIST and silently share its traffic. Refuse before TUNSETIFF.
-    let tun_sysfs = format!("/sys/class/net/{}", pcfg.tun.name);
-    if std::path::Path::new(&tun_sysfs).exists() {
+    // persistent TUN. Without exclusive creation, TUNSETIFF could attach to an existing
+    // multi-queue device and silently share its traffic. The early check
+    // provides a useful diagnostic; IFF_TUN_EXCL on the first queue closes the race.
+    if crate::tun::open::interface_index(&pcfg.tun.name)
+        .map_err(|error| {
+            anyhow::anyhow!(
+                "profile '{name}': cannot inspect interface '{}': {error}",
+                pcfg.tun.name
+            )
+        })?
+        .is_some()
+    {
         anyhow::bail!(
             "profile '{}': interface '{}' already exists — refusing to delete or attach to a \
              device whose ownership cannot be proved; stop its owner or choose another tun.name",

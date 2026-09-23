@@ -1778,6 +1778,14 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `dns` | client DNS mode. On Linux, `tunnel` applies per-interface DNS through `systemd-resolved`; it does not overwrite `/etc/resolv.conf`. Installing a requested resolver fails if resolved is not the active system resolver. Deleting the tunnel interface removes its DNS; clean shutdown also explicitly reverts it. `off` / `system` leaves DNS to the platform. File-only; emitted to INI only when `!= tunnel` |
 | `autostart` | auto-connect this profile when the supervisor/panel starts (accepts `true`/`1`/`yes`/`on`). Read by the **panel client-manager**; ignored by the client runtime itself. Emitted to INI only when `true` |
 
+On Linux, `dev_attach=false` only waits approximately six seconds for an occupied
+name to be released; Qeli does not delete a device based on its observed PID holders.
+Query errors and changed ifindex stop setup. TUN/TAP creation and the first multiqueue
+open are exclusive: a device appearing after the check is not borrowed. Later queues
+use the first queue's actual name. The server immediately refuses an occupied
+`tun.name`. No new parameters are introduced; diagnostics and `dev_attach` limits:
+[TROUBLESHOOTING.md §6.47](TROUBLESHOOTING.md).
+
 On Android and iOS, `allow_lan` also excludes IPv6 ULA, link-local and multicast
 (`fc00::/7`, `fe80::/10`, `ff00::/8`). A site's local IPv6 GUA prefix cannot be inferred
 safely; add that exact prefix to `exclude`. Android 13+ uses `excludeRoute`; older versions

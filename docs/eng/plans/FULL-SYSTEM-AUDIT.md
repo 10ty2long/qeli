@@ -616,6 +616,13 @@ checks PID/time context and procfs before pruning, and retains nonempty current-
 with an explicit migration error. 24 new tests, 1386 Rust tests PASS. Actual Linux,
 namespace identity after object destruction and full section PASS remain open.
 
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): destructive TUN recovery based on partial
+PID discovery was removed. The client passively waits for release and refuses
+lookup errors/changed ifindex; client and server create the first queue exclusively.
+Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust tests
+PASS. Linux example-test compilation without the server feature is fixed.
+Attach/teardown races and actual Linux runtime remain open.
+
 ### 15. Sessions, IP pools and limits
 
 **Source:** `qeli/src/server/pool.rs`, `qeli/src/server/handler.rs`, `qeli/src/server/udp_handler.rs`, `qeli/src/server/usage.rs`.
@@ -1011,6 +1018,13 @@ output capped at 16 MiB per stream, child termination and DNS-marker retention o
 Diagnostics no longer claim unconfirmed rollback. 986 host Rust tests PASS; two new Linux
 process-group tests were cross-compiled only. Route/firewall commands, live Linux and an
 overall shutdown deadline remain open; section status stays IN_PROGRESS.
+
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): destructive TUN recovery based on partial
+PID discovery was removed. The client passively waits for release and refuses
+lookup errors/changed ifindex; client and server create the first queue exclusively.
+Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust tests
+PASS. Linux example-test compilation without the server feature is fixed.
+Attach/teardown races and actual Linux runtime remain open.
 
 ### 22. Transport core, FFI/JNI and memory
 
@@ -1513,6 +1527,13 @@ checks PID/time context and procfs before pruning, and retains nonempty current-
 with an explicit migration error. 24 new tests, 1386 Rust tests PASS. Actual Linux,
 namespace identity after object destruction and full section PASS remain open.
 
+[Q25-F054–F056](../reports/AUDIT-Q25-TUN-ADMISSION.md): destructive TUN recovery based on partial
+PID discovery was removed. The client passively waits for release and refuses
+lookup errors/changed ifindex; client and server create the first queue exclusively.
+Later queues use its actual name. 20 new tests, 7 baseline failures, 1406 Rust tests
+PASS. Linux example-test compilation without the server feature is fixed.
+Attach/teardown races and actual Linux runtime remain open.
+
 ### 26. Shared C# and managed/native boundary
 
 **Source:** `qeli-shared/QeliShared`, `qeli-shared/QeliConformance`.
@@ -1788,10 +1809,11 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue section 25 with complete /proc evidence for TUN recovery,
-namespace identity after object destruction, journal file trust and lock deadlines.
-Q25-F052–F053 isolates sysctl network groups and checks PID/time context within the stated
-boundaries. Actual Linux namespace/migration/reboot, lease/attach/reconnect,
+**Next work:** continue sections 25/21 with dev_attach disappearance races,
+TUN ownership at cleanup and consistent parser/backend interface names.
+Q25-F054–F056 removes recovery deletion and makes first-queue creation exclusive.
+Then address namespace identity after object destruction, journal file trust and
+lock deadlines. Actual Linux namespace/migration/reboot, lease/attach/reconnect,
 iptables-nft/legacy and IPv6-disabled scenarios, IPv6 appearing after startup,
 DNS/carrier globals, overall deadlines, durable crash recovery, Q14-F027 workers/FD
 and synchronous preflight waits remain open. Native certification and a new benchmark

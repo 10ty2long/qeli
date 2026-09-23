@@ -1207,6 +1207,12 @@ sudo netfilter-persistent save 2>/dev/null; true
 
 ### 13.2. Client — Linux (Rust CLI)
 
+On restart, the client does not automatically delete an occupied TUN: it waits for
+the name to be released. A non-persistent device disappears after its last fd closes.
+Before manual deletion, establish that it belongs to the configuration being retired;
+`dev_attach=true` leaves it to the external owner. See
+[TROUBLESHOOTING.md §6.47](TROUBLESHOOTING.md).
+
 `sysctls.state` may hold recovery entries for several network namespaces. Restore
 settings in their original network/PID/time context and preserve the shared state directory
 while any client or server still needs it. When upgrading with nonempty v1 state, keep

@@ -95,3 +95,7 @@ lease не является доказательством изоляции вс
 
 Продолжение: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) разделяет журнал по network namespace,
 проверяет PID/time контекст и описывает миграцию v1 → v2. Runtime-границы сохранены.
+
+Продолжение: [Q25-F054–F055](AUDIT-Q25-TUN-ADMISSION.md) удаляет поиск TUN-владельцев
+через неполный procfs и разрушающее recovery; создание первой очереди эксклюзивно.
+Attach/teardown identity и Linux runtime остаются открыты.

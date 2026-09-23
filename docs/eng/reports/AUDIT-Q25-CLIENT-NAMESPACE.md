@@ -92,3 +92,7 @@ entries after inconclusive sysctl inspection; namespace identity remains open.
 
 Follow-up: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) isolates network journal groups,
 checks PID/time context and documents v1 → v2 migration. Runtime limits remain.
+
+Follow-up: [Q25-F054–F055](AUDIT-Q25-TUN-ADMISSION.md) removes partial procfs holder
+discovery and destructive recovery; the first queue is created exclusively.
+Attach/teardown identity and Linux runtime remain open.
