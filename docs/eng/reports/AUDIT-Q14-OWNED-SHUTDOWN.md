@@ -61,12 +61,41 @@ successful retry, all error causes and flush before lease release. These scenari
 not included in 1042. Evidence and logs:
 C:/Users/litvi/OneDrive/Documents/qeli/owned-shutdown-audit-20260923.
 
+## Follow-up: propagation through the outer supervisor
+
+A separate pass based on `ea2d377b` confirmed that `supervise` received the worker exit
+status but returned Ok on final stop regardless of it. Forced termination after the
+shutdown deadline also counted as success, hiding the worker failure from
+`run_supervisor` and its calling CLI.
+
+In `qeli/src/server/supervisor.rs`, the termination result is retained until the published
+PID is cleared. Final stop returns an error for unsuccessful exit status, and TimedOut
+for a kill after the grace deadline. Command-channel closure follows the same contract.
+Successful exit returns Ok. `run_supervisor` shuts down outbound clients and notifications,
+then reports `Supervisor shutdown failed: ...` and returns the error to its calling CLI.
+
+Explicit Restart and unexpected exit without a stop request keep the existing respawn
+policy; unsuccessful termination is also logged. Failed cleanup before such a restart
+does not prevent respawn in this change; that remains a separate policy question.
+
+Five real-child host tests were added: clean/nonzero stop, command-channel closure with
+exit 7, simultaneous ready exit/channel closure and automatic restart after unexpected exit 7. Five existing kill fixtures now
+expect an error while retaining deadline, PID, signal-count and restart-coalescing checks.
+
+**Current total: 976 host unit + 71 config integration = 1047 Rust tests PASS.**
+The entire prior build/Clippy/rustfmt matrix was rerun and passes; all nine docs checks PASS.
+A separate production-supervisor copy with host children confirms baseline loss of
+exit 7 and forced-kill errors. Both return Err with the fix; clean stop remains Ok and
+PID is cleared in every case. These three scenarios are not included in 1047.
+Evidence: C:/Users/litvi/OneDrive/Documents/qeli/supervisor-stop-audit-20260923.
+Linux signal delivery and systemd runtime were not tested.
+
 ## Open boundaries
 
 Q14-F027 **remains open**: generic NAT sweep errors, TUN deletion, queue timeouts/panics
 and shutdown JoinSet results do not yet reach a complete aggregate outcome. Success of
-the new check does not verify those resources. Worker exit also does not establish
-correct reporting by the outer supervisor/systemd.
+the new check does not verify those resources. The outer supervisor now propagates
+final stop failure, but live systemd reporting has not been tested.
 
 Only in-memory worker leases are checked. A failed partial acquire before IPv6 lease
 registration, previous-worker journal records and IPv4 forwarding held for the worker

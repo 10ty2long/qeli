@@ -578,7 +578,10 @@ baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остают
 retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
 статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
+остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
+host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
 
 ### 15. Сессии, IP-пулы и лимиты
 
@@ -659,7 +662,10 @@ baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остают
 retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
 статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
+остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
+host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
 
 ### 18. IPv6 off/manual/route/nat66 и NDP
 
@@ -703,7 +709,10 @@ baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остают
 retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
 статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
+остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
+host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
 
 ### 19. DNS сервера и клиентов
 
@@ -806,7 +815,10 @@ baseline/fix. Q14-F027, persistent journal, deadlines и live Linux остают
 retry известных DNS/IPv6 sysctl leases влияет на Result и код выхода worker. Flush
 статистики выполняется после ошибки сети; активные DNS leases обнаруживаются без удаления.
 14 новых host-тестов, 1042 Rust tests PASS; восемь отдельных process-exit сценариев PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journal и live Linux остаются открытыми.
+Дополнительный проход передаёт ошибку worker через внешний supervisor при финальной
+остановке: nonzero exit и принудительный kill больше не возвращают Ok. Ещё пять
+host-тестов, текущий итог 1047 Rust tests PASS; три отдельные supervisor-регрессии PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journal и live Linux остаются открытыми.
 
 ### 20. DHCP и lease lifecycle
 

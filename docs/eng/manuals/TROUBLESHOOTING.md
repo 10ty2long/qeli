@@ -1166,8 +1166,14 @@ this check does not delete its rules. For ordinary cleanup failure, inspect the 
 firewall tool, sysctl access and earlier profile errors. If final retry confirms cleanup,
 an earlier transient failure alone does not change a successful exit status.
 
+The outer supervisor returns final worker stop failure to its calling CLI and logs
+`Supervisor shutdown failed: ...`. A nonzero exit or forced kill after the grace deadline
+does not count as a successful stop. Successful worker exit returns success.
+Explicit Restart and unexpected exit without a stop request still respawn the worker;
+termination failure is logged.
+
 This check covers only DNS/IPv6 sysctl leases known to the worker. A successful exit
-does not prove the absence of generic NAT rules, TUN devices or outer supervisor errors.
+does not prove the absence of generic NAT rules, TUN devices or profile JoinSet errors.
 DNS ownership is lost when the process exits; automatic exact-rule recovery after
 restart is not yet guaranteed.
 [Report and open boundaries](../reports/AUDIT-Q14-OWNED-SHUTDOWN.md).

@@ -573,7 +573,10 @@ separately. Q14-F027, persistent journaling, deadlines and live Linux remain ope
 DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+A follow-up propagates final worker stop failure through the outer supervisor: nonzero
+exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+Rust tests PASS, plus three separate supervisor regression scenarios PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
 
 ### 15. Sessions, IP pools and limits
 
@@ -654,7 +657,10 @@ separately. Q14-F027, persistent journaling, deadlines and live Linux remain ope
 DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+A follow-up propagates final worker stop failure through the outer supervisor: nonzero
+exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+Rust tests PASS, plus three separate supervisor regression scenarios PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
 
 ### 18. IPv6 off/manual/route/nat66 and NDP
 
@@ -698,7 +704,10 @@ separately. Q14-F027, persistent journaling, deadlines and live Linux remain ope
 DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+A follow-up propagates final worker stop failure through the outer supervisor: nonzero
+exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+Rust tests PASS, plus three separate supervisor regression scenarios PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
 
 ### 19. Server and client DNS
 
@@ -799,7 +808,10 @@ separately. Q14-F027, persistent journaling, deadlines and live Linux remain ope
 DNS/IPv6 sysctl leases affects the worker Result and exit status. Accounting flush still
 runs after network failure; active DNS leases are reported without deleting their rules.
 14 new host tests, 1042 Rust tests PASS; eight separate process-exit scenarios PASS.
-Generic NAT, TUN, JoinSet/supervisor, persistent journaling and live Linux remain open.
+A follow-up propagates final worker stop failure through the outer supervisor: nonzero
+exit and forced kill no longer return Ok. Five more host tests; current total is 1047
+Rust tests PASS, plus three separate supervisor regression scenarios PASS.
+Generic NAT, TUN, profile JoinSet, restart policy, persistent journaling and live Linux remain open.
 
 ### 20. DHCP and lease lifecycle
 

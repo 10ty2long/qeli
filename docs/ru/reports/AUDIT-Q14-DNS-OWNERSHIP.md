@@ -89,4 +89,4 @@ SSH/systemd/Actions и бенчмарки не запускались. След�
 
 Продолжение: [итоговая проверка известных DNS/sysctl leases](AUDIT-Q14-OWNED-SHUTDOWN.md)
 передаёт их неустранённые ошибки в код выхода worker. Q14-F027 исправлена частично;
-TUN, generic NAT и supervisor остаются открытыми.
+Внешний supervisor передаёт ошибку финальной остановки; TUN, generic NAT и profile JoinSet остаются открытыми.

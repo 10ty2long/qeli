@@ -88,4 +88,4 @@ Previous pass: [shared firewall checks](AUDIT-Q14-Q25-FIREWALL-CHECKS.md).
 
 Follow-up: [final verification of known DNS/sysctl leases](AUDIT-Q14-OWNED-SHUTDOWN.md)
 propagates their unresolved errors to worker exit status. Q14-F027 is partially addressed;
-TUN, generic NAT and supervisor outcomes remain open.
+The outer supervisor propagates final stop failure; TUN, generic NAT and profile JoinSet remain open.

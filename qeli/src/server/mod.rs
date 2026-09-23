@@ -4171,7 +4171,10 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     state.client_manager.shutdown_all().await;
 
     notifications.shutdown().await;
-    log::info!("Supervisor shutdown complete");
+    match &result {
+        Ok(()) => log::info!("Supervisor shutdown complete"),
+        Err(error) => log::error!("Supervisor shutdown failed: {error}"),
+    }
     result.map_err(Into::into)
 }
 

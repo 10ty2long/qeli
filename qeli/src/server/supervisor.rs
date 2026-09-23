@@ -163,7 +163,7 @@ pub(crate) async fn supervise(
         let mut stopping = false;
         let mut restarting = false;
         let mut deadline = None;
-        loop {
+        let stop_result = loop {
             tokio::select! {
                 biased;
                 _ = &mut stop, if !stopping => {
@@ -172,16 +172,21 @@ pub(crate) async fn supervise(
                     request_termination(&mut worker.child, &mut signal, &mut deadline, policy.shutdown_grace);
                 },
                 status = worker.child.wait() => {
-                    match status {
-                        Ok(status) => log::info!("supervisor: worker exited ({status})"),
-                        Err(error) => return Err(error),
-                    }
-                    break;
+                    let status = status?;
+                    log::info!("supervisor: worker exited ({status})");
+                    break if status.success() {
+                        Ok(())
+                    } else {
+                        Err(io::Error::other(format!("worker exited unsuccessfully ({status})")))
+                    };
                 },
                 _ = wait_for_deadline(deadline) => {
                     log::warn!("supervisor: worker did not stop within {:?} — killing and reaping it", policy.shutdown_grace);
                     worker.child.kill().await?;
-                    break;
+                    break Err(io::Error::new(
+                        io::ErrorKind::TimedOut,
+                        format!("worker exceeded shutdown grace {:?}; forced termination cannot confirm cleanup", policy.shutdown_grace),
+                    ));
                 },
                 command = commands.recv(), if !stopping => match command {
                     Some(WorkerCmd::ReloadUsers) if deadline.is_none() => {
@@ -202,12 +207,19 @@ pub(crate) async fn supervise(
                     },
                 },
             }
-        }
+        };
         // Drop clears metrics BEFORE any retry delay. All waits/signals use this same
         // Child, so a detached waiter can no longer reap and recycle the stored PID.
         drop(worker);
-        if stopping {
-            return Ok(());
+        // A ready child wait wins over commands.recv in the biased select above.
+        // Owner loss in that same poll must not discard a failed exit via retry's Ok path.
+        if stopping || commands.is_closed() {
+            return stop_result;
+        }
+        // An explicit restart or unexpected exit still follows the existing recovery
+        // policy. Only final service stop returns this generation's failure to the caller.
+        if let Err(error) = stop_result {
+            log::warn!("supervisor: {error}");
         }
         if restarting {
             backoff = policy.initial_backoff;
@@ -246,10 +258,20 @@ mod tests {
             // A real isolated child: no network or host changes; exits when the owner
             // closes stdin. This also cleans up the baseline's detached waiter on failure.
             let _ = std::io::copy(&mut std::io::stdin(), &mut std::io::sink());
+            if let Ok(code) = std::env::var("QELI_SUPERVISOR_TEST_EXIT_CODE") {
+                std::process::exit(code.parse().unwrap());
+            }
         }
     }
 
     fn spawn_fixture(held: &Arc<Mutex<Option<ChildStdin>>>) -> io::Result<Child> {
+        spawn_fixture_with_exit(held, 0)
+    }
+
+    fn spawn_fixture_with_exit(
+        held: &Arc<Mutex<Option<ChildStdin>>>,
+        code: i32,
+    ) -> io::Result<Child> {
         let mut child = Command::new(std::env::current_exe()?)
             .args([
                 "--exact",
@@ -257,6 +279,7 @@ mod tests {
                 "--nocapture",
             ])
             .env("QELI_SUPERVISOR_TEST_CHILD", "1")
+            .env("QELI_SUPERVISOR_TEST_EXIT_CODE", code.to_string())
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -418,7 +441,8 @@ mod tests {
             stopped.is_ok(),
             "worker ignoring termination blocks shutdown indefinitely"
         );
-        stopped.unwrap().unwrap().unwrap();
+        let error = stopped.unwrap().unwrap().unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::TimedOut);
         assert_eq!(pid.load(Ordering::SeqCst), 0);
     }
     #[tokio::test]
@@ -478,7 +502,12 @@ mod tests {
         });
         until(|| pid.load(Ordering::SeqCst) != 0).await;
         drop(tx);
-        timeout(DEADLINE, worker).await.unwrap().unwrap().unwrap();
+        let error = timeout(DEADLINE, worker)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
         assert_eq!(stops.load(Ordering::SeqCst), 1);
         assert_eq!(pid.load(Ordering::SeqCst), 0);
     }
@@ -531,7 +560,12 @@ mod tests {
         tx.try_send(WorkerCmd::ReloadUsers).unwrap();
         until(|| attempts.load(Ordering::SeqCst) == 2).await;
         stop_tx.send(()).unwrap();
-        timeout(DEADLINE, worker).await.unwrap().unwrap().unwrap();
+        let error = timeout(DEADLINE, worker)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
         assert_eq!(attempts.load(Ordering::SeqCst), 2);
         assert_eq!(reloads.load(Ordering::SeqCst), 1);
         assert_eq!(stops.load(Ordering::SeqCst), 2); // restart and final stop
@@ -579,7 +613,12 @@ mod tests {
         // establishes that Apply wakes the backoff instead of waiting for its timer.
         until(|| attempts.load(Ordering::SeqCst) == 2).await;
         stop_tx.send(()).unwrap();
-        timeout(DEADLINE, worker).await.unwrap().unwrap().unwrap();
+        let error = timeout(DEADLINE, worker)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
         assert_eq!(reloads.load(Ordering::SeqCst), 0);
     }
 
@@ -620,7 +659,12 @@ mod tests {
         }
         until(|| attempts.load(Ordering::SeqCst) == 2).await;
         stop_tx.send(()).unwrap();
-        timeout(DEADLINE, worker).await.unwrap().unwrap().unwrap();
+        let error = timeout(DEADLINE, worker)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::TimedOut);
         assert_eq!(attempts.load(Ordering::SeqCst), 2);
         assert_eq!(stops.load(Ordering::SeqCst), 2);
     }
@@ -659,5 +703,136 @@ mod tests {
             !wait_for_retry(Duration::from_secs(30), &mut rx, stop.as_mut()).await,
             "queued Restart must not outlive the owner of the command channel"
         );
+    }
+
+    async fn stop_fixture_with_exit(code: i32, close_channel: bool) -> io::Result<()> {
+        let held = Arc::new(Mutex::new(None));
+        let child_stdin = held.clone();
+        let pid = Arc::new(AtomicU32::new(0));
+        let published = pid.clone();
+        let (tx, mut rx) = mpsc::channel(8);
+        let (stop_tx, stop_rx) = oneshot::channel();
+        let worker = tokio::spawn(async move {
+            supervise(
+                || spawn_fixture_with_exit(&child_stdin, code),
+                |_, signal| {
+                    assert_eq!(signal, WorkerSignal::Stop);
+                    child_stdin.lock().unwrap().take(); // simulate graceful signal handling
+                    Ok(())
+                },
+                |value| published.store(value.unwrap_or(0), Ordering::SeqCst),
+                &mut rx,
+                async {
+                    let _ = stop_rx.await;
+                },
+                SupervisorPolicy {
+                    shutdown_grace: Duration::from_secs(1),
+                    ..policy()
+                },
+            )
+            .await
+        });
+        until(|| pid.load(Ordering::SeqCst) != 0).await;
+        if close_channel {
+            drop(tx);
+        } else {
+            stop_tx.send(()).unwrap();
+        }
+        let result = timeout(DEADLINE, worker).await.unwrap().unwrap();
+        assert_eq!(pid.load(Ordering::SeqCst), 0);
+        result
+    }
+
+    #[tokio::test]
+    async fn successful_worker_stop_returns_success_after_reaping() {
+        stop_fixture_with_exit(0, false).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn failed_worker_stop_propagates_its_exit_status() {
+        let error = stop_fixture_with_exit(7, false).await.unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
+        assert!(error.to_string().contains('7'), "{error}");
+    }
+
+    #[tokio::test]
+    async fn command_owner_loss_also_propagates_failed_worker_stop() {
+        let error = stop_fixture_with_exit(7, true).await.unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
+        assert!(error.to_string().contains('7'), "{error}");
+    }
+
+    #[tokio::test]
+    async fn unexpected_nonzero_exit_still_restarts_before_final_clean_stop() {
+        let held = Arc::new(Mutex::new(None));
+        let child_stdin = held.clone();
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let spawned = attempts.clone();
+        let (_tx, mut rx) = mpsc::channel(8);
+        let (stop_tx, stop_rx) = oneshot::channel();
+        let worker = tokio::spawn(async move {
+            supervise(
+                || {
+                    let attempt = spawned.load(Ordering::SeqCst);
+                    let child =
+                        spawn_fixture_with_exit(&child_stdin, if attempt == 0 { 7 } else { 0 })?;
+                    spawned.fetch_add(1, Ordering::SeqCst);
+                    Ok(child)
+                },
+                |_, _| {
+                    child_stdin.lock().unwrap().take();
+                    Ok(())
+                },
+                |_| {},
+                &mut rx,
+                async {
+                    let _ = stop_rx.await;
+                },
+                SupervisorPolicy {
+                    initial_backoff: Duration::from_millis(1),
+                    maximum_backoff: Duration::from_millis(1),
+                    shutdown_grace: Duration::from_secs(1),
+                    ..policy()
+                },
+            )
+            .await
+        });
+        until(|| attempts.load(Ordering::SeqCst) == 1).await;
+        held.lock().unwrap().take(); // first worker fails outside a stop request
+        until(|| attempts.load(Ordering::SeqCst) == 2).await;
+        stop_tx.send(()).unwrap();
+        timeout(DEADLINE, worker).await.unwrap().unwrap().unwrap();
+        assert_eq!(attempts.load(Ordering::SeqCst), 2);
+    }
+
+    #[tokio::test]
+    async fn simultaneous_owner_loss_and_ready_exit_preserve_failure() {
+        let held = Arc::new(Mutex::new(None));
+        let (tx, mut rx) = mpsc::channel(8);
+        let mut owner = Some(tx);
+        let result = supervise(
+            || {
+                let mut child = spawn_fixture_with_exit(&held, 7)?;
+                held.lock().unwrap().take();
+                // Make wait ready before entering the select, alongside owner loss.
+                // The isolated OS process can finish independently of this test runtime.
+                let deadline = std::time::Instant::now() + Duration::from_secs(2);
+                while child.try_wait()?.is_none() {
+                    assert!(std::time::Instant::now() < deadline, "fixture did not exit");
+                    std::thread::sleep(Duration::from_millis(1));
+                }
+                owner.take();
+                Ok(child)
+            },
+            |_, _| panic!("already reaped child must not be signalled"),
+            |pid| assert!(pid.is_none()),
+            &mut rx,
+            std::future::pending(),
+            policy(),
+        )
+        .await;
+        let error = result.unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::Other);
+        assert!(error.to_string().contains('7'), "{error}");
     }
 }
