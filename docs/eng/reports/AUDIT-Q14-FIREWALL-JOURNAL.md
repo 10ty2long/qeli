@@ -85,3 +85,5 @@ Windows VM/Mac/iOS/router runtime remains SKIPPED at the user's request.
 [Register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md)
 
 The first packet-matrix invocation stopped before network cases because its harness archive omitted `release_certification.py`. The archive was corrected; the final run is `firewall-journal-packet-matrix-v2`, and the original failure is retained.
+
+24 September follow-up: [16 native mixed/firewalld scenarios](AUDIT-Q14-MIXED-FIREWALL.md) verify rule and journal preservation. A native nft expression can break absent-rule `-C` confirmation after successful `-D`; evidence remains until an administrator restores compatibility. The wrapper that disabled only `-S` did not cover this case.

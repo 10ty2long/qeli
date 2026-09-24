@@ -209,3 +209,5 @@
 - [Q25-F101: безопасный отказ от старого глобального DNS recovery](reports/AUDIT-Q25-LEGACY-DNS.md).
 
 - [Q25: runtime-проверка persistent TUN/TAP и ручного recovery](reports/AUDIT-Q25-PERSISTENT-TUN.md).
+
+- [Q14: серверное восстановление mixed nft/legacy/firewalld, 16 сценариев](reports/AUDIT-Q14-MIXED-FIREWALL.md).

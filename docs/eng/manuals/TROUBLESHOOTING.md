@@ -2359,3 +2359,33 @@ the new connection is ready; use §6.79 when deliberately returning to direct ac
 Do not flush shared firewall/route tables. Automatically adopting a persistent device
 or another owner's DNS configuration is not supported.
 [SIGKILL and manual recovery validation](../reports/AUDIT-Q25-PERSISTENT-TUN.md).
+
+### 6.83. Linux: mixed nft/legacy/firewalld recovery
+
+The backend is selected independently for `iptables` and `ip6tables`. If it changes
+after a crash, Qeli preserves the affected family's records and aborts startup;
+independent confirmed deletions in the other family may already have completed.
+Restore each family's original backend. A whole-table flush is unnecessary.
+
+A native nft expression in a shared chain can prevent both `-S` listing and `-C`
+inspection of an absent rule. In the tested case, successful `-D` is followed by
+`Parsing nftables rule failed` and exit 3. The kernel rule may already be absent,
+but the journal correctly remains: a parse failure does not establish absence.
+Repeated startup will refuse while inspection remains ambiguous.
+
+Stop automatic restarts and save the journal plus `nft -a list ruleset` in the
+original namespace. The owner of the native nft rules must restore chain compatibility
+while preserving required filtering; for example, move its expression to a separate
+native table after checking hook/priority and rule ordering. Remove only explicitly
+verified unwanted rules, never the whole FORWARD chain. Once inspection works, restart
+Qeli to finish exact checks and retire the corresponding journal records. Do not
+reinterpret exit 3 as absence or delete state to bypass refusal.
+
+Successful firewall recovery does not complete every subsystem. WAN `accept_ra`
+reporting `lost live per-interface sysctl evidence` follows §6.64: the original
+interface and value require separate administrator confirmation.
+
+Reloading firewalld with its nftables backend is checked separately from Qeli recovery.
+Preservation of Qeli rules does not prove that firewalld zones and policies permit VPN
+traffic; that depends on administrator configuration.
+[Matrix and limits](../reports/AUDIT-Q14-MIXED-FIREWALL.md).

@@ -471,3 +471,12 @@ verify the orphan's origin, retain evidence, manually remove only that device if
 appropriate, and restart in the original context. Retain the kill-switch and journals
 until recovery completes. Procedure and limits:
 [§6.82](TROUBLESHOOTING.md#682-linux-persistent-tuntap-survives-client-termination).
+
+## Coexistence with nftables and firewalld
+
+Preserve each family's original backend during crash recovery. Native rules can
+prevent confirmation of absence even after successful deletion; Qeli retains those
+records until inspection is repaired. A firewalld reload does not replace Qeli journal
+recovery. Rule preservation and actual traffic through zones/policies are separate
+validation steps.
+[Troubleshooting §6.83](TROUBLESHOOTING.md#683-linux-mixed-nftlegacyfirewalld-recovery).

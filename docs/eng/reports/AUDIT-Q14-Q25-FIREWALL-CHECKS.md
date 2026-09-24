@@ -88,3 +88,5 @@ Previous pass: [finite NAT sweep](AUDIT-Q14-NAT-CLEANUP.md).
 
 Follow-up: [Q14-F028](AUDIT-Q14-DNS-OWNERSHIP.md) preserves exact ownership after failed
 Drop/rollback in worker memory and adds retry. Q14-F027 and restart recovery remain open.
+
+24 September follow-up: [16 native mixed/firewalld scenarios](AUDIT-Q14-MIXED-FIREWALL.md) verify rule and journal preservation. A native nft expression can break absent-rule `-C` confirmation after successful `-D`; evidence remains until an administrator restores compatibility. The wrapper that disabled only `-S` did not cover this case.
