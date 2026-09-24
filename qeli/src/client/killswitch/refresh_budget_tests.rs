@@ -58,8 +58,9 @@ impl Fixture {
             .enable_all()
             .build()
             .unwrap()
-            .block_on(refresh_server_ips("203.0.113.8", 443, self.name))
-            .unwrap();
+            .block_on(prepare_refresh("203.0.113.8", 443, self.name))
+            .unwrap()()
+        .unwrap();
         self.retained();
     }
 }

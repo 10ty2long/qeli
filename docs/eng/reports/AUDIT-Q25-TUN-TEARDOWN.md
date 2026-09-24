@@ -128,3 +128,5 @@ Windows VM, Mac/iOS and physical-router runtime remain **SKIPPED by user decisio
 No fresh Android package is tested in this phase. No new full-audit sections were opened.
 Debt: **4/15 DONE (26.7%), 9 IN_PROGRESS, 2 TODO**.
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/OPERATIONS.md).
+
+Follow-up: [Q25-F107/F108](AUDIT-Q25-FIREWALL-TASK.md) moves firewall operations to joined workers and prevents flushing a chain when hook removal is unconfirmed. Historical results above are retained; overall D05 remains open.

@@ -597,19 +597,19 @@ fn engage(
         .enable_all()
         .build()
         .unwrap()
-        .block_on(ks::engage(
+        .block_on(ks::prepare_engage(
             host,
             port,
             tun,
             allow_ipv4_leak,
             allow_ipv6_leak,
             guard_forward,
-        ))
+        ))?()
 }
 fn refresh_server_ips(host: &str, port: u16, tun: &str) -> anyhow::Result<()> {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap()
-        .block_on(ks::refresh_server_ips(host, port, tun))
+        .block_on(ks::prepare_refresh(host, port, tun))?()
 }

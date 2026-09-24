@@ -100,3 +100,5 @@ Follow-up: [Q25-F098](AUDIT-Q25-KILL-SWITCH-REBUILD.md) fixes the crash-rebuild 
 D05 follow-up: [Q25-F103 — shared system resolver](AUDIT-Q25-SYSTEM-RESOLVER.md) bounds DNS/NSS waiting and call count, supports cancellation and avoids blocking-pool waits during runtime destruction. Earlier synchronous DNS-wait statements refer to the previous snapshot; network mutations and full D05 remain open.
 
 Follow-up: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) moves resolver-file reads before firewall setup, shares bounded admission with NSS and unifies the reader/parser with stub detection. Historical results above are unchanged.
+
+Follow-up: [Q25-F107/F108](AUDIT-Q25-FIREWALL-TASK.md) moves firewall operations to joined workers and prevents flushing a chain when hook removal is unconfirmed. Historical results above are retained; overall D05 remains open.

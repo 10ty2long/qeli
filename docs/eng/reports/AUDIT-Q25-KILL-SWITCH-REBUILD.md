@@ -91,3 +91,5 @@ runtime remain SKIPPED by user decision.
 Additional v2 matrix enables `QELI_DNS_KILL_SWITCH=1` with `QELI_DNS_CRASH_CHECK=1`: both DNS4/DNS6 cells check real tunnels, retained kill-switch after SIGKILL, restored DNS/protection and retired guards. The v1 control matrix without enabled kill-switch in these cells also passed 17/17 and 323 assertions. The fixed runtime runner preserved WAN counters **[8, 14] → [8, 14]**.
 
 Final D04 follow-up: [client mixed packet/recovery matrix and Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) completed; D04 is DONE in the current register. Historical IN_PROGRESS statements above refer to earlier snapshots. D10 (broader policies/topologies) and D13 (state growth) remain open.
+
+Follow-up: [Q25-F107/F108](AUDIT-Q25-FIREWALL-TASK.md) moves firewall operations to joined workers and prevents flushing a chain when hook removal is unconfirmed. Historical results above are retained; overall D05 remains open.

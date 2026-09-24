@@ -2465,3 +2465,15 @@ Hook reason `network_cleanup_failed` and code `network_cleanup` remain unchanged
 Do not assume an enabled kill-switch was removed after this exit, or automatically
 remove it merely because the client window closed. Early errors and forced Drop may
 still run fallback synchronously. [Details](../reports/AUDIT-Q25-TUN-TEARDOWN.md).
+
+### 6.89. Linux: stop during a firewall command or chain retained
+
+DNS waits can be cancelled before mutation. Once iptables/ip6tables work starts, the
+client retains its namespace/TUN lease and awaits the result even after receiving stop.
+Neighboring async tasks keep running. There is still no single hard shutdown deadline.
+
+For `firewall unhook failed; chain retained`, inspect the OUTPUT/FORWARD error and
+exact IPv4/IPv6 family. A chain with unconfirmed hook removal is not automatically
+flushed. Retain logs and resolve the command failure before a new start; `failed`
+alone proves neither absence nor complete retention of protection.
+[Cancellation and recovery scenarios](../reports/AUDIT-Q25-FIREWALL-TASK.md).

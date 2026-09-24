@@ -1100,25 +1100,30 @@ impl ClientHookContext {
 }
 
 #[cfg(target_os = "linux")]
-fn cleanup_routing_features(
+async fn cleanup_routing_features(
     checks: impl Into<crate::client_cleanup::Checks>,
     kill_switch: bool,
     gateway_enabled: bool,
     exit_node: bool,
     tun_if: &str,
 ) -> anyhow::Result<()> {
-    crate::client_cleanup::routing(
-        checks,
-        kill_switch,
-        || {
-            if gateway_enabled || exit_node {
-                gateway::disengage_plan(tun_if)
-            } else {
-                Ok(())
-            }
-        },
-        || killswitch::disengage(tun_if),
-    )
+    let checks = checks.into();
+    let tun_if = tun_if.to_owned();
+    network_task::run(Arc::new(AtomicBool::new(false)), move || {
+        crate::client_cleanup::routing(
+            checks,
+            kill_switch,
+            || {
+                if gateway_enabled || exit_node {
+                    gateway::disengage_plan(&tun_if)
+                } else {
+                    Ok(())
+                }
+            },
+            || killswitch::disengage(&tun_if),
+        )
+    })
+    .await
 }
 
 /// The packet/session code is platform-neutral. This is the deliberately small boundary
@@ -2636,17 +2641,20 @@ async fn run_client_inner(
     // is torn down only on a clean stop. If the user asked for it but it can't be
     // installed (no iptables / unresolvable server), refuse to run unprotected.
     if ks_on {
-        tokio::select! {
-            biased;
-            _ = wait_for_shutdown(&shutdown_requested, &shutdown_wakeup) => return Ok(()),
-            result = killswitch::engage(
+        let applied = network_task::prepared(
+            killswitch::prepare_engage(
                 &config.server.address,
                 config.server.port,
                 &tun_if,
                 config.routing.allow_ipv4_leak,
                 config.routing.allow_ipv6_leak,
                 gw_on,
-            ) => result?,
+            ),
+            wait_for_shutdown(&shutdown_requested, &shutdown_wakeup),
+        )
+        .await?;
+        if applied.is_none() {
+            return Ok(()); // Only read-only preparation was cancelled.
         }
     }
     // Gateway and exit-node firewalling are installed by `setup_tunnel` only after the
@@ -2663,11 +2671,11 @@ async fn run_client_inner(
         // through the kill-switch before the next attempt — otherwise a stale
         // allow-list would block every reconnect. Verify the barrier before retrying.
         if ks_on && !shutdown_requested.load(Ordering::Acquire) {
-            let refresh = tokio::select! {
-                biased;
-                _ = wait_for_shutdown(&shutdown_requested, &shutdown_wakeup) => Ok(()),
-                result = killswitch::refresh_server_ips(&config.server.address, config.server.port, &tun_if) => result,
-            };
+            let refresh = network_task::prepared(
+                killswitch::prepare_refresh(&config.server.address, config.server.port, &tun_if),
+                wait_for_shutdown(&shutdown_requested, &shutdown_wakeup),
+            )
+            .await;
             if let Err(error) = refresh {
                 let message = format!("kill-switch verification/address refresh failed: {error}");
                 log::error!("{message}; stopping reconnect and retaining protection");
@@ -2680,7 +2688,8 @@ async fn run_client_inner(
                     gw_on,
                     exit_on,
                     &tun_if,
-                );
+                )
+                .await;
                 run_client_post_down(
                     &core_adapter,
                     &post_down,
@@ -2736,7 +2745,7 @@ async fn run_client_inner(
             // reported by Drop guards before the connection future returned.
             let (reason, error_code) =
                 failure_reason.unwrap_or(("core_start_failed", "core_start"));
-            let cleanup = cleanup_routing_features(checks, ks_on, gw_on, exit_on, &tun_if);
+            let cleanup = cleanup_routing_features(checks, ks_on, gw_on, exit_on, &tun_if).await;
             let terminal = crate::client_cleanup::with_cleanup_error(result, cleanup);
             let message = terminal
                 .as_ref()
@@ -2752,7 +2761,8 @@ async fn run_client_inner(
                 .downcast_ref::<ServerKickError>()
                 .is_some_and(|kick| !kick.reconnect_allowed)
             {
-                let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
+                let cleanup =
+                    cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
                 run_client_post_down(
                     &core_adapter,
                     &post_down,
@@ -2770,7 +2780,7 @@ async fn run_client_inner(
         }
 
         if shutdown_requested.load(Ordering::Acquire) {
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
             let transport_error = result
                 .as_ref()
                 .err()
@@ -2810,7 +2820,7 @@ async fn run_client_inner(
         if stop_reason == Some("disabled") {
             // Clean exit (reconnect disabled): lift the kill-switch / gateway NAT so
             // the host isn't left firewalled or NAT'ing after the client returns.
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
             let (error_code, error_message) = match result.as_ref() {
                 Ok(()) => ("", String::new()),
                 Err(error) => ("transport_error", error.to_string()),
@@ -2835,7 +2845,7 @@ async fn run_client_inner(
         }
 
         if stop_reason == Some("retry_limit") {
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if);
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
             let transport_error = result
                 .as_ref()
                 .err()

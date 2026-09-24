@@ -135,6 +135,24 @@ pub(crate) async fn run<T: Send + 'static>(
     }
 }
 
+/// Cancellation may abandon read-only preparation, never a started mutation.
+/// Once admitted, join and preserve its actual result even if stop becomes ready.
+/// Abandoning the whole future also joins; firewall state remains owned by its registry.
+pub(crate) async fn prepared<T: Send + 'static, W>(
+    preparation: impl std::future::Future<Output = anyhow::Result<W>>,
+    stop: impl std::future::Future<Output = ()>,
+) -> anyhow::Result<Option<T>>
+where
+    W: FnOnce() -> anyhow::Result<T> + Send + 'static,
+{
+    let work = tokio::select! {
+        biased;
+        _ = stop => return Ok(None),
+        prepared = preparation => prepared?,
+    };
+    run(Arc::new(AtomicBool::new(false)), work).await.map(Some)
+}
+
 /// Keep one resource on its original worker across an async pump shutdown.
 /// Dropping the waiter drops the pump future before joining the worker's fallback Drop.
 pub(crate) async fn teardown<T: Send + 'static, B, R: Send + 'static>(
@@ -205,3 +223,7 @@ mod tests;
 #[cfg(test)]
 #[path = "network_task/teardown_tests.rs"]
 mod teardown_tests;
+
+#[cfg(test)]
+#[path = "network_task/prepared_tests.rs"]
+mod prepared_tests;

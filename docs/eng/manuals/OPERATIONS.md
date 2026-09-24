@@ -533,3 +533,17 @@ an enabled kill-switch is retained. A successful guard retry does not turn the i
 failure into successful exit. Retain logs and investigate before a new explicit start.
 Forced Drop may synchronously await completion; there is still no single hard shutdown
 deadline. [Design and checks](../reports/AUDIT-Q25-TUN-TEARDOWN.md).
+
+## Stopping during kill-switch setup, refresh or removal
+
+Before firewall mutation, stop can cancel DNS/read-only preparation. Once admitted,
+the client awaits the operation's actual result. Success after stop takes setup/refresh
+to ordinary cleanup without a new connection; an error remains an error requiring investigation.
+Forced future destruction also joins the worker but can block the calling thread.
+
+`firewall unhook failed; chain retained` means removal of all hooks into the named chain
+has not been confirmed. Qeli preserves its contents, including DROP, and returns an error.
+Do not manually flush that chain before inspecting its hooks. Another firewall family
+may already have been removed; one retained chain does not establish host-wide protection.
+After resolving the cause, a new explicit start performs ordinary recovery.
+[Validation and limits](../reports/AUDIT-Q25-FIREWALL-TASK.md).

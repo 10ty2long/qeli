@@ -220,3 +220,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F105: asynchronous NetworkPlan application and rollback ownership](reports/AUDIT-Q25-NETWORK-TASK.md).
 
 - [Q25-F106: asynchronous teardown of established tunnels](reports/AUDIT-Q25-TUN-TEARDOWN.md).
+
+- [Q25-F107/F108: asynchronous firewall and chain retention on unhook failure](reports/AUDIT-Q25-FIREWALL-TASK.md).

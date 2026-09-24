@@ -30,13 +30,13 @@
 //! to avoid even that. (Windows and macOS scope this identically.)
 //!
 //! FAIL-SAFE LIFECYCLE — this is the whole point, read carefully:
-//!   * [`engage`] pins the calling network namespace and installs `QELI_KS_<tun>` + OUTPUT jump and is idempotent (it
+//!   * [`prepare_engage`] pins the calling network namespace; its returned mutation installs `QELI_KS_<tun>` + OUTPUT jump and is idempotent (it
 //!     rebuilds existing rules under temporary DROP guards). It is installed ONCE,
 //!     before the connect loop, and deliberately stays up across every reconnect.
 //!   * [`disengage`] removes the chain and is called only on a CLEAN stop
 //!     (user disconnect / SIGINT / SIGTERM / loop exit).
 //!   * A crashed run (SIGKILL / panic / power loss) leaves the chain in place — the
-//!     machine stays locked (no leak) until qeli runs again, which `engage`
+//!     machine stays locked (no leak) until qeli runs again, whose prepared setup
 //!     replaces it. A failed rebuild retains exact `qeli-ks-rebuild:<tun>` DROP guards
 //!     until a successful retry or explicit clean stop. To unlock without reconnecting:
 //!     use the exact per-TUN chain shown in the log, in its original network namespace.
@@ -289,6 +289,15 @@ fn teardown_family(context: &Context, path: &str, chain: &str) -> anyhow::Result
             Ok(false) => {}
             Err(error) => errors.push(error.to_string()),
         }
+    }
+
+    // Flushing a chain that may still be referenced would remove its DROP barrier.
+    // Failure/unknown unhook results retain the exact chain for explicit recovery.
+    if !errors.is_empty() {
+        anyhow::bail!(
+            "firewall unhook failed; chain retained: {}",
+            errors.join("; ")
+        );
     }
 
     match chain_exists(context, path, chain) {
@@ -578,11 +587,11 @@ fn host_may_have_global_ipv6_with(
         .unwrap_or(true)
 }
 
-/// Engage the kill-switch: allow only loopback, `tun_if`, DHCP, DNS, and the server
+/// Prepare a kill-switch mutation: allow only loopback, `tun_if`, DHCP, DNS, and the server
 /// IP(s). Idempotent — rebuilds the `QELI_KS` chain on both families. Each family fails
 /// closed when the host has usable egress but its firewall cannot be armed, unless the
 /// matching `allow_ipv*_leak` escape hatch was explicitly enabled.
-pub async fn engage(
+pub(crate) async fn prepare_engage(
     server_addr: &str,
     server_port: u16,
     tun_if: &str,
@@ -591,26 +600,30 @@ pub async fn engage(
     // True when qeli routes a LAN through the tunnel (gateway/forward mode). Routed
     // packets bypass OUTPUT entirely, so the chain must also cover FORWARD.
     guard_forward: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<impl FnOnce() -> anyhow::Result<()> + Send + 'static> {
     let until = std::time::Instant::now() + OPERATION_BUDGET;
     let context = setup_context(tun_if, until)?;
     let ips = resolve_ips(server_addr, server_port, until).await?;
     // Read once, before any family is changed; cancellation cannot strand a partial chain.
     let resolvers = system_resolvers(until).await?;
-    engage_prepared(
-        Setup {
-            server_addr,
-            tun_if,
-            allow_ipv4_leak,
-            allow_ipv6_leak,
-            guard_forward,
-        },
-        context,
-        until,
-        OPERATION_BUDGET,
-        ips,
-        resolvers,
-    )
+    let server_addr = server_addr.to_owned();
+    let tun_if = tun_if.to_owned();
+    Ok(move || {
+        engage_prepared(
+            Setup {
+                server_addr: &server_addr,
+                tun_if: &tun_if,
+                allow_ipv4_leak,
+                allow_ipv6_leak,
+                guard_forward,
+            },
+            context,
+            until,
+            OPERATION_BUDGET,
+            ips,
+            resolvers,
+        )
+    })
 }
 
 struct Setup<'a> {
@@ -892,22 +905,28 @@ fn host_may_have_ipv4_default_route_with(
 /// Re-resolve the server hostname and ADD any newly-seen server IP(s) to the live
 /// kill-switch chain, inserted before the terminal DROP — WITHOUT tearing the chain
 /// down. So a DDNS / round-robin server whose address rotates mid-session can still
-/// be reconnected to without rebuilding the protection. Re-calling [`engage`] uses
+/// be reconnected to without rebuilding the protection. Re-applying [`prepare_engage`] uses
 /// temporary DROP guards and can interrupt availability. Idempotent: never removes the DROP or existing
 /// removes stale server allowances only after adding the current ones. A previously
 /// armed family must still have its hooks and DROP. Inspection or update errors stop
 /// reconnect; the retained rules require recovery. Call it before each attempt.
-pub async fn refresh_server_ips(
+pub(crate) async fn prepare_refresh(
     server_addr: &str,
     server_port: u16,
     tun_if: &str,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<impl FnOnce() -> anyhow::Result<()> + Send + 'static> {
     let until = std::time::Instant::now() + OPERATION_BUDGET;
-    let Some(context) = refresh_context(tun_if, until)? else {
-        return Ok(());
+    let context = refresh_context(tun_if, until)?;
+    let ips = if context.is_some() {
+        resolve_ips(server_addr, server_port, until).await?
+    } else {
+        Vec::new()
     };
-    let ips = resolve_ips(server_addr, server_port, until).await?;
-    refresh_prepared(tun_if, until, context, ips)
+    let tun_if = tun_if.to_owned();
+    Ok(move || match context {
+        Some(context) => refresh_prepared(&tun_if, until, context, ips),
+        None => Ok(()),
+    })
 }
 
 fn refresh_context(tun_if: &str, until: std::time::Instant) -> anyhow::Result<Option<Context>> {
@@ -1327,7 +1346,7 @@ mod fault_injection {
         let calls = fixture.calls();
         assert!(calls.contains("-C OUTPUT"));
         assert!(calls.contains("-C FORWARD"));
-        assert!(calls.contains("-S QELI_KS_qtest"));
+        assert!(!calls.contains("-S QELI_KS_qtest"));
         assert!(
             !calls.contains("-D ") && !calls.contains("-F ") && !calls.contains("-X "),
             "{calls}"
@@ -1537,6 +1556,10 @@ mod fault_injection {
         assert!(
             error.to_string().contains("still"),
             "a lying delete command must not produce clean-stop success: {error}"
+        );
+        assert!(
+            !ipt.calls().contains("-F "),
+            "referenced chain must retain its DROP"
         );
         // The synthetic kernel is about to be discarded with its temporary directory.
         Context::lookup("qtest", true)

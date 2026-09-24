@@ -207,3 +207,81 @@ fn only_successful_empty_ipv6_address_inventory_skips_protection() {
         }
     });
 }
+
+#[test]
+fn teardown_preserves_referenced_chain_when_jump_deletion_does_not_work() {
+    #[cfg(unix)]
+    use std::os::unix::process::ExitStatusExt;
+    #[cfg(windows)]
+    use std::os::windows::process::ExitStatusExt;
+    use std::sync::{Arc, Mutex};
+    for hook in ["OUTPUT", "FORWARD"] {
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let observed = calls.clone();
+        with_commands(
+            move |command| {
+                let args = arguments(command);
+                observed.lock().unwrap().push(args.clone());
+                assert!(
+                    matches!(args[0].as_str(), "-C" | "-D"),
+                    "no flush/delete of referenced chain: {args:?}"
+                );
+                let present = args[1] == hook;
+                Action::Reply(Ok(std::process::Output {
+                    status: std::process::ExitStatus::from_raw(if present {
+                        0
+                    } else {
+                        if cfg!(unix) {
+                            256
+                        } else {
+                            1
+                        }
+                    }),
+                    stdout: vec![],
+                    stderr: if present {
+                        vec![]
+                    } else {
+                        b"Bad rule (does a matching rule exist in that chain?).".to_vec()
+                    },
+                }))
+            },
+            || {
+                let error =
+                    teardown_family(&Context::fixture(), "fixture", "QELI_KS_qtest").unwrap_err();
+                assert!(error.to_string().contains("chain retained"));
+            },
+        );
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls.iter().filter(|a| a[0] == "-D").count(), 8);
+    }
+}
+
+#[test]
+fn teardown_preserves_chain_if_hook_inventory_is_unknown_even_when_chain_is_readable() {
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+    let inspected = Arc::new(AtomicUsize::new(0));
+    let calls = inspected.clone();
+    with_commands(
+        move |command| {
+            let args = arguments(command);
+            assert_eq!(
+                args[0], "-C",
+                "unknown hook state must not authorize chain flushing: {args:?}"
+            );
+            calls.fetch_add(1, Ordering::Relaxed);
+            Action::Reply(Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "hook inspection refused",
+            )))
+        },
+        || {
+            let error =
+                teardown_family(&Context::fixture(), "fixture", "QELI_KS_qtest").unwrap_err();
+            assert!(error.to_string().contains("chain retained"));
+        },
+    );
+    assert_eq!(inspected.load(Ordering::Relaxed), 4);
+}

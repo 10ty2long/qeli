@@ -465,11 +465,11 @@ fn engage(
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?
-        .block_on(super::engage(host, port, tun, v4, v6, forward))
+        .block_on(super::prepare_engage(host, port, tun, v4, v6, forward))?()
 }
 fn refresh_server_ips(host: &str, port: u16, tun: &str) -> anyhow::Result<()> {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?
-        .block_on(super::refresh_server_ips(host, port, tun))
+        .block_on(super::prepare_refresh(host, port, tun))?()
 }

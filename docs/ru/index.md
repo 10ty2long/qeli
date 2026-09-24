@@ -220,3 +220,5 @@
 - [Q25-F105: асинхронное применение NetworkPlan и владение откатом](reports/AUDIT-Q25-NETWORK-TASK.md).
 
 - [Q25-F106: асинхронная очистка установленного туннеля](reports/AUDIT-Q25-TUN-TEARDOWN.md).
+
+- [Q25-F107/F108: асинхронный firewall и сохранение цепочки при отказе unhook](reports/AUDIT-Q25-FIREWALL-TASK.md).
