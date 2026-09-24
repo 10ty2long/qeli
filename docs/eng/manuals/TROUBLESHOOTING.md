@@ -2229,3 +2229,7 @@ there is no lease file to delete. Do not remove a live process's control lock.
 Unknown holders are not bypassed automatically; a local process can also occupy
 the abstract name. Reservation unavailable may indicate another bind error,
 identified in the message. [Checks and limits](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md).
+
+### 6.78. Server firewall recovery incomplete
+
+The worker does not launch profiles when exact rules in `server-firewall.state` cannot be removed or verified. Keep the journal and `.lock`, use the original state/network namespace/backend, fix the iptables or permission failure and retry. `iptables backend changed` requires restoring the original nft/legacy backend; `server firewall journal requires SO_NETNS_COOKIE` requires kernel support for that option. Corrupt or unsupported state cannot be automatically reset. An empty journal after success is normal. [Recovery procedure](OPERATIONS.md#server-firewall-recovery).

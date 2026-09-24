@@ -4,7 +4,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 const MAX_RULES: usize = 32768;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct Rule {
     pub(crate) ipv6: bool,
     pub(crate) table: String,

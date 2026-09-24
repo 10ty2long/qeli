@@ -6,14 +6,14 @@ use std::{
     path::Path,
 };
 
-pub(super) struct Opened {
+pub(crate) struct Opened {
     file: File,
     stamp: Stamp,
     limit: u64,
 }
 
 impl Opened {
-    pub(super) fn open(path: &Path, limit: u64) -> io::Result<Option<Self>> {
+    pub(crate) fn open(path: &Path, limit: u64) -> io::Result<Option<Self>> {
         let mut options = OpenOptions::new();
         options.read(true);
         #[cfg(unix)]
@@ -24,7 +24,7 @@ impl Opened {
         #[cfg(not(unix))]
         match std::fs::symlink_metadata(path) {
             Ok(metadata) if metadata.file_type().is_symlink() => {
-                return Err(io::Error::other("sysctl journal must not be a symlink"))
+                return Err(io::Error::other("privileged journal must not be a symlink"))
             }
             Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error),
             _ => {}
@@ -37,7 +37,7 @@ impl Opened {
         let metadata = file.metadata()?;
         if !metadata.is_file() || metadata.len() > limit {
             return Err(io::Error::other(
-                "sysctl journal must be a regular file within its size limit",
+                "privileged journal must be a regular file within its size limit",
             ));
         }
         #[cfg(unix)]
@@ -53,12 +53,12 @@ impl Opened {
                 || (metadata.uid() != 0 && metadata.uid() != parent_metadata.uid())
             {
                 return Err(io::Error::other(
-                    "sysctl journal owner or parent permissions are untrusted",
+                    "privileged journal owner or parent permissions are untrusted",
                 ));
             }
             if metadata.nlink() != 1 || metadata.mode() & 0o022 != 0 {
                 return Err(io::Error::other(
-                    "sysctl journal must be single-link and not group/world-writable",
+                    "privileged journal must be single-link and not group/world-writable",
                 ));
             }
         }
@@ -69,7 +69,7 @@ impl Opened {
         }))
     }
 
-    pub(super) fn read(mut self) -> io::Result<Vec<u8>> {
+    pub(crate) fn read(mut self) -> io::Result<Vec<u8>> {
         let mut bytes = Vec::new();
         self.file
             .by_ref()
@@ -77,12 +77,12 @@ impl Opened {
             .read_to_end(&mut bytes)?;
         if bytes.len() as u64 > self.limit {
             return Err(io::Error::other(
-                "sysctl journal grew beyond its size limit",
+                "privileged journal grew beyond its size limit",
             ));
         }
         let metadata = self.file.metadata()?;
         if self.stamp != Stamp::of(&metadata) || bytes.len() as u64 != metadata.len() {
-            return Err(io::Error::other("sysctl journal changed while reading"));
+            return Err(io::Error::other("privileged journal changed while reading"));
         }
         Ok(bytes)
     }

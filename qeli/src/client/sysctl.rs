@@ -17,12 +17,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 #[path = "sysctl/host.rs"]
 mod host;
-#[path = "sysctl/journal_file.rs"]
-mod journal_file;
+use crate::state_storage::{journal_file, state_dir};
 #[path = "sysctl/namespace.rs"]
 mod namespace;
-#[path = "sysctl/state_dir.rs"]
-mod state_dir;
 #[path = "sysctl/target.rs"]
 mod target;
 
@@ -624,7 +621,7 @@ fn with_locked_journal<T>(
     })?;
     // Every sidecar, snapshot, temporary file and rename is now relative to the
     // same held directory, even if the original pathname is moved or replaced.
-    let path = directory.journal_path();
+    let path = directory.journal_path(JOURNAL_NAME)?;
     let _file_lock = crate::util::FileLock::acquire_timeout_owned(
         &path,
         deadline.saturating_duration_since(std::time::Instant::now()),

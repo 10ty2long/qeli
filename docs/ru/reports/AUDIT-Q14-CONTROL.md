@@ -51,3 +51,5 @@ future/panic, потомки hook-процесса, bounded hook stdout/stderr �
 ownership/output limits и startup rollback. Полный Q14 и полный аудит Qeli не закрыты.
 
 Продолжение: [Q14-F037](AUDIT-Q14-WORKER-NETWORK-LEASE.md) закрывает обход control lease через другой путь/namespace файловой системы. Новый kernel lease ограничивает server worker на уровне сети; SIGKILL/deleted-profile recovery проверено для доступных tagged rules. Persistent exact-rule journal и mixed nft остаются открыты.
+
+Позднейшее продолжение: [Q14-F038](AUDIT-Q14-FIREWALL-JOURNAL.md) добавляет persistent exact server firewall journal и проверяет восстановление при отказе listing. Ограничения клиентского crash recovery и общей mixed nft/firewalld матрицы сохраняются.

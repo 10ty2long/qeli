@@ -1347,3 +1347,5 @@ rm -rf ./data                                                 # смонтиро
 
 > Нашли неточность или есть вопрос по настройке — заводите issue/discussion в
 > репозитории. Полная карта документации — в [README](../README.md).
+
+Для Linux server worker требуются `SO_NETNS_COOKIE` и доверенный `STATE_DIRECTORY` (обычно `/var/lib/qeli`). Сохраняйте этот каталог при перезапуске: `server-firewall.state` нужен для точной очистки после SIGKILL, даже если профиль удалён из INI. Перед обновлением остановите прежний worker. [Восстановление firewall](OPERATIONS.md#восстановление-серверного-firewall).

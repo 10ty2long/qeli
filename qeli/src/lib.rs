@@ -67,7 +67,7 @@ mod client_tun_recovery;
 mod tun_open;
 
 // A live fd pins the namespace shared by route and standalone firewall owners.
-#[cfg(all(target_os = "linux", any(test, feature = "client")))]
+#[cfg(all(target_os = "linux", any(test, feature = "client", feature = "server")))]
 mod network_namespace;
 
 // Link identity queried in the calling network namespace, shared by client/server.
@@ -90,6 +90,11 @@ mod nat_cleanup;
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
 #[path = "server/nat/owned_rules.rs"]
 mod nat_owned_rules;
+
+#[cfg(any(test, all(target_os = "linux", feature = "server")))]
+#[cfg_attr(test, allow(dead_code))]
+#[path = "server/nat/firewall_journal.rs"]
+mod nat_firewall_journal;
 
 // IPv6 sysctl rollback keeps partial acquisitions visible until release succeeds.
 #[cfg(any(test, all(target_os = "linux", feature = "server")))]
@@ -153,6 +158,13 @@ mod dns_listeners;
 #[cfg(all(test, not(all(target_os = "linux", feature = "server"))))]
 #[path = "server/usage.rs"]
 mod server_usage;
+
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+mod state_storage;
 
 // One cross-process ownership journal for every Linux component that changes host-wide
 // forwarding sysctls. The full daemon can run server profiles and panel-managed outbound

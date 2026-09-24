@@ -31,6 +31,7 @@ use std::sync::{Mutex, OnceLock};
 
 mod cleanup_budget;
 mod discovery;
+mod journal;
 use cleanup_budget::Budget;
 #[cfg(test)]
 pub(crate) use discovery::with_probe;
@@ -419,16 +420,20 @@ fn owned_rules() -> &'static Mutex<crate::nat_owned_rules::Registry> {
 /// Caller holds firewall_program_lock, including while recording/retrying ownership.
 fn retry_owned_rules(profile: Option<&str>, budget: Budget) -> anyhow::Result<()> {
     budget.lock(owned_rules())?.cleanup(profile, |rule| {
-        let path = budget.find(rule.ipv6)?.ok_or_else(|| {
-            anyhow::anyhow!("firewall tool unavailable; exact ownership retained")
-        })?;
-        cleanup_exact_rules_with(
-            &rule.table,
-            &rule.chain,
-            [("managed rule", rule.args.as_slice())],
-            |args| budget.ipt(&path, args),
-        )
+        journal::remove(rule, budget, || remove_exact(rule, budget))
     })
+}
+
+fn remove_exact(rule: &crate::nat_owned_rules::Rule, budget: Budget) -> anyhow::Result<()> {
+    let path = budget
+        .find(rule.ipv6)?
+        .ok_or_else(|| anyhow::anyhow!("firewall tool unavailable; exact ownership retained"))?;
+    cleanup_exact_rules_with(
+        &rule.table,
+        &rule.chain,
+        [("managed rule", rule.args.as_slice())],
+        |args| budget.ipt(&path, args),
+    )
 }
 
 /// Caller holds the firewall lock. Failed admission never reaches a mutation.
@@ -459,25 +464,25 @@ fn install_rule(
         args.push(position.to_string());
     }
     args.extend(rule.args.clone());
-    budget.lock(owned_rules())?.retain(
-        profile,
-        crate::nat_owned_rules::Rule {
-            ipv6,
-            table: rule.table.into(),
-            chain: rule.chain.into(),
-            args: rule.args.clone(),
-        },
-    )?;
-    let refs: Vec<_> = args.iter().map(String::as_str).collect();
-    let _ = budget.ipt(path, &refs);
-    budget.check()?;
-    let mut check = vec!["-t", rule.table, "-C", rule.chain];
-    check.extend(rule.args.iter().map(String::as_str));
-    let present = budget
-        .ipt(path, &check)
-        .is_ok_and(|output| output.status.success());
-    budget.check()?;
-    Ok(present)
+    let owned = crate::nat_owned_rules::Rule {
+        ipv6,
+        table: rule.table.into(),
+        chain: rule.chain.into(),
+        args: rule.args.clone(),
+    };
+    budget.lock(owned_rules())?.retain(profile, owned.clone())?;
+    journal::apply(&owned, path, budget, || {
+        let refs: Vec<_> = args.iter().map(String::as_str).collect();
+        let _ = budget.ipt(path, &refs);
+        budget.check()?;
+        let mut check = vec!["-t", rule.table, "-C", rule.chain];
+        check.extend(rule.args.iter().map(String::as_str));
+        let present = budget
+            .ipt(path, &check)
+            .is_ok_and(|output| output.status.success());
+        budget.check()?;
+        Ok(present)
+    })
 }
 
 /// Each setup is a profile startup boundary. On error the profile cannot continue;
@@ -943,18 +948,20 @@ fn dns_input_registry() -> &'static Mutex<DnsInputRegistry> {
 
 /// Caller holds firewall_program_lock; this function must not re-enter the registry.
 fn cleanup_dns_rules_until(owned: &DnsInputRules, budget: Budget) -> anyhow::Result<()> {
-    let path = budget.find(owned.ipv6)?.ok_or_else(|| {
-        anyhow::anyhow!("cannot remove DNS INPUT permits because the firewall tool is unavailable")
-    })?;
-    cleanup_exact_rules_with(
-        "filter",
-        "INPUT",
-        ["udp", "tcp"]
-            .into_iter()
-            .zip(owned.rules.iter().map(Vec::as_slice)),
-        |args| budget.ipt(&path, args),
-    )
-    .map_err(|error| anyhow::anyhow!("DNS INPUT cleanup failed: {error}"))
+    let mut errors = crate::nat_cleanup::Errors::default();
+    for args in &owned.rules {
+        let rule = crate::nat_owned_rules::Rule {
+            ipv6: owned.ipv6,
+            table: "filter".into(),
+            chain: "INPUT".into(),
+            args: args.clone(),
+        };
+        errors.record(
+            "DNS INPUT",
+            journal::remove(&rule, budget, || remove_exact(&rule, budget)),
+        );
+    }
+    errors.finish()
 }
 
 /// Caller holds firewall_program_lock. Failed records stay in the registry for retry.
@@ -974,7 +981,7 @@ fn release_ipv6_sysctls_until(profile: &str, budget: Budget) -> anyhow::Result<(
 
 /// A generation token for its exact DNS INPUT rules. The worker registry owns the
 /// specifications, so destroying this lease cannot discard failed cleanup evidence.
-/// This is process-local recovery; restart/crash persistence needs a separate journal.
+/// Every kernel mutation also reserves its exact specification in the durable worker journal.
 #[derive(Debug)]
 pub(crate) struct DnsInputLease {
     owner: Option<DnsInputOwner>,
@@ -1075,17 +1082,26 @@ fn enable_dns_input_until(
             ];
             argv.extend(args.clone());
             let refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-            let _ = budget.ipt(&path, &refs);
-            budget.check()?;
-            let mut check = vec!["-t", "filter", "-C", "INPUT"];
-            check.extend(args.iter().map(String::as_str));
-            if !budget
-                .ipt(&path, &check)
-                .is_ok_and(|output| output.status.success())
-            {
+            let saved = crate::nat_owned_rules::Rule {
+                ipv6: listen.parse::<std::net::IpAddr>()?.is_ipv6(),
+                table: "filter".into(),
+                chain: "INPUT".into(),
+                args: args.clone(),
+            };
+            let applied = journal::apply(&saved, &path, budget, || {
+                let _ = budget.ipt(&path, &refs);
+                budget.check()?;
+                let mut check = vec!["-t", "filter", "-C", "INPUT"];
+                check.extend(args.iter().map(String::as_str));
+                let present = budget
+                    .ipt(&path, &check)
+                    .is_ok_and(|output| output.status.success());
+                budget.check()?;
+                Ok(present)
+            })?;
+            if !applied {
                 unapplied.push(proto);
             }
-            budget.check()?;
         }
         if !unapplied.is_empty() {
             let status = budget
@@ -1432,7 +1448,14 @@ fn finish_owned_cleanup_until(
 /// that has since been REMOVED from the config do not leak forever. Active profiles
 /// reinstall their rules afterwards. Non-deadline historical sweep failures remain warnings.
 pub fn cleanup_all() -> anyhow::Result<()> {
-    cleanup_all_until(Budget::new(), crate::sysctl::recover)
+    let budget = Budget::new();
+    {
+        let _guard = budget.lock(firewall_program_lock())?;
+        // Before sysctl recovery, tag sweeps or any new profiles. A failure retains
+        // exact state and aborts startup; it is never downgraded to a sweep warning.
+        journal::initialize(budget, |rule| remove_exact(rule, budget))?;
+    }
+    cleanup_all_until(budget, crate::sysctl::recover)
 }
 
 fn cleanup_all_until(

@@ -77,3 +77,5 @@ refer to their own snapshot. NAT setup/rollback, DNS lease Drop/setup admission 
 persistent recovery remain open.
 
 Follow-up: [Q14-F037](AUDIT-Q14-WORKER-NETWORK-LEASE.md) prevents bypassing the control lease through another path/filesystem namespace. A new kernel lease scopes server-worker admission to the network; SIGKILL/deleted-profile recovery was tested for listable tagged rules. Persistent exact-rule journaling and mixed nft remain open.
+
+Later follow-up: [Q14-F038](AUDIT-Q14-FIREWALL-JOURNAL.md) adds a persistent exact server firewall journal and verifies recovery with listing failures. Client crash recovery and the general mixed nft/firewalld matrix remain open.

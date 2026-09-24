@@ -15,21 +15,21 @@ impl Policy {
         let sticky_root = node.owner == 0 && node.mode & 0o1000 != 0;
         anyhow::ensure!(
             node.mode & 0o022 == 0 || (!final_dir && sticky_root),
-            "sysctl state directory must not be group/world-writable"
+            "privileged state directory must not be group/world-writable"
         );
         if parent.is_some_and(|p| p.mode & 0o022 != 0) {
             // A root invocation must not adopt a foreign user's pre-planted child
             // of /tmp merely because the child's own permissions look private.
             anyhow::ensure!(
                 node.owner == 0 || node.owner == self.caller,
-                "foreign sysctl state directory beneath a writable ancestor"
+                "foreign privileged state directory beneath a writable ancestor"
             );
         }
         if node.owner != 0 && node.owner != self.caller && self.delegated != Some(node.owner) {
             anyhow::ensure!(
                 self.delegated.is_none()
                     && parent.is_some_and(|p| p.owner == 0 && p.mode & 0o022 == 0),
-                "untrusted sysctl state directory owner {}",
+                "untrusted privileged state directory owner {}",
                 node.owner
             );
             // /var/lib/qeli is deliberately assigned to the packaged service user
@@ -40,7 +40,7 @@ impl Policy {
     }
 }
 
-pub(super) struct Directory {
+pub(crate) struct Directory {
     #[cfg(target_os = "linux")]
     file: std::fs::File,
     #[cfg(target_os = "linux")]
@@ -48,7 +48,7 @@ pub(super) struct Directory {
 }
 impl Directory {
     #[cfg(target_os = "linux")]
-    pub(super) fn open(path: &Path) -> anyhow::Result<Self> {
+    pub(crate) fn open(path: &Path) -> anyhow::Result<Self> {
         use std::{
             ffi::CString,
             os::{
@@ -62,19 +62,19 @@ impl Directory {
         };
         anyhow::ensure!(
             path.is_absolute(),
-            "sysctl state directory must be absolute"
+            "privileged state directory must be absolute"
         );
         let mut names = Vec::new();
         for component in path.components() {
             match component {
                 Component::RootDir | Component::CurDir => (),
                 Component::Normal(name) => names.push(CString::new(name.as_bytes())?),
-                _ => anyhow::bail!("sysctl state directory must not contain parent traversal"),
+                _ => anyhow::bail!("privileged state directory must not contain parent traversal"),
             }
         }
         anyhow::ensure!(
             !names.is_empty() && names.len() <= 64,
-            "invalid sysctl state directory depth"
+            "invalid privileged state directory depth"
         );
         let mut file = std::fs::OpenOptions::new()
             .read(true)
@@ -136,42 +136,51 @@ impl Directory {
         })
     }
     #[cfg(not(target_os = "linux"))]
-    pub(super) fn open(_path: &Path) -> anyhow::Result<Self> {
+    pub(crate) fn open(_path: &Path) -> anyhow::Result<Self> {
         anyhow::bail!("host sysctl state directories require Linux")
     }
     #[cfg(target_os = "linux")]
-    pub(super) fn journal_path(&self) -> PathBuf {
+    pub(crate) fn journal_path(&self, name: &str) -> anyhow::Result<PathBuf> {
         use std::os::fd::AsRawFd;
-        PathBuf::from(format!(
+        anyhow::ensure!(
+            !name.is_empty()
+                && name
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'.' || b == b'-')
+                && name != "."
+                && name != "..",
+            "invalid state file name"
+        );
+        Ok(PathBuf::from(format!(
             "/proc/self/fd/{}/{}",
             self.file.as_raw_fd(),
-            super::JOURNAL_NAME
-        ))
+            name
+        )))
     }
     #[cfg(not(target_os = "linux"))]
-    pub(super) fn journal_path(&self) -> PathBuf {
+    pub(crate) fn journal_path(&self, _name: &str) -> anyhow::Result<PathBuf> {
         unreachable!()
     }
     #[cfg(target_os = "linux")]
-    pub(super) fn owner(&self) -> u32 {
+    pub(crate) fn owner(&self) -> u32 {
         self.owner
     }
     #[cfg(not(target_os = "linux"))]
-    pub(super) fn owner(&self) -> u32 {
+    pub(crate) fn owner(&self) -> u32 {
         unreachable!()
     }
     #[cfg(target_os = "linux")]
-    pub(super) fn verify(&self) -> anyhow::Result<()> {
+    pub(crate) fn verify(&self) -> anyhow::Result<()> {
         use std::os::unix::fs::MetadataExt;
         let md = self.file.metadata()?;
         anyhow::ensure!(
             md.uid() == self.owner && md.mode() & 0o022 == 0,
-            "sysctl state directory ownership or permissions changed"
+            "privileged state directory ownership or permissions changed"
         );
         Ok(())
     }
     #[cfg(not(target_os = "linux"))]
-    pub(super) fn verify(&self) -> anyhow::Result<()> {
+    pub(crate) fn verify(&self) -> anyhow::Result<()> {
         unreachable!()
     }
 }

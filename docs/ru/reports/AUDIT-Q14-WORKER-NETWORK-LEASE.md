@@ -75,3 +75,5 @@ release benchmark или native certification нет. Windows VM/Mac/iOS/router 
 пропущен по решению пользователя.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Эксплуатация](../manuals/OPERATIONS.md)
+
+Позднейшее продолжение: [Q14-F038](AUDIT-Q14-FIREWALL-JOURNAL.md) добавляет persistent exact server firewall journal и проверяет восстановление при отказе listing. Ограничения клиентского crash recovery и общей mixed nft/firewalld матрицы сохраняются.

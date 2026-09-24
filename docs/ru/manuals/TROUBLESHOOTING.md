@@ -2229,3 +2229,7 @@ network namespace и отдельные файловые пути. Если пр
 Неизвестный владелец не обходится автоматически; локальный процесс также способен
 занять abstract-имя. Ошибка reservation unavailable может означать иной отказ bind,
 который указан в сообщении. [Проверки и ограничения](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md).
+
+### 6.78. Server firewall recovery incomplete
+
+Worker не запускает профили, если точные правила из `server-firewall.state` не удалось удалить или проверить. Сохраните журнал и `.lock`, используйте прежние state/network namespace/backend, устраните отказ iptables или проблему прав и повторите запуск. Сообщение `iptables backend changed` требует возврата исходного nft/legacy backend; `server firewall journal requires SO_NETNS_COOKIE` — ядра с поддержкой этой опции. Файл с повреждённым/неподдерживаемым содержимым нельзя автоматически сбрасывать. Пустой журнал после успеха нормален. [Порядок восстановления](OPERATIONS.md#восстановление-серверного-firewall).

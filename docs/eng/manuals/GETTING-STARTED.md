@@ -1340,3 +1340,5 @@ rm -rf ./data                                                 # the mounted /etc
 
 > Found an inaccuracy or have a setup question — open an issue/discussion in the
 > repository. Full documentation map — in the [README](../README.md).
+
+Linux server workers require `SO_NETNS_COOKIE` and a trusted `STATE_DIRECTORY` (normally `/var/lib/qeli`). Preserve that directory across restarts: `server-firewall.state` supports exact cleanup after SIGKILL, including deleted INI profiles. Stop the previous worker before upgrading. [Firewall recovery](OPERATIONS.md#server-firewall-recovery).

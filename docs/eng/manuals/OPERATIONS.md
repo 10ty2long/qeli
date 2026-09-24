@@ -386,3 +386,30 @@ reads, CLI connect, and writes have a 5 s deadline; CLI response reads have 15 s
 At most 16 connections are handled concurrently. Shutdown closes admission and drains
 accepted handlers before profile teardown; the supervisor's overall 60 s worker grace
 still applies. Forced termination cannot guarantee completion of commands or hooks.
+
+
+## Server firewall recovery
+
+`server-firewall.state` in `STATE_DIRECTORY` (default `/var/lib/qeli`) saves exact
+NAT/FORWARD/MSS/DNS INPUT/REDIRECT rules before invoking commands. It is internal
+recovery state; user configuration remains INI. `SO_NETNS_COOKIE` support and trusted
+state storage are required: no symlinks, foreign write access or unsafe owners.
+
+After SIGKILL, restart with the original state directory, network namespace and
+iptables backend. Deleted INI profiles are also cleaned up. Rules recorded by this
+version recover without `-S`, through exact `-C` checks and `-D` deletion. Incomplete
+cleanup aborts startup and retains unresolved entries. Fix the cause and retry;
+do not delete the journal or `.lock`. An empty journal and stable `.lock` after a
+clean stop are expected.
+
+For `iptables backend changed`, restore the original nft/legacy choice for that
+family. Recovery never switches the backend automatically or treats absence in a
+different backend as cleanup success. Corruption, unsupported versions and namespace
+context loss require investigation; deleting the journal discards rule evidence.
+Changing `STATE_DIRECTORY` does not migrate state.
+
+Limits are 8 MiB, 32768 rules and 64 namespace groups. Foreign groups remain untouched;
+valid records from a previous boot no longer supply commands. Historical rules from
+older binaries without journals still depend on tagged sweeps and available listing.
+Stop the old worker before upgrading.
+[Checks and limits](../reports/AUDIT-Q14-FIREWALL-JOURNAL.md).

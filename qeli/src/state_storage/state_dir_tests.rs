@@ -45,11 +45,11 @@ fn pinned_directory_keeps_lock_read_write_and_remove_on_original_tree() {
     let f = Fixture::new();
     let original = f.0.join("state");
     let directory = Directory::open(&original).unwrap();
-    let anchored = directory.journal_path();
+    let anchored = directory.journal_path("sysctls.state").unwrap();
     let moved = f.0.join("moved");
     fs::rename(&original, &moved).unwrap();
     fs::create_dir(&original).unwrap();
-    let foreign = original.join(super::super::JOURNAL_NAME);
+    let foreign = original.join("sysctls.state");
     fs::write(&foreign, b"replacement must survive").unwrap();
     let _lease =
         crate::util::FileLock::acquire_timeout_owned(&anchored, Duration::ZERO, directory.owner())
@@ -66,14 +66,14 @@ fn pinned_directory_keeps_lock_read_write_and_remove_on_original_tree() {
     assert!(moved.join("sysctls.state.lock").exists());
     assert!(!original.join("sysctls.state.lock").exists());
     crate::util::remove_file_synced(&anchored).unwrap();
-    assert!(!moved.join(super::super::JOURNAL_NAME).exists());
+    assert!(!moved.join("sysctls.state").exists());
     assert_eq!(fs::read(foreign).unwrap(), b"replacement must survive");
 }
 #[test]
 fn permissive_lock_or_changed_directory_does_not_authorize_a_journal() {
     let f = Fixture::new();
     let directory = Directory::open(&f.0.join("state")).unwrap();
-    let anchored = directory.journal_path();
+    let anchored = directory.journal_path("sysctls.state").unwrap();
     let lock = anchored.with_extension("state.lock");
     fs::write(&lock, b"lock sentinel").unwrap();
     fs::set_permissions(&lock, fs::Permissions::from_mode(0o666)).unwrap();
@@ -114,7 +114,7 @@ fn native_root_and_service_share_state_but_foreign_inodes_are_refused() {
     chown(&state, 65534);
     fs::set_permissions(&state, fs::Permissions::from_mode(0o750)).unwrap();
     let directory = Directory::open(&state).unwrap();
-    let path = directory.journal_path();
+    let path = directory.journal_path("sysctls.state").unwrap();
     {
         let _lock =
             crate::util::FileLock::acquire_timeout_owned(&path, Duration::ZERO, directory.owner())
@@ -167,7 +167,7 @@ fn service_child() {
     };
     assert_eq!(unsafe { libc::geteuid() }, 65534);
     let directory = Directory::open(Path::new(&path)).unwrap();
-    let path = directory.journal_path();
+    let path = directory.journal_path("sysctls.state").unwrap();
     let _lock =
         crate::util::FileLock::acquire_timeout_owned(&path, Duration::ZERO, directory.owner())
             .unwrap();
@@ -187,7 +187,7 @@ fn lock_replaced_while_waiting_never_splits_the_state_transaction() {
     for trusted in [false, true] {
         let f = Fixture::new();
         let directory = Directory::open(&f.0.join("state")).unwrap();
-        let path = directory.journal_path();
+        let path = directory.journal_path("sysctls.state").unwrap();
         let lock_path = path.with_extension("state.lock");
         let first =
             crate::util::FileLock::acquire_timeout_owned(&path, Duration::ZERO, directory.owner())

@@ -74,3 +74,5 @@ criteria remain in the register. No new INI key, ABI/wire change, release benchm
 or native certification. Windows VM/Mac/iOS/router runtime is skipped by user decision.
 
 [Register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md)
+
+Later follow-up: [Q14-F038](AUDIT-Q14-FIREWALL-JOURNAL.md) adds a persistent exact server firewall journal and verifies recovery with listing failures. Client crash recovery and the general mixed nft/firewalld matrix remain open.
