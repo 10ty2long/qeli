@@ -88,6 +88,7 @@ pub fn available() -> bool {
     iptables_path().is_some()
 }
 
+#[cfg(test)]
 fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
     // Keep the 5s xtables-lock wait inside the shared runner's 15s command deadline.
     // The lock wait alone cannot bound a stalled backend or inherited output pipe.
@@ -98,22 +99,31 @@ fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
         .output()
 }
 
-/// Auto-detect the default-route (WAN) interface via `ip route get 1.1.1.1`.
-fn detect_wan() -> Option<String> {
-    let out = Command::new("ip")
-        .args(["route", "get", "1.1.1.1"])
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
+/// Resolve a route in the same operation deadline as its subsequent firewall rules.
+fn detect_wan_until(ipv6: bool, budget: Budget) -> anyhow::Result<Option<String>> {
+    let mut command = Command::new("ip");
+    if ipv6 {
+        command.args(["-6"]);
     }
-    // "1.1.1.1 via 10.0.0.1 dev eth0 src ..." — the token after "dev".
-    let s = String::from_utf8_lossy(&out.stdout);
-    let toks: Vec<&str> = s.split_whitespace().collect();
-    toks.iter()
-        .position(|&t| t == "dev")
-        .and_then(|i| toks.get(i + 1))
-        .map(|s| s.to_string())
+    command.args([
+        "route",
+        "get",
+        if ipv6 {
+            "2606:4700:4700::1111"
+        } else {
+            "1.1.1.1"
+        },
+    ]);
+    let output = budget.output(&mut command);
+    budget.check()?;
+    Ok(output.ok().filter(|o| o.status.success()).and_then(|o| {
+        let text = String::from_utf8_lossy(&o.stdout);
+        let fields: Vec<_> = text.split_whitespace().collect();
+        fields
+            .windows(2)
+            .find(|pair| pair[0] == "dev")
+            .map(|pair| pair[1].to_string())
+    }))
 }
 
 /// Acquire `net.ipv4.ip_forward = 1` for the server worker through the common host journal.
@@ -145,58 +155,21 @@ fn firewall_program_lock() -> &'static Mutex<()> {
 }
 
 /// Acquire router settings with a retryable scope registered before either sysctl write.
-fn acquire_ipv6_sysctls(profile: &str, wan: Option<&str>, tun: &str) -> anyhow::Result<()> {
-    ipv6_sysctl_leases()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .acquire(
-            profile,
-            wan,
-            tun,
-            crate::sysctl::acquire_checked,
-            crate::sysctl::release_scope,
-        )
-}
-
-fn release_ipv6_sysctls(profile: &str) {
-    if let Err(error) = release_ipv6_sysctls_checked(profile) {
-        log::error!(
-            "IPv6 routing: could not release host sysctls for profile '{profile}': {error}"
-        );
-    }
-}
-
-fn release_ipv6_sysctls_checked(profile: &str) -> anyhow::Result<()> {
-    ipv6_sysctl_leases()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .release(profile, crate::sysctl::release_scope)
-}
-fn detect_wan_ipv6() -> Option<String> {
-    let output = Command::new("ip")
-        .args(["-6", "route", "get", "2606:4700:4700::1111"])
-        .output()
-        .ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    let text = String::from_utf8_lossy(&output.stdout);
-    let fields: Vec<&str> = text.split_whitespace().collect();
-    fields
-        .windows(2)
-        .find(|pair| pair[0] == "dev")
-        .map(|pair| pair[1].to_string())
-}
-
-/// Resolve the IPv4 egress using the historical compatibility rule: the old default value
-/// `eth0` was a placeholder for auto-detection, so only a different non-empty value is explicit.
-pub(crate) fn resolve_wan_ipv4(configured_iface: &str) -> Option<String> {
-    let configured = configured_iface.trim();
-    if !configured.is_empty() && configured != "eth0" {
-        Some(configured.to_string())
-    } else {
-        detect_wan()
-    }
+fn acquire_ipv6_sysctls(
+    profile: &str,
+    wan: Option<&str>,
+    tun: &str,
+    budget: Budget,
+) -> anyhow::Result<()> {
+    budget.lock(ipv6_sysctl_leases())?.acquire(
+        profile,
+        wan,
+        tun,
+        |path, value, scope| budget.checked(|| crate::sysctl::acquire_checked(path, value, scope)),
+        // An expired setup must not renew its time here. The outer operation owns
+        // one fresh rollback budget after this registry guard has been released.
+        |scope| budget.checked(|| crate::sysctl::release_scope(scope)),
+    )
 }
 
 /// Resolve the IPv6 egress. Unlike the legacy IPv4 key, this setting has always documented an
@@ -204,9 +177,25 @@ pub(crate) fn resolve_wan_ipv4(configured_iface: &str) -> Option<String> {
 pub(crate) fn resolve_wan_ipv6(configured_iface: &str) -> Option<String> {
     let configured = configured_iface.trim();
     if configured.is_empty() {
-        detect_wan_ipv6()
+        detect_wan_until(true, Budget::for_operation("WAN discovery"))
+            .ok()
+            .flatten()
     } else {
         Some(configured.to_string())
+    }
+}
+
+fn resolve_wan_until(
+    configured: &str,
+    ipv6: bool,
+    budget: Budget,
+) -> anyhow::Result<Option<String>> {
+    budget.check()?;
+    let configured = configured.trim();
+    if configured.is_empty() || (!ipv6 && configured == "eth0") {
+        detect_wan_until(ipv6, budget)
+    } else {
+        Ok(Some(configured.to_string()))
     }
 }
 
@@ -376,6 +365,7 @@ fn rules(
 /// Is this exact rule currently present? Verified with `iptables -C` (the only
 /// reliable check across the legacy/nft backends — the exit code of `-A` lies on a
 /// chain the nft wrapper considers incompatible).
+#[cfg(test)]
 fn rule_present(path: &str, table: &str, chain: &str, rule: &[String]) -> bool {
     let mut a: Vec<String> = vec!["-t".into(), table.into(), "-C".into(), chain.into()];
     a.extend_from_slice(rule);
@@ -412,14 +402,13 @@ fn forward_permit_position_from_listing(listing: &str) -> usize {
     last_managed_drop + 1
 }
 
-fn forward_permit_position(path: &str) -> Option<usize> {
-    let output = ipt(path, &["-t", "filter", "-S", "FORWARD"]).ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    Some(forward_permit_position_from_listing(
-        &String::from_utf8_lossy(&output.stdout),
-    ))
+fn forward_permit_position(path: &str, budget: Budget) -> anyhow::Result<Option<usize>> {
+    let output = budget.ipt(path, &["-t", "filter", "-S", "FORWARD"]);
+    budget.check()?;
+    Ok(output
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| forward_permit_position_from_listing(&String::from_utf8_lossy(&o.stdout))))
 }
 
 fn owned_rules() -> &'static Mutex<crate::nat_owned_rules::Registry> {
@@ -442,7 +431,15 @@ fn retry_owned_rules(profile: Option<&str>, budget: Budget) -> anyhow::Result<()
     })
 }
 
-fn install_rule(profile: &str, ipv6: bool, path: &str, rule: &Rule) -> bool {
+/// Caller holds the firewall lock. Failed admission never reaches a mutation.
+fn install_rule(
+    profile: &str,
+    ipv6: bool,
+    path: &str,
+    rule: &Rule,
+    budget: Budget,
+) -> anyhow::Result<bool> {
+    budget.check()?;
     let insert = rule.table == "filter" && rule.chain == "FORWARD";
     let mut args = vec![
         "-t".to_string(),
@@ -454,34 +451,63 @@ fn install_rule(profile: &str, ipv6: bool, path: &str, rule: &Rule) -> bool {
         let position = if rule_jumps_to(&rule.args, "DROP") {
             1
         } else {
-            match forward_permit_position(path) {
+            match forward_permit_position(path, budget)? {
                 Some(position) => position,
-                None => return false,
+                None => return Ok(false),
             }
         };
         args.push(position.to_string());
     }
     args.extend(rule.args.clone());
-    // A command can mutate and then time out or fail its postcondition. Never lose its spec.
-    if let Err(error) = owned_rules()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .retain(
-            profile,
-            crate::nat_owned_rules::Rule {
-                ipv6,
-                table: rule.table.into(),
-                chain: rule.chain.into(),
-                args: rule.args.clone(),
-            },
-        )
-    {
-        log::error!("Profile '{profile}': {error}");
-        return false;
+    budget.lock(owned_rules())?.retain(
+        profile,
+        crate::nat_owned_rules::Rule {
+            ipv6,
+            table: rule.table.into(),
+            chain: rule.chain.into(),
+            args: rule.args.clone(),
+        },
+    )?;
+    let refs: Vec<_> = args.iter().map(String::as_str).collect();
+    let _ = budget.ipt(path, &refs);
+    budget.check()?;
+    let mut check = vec!["-t", rule.table, "-C", rule.chain];
+    check.extend(rule.args.iter().map(String::as_str));
+    let present = budget
+        .ipt(path, &check)
+        .is_ok_and(|output| output.status.success());
+    budget.check()?;
+    Ok(present)
+}
+
+/// Each setup is a profile startup boundary. On error the profile cannot continue;
+/// release all its retained NAT rules, including earlier families, before returning.
+/// Keep the firewall guard through rollback so a new setup cannot overtake retirement.
+fn setup_operation<T>(
+    profile: &str,
+    budget: Budget,
+    run: impl FnOnce() -> anyhow::Result<T>,
+) -> anyhow::Result<T> {
+    let _guard = budget.lock(firewall_program_lock())?;
+    let result = budget.checked(run);
+    match result {
+        Ok(value) => Ok(value),
+        Err(error) => match rollback_setup_until(profile, Budget::for_operation("NAT rollback")) {
+            Ok(()) => Err(error),
+            Err(rollback) => Err(anyhow::anyhow!(
+                "{error:#}; NAT rollback incomplete: {rollback:#}"
+            )),
+        },
     }
-    let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    let _ = ipt(path, &refs);
-    rule_present(path, rule.table, rule.chain, &rule.args)
+}
+
+/// Caller holds firewall_program_lock. Every rollback command shares this budget.
+fn rollback_setup_until(profile: &str, budget: Budget) -> anyhow::Result<()> {
+    let mut errors = crate::nat_cleanup::Errors::default();
+    errors.record("exact rules", retry_owned_rules(Some(profile), budget));
+    errors.record("IPv6 sysctls", release_ipv6_sysctls_until(profile, budget));
+    errors.record("deadline", budget.check().map_err(Into::into));
+    errors.finish()
 }
 
 /// Install NAT for `profile`. Returns the chosen WAN interface on success.
@@ -493,63 +519,62 @@ pub fn setup(
     peer_tuns: &[String],
     mtu: i32,
 ) -> anyhow::Result<String> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let path = iptables_path().ok_or_else(|| {
-        anyhow::anyhow!(
+    let budget = Budget::for_operation("NAT setup");
+    setup_operation(profile, budget, || {
+        let path = budget.find(false)?.ok_or_else(|| {
+            anyhow::anyhow!(
             "`iptables` is not installed (apt install iptables) — required for routing.nat.enabled"
         )
-    })?;
-    // WAN: an explicit, non-default interface wins; otherwise auto-detect. The config
-    // default "eth0" is treated as "auto" (it's just a placeholder).
-    let wan = resolve_wan_ipv4(configured_iface).ok_or_else(|| {
-        anyhow::anyhow!(
-            "could not auto-detect the WAN interface; set routing.nat.interface explicitly"
-        )
-    })?;
+        })?;
+        // WAN: an explicit, non-default interface wins; otherwise auto-detect. The config
+        // default "eth0" is treated as "auto" (it's just a placeholder).
+        let wan = resolve_wan_until(configured_iface, false, budget)?.ok_or_else(|| {
+            anyhow::anyhow!(
+                "could not auto-detect the WAN interface; set routing.nat.interface explicitly"
+            )
+        })?;
 
-    // `routing.nat.enabled = true` is a PROMISE that clients reach the internet, and without
-    // `ip_forward` the kernel drops every transit packet no matter how correct the iptables
-    // rules are. This used to be best-effort — a warning, then `Ok(wan)` — so the profile came
-    // up, clients connected, got an address, and had no connectivity at all, with the cause a
-    // single WARN line above a screen of INFO. Making it fatal is what turns "NAT is enabled"
-    // into something that was actually checked. (Audit 2026-08-01, §6.)
-    if !enable_ip_forward() {
-        anyhow::bail!(
-            "routing.nat.enabled = true but net.ipv4.ip_forward could not be enabled — the \
+        // `routing.nat.enabled = true` is a PROMISE that clients reach the internet, and without
+        // `ip_forward` the kernel drops every transit packet no matter how correct the iptables
+        // rules are. This used to be best-effort — a warning, then `Ok(wan)` — so the profile came
+        // up, clients connected, got an address, and had no connectivity at all, with the cause a
+        // single WARN line above a screen of INFO. Making it fatal is what turns "NAT is enabled"
+        // into something that was actually checked. (Audit 2026-08-01, §6.)
+        if !budget.checked(|| Ok(enable_ip_forward()))? {
+            anyhow::bail!(
+                "routing.nat.enabled = true but net.ipv4.ip_forward could not be enabled — the \
              kernel would not forward client traffic, so every client would connect and then \
              reach nothing. Enable it on the host (`sysctl -w net.ipv4.ip_forward=1`), or set \
              routing.nat.enabled = false"
-        );
-    }
-    // Clear any stale copies first so a re-apply can't stack duplicates.
-    cleanup_with(&path, profile);
+            );
+        }
+        // Clear any stale copies first so a re-apply can't stack duplicates.
+        cleanup_matching_until(&path, &tag(profile), true, budget);
+        budget.check()?;
 
-    let mss = (mtu - 40).max(536);
-    let mut forward_unapplied = false;
-    for r in rules(profile, &wan, tun, pool_cidr, peer_tuns, mss) {
-        if !install_rule(profile, false, &path, &r) {
-            if r.essential {
-                cleanup_with(&path, profile); // roll back the partial set
-                anyhow::bail!(
+        let mss = (mtu - 40).max(536);
+        let mut forward_unapplied = false;
+        for r in rules(profile, &wan, tun, pool_cidr, peer_tuns, mss) {
+            if !install_rule(profile, false, &path, &r, budget)? {
+                if r.essential {
+                    anyhow::bail!(
                     "iptables could not apply the {}/{} rule — check the host firewall backend \
                      (e.g. legacy/nft mix)",
                     r.table,
                     r.chain
                 );
+                }
+                forward_unapplied = true;
             }
-            forward_unapplied = true;
         }
-    }
-    if forward_unapplied {
-        // Whether this is survivable depends on the host's FORWARD POLICY, so ask instead of
-        // guessing. With a policy of ACCEPT the missing rules change nothing and a warning is
-        // the right response — that is why they are not `essential`. With DROP the chain
-        // discards exactly the transit traffic those rules existed to permit, so the profile
-        // would serve clients that can reach nothing; the old code warned in both cases and
-        // returned Ok. (Audit 2026-08-01, §6.)
-        match forward_policy(&path) {
+        if forward_unapplied {
+            // Whether this is survivable depends on the host's FORWARD POLICY, so ask instead of
+            // guessing. With a policy of ACCEPT the missing rules change nothing and a warning is
+            // the right response — that is why they are not `essential`. With DROP the chain
+            // discards exactly the transit traffic those rules existed to permit, so the profile
+            // would serve clients that can reach nothing; the old code warned in both cases and
+            // returned Ok. (Audit 2026-08-01, §6.)
+            match forward_policy(&path, budget)? {
             Some(status) if status.unconditionally_accepts => log::warn!(
                 "Profile '{profile}': FORWARD ACCEPT rules could not be applied (host has a \
                  mixed legacy/nft filter table). The empty built-in chain has policy ACCEPT, so egress \
@@ -557,15 +582,16 @@ pub fn setup(
                  <-> {wan} yourself."
             ),
             status => {
-                cleanup_with(&path, profile); // roll back the partial set
+
                 anyhow::bail!(
                     "the FORWARD ACCEPT rules could not be applied and the observed chain state is {} — client traffic between {pool_cidr} and {wan} may be dropped. Permit that forwarding yourself, fix the iptables backend, or set routing.nat.enabled = false",
                     status.as_ref().map_or("unknown", |value| value.summary())
                 );
             }
         }
-    }
-    Ok(wan)
+        }
+        Ok(wan)
+    })
 }
 
 fn ipv6_rules(
@@ -758,114 +784,111 @@ pub fn setup_ipv6(
     if mode == crate::config::server::Ipv6RoutingMode::Manual {
         return Ok(resolve_wan_ipv6(configured_iface));
     }
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let path = ip6tables_path().ok_or_else(|| {
+    let budget = Budget::for_operation("IPv6 routing setup");
+    setup_operation(profile, budget, || {
+        let path = budget.find(true)?.ok_or_else(|| {
         anyhow::anyhow!(
             "an IPv6 profile with routing.ipv6.mode = {mode} requires ip6tables so its egress boundary can be enforced"
         )
     })?;
-    cleanup_with(&path, profile);
-    if mode == crate::config::server::Ipv6RoutingMode::Off {
-        // Be correct even when a caller changes this profile from route/NAT66 to off
-        // without first going through the outer cleanup wrapper: off owns no router
-        // sysctls and must release its previous forwarding/accept_ra lease.
-        release_ipv6_sysctls(profile);
-        // Verification is mandatory: falling back to a permissive FORWARD policy would be
-        // the exact cross-profile leak this mode exists to prevent.
-        for rule in ipv6_off_rules(profile, tun) {
-            if !install_rule(profile, true, &path, &rule) {
-                cleanup_with(&path, profile);
-                anyhow::bail!(
+        cleanup_matching_until(&path, &tag(profile), true, budget);
+        budget.check()?;
+        if mode == crate::config::server::Ipv6RoutingMode::Off {
+            // Be correct even when a caller changes this profile from route/NAT66 to off
+            // without first going through the outer cleanup wrapper: off owns no router
+            // sysctls and must release its previous forwarding/accept_ra lease.
+            release_ipv6_sysctls_until(profile, budget)?;
+            // Verification is mandatory: falling back to a permissive FORWARD policy would be
+            // the exact cross-profile leak this mode exists to prevent.
+            for rule in ipv6_off_rules(profile, tun) {
+                if !install_rule(profile, true, &path, &rule, budget)? {
+                    anyhow::bail!(
                     "ip6tables could not enforce routing.ipv6.mode = off for profile '{profile}'; refusing an IPv6 plan that could inherit Internet forwarding"
                 );
+                }
             }
+            return Ok(None);
         }
-        return Ok(None);
-    }
-    let wan = resolve_wan_ipv6(configured_iface);
-    if mode == crate::config::server::Ipv6RoutingMode::Nat66 && wan.is_none() {
-        anyhow::bail!(
-            "could not detect an IPv6 uplink for NAT66; set routing.ipv6.interface explicitly"
-        );
-    }
-    let uplink_label = wan.as_deref().unwrap_or("<kernel routes>");
-    acquire_ipv6_sysctls(profile, wan.as_deref(), tun).map_err(|error| {
+        let wan = resolve_wan_until(configured_iface, true, budget)?;
+        if mode == crate::config::server::Ipv6RoutingMode::Nat66 && wan.is_none() {
+            anyhow::bail!(
+                "could not detect an IPv6 uplink for NAT66; set routing.ipv6.interface explicitly"
+            );
+        }
+        let uplink_label = wan.as_deref().unwrap_or("<kernel routes>");
+        acquire_ipv6_sysctls(profile, wan.as_deref(), tun, budget).map_err(|error| {
         anyhow::anyhow!(
             "routing.ipv6.mode = {mode} could not enable safe IPv6 forwarding via '{uplink_label}': {error}"
         )
     })?;
-    // Auto-detection depends on the RA/default route that existed before forwarding was
-    // enabled. Verify it survived the transition: otherwise rules below would be installed
-    // for a stale uplink and the profile would ACK IPv6 while public traffic has no route.
-    if configured_iface.trim().is_empty() {
-        if let Some(expected_wan) = wan.as_deref() {
-            match detect_wan_ipv6() {
-                Some(active_wan) if active_wan == expected_wan => {}
-                active_wan => {
-                    release_ipv6_sysctls(profile);
-                    anyhow::bail!(
+        // Auto-detection depends on the RA/default route that existed before forwarding was
+        // enabled. Verify it survived the transition: otherwise rules below would be installed
+        // for a stale uplink and the profile would ACK IPv6 while public traffic has no route.
+        if configured_iface.trim().is_empty() {
+            if let Some(expected_wan) = wan.as_deref() {
+                match detect_wan_until(true, budget)? {
+                    Some(active_wan) if active_wan == expected_wan => {}
+                    active_wan => {
+                        anyhow::bail!(
                         "the auto-detected IPv6 uplink changed from '{expected_wan}' to '{}' after enabling forwarding; check accept_ra=2 and the host IPv6 default route",
                         active_wan.as_deref().unwrap_or("none")
                     );
+                    }
                 }
             }
         }
-    }
-    let wan_for_rules = wan.as_deref().unwrap_or("");
-    let mut forward_unapplied = false;
-    for rule in ipv6_rules(
-        profile,
-        wan_for_rules,
-        tun,
-        pool_cidr,
-        peer_tuns,
-        (mtu - 60).max(1220),
-        mode,
-    ) {
-        if !install_rule(profile, true, &path, &rule) {
-            if rule.essential {
-                cleanup_with(&path, profile);
-                release_ipv6_sysctls(profile);
-                anyhow::bail!(
-                    "ip6tables could not apply the {}/{} rule for IPv6 {}",
-                    rule.table,
-                    rule.chain,
-                    mode
-                );
+        let wan_for_rules = wan.as_deref().unwrap_or("");
+        let mut forward_unapplied = false;
+        for rule in ipv6_rules(
+            profile,
+            wan_for_rules,
+            tun,
+            pool_cidr,
+            peer_tuns,
+            (mtu - 60).max(1220),
+            mode,
+        ) {
+            if !install_rule(profile, true, &path, &rule, budget)? {
+                if rule.essential {
+                    anyhow::bail!(
+                        "ip6tables could not apply the {}/{} rule for IPv6 {}",
+                        rule.table,
+                        rule.chain,
+                        mode
+                    );
+                }
+                forward_unapplied = true;
             }
-            forward_unapplied = true;
         }
-    }
-    if forward_unapplied {
-        match forward_policy(&path) {
+        if forward_unapplied {
+            match forward_policy(&path, budget)? {
             Some(status) if status.unconditionally_accepts => log::warn!(
                 "Profile '{profile}': IPv6 FORWARD permit rules could not be verified; \
                  the empty built-in chain has policy ACCEPT. Ensure {pool_cidr} can forward between \
                  {tun} and {uplink_label}."
             ),
             status => {
-                cleanup_with(&path, profile);
-                release_ipv6_sysctls(profile);
+
                 anyhow::bail!(
                     "qeli could not install IPv6 FORWARD permit rules and the observed chain state is {}; refusing a profile that may black-hole forwarded traffic",
                     status.as_ref().map_or("unknown", |value| value.summary())
                 );
             }
         }
-    }
-    Ok(Some(wan.unwrap_or_default()))
+        }
+        Ok(Some(wan.unwrap_or_default()))
+    })
 }
 
 /// The `filter/FORWARD` chain's default policy plus whether it contains explicit rules, or
 /// `None` when it cannot be read. `iptables -S FORWARD` opens with `-P FORWARD DROP`.
-fn forward_policy(path: &str) -> Option<ChainPolicy> {
-    let out = ipt(path, &["-t", "filter", "-S", "FORWARD"]).ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    chain_policy_from_output(&out.stdout, "FORWARD")
+fn forward_policy(path: &str, budget: Budget) -> anyhow::Result<Option<ChainPolicy>> {
+    let output = budget.ipt(path, &["-t", "filter", "-S", "FORWARD"]);
+    budget.check()?;
+    Ok(output
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| chain_policy_from_output(&o.stdout, "FORWARD")))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -992,6 +1015,7 @@ impl Drop for DnsInputLease {
 /// Full-tunnel traffic normally crosses `FORWARD`, but the pushed resolver is the server's
 /// own TUN address and therefore crosses `INPUT`. Keep the exception narrow: exact interface,
 /// client pool, resolver address and port, for both DNS transports.
+#[cfg(test)]
 pub(crate) fn enable_dns_input(
     profile: &str,
     tun: &str,
@@ -1117,12 +1141,9 @@ pub(crate) fn setup_dns_firewall(
         log::info!("Profile '{profile}': IPv6 DNS {listen}:{port} uses administrator-managed INPUT and port-53 delivery");
         return Ok(None);
     }
-    let lease = enable_dns_input(profile, tun, pool_cidr, listen, port)?;
-    if !enable_dns_redirect(profile, tun, listen, port) {
-        anyhow::bail!(
-            "profile '{profile}': DNS port 53 -> {port} redirect on {listen} could not be installed; fix the firewall or set dns.port = 53"
-        );
-    }
+    let budget = Budget::for_operation("DNS firewall setup");
+    let lease = enable_dns_input_until(profile, tun, pool_cidr, listen, port, budget)?;
+    enable_dns_redirect_until(profile, tun, listen, port, budget)?;
     Ok(Some(lease))
 }
 
@@ -1142,126 +1163,125 @@ pub fn enable_routing(
     peer_tuns: &[String],
     mtu: i32,
 ) -> anyhow::Result<()> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    // Same invariant as `setup`, for the same reason: `forward_private` promises the server
-    // ROUTES transit traffic, and without `ip_forward` the kernel drops every transit packet
-    // whatever the rules say. This used to be ignored entirely — the function returned `()`
-    // and logged success unconditionally — so a profile came up "routing" while nothing was
-    // forwarded. (Audit 2026-08-01, §5.)
-    if !enable_ip_forward() {
-        anyhow::bail!(
+    let budget = Budget::for_operation("IPv4 routing setup");
+    setup_operation(profile, budget, || {
+        // Same invariant as `setup`, for the same reason: `forward_private` promises the server
+        // ROUTES transit traffic, and without `ip_forward` the kernel drops every transit packet
+        // whatever the rules say. This used to be ignored entirely — the function returned `()`
+        // and logged success unconditionally — so a profile came up "routing" while nothing was
+        // forwarded. (Audit 2026-08-01, §5.)
+        if !budget.checked(|| Ok(enable_ip_forward()))? {
+            anyhow::bail!(
             "routing.forward_private = true but net.ipv4.ip_forward could not be enabled — the \
              kernel would not route anything between the tunnel and your networks. Enable it on \
              the host (`sysctl -w net.ipv4.ip_forward=1`), or unset routing.forward_private"
         );
-    }
-    let path = iptables_path().ok_or_else(|| {
-        anyhow::anyhow!(
+        }
+        let path = budget.find(false)?.ok_or_else(|| {
+            anyhow::anyhow!(
             "routing.forward_private = true requires iptables so qeli can verify the FORWARD path"
         )
-    })?;
-    let mss = (mtu - 40).max(536).to_string();
-    let comment = tag(profile);
-    let cm = |mut r: Vec<String>| -> Vec<String> {
-        r.extend([
-            "-m".into(),
-            "comment".into(),
-            "--comment".into(),
-            comment.clone(),
-        ]);
-        r
-    };
-    let mss_rule = |dir: &str| -> (&'static str, &'static str, Vec<String>) {
-        (
-            "mangle",
-            "FORWARD",
-            cm(vec![
-                "-p".into(),
-                "tcp".into(),
-                "--tcp-flags".into(),
-                "SYN,RST".into(),
-                "SYN".into(),
-                dir.into(),
-                tun.into(),
-            ])
-            .into_iter()
-            .chain([
-                "-j".into(),
-                "TCPMSS".into(),
-                "--set-mss".into(),
-                mss.clone(),
-            ])
-            .collect(),
-        )
-    };
-    let accept = |dir: &str| -> (&'static str, &'static str, Vec<String>) {
-        (
-            "filter",
-            "FORWARD",
-            cm(vec![dir.into(), tun.into()])
-                .into_iter()
-                .chain(["-j".into(), "ACCEPT".into()])
-                .collect(),
-        )
-    };
-    for rule in cross_profile_drop_rules(profile, tun, peer_tuns) {
-        if !install_rule(profile, false, &path, &rule) {
-            cleanup_with(&path, profile);
-            anyhow::bail!("could not enforce cross-profile isolation for {tun}");
-        }
-    }
-    // MSS-clamp forwarded TCP (PMTU black-hole guard), then permit tun<->anywhere routing.
-    let mut forward_unapplied = false;
-    let mut mss_unapplied = false;
-    for (table, chain, args) in [mss_rule("-o"), mss_rule("-i"), accept("-i"), accept("-o")] {
-        let insert = table == "filter" && chain == "FORWARD";
-        let rule = Rule {
-            table,
-            chain,
-            args: args.clone(),
-            essential: false,
+        })?;
+        let mss = (mtu - 40).max(536).to_string();
+        let comment = tag(profile);
+        let cm = |mut r: Vec<String>| -> Vec<String> {
+            r.extend([
+                "-m".into(),
+                "comment".into(),
+                "--comment".into(),
+                comment.clone(),
+            ]);
+            r
         };
-        // VERIFY instead of assuming. The whole set was applied with `let _ =` and then
-        // reported as success, so a host that refused every rule still logged "FORWARD ACCEPT
-        // for tun0" — the operator had no way to tell routing from silence.
-        if !install_rule(profile, false, &path, &rule) {
-            if insert {
-                forward_unapplied = true;
-            } else {
-                mss_unapplied = true;
+        let mss_rule = |dir: &str| -> (&'static str, &'static str, Vec<String>) {
+            (
+                "mangle",
+                "FORWARD",
+                cm(vec![
+                    "-p".into(),
+                    "tcp".into(),
+                    "--tcp-flags".into(),
+                    "SYN,RST".into(),
+                    "SYN".into(),
+                    dir.into(),
+                    tun.into(),
+                ])
+                .into_iter()
+                .chain([
+                    "-j".into(),
+                    "TCPMSS".into(),
+                    "--set-mss".into(),
+                    mss.clone(),
+                ])
+                .collect(),
+            )
+        };
+        let accept = |dir: &str| -> (&'static str, &'static str, Vec<String>) {
+            (
+                "filter",
+                "FORWARD",
+                cm(vec![dir.into(), tun.into()])
+                    .into_iter()
+                    .chain(["-j".into(), "ACCEPT".into()])
+                    .collect(),
+            )
+        };
+        for rule in cross_profile_drop_rules(profile, tun, peer_tuns) {
+            if !install_rule(profile, false, &path, &rule, budget)? {
+                anyhow::bail!("could not enforce cross-profile isolation for {tun}");
             }
         }
-    }
-    if forward_unapplied {
-        // Survivable only for a genuinely empty chain whose policy is ACCEPT. A default
-        // ACCEPT behind an explicit DROP/jump proves nothing about this transit path.
-        match forward_policy(&path) {
+        // MSS-clamp forwarded TCP (PMTU black-hole guard), then permit tun<->anywhere routing.
+        let mut forward_unapplied = false;
+        let mut mss_unapplied = false;
+        for (table, chain, args) in [mss_rule("-o"), mss_rule("-i"), accept("-i"), accept("-o")] {
+            let insert = table == "filter" && chain == "FORWARD";
+            let rule = Rule {
+                table,
+                chain,
+                args: args.clone(),
+                essential: false,
+            };
+            // VERIFY instead of assuming. The whole set was applied with `let _ =` and then
+            // reported as success, so a host that refused every rule still logged "FORWARD ACCEPT
+            // for tun0" — the operator had no way to tell routing from silence.
+            if !install_rule(profile, false, &path, &rule, budget)? {
+                if insert {
+                    forward_unapplied = true;
+                } else {
+                    mss_unapplied = true;
+                }
+            }
+        }
+        if forward_unapplied {
+            // Survivable only for a genuinely empty chain whose policy is ACCEPT. A default
+            // ACCEPT behind an explicit DROP/jump proves nothing about this transit path.
+            match forward_policy(&path, budget)? {
             Some(status) if status.unconditionally_accepts => log::warn!(
                 "Profile '{profile}': forward_private — explicit FORWARD permits could not be \
                  applied, but the empty built-in chain has policy ACCEPT. If you tighten it later, permit \
                  {tun} yourself."
             ),
             status => {
-                cleanup_with(&path, profile); // roll back the partial set
+
                 anyhow::bail!(
                     "routing.forward_private = true, but FORWARD permits could not be applied and the observed chain state is {} — transit through {tun} may be dropped. Permit it yourself, fix the iptables backend, or unset routing.forward_private",
                     status.as_ref().map_or("unknown", |value| value.summary())
                 );
             }
         }
-    }
-    if mss_unapplied {
-        log::warn!(
-            "Profile '{profile}': forward_private — TCP MSS clamp could not be verified; \
+        }
+        if mss_unapplied {
+            log::warn!(
+                "Profile '{profile}': forward_private — TCP MSS clamp could not be verified; \
              correct Path-MTU Discovery is required for forwarded TCP through {tun}."
-        );
-    }
-    log::info!(
+            );
+        }
+        log::info!(
         "Profile '{profile}': forward_private — ip_forward + FORWARD ACCEPT for {tun} (routing, no NAT)"
     );
-    Ok(())
+        Ok(())
+    })
 }
 
 /// Redirect in-tunnel DNS from the standard port 53 to where the proxy actually listens.
@@ -1280,78 +1300,69 @@ pub fn enable_routing(
 ///
 /// Tagged with the same per-profile comment as every other rule, so [`cleanup`] removes it
 /// with the rest when the profile stops.
-pub fn enable_dns_redirect(profile: &str, tun: &str, listen: &str, port: u16) -> bool {
+fn enable_dns_redirect_until(
+    profile: &str,
+    tun: &str,
+    listen: &str,
+    port: u16,
+    budget: Budget,
+) -> anyhow::Result<()> {
+    budget.check()?;
     if port == 53 {
-        return true; // nothing to bridge
+        return Ok(()); // nothing to bridge
     }
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let ipv6 = listen
-        .parse::<std::net::IpAddr>()
-        .is_ok_and(|address| address.is_ipv6());
-    let tool = if ipv6 { "ip6tables" } else { "iptables" };
-    let path = match if ipv6 {
-        ip6tables_path()
-    } else {
-        iptables_path()
-    } {
-        Some(p) => p,
-        None => {
-            log::error!(
-                "Profile '{profile}': dns.port = {port} needs a {tool} REDIRECT so clients \
-                 can keep using port 53, but {tool} is absent. Clients would be handed a \
-                 resolver they cannot reach. Set dns.port = 53, or install {tool}."
-            );
-            return false;
-        }
-    };
-    let comment = tag(profile);
-    // BOTH protocols. This was UDP-only, and correctly so at the time: the proxy bound a UDP
-    // socket and nothing listened on TCP, so a TCP rule would have redirected clients to a
-    // closed port — worse than leaving 53/tcp unserved. Now that the resolver serves TCP
-    // (RFC 7766, and the retry path for a truncated answer), the rule has to cover it, or a
-    // client told to retry over TCP would reach port 53 with nothing behind it — precisely the
-    // black hole the redirect exists to prevent. (Audit 2026-08-01, §10.)
-    for proto in ["udp", "tcp"] {
-        let args: Vec<String> = vec![
-            "-i".into(),
-            tun.into(),
-            "-p".into(),
-            proto.into(),
-            "-d".into(),
-            listen.into(),
-            "--dport".into(),
-            "53".into(),
-            "-m".into(),
-            "comment".into(),
-            "--comment".into(),
-            comment.clone(),
-            "-j".into(),
-            "REDIRECT".into(),
-            "--to-ports".into(),
-            port.to_string(),
-        ];
-        let rule = Rule {
-            table: "nat",
-            chain: "PREROUTING",
-            args,
-            essential: true,
-        };
-        if !install_rule(profile, ipv6, &path, &rule) {
-            log::error!(
+    setup_operation(profile, budget, || {
+        let ipv6 = listen.parse::<std::net::IpAddr>()?.is_ipv6();
+        let tool = if ipv6 { "ip6tables" } else { "iptables" };
+        let path = budget.find(ipv6)?.ok_or_else(|| {
+            anyhow::anyhow!("Profile '{profile}': dns.port = {port} requires {tool} REDIRECT")
+        })?;
+        let comment = tag(profile);
+        // BOTH protocols. This was UDP-only, and correctly so at the time: the proxy bound a UDP
+        // socket and nothing listened on TCP, so a TCP rule would have redirected clients to a
+        // closed port — worse than leaving 53/tcp unserved. Now that the resolver serves TCP
+        // (RFC 7766, and the retry path for a truncated answer), the rule has to cover it, or a
+        // client told to retry over TCP would reach port 53 with nothing behind it — precisely the
+        // black hole the redirect exists to prevent. (Audit 2026-08-01, §10.)
+        for proto in ["udp", "tcp"] {
+            let args: Vec<String> = vec![
+                "-i".into(),
+                tun.into(),
+                "-p".into(),
+                proto.into(),
+                "-d".into(),
+                listen.into(),
+                "--dport".into(),
+                "53".into(),
+                "-m".into(),
+                "comment".into(),
+                "--comment".into(),
+                comment.clone(),
+                "-j".into(),
+                "REDIRECT".into(),
+                "--to-ports".into(),
+                port.to_string(),
+            ];
+            let rule = Rule {
+                table: "nat",
+                chain: "PREROUTING",
+                args,
+                essential: true,
+            };
+            if !install_rule(profile, ipv6, &path, &rule, budget)? {
+                anyhow::bail!(
                 "Profile '{profile}': FAILED to install the DNS redirect {listen}:53/{proto} -> \
                  :{port} on {tun}. Clients would be handed a resolver they cannot reach — set \
                  dns.port = 53, or fix iptables."
             );
-            return false;
+            }
         }
-    }
-    log::info!(
-        "Profile '{profile}': DNS redirect {listen}:53 -> :{port} on {tun}, udp+tcp \
+        log::info!(
+            "Profile '{profile}': DNS redirect {listen}:53 -> :{port} on {tun}, udp+tcp \
          (clients are told 53; the proxy listens on {port})"
-    );
-    true
+        );
+        Ok(())
+    })
 }
 
 /// Sweep historical tags, then verify every exact specification retained by this worker.
@@ -1442,28 +1453,6 @@ fn cleanup_all_until(
     }
     budget.check()?;
     Ok(())
-}
-
-fn cleanup_with(path: &str, profile: &str) {
-    // EXACT tag match: the per-profile teardown must delete only THIS profile's rules.
-    // A substring match (the old behaviour) made `qeli-nat:web` match `qeli-nat:web2`, so
-    // starting/stopping profile `web` silently wiped profile `web2`'s MASQUERADE/FORWARD/
-    // MSS rules and broke its egress until it restarted. Both names are valid idents. (M1)
-    cleanup_matching(path, &tag(profile), true);
-}
-
-/// Delete every managed rule whose iptables comment matches `needle`. With `exact`, the
-/// comment must equal `needle` (a specific `qeli-nat:<profile>` tag); without it, the
-/// comment must START WITH `needle` (the bare `qeli-nat:` prefix used by `cleanup_all`).
-/// The comment is our own tag — no wire input — but we still match the parsed token, not a
-/// raw substring, so one profile name can never be a prefix of another's rules. (M1)
-fn cleanup_matching(path: &str, needle: &str, exact: bool) {
-    // Keep the existing best-effort lifecycle contract, including native nft chains
-    // which cannot be listed through iptables-nft. A failed sweep is now observable.
-    // Do not retry a successful no-op indefinitely or skip later rules after a failure.
-    if let Err(error) = cleanup_matching_with(needle, exact, |args| ipt(path, args)) {
-        log::warn!("NAT cleanup via {path} for '{needle}' incomplete: {error}");
-    }
 }
 
 fn cleanup_matching_until(path: &str, needle: &str, exact: bool, budget: Budget) {
@@ -1918,3 +1907,7 @@ mod dns_input_budget_tests;
 #[cfg(test)]
 #[path = "nat/test_support.rs"]
 mod test_support;
+
+#[cfg(test)]
+#[path = "nat/setup_budget_tests.rs"]
+mod setup_budget_tests;

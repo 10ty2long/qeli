@@ -2157,7 +2157,7 @@ already started or guarantee whole-shutdown time.
 
 ### 6.70. Server: DNS INPUT setup/cleanup deadline expired
 
-`DNS INPUT setup deadline expired` covers one ruleset's 15 seconds: queue time,
+`DNS firewall setup deadline expired` covers one ruleset's 15 seconds: queue time,
 old pending records, UDP/TCP and INPUT verification. Failure after partial installation
 starts rollback with a separate 15-second deadline.
 
@@ -2170,3 +2170,12 @@ and iptables/ip6tables replies; preserve unrelated INPUT rules. After worker exi
 inspect leftovers separately: in-memory retirement is not a crash journal. Port-53
 DNS REDIRECT setup has a separate, still-open operation-budget boundary.
 [Analysis](../reports/AUDIT-Q14-DNS-INPUT-BUDGET.md).
+
+### 6.71. Server: NAT setup / rollback deadline
+
+`NAT setup`, `IPv4 routing setup` and `IPv6 routing setup deadline expired` include
+firewall/registry admission and the complete command sequence for one setup. Rollback
+has a separate shared deadline. `NAT rollback incomplete` retains exact records and
+prevents successful setup. Once the delay is resolved, lifecycle cleanup verifies the
+remaining rules again. Preserve unrelated rules; timeout does not prove no mutation.
+[Analysis](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).

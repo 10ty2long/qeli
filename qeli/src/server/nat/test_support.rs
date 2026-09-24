@@ -31,7 +31,7 @@ done
 case "$op" in
   -S) [ -e "$0.inventory-delay" ] && sleep "$(cat "$0.inventory-delay")"; printf '%s\n' "-P $chain ACCEPT"; exit 0;;
   -C) [ -e "$0.$chain.$proto" ] && exit 0; exit 1;;
-  -I) touch "$0.$chain.$proto"; [ -e "$0.insert-$proto-delay" ] && sleep "$(cat "$0.insert-$proto-delay")"; exit 0;;
+  -I|-A) touch "$0.$chain.$proto"; [ -e "$0.insert-$proto-delay" ] && sleep "$(cat "$0.insert-$proto-delay")"; exit 0;;
   -D)
     [ -e "$0.deny-$proto" ] && exit 4
     rm -f "$0.$chain.$proto"

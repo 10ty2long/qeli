@@ -439,7 +439,11 @@ share the deadline; a late deletion acknowledgement is not success. Unverified e
 rules remain in worker memory for retry. After process exit, inspect leftovers separately;
 historical tag sweeps do not guarantee removal of unlistable mixed nft rules. This is
 not a whole-shutdown bound: profiles use separate calls, and synchronous sysctl/I/O
-may return after the deadline. NAT setup, including DNS REDIRECT, still lacks a shared operation deadline.
+may return after the deadline. NAT44, IPv4 forwarding and managed IPv6 routing each receive 15 seconds for setup,
+including queue time and commands. An error starts exact rollback with a separate shared
+15 seconds; incomplete rollback retains records and returns an error. DNS INPUT and
+REDIRECT share 15 seconds for setup; their cleanup operations have separate deadlines.
+[Limits and validation](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).
 [Description and validation](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
 
 Setup of one DNS INPUT ruleset receives 15 seconds including admission and cleanup of

@@ -2158,7 +2158,7 @@ namespace. Сохраняйте чужие правила; не заменяйт
 
 ### 6.70. Сервер: истёк срок DNS INPUT setup/cleanup
 
-`DNS INPUT setup deadline expired` относится к 15 секундам одного набора разрешений:
+`DNS firewall setup deadline expired` относится к 15 секундам одного набора разрешений:
 очередь, очистка старых записей, UDP/TCP и проверка INPUT. Ошибка после частичной
 установки запускает откат с отдельным сроком 15 секунд.
 
@@ -2171,3 +2171,12 @@ namespace. Сохраняйте чужие правила; не заменяйт
 INPUT-правила. После выхода worker требуется отдельная проверка остатков: отметка
 в памяти не заменяет crash journal. DNS REDIRECT порта 53 имеет отдельную незакрытую
 границу setup. [Разбор](../reports/AUDIT-Q14-DNS-INPUT-BUDGET.md).
+
+### 6.71. Сервер: NAT setup / rollback deadline
+
+`NAT setup`, `IPv4 routing setup` и `IPv6 routing setup deadline expired` учитывают
+ожидание firewall/registry mutex и всю последовательность команд одного setup.
+Откат имеет отдельный общий срок; `NAT rollback incomplete` сохраняет точные записи
+и запрещает успех установки. После устранения задержки lifecycle cleanup проверяет
+остатки заново. Не очищайте чужие правила и не считайте timeout доказательством отсутствия
+мутации. [Разбор](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).

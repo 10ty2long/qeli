@@ -51,7 +51,13 @@ fn native_exact_cleanup_removes_duplicates_both_families_and_preserves_sibling(
                     ("audit-owned", &nat),
                 ] {
                     anyhow::ensure!(
-                        install_rule(profile, ipv6, path, rule),
+                        install_rule(
+                            profile,
+                            ipv6,
+                            path,
+                            rule,
+                            Budget::for_operation("native setup")
+                        )?,
                         "rule not installed"
                     );
                 }

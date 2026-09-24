@@ -67,7 +67,7 @@ impl Budget {
         self.check()?;
         Ok(value)
     }
-    fn output(self, command: &mut crate::system_command::Command) -> io::Result<Output> {
+    pub(super) fn output(self, command: &mut crate::system_command::Command) -> io::Result<Output> {
         self.check()?;
         let output = command.output_until(self.until);
         self.check()?;

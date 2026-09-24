@@ -3957,7 +3957,7 @@ pub(crate) fn build_auth_ok_for_addresses_with_udp_roaming(
         // VpnService.Builder and NEDNSSettings take an address and nothing else, Windows and
         // macOS configure resolvers by IP, while the Rust client uses resolvectl's `IP#port`
         // form. Pushing the real port therefore black-holed DNS on every client but one. The
-        // proxy keeps its own port; `nat::enable_dns_redirect` bridges 53 to it inside the tunnel.
+        // proxy keeps its own port; `nat::setup_dns_firewall` bridges 53 to it inside the tunnel.
         // (Audit 2026-07-31.)
         "dns_port": 53,
         "routes": routes,

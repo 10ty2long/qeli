@@ -87,6 +87,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-NAT-COMMANDS.md](reports/AUDIT-Q14-NAT-COMMANDS.md) | Q14-F032: server NAT shares the bounded command runner; ownership after timeout |
 | [AUDIT-Q14-NAT-CLEANUP-BUDGET.md](reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md) | Shared NAT/DNS cleanup deadline and retained unverified rules |
 | [AUDIT-Q14-DNS-INPUT-BUDGET.md](reports/AUDIT-Q14-DNS-INPUT-BUDGET.md) | DNS INPUT lease deadlines and retirement without lock waits |
+| [AUDIT-Q14-NAT-SETUP-BUDGET.md](reports/AUDIT-Q14-NAT-SETUP-BUDGET.md) | NAT/forwarding setup and exact rollback deadlines |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Retained DNS rule specifications after cleanup/rollback failure, retries and generation identity |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |
