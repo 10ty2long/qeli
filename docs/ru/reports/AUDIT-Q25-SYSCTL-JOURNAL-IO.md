@@ -41,3 +41,5 @@ sysctl операции, reuse долговременной namespace identity �
 последовательность внешних команд и вся cleanup-транзакция общего deadline не получили.
 Синхронный preflight в async handlers также остаётся D05. Эти ограничения не скрываются
 успешным unit/cross/native прогоном.
+
+Внутренние I/O-границы позднее защищены в [Q25-F077](AUDIT-Q25-SYSCTL-CONTEXT-IO.md); это не полное закрытие D02.

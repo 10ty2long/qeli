@@ -2009,3 +2009,14 @@ complete backup exists. If publication already started and failed, use the retai
 `.pre-restore-*.tgz`; automatic whole-tree rollback is not promised.
 
 [Analysis and verification](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md).
+
+
+### 6.60. Sysctl: namespace changed during a transaction
+
+`host sysctl namespace changed during the journal transaction` or `transaction lost
+its namespace context` prevents that transaction from writing further. Keep
+`sysctls.state`; do not delete the journal to bypass the error. Return to the original
+network, PID/time namespaces and matching procfs, then retry cleanup as a separate
+operation. An error after writing does not mean the sysctl remained unchanged: the
+journal retains the original value for verification/recovery. Returning to the original
+context does not revive a failed transaction. [Analysis](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md).

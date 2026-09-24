@@ -66,3 +66,58 @@ pub(super) fn current() -> anyhow::Result<Context> {
     }
     Ok(Context { network, pid, time })
 }
+
+/// A transaction becomes unusable after any observed context loss, even if a later
+/// callback returns to the original namespace. Never persist a partly reinterpreted journal.
+pub(super) struct Guard {
+    expected: Context,
+    failed: std::cell::Cell<bool>,
+}
+
+impl Guard {
+    pub(super) fn new(expected: Context) -> anyhow::Result<Self> {
+        let guard = Self {
+            expected,
+            failed: std::cell::Cell::new(false),
+        };
+        guard.check()?;
+        Ok(guard)
+    }
+
+    pub(super) fn context(&self) -> &Context {
+        &self.expected
+    }
+
+    pub(super) fn check(&self) -> anyhow::Result<()> {
+        if self.failed.get() {
+            anyhow::bail!("host sysctl transaction lost its namespace context; keep the journal and retry from the original namespaces");
+        }
+        let result = current().and_then(|actual| {
+            if actual == self.expected {
+                Ok(())
+            } else {
+                anyhow::bail!("host sysctl namespace changed during the journal transaction")
+            }
+        });
+        if result.is_err() {
+            self.failed.set(true);
+        }
+        result
+    }
+
+    pub(super) fn io<T>(
+        &self,
+        operation: impl FnOnce() -> std::io::Result<T>,
+    ) -> std::io::Result<T> {
+        let check = || {
+            self.check()
+                .map_err(|error| std::io::Error::other(error.to_string()))
+        };
+        check()?;
+        let result = operation();
+        // A failed read can coincide with a namespace change. Context loss takes
+        // precedence over NotFound, which otherwise authorizes owner/interface removal.
+        check()?;
+        result
+    }
+}

@@ -113,3 +113,5 @@ D02/D06: [namespace-aware link observation](../reports/AUDIT-Q25-LINK-OBSERVATIO
 D05: [async preflight and panel transaction lifetime](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md). Overall backup/restore and other network sequence budgets remain open.
 
 D05/D09 update: [backup/restore budget and snapshot completeness](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md). Other network sequences and filesystem fault E2E remain open.
+
+D02: [internal sysctl boundary guard](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md); durable namespace identity, original-interface ownership and parent trust remain open.

@@ -18,6 +18,9 @@ struct Kernel {
     write_error: Option<io::ErrorKind>,
     status: Option<Result<String, io::ErrorKind>>,
     probes: usize,
+    switch_after_owner_read: Option<u64>,
+    switch_after_knob_read: Option<u64>,
+    switch_after_write: Option<u64>,
 }
 struct Fixture {
     path: PathBuf,
@@ -80,13 +83,22 @@ fn run(test: impl FnOnce(&Fixture)) {
                         std::process::id()
                     ))
                 }
-                Operation::Read(path) if path == KNOB => Ok(k
-                    .values
-                    .get(&k.net)
-                    .cloned()
-                    .unwrap_or_else(|| "1\n".into())),
+                Operation::Read(path) if path == KNOB => {
+                    let value = k
+                        .values
+                        .get(&k.net)
+                        .cloned()
+                        .unwrap_or_else(|| "1\n".into());
+                    if let Some(net) = k.switch_after_knob_read.take() {
+                        k.net = net;
+                    }
+                    Ok(value)
+                }
                 Operation::Read(path) => {
                     k.probes += 1;
+                    if let Some(net) = k.switch_after_owner_read.take() {
+                        k.net = net;
+                    }
                     if path == format!("/proc/{}/stat", std::process::id()) {
                         let mut fields = vec!["0"; 20];
                         fields[0] = "S";
@@ -107,6 +119,9 @@ fn run(test: impl FnOnce(&Fixture)) {
                     let net = k.net;
                     k.values.insert(net, value.into());
                     k.writes.push(value.into());
+                    if let Some(net) = k.switch_after_write.take() {
+                        k.net = net;
+                    }
                     Ok(String::new())
                 }
                 Operation::ProcessExists(_) | Operation::InterfaceExists(_) => {
@@ -568,4 +583,83 @@ fn local_journal_lock_has_a_deadline_without_stealing_ownership() {
     assert!(wait_local_lock(&lock, std::time::Instant::now()).is_err());
     drop(held);
     assert!(wait_local_lock(&lock, std::time::Instant::now()).is_ok());
+}
+
+#[test]
+fn context_loss_during_owner_probe_cannot_prune_or_persist() {
+    run(|f| {
+        seed_owned(f);
+        let before = std::fs::read(&f.path).unwrap();
+        f.kernel.borrow_mut().switch_after_owner_read = Some(11);
+        assert!(recover_at(f).is_err());
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(
+            f.kernel.borrow().probes,
+            1,
+            "do not probe PID existence in the new context"
+        );
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+        f.kernel.borrow_mut().net = 10;
+        recover_at(f).unwrap();
+        assert!(!f.path.exists());
+    });
+}
+
+#[test]
+fn context_loss_after_original_read_cannot_acquire_in_another_namespace() {
+    run(|f| {
+        f.kernel.borrow_mut().values.insert(10, "0".into());
+        f.kernel.borrow_mut().switch_after_knob_read = Some(11);
+        assert!(acquire_at(f, "1", "edge").is_err());
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert!(
+            !f.path.exists(),
+            "an unverified original must not enter the journal"
+        );
+    });
+}
+
+#[test]
+fn context_loss_before_restore_write_retains_the_original_journal() {
+    run(|f| {
+        f.kernel.borrow_mut().values.insert(10, "0".into());
+        acquire_at(f, "1", "edge").unwrap();
+        let before = std::fs::read(&f.path).unwrap();
+        f.kernel.borrow_mut().writes.clear();
+        f.kernel.borrow_mut().switch_after_knob_read = Some(11);
+        assert!(release_at(f, "edge").is_err());
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+        f.kernel.borrow_mut().net = 10;
+        release_at(f, "edge").unwrap();
+        assert_eq!(f.kernel.borrow().writes, ["0\n"]);
+        assert!(!f.path.exists());
+    });
+}
+
+#[test]
+fn context_loss_after_write_preserves_evidence_and_poisoned_transaction_cannot_commit() {
+    run(|f| {
+        f.kernel.borrow_mut().values.insert(10, "0".into());
+        f.kernel.borrow_mut().values.insert(11, "2".into());
+        let result = with_journal(&f.path, BOOT, |tx, unknown| {
+            f.kernel.borrow_mut().switch_after_write = Some(11);
+            assert!(acquire_in(tx, &unknown, KNOB, "1", "edge").is_err());
+            // Returning to the original namespace must not resurrect a transaction
+            // whose verification failed after an actual mutation.
+            f.kernel.borrow_mut().net = 10;
+            tx.current_mut().entries.clear();
+            tx.persist()
+        });
+        assert!(result.is_err());
+        let store = load(&f.path, BOOT).unwrap();
+        let entry = &store.namespaces["4:10"].entries[KNOB];
+        assert_eq!(entry.original, "0");
+        assert_eq!(entry.owners.len(), 1);
+        assert_eq!(f.kernel.borrow().values[&10], "1\n");
+        assert_eq!(f.kernel.borrow().values[&11], "2");
+        release_at(f, "edge").unwrap();
+        assert_eq!(f.kernel.borrow().values[&10], "0\n");
+        assert!(!f.path.exists());
+    });
 }

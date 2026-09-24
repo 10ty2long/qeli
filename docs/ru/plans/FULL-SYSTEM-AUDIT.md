@@ -1945,3 +1945,5 @@ crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 wor
 **24 сентября, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight до config lock, общий бюджет проб, отказ устаревшего snapshot, owned guard для отменяемого backup/restore, bounded restart dispatch. Разделы остаются IN_PROGRESS; архивные операции и полный HTTP/systemd E2E не закрыты.
 
 **D05/D09, backup/restore:** [Q05-F005–F007](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md): общий бюджет подготовки, bounded stdin/output, полный pre-restore snapshot, немедленный отказ дубликата и приватный API-handler roundtrip. Crash/ENOSPC/systemd и остальные сетевые бюджеты остаются открытыми.
+
+**D02, Q25-F077:** [контекст внутри sysctl transaction](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) проверяется вокруг PID/sysctl I/O и persistence; после потери контекста транзакция не может продолжить запись. Остальные критерии D02 остаются открытыми.

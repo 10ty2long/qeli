@@ -116,6 +116,7 @@ struct JournalTransaction<'a> {
     path: &'a Path,
     store: JournalStore,
     network: String,
+    context: namespace::Guard,
 }
 impl JournalTransaction<'_> {
     #[cfg(any(test, feature = "server"))]
@@ -129,7 +130,10 @@ impl JournalTransaction<'_> {
             .expect("selected sysctl namespace")
     }
     fn persist(&self) -> anyhow::Result<()> {
-        persist(self.path, &self.store)
+        self.context.check()?;
+        let result = persist(self.path, &self.store);
+        self.context.check()?;
+        result
     }
 }
 
@@ -151,9 +155,9 @@ fn current_boot_id() -> anyhow::Result<String> {
     Ok(value.to_string())
 }
 
-fn process_start_time(pid: u32) -> std::io::Result<String> {
+fn process_start_time(pid: u32, context: &namespace::Guard) -> std::io::Result<String> {
     let path = format!("/proc/{pid}/stat");
-    let stat = host::read(&path)?;
+    let stat = context.io(|| host::read(&path))?;
     let invalid = || {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
@@ -180,12 +184,15 @@ fn process_start_time(pid: u32) -> std::io::Result<String> {
     Ok(start.to_string())
 }
 
-fn owner_id(scope: &str) -> anyhow::Result<String> {
+fn owner_id(scope: &str, context: &namespace::Guard) -> anyhow::Result<String> {
     if !valid_scope(scope) {
         anyhow::bail!("invalid sysctl owner scope {scope:?}");
     }
     let pid = std::process::id();
-    Ok(format!("{pid}:{}:{scope}", process_start_time(pid)?))
+    Ok(format!(
+        "{pid}:{}:{scope}",
+        process_start_time(pid, context)?
+    ))
 }
 
 fn parse_owner(owner: &str) -> Option<(u32, &str)> {
@@ -206,13 +213,13 @@ fn parse_owner(owner: &str) -> Option<(u32, &str)> {
 
 /// Only a different observed generation or confirmed process absence proves death.
 /// NotFound alone can also mean an invisible process under procfs restrictions.
-fn owner_is_alive(owner: &str) -> anyhow::Result<bool> {
+fn owner_is_alive(owner: &str, context: &namespace::Guard) -> anyhow::Result<bool> {
     let (pid, expected) = parse_owner(owner)
         .ok_or_else(|| anyhow::anyhow!("invalid sysctl owner identity {owner:?}"))?;
-    match process_start_time(pid) {
+    match process_start_time(pid, context) {
         Ok(actual) => Ok(actual == expected),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            if !host::process_exists(pid)? {
+            if !context.io(|| host::process_exists(pid))? {
                 Ok(false)
             } else {
                 anyhow::bail!("PID {pid} exists but its start time cannot be inspected");
@@ -406,8 +413,8 @@ fn persist(path: &Path, store: &JournalStore) -> anyhow::Result<()> {
     crate::util::write_atomic_private(path, &bytes)
 }
 
-fn read_value(path: &str) -> std::io::Result<String> {
-    let value = host::read(path)?.trim().to_string();
+fn read_value(path: &str, context: &namespace::Guard) -> std::io::Result<String> {
+    let value = context.io(|| host::read(path))?.trim().to_string();
     if !valid_value(&value) {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
@@ -417,10 +424,11 @@ fn read_value(path: &str) -> std::io::Result<String> {
     Ok(value)
 }
 
-fn write_value(path: &str, value: &str) -> anyhow::Result<()> {
-    host::write(path, &format!("{value}\n"))
+fn write_value(path: &str, value: &str, context: &namespace::Guard) -> anyhow::Result<()> {
+    context
+        .io(|| host::write(path, &format!("{value}\n")))
         .map_err(|error| anyhow::anyhow!("cannot write {path}={value}: {error}"))?;
-    let actual = read_value(path)?;
+    let actual = read_value(path, context)?;
     if actual != value {
         anyhow::bail!("{path} remained {actual} after writing {value}");
     }
@@ -429,8 +437,12 @@ fn write_value(path: &str, value: &str) -> anyhow::Result<()> {
 
 /// Restore only while the kernel still contains our managed value. An administrator's
 /// deliberate change made while qeli was active wins and is never overwritten.
-fn restore_if_owned(path: &str, entry: &ManagedSysctl) -> anyhow::Result<()> {
-    let current = match read_value(path) {
+fn restore_if_owned(
+    path: &str,
+    entry: &ManagedSysctl,
+    context: &namespace::Guard,
+) -> anyhow::Result<()> {
+    let current = match read_value(path, context) {
         Ok(current) => current,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let fields: Vec<_> = path
@@ -439,7 +451,9 @@ fn restore_if_owned(path: &str, entry: &ManagedSysctl) -> anyhow::Result<()> {
                 .split('/')
                 .collect();
             if let [_, "conf", interface, _] = fields.as_slice() {
-                if !["all", "default"].contains(interface) && !host::interface_exists(interface)? {
+                if !["all", "default"].contains(interface)
+                    && !context.io(|| host::interface_exists(interface))?
+                {
                     return Ok(());
                 }
             }
@@ -462,21 +476,23 @@ fn restore_if_owned(path: &str, entry: &ManagedSysctl) -> anyhow::Result<()> {
         }
         return Ok(());
     }
-    write_value(path, &entry.original)
+    write_value(path, &entry.original, context)
 }
 
-fn prune_dead_owners(journal: &mut SysctlJournal) -> Vec<String> {
+fn prune_dead_owners(journal: &mut SysctlJournal, context: &namespace::Guard) -> Vec<String> {
     let mut uncertain = Vec::new();
     for (path, entry) in &mut journal.entries {
-        entry.owners.retain(|owner| match owner_is_alive(owner) {
-            Ok(alive) => alive,
-            Err(error) => {
-                let message = format!("{path}, owner {owner}: {error}");
-                log::warn!("host networking: retaining unverified owner: {message}");
-                uncertain.push(message);
-                true
-            }
-        });
+        entry
+            .owners
+            .retain(|owner| match owner_is_alive(owner, context) {
+                Ok(alive) => alive,
+                Err(error) => {
+                    let message = format!("{path}, owner {owner}: {error}");
+                    log::warn!("host networking: retaining unverified owner: {message}");
+                    uncertain.push(message);
+                    true
+                }
+            });
     }
     let empty: Vec<String> = journal
         .entries
@@ -488,7 +504,7 @@ fn prune_dead_owners(journal: &mut SysctlJournal) -> Vec<String> {
         let restored = journal
             .entries
             .get(&path)
-            .is_some_and(|entry| restore_if_owned(&path, entry).is_ok());
+            .is_some_and(|entry| restore_if_owned(&path, entry, context).is_ok());
         if restored {
             journal.entries.remove(&path);
         } else {
@@ -542,16 +558,26 @@ fn with_journal_context<T>(
             "host sysctl namespace changed while waiting for journal locks; no recovery attempted"
         );
     }
+    let guard = namespace::Guard::new(context)?;
     let mut store = load(path, boot_id)?;
+    guard.check()?;
     // Admission precedes pruning, kernel I/O and persistence. Foreign groups are
     // never probed: their PIDs and sysctl paths have meaning only in their namespace.
-    store.select(&context)?;
+    store.select(guard.context())?;
     let mut transaction = JournalTransaction {
         path,
         store,
-        network: context.network,
+        network: guard.context().network.clone(),
+        context: guard,
     };
-    let uncertain = prune_dead_owners(transaction.current_mut());
+    let uncertain = prune_dead_owners(
+        transaction
+            .store
+            .namespaces
+            .get_mut(&transaction.network)
+            .expect("selected sysctl namespace"),
+        &transaction.context,
+    );
     transaction.persist()?;
     body(&mut transaction, uncertain)
 }
@@ -573,8 +599,8 @@ fn acquire_in(
     if !valid_sysctl_path(path) || !valid_value(value) {
         anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");
     }
-    let owner = owner_id(scope)?;
-    let current = read_value(path)?;
+    let owner = owner_id(scope, &transaction.context)?;
+    let current = read_value(path, &transaction.context)?;
     let journal = transaction.current_mut();
     let new_owner = if let Some(entry) = journal.entries.get_mut(path) {
         if entry.managed != value {
@@ -599,7 +625,7 @@ fn acquire_in(
     // the write can then be recovered by the next qeli client operation.
     transaction.persist()?;
     if current != value {
-        if let Err(error) = write_value(path, value) {
+        if let Err(error) = write_value(path, value, &transaction.context) {
             // Undo only ownership added by this call. A failed idempotent reacquire
             // must not discard an earlier successful lease of the same live component.
             // Retain empty entries: write verification may fail after changing the knob.
@@ -633,6 +659,7 @@ fn release_owner(
     journal: &mut SysctlJournal,
     owner: &str,
     mut failures: Vec<String>,
+    context: &namespace::Guard,
 ) -> Vec<String> {
     for entry in journal.entries.values_mut() {
         entry.owners.remove(owner);
@@ -644,7 +671,7 @@ fn release_owner(
         .map(|(path, _)| path.clone())
         .collect();
     for path in empty {
-        match restore_if_owned(&path, &journal.entries[&path]) {
+        match restore_if_owned(&path, &journal.entries[&path], context) {
             Ok(()) => {
                 journal.entries.remove(&path);
             }
@@ -663,10 +690,19 @@ fn release_in(
     uncertain: Vec<String>,
     scope: &str,
 ) -> anyhow::Result<()> {
-    let owner = owner_id(scope)?;
+    let owner = owner_id(scope, &transaction.context)?;
     // Release our known identity even when another owner is uninspectable.
     // Its records remain, unrelated cleanup continues, and uncertainty is reported.
-    let failures = release_owner(transaction.current_mut(), &owner, uncertain);
+    let failures = release_owner(
+        transaction
+            .store
+            .namespaces
+            .get_mut(&transaction.network)
+            .expect("selected sysctl namespace"),
+        &owner,
+        uncertain,
+        &transaction.context,
+    );
     transaction.persist()?;
     if failures.is_empty() {
         Ok(())

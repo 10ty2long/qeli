@@ -16,7 +16,13 @@ struct Kernel {
 impl Kernel {
     fn command(&mut self, op: Operation<'_>) -> io::Result<String> {
         match op {
-            Operation::Namespace(_) => panic!("ownership unit tests do not inspect namespaces"),
+            Operation::Namespace(path) => match path {
+                "/proc/thread-self/ns/net" => Ok("4:10".into()),
+                "/proc/thread-self/ns/pid" => Ok("4:20".into()),
+                "/proc/thread-self/ns/time" => Err(io::ErrorKind::NotFound.into()),
+                _ => panic!("unexpected namespace {path}"),
+            },
+            Operation::Read("/proc/self/status") => Ok(format!("NStgid: {}\n", std::process::id())),
             Operation::Read(path) => self
                 .reads
                 .get(path)
@@ -79,6 +85,9 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
     let io = kernel.clone();
     with_io(move |op| io.borrow_mut().command(op), || test(kernel));
 }
+fn context() -> namespace::Guard {
+    namespace::Guard::new(namespace::current().unwrap()).unwrap()
+}
 fn assert_retained(journal: &SysctlJournal, kernel: &Rc<RefCell<Kernel>>, owner: bool) {
     let entry = journal
         .entries
@@ -104,7 +113,7 @@ fn regression_unreadable_owner_is_retained_without_restoring_forwarding() {
                 .reads
                 .insert("/proc/42/stat".into(), Err(error));
             let mut j = journal(true);
-            let _ = prune_dead_owners(&mut j);
+            let _ = prune_dead_owners(&mut j, &context());
             assert_retained(&j, &k, true);
         });
     }
@@ -117,7 +126,7 @@ fn regression_malformed_process_stat_is_not_a_dead_owner() {
                 .reads
                 .insert("/proc/42/stat".into(), Ok(value.into()));
             let mut j = journal(true);
-            let _ = prune_dead_owners(&mut j);
+            let _ = prune_dead_owners(&mut j, &context());
             assert_retained(&j, &k, true);
         });
     }
@@ -127,7 +136,7 @@ fn regression_hidden_but_existing_process_is_not_pruned() {
     run(|k| {
         k.borrow_mut().processes.insert(42, Ok(true));
         let mut j = journal(true);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert_retained(&j, &k, true);
     });
 }
@@ -138,7 +147,7 @@ fn regression_unknown_process_existence_is_not_pruned() {
             .processes
             .insert(42, Err(io::ErrorKind::PermissionDenied));
         let mut j = journal(true);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert_retained(&j, &k, true);
     });
 }
@@ -148,7 +157,7 @@ fn regression_failed_knob_inspection_preserves_ownerless_recovery() {
         run(|k| {
             k.borrow_mut().reads.insert(KNOB.into(), Err(error));
             let mut j = journal(false);
-            let _ = prune_dead_owners(&mut j);
+            let _ = prune_dead_owners(&mut j, &context());
             assert_retained(&j, &k, false);
         });
     }
@@ -159,7 +168,7 @@ fn regression_empty_or_invalid_knob_is_not_an_administrator_change() {
         run(|k| {
             k.borrow_mut().reads.insert(KNOB.into(), Ok(value.into()));
             let mut j = journal(false);
-            let _ = prune_dead_owners(&mut j);
+            let _ = prune_dead_owners(&mut j, &context());
             assert_retained(&j, &k, false);
         });
     }
@@ -171,7 +180,7 @@ fn live_generation_with_complex_comm_keeps_forwarding() {
             .reads
             .insert("/proc/42/stat".into(), Ok(stat(42, "100")));
         let mut j = journal(true);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert_retained(&j, &k, true);
     });
 }
@@ -182,7 +191,7 @@ fn confirmed_pid_reuse_restores_unowned_value() {
             .reads
             .insert("/proc/42/stat".into(), Ok(stat(42, "101")));
         let mut j = journal(true);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert!(j.entries.is_empty());
         assert_eq!(k.borrow().writes, [(KNOB.into(), "0\n".into())]);
     });
@@ -192,7 +201,7 @@ fn confirmed_missing_process_restores_unowned_value() {
     run(|k| {
         k.borrow_mut().processes.insert(42, Ok(false));
         let mut j = journal(true);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert!(j.entries.is_empty());
         assert_eq!(k.borrow().writes.len(), 1);
     });
@@ -202,7 +211,7 @@ fn administrator_change_is_preserved() {
     run(|k| {
         k.borrow_mut().reads.insert(KNOB.into(), Ok("2\n".into()));
         let mut j = journal(false);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert!(j.entries.is_empty());
         assert!(k.borrow().writes.is_empty());
     });
@@ -215,7 +224,7 @@ fn confirmed_disappeared_interface_does_not_need_a_write() {
         let mut j = journal(false);
         let entry = j.entries.remove(KNOB).unwrap();
         j.entries.insert(path.into(), entry);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert!(j.entries.is_empty());
         assert!(k.borrow().writes.is_empty());
     });
@@ -225,7 +234,7 @@ fn regression_missing_global_knob_is_not_completed_recovery() {
     run(|k| {
         k.borrow_mut().reads.remove(KNOB);
         let mut j = journal(false);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert_retained(&j, &k, false);
     });
 }
@@ -238,7 +247,7 @@ fn regression_missing_knob_needs_proof_that_its_interface_disappeared() {
             let mut j = journal(false);
             let entry = j.entries.remove(KNOB).unwrap();
             j.entries.insert(path.into(), entry);
-            let _ = prune_dead_owners(&mut j);
+            let _ = prune_dead_owners(&mut j, &context());
             assert!(
                 j.entries.contains_key(path),
                 "missing procfs is not interface removal"
@@ -255,7 +264,7 @@ fn uncertain_owner_is_reported_and_blocks_acquisition_policy() {
             .reads
             .insert("/proc/42/stat".into(), Err(io::ErrorKind::PermissionDenied));
         let mut j = journal(true);
-        let uncertain = prune_dead_owners(&mut j);
+        let uncertain = prune_dead_owners(&mut j, &context());
         assert_eq!(uncertain.len(), 1);
         assert!(require_known_owners(&uncertain)
             .unwrap_err()
@@ -286,7 +295,7 @@ fn mismatched_pid_in_stat_is_unknown_not_pid_reuse() {
             .reads
             .insert("/proc/42/stat".into(), Ok(stat(43, "101")));
         let mut j = journal(true);
-        assert!(!prune_dead_owners(&mut j).is_empty());
+        assert!(!prune_dead_owners(&mut j, &context()).is_empty());
         assert_retained(&j, &k, true);
     });
 }
@@ -297,11 +306,11 @@ fn recovery_retries_after_owner_observation_becomes_available() {
             .reads
             .insert("/proc/42/stat".into(), Err(io::ErrorKind::PermissionDenied));
         let mut j = journal(true);
-        assert!(!prune_dead_owners(&mut j).is_empty());
+        assert!(!prune_dead_owners(&mut j, &context()).is_empty());
         k.borrow_mut()
             .reads
             .insert("/proc/42/stat".into(), Ok(stat(42, "101")));
-        assert!(prune_dead_owners(&mut j).is_empty());
+        assert!(prune_dead_owners(&mut j, &context()).is_empty());
         assert!(j.entries.is_empty());
         assert_eq!(k.borrow().writes.len(), 1);
     });
@@ -315,9 +324,9 @@ fn own_release_preserves_uninspectable_coowner_and_reports_uncertainty() {
             .insert("/proc/99/stat".into(), Ok(stat(99, "200")));
         let mut j = journal(true);
         j.entries.get_mut(KNOB).unwrap().owners.insert(me.into());
-        let uncertain = prune_dead_owners(&mut j);
+        let uncertain = prune_dead_owners(&mut j, &context());
         assert_eq!(uncertain.len(), 1);
-        assert!(!release_owner(&mut j, me, uncertain).is_empty());
+        assert!(!release_owner(&mut j, me, uncertain, &context()).is_empty());
         assert_eq!(j.entries[KNOB].owners, BTreeSet::from([OWNER.into()]));
         assert!(k.borrow().writes.is_empty());
     });
@@ -340,8 +349,8 @@ fn unrelated_own_cleanup_continues_despite_unknown_foreign_owner() {
                 owners: BTreeSet::from([me.into()]),
             },
         );
-        let uncertain = prune_dead_owners(&mut j);
-        assert!(!release_owner(&mut j, me, uncertain).is_empty());
+        let uncertain = prune_dead_owners(&mut j, &context());
+        assert!(!release_owner(&mut j, me, uncertain, &context()).is_empty());
         assert!(j.entries.contains_key(KNOB));
         assert!(!j.entries.contains_key(other));
         assert_eq!(k.borrow().writes, [(other.into(), "0\n".into())]);
@@ -352,10 +361,10 @@ fn failed_restore_write_keeps_pristine_value_for_retry() {
     run(|k| {
         k.borrow_mut().write_error = Some(io::ErrorKind::PermissionDenied);
         let mut j = journal(false);
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert_retained(&j, &k, false);
         k.borrow_mut().write_error = None;
-        let _ = prune_dead_owners(&mut j);
+        let _ = prune_dead_owners(&mut j, &context());
         assert!(j.entries.is_empty());
         assert_eq!(k.borrow().writes, [(KNOB.into(), "0\n".into())]);
     });

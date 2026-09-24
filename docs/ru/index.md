@@ -95,6 +95,7 @@
 | [AUDIT-Q25-CLIENT-NAMESPACE.md](reports/AUDIT-Q25-CLIENT-NAMESPACE.md) | Q25-F048–F049: отключённый IPv6 и общее резервирование клиентского TUN |
 | [AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md](reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md) | Q25-F050–F051: проверка владельцев sysctl и сохранение незавершённого восстановления |
 | [AUDIT-Q25-SYSCTL-JOURNAL-IO.md](reports/AUDIT-Q25-SYSCTL-JOURNAL-IO.md) | Ограниченное чтение journal по fd, FIFO-lock и deadline ожидания sysctl |
+| [AUDIT-Q25-SYSCTL-CONTEXT-IO.md](reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) | Namespace на границах PID/sysctl I/O и persistence; сохранение evidence после смены контекста |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Владелец namespace, защита reconnect и точная очистка семейств |
 | [AUDIT-Q25-LINK-OBSERVATION.md](reports/AUDIT-Q25-LINK-OBSERVATION.md) | Общие сведения об интерфейсе текущего namespace: NDP, TAP, hooks, sysctl и панель |
 | [AUDIT-Q25-SYSCTL-NAMESPACE.md](reports/AUDIT-Q25-SYSCTL-NAMESPACE.md) | Q25-F052–F053: изоляция sysctl по namespace и миграция журнала v2 |

@@ -2011,3 +2011,14 @@ Portable gzip ограничен 16 МиБ, как загрузка панели
 сохранённый `.pre-restore-*.tgz`; автоматический rollback всего дерева не обещается.
 
 [Разбор и проверки](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md).
+
+
+### 6.60. Sysctl: namespace изменился во время транзакции
+
+`host sysctl namespace changed during the journal transaction` или `transaction lost
+its namespace context` запрещает дальнейшую запись этой транзакцией. Сохраните
+`sysctls.state`; не удаляйте журнал для обхода ошибки. Вернитесь к исходным network,
+PID/time namespace и корректному procfs, затем повторите cleanup отдельной операцией.
+Ошибка после записи не означает, что sysctl остался прежним: в журнале сохраняется
+исходное значение для проверки/восстановления. Смена контекста назад не возобновляет
+уже отказавшую транзакцию. [Разбор](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md).

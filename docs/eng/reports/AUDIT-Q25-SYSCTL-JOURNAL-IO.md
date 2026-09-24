@@ -40,3 +40,5 @@ checks, durable namespace identity reuse and parent-directory trust still need s
 closure. Only mutex/flock contention is bounded; file I/O, external-command sequences
 and the complete cleanup transaction have no new shared deadline. Synchronous preflight
 in async handlers also remains D05. Successful unit/cross/native checks do not hide these limits.
+
+Internal I/O boundaries were subsequently guarded in [Q25-F077](AUDIT-Q25-SYSCTL-CONTEXT-IO.md); this does not fully close D02.

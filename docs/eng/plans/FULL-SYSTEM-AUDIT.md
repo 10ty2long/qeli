@@ -1935,3 +1935,5 @@ certification and a new benchmark were not run; full section statuses are unchan
 **24 September, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight before config locking, shared probe budget, stale-snapshot refusal, owned guard for cancelled backup/restore and bounded restart dispatch. Sections remain IN_PROGRESS; archive operations and full HTTP/systemd E2E remain open.
 
 **D05/D09, backup/restore:** [Q05-F005–F007](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md): shared preparation budget, bounded stdin/output, complete pre-restore snapshot, immediate duplicate refusal and private API-handler roundtrip. Crash/ENOSPC/systemd and other network budgets remain open.
+
+**D02, Q25-F077:** [context inside sysctl transactions](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) is checked around PID/sysctl I/O and persistence; a transaction cannot continue writing after observed context loss. Other D02 criteria remain open.

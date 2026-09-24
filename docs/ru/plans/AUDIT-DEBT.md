@@ -113,3 +113,5 @@ D02/D06: [namespace-aware link observation](../reports/AUDIT-Q25-LINK-OBSERVATIO
 D05: [async preflight и время жизни транзакции панели](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md). Открыты общий бюджет backup/restore и остальных сетевых последовательностей.
 
 Обновление D05/D09: [бюджет backup/restore и полнота снимка](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md). Остальные сетевые последовательности и filesystem fault E2E остаются открытыми.
+
+D02: [guard внутренних границ sysctl](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md); durable namespace identity, исходный интерфейс и parent trust ещё открыты.
