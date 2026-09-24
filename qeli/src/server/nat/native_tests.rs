@@ -75,3 +75,61 @@ fn native_exact_cleanup_removes_duplicates_both_families_and_preserves_sibling(
     .join()
     .expect("native firewall test panicked")
 }
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and iptables/ip6tables; isolated netns"]
+fn native_dns_leases_install_and_remove_both_transports_without_foreign_deletion(
+) -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        // SAFETY: only this disposable thread changes its network namespace.
+        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+            return Err(std::io::Error::last_os_error().into());
+        }
+        for (ipv6, pool, listen) in [
+            (false, "192.0.2.0/24", "192.0.2.1"),
+            (true, "2001:db8::/64", "2001:db8::1"),
+        ] {
+            let path = if ipv6 {
+                ip6tables_path()
+            } else {
+                iptables_path()
+            }
+            .ok_or_else(|| anyhow::anyhow!("firewall tool unavailable"))?;
+            let foreign = [
+                "-m",
+                "comment",
+                "--comment",
+                "audit-dns-foreign",
+                "-j",
+                "DROP",
+            ];
+            anyhow::ensure!(ipt(&path, &["-P", "INPUT", "DROP"])?.status.success());
+            let mut insert = vec!["-A", "INPUT"];
+            insert.extend(foreign);
+            anyhow::ensure!(ipt(&path, &insert)?.status.success());
+            let owned = DnsInputRules::new("audit-dns-deadline", "vpn0", pool, listen, 5353)?;
+            let mut lease = enable_dns_input("audit-dns-deadline", "vpn0", pool, listen, 5353)?;
+            for rule in &owned.rules {
+                anyhow::ensure!(rule_present(&path, "filter", "INPUT", rule));
+            }
+            lease.cleanup()?;
+            for rule in &owned.rules {
+                let mut check = vec!["-t", "filter", "-C", "INPUT"];
+                check.extend(rule.iter().map(String::as_str));
+                anyhow::ensure!(!crate::firewall_check::present(
+                    &ipt(&path, &check)?,
+                    crate::firewall_check::Query::Rule {
+                        missing_target: None
+                    }
+                )
+                .map_err(anyhow::Error::msg)?);
+            }
+            let mut check = vec!["-C", "INPUT"];
+            check.extend(foreign);
+            anyhow::ensure!(ipt(&path, &check)?.status.success());
+        }
+        Ok(())
+    })
+    .join()
+    .expect("native DNS test panicked")
+}

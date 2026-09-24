@@ -23,7 +23,9 @@
 #[cfg(test)]
 use crate::nat_cleanup::exact_delete_args;
 use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_comment};
-use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInputRules};
+#[cfg(test)]
+use crate::nat_dns_input::DnsInputId;
+use crate::nat_dns_input::{dns_input_rule, DnsInputOwner, DnsInputRegistry, DnsInputRules};
 use crate::system_command::Command;
 use std::sync::{Mutex, OnceLock};
 
@@ -866,16 +868,6 @@ fn forward_policy(path: &str) -> Option<ChainPolicy> {
     chain_policy_from_output(&out.stdout, "FORWARD")
 }
 
-/// The `filter/INPUT` chain's default policy. DNS traffic terminates on the server rather
-/// than traversing FORWARD, so a host with `INPUT DROP` needs an explicit per-profile rule.
-fn input_policy(path: &str) -> Option<ChainPolicy> {
-    let out = ipt(path, &["-t", "filter", "-S", "INPUT"]).ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    chain_policy_from_output(&out.stdout, "INPUT")
-}
-
 #[derive(Debug, PartialEq, Eq)]
 struct ChainPolicy {
     policy: String,
@@ -927,10 +919,6 @@ fn dns_input_registry() -> &'static Mutex<DnsInputRegistry> {
 }
 
 /// Caller holds firewall_program_lock; this function must not re-enter the registry.
-fn cleanup_dns_rules(owned: &DnsInputRules) -> anyhow::Result<()> {
-    cleanup_dns_rules_until(owned, Budget::new())
-}
-
 fn cleanup_dns_rules_until(owned: &DnsInputRules, budget: Budget) -> anyhow::Result<()> {
     let path = budget.find(owned.ipv6)?.ok_or_else(|| {
         anyhow::anyhow!("cannot remove DNS INPUT permits because the firewall tool is unavailable")
@@ -966,23 +954,27 @@ fn release_ipv6_sysctls_until(profile: &str, budget: Budget) -> anyhow::Result<(
 /// This is process-local recovery; restart/crash persistence needs a separate journal.
 #[derive(Debug)]
 pub(crate) struct DnsInputLease {
-    id: Option<DnsInputId>,
+    owner: Option<DnsInputOwner>,
     profile: String,
 }
 
 impl DnsInputLease {
     fn cleanup(&mut self) -> anyhow::Result<()> {
-        let Some(id) = self.id else {
+        self.cleanup_until(Budget::for_operation("DNS INPUT cleanup"))
+    }
+    fn cleanup_until(&mut self, budget: Budget) -> anyhow::Result<()> {
+        let Some(owner) = self.owner.as_ref() else {
             return Ok(());
         };
-        let _firewall_guard = firewall_program_lock()
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        dns_input_registry()
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .finish(id, cleanup_dns_rules)?;
-        self.id = None;
+        // Publish before ANY fallible lock admission. Dropping the token also retires it,
+        // so timeout/unwind never strands an active record without a living lease.
+        owner.retire();
+        let _firewall_guard = budget.lock(firewall_program_lock())?;
+        budget
+            .lock(dns_input_registry())?
+            .finish(owner.id(), |owned| cleanup_dns_rules_until(owned, budget))?;
+        self.owner = None;
+        budget.check()?;
         Ok(())
     }
 }
@@ -1007,31 +999,42 @@ pub(crate) fn enable_dns_input(
     listen: &str,
     port: u16,
 ) -> anyhow::Result<DnsInputLease> {
+    enable_dns_input_until(
+        profile,
+        tun,
+        pool_cidr,
+        listen,
+        port,
+        Budget::for_operation("DNS INPUT setup"),
+    )
+}
+
+fn enable_dns_input_until(
+    profile: &str,
+    tun: &str,
+    pool_cidr: &str,
+    listen: &str,
+    port: u16,
+    budget: Budget,
+) -> anyhow::Result<DnsInputLease> {
+    budget.check()?;
     // Outer ownership outlives the inner lock scope: a setup error drops the lock
     // before the lease retries exact cleanup, avoiding recursive mutex acquisition.
     let lease;
     {
-        let _firewall_guard = firewall_program_lock()
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _firewall_guard = budget.lock(firewall_program_lock())?;
         let owned = DnsInputRules::new(profile, tun, pool_cidr, listen, port)?;
         let tool = if owned.ipv6 { "ip6tables" } else { "iptables" };
-        let path = if owned.ipv6 {
-            ip6tables_path()
-        } else {
-            iptables_path()
-        }
-        .ok_or_else(|| {
+        let path = budget.find(owned.ipv6)?.ok_or_else(|| {
             anyhow::anyhow!(
                 "{tool} is required to verify INPUT access to DNS {listen}:{port} on {tun}"
             )
         })?;
-        let id = dns_input_registry()
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .begin(owned, cleanup_dns_rules)?;
+        let owner = budget
+            .lock(dns_input_registry())?
+            .begin_owned(owned, |pending| cleanup_dns_rules_until(pending, budget))?;
         lease = DnsInputLease {
-            id: Some(id),
+            owner: Some(owner),
             profile: profile.to_string(),
         };
         let mut unapplied = Vec::new();
@@ -1048,13 +1051,25 @@ pub(crate) fn enable_dns_input(
             ];
             argv.extend(args.clone());
             let refs: Vec<&str> = argv.iter().map(String::as_str).collect();
-            let _ = ipt(&path, &refs);
-            if !rule_present(&path, "filter", "INPUT", &args) {
+            let _ = budget.ipt(&path, &refs);
+            budget.check()?;
+            let mut check = vec!["-t", "filter", "-C", "INPUT"];
+            check.extend(args.iter().map(String::as_str));
+            if !budget
+                .ipt(&path, &check)
+                .is_ok_and(|output| output.status.success())
+            {
                 unapplied.push(proto);
             }
+            budget.check()?;
         }
         if !unapplied.is_empty() {
-            let status = input_policy(&path);
+            let status = budget
+                .ipt(&path, &["-t", "filter", "-S", "INPUT"])
+                .ok()
+                .filter(|output| output.status.success())
+                .and_then(|output| chain_policy_from_output(&output.stdout, "INPUT"));
+            budget.check()?;
             if status
                 .as_ref()
                 .is_some_and(|value| value.unconditionally_accepts)
@@ -1078,6 +1093,7 @@ pub(crate) fn enable_dns_input(
                 );
             }
         }
+        budget.check()?;
         log::info!(
         "Profile '{profile}': DNS INPUT permit {pool_cidr} via {tun} -> {listen}:{port}, udp+tcp"
     );
@@ -1895,3 +1911,10 @@ mod native_tests;
 #[cfg(test)]
 #[path = "nat/cleanup_budget_tests.rs"]
 mod cleanup_budget_tests;
+
+#[cfg(test)]
+#[path = "nat/dns_input_budget_tests.rs"]
+mod dns_input_budget_tests;
+#[cfg(test)]
+#[path = "nat/test_support.rs"]
+mod test_support;

@@ -13,7 +13,7 @@ fn no_pending(_: &DnsInputRules) -> anyhow::Result<()> {
 fn reservation_precedes_mutation_and_refuses_duplicate_live_owner() {
     let mut registry = DnsInputRegistry::default();
     let id = registry.begin(rules("edge"), no_pending).unwrap();
-    assert!(!registry.entries[&id].retired);
+    assert!(!registry.entries[&id].retired.load(Ordering::Acquire));
     let error = registry
         .begin(rules("edge"), no_pending)
         .unwrap_err()
@@ -30,7 +30,7 @@ fn failed_finish_retains_complete_evidence_for_later_retry() {
     registry
         .finish(id, |_| anyhow::bail!("tool disappeared"))
         .unwrap_err();
-    assert!(registry.entries[&id].retired);
+    assert!(registry.entries[&id].retired.load(Ordering::Acquire));
     assert_eq!(registry.entries[&id].rules, owned);
     registry
         .retry(Some("edge"), |_| anyhow::bail!("still unavailable"))
@@ -62,7 +62,7 @@ fn stale_lease_cannot_delete_replacement_after_successful_retry() {
     assert!(retried.get());
     assert_ne!(old, current);
     registry.finish(old, no_pending).unwrap();
-    assert!(!registry.entries[&current].retired);
+    assert!(!registry.entries[&current].retired.load(Ordering::Acquire));
     assert_eq!(registry.entries.len(), 1);
 }
 
@@ -109,8 +109,8 @@ fn profile_retry_does_not_touch_active_or_sibling_profile_permits() {
         })
         .unwrap();
     assert!(!registry.entries.contains_key(&old));
-    assert!(registry.entries[&sibling].retired);
-    assert!(!registry.entries[&active].retired);
+    assert!(registry.entries[&sibling].retired.load(Ordering::Acquire));
+    assert!(!registry.entries[&active].retired.load(Ordering::Acquire));
 }
 
 #[test]
@@ -137,9 +137,9 @@ fn retry_all_continues_after_failure_and_preserves_failed_entries() {
         .to_string();
     assert_eq!(seen, ["first", "second"]);
     assert!(error.contains("first: still failed"), "{error}");
-    assert!(registry.entries[&first].retired);
+    assert!(registry.entries[&first].retired.load(Ordering::Acquire));
     assert!(!registry.entries.contains_key(&second));
-    assert!(!registry.entries[&active].retired);
+    assert!(!registry.entries[&active].retired.load(Ordering::Acquire));
 }
 
 #[test]
@@ -162,7 +162,7 @@ fn panic_during_cleanup_leaves_retryable_evidence() {
             .unwrap();
     }));
     assert!(unwind.is_err());
-    assert!(registry.entries[&id].retired);
+    assert!(registry.entries[&id].retired.load(Ordering::Acquire));
     registry.retry(None, |_| Ok(())).unwrap();
     assert!(registry.entries.is_empty());
 }
@@ -293,7 +293,7 @@ fn partial_udp_failure_retains_rules_for_real_exact_cleanup_retry() {
         .unwrap_err()
         .to_string()
         .contains("UDP delete failure"));
-    assert!(registry.entries[&id].retired);
+    assert!(registry.entries[&id].retired.load(Ordering::Acquire));
     assert_eq!(registry.entries[&id].rules, spec);
     assert_eq!(
         *installed.borrow(),
@@ -338,7 +338,7 @@ fn shutdown_keeps_a_permanent_failure_retryable() {
         .unwrap_err()
         .to_string();
     assert!(error.contains("tool unavailable"), "{error}");
-    assert!(registry.entries[&id].retired);
+    assert!(registry.entries[&id].retired.load(Ordering::Acquire));
     assert_eq!(registry.entries[&id].rules, rules("edge"));
     registry.finish_shutdown(|_| Ok(())).unwrap();
 }
@@ -355,7 +355,7 @@ fn shutdown_reports_active_owners_without_deleting_their_rules() {
         error.contains("edge: DNS INPUT lease still active"),
         "{error}"
     );
-    assert!(!registry.entries[&id].retired);
+    assert!(!registry.entries[&id].retired.load(Ordering::Acquire));
     registry.finish(id, |_| Ok(())).unwrap();
     registry.finish_shutdown(no_pending).unwrap();
 }
@@ -387,6 +387,87 @@ fn shutdown_reports_active_and_failed_retired_owners_and_cleans_the_rest() {
         "{error}"
     );
     assert!(!registry.entries.contains_key(&recovered));
-    assert!(!registry.entries[&active].retired);
-    assert!(registry.entries[&failed].retired);
+    assert!(!registry.entries[&active].retired.load(Ordering::Acquire));
+    assert!(registry.entries[&failed].retired.load(Ordering::Acquire));
+}
+
+#[test]
+fn owner_drop_retires_without_acquiring_the_registry_lock() {
+    let mut registry = DnsInputRegistry::default();
+    let owner = registry.begin_owned(rules("edge"), no_pending).unwrap();
+    let id = owner.id();
+    let lock = std::sync::Mutex::new(registry);
+    let mut held = lock.lock().unwrap();
+    std::thread::spawn(move || drop(owner)).join().unwrap();
+    assert!(held.entries[&id].retired.load(Ordering::Acquire));
+    held.retry(Some("edge"), |_| Ok(())).unwrap();
+    assert!(held.entries.is_empty());
+}
+
+#[test]
+fn dropped_old_owner_cannot_retire_a_replacement_generation() {
+    let mut registry = DnsInputRegistry::default();
+    let old = registry.begin_owned(rules("edge"), no_pending).unwrap();
+    registry.finish(old.id(), |_| Ok(())).unwrap();
+    let current = registry.begin_owned(rules("edge"), no_pending).unwrap();
+    drop(old);
+    assert!(!registry.entries[&current.id()]
+        .retired
+        .load(Ordering::Acquire));
+    registry.retry(None, no_pending).unwrap();
+    drop(current);
+    registry.finish_shutdown(|_| Ok(())).unwrap();
+}
+
+#[test]
+fn shutdown_reports_retirement_that_arrives_after_retry_snapshot() {
+    let mut registry = DnsInputRegistry::default();
+    let first = registry.begin_owned(rules("first"), no_pending).unwrap();
+    let mut later = Some(registry.begin_owned(rules("later"), no_pending).unwrap());
+    drop(first);
+    let error = registry
+        .finish_shutdown(|spec| {
+            assert_eq!(spec.profile, "first");
+            drop(later.take());
+            Ok(())
+        })
+        .unwrap_err();
+    assert!(
+        error.to_string().contains("cleanup still pending"),
+        "{error}"
+    );
+    assert_eq!(registry.entries.len(), 1);
+    registry.finish_shutdown(|_| Ok(())).unwrap();
+    assert!(registry.entries.is_empty());
+}
+
+#[test]
+fn reservation_refuses_retirement_arriving_during_pending_cleanup() {
+    let mut registry = DnsInputRegistry::default();
+    let first = registry.begin_owned(rules("edge"), no_pending).unwrap();
+    let mut later = Some(
+        registry
+            .begin_owned(
+                DnsInputRules::new("edge", "tun0", "2001:db8::/64", "2001:db8::1", 53).unwrap(),
+                no_pending,
+            )
+            .unwrap(),
+    );
+    drop(first);
+    let before = registry.last_id;
+    let error = registry
+        .begin_owned(rules("edge"), |_| {
+            drop(later.take());
+            Ok(())
+        })
+        .unwrap_err();
+    assert!(
+        error.to_string().contains("cleanup still pending"),
+        "{error}"
+    );
+    assert_eq!(registry.last_id, before);
+    let current = registry.begin_owned(rules("edge"), |_| Ok(())).unwrap();
+    assert_eq!(registry.entries.len(), 1);
+    drop(current);
+    registry.finish_shutdown(|_| Ok(())).unwrap();
 }

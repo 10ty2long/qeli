@@ -2154,3 +2154,19 @@ the original namespace. Preserve unrelated rules; do not substitute a broad fire
 flush or journal deletion for verification. The deadline does not interrupt sysctl/I/O
 already started or guarantee whole-shutdown time.
 [Analysis](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
+
+### 6.70. Server: DNS INPUT setup/cleanup deadline expired
+
+`DNS INPUT setup deadline expired` covers one ruleset's 15 seconds: queue time,
+old pending records, UDP/TCP and INPUT verification. Failure after partial installation
+starts rollback with a separate 15-second deadline.
+
+`DNS INPUT cleanup deadline expired` retains the entry as pending before lock admission.
+Once the delay is resolved, profile/setup/final cleanup can retry verification. Drop
+logs its failure; subsequent verified cleanup determines the shutdown result.
+`DNS INPUT cleanup still pending` prevents successful final cleanup, and during setup
+refuses reservation over an observed pending generation. Inspect competing operations
+and iptables/ip6tables replies; preserve unrelated INPUT rules. After worker exit,
+inspect leftovers separately: in-memory retirement is not a crash journal. Port-53
+DNS REDIRECT setup has a separate, still-open operation-budget boundary.
+[Analysis](../reports/AUDIT-Q14-DNS-INPUT-BUDGET.md).

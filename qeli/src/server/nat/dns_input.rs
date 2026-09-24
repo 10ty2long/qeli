@@ -1,6 +1,12 @@
 //! Process-local ownership for exact DNS INPUT permits, including failed retirement.
 //! The caller serializes this registry with firewall mutations; callbacks must not re-lock it.
-use std::collections::BTreeMap;
+use std::{
+    collections::BTreeMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 const MAX_TRACKED_RULESETS: usize = 4096;
 
@@ -32,10 +38,31 @@ impl DnsInputRules {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct DnsInputId(u64);
 
+/// Dropping this token publishes retirement without waiting for the firewall or registry.
+/// It owns no cleanup I/O; the registry retains the exact rules until verified absent.
+#[derive(Debug)]
+pub(crate) struct DnsInputOwner {
+    id: DnsInputId,
+    retired: Arc<AtomicBool>,
+}
+impl DnsInputOwner {
+    pub(crate) fn id(&self) -> DnsInputId {
+        self.id
+    }
+    pub(crate) fn retire(&self) {
+        self.retired.store(true, Ordering::Release);
+    }
+}
+impl Drop for DnsInputOwner {
+    fn drop(&mut self) {
+        self.retire();
+    }
+}
+
 #[derive(Debug)]
 struct Entry {
     rules: DnsInputRules,
-    retired: bool,
+    retired: Arc<AtomicBool>,
 }
 
 #[derive(Default, Debug)]
@@ -45,6 +72,18 @@ pub(crate) struct DnsInputRegistry {
 }
 
 impl DnsInputRegistry {
+    pub(crate) fn begin_owned(
+        &mut self,
+        rules: DnsInputRules,
+        cleanup: impl FnMut(&DnsInputRules) -> anyhow::Result<()>,
+    ) -> anyhow::Result<DnsInputOwner> {
+        let id = self.begin(rules, cleanup)?;
+        Ok(DnsInputOwner {
+            id,
+            retired: self.entries[&id].retired.clone(),
+        })
+    }
+
     /// Reserve ownership BEFORE the first insertion. Old failed retirement for this
     /// profile must complete before a new generation may install DNS permits.
     pub(crate) fn begin(
@@ -53,6 +92,13 @@ impl DnsInputRegistry {
         cleanup: impl FnMut(&DnsInputRules) -> anyhow::Result<()>,
     ) -> anyhow::Result<DnsInputId> {
         self.retry(Some(&rules.profile), cleanup)?;
+        // Retirement can arrive while an earlier cleanup callback is running.
+        // Do not reserve a new generation over newly observed pending evidence.
+        if self.entries.values().any(|entry| {
+            entry.rules.profile == rules.profile && entry.retired.load(Ordering::Acquire)
+        }) {
+            anyhow::bail!("DNS INPUT cleanup still pending for '{}'", rules.profile);
+        }
         if self.entries.values().any(|entry| entry.rules == rules) {
             anyhow::bail!(
                 "DNS INPUT rules for '{}' already have a live owner",
@@ -72,7 +118,7 @@ impl DnsInputRegistry {
             id,
             Entry {
                 rules,
-                retired: false,
+                retired: Arc::new(AtomicBool::new(false)),
             },
         );
         Ok(id)
@@ -88,7 +134,7 @@ impl DnsInputRegistry {
         let Some(entry) = self.entries.get_mut(&id) else {
             return Ok(());
         };
-        entry.retired = true;
+        entry.retired.store(true, Ordering::Release);
         cleanup(&entry.rules)?;
         self.entries.remove(&id);
         Ok(())
@@ -102,12 +148,16 @@ impl DnsInputRegistry {
     ) -> anyhow::Result<()> {
         let mut errors = crate::nat_cleanup::Errors::default();
         errors.record("pending DNS INPUT", self.retry(None, cleanup));
-        for entry in self.entries.values().filter(|entry| !entry.retired) {
+        // A token may retire after retry's snapshot. Every remaining entry is unresolved,
+        // including newly retired ones; checking only active entries would miss that race.
+        for entry in self.entries.values() {
             errors.record(
                 &entry.rules.profile,
-                Err(anyhow::anyhow!(
+                Err(anyhow::anyhow!(if entry.retired.load(Ordering::Acquire) {
+                    "DNS INPUT cleanup still pending at worker shutdown"
+                } else {
                     "DNS INPUT lease still active at worker shutdown"
-                )),
+                })),
             );
         }
         errors.finish()
@@ -124,8 +174,9 @@ impl DnsInputRegistry {
             .entries
             .iter()
             .filter_map(|(id, entry)| {
-                (entry.retired && profile.is_none_or(|profile| profile == entry.rules.profile))
-                    .then_some(*id)
+                (entry.retired.load(Ordering::Acquire)
+                    && profile.is_none_or(|profile| profile == entry.rules.profile))
+                .then_some(*id)
             })
             .collect();
         let mut errors = crate::nat_cleanup::Errors::default();

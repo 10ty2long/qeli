@@ -1,4 +1,4 @@
-//! One deadline for a server cleanup attempt, including admission and both families.
+//! One deadline for a named server firewall operation, including admission and both families.
 use super::discovery::{self, Tool};
 use std::{
     io,
@@ -12,12 +12,22 @@ const LIMIT: Duration = Duration::from_secs(15);
 #[derive(Clone, Copy)]
 pub(super) struct Budget {
     pub(super) until: Instant,
+    operation: &'static str,
 }
 impl Budget {
     pub(super) fn new() -> Self {
+        Self::for_operation("NAT cleanup")
+    }
+    pub(super) fn for_operation(operation: &'static str) -> Self {
         Self {
             until: Instant::now() + LIMIT,
+            operation,
         }
+    }
+    #[cfg(test)]
+    pub(super) fn with_deadline(mut self, until: Instant) -> Self {
+        self.until = until;
+        self
     }
     fn remaining(self) -> io::Result<Duration> {
         self.until
@@ -26,7 +36,10 @@ impl Budget {
             .ok_or_else(|| {
                 io::Error::new(
                     io::ErrorKind::TimedOut,
-                    "NAT cleanup deadline expired; unresolved ownership retained for retry",
+                    format!(
+                        "{} deadline expired; unresolved ownership retained for retry",
+                        self.operation
+                    ),
                 )
             })
     }

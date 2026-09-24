@@ -91,3 +91,9 @@ Release, benchmark и сертификация устройств не выпо�
 [Точное владение](AUDIT-Q14-RETAINED-CLEANUP.md) ·
 [Прежние сроки команд](AUDIT-Q14-NAT-COMMANDS.md) ·
 [Мануал](../manuals/CONFIG.md) · [Диагностика](../manuals/TROUBLESHOOTING.md)
+
+Следующая фаза: [Q14-F035 — DNS INPUT setup/Drop](AUDIT-Q14-DNS-INPUT-BUDGET.md)
+покрывает их общий срок с admission и неблокирующее retirement. Прежние результаты
+выше описывают свой снимок. Точные generic NAT и ошибки старых поколений закрыты
+в [D01](AUDIT-Q14-RETAINED-CLEANUP.md); persistent recovery, DNS REDIRECT и остальная
+установка NAT остаются открытыми.

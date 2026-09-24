@@ -91,3 +91,9 @@ prove which remaining rules belong to the old worker. D05/D09 are not fully clos
 [Exact ownership](AUDIT-Q14-RETAINED-CLEANUP.md) ·
 [Earlier command limits](AUDIT-Q14-NAT-COMMANDS.md) ·
 [Manual](../manuals/CONFIG.md) · [Troubleshooting](../manuals/TROUBLESHOOTING.md)
+
+Follow-up: [Q14-F035 — DNS INPUT setup/Drop](AUDIT-Q14-DNS-INPUT-BUDGET.md)
+covers their shared deadlines including admission and retirement without lock waits.
+Earlier results above describe their own snapshot. Exact generic NAT and older-generation
+outcomes are addressed in [D01](AUDIT-Q14-RETAINED-CLEANUP.md); persistent recovery,
+DNS REDIRECT and other NAT setup remain open.

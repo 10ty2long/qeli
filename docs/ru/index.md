@@ -86,6 +86,7 @@
 | [AUDIT-Q05-HEALTH-PROBES.md](reports/AUDIT-Q05-HEALTH-PROBES.md) | Async-проверки Status/Transport health, общий admission и отзывчивость HTTP-роутера |
 | [AUDIT-Q14-NAT-COMMANDS.md](reports/AUDIT-Q14-NAT-COMMANDS.md) | Q14-F032: серверный NAT использует общий runner со сроком и лимитом вывода; ownership после timeout |
 | [AUDIT-Q14-NAT-CLEANUP-BUDGET.md](reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md) | Общий срок очистки NAT, DNS и сохранение неподтверждённых правил |
+| [AUDIT-Q14-DNS-INPUT-BUDGET.md](reports/AUDIT-Q14-DNS-INPUT-BUDGET.md) | Сроки DNS INPUT lease и неблокирующее завершение поколения |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Сохранение DNS rule specs при отказе cleanup/rollback, retry и идентичность поколения |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Конечная очистка NAT, проверка результата, диагностика и открытые ошибки teardown |
