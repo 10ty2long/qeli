@@ -116,3 +116,5 @@ runtime remain **SKIPPED by user decision**, not PASS. Debt: **4/15 DONE (26.7%)
 9 IN_PROGRESS, 2 TODO**.
 
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md#kill-switch-kill_switch).
+
+Follow-up: [Q25-F105](AUDIT-Q25-NETWORK-TASK.md) moves NetworkPlan application and unadopted-result rollback to a joined worker. Established-tunnel cleanup remains separate D05 work; historical results above are retained.

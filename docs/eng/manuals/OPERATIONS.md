@@ -507,3 +507,16 @@ allowance and does not discard other valid entries. Later DNS changes do not ref
 firewall rules automatically. [Resolver-file reads](../reports/AUDIT-Q25-RESOLVER-FILES.md).
 
 [§6.86](TROUBLESHOOTING.md#686-linux-resolver-files-and-kill-switch-dns-allowances).
+
+## Stopping while NetworkPlan is being applied
+
+Linux applies NetworkPlan on a separate thread and retains TUN/routes/DNS ownership
+until the operation and any rollback finish. Ordinary SIGTERM/SIGINT is processed
+while waiting. Started system work is not interrupted: the client waits for completion
+and rolls back an unadopted result. State stays `awaiting_network` until successful ACK;
+cancellation before ACK does not run `post_up`. Cleanup failure prevents a successful restart.
+
+Sending a signal alone does not make a TUN ready for reuse. Wait for process exit and
+verify cleanup. Forcibly dropping a future may synchronously wait for the worker join;
+there is no single hard shutdown deadline yet.
+[Validation and limits](../reports/AUDIT-Q25-NETWORK-TASK.md).

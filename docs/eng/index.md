@@ -216,3 +216,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F103: shared DNS/NSS, cancellation and client shutdown](reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
 
 - [Q25-F104: resolver-file reads, shared parser and DNS allowances](reports/AUDIT-Q25-RESOLVER-FILES.md).
+
+- [Q25-F105: asynchronous NetworkPlan application and rollback ownership](reports/AUDIT-Q25-NETWORK-TASK.md).

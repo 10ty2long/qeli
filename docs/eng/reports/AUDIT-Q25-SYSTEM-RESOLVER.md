@@ -98,3 +98,5 @@ runtime remain **SKIPPED by user decision**. Debt totals remain **4/15 DONE (26.
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md#kill-switch-kill_switch).
 
 Follow-up: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) moves resolver-file reads before firewall setup, shares bounded admission with NSS and unifies the reader/parser with stub detection. Historical results above are unchanged.
+
+Follow-up: [Q25-F105](AUDIT-Q25-NETWORK-TASK.md) moves NetworkPlan application and unadopted-result rollback to a joined worker. Established-tunnel cleanup remains separate D05 work; historical results above are retained.

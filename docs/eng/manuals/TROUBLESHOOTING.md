@@ -2439,3 +2439,17 @@ ordinary recovery/cleanup. SIGTERM cancels waiting for the read-only worker; syn
 network mutations retain their previous boundaries. Changed system DNS needs a new
 installation cycle: refreshing VPN server addresses does not reread DNS allowances.
 [Causes and lab validation](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+
+### 6.87. Linux: stopping in awaiting_network
+
+When stopped during TUN/address/route/DNS setup, the client continues processing signals
+and neighboring async tasks but waits for started system work. Unadopted settings are
+then rolled back in their original context. If a command or kernel call is stuck, do not
+start a competing profile with the same `dev`: the outer lease must remain held until
+cleanup finishes. A signal log entry does not establish completed rollback.
+
+`network transaction ... namespace changed` rejects result adoption from a changed
+NET/mount context; `worker panicked` reports worker failure, not successful setup.
+Retain journals when cleanup is unverified. Established-tunnel teardown and kill-switch
+still have their previous synchronous-section limitations.
+[Operation and tests](../reports/AUDIT-Q25-NETWORK-TASK.md).

@@ -6,6 +6,8 @@ pub mod gateway;
 pub mod killswitch;
 #[cfg(target_os = "linux")]
 mod network_lease;
+#[cfg(target_os = "linux")]
+mod network_task;
 #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
 mod roaming_linux;
 #[cfg(target_os = "linux")]
@@ -1615,12 +1617,11 @@ pub(crate) trait ClientPlatform {
     }
     fn device_id(&self) -> anyhow::Result<[u8; crate::protocol::DEVICE_ID_LEN]>;
     fn identity_verifier(&self, config: &crate::config::client::ClientConfig) -> IdentityVerifier;
-    fn prepare_tunnel(
-        &mut self,
-        config: &crate::config::client::ClientConfig,
+    fn prepare_tunnel<'a>(
+        &'a mut self,
+        config: &'a crate::config::client::ClientConfig,
         plan: NetworkPlan,
-        network: &HandshakeNetwork<'_>,
-    ) -> anyhow::Result<TunnelSetup>;
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<TunnelSetup>> + 'a>>;
     fn fallback_dns_servers(&self) -> &[String];
     fn cancel_token(&self) -> Arc<AtomicBool>;
     fn counters(&self) -> Arc<RuntimeCounters>;
@@ -2033,10 +2034,10 @@ impl LinuxCoreAdapter {
         })
     }
 
-    fn apply_network_plan<T>(
+    async fn apply_network_plan<T: Send + 'static>(
         &mut self,
         plan: NetworkPlan,
-        apply: impl FnOnce(&NetworkPlan) -> anyhow::Result<T>,
+        apply: impl FnOnce(&NetworkPlan) -> anyhow::Result<T> + Send + 'static,
     ) -> anyhow::Result<T> {
         let generation = plan.generation;
         self.with_core(|core| core.publish_network_plan(plan))?;
@@ -2044,10 +2045,32 @@ impl LinuxCoreAdapter {
             anyhow::anyhow!("core emitted no network plan for generation {generation}")
         })?;
 
-        match apply(&executable) {
+        match network_task::run(self.cancel.clone(), move || apply(&executable)).await {
             Ok(value) => {
-                self.with_core(|core| core.ack_network_plan(generation, true, None))?;
-                self.drain_events(None)?;
+                let acknowledged = if self.cancel.load(Ordering::Acquire) {
+                    Err(anyhow::anyhow!(
+                        "client stopped before NetworkPlan acknowledgement"
+                    ))
+                } else {
+                    self.with_core(|core| core.ack_network_plan(generation, true, None))
+                        .map_err(anyhow::Error::from)
+                        .and_then(|()| self.drain_events(None).map(|_| ()))
+                };
+                if let Err(error) = acknowledged {
+                    // The unapplied ACK never strips ownership from a completed platform result.
+                    // Join its rollback before returning to the outer network-lease owner.
+                    let rollback = network_task::run(Arc::new(AtomicBool::new(false)), move || {
+                        drop(value);
+                        Ok(())
+                    })
+                    .await;
+                    return Err(match rollback {
+                        Ok(()) => error,
+                        Err(rollback) => {
+                            error.context(format!("network rollback also failed: {rollback}"))
+                        }
+                    });
+                }
                 Ok(value)
             }
             Err(error) => {
@@ -2174,36 +2197,41 @@ impl ClientPlatform for LinuxCoreAdapter {
         })
     }
 
-    fn prepare_tunnel(
-        &mut self,
-        config: &crate::config::client::ClientConfig,
+    fn prepare_tunnel<'a>(
+        &'a mut self,
+        config: &'a crate::config::client::ClientConfig,
         plan: NetworkPlan,
-        network: &HandshakeNetwork<'_>,
-    ) -> anyhow::Result<TunnelSetup> {
-        let mut hook_context = self.hook_context.clone();
-        let cleanup_failures = self.cleanup_failures.clone();
-        let (tunnel, hook_context) = self.apply_network_plan(plan, |plan| {
-            let tunnel = setup_tunnel(config, plan, network, cleanup_failures)?;
-            if let Some(context) = hook_context.as_mut() {
-                context.refresh(plan, &tunnel.if_name);
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<TunnelSetup>> + 'a>>
+    {
+        Box::pin(async move {
+            let mut hook_context = self.hook_context.clone();
+            let cleanup_failures = self.cleanup_failures.clone();
+            let owned_config = config.clone();
+            let (tunnel, hook_context) = self
+                .apply_network_plan(plan, move |plan| {
+                    let tunnel = setup_tunnel(&owned_config, plan, cleanup_failures)?;
+                    if let Some(context) = hook_context.as_mut() {
+                        context.refresh(plan, &tunnel.if_name);
+                    }
+                    Ok((tunnel, hook_context))
+                })
+                .await?;
+            #[cfg(feature = "experimental-roaming")]
+            {
+                *crate::util::lock_or_recover(
+                    &self.path_controller.prepared_routes,
+                    "client::linux_prepared_routes",
+                ) = None;
+                *crate::util::lock_or_recover(
+                    &self.path_controller.route_owner,
+                    "client::route_owner",
+                ) = (!config.tun.attach_existing).then(|| tunnel.guard.routes.scope());
             }
-            Ok((tunnel, hook_context))
-        })?;
-        #[cfg(feature = "experimental-roaming")]
-        {
-            *crate::util::lock_or_recover(
-                &self.path_controller.prepared_routes,
-                "client::linux_prepared_routes",
-            ) = None;
-            *crate::util::lock_or_recover(
-                &self.path_controller.route_owner,
-                "client::route_owner",
-            ) = (!config.tun.attach_existing).then(|| tunnel.guard.routes.scope());
-        }
-        self.hook_context = hook_context;
-        self.connected_since
-            .get_or_insert_with(std::time::Instant::now);
-        Ok(tunnel)
+            self.hook_context = hook_context;
+            self.connected_since
+                .get_or_insert_with(std::time::Instant::now);
+            Ok(tunnel)
+        })
     }
 
     fn fallback_dns_servers(&self) -> &[String] {
@@ -5355,7 +5383,7 @@ where
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let (tap_gateway_ipv4, tap_ipv4_prefix_len, tap_gateway_ipv6, tap_ipv6_prefix_len) =
         (None, 0, None, 0);
-    let tunnel = core.prepare_tunnel(config, plan, &network)?;
+    let tunnel = core.prepare_tunnel(config, plan).await?;
     run_pending_post_up(core).await;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let reader_fd = tunnel.reader_fd;
@@ -7783,7 +7811,6 @@ fn publish_network_plan_state(plan: &NetworkPlan) -> anyhow::Result<()> {
 fn setup_tunnel(
     config: &crate::config::client::ClientConfig,
     plan: &NetworkPlan,
-    _network: &HandshakeNetwork<'_>,
     cleanup_failures: crate::client_cleanup::Failures,
 ) -> anyhow::Result<TunnelSetup> {
     let client_ip = plan.tunnel_address.as_str();
@@ -9771,7 +9798,7 @@ pub(crate) async fn run_udp_tunnel(
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let (tap_gateway_ipv4, tap_ipv4_prefix_len, tap_gateway_ipv6, tap_ipv6_prefix_len) =
         (None, 0, None, 0);
-    let tun_setup = core.prepare_tunnel(config, plan, &network)?;
+    let tun_setup = core.prepare_tunnel(config, plan).await?;
     run_pending_post_up(core).await;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let reader_fd = tun_setup.reader_fd;
@@ -12431,8 +12458,8 @@ mod lifecycle_adapter_tests {
         assert!(!linux_roaming_path_supported(&config));
     }
 
-    #[test]
-    fn linux_adapter_enters_running_only_after_platform_apply() {
+    #[tokio::test]
+    async fn linux_adapter_enters_running_only_after_platform_apply() {
         let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
         adapter.begin_connection(false).unwrap();
         assert_eq!(
@@ -12442,11 +12469,12 @@ mod lifecycle_adapter_tests {
 
         let generation = adapter.next_generation();
         let result = adapter
-            .apply_network_plan(plan(generation), |event_plan| {
+            .apply_network_plan(plan(generation), move |event_plan| {
                 assert_eq!(event_plan.generation, generation);
                 assert_eq!(event_plan.routes[0].gateway, "10.20.0.1");
                 Ok(42)
             })
+            .await
             .unwrap();
 
         assert_eq!(result, 42);
@@ -12464,18 +12492,20 @@ mod lifecycle_adapter_tests {
         }
     }
 
-    #[test]
-    fn rejected_core_ack_drops_owned_platform_value_and_reports_rollback_failure() {
+    #[tokio::test]
+    async fn rejected_core_ack_drops_owned_platform_value_and_reports_rollback_failure() {
         let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
         adapter.begin_connection(false).unwrap();
         let failures = adapter.cleanup_failures.clone();
         let core = adapter.core.clone();
         let generation = adapter.next_generation();
-        let result = adapter.apply_network_plan(plan(generation), |_| {
-            // Invalidate ACK after apply: the applied value must retain a cleanup owner.
-            core.lock().unwrap().stop().unwrap();
-            Ok(DropFailure(failures))
-        });
+        let result = adapter
+            .apply_network_plan(plan(generation), move |_| {
+                // Invalidate ACK after apply: the applied value must retain a cleanup owner.
+                core.lock().unwrap().stop().unwrap();
+                Ok(DropFailure(failures))
+            })
+            .await;
         assert!(result.is_err());
         assert!(adapter
             .cleanup_failures
@@ -12485,17 +12515,18 @@ mod lifecycle_adapter_tests {
             .contains("simulated resource rollback failed"));
     }
 
-    #[test]
-    fn partial_apply_drop_fault_reaches_the_adapter_cleanup_check() {
+    #[tokio::test]
+    async fn partial_apply_drop_fault_reaches_the_adapter_cleanup_check() {
         let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
         adapter.begin_connection(false).unwrap();
         let failures = adapter.cleanup_failures.clone();
         let generation = adapter.next_generation();
         let error = adapter
-            .apply_network_plan::<()>(plan(generation), |_| {
+            .apply_network_plan::<()>(plan(generation), move |_| {
                 let _guard = DropFailure(failures);
                 anyhow::bail!("platform apply failed")
             })
+            .await
             .unwrap_err();
         assert!(error.to_string().contains("platform apply failed"));
         let checks = crate::client_cleanup::Checks {
@@ -12508,15 +12539,41 @@ mod lifecycle_adapter_tests {
         );
     }
 
-    #[test]
-    fn linux_adapter_rejects_a_partial_platform_plan() {
+    #[tokio::test]
+    async fn stop_during_platform_apply_rolls_back_before_core_can_run() {
+        let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
+        adapter.begin_connection(false).unwrap();
+        let generation = adapter.next_generation();
+        let cancel = adapter.cancel.clone();
+        let failures = adapter.cleanup_failures.clone();
+        let (ready, waiting) = tokio::sync::oneshot::channel();
+        let (release, blocked) = std::sync::mpsc::channel();
+        let request_stop = async move {
+            waiting.await.unwrap();
+            cancel.store(true, Ordering::Release);
+            release.send(()).unwrap();
+        };
+        let apply = adapter.apply_network_plan(plan(generation), move |_| {
+            ready.send(()).unwrap();
+            blocked.recv_timeout(Duration::from_secs(5))?;
+            Ok(DropFailure(failures))
+        });
+        let (result, ()) = tokio::join!(apply, request_stop);
+        assert!(result.is_err());
+        assert_eq!(adapter.with_core(|core| core.state()), ClientState::Failed);
+        assert!(adapter.cleanup_failures.result().is_err());
+    }
+
+    #[tokio::test]
+    async fn linux_adapter_rejects_a_partial_platform_plan() {
         let (mut adapter, _) = LinuxCoreAdapter::new(CONFIG).unwrap();
         adapter.begin_connection(false).unwrap();
         let generation = adapter.next_generation();
         let error = adapter
-            .apply_network_plan::<()>(plan(generation), |_| {
+            .apply_network_plan::<()>(plan(generation), move |_| {
                 Err(anyhow::anyhow!("route installation failed"))
             })
+            .await
             .unwrap_err();
 
         assert!(error.to_string().contains("route installation failed"));

@@ -52,6 +52,11 @@ mod client_killswitch;
 #[path = "client/network_lease.rs"]
 mod client_network_lease;
 
+// Joined network transaction ownership is exercised without host mutations.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[path = "client/network_task.rs"]
+mod client_network_task;
+
 // TUN admission tests replace interface queries and waiting; no real device operations.
 #[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
 #[allow(dead_code)]

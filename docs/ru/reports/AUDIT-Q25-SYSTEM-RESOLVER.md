@@ -98,3 +98,5 @@ Mac/iOS и physical-router runtime остаются **SKIPPED по решени�
 [Реестр](../plans/AUDIT-DEBT.md) · [Мануал](../manuals/CONFIG.md#kill-switch-kill_switch).
 
 Продолжение: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) переносит чтение DNS-файлов до firewall, делит ограниченную очередь с NSS и объединяет reader/parser с проверкой stub. Исторические результаты выше не изменены.
+
+Продолжение: [Q25-F105](AUDIT-Q25-NETWORK-TASK.md) переносит применение NetworkPlan и откат непринятого результата в присоединяемый поток. Штатная очистка активного туннеля остаётся отдельным D05; исторические результаты выше сохранены.

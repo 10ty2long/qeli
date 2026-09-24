@@ -216,3 +216,5 @@
 - [Q25-F103: общий DNS/NSS, отмена и остановка клиента](reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
 
 - [Q25-F104: чтение resolver-файлов, общий парсер и DNS-разрешения](reports/AUDIT-Q25-RESOLVER-FILES.md).
+
+- [Q25-F105: асинхронное применение NetworkPlan и владение откатом](reports/AUDIT-Q25-NETWORK-TASK.md).

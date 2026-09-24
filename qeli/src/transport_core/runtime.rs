@@ -24,7 +24,6 @@ use crate::client::{
 use crate::client::{CorePathController, PathAckFuture, PathController};
 use crate::config::client::ClientConfig;
 use crate::protocol::obfs::{AwgParams, ObfsStream};
-use crate::transport_core::network::HandshakeNetwork;
 use serde::Deserialize;
 use socket2::Socket;
 use std::net::{IpAddr, SocketAddr};
@@ -408,97 +407,104 @@ impl ClientPlatform for NativeCoreAdapter {
         })
     }
 
-    fn prepare_tunnel(
-        &mut self,
-        _config: &ClientConfig,
+    fn prepare_tunnel<'a>(
+        &'a mut self,
+        _config: &'a ClientConfig,
         mut plan: NetworkPlan,
-        _network: &HandshakeNetwork<'_>,
-    ) -> anyhow::Result<TunnelSetup> {
-        let carrier_address = *self
-            .carrier_address
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        plan.carrier_address = carrier_address.map(|address| address.to_string());
-        let generation = plan.generation;
-        self.lock().publish_network_plan(plan)?;
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<TunnelSetup>> + 'a>>
+    {
+        Box::pin(async move {
+            let carrier_address = *self
+                .carrier_address
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            plan.carrier_address = carrier_address.map(|address| address.to_string());
+            let generation = plan.generation;
+            self.lock().publish_network_plan(plan)?;
 
-        let deadline = Instant::now() + NETWORK_ACK_TIMEOUT;
-        loop {
-            if self.cancel.load(Ordering::Acquire) {
-                anyhow::bail!("transport cancelled while awaiting NetworkPlan ACK");
-            }
-            let result: Option<anyhow::Result<TunnelSetup>> = {
-                let mut core = self.lock();
-                match core.state {
-                    ClientState::Running => {
-                        #[cfg(target_os = "windows")]
-                        {
-                            if core.platform_capabilities() & super::platform_capability::TUN_WINTUN
-                                != 0
-                            {
-                                Some(
-                                    core.take_attached_wintun(generation)
-                                        .map(TunnelSetup::wintun)
-                                        .map_err(anyhow::Error::from),
-                                )
-                            } else if core.platform_capabilities()
-                                & super::platform_capability::TUN_PACKET_BATCH
-                                != 0
-                            {
-                                Some(
-                                    core.take_packet_tun_pump(generation)
-                                        .map(TunnelSetup::packet)
-                                        .map_err(anyhow::Error::from),
-                                )
-                            } else {
-                                Some(Err(anyhow::anyhow!(
-                                    "platform advertised neither packet IO nor a usable TUN fd"
-                                )))
-                            }
-                        }
-                        #[cfg(target_os = "ios")]
-                        {
-                            if core.platform_capabilities()
-                                & super::platform_capability::TUN_PACKET_BATCH
-                                != 0
-                            {
-                                Some(
-                                    core.take_packet_tun_pump(generation)
-                                        .map(TunnelSetup::packet)
-                                        .map_err(anyhow::Error::from),
-                                )
-                            } else {
-                                Some(Err(anyhow::anyhow!(
-                                    "platform advertised no usable packet TUN"
-                                )))
-                            }
-                        }
-                        #[cfg(any(target_os = "android", target_os = "macos"))]
-                        {
-                            Some(
-                                core.take_attached_tun_fds(generation)
-                                    .map(|(reader, writer)| TunnelSetup::external(reader, writer))
-                                    .map_err(anyhow::Error::from),
-                            )
-                        }
-                    }
-                    ClientState::Failed => Some(Err(anyhow::anyhow!(
-                        "platform rejected NetworkPlan {generation}"
-                    ))),
-                    ClientState::AwaitingNetwork => None,
-                    state => Some(Err(anyhow::anyhow!(
-                        "NetworkPlan {generation} left pending in state {state:?}"
-                    ))),
+            let deadline = Instant::now() + NETWORK_ACK_TIMEOUT;
+            loop {
+                if self.cancel.load(Ordering::Acquire) {
+                    anyhow::bail!("transport cancelled while awaiting NetworkPlan ACK");
                 }
-            };
-            if let Some(result) = result {
-                return result;
+                let result: Option<anyhow::Result<TunnelSetup>> = {
+                    let mut core = self.lock();
+                    match core.state {
+                        ClientState::Running => {
+                            #[cfg(target_os = "windows")]
+                            {
+                                if core.platform_capabilities()
+                                    & super::platform_capability::TUN_WINTUN
+                                    != 0
+                                {
+                                    Some(
+                                        core.take_attached_wintun(generation)
+                                            .map(TunnelSetup::wintun)
+                                            .map_err(anyhow::Error::from),
+                                    )
+                                } else if core.platform_capabilities()
+                                    & super::platform_capability::TUN_PACKET_BATCH
+                                    != 0
+                                {
+                                    Some(
+                                        core.take_packet_tun_pump(generation)
+                                            .map(TunnelSetup::packet)
+                                            .map_err(anyhow::Error::from),
+                                    )
+                                } else {
+                                    Some(Err(anyhow::anyhow!(
+                                        "platform advertised neither packet IO nor a usable TUN fd"
+                                    )))
+                                }
+                            }
+                            #[cfg(target_os = "ios")]
+                            {
+                                if core.platform_capabilities()
+                                    & super::platform_capability::TUN_PACKET_BATCH
+                                    != 0
+                                {
+                                    Some(
+                                        core.take_packet_tun_pump(generation)
+                                            .map(TunnelSetup::packet)
+                                            .map_err(anyhow::Error::from),
+                                    )
+                                } else {
+                                    Some(Err(anyhow::anyhow!(
+                                        "platform advertised no usable packet TUN"
+                                    )))
+                                }
+                            }
+                            #[cfg(any(target_os = "android", target_os = "macos"))]
+                            {
+                                Some(
+                                    core.take_attached_tun_fds(generation)
+                                        .map(|(reader, writer)| {
+                                            TunnelSetup::external(reader, writer)
+                                        })
+                                        .map_err(anyhow::Error::from),
+                                )
+                            }
+                        }
+                        ClientState::Failed => Some(Err(anyhow::anyhow!(
+                            "platform rejected NetworkPlan {generation}"
+                        ))),
+                        ClientState::AwaitingNetwork => None,
+                        state => Some(Err(anyhow::anyhow!(
+                            "NetworkPlan {generation} left pending in state {state:?}"
+                        ))),
+                    }
+                };
+                if let Some(result) = result {
+                    return result;
+                }
+                if Instant::now() >= deadline {
+                    anyhow::bail!(
+                        "platform did not acknowledge NetworkPlan {generation} within 45s"
+                    );
+                }
+                tokio::time::sleep(PLATFORM_ACK_POLL).await;
             }
-            if Instant::now() >= deadline {
-                anyhow::bail!("platform did not acknowledge NetworkPlan {generation} within 45s");
-            }
-            std::thread::sleep(PLATFORM_ACK_POLL);
-        }
+        })
     }
 
     fn fallback_dns_servers(&self) -> &[String] {
