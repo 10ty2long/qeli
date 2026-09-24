@@ -24,6 +24,8 @@ use axum::{
 use serde_json::{json, Value};
 use std::sync::Arc;
 
+const MAX_BODY_BYTES: usize = 16 * 1024 * 1024;
+
 pub fn routes() -> Router<Arc<ServerState>> {
     // Path params use axum-0.8 brace syntax (`{name}`, `{*rest}`).
     Router::new()
@@ -133,7 +135,7 @@ pub fn routes() -> Router<Arc<ServerState>> {
         )
         // Explicit request-body ceiling (axum's implicit default is 2 MiB): large enough
         // for an /api/restore tar.gz, but bounded so a huge body can't exhaust memory.
-        .layer(axum::extract::DefaultBodyLimit::max(16 * 1024 * 1024))
+        .layer(axum::extract::DefaultBodyLimit::max(MAX_BODY_BYTES))
 }
 
 /// Standard API error body: `{"ok": false, "error": <msg>}`. Centralizes the

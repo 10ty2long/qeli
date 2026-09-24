@@ -1933,3 +1933,5 @@ IPv6, DNS/carrier globals, Q14-F027 workers/FD and preflight waits remain open. 
 certification and a new benchmark were not run; full section statuses are unchanged.
 
 **24 September, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight before config locking, shared probe budget, stale-snapshot refusal, owned guard for cancelled backup/restore and bounded restart dispatch. Sections remain IN_PROGRESS; archive operations and full HTTP/systemd E2E remain open.
+
+**D05/D09, backup/restore:** [Q05-F005–F007](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md): shared preparation budget, bounded stdin/output, complete pre-restore snapshot, immediate duplicate refusal and private API-handler roundtrip. Crash/ENOSPC/systemd and other network budgets remain open.

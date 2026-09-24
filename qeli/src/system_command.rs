@@ -15,6 +15,15 @@ pub(crate) struct Command {
     inner: tokio::process::Command,
 }
 
+#[cfg(any(test, feature = "server"))]
+impl From<std::process::Command> for Command {
+    fn from(command: std::process::Command) -> Self {
+        Self {
+            inner: command.into(),
+        }
+    }
+}
+
 impl Command {
     pub(crate) fn new(program: impl AsRef<OsStr>) -> Self {
         Self {
@@ -40,15 +49,30 @@ impl Command {
         if let Some(action) = test_support::intercept(self.inner.as_std()) {
             return action.run();
         }
-        self.output_before(until, OUTPUT_LIMIT)
+        self.output_before(until, OUTPUT_LIMIT, None)
     }
 
     #[cfg(test)]
     fn output_with_limits(&mut self, deadline: Duration, limit: usize) -> io::Result<Output> {
-        self.output_before(Instant::now() + deadline, limit)
+        self.output_before(Instant::now() + deadline, limit, None)
     }
 
-    fn output_before(&mut self, until: Instant, limit: usize) -> io::Result<Output> {
+    #[cfg(any(test, feature = "server"))]
+    pub(crate) fn output_bounded(
+        &mut self,
+        until: Instant,
+        limit: usize,
+        input: Option<&[u8]>,
+    ) -> io::Result<Output> {
+        self.output_before(until, limit, input)
+    }
+
+    fn output_before(
+        &mut self,
+        until: Instant,
+        limit: usize,
+        input: Option<&[u8]>,
+    ) -> io::Result<Output> {
         std::thread::scope(|scope| {
             std::thread::Builder::new()
                 .name("qeli-system-command".to_string())
@@ -56,10 +80,11 @@ impl Command {
                     let runtime = tokio::runtime::Builder::new_current_thread()
                         .enable_all()
                         .build()?;
-                    runtime.block_on(crate::hook_process::run_output(
+                    runtime.block_on(crate::hook_process::run_output_with_input(
                         &mut self.inner,
                         tokio::time::Instant::from_std(until),
                         limit,
+                        input,
                     ))
                 })?
                 .join()

@@ -1989,3 +1989,23 @@ Do not automatically repeat restart based on a timeout alone. A busy worker rest
 queue returns an immediate error; retry after the queue becomes available.
 
 [Analysis](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
+
+
+### 6.59. Backup/restore: timeout, archive limit and incomplete snapshot
+
+Download/restore preparation shares 60 seconds across config-lock admission,
+archiving, validation and extraction. `archive operation timed out before publication`
+means this restore did not begin replacing live files. Once publication starts,
+the lock remains held until filesystem operations finish; this is not a hard I/O limit.
+
+Portable gzip is limited to 16 MiB, matching panel upload; pre-restore snapshots to
+64 MiB. `system command output limit exceeded` rejects partial output. Check for
+unrelated large files in `/etc/qeli`. If a complete set exceeds the limit, take a
+complete manual backup before maintenance.
+
+`could not take the pre-restore snapshot` caused by an unreadable file stops restore.
+Check access as the actual service user. Do not proceed with replacement until a
+complete backup exists. If publication already started and failed, use the retained
+`.pre-restore-*.tgz`; automatic whole-tree rollback is not promised.
+
+[Analysis and verification](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md).

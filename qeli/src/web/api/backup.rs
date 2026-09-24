@@ -5,9 +5,51 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 use std::path::{Component, Path};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 const MANAGED_BACKUP_ROOT: &str = "/etc/qeli";
+const ARCHIVE_BUDGET: Duration = Duration::from_secs(60);
+// Match the upload body limit: never return a portable backup the panel cannot upload.
+const PORTABLE_ARCHIVE_LIMIT: usize = super::MAX_BODY_BYTES;
+const SNAPSHOT_LIMIT: usize = 64 * 1024 * 1024;
+const ARCHIVE_TEXT_LIMIT: usize = 16 * 1024 * 1024;
+
+fn tar_command() -> std::process::Command {
+    let mut command = std::process::Command::new("tar");
+    // Validation, extraction and snapshots must interpret the same explicit options.
+    command
+        .env("LC_ALL", "C")
+        .env_remove("TAR_OPTIONS")
+        .env_remove("GZIP");
+    command
+}
+
+fn archive_budget(until: Instant) -> Result<(), String> {
+    if Instant::now() >= until {
+        Err(
+            "archive operation timed out before publication; retry after checking server resources"
+                .into(),
+        )
+    } else {
+        Ok(())
+    }
+}
+
+async fn archive_lock(
+    state: &std::sync::Arc<crate::server::ServerState>,
+    until: Instant,
+) -> Result<tokio::sync::OwnedMutexGuard<()>, &'static str> {
+    let guard = tokio::time::timeout_at(
+        tokio::time::Instant::from_std(until),
+        state.config_write_lock.clone().lock_owned(),
+    )
+    .await
+    .map_err(|_| "config is busy; archive operation timed out")?;
+    if Instant::now() >= until {
+        return Err("config is busy; archive operation timed out");
+    }
+    Ok(guard)
+}
 const TRANSIENT_TAR_EXCLUDES: &[&str] = &[
     "qeli/.pre-restore-*.tgz",
     "qeli/.restore-upload-*.tgz",
@@ -29,6 +71,19 @@ fn append_tar_excludes(command: &mut std::process::Command, portable: bool) {
             command.arg(format!("--exclude={pattern}"));
         }
     }
+}
+
+fn create_archive_command(parent: &Path, portable: bool) -> std::process::Command {
+    let mut command = tar_command();
+    command.args(["czf", "-", "--xattrs"]);
+    // Portable downloads verify required members separately. A rollback snapshot
+    // must be complete: even an optional unreadable file makes restoration unsafe.
+    if portable {
+        command.arg("--ignore-failed-read");
+    }
+    append_tar_excludes(&mut command, portable);
+    command.arg("-C").arg(parent).arg("qeli");
+    command
 }
 
 fn validate_critical_sources(paths: &[CriticalBackupPath]) -> Result<(), String> {
@@ -61,32 +116,13 @@ fn validate_critical_sources(paths: &[CriticalBackupPath]) -> Result<(), String>
 
 fn inspect_backup_archive(
     bytes: Vec<u8>,
+    until: Instant,
 ) -> Result<(Vec<u8>, std::collections::HashSet<String>), String> {
-    use std::io::Write;
-    use std::process::Stdio;
-
-    let mut child = std::process::Command::new("tar")
-        .args(["tzf", "-"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+    let mut command = tar_command();
+    command.args(["tzf", "-"]);
+    let listing = crate::system_command::Command::from(command)
+        .output_bounded(until, ARCHIVE_TEXT_LIMIT, Some(&bytes))
         .map_err(|error| format!("cannot inspect generated backup: {error}"))?;
-    let mut stdin = child
-        .stdin
-        .take()
-        .ok_or_else(|| "cannot open tar stdin for backup verification".to_string())?;
-    let writer = std::thread::spawn(move || {
-        let result = stdin.write_all(&bytes);
-        (bytes, result)
-    });
-    let listing = child
-        .wait_with_output()
-        .map_err(|error| format!("cannot wait for backup verification: {error}"))?;
-    let (bytes, write_result) = writer
-        .join()
-        .map_err(|_| "backup verification writer panicked".to_string())?;
-    write_result.map_err(|error| format!("cannot feed generated backup to tar: {error}"))?;
     if !listing.status.success() {
         return Err(format!(
             "generated backup cannot be listed: {}",
@@ -106,30 +142,16 @@ fn inspect_backup_archive(
     Ok((bytes, members))
 }
 
-fn read_backup_member(bytes: Vec<u8>, member: &str) -> Result<(Vec<u8>, String), String> {
-    use std::io::Write;
-    use std::process::Stdio;
-    let mut child = std::process::Command::new("tar")
-        .args(["xOzf", "-", "--", member])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+fn read_backup_member(
+    bytes: Vec<u8>,
+    member: &str,
+    until: Instant,
+) -> Result<(Vec<u8>, String), String> {
+    let mut command = tar_command();
+    command.args(["xOzf", "-", "--", member]);
+    let output = crate::system_command::Command::from(command)
+        .output_bounded(until, ARCHIVE_TEXT_LIMIT, Some(&bytes))
         .map_err(|error| format!("cannot read archived configuration: {error}"))?;
-    let mut input = child
-        .stdin
-        .take()
-        .ok_or("cannot open archive reader stdin")?;
-    let writer = std::thread::spawn(move || {
-        let result = input.write_all(&bytes);
-        (bytes, result)
-    });
-    let output = child.wait_with_output();
-    let (bytes, write_result) = writer
-        .join()
-        .map_err(|_| "archive reader writer panicked")?;
-    let output = output.map_err(|error| format!("cannot wait for archive reader: {error}"))?;
-    write_result.map_err(|error| format!("cannot feed archive reader: {error}"))?;
     if !output.status.success() {
         return Err(format!(
             "cannot read archived configuration: {}",
@@ -240,7 +262,11 @@ pub async fn download_backup(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<crate::server::ServerState>>,
     _guard: auth::AuthGuard,
 ) -> Result<Response, AuthError> {
-    let write_guard = state.config_write_lock.clone().lock_owned().await;
+    let until = Instant::now() + ARCHIVE_BUDGET;
+    let write_guard = match archive_lock(&state, until).await {
+        Ok(guard) => guard,
+        Err(error) => return Ok((StatusCode::CONFLICT, error).into_response()),
+    };
     let config_path = state
         .config_path
         .lock()
@@ -264,13 +290,15 @@ pub async fn download_backup(
     if let Err(error) = validate_critical_sources(&critical_paths) {
         return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response());
     }
-    let out = crate::config_transaction::blocking(write_guard, || {
+    let out = crate::config_transaction::blocking(write_guard, move || {
         // Non-critical local artefacts may be unreadable; the critical set is preflighted and
         // then verified against the actual archive member list below.
-        let mut command = std::process::Command::new("tar");
-        command.args(["czf", "-", "--ignore-failed-read", "--xattrs"]);
-        append_tar_excludes(&mut command, true);
-        command.args(["-C", "/etc", "qeli"]).output()
+        let command = create_archive_command(Path::new("/etc"), true);
+        crate::system_command::Command::from(command).output_bounded(
+            until,
+            PORTABLE_ARCHIVE_LIMIT,
+            None,
+        )
     })
     .await;
 
@@ -282,7 +310,7 @@ pub async fn download_backup(
         Ok((_, Err(e))) => {
             return Ok((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("tar spawn error: {e}"),
+                format!("tar execution failed: {e}"),
             )
                 .into_response())
         }
@@ -308,8 +336,8 @@ pub async fn download_backup(
         .map_err(|error| (StatusCode::CONFLICT, Json(super::err_json(error))))?;
     let inspected =
         crate::config_transaction::blocking(write_guard, move || -> Result<_, String> {
-            let (bytes, members) = inspect_backup_archive(o.stdout)?;
-            let (bytes, archived_raw) = read_backup_member(bytes, &archived_config_path)?;
+            let (bytes, members) = inspect_backup_archive(o.stdout, until)?;
+            let (bytes, archived_raw) = read_backup_member(bytes, &archived_config_path, until)?;
             if archived_raw != current_raw {
                 return Err(
                     "server config changed while creating backup; retry the download".into(),
@@ -401,9 +429,10 @@ const RESTORE_BUSY: &str = "another restore is already in progress — retry onc
 /// 400. Listed in one place instead of threading a status through ~15 return sites; the
 /// strings are ours and live next to the code that emits them. (S-13)
 const SERVER_FAULT_MARKERS: &[&str] = &[
+    "archive operation timed out",
     "write temp file",
     "tar list failed",
-    "tar extract spawn failed",
+    "tar extract execution failed",
     "cannot create the staging directory",
     "publishing the restored files failed",
     "could not run tar for the pre-restore snapshot",
@@ -436,7 +465,23 @@ pub async fn restore_backup(
     axum::extract::Query(q): axum::extract::Query<RestoreQuery>,
     body: Bytes,
 ) -> Result<Response, AuthError> {
-    let write_guard = state.config_write_lock.clone().lock_owned().await;
+    // Reserve before waiting for a config writer: a second restore must not queue
+    // behind the first and unexpectedly overwrite its result afterwards.
+    let restore_guard = match RESTORE_LOCK.try_lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return Ok((
+                StatusCode::CONFLICT,
+                Json(json!({"ok": false, "error": RESTORE_BUSY})),
+            )
+                .into_response())
+        }
+    };
+    let until = Instant::now() + ARCHIVE_BUDGET;
+    let write_guard = match archive_lock(&state, until).await {
+        Ok(guard) => guard,
+        Err(error) => return Ok((StatusCode::CONFLICT, error).into_response()),
+    };
     let config_path = state
         .config_path
         .lock()
@@ -463,7 +508,8 @@ pub async fn restore_backup(
     // click does. (Р1)
     let exact = q.exact.unwrap_or(false);
     let result = crate::config_transaction::blocking(write_guard, move || {
-        restore_blocking(&body, exact, &config_path)
+        let _restore_guard = restore_guard;
+        restore_blocking(&body, exact, &config_path, until)
     })
     .await;
     // A failed restore used to answer 200 {ok:false}: the panel rendered the error, but
@@ -487,12 +533,9 @@ pub async fn restore_backup(
     Ok((status, Json(payload)).into_response())
 }
 
-/// Serialises restores inside this process. Two restores running at once interleave
-/// snapshot → stage → publish over the SAME live directory, so the loser can publish
-/// half of the winner's tree; the per-restore names below stop them sharing paths, but
-/// only a lock stops them sharing /etc/qeli itself. Poisoning is irrelevant (the guard
-/// holds no data), so a poisoned lock is recovered rather than propagated. (S-08)
-static RESTORE_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+/// Immediate restore admission precedes config locking. The blocking worker owns
+/// this guard once dispatched, so request cancellation cannot admit another restore.
+static RESTORE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 /// Distinguishes restores that start within the same second (the old names used only a
 /// unix-seconds stamp, and the temp file added a pid that is identical for two requests
@@ -563,19 +606,16 @@ fn prune_absent(
 #[path = "backup_listing.rs"]
 mod listing;
 
-fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<String, String> {
+fn restore_blocking(
+    data: &[u8],
+    exact: bool,
+    config_path: &str,
+    until: Instant,
+) -> Result<String, String> {
+    archive_budget(until)?;
     if data.len() < 3 || data[0] != 0x1f || data[1] != 0x8b {
         return Err("not a gzip archive".into());
     }
-    // Refuse rather than queue: a restore rewrites /etc/qeli, and an operator who fired
-    // two by accident wants to hear about it, not to have them applied back to back.
-    let _restore_guard = match RESTORE_LOCK.try_lock() {
-        Ok(g) => g,
-        Err(std::sync::TryLockError::Poisoned(p)) => p.into_inner(),
-        Err(std::sync::TryLockError::WouldBlock) => {
-            return Err(RESTORE_BUSY.into());
-        }
-    };
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -597,7 +637,7 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
 
     // The listing is consumed with bounded memory, entry/expanded-byte budgets and
     // a deadline. Stop tar (and gzip) before a hostile archive can grow its output.
-    let count = match listing::validate_archive(tmp) {
+    let count = match listing::validate_archive(tmp, until) {
         Ok(count) => count,
         Err(error) => {
             cleanup();
@@ -609,59 +649,33 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
     // no way back, so refuse the restore rather than proceed unprotected — the whole
     // point of the snapshot is that the operator can undo a bad archive.
     let bak = format!("/etc/qeli/.pre-restore-{uniq}.tgz");
-    // Create the snapshot file 0600 BEFORE tar writes into it. tar creates it with the
-    // process umask (0644 in practice) and the chmod below only ran once the archive was
-    // COMPLETE — so for the whole duration of the archiving, a file containing the identity
-    // keys and every user's password hash sat world-readable. Opening an existing file with
-    // O_TRUNC does not change its mode, so pre-creating it closes that window without
-    // changing how tar is invoked.
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        if let Err(e) = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .mode(0o600)
-            .open(&bak)
-        {
-            cleanup();
-            return Err(format!(
-                "refusing to restore: could not pre-create the pre-restore snapshot ({e})"
-            ));
-        }
-    }
     let snapshot = {
-        let mut command = std::process::Command::new("tar");
-        command.args(["czf", &bak, "--ignore-failed-read", "--xattrs"]);
-        // Never archive the output file, prior snapshots, uploads or staging directories.
-        append_tar_excludes(&mut command, false);
-        command.args(["-C", "/etc", "qeli"]).output()
+        let command = create_archive_command(Path::new("/etc"), false);
+        crate::system_command::Command::from(command).output_bounded(until, SNAPSHOT_LIMIT, None)
     };
-    match snapshot {
-        Ok(o) if o.status.success() => {}
-        Ok(o) => {
+    let snapshot = match snapshot {
+        Ok(output) if output.status.success() => output,
+        Ok(output) => {
             cleanup();
             return Err(format!(
-                "refusing to restore: could not take the pre-restore snapshot ({}) — without \
-                 it the change would be irreversible",
-                String::from_utf8_lossy(&o.stderr).trim()
+                "refusing to restore: could not take the pre-restore snapshot ({})",
+                String::from_utf8_lossy(&output.stderr).trim()
             ));
         }
-        Err(e) => {
+        Err(error) => {
             cleanup();
             return Err(format!(
-                "refusing to restore: could not run tar for the pre-restore snapshot ({e})"
+                "refusing to restore: could not run tar for the pre-restore snapshot ({error})"
             ));
         }
+    };
+    if let Err(error) = crate::util::write_atomic_private(&bak, &snapshot.stdout) {
+        cleanup();
+        return Err(format!(
+            "refusing to restore: could not take the pre-restore snapshot ({error})"
+        ));
     }
-    // The snapshot holds identity keys + user hashes — keep it admin-only, and
-    // rotate old ones so repeated restores don't grow /etc/qeli without bound.
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&bak, std::fs::Permissions::from_mode(0o600));
-    }
+    drop(snapshot);
     prune_pre_restore_snapshots(5);
 
     // Extract into a STAGING directory, never straight into /etc/qeli. The checks above
@@ -694,9 +708,13 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
     let stage_cleanup = || {
         let _ = std::fs::remove_dir_all(&staging);
     };
-    let ex = std::process::Command::new("tar")
-        .args(["xzf", tmp, "--xattrs", "-C", &staging])
-        .output();
+    let mut command = tar_command();
+    command.args(["xzf", tmp, "--xattrs", "-C", &staging]);
+    let ex = crate::system_command::Command::from(command).output_bounded(
+        until,
+        ARCHIVE_TEXT_LIMIT,
+        None,
+    );
     cleanup();
     match ex {
         Ok(o) if o.status.success() => {}
@@ -709,7 +727,7 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
         }
         Err(e) => {
             stage_cleanup();
-            return Err(format!("tar extract spawn failed: {e}"));
+            return Err(format!("tar extract execution failed: {e}"));
         }
     }
 
@@ -723,7 +741,7 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
         let raw = std::fs::read_to_string(std::path::Path::new(&staged_root).join(relative))
             .map_err(|error| error.to_string())?;
         let config = crate::config::parse_server_config(&raw).map_err(|error| error.to_string())?;
-        crate::server::preflight::run(&config).map_err(|error| {
+        crate::server::preflight::run_until(&config, until).map_err(|error| {
             format!("refused: restored config conflicts with host networking: {error}")
         })
     })();
@@ -762,6 +780,12 @@ fn restore_blocking(data: &[u8], exact: bool, config_path: &str) -> Result<Strin
         }
     };
 
+    if let Err(error) = archive_budget(until) {
+        stage_cleanup();
+        return Err(error);
+    }
+    // Publication is the commit boundary: do not abandon half a tree just because
+    // the preparation deadline expires during filesystem renames.
     // Vetted — publish. Same filesystem, so each rename is atomic; a failure part-way
     // leaves the rest of the live directory intact and the pre-restore snapshot above
     // restores the whole thing.
@@ -1326,8 +1350,10 @@ mod tests {
             .output()
             .unwrap();
         assert!(archive.status.success());
-        let (bytes, members) = inspect_backup_archive(archive.stdout).unwrap();
-        let (_, archived) = read_backup_member(bytes, "qeli/server.conf").unwrap();
+        let (bytes, members) =
+            inspect_backup_archive(archive.stdout, Instant::now() + ARCHIVE_BUDGET).unwrap();
+        let (_, archived) =
+            read_backup_member(bytes, "qeli/server.conf", Instant::now() + ARCHIVE_BUDGET).unwrap();
         assert_eq!(archived, raw);
         let config = crate::config::parse_server_config(&archived).unwrap();
         let required = critical_backup_paths(&config, "/etc/qeli/server.conf").unwrap();
@@ -1362,6 +1388,186 @@ mod tests {
         assert!(names.contains(&"qeli/config/server.ini"));
         assert!(names.contains(&"qeli/auth/custom-users.ini"));
         assert!(names.contains(&"qeli/keys/tcp.key"));
+    }
+
+    #[test]
+    #[ignore = "requires root, a fresh mount/network namespace and existing /etc/qeli mount point"]
+    fn native_backup_and_overlay_exact_restore_roundtrip() {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        let original = std::fs::metadata("/etc/qeli").unwrap();
+        let original_namespace = std::fs::metadata("/proc/thread-self/ns/mnt").unwrap();
+        assert_eq!(unsafe { libc::geteuid() }, 0);
+        let root = std::path::PathBuf::from(format!(
+            "/tmp/qeli-backup-roundtrip-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = Cleanup(root.clone());
+        let private = root.join("qeli");
+        std::fs::create_dir(&private).unwrap();
+        std::fs::set_permissions(&private, std::fs::Permissions::from_mode(0o700)).unwrap();
+        std::thread::spawn(move || {
+            assert_eq!(unsafe { libc::unshare(libc::CLONE_NEWNS | libc::CLONE_NEWNET) }, 0, "{}", std::io::Error::last_os_error());
+            let namespace = std::fs::metadata("/proc/thread-self/ns/mnt").unwrap();
+            assert_ne!((namespace.dev(), namespace.ino()), (original_namespace.dev(), original_namespace.ino()));
+            assert!(crate::system_command::Command::new("mount").args(["--make-rprivate", "/"]).output().unwrap().status.success());
+            assert!(crate::system_command::Command::new("mount").args(["--bind", private.to_str().unwrap(), "/etc/qeli"]).output().unwrap().status.success());
+            let mounted = std::fs::metadata("/etc/qeli").unwrap();
+            let source = std::fs::metadata(&private).unwrap();
+            assert_eq!((mounted.dev(), mounted.ino()), (source.dev(), source.ino()));
+            let raw = "[auth]\nusers_file=/etc/qeli/users.conf\n[web]\nenabled=false\ntls=false\n[profile:test]\nidentity_key=/etc/qeli/test.key\nbind.port=443\ntun.name=vpn0\ntun.address=10.73.0.1\npool.cidr=10.73.0.0/24\nobf.mode=fake-tls\n";
+            let config = crate::config::parse_server_config(raw).unwrap();
+            crate::server::validate_profiles(&config).unwrap();
+            std::fs::write("/etc/qeli/server.conf", raw).unwrap();
+            std::fs::write("/etc/qeli/users.conf", "").unwrap();
+            std::fs::write("/etc/qeli/test.key", [42u8; 32]).unwrap();
+            let state = crate::server::test_api_state(config, Path::new("/etc/qeli/server.conf"));
+            tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
+                let response = download_backup(axum::extract::State(state.clone()), auth::AuthGuard).await.unwrap();
+                assert_eq!(response.status(), StatusCode::OK);
+                let bytes = axum::body::to_bytes(response.into_body(), PORTABLE_ARCHIVE_LIMIT).await.unwrap();
+                std::fs::write("/etc/qeli/server.conf", raw.replace("443", "8443")).unwrap();
+                std::fs::write("/etc/qeli/added.txt", "overlay keeps this").unwrap();
+                for exact in [false, true] {
+                    let response = restore_backup(axum::extract::State(state.clone()), auth::AuthGuard,
+                        axum::extract::Query(RestoreQuery { exact: Some(exact) }), bytes.clone()).await.unwrap();
+                    let status = response.status();
+                    let result = axum::body::to_bytes(response.into_body(), 64 * 1024).await.unwrap();
+                    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&result));
+                    assert_eq!(std::fs::read_to_string("/etc/qeli/server.conf").unwrap(), raw);
+                    assert_eq!(Path::new("/etc/qeli/added.txt").exists(), !exact);
+                    assert_eq!(std::fs::read("/etc/qeli/test.key").unwrap(), [42; 32]);
+                }
+                let response = restore_backup(axum::extract::State(state), auth::AuthGuard,
+                    axum::extract::Query(RestoreQuery { exact: Some(true) }), Bytes::from_static(b"invalid archive")).await.unwrap();
+                assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+                assert_eq!(std::fs::read_to_string("/etc/qeli/server.conf").unwrap(), raw);
+            });
+            let mut snapshots = 0;
+            for entry in std::fs::read_dir("/etc/qeli").unwrap() {
+                let entry = entry.unwrap();
+                let name = entry.file_name().to_string_lossy().into_owned();
+                assert!(!name.starts_with(".restore-upload-") && !name.starts_with(".restore-staging-"));
+                if name.starts_with(".pre-restore-") {
+                    snapshots += 1;
+                    assert_eq!(entry.metadata().unwrap().permissions().mode() & 0o777, 0o600);
+                }
+            }
+            assert_eq!(snapshots, 2);
+        }).join().unwrap();
+        let after = std::fs::metadata("/etc/qeli").unwrap();
+        assert_eq!((original.dev(), original.ino()), (after.dev(), after.ino()));
+    }
+
+    #[test]
+    #[ignore = "requires root to exercise tar under an unprivileged uid"]
+    fn native_rollback_snapshot_refuses_unreadable_files() {
+        use std::os::unix::fs::PermissionsExt;
+        use std::os::unix::process::CommandExt;
+        assert_eq!(unsafe { libc::geteuid() }, 0);
+        let root = std::path::PathBuf::from(format!(
+            "/tmp/qeli-snapshot-permissions-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = Cleanup(root.clone());
+        let config = root.join("qeli");
+        std::fs::create_dir(&config).unwrap();
+        for directory in [&root, &config] {
+            std::fs::set_permissions(directory, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let file = config.join("server.conf");
+        std::fs::write(&file, "fixture, no secrets").unwrap();
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o644)).unwrap();
+        let run = |ignore_failure: bool| {
+            let mut command = create_archive_command(&root, false);
+            command.uid(65534).gid(65534);
+            if ignore_failure {
+                command.arg("--ignore-failed-read");
+            }
+            crate::system_command::Command::from(command)
+                .output_bounded(Instant::now() + Duration::from_secs(5), 64 * 1024, None)
+                .unwrap()
+        };
+        assert!(run(false).status.success());
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let refused = run(false);
+        assert!(
+            !refused.status.success(),
+            "rollback snapshot silently omitted a file"
+        );
+        assert!(String::from_utf8_lossy(&refused.stderr).contains("Permission denied"));
+        // Reproduce the old flag's false-success policy with the same real tar/files.
+        assert!(run(true).status.success());
+    }
+
+    #[tokio::test]
+    async fn duplicate_restore_is_refused_before_waiting_for_config_lock() {
+        let state =
+            crate::server::test_api_state(Default::default(), Path::new("/unused/server.ini"));
+        let _restore = RESTORE_LOCK.lock().await;
+        let _writer = state.config_write_lock.lock().await;
+        let response = tokio::time::timeout(
+            Duration::from_millis(500),
+            restore_backup(
+                axum::extract::State(state.clone()),
+                auth::AuthGuard,
+                axum::extract::Query(RestoreQuery { exact: Some(true) }),
+                Bytes::from_static(b"unused"),
+            ),
+        )
+        .await
+        .expect("duplicate restore queued behind config write")
+        .unwrap();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        let bytes = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .unwrap();
+        let reply: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(reply["error"], RESTORE_BUSY);
+    }
+
+    #[test]
+    fn expired_restore_never_reaches_archive_or_live_path_handling() {
+        let error = restore_blocking(
+            b"not gzip",
+            false,
+            "/does/not/exist/server.ini",
+            Instant::now(),
+        )
+        .unwrap_err();
+        assert!(error.contains("timed out before publication"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn expired_archive_lock_does_not_admit_or_release_a_writer() {
+        let state = crate::server::test_api_state(
+            Default::default(),
+            std::path::Path::new("/unused/server.ini"),
+        );
+        assert!(archive_lock(&state, Instant::now()).await.is_err());
+        let guard = state.config_write_lock.lock().await;
+        assert!(
+            archive_lock(&state, Instant::now() + Duration::from_millis(20))
+                .await
+                .is_err()
+        );
+        assert!(state.config_write_lock.try_lock().is_err());
+        drop(guard);
     }
 
     #[test]

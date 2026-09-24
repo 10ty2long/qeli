@@ -2,7 +2,7 @@
 use super::{Command, OwnedProcess};
 use std::io;
 use std::process::Output;
-use tokio::io::{AsyncRead, AsyncReadExt};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 
 async fn read_complete(mut reader: impl AsyncRead + Unpin, limit: usize) -> io::Result<Vec<u8>> {
     let mut bytes = Vec::new();
@@ -28,19 +28,46 @@ pub(crate) async fn run(
     until: tokio::time::Instant,
     limit: usize,
 ) -> io::Result<Output> {
+    run_with_input(command, until, limit, None).await
+}
+
+pub(crate) async fn run_with_input(
+    command: &mut Command,
+    until: tokio::time::Instant,
+    limit: usize,
+    input: Option<&[u8]>,
+) -> io::Result<Output> {
     if tokio::time::Instant::now() >= until {
         return Err(io::Error::new(
             io::ErrorKind::TimedOut,
             "system command deadline expired",
         ));
     }
-    let mut process = OwnedProcess::spawn(command)?;
+    let stdin = if input.is_some() {
+        std::process::Stdio::piped()
+    } else {
+        std::process::Stdio::null()
+    };
+    let mut process = OwnedProcess::spawn_with_io(command, stdin, std::process::Stdio::piped())?;
+    let mut stdin = process.child.stdin.take();
     let stdout = process.child.stdout.take().expect("piped command stdout");
     let stderr = process.child.stderr.take().expect("piped command stderr");
     let completed = tokio::time::timeout_at(until, async {
         // Drain both pipes before reaping: a surviving descendant may retain a pipe.
-        let (stdout, stderr) =
-            tokio::try_join!(read_complete(stdout, limit), read_complete(stderr, limit),)?;
+        // Feed stdin and drain both outputs in the same owned future. A child that
+        // stops reading cannot strand a detached writer or bypass the deadline.
+        let feed = async {
+            if let (Some(mut stdin), Some(input)) = (stdin.take(), input) {
+                stdin.write_all(input).await?;
+                stdin.shutdown().await?;
+            }
+            Ok::<_, io::Error>(())
+        };
+        let (_, stdout, stderr) = tokio::try_join!(
+            feed,
+            read_complete(stdout, limit),
+            read_complete(stderr, limit)
+        )?;
         let status = process.wait().await?;
         Ok(Output {
             status,

@@ -22,6 +22,18 @@ fn command_fixture() {
             std::io::stdout().write_all(&data).unwrap();
             std::io::stderr().write_all(&data).unwrap();
         }
+        "duplex" => {
+            // Fill both output pipes before consuming input. A sequential writer deadlocks.
+            std::io::stdout()
+                .write_all(&vec![b'o'; 128 * 1024])
+                .unwrap();
+            std::io::stderr()
+                .write_all(&vec![b'e'; 128 * 1024])
+                .unwrap();
+            let mut input = Vec::new();
+            std::io::stdin().read_to_end(&mut input).unwrap();
+            std::io::stdout().write_all(&input).unwrap();
+        }
         "slow" => {
             std::thread::sleep(Duration::from_millis(500));
             std::io::stdout().write_all(b"late success").unwrap();
@@ -313,4 +325,83 @@ async fn generation_stop_joins_timed_out_command_without_late_observation() {
         "late observation after stop"
     );
     closed(peer).await;
+}
+
+#[test]
+fn bounded_stdin_drains_both_outputs_without_a_detached_writer() {
+    let input = vec![73; 1024 * 1024];
+    let output = fixture("duplex")
+        .output_bounded(
+            Instant::now() + TEST_DEADLINE,
+            2 * 1024 * 1024,
+            Some(&input),
+        )
+        .unwrap();
+    assert!(output.status.success());
+    assert!(output.stdout.ends_with(&input));
+    assert_eq!(output.stderr, vec![b'e'; 128 * 1024]);
+}
+
+#[tokio::test]
+async fn blocked_stdin_timeout_and_output_overflow_release_the_child() {
+    for (mode, limit, kind) in [
+        ("witness", OUTPUT_LIMIT, io::ErrorKind::TimedOut),
+        ("stdout-flood", 32 * 1024, io::ErrorKind::InvalidData),
+    ] {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let mut command = fixture(mode);
+        command.inner.env(
+            "QELI_SYSTEM_TEST_WITNESS",
+            listener.local_addr().unwrap().to_string(),
+        );
+        let task = tokio::task::spawn_blocking(move || {
+            let input = vec![42; 1024 * 1024];
+            command.output_bounded(Instant::now() + CHILD_DEADLINE, limit, Some(&input))
+        });
+        let peer = ready(&listener).await;
+        let error = tokio::time::timeout(TEST_DEADLINE, task)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap_err();
+        assert_eq!(error.kind(), kind);
+        closed(peer).await;
+    }
+}
+
+#[tokio::test]
+async fn cancellation_with_blocked_stdin_stops_the_owned_child() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let mut command = fixture("witness");
+    command.inner.env(
+        "QELI_SYSTEM_TEST_WITNESS",
+        listener.local_addr().unwrap().to_string(),
+    );
+    let task = tokio::spawn(async move {
+        let input = vec![42; 1024 * 1024];
+        crate::hook_process::run_output_with_input(
+            &mut command.inner,
+            tokio::time::Instant::now() + TEST_DEADLINE,
+            OUTPUT_LIMIT,
+            Some(&input),
+        )
+        .await
+    });
+    let peer = ready(&listener).await;
+    task.abort();
+    assert!(task.await.unwrap_err().is_cancelled());
+    closed(peer).await;
+}
+
+#[test]
+fn expired_input_command_never_spawns_or_waits_for_stdin() {
+    let missing =
+        std::env::temp_dir().join(format!("qeli-expired-input-{}", rand::random::<u64>()));
+    assert_eq!(
+        Command::new(missing)
+            .output_bounded(Instant::now(), 1024, Some(b"archive"))
+            .unwrap_err()
+            .kind(),
+        io::ErrorKind::TimedOut
+    );
 }

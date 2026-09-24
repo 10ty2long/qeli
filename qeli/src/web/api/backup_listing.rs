@@ -107,7 +107,15 @@ fn nonblocking(pipe: &impl AsRawFd) -> Result<(), String> {
     Ok(())
 }
 
-fn run(mut command: Command, deadline: Duration) -> Result<usize, String> {
+#[cfg(test)]
+fn run(command: Command, deadline: Duration) -> Result<usize, String> {
+    run_until(command, Instant::now() + deadline)
+}
+
+fn run_until(mut command: Command, until: Instant) -> Result<usize, String> {
+    if Instant::now() >= until {
+        return Err("tar listing timed out".into());
+    }
     let mut process = Process(
         command
             .stdin(Stdio::null())
@@ -122,14 +130,13 @@ fn run(mut command: Command, deadline: Duration) -> Result<usize, String> {
     let mut stderr = process.0.stderr.take().ok_or("missing tar stderr")?;
     nonblocking(&stdout)?;
     nonblocking(&stderr)?;
-    let start = Instant::now();
     let mut listing = Listing::default();
     let mut errors = Vec::new();
     let mut out_eof = false;
     let mut err_eof = false;
     let mut buffer = [0u8; 4096];
     loop {
-        if start.elapsed() >= deadline {
+        if Instant::now() >= until {
             return Err("tar listing timed out".into());
         }
         // At most one bounded chunk per pipe/iteration; neither a chatty child nor a
@@ -179,13 +186,10 @@ fn run(mut command: Command, deadline: Duration) -> Result<usize, String> {
     }
 }
 
-pub(super) fn validate_archive(path: &str) -> Result<usize, String> {
-    let mut command = Command::new("tar");
-    command
-        .env("LC_ALL", "C")
-        .env_remove("TAR_OPTIONS")
-        .args(["tzvf", path]);
-    run(command, Duration::from_secs(30))
+pub(super) fn validate_archive(path: &str, until: Instant) -> Result<usize, String> {
+    let mut command = super::tar_command();
+    command.args(["tzvf", path]);
+    run_until(command, until)
 }
 
 #[cfg(test)]
@@ -230,7 +234,10 @@ mod tests {
                 .write_all("qeli\n".repeat(count).as_bytes())
                 .unwrap();
             assert!(tar.wait().unwrap().success());
-            let result = validate_archive(archive.to_str().unwrap());
+            let result = validate_archive(
+                archive.to_str().unwrap(),
+                Instant::now() + Duration::from_secs(30),
+            );
             if count == 1 {
                 assert_eq!(result.unwrap(), 1);
             } else {

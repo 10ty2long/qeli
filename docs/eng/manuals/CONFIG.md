@@ -2714,9 +2714,11 @@ Timeout or output overflow returns an error after attempting to terminate and wa
 process. Partial output is not used. The DNS marker remains until confirmed revert; timeout
 does not mean that the command made no changes.
 
-These are internal bounds, with no new INI key. User-hook deadlines are unchanged. Route
-and firewall commands are not migrated yet; 15 seconds does not define total shutdown time.
-[Scope and limitations](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+These are internal bounds, with no new INI key. User-hook deadlines are unchanged. 15 seconds
+does not define total shutdown time. Current route/firewall sequence coverage and remaining
+limits are tracked in the [debt register](../plans/AUDIT-DEBT.md). IPv4/IPv6 preflight shares
+one 15-second budget across four probes; the panel runs them asynchronously before the
+config lock. [Panel transactions](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 ### Server hooks
 

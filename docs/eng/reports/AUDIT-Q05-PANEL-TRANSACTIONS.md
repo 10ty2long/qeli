@@ -3,7 +3,7 @@
 <!-- normative-sync: audit-q05-panel-transactions-v1 -->
 
 Date: 24 September 2026. Baseline: `89d3961e`. Partial closure of D05 in the
-[debt register](../plans/AUDIT-DEBT.md). Full sections 05/09/14 remain open.
+[debt register](../plans/AUDIT-DEBT.md). Full sections 05/07/14 remain open.
 
 ## Q05-F002, P2 — synchronous network probes under the write lock
 
@@ -79,3 +79,5 @@ replacement and complete HTTP/fault E2E remain D09. No new INI fields, JSON conf
 support or ABI changes were introduced.
 
 [Previous preflight](AUDIT-Q05-PREFLIGHT.md) · [Instructions](../manuals/TROUBLESHOOTING.md)
+
+D05/D09 update: [backup/restore budget and snapshot completeness](AUDIT-Q05-ARCHIVE-BUDGET.md). Other network sequences and filesystem fault E2E remain open.

@@ -298,7 +298,10 @@ const PROBES: [&[&str]; 4] = [
 ];
 
 pub fn gather_host_net() -> Option<HostNet> {
-    let until = std::time::Instant::now() + PROBE_BUDGET;
+    gather_host_net_until(std::time::Instant::now() + PROBE_BUDGET)
+}
+
+fn gather_host_net_until(until: std::time::Instant) -> Option<HostNet> {
     gather_host_net_with(|args| Command::new("ip").args(args).output_until(until))
 }
 
@@ -586,6 +589,13 @@ pub fn check(config: &ServerConfig, host: &HostNet) -> anyhow::Result<()> {
 /// Gather + check. The entry point callers use; see module docs for the fail-open rule.
 pub fn run(config: &ServerConfig) -> anyhow::Result<()> {
     check_observed(config, gather_host_net().as_ref())
+}
+
+pub fn run_until(config: &ServerConfig, until: std::time::Instant) -> anyhow::Result<()> {
+    check_observed(
+        config,
+        gather_host_net_until(until.min(std::time::Instant::now() + PROBE_BUDGET)).as_ref(),
+    )
 }
 
 pub fn check_observed(config: &ServerConfig, host: Option<&HostNet>) -> anyhow::Result<()> {

@@ -82,6 +82,7 @@
 | [AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md](reports/AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md) | Q14-F031: учёт частичного IPv6 acquire и повторный rollback до подтверждённого освобождения |
 | [AUDIT-Q05-PREFLIGHT.md](reports/AUDIT-Q05-PREFLIGHT.md) | Q05-F001: ограничения команд preflight и проверка частичного IPv4/IPv6 snapshot |
 | [AUDIT-Q05-PANEL-TRANSACTIONS.md](reports/AUDIT-Q05-PANEL-TRANSACTIONS.md) | Async preflight, сроки ожидания config lock и отмена backup/restore |
+| [AUDIT-Q05-ARCHIVE-BUDGET.md](reports/AUDIT-Q05-ARCHIVE-BUDGET.md) | Бюджет backup/restore, bounded stdin и полнота rollback snapshot |
 | [AUDIT-Q14-NAT-COMMANDS.md](reports/AUDIT-Q14-NAT-COMMANDS.md) | Q14-F032: серверный NAT использует общий runner со сроком и лимитом вывода; ownership после timeout |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Сохранение DNS rule specs при отказе cleanup/rollback, retry и идентичность поколения |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Общий разбор firewall-проверок сервера/клиента, точечная очистка DNS и граница 1024 правил |

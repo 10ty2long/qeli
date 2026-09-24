@@ -318,6 +318,14 @@ The **⤓ Backup** and **⤒ Restore** buttons in the header of the *Host load* 
   in progress". After a successful restore you **must restart** to apply it, and a
   *Config restored* notification fires.
 
+Backup/Restore preparation shares 60 seconds across config-lock admission, all tar
+commands and preflight. Portable gzip is limited to 16 MiB, pre-restore gzip to 64 MiB;
+timeout/overflow never yields a partial archive. An unreadable file makes the rollback
+snapshot fail and prevents publication. Once publication starts, filesystem operations
+finish under the lock; no hard filesystem I/O deadline is promised. Cancelling a request
+does not cancel a running restore. A duplicate restore immediately receives HTTP 409,
+including while the first awaits the config lock. [Troubleshooting](TROUBLESHOOTING.md#659-backuprestore-timeout-archive-limit-and-incomplete-snapshot).
+
 ### Quick start page
 Its own sidebar page: a table of ten masking modes, each launchable with **Launch** —
 `reality-tls` (TCP 443, badged "flagship"), `reality` (8443), `fake-tls` (8444),
@@ -397,6 +405,11 @@ leak verification are documented in the [IPv6 guide](IPV6.md).
   private rollback snapshot in `/etc/qeli/.config-history` (`0700` directory, `0600` files;
   newest ten retained); **History** validates and restores one while first preserving the
   current file as another snapshot. A restart is still required for data-plane changes.
+
+Save/restart network preflight runs asynchronously before acquiring the write lock.
+Probes share 15 seconds; after observation, five seconds remain for config-lock admission
+and candidate preparation. Busy or expired preflight asks for a retry; revision and users
+are re-read under the lock. [Details](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 > **`Apply & Restart` needs permission to restart the service.** It runs
 > `systemctl restart <unit>`. A **root** service can do this directly; the hardened
