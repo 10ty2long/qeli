@@ -53,3 +53,5 @@ automatic recovery after arbitrary rename/delete/recreate operations.
 
 [Internal I/O guard](AUDIT-Q25-SYSCTL-CONTEXT-IO.md) ·
 [State directory](AUDIT-Q25-STATE-DIRECTORY.md)
+
+Continuation: [Q25-F083 — v3 and original sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Historical limitations above describe this report’s snapshot; name disappearance no longer permits forgetting the original.

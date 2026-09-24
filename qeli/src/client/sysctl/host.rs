@@ -82,58 +82,15 @@ fn live_pin_namespace(path: &str) -> io::Result<NamespacePin> {
         _file: Some(file),
     })
 }
-pub(super) fn interface_exists(name: &str) -> io::Result<bool> {
-    #[cfg(test)]
-    {
-        test_support::call(test_support::Operation::InterfaceExists(name)).map(|value| value == "1")
-    }
-    #[cfg(not(test))]
-    {
-        live_interface_exists(name)
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn live_interface_exists(name: &str) -> io::Result<bool> {
-    crate::network_interface::index(name).map(|index| index.is_some())
-}
-#[cfg(all(test, target_os = "linux"))]
-#[test]
-#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and ip; isolated netns"]
-fn native_sysctl_absence_probe_uses_calling_namespace() -> anyhow::Result<()> {
-    std::thread::spawn(|| -> anyhow::Result<()> {
-        // SAFETY: only this new disposable thread changes namespace.
-        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
-            return Err(io::Error::last_os_error().into());
-        }
-        let name = "qeli-view3";
-        anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
-        let output = crate::system_command::Command::new("ip")
-            .args(["link", "add", name, "type", "dummy"])
-            .output()?;
-        anyhow::ensure!(output.status.success());
-        anyhow::ensure!(live_interface_exists(name)?);
-        anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
-        let output = crate::system_command::Command::new("ip")
-            .args(["link", "del", name])
-            .output()?;
-        anyhow::ensure!(output.status.success());
-        anyhow::ensure!(!live_interface_exists(name)?);
-        Ok(())
-    })
-    .join()
-    .expect("native sysctl presence test panicked")
-}
-
 #[cfg(test)]
 pub(super) mod test_support {
     use std::{cell::RefCell, io};
     pub(crate) enum Operation<'a> {
         Read(&'a str),
         Namespace(&'a str),
+        Target(&'a str),
         Write(&'a str, &'a str),
         ProcessExists(u32),
-        InterfaceExists(&'a str),
     }
     type Handler = Box<dyn FnMut(Operation<'_>) -> io::Result<String>>;
     thread_local! {
@@ -154,6 +111,7 @@ pub(super) mod test_support {
         impl Drop for Reset {
             fn drop(&mut self) {
                 BACKEND.with(|slot| *slot.borrow_mut() = None);
+                super::super::target::clear_test_cache();
             }
         }
         BACKEND.with(|slot| {
@@ -193,4 +151,9 @@ fn native_namespace_pin_survives_last_member_and_closes_on_drop() -> anyhow::Res
     })
     .join()
     .expect("namespace pin test panicked")
+}
+
+#[cfg(test)]
+pub(super) fn target_identity(path: &str) -> io::Result<String> {
+    test_support::call(test_support::Operation::Target(path))
 }

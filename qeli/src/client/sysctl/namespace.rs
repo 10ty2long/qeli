@@ -1,13 +1,14 @@
 //! A journal group belongs to one network namespace and one PID coordinate system.
 use super::host;
 
+#[derive(Clone)]
 pub(super) struct Context {
     pub network: String,
     pub pid: String,
     pub time: Option<String>,
     // Capture before waiting for either journal lock and retain through final I/O.
     // Strings alone can be reused after the last namespace reference disappears.
-    _pins: Vec<host::NamespacePin>,
+    _pins: std::sync::Arc<Vec<host::NamespacePin>>,
 }
 
 impl PartialEq for Context {
@@ -84,7 +85,7 @@ pub(super) fn current() -> anyhow::Result<Context> {
         network,
         pid,
         time,
-        _pins: pins,
+        _pins: std::sync::Arc::new(pins),
     })
 }
 
@@ -93,6 +94,7 @@ pub(super) fn current() -> anyhow::Result<Context> {
 pub(super) struct Guard {
     expected: Context,
     failed: std::cell::Cell<bool>,
+    scope: std::path::PathBuf,
 }
 
 impl Guard {
@@ -100,9 +102,19 @@ impl Guard {
         let guard = Self {
             expected,
             failed: std::cell::Cell::new(false),
+            scope: std::path::PathBuf::new(),
         };
         guard.check()?;
         Ok(guard)
+    }
+
+    pub(super) fn with_journal_scope(mut self, scope: &std::path::Path) -> Self {
+        self.scope = scope.to_owned();
+        self
+    }
+
+    pub(super) fn scope(&self) -> &std::path::Path {
+        &self.scope
     }
 
     pub(super) fn context(&self) -> &Context {

@@ -9,13 +9,13 @@ const OWNER: &str = "42:100:edge";
 struct Kernel {
     reads: BTreeMap<String, Result<String, io::ErrorKind>>,
     processes: BTreeMap<u32, Result<bool, io::ErrorKind>>,
-    interfaces: BTreeMap<String, Result<bool, io::ErrorKind>>,
     write_error: Option<io::ErrorKind>,
     writes: Vec<(String, String)>,
 }
 impl Kernel {
     fn command(&mut self, op: Operation<'_>) -> io::Result<String> {
         match op {
+            Operation::Target(path) => panic!("unexpected target {path}"),
             Operation::Namespace(path) => match path {
                 "/proc/thread-self/ns/net" => Ok("4:10".into()),
                 "/proc/thread-self/ns/pid" => Ok("4:20".into()),
@@ -37,13 +37,6 @@ impl Kernel {
                 self.reads.insert(path.into(), Ok(value.into()));
                 Ok(String::new())
             }
-            Operation::InterfaceExists(name) => self
-                .interfaces
-                .get(name)
-                .copied()
-                .unwrap_or(Err(io::ErrorKind::Other))
-                .map(|exists| u8::from(exists).to_string())
-                .map_err(Into::into),
             Operation::ProcessExists(pid) => self
                 .processes
                 .get(&pid)
@@ -65,6 +58,7 @@ fn journal(owned: bool) -> SysctlJournal {
     journal.entries.insert(
         KNOB.into(),
         ManagedSysctl {
+            target: None,
             original: "0".into(),
             managed: "1".into(),
             owners: if owned {
@@ -217,15 +211,14 @@ fn administrator_change_is_preserved() {
     });
 }
 #[test]
-fn confirmed_disappeared_interface_does_not_need_a_write() {
+fn missing_interface_without_generation_evidence_retains_journal() {
     run(|k| {
         let path = "/proc/sys/net/ipv4/conf/edge/rp_filter";
-        k.borrow_mut().interfaces.insert("edge".into(), Ok(false));
         let mut j = journal(false);
         let entry = j.entries.remove(KNOB).unwrap();
         j.entries.insert(path.into(), entry);
         let _ = prune_dead_owners(&mut j, &context());
-        assert!(j.entries.is_empty());
+        assert!(j.entries.contains_key(path));
         assert!(k.borrow().writes.is_empty());
     });
 }
@@ -238,25 +231,6 @@ fn regression_missing_global_knob_is_not_completed_recovery() {
         assert_retained(&j, &k, false);
     });
 }
-#[test]
-fn regression_missing_knob_needs_proof_that_its_interface_disappeared() {
-    for evidence in [Ok(true), Err(io::ErrorKind::PermissionDenied)] {
-        run(|k| {
-            let path = "/proc/sys/net/ipv4/conf/edge/rp_filter";
-            k.borrow_mut().interfaces.insert("edge".into(), evidence);
-            let mut j = journal(false);
-            let entry = j.entries.remove(KNOB).unwrap();
-            j.entries.insert(path.into(), entry);
-            let _ = prune_dead_owners(&mut j, &context());
-            assert!(
-                j.entries.contains_key(path),
-                "missing procfs is not interface removal"
-            );
-            assert!(k.borrow().writes.is_empty());
-        });
-    }
-}
-
 #[test]
 fn uncertain_owner_is_reported_and_blocks_acquisition_policy() {
     run(|k| {
@@ -344,6 +318,7 @@ fn unrelated_own_cleanup_continues_despite_unknown_foreign_owner() {
         j.entries.insert(
             other.into(),
             ManagedSysctl {
+                target: None,
                 original: "0".into(),
                 managed: "1".into(),
                 owners: BTreeSet::from([me.into()]),

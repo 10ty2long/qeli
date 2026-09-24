@@ -1933,7 +1933,7 @@ P2/P3 сохраняются как конкретные задачи, не ис
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
 **Ближайшая работа:** закрывать [реестр техдолга](AUDIT-DEBT.md), не открывая новые
-разделы. В D02 остаются durable namespace identity и исходное поколение интерфейса;
+разделы. В D02 остаётся durable namespace identity глобальных записей после crash;
 затем D04 crash recovery и оставшиеся D05/D06 network budgets/resource context.
 Проверки lock/I/O, доверия к каталогу, отдельного kill-switch и Linux route/TUN
 уже выполнены в описанных ниже границах. Runtime-контракты, полная интеграционная
@@ -1953,3 +1953,5 @@ D02/D05/D09: [каталог состояния и целостность lock](
 D08/D11/D12: [Android JNI и emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.
 
 D02: [удержание namespace](../reports/AUDIT-Q25-NAMESPACE-PIN.md) открытыми fd действует от admission до конца транзакции; 1922 Linux + 29 privileged + 8 worker E2E PASS. Между транзакциями и после crash durable generation остаётся открытым, как и исходное поколение интерфейса.
+
+D02: [Q25-F083 — исходный sysctl интерфейса](../reports/AUDIT-Q25-SYSCTL-TARGET.md): journal v3 удерживает fd и отказывает при потере свидетельства; 3 дефекта baseline воспроизведены, 5 дополнительных worker E2E PASS. Опасное восстановление по имени и потеря original закрыты. Для global journal durable namespace generation после crash остаётся открытым; автоматическое per-interface crash recovery не обещается.

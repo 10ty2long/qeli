@@ -51,6 +51,7 @@ fn run(test: impl FnOnce(&Fixture)) {
         move |op| {
             let mut k = kernel.borrow_mut();
             match op {
+                Operation::Target(path) => panic!("unexpected target {path}"),
                 Operation::Namespace(path) => {
                     if let Some(error) = k.namespace_error {
                         return Err(error.into());
@@ -124,7 +125,7 @@ fn run(test: impl FnOnce(&Fixture)) {
                     }
                     Ok(String::new())
                 }
-                Operation::ProcessExists(_) | Operation::InterfaceExists(_) => {
+                Operation::ProcessExists(_) => {
                     k.probes += 1;
                     Ok("0".into())
                 }
@@ -139,6 +140,7 @@ fn seed_owned(f: &Fixture) {
         tx.current_mut().entries.insert(
             KNOB.into(),
             ManagedSysctl {
+                target: None,
                 original: "0".into(),
                 managed: "1".into(),
                 owners: BTreeSet::from(["42:100:edge".into()]),
@@ -346,7 +348,7 @@ fn empty_legacy_journal_can_be_replaced_without_guessing_a_namespace() {
         .unwrap();
         acquire_at(f, "1", "edge").unwrap();
         let store = load(&f.path, BOOT).unwrap();
-        assert_eq!(store.version, 2);
+        assert_eq!(store.version, JOURNAL_VERSION);
         assert_eq!(store.namespaces["4:10"].pid_namespace, "4:20");
     });
 }
@@ -414,10 +416,9 @@ fn failed_oversized_persist_preserves_previous_journal() {
             .map(|pid| format!("{pid}:100:long-owner-scope-012345678901234"))
             .collect();
         for n in 0..32 {
-            store.namespaces.get_mut("4:10").unwrap().entries.insert(
-                format!("/proc/sys/net/ipv4/conf/tun{n}/rp_filter"),
-                entry.clone(),
-            );
+            let mut journal = SysctlJournal::empty("4:20".into());
+            journal.entries.insert(KNOB.into(), entry.clone());
+            store.namespaces.insert(format!("4:{}", 100 + n), journal);
         }
         assert!(persist(&f.path, &store)
             .unwrap_err()

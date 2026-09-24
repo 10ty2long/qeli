@@ -1924,7 +1924,7 @@ mandatory sections closed, resolved blockers, justified N/A cases, matching nati
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
 **Next work:** close the [debt register](AUDIT-DEBT.md) before starting new sections.
-D02 still needs durable namespace identity and original-interface generation;
+D02 still needs durable namespace identity for global entries after crashes;
 then D04 crash recovery and remaining D05/D06 network budgets/resource context.
 Lock/I/O, directory-trust, standalone kill-switch and Linux route/TUN checks have
 already run within the boundaries documented below. Runtime contracts, the full
@@ -1944,3 +1944,5 @@ D02/D05/D09: [state-directory and lock identity](../reports/AUDIT-Q25-STATE-DIRE
 D08/D11/D12: [Android JNI and emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): fixed cargo-ndk cwd/API flag, removed the obsolete JSON-config harness; 154 JVM + 6 instrumentation tests PASS. The fresh dev x86_64 APK is SHA-verified. Release A/B, the full config/runtime contract and other platforms remain open.
 
 D02: [namespace pins](../reports/AUDIT-Q25-NAMESPACE-PIN.md) retain open fds from admission through the end of the transaction; 1922 Linux + 29 privileged + 8 worker E2E PASS. Durable generation between transactions and after crashes remains open, as does original-interface generation.
+
+D02: [Q25-F083 — original interface sysctl](../reports/AUDIT-Q25-SYSCTL-TARGET.md): journal v3 retains fds and refuses when evidence is lost; 3 baseline defects reproduced, 5 additional worker E2E PASS. Unsafe name-based restoration and loss of originals are closed. Durable namespace generation after crashes remains open for global journals; automatic per-interface crash recovery is not promised.

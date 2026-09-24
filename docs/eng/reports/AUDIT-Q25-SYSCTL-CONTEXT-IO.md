@@ -62,3 +62,5 @@ next design but is not an implemented sysctl lease contract yet.
 Continuation: [temporary-file cleanup and directory fsync](AUDIT-Q25-ATOMIC-STATE.md).
 
 Subsequent parent-trust closure: [state directory and shared lock](AUDIT-Q25-STATE-DIRECTORY.md).
+
+Continuation: [Q25-F083 — v3 and original sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Historical limitations above describe this report’s snapshot; name disappearance no longer permits forgetting the original.

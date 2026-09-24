@@ -1229,13 +1229,13 @@ existing processes retain the owner; new acquisition and startup recovery return
 error. During release, independent cleanup may finish, but unknown co-owners remain
 and are included in the resulting error.
 
-Missing global sysctls and malformed/empty values also retain entries for retry. The
-exception is a confirmed disappeared named interface; an inventory failure does not
-prove disappearance. Resolve the observation failure and retry; do not delete the
-journal to bypass the check.
-[Owner-observation checks](../reports/AUDIT-Q25-SYSCTL-OWNER-EVIDENCE.md).
+Missing sysctls and malformed/empty values retain their entries for recovery.
+Disappearance of the previous interface name no longer permits forgetting the original:
+the object may have been renamed or replaced. Restarting cannot recreate evidence from
+a lost live sysctl descriptor. Do not remove the journal to bypass the check.
+[Current contract](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
 
-Version 2 now separates groups by network namespace. `host sysctl PID namespace mismatch`
+Version 3 separates groups by network namespace. `host sysctl PID namespace mismatch`
 or `host sysctl time namespace mismatch` means the same network is being accessed from
 a different process-observation context; recover in the original PID/time namespace.
 `procfs PID namespace mismatch or unavailable NStgid` requires procfs for the current
@@ -1244,13 +1244,14 @@ namespace metadata also stops the operation. Minimal kernels without these inter
 have not been qualified.
 
 `legacy host sysctl journal has no namespace identity` retains nonempty v1 state from
-the current boot. Complete recovery with the previous version in the original namespaces
-before upgrading. If impossible, combine transition with a planned host reboot and run
-the new version afterward; restarting Qeli alone does not change boot-id. Stopping an
-old server does not always clear its IPv4 lease. Do not manually change version/boot-id
-or delete the journal: that loses recovery data. Old binaries do not support nonempty v2.
-Current recovery retains foreign network groups, so success in one namespace does not
-prove cleanup of the others. [Migration and limitations](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md).
+the current boot; `legacy v2 host sysctl journal lacks live descriptor ownership` retains
+nonempty v2. Before upgrading, stop old participants and complete recovery in the original
+context while the original interfaces remain verified. Renamed/replaced interfaces require
+manual inspection, rather than blindly running previous recovery. Alternatively, use a
+planned host reboot; restarting Qeli alone does not change boot-id. Do not change
+version/boot-id or remove the journal to bypass checks. Mixed versions sharing a journal
+are unsupported. Foreign network groups remain, so success in one network does not prove
+cleanup of the others. [Migration and limits](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
 
 ---
 
@@ -2054,3 +2055,26 @@ verified identity. Check fd limits and access to the service's own procfs view;
 do not remove the journal to bypass the failure. This does not reserve a namespace
 persistently after the process exits.
 [Guarantees and limitations](../reports/AUDIT-Q25-NAMESPACE-PIN.md).
+
+### 6.64. Original interface sysctl evidence was lost
+
+`lost live per-interface sysctl evidence/witness`, `per-interface sysctl object changed`
+or `cannot inspect saved sysctl ... No such file` means automatic restoration of the
+original `rp_filter`/`accept_ra` cannot safely continue. Even the same name and ifindex
+do not prove it is the original object. Rename may also make an old fd return ENOENT.
+Qeli retains the original, continues independent cleanup and reports the failure.
+
+Stop automatic restarts and participants using this journal. Preserve a private copy
+of `sysctls.state` and logs. Use administrative network history to establish which
+original interface owned the setting; manually restore only a verified original object.
+The journal alone does not prove the identity of the current interface. If identity
+cannot be established, use a planned host reboot: the next start recognizes valid state
+from the previous boot and does not replay it. There is no automatic command that safely
+guesses the mapping and clears such an entry. An ordinary restart, renaming back or
+removing the journal does not replace verification.
+
+The limit of 256 retained per-interface objects is per process. Each holds a sysctl fd
+and references to namespace fds; this is not a total limit of 256 descriptors. On
+`per-interface sysctl descriptor limit reached`, finish verified cleanup and inspect
+fds and remaining entries. Do not raise limits instead of identifying the cause.
+[Analysis, v2 → v3 migration and tests](../reports/AUDIT-Q25-SYSCTL-TARGET.md).

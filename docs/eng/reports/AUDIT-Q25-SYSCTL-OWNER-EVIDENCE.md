@@ -81,3 +81,5 @@ IN_PROGRESS and 18 TODO; none has full PASS. Preparation stage 00 is complete.
 
 Follow-up: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) isolates network journal groups,
 checks PID/time context and documents v1 → v2 migration. Runtime limits remain.
+
+Continuation: [Q25-F083 — v3 and original sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Historical limitations above describe this report’s snapshot; name disappearance no longer permits forgetting the original.

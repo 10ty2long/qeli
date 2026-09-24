@@ -17,7 +17,7 @@
 | ID | Разделы | Статус | Долг | Критерий закрытия / текущее свидетельство |
 |---|---|---|---|---|
 | D01 | 14/17/18/25 | DONE | Ошибки NAT и старого поколения | Точные спецификации правил до изменения firewall; retry и итоговая ошибка; запрет restart после неполной очистки; возврат IPv4 forwarding. Unit/cross, 18 native и 8 worker E2E PASS; baseline IPv4 leak воспроизведён. [Отчёт](../reports/AUDIT-Q14-RETAINED-CLEANUP.md). |
-| D02 | 14/25 | IN_PROGRESS | Внутренние границы sysctl | Проверять namespace после ожидания lock и на границах I/O/prune, защищать чтение журнала, различать старый и заменённый интерфейс. Регрессии смены identity и native restore. |
+| D02 | 14/25 | IN_PROGRESS | Внутренние границы sysctl | Lock/I/O/context, каталог и удержание namespace проверены. V3 исключает восстановление per-interface по имени: original fd либо явный отказ с сохранением журнала. 3 baseline дефекта и 5 worker регрессий. Открыто: durable namespace generation глобальных записей после crash. [Отчёт](../reports/AUDIT-Q25-SYSCTL-TARGET.md). |
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | TODO | Восстановление после crash | Определить и реализовать безопасное восстановление exact firewall/DNS/routes, включая mixed nft, SIGKILL и удалённый профиль. Нельзя выдавать process-local registry за persistent journal. |
 | D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Убрать синхронный preflight из async handler/долгого config lock; ограничить последовательности команд и ожидания; проверить отмену и доступность соседних запросов. |
@@ -123,3 +123,5 @@ D02/D05/D09: [каталог состояния и целостность lock](
 D08/D11/D12: [Android JNI и emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.
 
 D02: [удержание namespace](../reports/AUDIT-Q25-NAMESPACE-PIN.md) открытыми fd действует от admission до конца транзакции; 1922 Linux + 29 privileged + 8 worker E2E PASS. Между транзакциями и после crash durable generation остаётся открытым, как и исходное поколение интерфейса.
+
+D02: [Q25-F083 — исходный sysctl интерфейса](../reports/AUDIT-Q25-SYSCTL-TARGET.md): journal v3 удерживает fd и отказывает при потере свидетельства; 3 дефекта baseline воспроизведены, 5 дополнительных worker E2E PASS. Опасное восстановление по имени и потеря original закрыты. Для global journal durable namespace generation после crash остаётся открытым; автоматическое per-interface crash recovery не обещается.

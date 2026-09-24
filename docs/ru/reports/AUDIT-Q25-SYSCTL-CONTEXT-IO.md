@@ -63,3 +63,5 @@ delete/recreate старый fd также не обращается к ново
 Продолжение: [очистка временных файлов и directory fsync](AUDIT-Q25-ATOMIC-STATE.md).
 
 Дальнейшее закрытие parent trust: [каталог состояния и общий lock](AUDIT-Q25-STATE-DIRECTORY.md).
+
+Продолжение: [Q25-F083 — v3 и исходный sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Исторические ограничения выше относятся к снимку этого отчёта; исчезновение имени больше не разрешает забыть original.

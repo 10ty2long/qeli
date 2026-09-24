@@ -8,6 +8,9 @@
 //! same-process multi-profile operation are both handled. Network namespaces have separate
 //! journal groups; each group requires the same PID namespace/procfs view. The journal follows the state
 //! directory's ownership, so a manual root client cannot lock a later User=qeli service out.
+//! Per-interface v3 entries additionally require a live held sysctl descriptor.
+//! Loss of all live evidence retains the original for manual recovery instead of
+//! applying a saved value to a potentially renamed or replaced interface.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -20,8 +23,10 @@ mod journal_file;
 mod namespace;
 #[path = "sysctl/state_dir.rs"]
 mod state_dir;
+#[path = "sysctl/target.rs"]
+mod target;
 
-const JOURNAL_VERSION: u8 = 2;
+const JOURNAL_VERSION: u8 = 3;
 const JOURNAL_LIMIT: u64 = 128 * 1024;
 const BOOT_ID_PATH: &str = "/proc/sys/kernel/random/boot_id";
 const JOURNAL_NAME: &str = "sysctls.state";
@@ -53,6 +58,8 @@ struct ManagedSysctl {
     original: String,
     managed: String,
     owners: BTreeSet<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    target: Option<target::Identity>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -121,7 +128,6 @@ struct JournalTransaction<'a> {
     context: namespace::Guard,
 }
 impl JournalTransaction<'_> {
-    #[cfg(any(test, feature = "server"))]
     fn current(&self) -> &SysctlJournal {
         &self.store.namespaces[&self.network]
     }
@@ -135,7 +141,9 @@ impl JournalTransaction<'_> {
         self.context.check()?;
         let result = persist(self.path, &self.store);
         self.context.check()?;
-        result
+        result?;
+        retain_targets(&self.store, self.context.scope());
+        Ok(())
     }
 }
 
@@ -277,6 +285,27 @@ fn valid_sysctl_path(path: &str) -> bool {
         || matches!(fields.as_slice(), ["ipv6", "conf", interface, "accept_ra"] if valid_ifname(interface))
 }
 
+fn per_interface(path: &str) -> bool {
+    let fields: Vec<_> = path
+        .strip_prefix("/proc/sys/net/")
+        .unwrap_or_default()
+        .split('/')
+        .collect();
+    matches!(fields.as_slice(), [_, "conf", interface, _] if !["all", "default"].contains(interface))
+}
+
+fn retain_targets(store: &JournalStore, scope: &Path) {
+    target::retain(
+        scope,
+        store
+            .namespaces
+            .values()
+            .flat_map(|j| j.entries.values())
+            .filter_map(|entry| entry.target.as_ref().map(target::Identity::lease))
+            .collect(),
+    );
+}
+
 fn valid_value(value: &str) -> bool {
     matches!(value, "0" | "1" | "2")
 }
@@ -293,6 +322,7 @@ fn validate_entries(entries: &BTreeMap<String, ManagedSysctl>) -> anyhow::Result
         if !valid_sysctl_path(path)
             || !valid_value(&entry.original)
             || !valid_value(&entry.managed)
+            || entry.target.as_ref().is_some_and(|target| !target.valid())
             || entry.owners.len() > 256
             || entry
                 .owners
@@ -332,11 +362,22 @@ fn validate_store(store: &JournalStore) -> anyhow::Result<()> {
     {
         anyhow::bail!("invalid host sysctl journal header");
     }
+    let mut leases = BTreeSet::new();
     for (network, journal) in &store.namespaces {
         if !namespace::valid_identity(network) {
             anyhow::bail!("invalid host sysctl network namespace identity");
         }
         validate(journal)?;
+        for (path, entry) in &journal.entries {
+            if let Some(target) = &entry.target {
+                if !leases.insert(target.lease()) {
+                    anyhow::bail!("duplicate per-interface sysctl lease identity");
+                }
+            }
+            if per_interface(path) != entry.target.is_some() {
+                anyhow::bail!("missing or misplaced per-interface sysctl identity for {path}");
+            }
+        }
     }
     Ok(())
 }
@@ -366,6 +407,30 @@ fn decode_store(bytes: &[u8], boot_id: &str) -> anyhow::Result<JournalStore> {
             anyhow::bail!("legacy host sysctl journal has no namespace identity; keep sysctls.state and complete recovery with the previous version in its original namespaces before upgrading");
         }
         return Ok(JournalStore::empty(boot_id.to_string()));
+    }
+    if header.version == 2 {
+        let old: JournalStore = serde_json::from_slice(bytes)?;
+        if !valid_boot_id(&old.boot_id)
+            || old.namespaces.len() > 256
+            || old
+                .namespaces
+                .values()
+                .map(|j| j.entries.len())
+                .sum::<usize>()
+                > 256
+        {
+            anyhow::bail!("invalid legacy host sysctl journal header");
+        }
+        for (network, journal) in &old.namespaces {
+            if !namespace::valid_identity(network) {
+                anyhow::bail!("invalid legacy host sysctl network namespace identity");
+            }
+            validate(journal)?;
+        }
+        if old.boot_id == boot_id && old.namespaces.values().any(|j| !j.entries.is_empty()) {
+            anyhow::bail!("legacy v2 host sysctl journal lacks live descriptor ownership; keep sysctls.state and complete recovery before upgrading, or perform a planned host reboot");
+        }
+        return Ok(JournalStore::empty(boot_id.to_owned()));
     }
     if header.version != JOURNAL_VERSION {
         anyhow::bail!("unsupported host sysctl journal version {}", header.version);
@@ -412,8 +477,17 @@ fn persist(path: &Path, store: &JournalStore) -> anyhow::Result<()> {
     crate::util::write_atomic_private(path, &bytes)
 }
 
-fn read_value(path: &str, context: &namespace::Guard) -> std::io::Result<String> {
-    let value = context.io(|| host::read(path))?.trim().to_string();
+fn read_target_value(
+    path: &str,
+    target: Option<&target::Pin>,
+    context: &namespace::Guard,
+) -> std::io::Result<String> {
+    let value = match target {
+        Some(pin) => pin.read(context)?,
+        None => context.io(|| host::read(path))?,
+    }
+    .trim()
+    .to_string();
     if !valid_value(&value) {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
@@ -423,11 +497,19 @@ fn read_value(path: &str, context: &namespace::Guard) -> std::io::Result<String>
     Ok(value)
 }
 
-fn write_value(path: &str, value: &str, context: &namespace::Guard) -> anyhow::Result<()> {
-    context
-        .io(|| host::write(path, &format!("{value}\n")))
-        .map_err(|error| anyhow::anyhow!("cannot write {path}={value}: {error}"))?;
-    let actual = read_value(path, context)?;
+fn write_value(
+    path: &str,
+    value: &str,
+    target: Option<&target::Pin>,
+    context: &namespace::Guard,
+) -> anyhow::Result<()> {
+    let bytes = format!("{value}\n");
+    match target {
+        Some(pin) => pin.write(&bytes, context),
+        None => context.io(|| host::write(path, &bytes)),
+    }
+    .map_err(|error| anyhow::anyhow!("cannot write {path}={value}: {error}"))?;
+    let actual = read_target_value(path, target, context)?;
     if actual != value {
         anyhow::bail!("{path} remained {actual} after writing {value}");
     }
@@ -441,31 +523,19 @@ fn restore_if_owned(
     entry: &ManagedSysctl,
     context: &namespace::Guard,
 ) -> anyhow::Result<()> {
-    let current = match read_value(path, context) {
-        Ok(current) => current,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            let fields: Vec<_> = path
-                .strip_prefix("/proc/sys/net/")
-                .unwrap_or_default()
-                .split('/')
-                .collect();
-            if let [_, "conf", interface, _] = fields.as_slice() {
-                if !["all", "default"].contains(interface)
-                    && !context.io(|| host::interface_exists(interface))?
-                {
-                    return Ok(());
-                }
-            }
-            return Err(anyhow::anyhow!(
-                "cannot inspect saved sysctl {path}: {error}"
-            ));
-        }
-        Err(error) => {
-            return Err(anyhow::anyhow!(
-                "cannot inspect saved sysctl {path}: {error}"
-            ))
-        }
+    // If we never changed this value, no write or interface lookup is needed.
+    if entry.original == entry.managed {
+        return Ok(());
+    }
+    let target = if per_interface(path) {
+        Some(target::resolve(path, entry.target.as_ref(), context, None)?)
+    } else {
+        None
     };
+    // ENOENT from a held descriptor can mean a rename/unregistered sysctl table,
+    // not just deletion. Preserve evidence rather than forgetting the original.
+    let current = read_target_value(path, target.as_deref(), context)
+        .map_err(|error| anyhow::anyhow!("cannot inspect saved sysctl {path}: {error}"))?;
     if current != entry.managed || current == entry.original {
         if current != entry.managed {
             log::warn!(
@@ -475,7 +545,7 @@ fn restore_if_owned(
         }
         return Ok(());
     }
-    write_value(path, &entry.original, context)
+    write_value(path, &entry.original, target.as_deref(), context)
 }
 
 fn prune_dead_owners(journal: &mut SysctlJournal, context: &namespace::Guard) -> Vec<String> {
@@ -500,16 +570,11 @@ fn prune_dead_owners(journal: &mut SysctlJournal, context: &namespace::Guard) ->
         .map(|(path, _)| path.clone())
         .collect();
     for path in empty {
-        let restored = journal
-            .entries
-            .get(&path)
-            .is_some_and(|entry| restore_if_owned(&path, entry, context).is_ok());
-        if restored {
-            journal.entries.remove(&path);
-        } else {
-            log::warn!(
-                "host networking: stale owner cleanup could not restore {path}; keeping it for retry"
-            );
+        match restore_if_owned(&path, &journal.entries[&path], context) {
+            Ok(()) => { journal.entries.remove(&path); }
+            Err(error) => log::warn!(
+                "host networking: stale owner cleanup could not restore {path}: {error}; keeping it for retry"
+            ),
         }
     }
     uncertain
@@ -541,7 +606,7 @@ fn with_locked_journal<T>(
     )?;
     directory.verify()?;
     let boot_id = current_boot_id()?;
-    let result = with_journal_context(&path, &boot_id, context, body);
+    let result = with_journal_scope(&path, &requested, &boot_id, context, body);
     directory.verify()?;
     result
 }
@@ -557,8 +622,19 @@ fn with_journal<T>(
     with_journal_context(path, boot_id, namespace::current()?, body)
 }
 
+#[cfg(test)]
 fn with_journal_context<T>(
     path: &Path,
+    boot_id: &str,
+    context: namespace::Context,
+    body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
+) -> anyhow::Result<T> {
+    with_journal_scope(path, path, boot_id, context, body)
+}
+
+fn with_journal_scope<T>(
+    path: &Path,
+    scope: &Path,
     boot_id: &str,
     context: namespace::Context,
     body: impl FnOnce(&mut JournalTransaction<'_>, Vec<String>) -> anyhow::Result<T>,
@@ -568,9 +644,10 @@ fn with_journal_context<T>(
             "host sysctl namespace changed while waiting for journal locks; no recovery attempted"
         );
     }
-    let guard = namespace::Guard::new(context)?;
+    let guard = namespace::Guard::new(context)?.with_journal_scope(scope);
     let mut store = load(path, boot_id)?;
     guard.check()?;
+    retain_targets(&store, scope);
     // Admission precedes pruning, kernel I/O and persistence. Foreign groups are
     // never probed: their PIDs and sysctl paths have meaning only in their namespace.
     store.select(guard.context())?;
@@ -610,7 +687,32 @@ fn acquire_in(
         anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");
     }
     let owner = owner_id(scope, &transaction.context)?;
-    let current = read_value(path, &transaction.context)?;
+    let existing = transaction.current().entries.get(path).cloned();
+    let (target_identity, target) = if per_interface(path) {
+        if let Some(entry) = existing.as_ref() {
+            let live_witness = || {
+                for witness in &entry.owners {
+                    if owner_is_alive(witness, &transaction.context)? {
+                        return Ok(true);
+                    }
+                }
+                Ok(false)
+            };
+            let pin = target::resolve(
+                path,
+                entry.target.as_ref(),
+                &transaction.context,
+                Some(&live_witness),
+            )?;
+            (entry.target.clone(), Some(pin))
+        } else {
+            let (identity, pin) = target::capture(path, &transaction.context)?;
+            (Some(identity), Some(pin))
+        }
+    } else {
+        (None, None)
+    };
+    let current = read_target_value(path, target.as_deref(), &transaction.context)?;
     let journal = transaction.current_mut();
     let new_owner = if let Some(entry) = journal.entries.get_mut(path) {
         if entry.managed != value {
@@ -627,15 +729,17 @@ fn acquire_in(
                 original: current.clone(),
                 managed: value.to_string(),
                 owners: BTreeSet::from([owner.clone()]),
+                target: target_identity,
             },
         );
         true
     };
-    // Persist the pristine value and owner BEFORE changing the kernel. A SIGKILL after
-    // the write can then be recovered by the next qeli client operation.
+    // Persist the pristine value and owner BEFORE changing the kernel. A SIGKILL
+    // retains recovery evidence. Per-interface replay additionally needs a live
+    // descriptor witness; after the last witness dies it requires manual recovery.
     transaction.persist()?;
     if current != value {
-        if let Err(error) = write_value(path, value, &transaction.context) {
+        if let Err(error) = write_value(path, value, target.as_deref(), &transaction.context) {
             // Undo only ownership added by this call. A failed idempotent reacquire
             // must not discard an earlier successful lease of the same live component.
             // Retain empty entries: write verification may fail after changing the knob.
@@ -781,3 +885,7 @@ mod ownership_tests;
 #[cfg(test)]
 #[path = "sysctl/namespace_tests.rs"]
 mod namespace_tests;
+
+#[cfg(test)]
+#[path = "sysctl/target_tests.rs"]
+mod target_tests;

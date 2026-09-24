@@ -82,3 +82,5 @@ native certification и новый benchmark остаются открыты. И
 
 Продолжение: [Q25-F052–F053](AUDIT-Q25-SYSCTL-NAMESPACE.md) разделяет журнал по network namespace,
 проверяет PID/time контекст и описывает миграцию v1 → v2. Runtime-границы сохранены.
+
+Продолжение: [Q25-F083 — v3 и исходный sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Исторические ограничения выше относятся к снимку этого отчёта; исчезновение имени больше не разрешает забыть original.

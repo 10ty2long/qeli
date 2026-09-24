@@ -53,3 +53,5 @@ namespace generation и исходное поколение интерфейса
 
 [Guard внутренних I/O](AUDIT-Q25-SYSCTL-CONTEXT-IO.md) ·
 [Каталог состояния](AUDIT-Q25-STATE-DIRECTORY.md)
+
+Продолжение: [Q25-F083 — v3 и исходный sysctl fd](AUDIT-Q25-SYSCTL-TARGET.md). Исторические ограничения выше относятся к снимку этого отчёта; исчезновение имени больше не разрешает забыть original.

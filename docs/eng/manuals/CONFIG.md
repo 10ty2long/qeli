@@ -2245,32 +2245,47 @@ kill-switch this is fail-safe, not forgetfulness. Manual cleanup after a crash i
 [GETTING-STARTED.md](GETTING-STARTED.md) §13.2.
 
 The host-wide forwarding, `rp_filter`, and IPv6 `accept_ra` values use a locked persistent
-owner journal shared by standalone client processes and in-daemon client profiles. Ownership is
-registered even when the kernel already has the requested value. A clean stop restores the
-pristine value only after the last `PID + process-start-time + TUN` owner exits; the next client
-operation prunes confirmed dead owners, and a journal from another kernel boot is discarded.
+owner journal shared by server profiles and standalone client processes. Ownership is
+registered even when the kernel already has the requested value. A clean stop restores
+the original after the last `PID + process-start-time + TUN` owner, provided the original
+object remains verified. Administrator changes are not overwritten. The next operation
+prunes confirmed dead owners; valid state from another boot is discarded without
+replaying previous values.
 
 Unreadable or malformed `/proc/<pid>/stat` does not prove that an owner died. If its
 state cannot be confirmed, the entry remains and new acquisition or startup recovery
 reports `cannot verify host sysctl owner(s)`. Releasing a verified scope continues
 independent cleanup and reports remaining failures. Failed sysctl reads/writes retain
-the original value for retry. A missing named-interface setting can be forgotten only
-after confirming that the interface disappeared; global settings and `all`/`default`
-are excluded.
+the original value for recovery.
 
-Internal `sysctls.state` version 2 separates entries by network namespace. Each group
+Internal `sysctls.state` version 3 separates entries by network namespace. Each group
 also records PID and exposed time namespace identity; mismatch stops the operation
 before checking owners or changing settings. Foreign network groups remain intact and
 their PIDs are not probed. Participants in one network must share a state directory
 and PID/time context; separate directories do not replace coordination. Procfs must
 match the current PID namespace and expose `NStgid` and namespace metadata.
 
-A nonempty v1 journal from the current boot is not migrated automatically: original
-values remain and `legacy host sysctl journal has no namespace identity` is reported.
-Complete recovery using the previous version in the original namespaces before upgrading,
-or combine transition with a planned host reboot. Empty v1 or valid previous-boot state
-allows transition; old settings are not replayed after reboot. Old and new binaries
-sharing one journal are unsupported. [Migration and limits](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md).
+For named-interface `rp_filter`/`accept_ra`, Qeli retains the open sysctl fd and its
+namespace until the entry is released. Another process can join only with a matching
+object and a confirmed live owner. Restoration never reopens the setting by name:
+rename/delete/recreate, even with the same ifindex, does not authorize writing an old
+value into a new interface. `ENOENT` does not authorize forgetting the original either.
+After all live descriptors are lost, including SIGKILL, the entry remains for manual
+recovery and startup recovery returns an error. Exception: if `original == managed`,
+Qeli changed nothing and can release the entry without accessing the interface. Global
+settings and `all`/`default` retain the previous namespace contract. Automatic recovery
+across namespace reuse after a crash has not yet been qualified.
+
+Nonempty v1/v2 journals from the current boot are not migrated automatically. Version 2
+reports `legacy v2 host sysctl journal lacks live descriptor ownership`; v1 retains
+`legacy host sysctl journal has no namespace identity`. Before upgrading, stop old
+participants and complete recovery in the original namespaces while the original
+interfaces remain verified. Do not blindly run old recovery after an interface was
+replaced. Alternatively, use a planned host reboot. Empty v1/v2 or valid previous-boot
+state allows transition; old values are not replayed after reboot. Do not manually
+change version/boot-id or remove the journal to force startup. Mixed journal versions
+are unsupported. User configs remain INI; no new keys were added.
+[Contract, migration and limits](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
 
 On Unix shared atomic writes and removal of the final sysctl journal sync the
 parent directory. `published ... persistence is uncertain` means the file was
