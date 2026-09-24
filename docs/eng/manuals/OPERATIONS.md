@@ -418,6 +418,8 @@ Stop the old worker before upgrading.
 
 Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
 
+Legacy global `dns-backup.json`/`dns-holders` are not restored automatically: startup preserves them and requires administrator recovery even with `dns = off`/`system`. Stop the old client cleanly before upgrading. [Procedure §6.20](TROUBLESHOOTING.md#620-linux-legacy-resolver-recovery-failed-backup-kept).
+
 ## Client kill-switch recovery
 
 Reinstalling a Linux kill-switch over prior protection uses temporary DROP rules `qeli-ks-rebuild:<tun>`. Failure or SIGKILL retains them; successful retry retires them after both required families are ready. Guards may block DNS/loopback until replacement is ready; `allow_ipv*_leak` cannot bypass recovery failure. For manual removal after stopping the owner, inspect guards separately from `QELI_KS_<tun>`. [Procedure §6.79](TROUBLESHOOTING.md#679-linux-kill-switch-rebuild-guard-remains-after-failure).

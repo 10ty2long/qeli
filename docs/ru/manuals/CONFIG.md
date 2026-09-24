@@ -2774,6 +2774,8 @@ set -eu
 
 Managed DNS на Linux также требует `SO_NETNS_COOKIE` и доверенного `/var/lib/qeli` без symlink и group/world write. Per-link DNS state не переносится через `STATE_DIRECTORY`. Перед обновлением штатно остановите старый клиент; оставшиеся v1-маркеры требуют ручного разбора, если совпадают с новым link. [Формат v2 и восстановление](TROUBLESHOOTING.md#650-linux-владение-dns-lease-и-восстановление-маркеров).
 
+Старые глобальные `dns-backup.json`/`dns-holders` не восстанавливаются автоматически: startup сохраняет их и требует ручного разбора даже при `dns = off`/`system`. Перед обновлением штатно остановите старый клиент. [Процедура §6.20](TROUBLESHOOTING.md#620-linux-восстановление-старого-dns-не-удалось-снимок-сохранён).
+
 Managed Linux-клиент сохраняет физические bypass/exclude и blackhole в `/var/lib/qeli/client-routes.state`. Поэтому `SO_NETNS_COOKIE` и доверенный writable state каталог обязательны также при `dns = off`/`system`. `STATE_DIRECTORY` не меняет этот путь; клиенты одной сети должны видеть общий журнал и lock. Нового INI-параметра нет. [Recovery и ограничения](OPERATIONS.md#восстановление-физических-маршрутов-клиента).
 
 Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Это не общий срок NetworkPlan/shutdown и не прерывание внутреннего I/O. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).

@@ -702,8 +702,9 @@ the service without starting it is insufficient; Qeli does not autoactivate it. 
 
 Starting with 0.7.15 qeli deliberately **does not replace persistent `/etc/resolv.conf`**:
 after `SIGKILL`, power loss or client removal it could retain the vanished tunnel resolver
-and break DNS for the whole host. Legacy backups are still recovered at startup, but new
-ones are not created. Enable the lifecycle-safe per-link path:
+and break DNS for the whole host. New backups are not created; old ones require manual
+recovery under §6.20. Startup no longer changes the global resolver. Enable the
+lifecycle-safe per-link path:
 ```bash
 sudo systemctl enable --now systemd-resolved
 sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
@@ -985,16 +986,31 @@ as proof of a clean network reset. User hook scripts can make their own firewall
 
 ### 6.20 Linux: legacy resolver recovery failed; backup kept
 
-`failed to restore /etc/resolv.conf ... (backup kept at ...)` reports an unsuccessful
-recovery of a snapshot from an older Qeli release. Failed file deletion/replacement or
-permission restoration keeps that snapshot available for retry. A `file` snapshot without
-content, an invalid symlink target, an unknown kind or malformed data is rejected; it does
-not silently replace the resolver with an empty file. Explicitly empty file content is valid.
+`legacy global DNS state ... administrator recovery required` means that an old client's
+`/var/lib/qeli/dns-backup.json` or `dns-holders` remains. The current version preserves
+it and refuses startup, including with `dns = off`/`system`. These records lack ownership
+of the current resolver and its original namespace. Neither a valid snapshot nor absent
+PIDs authorizes automatic `/etc/resolv.conf` replacement.
 
-Check the reported filesystem error and the saved original before recovery. Do not delete
-the snapshot to suppress the error. If restoration succeeded but backup removal failed,
-the diagnostic says so separately. New sessions use per-link systemd-resolved DNS; this
-compatibility path does not enable direct resolver-file takeover for new connections.
+1. Establish the original host, network/mount view and stop all old DNS owners. Prefer
+   a clean stop of the old client before upgrading. A saved PID may belong to another
+   boot/PID namespace; do not terminate a process based only on its number.
+2. Preserve legacy evidence and current resolver state. Before reading a snapshot,
+   check its type, size, owner and path. A FIFO, directory or unknown symlink needs
+   investigation; Qeli does not open its contents.
+3. Restore DNS through its responsible network manager or a verified original. `file`
+   needs verified content/permissions; `symlink` needs a verified target. `absent` does
+   not authorize removing a resolver now needed by another owner. `managed-no-original`
+   means the original is unknown: the administrator selects DNS, without a public fallback.
+4. Verify DNS and absence of old owners. Only then archive the resolved
+   `dns-backup.json`/`dns-holders` outside their active names and restart. Do not delete
+   live locks or all of `/var/lib/qeli`. A stable `dns-holders.lock` alone does not
+   prevent startup.
+
+On older binaries, `failed to restore /etc/resolv.conf ... (backup kept at ...)` meant
+an unsuccessful automatic attempt. Upgrading does not repeat that attempt. New
+connections use per-link systemd-resolved; old global resolver snapshots are not adopted.
+[Report](../reports/AUDIT-Q25-LEGACY-DNS.md).
 
 ---
 

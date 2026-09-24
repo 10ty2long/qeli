@@ -110,3 +110,5 @@ Tests ran in private namespaces on `.11`; `.10` was untouched.
 Windows VM/Mac/iOS/router runtime remain SKIPPED by user decision.
 
 [Operations](../manuals/OPERATIONS.md) · [Troubleshooting §6.81](../manuals/TROUBLESHOOTING.md#681-linux-physical-route-journal-recovery) · [Debt register](../plans/AUDIT-DEBT.md)
+
+Follow-up: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) closes legacy global DNS through refusal of automatic replay and manual migration. An old snapshot does not prove ownership of the current resolver; automatic restore/refcount and their test implementations were removed. Historical results above describe the earlier behavior.

@@ -79,3 +79,5 @@ the full mixed nft/firewalld matrix remain open. `.10` was unchanged; tests ran 
 Windows VM/Mac/iOS/router runtime remain SKIPPED by user decision.
 
 [Debt register](../plans/AUDIT-DEBT.md) · [DNS recovery](../manuals/TROUBLESHOOTING.md)
+
+Follow-up: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) closes legacy global DNS through refusal of automatic replay and manual migration. An old snapshot does not prove ownership of the current resolver; automatic restore/refcount and their test implementations were removed. Historical results above describe the earlier behavior.

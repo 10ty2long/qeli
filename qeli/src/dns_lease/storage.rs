@@ -39,6 +39,12 @@ impl Directory {
             Err(e) => Err(e.into()),
         }
     }
+    #[cfg(all(target_os = "linux", feature = "client"))]
+    pub(crate) fn refuse_legacy_global(&self) -> anyhow::Result<()> {
+        self.verify()?;
+        crate::dns_legacy::require_absent(&self.path)?;
+        self.verify()
+    }
     pub(super) fn path(&self) -> &Path {
         &self.path
     }

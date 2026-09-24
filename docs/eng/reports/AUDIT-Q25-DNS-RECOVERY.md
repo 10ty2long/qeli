@@ -45,3 +45,5 @@ errors and normal data-plane cleanup errors still need end-to-end propagation to
 loop. This pass does not close those lifecycle findings or the full system audit.
 
 Follow-up: [TUN cleanup audit](AUDIT-Q25-TUN-CLEANUP.md) propagates explicit resource and rollback-guard failures to the client stop policy. Live Linux E2E and complete task shutdown remain open.
+
+Follow-up: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) closes legacy global DNS through refusal of automatic replay and manual migration. An old snapshot does not prove ownership of the current resolver; automatic restore/refcount and their test implementations were removed. Historical results above describe the earlier behavior.

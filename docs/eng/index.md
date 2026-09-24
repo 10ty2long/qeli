@@ -205,3 +205,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F099: ownership of changed Linux routes](reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
 
 - [Q25-F100: physical route journal and SIGKILL recovery](reports/AUDIT-Q25-ROUTE-JOURNAL.md).
+
+- [Q25-F101: refuse unscoped legacy global DNS recovery](reports/AUDIT-Q25-LEGACY-DNS.md).

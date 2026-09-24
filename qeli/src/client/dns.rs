@@ -5,20 +5,16 @@
 //! DNS through systemd-resolved's per-link API: deleting the tunnel link also
 //! deletes its DNS state after SIGKILL, power loss, or uninstall.
 //!
-//! The snapshot/restore code below remains deliberately supported to recover
-//! systems changed by older qeli versions. New sessions never create such a
-//! snapshot or write `/etc/resolv.conf` directly.
+//! Old resolver snapshots lack namespace and current-file ownership. Preserve them
+//! for administrator recovery; neither startup nor new sessions write resolv.conf.
 
 use crate::config::client::ClientDnsConfig;
-#[cfg(test)]
-use crate::dns_backup::{restore_resolv, DnsBackup};
 use crate::transport_core::NetworkDns;
 use std::path::Path;
 
 const RESOLV_PATH: &str = "/etc/resolv.conf";
 const STATE_DIR: &str = "/var/lib/qeli";
 const DNS_SETUP_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
-const BACKUP_PATH: &str = "/var/lib/qeli/dns-backup.json";
 #[path = "dns/resolver_context.rs"]
 mod resolver_context;
 pub(crate) struct DnsLease {
@@ -63,14 +59,6 @@ impl DnsLease {
         })
     }
 }
-
-#[cfg(test)]
-const MARKER: &str = "# Managed by qeli VPN — original saved in /var/lib/qeli/dns-backup.json";
-
-/// Legacy holder set written by releases that took over `/etc/resolv.conf` directly. New
-/// connections use per-link systemd-resolved state and never create this file, but recovery
-/// must still honour it while an older client process may be alive.
-const REFCOUNT_PATH: &str = "/var/lib/qeli/dns-holders";
 
 /// Apply exactly the resolver set already validated into the shared NetworkPlan.
 /// Resolver selection and reachability routes belong to the core, for both IP families.
@@ -162,47 +150,6 @@ fn revert_link_with(
     Ok(())
 }
 
-/// Legacy resolver-file recovery is separate from per-generation link cleanup.
-fn restore_legacy_dns() -> anyhow::Result<()> {
-    let mut errors = Vec::new();
-    // 2. Restore /etc/resolv.conf from a legacy persistent backup, but only when no older
-    // client process still holds it. If the holder state cannot be locked or parsed, preserve
-    // the backup and leave the host untouched rather than guessing that this process is last.
-    let backup = Path::new(BACKUP_PATH);
-    if backup.exists() {
-        match release_dns_holder() {
-            Ok(false) => {
-                log::info!(
-                    "DNS restore deferred: another qeli client still holds the host DNS — \
-                     /etc/resolv.conf left in place"
-                );
-                if errors.is_empty() {
-                    return Ok(());
-                }
-                anyhow::bail!("DNS cleanup failed: {}", errors.join("; "));
-            }
-            Ok(true) => {}
-            Err(error) => {
-                errors.push(format!(
-                    "DNS restore deferred because legacy holder state is unsafe ({error}); backup kept at {BACKUP_PATH}"
-                ));
-                return Err(anyhow::anyhow!("DNS cleanup failed: {}", errors.join("; ")));
-            }
-        }
-    }
-    if backup.exists() {
-        match crate::dns_backup::restore_and_remove(Path::new(RESOLV_PATH), backup) {
-            Ok(()) => log::info!("Restored /etc/resolv.conf to its original state"),
-            Err(error) => errors.push(error.to_string()),
-        }
-    }
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        anyhow::bail!("DNS cleanup failed: {}", errors.join("; "))
-    }
-}
-
 /// Startup never reverts a live link from a durable marker alone. Only the generation
 /// holding the original TUN descriptor and DNS lease may issue a resolver mutation.
 pub fn recover_stale() -> anyhow::Result<()> {
@@ -211,6 +158,9 @@ pub fn recover_stale() -> anyhow::Result<()> {
     let mut errors = Vec::new();
     let mut scope = None;
     if let Some(directory) = directory {
+        // A PID-only holder list and an unscoped snapshot cannot authorize global DNS
+        // recovery, even if every listed PID appears absent in this caller's namespace.
+        directory.refuse_legacy_global()?;
         for entry in directory.entries()? {
             let entry = match entry {
                 Ok(entry) => entry,
@@ -245,9 +195,6 @@ pub fn recover_stale() -> anyhow::Result<()> {
                 log::warn!("Legacy DNS marker {} retained for administrator recovery; a saved name is not ownership",visible.display());
             }
         }
-    }
-    if let Err(error) = restore_legacy_dns() {
-        errors.push(error.to_string());
     }
     if !errors.is_empty() {
         anyhow::bail!("DNS recovery failed: {}", errors.join("; "));
@@ -410,183 +357,6 @@ fn apply_link_dns(
     Ok(())
 }
 
-// ── /etc/resolv.conf capture & restore (pure file logic, path-injectable) ───
-
-fn ensure_state_dir() -> anyhow::Result<()> {
-    std::fs::create_dir_all(STATE_DIR)
-        .map_err(|e| anyhow::anyhow!("cannot create state dir {}: {}", STATE_DIR, e))
-}
-
-/// Live-holder set for the host DNS takeover: one line per still-running client pid.
-/// Read under a lock, filtered to pids that are actually alive (so a SIGKILLed instance
-/// does not pin the takeover forever), and returned.
-fn read_live_holders() -> anyhow::Result<Vec<u32>> {
-    let text = match std::fs::read_to_string(REFCOUNT_PATH) {
-        Ok(text) => text,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(error) => anyhow::bail!("cannot read {REFCOUNT_PATH}: {error}"),
-    };
-    text.lines()
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| {
-            line.trim().parse::<u32>().map_err(|error| {
-                anyhow::anyhow!("invalid PID in {REFCOUNT_PATH} ({line:?}): {error}")
-            })
-        })
-        .filter_map(|pid| match pid {
-            Ok(pid) if pid_alive(pid) => Some(Ok(pid)),
-            Ok(_) => None,
-            Err(error) => Some(Err(error)),
-        })
-        .collect()
-}
-
-fn write_holders(pids: &[u32]) -> anyhow::Result<()> {
-    let body: String = pids.iter().map(|p| format!("{p}\n")).collect();
-    crate::util::write_atomic_private(REFCOUNT_PATH, body.as_bytes())
-}
-
-#[cfg(unix)]
-fn pid_alive(pid: u32) -> bool {
-    // kill(pid, 0): 0 or EPERM => the process exists; ESRCH => it does not.
-    let rc = unsafe { libc::kill(pid as libc::pid_t, 0) };
-    rc == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
-}
-
-#[cfg(not(unix))]
-fn pid_alive(_pid: u32) -> bool {
-    true
-}
-
-/// Release: returns (remaining, last).
-fn compute_release(holders: Vec<u32>, me: u32) -> (Vec<u32>, bool) {
-    let remaining: Vec<u32> = holders.into_iter().filter(|&p| p != me).collect();
-    let last = remaining.is_empty();
-    (remaining, last)
-}
-
-/// Drop this process from the holder set. Returns true when it was the LAST holder — the
-/// only case in which the caller should restore the original and delete the backup.
-fn release_dns_holder() -> anyhow::Result<bool> {
-    ensure_state_dir()?;
-    let _lock = crate::util::FileLock::acquire(REFCOUNT_PATH)?;
-    let (remaining, last) = compute_release(read_live_holders()?, std::process::id());
-    if last {
-        match std::fs::remove_file(REFCOUNT_PATH) {
-            Ok(()) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(error) => anyhow::bail!("cannot remove {REFCOUNT_PATH}: {error}"),
-        }
-    } else {
-        write_holders(&remaining)?;
-    }
-    Ok(last)
-}
-
-/// Capture the current resolv.conf state into `backup`, exactly once.
-///
-/// Idempotent: if `backup` already exists we keep the previously-saved
-/// original. If the current file is already ours (contains `marker`) but no
-/// backup exists, we record `managed-no-original` so restore falls back to a
-/// working public resolver rather than leaving a dangling tunnel address.
-#[cfg(test)]
-fn capture_original(resolv: &Path, backup: &Path, marker: &str) -> anyhow::Result<()> {
-    if backup.exists() {
-        return Ok(());
-    }
-
-    let snapshot = match std::fs::symlink_metadata(resolv) {
-        Ok(meta) if meta.file_type().is_symlink() => {
-            let target = std::fs::read_link(resolv)
-                .map_err(|e| anyhow::anyhow!("read_link {}: {}", resolv.display(), e))?;
-            DnsBackup {
-                kind: "symlink".into(),
-                target: Some(target.to_string_lossy().into_owned()),
-                content: None,
-                mode: None,
-            }
-        }
-        Ok(_meta) => {
-            let content = std::fs::read_to_string(resolv).unwrap_or_default();
-            if content.contains(marker) {
-                // Our own file with no saved original — corrupted prior state.
-                DnsBackup {
-                    kind: "managed-no-original".into(),
-                    target: None,
-                    content: None,
-                    mode: None,
-                }
-            } else {
-                #[cfg(unix)]
-                let mode = {
-                    use std::os::unix::fs::PermissionsExt;
-                    std::fs::metadata(resolv)
-                        .ok()
-                        .map(|m| m.permissions().mode())
-                };
-                #[cfg(not(unix))]
-                let mode = None;
-                DnsBackup {
-                    kind: "file".into(),
-                    target: None,
-                    content: Some(content),
-                    mode,
-                }
-            }
-        }
-        Err(_) => DnsBackup {
-            kind: "absent".into(),
-            target: None,
-            content: None,
-            mode: None,
-        },
-    };
-
-    let json = serde_json::to_string(&snapshot)?;
-    write_atomic(backup, json.as_bytes())?;
-    Ok(())
-}
-
-#[cfg(test)]
-fn write_managed_resolv(
-    resolv: &Path,
-    dns_server: &str,
-    search: &[String],
-    marker: &str,
-) -> anyhow::Result<()> {
-    write_managed_resolv_many(resolv, &[dns_server.to_string()], search, marker)
-}
-
-#[cfg(test)]
-fn write_managed_resolv_many(
-    resolv: &Path,
-    dns_servers: &[String],
-    search: &[String],
-    marker: &str,
-) -> anyhow::Result<()> {
-    let mut content = String::new();
-    content.push_str(marker);
-    content.push('\n');
-    for dns_server in dns_servers {
-        content.push_str(&format!("nameserver {}\n", dns_server));
-    }
-    if !search.is_empty() {
-        content.push_str(&format!("search {}\n", search.join(" ")));
-    }
-    write_atomic(resolv, content.as_bytes())
-}
-
-/// Write a file atomically (tmp in the same dir, then rename). Thin wrapper over
-/// [`crate::util::write_atomic`] — the single shared implementation (also used by
-/// the server's config/users/key writes), which on Unix uses `O_EXCL` +
-/// `O_NOFOLLOW` against symlink pre-planting (H-5) and preserves the target's
-/// mode. Replacing a symlink with the renamed regular file is intentional —
-/// `restore_resolv` recreates the link from the backup.
-#[cfg(test)]
-fn write_atomic(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
-    crate::util::write_atomic(path, bytes)
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -656,23 +426,6 @@ mod tests {
         );
     }
 
-    /// Legacy recovery must remove only this process and defer restoration while another
-    /// live holder remains.
-    #[test]
-    fn legacy_holder_release_restores_only_for_the_last_process() {
-        let (holders, last) = super::compute_release(vec![100, 200], 100);
-        assert!(
-            !last,
-            "the first to leave must NOT restore while another holds DNS"
-        );
-        assert_eq!(holders, vec![200]);
-
-        let (holders, last) = super::compute_release(holders, 200);
-        assert!(last, "the last holder out restores the original");
-        assert!(holders.is_empty());
-    }
-
-    use super::*;
     use std::path::PathBuf;
 
     /// Unique temp workspace per test.
@@ -699,109 +452,6 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_dir_all(&self.0);
         }
-    }
-
-    fn read(p: &Path) -> String {
-        std::fs::read_to_string(p).unwrap()
-    }
-
-    #[test]
-    fn capture_and_restore_regular_file() {
-        let t = Tmp::new("file");
-        let resolv = t.path("resolv.conf");
-        let backup = t.path("backup.json");
-        std::fs::write(&resolv, "nameserver 192.168.1.1\n").unwrap();
-
-        capture_original(&resolv, &backup, MARKER).unwrap();
-        write_managed_resolv(&resolv, "10.0.0.1", &[], MARKER).unwrap();
-        assert!(read(&resolv).contains("10.0.0.1"));
-        assert!(read(&resolv).contains(MARKER));
-
-        restore_resolv(&resolv, &backup).unwrap();
-        assert_eq!(read(&resolv), "nameserver 192.168.1.1\n");
-    }
-
-    #[test]
-    fn capture_is_idempotent_across_reconnects() {
-        // The core bug: a second setup must NOT overwrite the saved original
-        // with our generated file.
-        let t = Tmp::new("reconnect");
-        let resolv = t.path("resolv.conf");
-        let backup = t.path("backup.json");
-        std::fs::write(&resolv, "nameserver 9.9.9.9\n").unwrap();
-
-        capture_original(&resolv, &backup, MARKER).unwrap();
-        write_managed_resolv(&resolv, "10.0.0.1", &[], MARKER).unwrap();
-        // Reconnect: setup runs again while resolv.conf is already ours.
-        capture_original(&resolv, &backup, MARKER).unwrap();
-
-        restore_resolv(&resolv, &backup).unwrap();
-        assert_eq!(
-            read(&resolv),
-            "nameserver 9.9.9.9\n",
-            "original must survive reconnect"
-        );
-    }
-
-    #[test]
-    #[cfg(unix)]
-    fn capture_and_restore_symlink() {
-        let t = Tmp::new("symlink");
-        let resolv = t.path("resolv.conf");
-        let real = t.path("stub-resolv.conf");
-        std::fs::write(&real, "nameserver 127.0.0.53\n").unwrap();
-        std::os::unix::fs::symlink(&real, &resolv).unwrap();
-
-        capture_original(&resolv, &t.path("backup.json"), MARKER).unwrap();
-        write_managed_resolv(&resolv, "10.0.0.1", &[], MARKER).unwrap();
-        // Our write replaced the symlink with a regular file.
-        assert!(!std::fs::symlink_metadata(&resolv)
-            .unwrap()
-            .file_type()
-            .is_symlink());
-
-        restore_resolv(&resolv, &t.path("backup.json")).unwrap();
-        let meta = std::fs::symlink_metadata(&resolv).unwrap();
-        assert!(meta.file_type().is_symlink(), "symlink must be recreated");
-        assert_eq!(std::fs::read_link(&resolv).unwrap(), real);
-    }
-
-    #[test]
-    fn absent_original_is_removed_on_restore() {
-        let t = Tmp::new("absent");
-        let resolv = t.path("resolv.conf");
-        let backup = t.path("backup.json");
-        // No resolv.conf exists yet.
-        capture_original(&resolv, &backup, MARKER).unwrap();
-        write_managed_resolv(&resolv, "10.0.0.1", &[], MARKER).unwrap();
-        assert!(resolv.exists());
-
-        restore_resolv(&resolv, &backup).unwrap();
-        assert!(
-            !resolv.exists(),
-            "file we created must be removed when there was no original"
-        );
-    }
-
-    #[test]
-    fn managed_file_without_backup_restores_to_public_resolver() {
-        // Simulates a crashed prior run: resolv.conf is ours, backup is gone.
-        let t = Tmp::new("orphan");
-        let resolv = t.path("resolv.conf");
-        let backup = t.path("backup.json");
-        write_managed_resolv(&resolv, "10.0.0.1", &[], MARKER).unwrap();
-
-        capture_original(&resolv, &backup, MARKER).unwrap();
-        let snap: DnsBackup = serde_json::from_str(&read(&backup)).unwrap();
-        assert_eq!(snap.kind, "managed-no-original");
-
-        restore_resolv(&resolv, &backup).unwrap();
-        let restored = read(&resolv);
-        assert!(
-            restored.contains("1.1.1.1"),
-            "must leave a working resolver, not the dead tunnel IP"
-        );
-        assert!(!restored.contains("10.0.0.1"));
     }
 }
 

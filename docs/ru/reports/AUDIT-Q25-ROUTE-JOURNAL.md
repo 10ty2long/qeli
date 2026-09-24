@@ -109,3 +109,5 @@ DNS, live persistent TUN recovery и полная mixed nft/firewalld матри
 Windows VM/Mac/iOS/router runtime остаются SKIPPED по решению пользователя.
 
 [Эксплуатация](../manuals/OPERATIONS.md) · [Диагностика §6.81](../manuals/TROUBLESHOOTING.md#681-linux-восстановление-журнала-физических-маршрутов) · [Реестр](../plans/AUDIT-DEBT.md)
+
+Продолжение: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) закрывает legacy global DNS безопасным отказом от автоматического replay и ручной миграцией. Старый snapshot не доказывает владение текущим resolver; автоматический restore/refcount и его тестовые реализации удалены. Исторические результаты выше относятся к прежнему поведению.

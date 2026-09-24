@@ -208,9 +208,9 @@ mod client_tasks;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod credential_file;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
-mod dns_backup;
-#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod dns_lease;
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+mod dns_legacy;
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod secret_buffer;
 

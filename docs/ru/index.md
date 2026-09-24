@@ -205,3 +205,5 @@
 - [Q25-F099: владение изменёнными маршрутами Linux](reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
 
 - [Q25-F100: журнал физических маршрутов и SIGKILL recovery](reports/AUDIT-Q25-ROUTE-JOURNAL.md).
+
+- [Q25-F101: безопасный отказ от старого глобального DNS recovery](reports/AUDIT-Q25-LEGACY-DNS.md).

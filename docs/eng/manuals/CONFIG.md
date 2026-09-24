@@ -2806,6 +2806,8 @@ not give synchronous file I/O, spawn or kill/reap a hard upper bound.
 
 Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
 
+Legacy global `dns-backup.json`/`dns-holders` are not restored automatically: startup preserves them and requires administrator recovery even with `dns = off`/`system`. Stop the old client cleanly before upgrading. [Procedure §6.20](TROUBLESHOOTING.md#620-linux-legacy-resolver-recovery-failed-backup-kept).
+
 The managed Linux client persists physical bypass/exclude and blackhole routes in `/var/lib/qeli/client-routes.state`. Therefore `SO_NETNS_COOKIE` and trusted writable state storage are required even with `dns = off`/`system`. `STATE_DIRECTORY` does not change this path; clients sharing a network must see the same journal and lock. No new INI key is added. [Recovery and limits](OPERATIONS.md#client-physical-route-recovery).
 
 These are internal bounds, with no new INI key. User-hook deadlines are unchanged. 15 seconds

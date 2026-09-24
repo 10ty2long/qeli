@@ -79,3 +79,5 @@ mixed nft/firewalld матрица ещё не закрыты. `.10` не изм
 Windows VM/Mac/iOS/router runtime остаются SKIPPED по решению пользователя.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Восстановление DNS](../manuals/TROUBLESHOOTING.md)
+
+Продолжение: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) закрывает legacy global DNS безопасным отказом от автоматического replay и ручной миграцией. Старый snapshot не доказывает владение текущим resolver; автоматический restore/refcount и его тестовые реализации удалены. Исторические результаты выше относятся к прежнему поведению.
