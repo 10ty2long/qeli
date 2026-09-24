@@ -173,6 +173,24 @@ else
   bad "direct IPv6 topology works before the VPN"
 fi
 
+# Optional real mixed firewall/packet lifecycle checks, isolated by the outer runner.
+mixed_firewall() {
+  [ -n "${QELI_MIXED_FIREWALL_CONFIG:-}" ] || return 0
+  if ip netns exec "$CLI_NS" python3 "$SCRIPT_DIR/audit_client_mixed_firewall.py" "$1" \
+      --work "$WORK" --tun "$TUN_IF" --interface "$CLI_IF" --routing "$ROUTING" \
+      > "$WORK/mixed-$1.log" 2>&1; then
+    ok "mixed firewall $1: real packets and foreign state"
+  else
+    bad "mixed firewall $1: real packets and foreign state"
+    cat "$WORK/mixed-$1.log" >&2
+    exit 1
+  fi
+}
+if [ -n "${QELI_MIXED_FIREWALL_CONFIG:-}" ]; then
+  ip netns exec "$RTR_NS" python3 "$SCRIPT_DIR/audit_client_mixed_firewall.py" echo --work "$WORK" \
+    > "$WORK/echo.log" 2>&1 &
+  mixed_firewall init
+fi
 DNS_UPSTREAM=
 DNS_UPSTREAM_FAMILY=
 if [ "$FLAVOR" = dns4 ]; then
@@ -282,6 +300,7 @@ if [ "$FLAVOR" = mtu ]; then
   CLIENT_MTU=1280
 fi
 CLIENT_KILL_SWITCH=false
+if [ "$ROUTING" = full ] && [ -n "${QELI_MIXED_FIREWALL_CONFIG:-}" ]; then CLIENT_KILL_SWITCH=true; fi
 if [ -n "$DNS_UPSTREAM" ] && [ "${QELI_DNS_KILL_SWITCH:-0}" = 1 ]; then CLIENT_KILL_SWITCH=true; fi
 SERVER_ROAMING_LINE="roaming.enabled = true"
 SERVER_DEVICE_LINE="tun.device_type = $SERVER_DEVICE_TYPE"
@@ -603,6 +622,8 @@ elif [ "$ROUTING" = split ]; then
     "ip netns exec $CLI_NS ping -6 -c1 -W2 fd46:ffff::2"
 fi
 
+mixed_firewall active
+
 # Optional physical route recovery using a real SIGKILL and a fresh client process.
 ROUTE_CRASH_CHECK=0
 if [ "${QELI_ROUTE_CRASH_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS_UPSTREAM" ]; then
@@ -614,6 +635,7 @@ if [ "${QELI_ROUTE_CRASH_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS
   wait "$CLIENT_PID" 2>/dev/null || true
   CLIENT_PID=
   persistent_before_release
+  mixed_firewall crashed
   check_eventually "$TUN_RELEASE_CAUSE releases the original TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
   check "SIGKILL leaves the physical carrier bypass" "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS | grep -q 'dev $CLI_IF'"
   if [ "${QELI_EXPECT_ROUTE_JOURNAL:-1}" = 1 ]; then
@@ -642,6 +664,7 @@ if [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; then
   wait "$CLIENT_PID" 2>/dev/null || true
   CLIENT_PID=
   persistent_before_release
+  mixed_firewall crashed
   check_eventually "$TUN_RELEASE_CAUSE releases the client TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
   check_eventually "$TUN_RELEASE_CAUSE removes DNS from real resolved with its link" \
     "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after-crash.txt && ! grep -Fq 'Link $CRASH_DNS_INDEX (' $WORK/resolved-after-crash.txt"
@@ -696,6 +719,10 @@ PYDNS
   fi
 fi
 
+if [ "$ROUTE_CRASH_CHECK" = 1 ] || { [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; }; then
+  mixed_firewall restarted
+fi
+
 # Optional operator replacement before clean stop. DNS crash cells already lost
 # the original process journal, so they cannot prove this ownership regression.
 ROUTE_IDENTITY_CHECK=0
@@ -745,6 +772,8 @@ check "clean stop restored direct IPv4 routing" \
   "ip netns exec $CLI_NS ping -4 -c1 -W2 198.18.46.1"
 check "clean stop restored direct IPv6 routing" \
   "ip netns exec $CLI_NS ping -6 -c1 -W2 fd46:ffff::1"
+
+mixed_firewall stopped
 
 echo "=== RESULT outer=$OUTER inner=$INNER transport=$TRANSPORT wire=$WIRE routing=$ROUTING: $PASS passed, $FAIL failed ==="
 if [ "$FAIL" -ne 0 ]; then

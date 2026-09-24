@@ -2362,7 +2362,7 @@ or another owner's DNS configuration is not supported.
 
 ### 6.83. Linux: mixed nft/legacy/firewalld recovery
 
-The backend is selected independently for `iptables` and `ip6tables`. If it changes
+The backend is selected independently for `iptables` and `ip6tables`. For server firewall journal recovery, if it changes
 after a crash, Qeli preserves the affected family's records and aborts startup;
 independent confirmed deletions in the other family may already have completed.
 Restore each family's original backend. A whole-table flush is unnecessary.
@@ -2389,3 +2389,20 @@ Reloading firewalld with its nftables backend is checked separately from Qeli re
 Preservation of Qeli rules does not prove that firewalld zones and policies permit VPN
 traffic; that depends on administrator configuration.
 [Matrix and limits](../reports/AUDIT-Q14-MIXED-FIREWALL.md).
+
+### 6.84. Linux: client rejects a legacy-table warning
+
+`# Warning: iptables-legacy tables present, use iptables-legacy to see them`
+(or its `ip6tables-legacy` counterpart) reports tables belonging to the other backend.
+It does not by itself mean that the selected backend is broken. Previously, this line
+before `No chain/target/match by that name` caused a false failure when inspecting an
+absent `QELI_KS_<dev>` chain. Q25-F102 permits only these exact advisory lines alongside
+a recognized absence diagnostic and appropriate exit. Update to a binary containing
+this fix; do not delete operator legacy rules merely to silence the warning.
+
+Permission/backend errors, unknown extra messages and nft parse errors still require
+investigation. Exit 1 alone does not establish absence. For `Parsing nftables rule failed`,
+follow §6.83 without erasing journals/chains. Keep **each family's** original backend
+across client startup, crash recovery and stop: automatic nft/legacy migration is not
+certified. Firewalld reload does not replace checks of traffic, DNS and retained kill-switch.
+[Cause, tests and boundaries](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md).

@@ -480,3 +480,8 @@ records until inspection is repaired. A firewalld reload does not replace Qeli j
 recovery. Rule preservation and actual traffic through zones/policies are separate
 validation steps.
 [Troubleshooting §6.83](TROUBLESHOOTING.md#683-linux-mixed-nftlegacyfirewalld-recovery).
+
+Keep both families' original backend until client recovery/stop finishes. Exact legacy-table
+advice is permitted alongside a recognized missing-rule/chain diagnostic; unknown errors
+are not ignored. Do not flush operator tables to silence that advice.
+[Client diagnostics §6.84](TROUBLESHOOTING.md#684-linux-client-rejects-a-legacy-table-warning).

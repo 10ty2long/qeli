@@ -71,3 +71,5 @@ Evidence: `C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/persistent
 
 Общий реестр: **3/15 DONE, 10 IN_PROGRESS, 2 TODO — 20% закрытых групп**.
 [Реестр](../plans/AUDIT-DEBT.md) · [Эксплуатация](../manuals/OPERATIONS.md).
+
+Итоговое продолжение D04: [клиентская mixed packet/recovery матрица и Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) завершены, D04 DONE в текущем реестре. Исторические IN_PROGRESS выше относятся к прежнему снимку. D10 (расширенные политики/топологии) и D13 (рост состояния) остаются открытыми.

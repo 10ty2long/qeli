@@ -43,9 +43,19 @@ fn diagnostic(stderr: &str) -> Option<&str> {
     let mut lines = stderr
         .lines()
         .map(str::trim)
-        .filter(|line| !line.is_empty());
+        .filter(|line| !line.is_empty())
+        // nft reports coexistence with legacy tables even for a valid absence
+        // diagnostic. These exact advisory lines do not invalidate its own query;
+        // they alone still cannot establish absence or mask another failure.
+        .filter(|line| {
+            !matches!(
+            *line,
+            "# Warning: iptables-legacy tables present, use iptables-legacy to see them"
+                | "# Warning: ip6tables-legacy tables present, use ip6tables-legacy to see them"
+        )
+        });
     let line = lines.next()?;
-    // xtables parameter errors can append this standard help line. Any additional
+    // xtables parameter errors can append this standard help line. Any other
     // warning/error is unknown, even if one line also mentions a missing rule.
     if lines.any(|line| {
         !matches!(
@@ -155,6 +165,55 @@ mod tests {
             "iptables: Rule does not exist.",
         ] {
             assert!(!present(&output(1, stderr), RULE).unwrap(), "{stderr}");
+        }
+    }
+    #[test]
+    fn exact_legacy_coexistence_advice_preserves_explicit_absence() {
+        for tool in ["iptables", "ip6tables"] {
+            let warning =
+                format!("# Warning: {tool}-legacy tables present, use {tool}-legacy to see them");
+            for diagnostic in [
+                format!("{tool}: No chain/target/match by that name."),
+                format!("{tool} v1.8.11 (nf_tables): Chain 'QELI_KS_edge' does not exist"),
+            ] {
+                for stderr in [
+                    format!("{warning}\n{diagnostic}"),
+                    format!("{diagnostic}\n{warning}"),
+                ] {
+                    for query in [RULE, Query::Chain("QELI_KS_edge")] {
+                        // Named diagnostics require an expected target.
+                        if matches!(query, Query::Rule { .. }) && diagnostic.contains("Chain '") {
+                            assert!(present(&output(1, &stderr), query).is_err());
+                        } else {
+                            assert!(!present(&output(1, &stderr), query).unwrap());
+                        }
+                    }
+                }
+            }
+            let missing = format!("{tool}: Bad rule (does a matching rule exist in that chain?).");
+            assert!(!present(&output(1, &format!("{warning}\n{missing}")), RULE).unwrap());
+        }
+    }
+    #[test]
+    fn coexistence_advice_never_masks_unknown_failed_inspection() {
+        let warning = "# Warning: iptables-legacy tables present, use iptables-legacy to see them";
+        let missing = "iptables: No chain/target/match by that name.";
+        for stderr in [
+            warning.to_owned(),
+            format!("{warning}\niptables: Permission denied"),
+            format!("{warning}\n{missing}\nError: meta sreg is not an immediate"),
+            format!(
+                "{warning}\n{missing}\niptables v1.8.11 (nf_tables): Parsing nftables rule failed"
+            ),
+            format!("{warning} (unrecognized suffix)\n{missing}"),
+            format!("# Warning: unknown tables present\n{missing}"),
+        ] {
+            for query in [RULE, Query::Chain("QELI_KS_edge")] {
+                assert!(present(&output(1, &stderr), query).is_err(), "{stderr}");
+            }
+        }
+        for code in [2, 3, 4, 111, 137, 255] {
+            assert!(present(&output(code, &format!("{warning}\n{missing}")), RULE).is_err());
         }
     }
     #[test]

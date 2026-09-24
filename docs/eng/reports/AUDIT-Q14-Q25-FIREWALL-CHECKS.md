@@ -90,3 +90,5 @@ Follow-up: [Q14-F028](AUDIT-Q14-DNS-OWNERSHIP.md) preserves exact ownership afte
 Drop/rollback in worker memory and adds retry. Q14-F027 and restart recovery remain open.
 
 24 September follow-up: [16 native mixed/firewalld scenarios](AUDIT-Q14-MIXED-FIREWALL.md) verify rule and journal preservation. A native nft expression can break absent-rule `-C` confirmation after successful `-D`; evidence remains until an administrator restores compatibility. The wrapper that disabled only `-S` did not cover this case.
+
+Final D04 follow-up: [client mixed packet/recovery matrix and Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) completed; D04 is DONE in the current register. Historical IN_PROGRESS statements above refer to earlier snapshots. D10 (broader policies/topologies) and D13 (state growth) remain open.

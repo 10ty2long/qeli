@@ -72,3 +72,5 @@ remains D04/D10. These are not new benchmark or final native-build results.
 
 Overall register: **3/15 DONE, 10 IN_PROGRESS, 2 TODO — 20% by closed groups**.
 [Register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md).
+
+Final D04 follow-up: [client mixed packet/recovery matrix and Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) completed; D04 is DONE in the current register. Historical IN_PROGRESS statements above refer to earlier snapshots. D10 (broader policies/topologies) and D13 (state growth) remain open.

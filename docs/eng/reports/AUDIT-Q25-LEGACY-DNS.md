@@ -92,3 +92,5 @@ namespaces on `.11`. Windows VM/Mac/iOS/router runtime remain SKIPPED by user de
 [Debt register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md)
 
 24 September follow-up: [persistent TUN/TAP validated in 17 crash scenarios](AUDIT-Q25-PERSISTENT-TUN.md). Safe refusal and explicit removal of a verified orphan close this portion of D04; the full mixed firewall matrix remains open.
+
+Final D04 follow-up: [client mixed packet/recovery matrix and Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) completed; D04 is DONE in the current register. Historical IN_PROGRESS statements above refer to earlier snapshots. D10 (broader policies/topologies) and D13 (state growth) remain open.

@@ -114,3 +114,5 @@ Windows VM/Mac/iOS/router runtime remain SKIPPED by user decision.
 Follow-up: [Q25-F101](AUDIT-Q25-LEGACY-DNS.md) closes legacy global DNS through refusal of automatic replay and manual migration. An old snapshot does not prove ownership of the current resolver; automatic restore/refcount and their test implementations were removed. Historical results above describe the earlier behavior.
 
 24 September follow-up: [persistent TUN/TAP validated in 17 crash scenarios](AUDIT-Q25-PERSISTENT-TUN.md). Safe refusal and explicit removal of a verified orphan close this portion of D04; the full mixed firewall matrix remains open.
+
+Final D04 follow-up: [client mixed packet/recovery matrix and Q25-F102](AUDIT-Q25-CLIENT-MIXED-FIREWALL.md) completed; D04 is DONE in the current register. Historical IN_PROGRESS statements above refer to earlier snapshots. D10 (broader policies/topologies) and D13 (state growth) remain open.
