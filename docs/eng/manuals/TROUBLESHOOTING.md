@@ -695,11 +695,10 @@ ls -la /etc/qeli/
 **Symptom:** a connection using `dns = tunnel` stops with
 `refusing to replace /etc/resolv.conf with tunnel DNS`.
 
-**Cause.** The client picks its DNS path not by whether the binary exists, but by what
-actually **resolves** on this machine: whether `/etc/resolv.conf` points at the
-systemd-resolved stub. If the service is installed but not enabled, or `resolv.conf` was
-left as a plain file (the usual state after removing `resolvconf` on Ubuntu), then
-`resolvectl dns` is a silent no-op.
+**Cause.** Actual `nameserver` entries in `/etc/resolv.conf` must contain only
+`127.0.0.53`/`127.0.0.54`; a regular file is supported and a symlink name proves nothing.
+The systemd-resolved/D-Bus availability and context are checked separately. Installing
+the service without starting it is insufficient; Qeli does not autoactivate it. See §6.76.
 
 Starting with 0.7.15 qeli deliberately **does not replace persistent `/etc/resolv.conf`**:
 after `SIGKILL`, power loss or client removal it could retain the vanished tunnel resolver
@@ -709,7 +708,7 @@ ones are not created. Enable the lifecycle-safe per-link path:
 sudo systemctl enable --now systemd-resolved
 sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 ```
-Check (it should be a symlink to the stub):
+Check (the usual recommended stub symlink):
 ```bash
 ls -l /etc/resolv.conf
 ```
@@ -1021,11 +1020,11 @@ history of every retry. User hook scripts may still change firewall state indepe
 Normal shutdown closes TCP-task admission and joins readers/writers, the decrypt pipeline
 and connection-maintenance tasks before network cleanup. Management-event errors follow
 the same sequence. The Linux TCP and UDP path monitor also waits for running route reads
-or path updates. Individual route, firewall, TUN and resolvectl commands have
+or path updates. Individual route, firewall, TUN and busctl commands have
 [bounds](#627-linux-system-command-timed-out-or-output-limit-exceeded); total stop time
 also depends on command count, verification queries and waiting for process exit.
 
-If shutdown is delayed, inspect logs and child ip/iptables/resolvectl processes. A stop
+If shutdown is delayed, inspect logs and child ip/iptables/busctl processes. A stop
 request alone does not prove network cleanup is complete. Forcing process termination cannot
 guarantee joining, network restoration or post_down. See [the report and validation limits](../reports/AUDIT-Q25-TCP-TASKS.md).
 
@@ -1088,7 +1087,7 @@ joining when the runtime is destroyed. Linux runtime validation remains open;
 
 ### 6.27 Linux: system command timed out or output limit exceeded
 
-For client route, kill-switch/gateway, TUN-interface and `resolvectl` commands, these
+For client route, kill-switch/gateway, TUN-interface and `busctl` commands, these
 errors mean exceeding 15 seconds
 or 16 MiB on one output stream. Spawn errors and nonzero exit codes remain distinct. Qeli
 attempts to terminate the child and, on Linux, its group, then waits for exit; partial output
@@ -1099,7 +1098,7 @@ DNS application (`dns` + `domain`) shares 15 seconds from setup entry.
 next step; the second command can time out before its own 15 seconds. The generation
 retains its lease for separate rollback. [Validation](../reports/AUDIT-Q25-DNS-BUDGET.md).
 
-Timeout does not prove that nothing changed. A failed `resolvectl revert` retains its marker
+Timeout does not prove that nothing changed. A failed D-Bus `RevertLink` retains its marker
 for the owning guard's retry. Startup does not revert live links from a marker alone (see §6.50).
 Generation rollback failures appear in the log; an attempted rollback
 does not mean successful revert. Check the affected interface and systemd-resolved state.
@@ -2201,3 +2200,19 @@ Route queries/mutations or mutex admission exceeded the shared deadline. Timeout
 ### 6.75. DNS: systemd-resolved is not the active system resolver
 
 For `dns = tunnel`, Qeli checks `/etc/resolv.conf` contents, including the symlink target. An upstream file, commented stub address or mixed DNS list is insufficient. Use an operating stub or `dns = off`/`system` for platform-managed DNS. Qeli does not rewrite the file automatically. [Validation and boundaries](../reports/AUDIT-Q25-RESOLVER-CONFIG.md).
+
+### 6.76. DNS: bus/service context changed or different network namespace
+
+The client refuses numeric ifindex mutations in a foreign network or through a replaced
+service/bus instance. Check that resolved serves the client network, the broker shares
+its PID namespace, `busctl` is installed, `/proc` is accessible, and
+`DBUS_SYSTEM_BUS_ADDRESS` selects one local Unix bus. Do not expose the host bus to a
+separate-network container for DNS management. Delegate external management through
+`dns = off`/`system`.
+
+A retained lease is not automatically transferred to a replacement service. Inspect
+the interface and `resolvectl status`; preserve evidence before manual recovery (§6.50).
+`LinkBusy` means another manager controls the link; there is no implicit networkd
+fallback. A `SetLinkDNSEx` error with a custom port requires resolved supporting this
+API: Qeli does not silently change the port to 53.
+[Analysis and checks](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).

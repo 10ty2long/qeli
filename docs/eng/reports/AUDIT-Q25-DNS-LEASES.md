@@ -111,3 +111,5 @@ remain open. No Linux E2E, native certification or new benchmark. Plan: 37 secti
 Follow-up: [Q25-F063–F064](AUDIT-Q25-ROUTE-IDENTITY.md) adds original-TUN and held-namespace
 evidence to route cleanup while preserving independent physical cleanup.
 Post-check races and setup/roaming remain open.
+
+Follow-up: [Q25-F094/F095](AUDIT-Q25-RESOLVER-CONTEXT.md) binds the bus/service context and command receiver, validates real resolved and fixes nonstandard DNS ports. Historical results above are unchanged.

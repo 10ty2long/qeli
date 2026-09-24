@@ -109,6 +109,7 @@
 | [AUDIT-Q25-SYSCTL-TARGET.md](reports/AUDIT-Q25-SYSCTL-TARGET.md) | Исходный sysctl fd, отказ при rename/replacement/crash и миграция журнала v3 |
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Общий срок применения DNS и сохранение lease для отдельного rollback |
 | [AUDIT-Q25-RESOLVER-CONFIG.md](reports/AUDIT-Q25-RESOLVER-CONFIG.md) | Строгая проверка resolver-конфига и bounded чтение |
+| [AUDIT-Q25-RESOLVER-CONTEXT.md](reports/AUDIT-Q25-RESOLVER-CONTEXT.md) | Контекст D-Bus/resolved, прямые вызовы и DNS-порт |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Свежий Android JNI, исправление cargo-ndk и 154 JVM + 6 emulator tests |
 | [AUDIT-Q34-LINUX-MATRIX.md](reports/AUDIT-Q34-LINUX-MATRIX.md) | Linux: матрица пакетов и RSS soak |
 | [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Память release TCP/UDP при 100 переключениях |

@@ -765,6 +765,8 @@ kill_switch = false
 dns         = tunnel
 ```
 
+На Linux `dns = tunnel` требует `busctl`, активный systemd-resolved и его stub в `/etc/resolv.conf`. Клиент и resolved должны находиться в одной сети, клиент и брокер D-Bus — в одном PID namespace. Для DNS, которым управляет внешняя платформа, используйте `dns = off`/`system`. [Точный контракт](CONFIG.md#системные-команды-tun-и-dns-на-linux).
+
 ```bash
 sudo qeli client --config /etc/qeli/client.conf
 ```

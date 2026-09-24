@@ -3953,12 +3953,10 @@ pub(crate) fn build_auth_ok_for_addresses_with_udp_roaming(
         // Additive: older clients ignore the field and use their own default.
         "mtu": pcfg.tun.mtu,
         "dns": pushed_dns,
-        // ALWAYS 53, never pcfg.dns.port. No client platform can express a different one —
-        // VpnService.Builder and NEDNSSettings take an address and nothing else, Windows and
-        // macOS configure resolvers by IP, while the Rust client uses resolvectl's `IP#port`
-        // form. Pushing the real port therefore black-holed DNS on every client but one. The
-        // proxy keeps its own port; `nat::setup_dns_firewall` bridges 53 to it inside the tunnel.
-        // (Audit 2026-07-31.)
+        // ALWAYS 53, never pcfg.dns.port: mobile/platform resolver APIs accept only IPs.
+        // Linux can apply custom ports through SetLinkDNSEx, but server-pushed DNS
+        // uses one portable contract. The proxy keeps its own port;
+        // `nat::setup_dns_firewall` bridges 53 to it inside the tunnel.
         "dns_port": 53,
         "routes": routes,
         "obfuscation": obf,

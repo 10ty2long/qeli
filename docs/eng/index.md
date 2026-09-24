@@ -109,6 +109,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-SYSCTL-TARGET.md](reports/AUDIT-Q25-SYSCTL-TARGET.md) | Original sysctl fd, rename/replacement/crash refusal and journal v3 migration |
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Shared DNS application deadline and retained lease for separate rollback |
 | [AUDIT-Q25-RESOLVER-CONFIG.md](reports/AUDIT-Q25-RESOLVER-CONFIG.md) | Strict resolver configuration and bounded file reading |
+| [AUDIT-Q25-RESOLVER-CONTEXT.md](reports/AUDIT-Q25-RESOLVER-CONTEXT.md) | D-Bus/resolved context, direct calls and DNS ports |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Fresh Android JNI, cargo-ndk fixes and 154 JVM + 6 emulator tests |
 | [AUDIT-Q34-LINUX-MATRIX.md](reports/AUDIT-Q34-LINUX-MATRIX.md) | Linux packet matrix and RSS soak |
 | [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Release TCP/UDP memory across 100 handovers |

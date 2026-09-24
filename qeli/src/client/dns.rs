@@ -19,7 +19,12 @@ const RESOLV_PATH: &str = "/etc/resolv.conf";
 const STATE_DIR: &str = "/var/lib/qeli";
 const DNS_SETUP_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
 const BACKUP_PATH: &str = "/var/lib/qeli/dns-backup.json";
-pub(crate) struct DnsLease(crate::dns_lease::Lease);
+#[path = "dns/resolver_context.rs"]
+mod resolver_context;
+pub(crate) struct DnsLease {
+    lease: crate::dns_lease::Lease,
+    resolver: resolver_context::Context,
+}
 
 fn current_scope() -> anyhow::Result<crate::dns_lease::Scope> {
     use std::os::unix::fs::MetadataExt;
@@ -44,9 +49,10 @@ fn target(
 
 impl DnsLease {
     pub(crate) fn restore(&mut self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
-        self.0.cleanup(|link| {
+        let until = std::time::Instant::now() + DNS_SETUP_BUDGET;
+        self.lease.cleanup(|link| {
             if let Some(index) = target(link, tun)? {
-                revert_resolvectl_link(&index)?;
+                revert_link_with(&index, Some(&self.resolver), until)?;
             }
             Ok(())
         })
@@ -100,6 +106,7 @@ pub(crate) fn setup_network_plan_dns(
         );
     }
 
+    let resolver = resolver_context::Context::capture(until)?;
     ensure_state_dir()?;
     let (name, index) = tun
         .attached_link()?
@@ -111,36 +118,41 @@ pub(crate) fn setup_network_plan_dns(
     };
     let lease = crate::dns_lease::Lease::acquire(Path::new(STATE_DIR), link)?;
     // Transfer ownership BEFORE the first resolver mutation, including partial failures.
-    *owned = Some(DnsLease(lease));
+    *owned = Some(DnsLease { lease, resolver });
     let lease = owned.as_ref().expect("lease just installed");
-    try_resolvectl_many(
+    apply_link_dns(
         config,
         || {
-            target(lease.0.link(), tun)?
+            target(lease.lease.link(), tun)?
                 .ok_or_else(|| anyhow::anyhow!("TUN disappeared during DNS setup"))
         },
         &resolver_args,
         until,
+        Some(&lease.resolver),
     )?;
     log::info!(
-        "DNS set via resolvectl on ifindex {}: {}",
+        "DNS set via systemd-resolved on ifindex {}: {}",
         index,
         resolver_args.join(", ")
     );
     Ok(())
 }
 
+#[cfg(test)]
 fn revert_resolvectl_link(ifname: &str) -> anyhow::Result<()> {
-    let output = resolvectl_cmd()
-        .args(["revert", ifname])
-        .output()
-        .map_err(|error| anyhow::anyhow!("cannot run resolvectl revert {ifname}: {error}"))?;
-    if !output.status.success() {
-        anyhow::bail!(
-            "resolvectl revert {ifname} failed with {}: {}",
-            output.status,
-            String::from_utf8_lossy(&output.stderr).trim()
-        );
+    revert_link_with(ifname, None, std::time::Instant::now() + DNS_SETUP_BUDGET)
+}
+fn revert_link_with(
+    ifname: &str,
+    context: Option<&resolver_context::Context>,
+    until: std::time::Instant,
+) -> anyhow::Result<()> {
+    if let Some(context) = context {
+        context.verify(until)?;
+    }
+    execute_link_command(context, "revert", ifname, &[], until)?;
+    if let Some(context) = context {
+        context.verify(until)?;
     }
     Ok(())
 }
@@ -248,8 +260,8 @@ fn index_exists(index: u32) -> anyhow::Result<bool> {
 #[path = "dns/resolver_config.rs"]
 mod resolver_config;
 
-// This proves only the configured stub path. Resolver service/bus identity remains
-// a separate D06 boundary; this check must not be mistaken for that proof.
+// The file proves the configured stub path; resolver_context separately verifies
+// the bus, calling namespace and possible service receivers before mutation.
 fn resolved_is_active() -> bool {
     resolver_config::uses_stub(Path::new(RESOLV_PATH))
 }
@@ -260,6 +272,7 @@ fn resolved_is_active() -> bool {
 /// different and more important question. Looked up by absolute path rather than via
 /// `PATH`: the client runs from a
 /// systemd unit whose environment may not carry a useful `PATH`.
+#[cfg(test)]
 fn which_resolvectl() -> Option<String> {
     // An explicit override wins. It exists because the absolute-path lookup below is, by
     // design, immune to `PATH` — which also makes it immune to being pointed at a stand-in.
@@ -284,24 +297,45 @@ fn which_resolvectl() -> Option<String> {
     .map(str::to_string)
 }
 
-/// `resolvectl` as a runnable command, resolved to an ABSOLUTE path.
-///
-/// Every call site used `Command::new("resolvectl")`, which searches `PATH` — defeating the
-/// whole reason [`which_resolvectl`] looks the binary up by absolute path in the first place
-/// (its own doc says so: the client runs from a systemd unit whose environment may carry no
-/// useful `PATH`). Where that bit, the symptom was silent: `resolvectl dns` simply failed to
-/// spawn, the caller read that as "resolvectl did not work". Falls back to the bare name
-/// when the binary is somewhere unusual, so
-/// a working `PATH` still succeeds. (Audit 2026-07-30.)
-fn resolvectl_cmd() -> crate::system_command::Command {
-    crate::system_command::Command::new(
-        which_resolvectl().unwrap_or_else(|| "resolvectl".to_string()),
-    )
+#[cfg(test)]
+fn resolver_command(context: Option<&resolver_context::Context>) -> crate::system_command::Command {
+    let mut command =
+        std::process::Command::new(which_resolvectl().unwrap_or_else(|| "resolvectl".into()));
+    if let Some(context) = context {
+        command.env("DBUS_SYSTEM_BUS_ADDRESS", context.address());
+    }
+    command.into()
+}
+fn execute_link_command(
+    context: Option<&resolver_context::Context>,
+    operation: &str,
+    index: &str,
+    values: &[String],
+    until: std::time::Instant,
+) -> anyhow::Result<()> {
+    if let Some(context) = context {
+        return context.apply(operation, index, values, until);
+    }
+    #[cfg(test)]
+    {
+        let output = resolver_command(None)
+            .args([operation, index])
+            .args(values)
+            .output_until(until)?;
+        anyhow::ensure!(
+            output.status.success(),
+            "resolvectl {operation} on {index} failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+        Ok(())
+    }
+    #[cfg(not(test))]
+    anyhow::bail!("verified resolver context is required for per-link DNS");
 }
 
 /// The `resolvectl domain` list for the tunnel link.
 ///
-/// Shared with [`try_resolvectl_many`] so the decision can be tested without spawning anything —
+/// Shared with [`apply_link_dns`] so the decision can be tested without spawning anything —
 /// it is the difference between "all DNS goes through the tunnel" and a silent split.
 fn routing_domains(config: &ClientDnsConfig) -> Vec<String> {
     let mut domains: Vec<String> = config.search_domains.clone();
@@ -322,11 +356,22 @@ fn try_resolvectl(config: &ClientDnsConfig, ifname: &str, dns_addr: &str) -> boo
     .is_ok()
 }
 
+#[cfg(test)]
 fn try_resolvectl_many(
+    config: &ClientDnsConfig,
+    current_target: impl FnMut() -> anyhow::Result<String>,
+    dns_addrs: &[String],
+    until: std::time::Instant,
+) -> anyhow::Result<()> {
+    apply_link_dns(config, current_target, dns_addrs, until, None)
+}
+
+fn apply_link_dns(
     config: &ClientDnsConfig,
     mut current_target: impl FnMut() -> anyhow::Result<String>,
     dns_addrs: &[String],
     until: std::time::Instant,
+    context: Option<&resolver_context::Context>,
 ) -> anyhow::Result<()> {
     let domains = routing_domains(config);
     for (operation, values) in [("dns", dns_addrs), ("domain", domains.as_slice())] {
@@ -340,13 +385,13 @@ fn try_resolvectl_many(
         }
         // Recheck the original descriptor before each mutation; use its captured numeric
         // index so a rename does not redirect a later operation to a same-name replacement.
+        if let Some(context) = context {
+            context.verify(until)?;
+        }
         let index = current_target()?;
-        let output = resolvectl_cmd()
-            .args([operation, &index])
-            .args(values)
-            .output_until(until)?;
-        if !output.status.success() {
-            anyhow::bail!("resolvectl {operation} on {index} failed with {}: {}; generation rollback retains its DNS lease",output.status,String::from_utf8_lossy(&output.stderr).trim());
+        execute_link_command(context, operation, &index, values, until)?;
+        if let Some(context) = context {
+            context.verify(until)?;
         }
     }
     Ok(())

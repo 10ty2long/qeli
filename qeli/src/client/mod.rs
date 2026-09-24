@@ -7903,7 +7903,7 @@ fn setup_tunnel(
     //
     // POSIX says dup(2) CLEARS FD_CLOEXEC on the new descriptor. The original /dev/net/tun
     // fd is opened by std, which sets O_CLOEXEC — and both dups threw that away. After this
-    // point the client keeps spawning children: `ip` (routes), `resolvectl` (DNS),
+    // point the client keeps spawning children: `ip` (routes), `busctl` (DNS),
     // `iptables`/`ip6tables` (kill-switch refresh on EVERY reconnect), and above all
     // `hooks::run("post_down", …)`, which is `/bin/sh -c <operator string>`. Each inherited
     // a live, readable TUN descriptor: `exec 9<&<N>` in a hook script reads the user's raw

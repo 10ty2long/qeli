@@ -52,3 +52,5 @@ does not close it. D04/D05/D09/D10/D13 also remain open. Windows VM/Mac/iOS/rout
 runtime is skipped by user decision.
 
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md)
+
+Follow-up: [Q25-F094/F095](AUDIT-Q25-RESOLVER-CONTEXT.md) binds the bus/service context and command receiver, validates real resolved and fixes nonstandard DNS ports. Historical results above are unchanged.

@@ -1288,11 +1288,9 @@ pub fn enable_routing(
 ///
 /// `dns.port` exists so the proxy can dodge a host service already holding 53 (dnsmasq,
 /// Pi-hole and friends bind `0.0.0.0:53`, which covers the TUN address too). But the port was
-/// then PUSHED to clients — and no client platform can use it: `VpnService.Builder` and
-/// `NEDNSSettings` take an address and nothing else, Windows and macOS configure resolvers by
-/// IP, and even the Rust client only manages it through `resolvectl`'s `IP#port` syntax, which
-/// cannot be represented by every platform. So a non-default `dns.port`
-/// silently black-holed DNS for every client but one.
+/// then pushed to clients whose platform resolver APIs accept only an IP address.
+/// Linux can apply custom ports through SetLinkDNSEx, but that capability does not
+/// change the portable server-pushed contract: clients use 53 on the tunnel address.
 ///
 /// Splitting the two settings fixes it properly: the proxy keeps its odd port, clients are
 /// told the only port they can express — 53 — and the kernel bridges the gap here. A no-op

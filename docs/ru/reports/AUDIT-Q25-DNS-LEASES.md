@@ -113,3 +113,5 @@ Linux E2E, native certification и новый benchmark не выполняли�
 Продолжение: [Q25-F063–F064](AUDIT-Q25-ROUTE-IDENTITY.md) добавляет проверки исходного
 TUN и удерживаемого namespace в route cleanup с независимым physical cleanup.
 Гонка после проверки и setup/roaming остаются открыты.
+
+Продолжение: [Q25-F094/F095](AUDIT-Q25-RESOLVER-CONTEXT.md) фиксирует контекст шины/службы и адресата команд, проверяет реальный resolved и исправляет нестандартный DNS-порт. Исторические результаты выше не пересчитывались.

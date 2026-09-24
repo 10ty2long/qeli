@@ -2786,19 +2786,21 @@ These rules apply to both client and server hooks:
 
 ### Linux TUN and DNS system commands
 
-Built-in TUN setup/removal commands (`ip` in the interface adapter) and client `resolvectl`
+Built-in TUN setup/removal commands (`ip` in the interface adapter) and client `busctl`
 calls have a 15-second execution deadline and a 16 MiB limit for each stdout/stderr stream.
 Timeout or output overflow returns an error after attempting to terminate and wait for the
 process. Partial output is not used. The DNS marker remains until confirmed revert; timeout
 does not mean that the command made no changes.
 
-DNS application commands `resolvectl dns` and `resolvectl domain` share one 15-second
+DNS bus/service context checks and `SetLinkDNS[Ex]` / `SetLinkDomains` share one 15-second
 budget starting at DNS setup entry, including time spent in preliminary checks. The
 second command receives only the remaining time; no new command starts after expiry.
 Partial failure preserves the generation lease; its later `revert` has a separate
 15-second deadline, so setup expiry does not prevent owned rollback. This budget does
 not give synchronous file I/O, spawn or kill/reap a hard upper bound.
 [DNS shared deadline validation](../reports/AUDIT-Q25-DNS-BUDGET.md).
+
+`dns = tunnel` requires `busctl` and an already running systemd-resolved in the same network namespace; the D-Bus broker must share the caller PID namespace. Commands target a specific unique owner on a bus with a pinned AUTH GUID. Replacing the service/bus aborts the operation and retains the lease. There is no autoactivation or networkd fallback; `LinkBusy` requires adjusting TUN ownership or selecting `dns = off`/`system`. Nonstandard NetworkPlan ports require `SetLinkDNSEx`; port 53 uses `SetLinkDNS`. [Context and validation](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
 
 These are internal bounds, with no new INI key. User-hook deadlines are unchanged. 15 seconds
 does not define total shutdown time. Current route/firewall sequence coverage and remaining

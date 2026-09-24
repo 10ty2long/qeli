@@ -49,9 +49,15 @@ for command in ip iptables ip6tables ping python3; do
   }
 done
 if [ "$FLAVOR" = dns4 ] || [ "$FLAVOR" = dns6 ]; then
-  for command in mount unshare; do
+  for command in mount unshare nsenter dbus-daemon busctl resolvectl; do
     command -v "$command" >/dev/null 2>&1 || { echo "required command is missing: $command" >&2; exit 2; }
   done
+  RESOLVED_BIN=
+  for path in /usr/lib/systemd/systemd-resolved /lib/systemd/systemd-resolved; do
+    if [ -x "$path" ]; then RESOLVED_BIN=$path; break; fi
+  done
+  [ -n "$RESOLVED_BIN" ] || { echo "systemd-resolved is required for DNS integration" >&2; exit 2; }
+  RESOLVECTL_REAL=$(command -v resolvectl)
   if [ ! -r "$SCRIPT_DIR/dns_test_server.py" ]; then
     echo "required DNS probe is missing: $SCRIPT_DIR/dns_test_server.py" >&2
     exit 2
@@ -374,21 +380,33 @@ EOF
 chmod 600 "$WORK/client.conf"
 if [ -n "$DNS_UPSTREAM" ]; then
   printf '%s\n' 'nameserver 127.0.0.53' >"$WORK/resolv.conf"
-  cat >"$WORK/resolvectl" <<EOF
-#!/bin/sh
-printf '%s\n' "\$*" >>"$WORK/resolvectl.log"
-exit 0
-EOF
   cat >"$WORK/client-mount.sh" <<EOF
 #!/bin/sh
 set -eu
 mount --make-rprivate /
 mount --bind "$WORK/resolv.conf" /etc/resolv.conf
-exec env QELI_RESOLVECTL="$WORK/resolvectl" \
-  QELI_KNOWN_HOSTS="$WORK/known-hosts" QELI_DEVICE_ID_FILE="$WORK/device-id" \
+# Each client owns a real resolver and bus in this private mount/network context.
+mount -t tmpfs tmpfs /run
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus
+export SYSTEMD_LOG_TARGET=console SYSTEMD_LOG_LEVEL=info
+printf '%s\n' '<busconfig><type>system</type><listen>unix:path=/run/qeli-matrix-bus</listen><auth>EXTERNAL</auth><policy context="default"><allow user="*"/><allow own="*"/><allow send_destination="*"/><allow receive_sender="*"/></policy></busconfig>' > /run/qeli-dbus.conf
+dbus-daemon --config-file=/run/qeli-dbus.conf --nofork --nopidfile >"$WORK/dbus.log" 2>&1 &
+for attempt in \$(seq 1 50); do [ ! -S /run/qeli-matrix-bus ] || break; sleep 0.1; done
+chmod 666 /run/qeli-matrix-bus
+mkdir -p /run/systemd/resolve
+chown systemd-resolve:systemd-resolve /run/systemd/resolve
+"$RESOLVED_BIN" >"$WORK/resolved.log" 2>&1 &
+printf '%s\n' "\$!" > "$WORK/resolved.pid"
+ready=0
+for attempt in \$(seq 1 100); do
+  if busctl --system --auto-start=no call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetNameOwner s org.freedesktop.resolve1 >/dev/null 2>&1; then ready=1; break; fi
+  sleep 0.1
+done
+[ "\$ready" = 1 ]
+exec env QELI_KNOWN_HOSTS="$WORK/known-hosts" QELI_DEVICE_ID_FILE="$WORK/device-id" \
   "$CLIENT_BIN" client -c "$WORK/client.conf"
 EOF
-  chmod 700 "$WORK/resolvectl" "$WORK/client-mount.sh"
+  chmod 700 "$WORK/client-mount.sh"
   ip netns exec "$CLI_NS" unshare --mount --propagation private \
     "$WORK/client-mount.sh" >"$WORK/client.log" 2>&1 &
 else
@@ -437,10 +455,23 @@ if [ -n "$DNS_UPSTREAM" ]; then
   DNS_NAMESPACE=$(ip netns exec "$CLI_NS" stat -Lc '%d-%i' /proc/self/ns/net)
   DNS_MARKER="/var/lib/qeli/dns-link-v1-$DNS_BOOT-$DNS_NAMESPACE-$DNS_INDEX.state"
   check_eventually "DNS owns the current link marker" "test -f $DNS_MARKER"
-  check_eventually "dual DNS servers were applied to the tunnel link" \
-    "grep -Fxq 'dns $DNS_INDEX 10.86.0.1 fd86::1' $WORK/resolvectl.log"
-  check_eventually "tunnel DNS owns the catch-all routing domain" \
-    "grep -Fxq 'domain $DNS_INDEX ~.' $WORK/resolvectl.log"
+  RESOLVER_PID=$(cat "$WORK/resolved.pid")
+  check_eventually "real resolved reports both tunnel DNS servers" \
+    "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns $DNS_INDEX | grep -Fq '10.86.0.1 fd86::1'"
+  check_eventually "real resolved reports the catch-all domain" \
+    "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL domain $DNS_INDEX | grep -Fq '~.'"
+  if ip netns exec "$CLI_NS" python3 "$SCRIPT_DIR/dns_test_server.py" query \
+    --server 127.0.0.53 --name a-stub.release.test --type A --expect 192.0.2.80; then
+    ok "A query crosses the real systemd-resolved stub and tunnel"
+  else
+    bad "A query crosses the real systemd-resolved stub and tunnel"
+  fi
+  if ip netns exec "$CLI_NS" python3 "$SCRIPT_DIR/dns_test_server.py" query \
+    --server 127.0.0.53 --name aaaa-stub.release.test --type AAAA --expect 2001:db8::80; then
+    ok "AAAA query crosses the real systemd-resolved stub and tunnel"
+  else
+    bad "AAAA query crosses the real systemd-resolved stub and tunnel"
+  fi
   if ip netns exec "$CLI_NS" python3 "$SCRIPT_DIR/dns_test_server.py" query \
     --server 10.86.0.1 --name a-v4.release.test --type A --expect 192.0.2.80; then
     ok "A query resolves through the IPv4 tunnel DNS listener"
@@ -536,7 +567,7 @@ fi
 CLIENT_PID=
 if [ -n "$DNS_UPSTREAM" ]; then
   check_eventually "clean stop reverted per-link DNS" \
-    "grep -Fxq 'revert $DNS_INDEX' $WORK/resolvectl.log"
+    "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after.txt && ! grep -Fq 'Link $DNS_INDEX (' $WORK/resolved-after.txt"
   check "clean stop removed the resolver ownership marker" \
     "test ! -e $DNS_MARKER"
 fi
