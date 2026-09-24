@@ -2097,3 +2097,14 @@ cancellation stops its owned process group; ordinary timeout waits for child com
 Kill/reap and synchronous file checks have no hard upper bound here, so this is not
 a whole-HTTP-request latency promise. Finding the tool also does not verify firewall
 correctness. [Analysis](../reports/AUDIT-Q05-HEALTH-PROBES.md).
+
+### 6.66. Linux: shared kill-switch cleanup deadline expired
+
+`kill-switch cleanup deadline expired; ownership retained for retry` means the attempt's
+15 seconds were consumed by lock admission or commands across both families. Inspect
+stalled backends, competing firewall operations and their logs. Once resolved, cleanup
+retry in the same process receives a fresh budget and checks the remaining resources.
+Some jumps/chains may already have been removed; neither intact protection nor successful
+shutdown is established by timeout. After process exit the in-memory owner is lost:
+inspect exact `QELI_KS_<tun>` chains in the original namespace and perform verified
+recovery. Preserve unrelated chains. [Analysis](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).

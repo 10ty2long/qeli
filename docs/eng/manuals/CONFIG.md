@@ -1942,6 +1942,14 @@ check for leftover rules before reusing the interface.
 
 ## Kill-switch (`kill_switch`)
 
+Linux `disengage` shares 15 seconds across operation-mutex admission and IPv4/IPv6
+cleanup. Expired attempts start no new commands and retain ownership for retry in the
+same process. Some rules may already be gone: timeout establishes neither complete
+removal nor intact protection. Resolve the firewall delay and retry cleanup; after
+process exit inspect leftovers in the original namespace using the recovery instructions.
+This is not a whole-client shutdown bound; setup/refresh still use per-command deadlines.
+[Details and validation](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
+
 On Linux, successful transport-core teardown and gateway/exit-node forwarding cleanup,
 with no recorded DNS/route/TUN cleanup failures, are required before releasing an enabled
 kill-switch. If these conditions are not met, Qeli reports `kill-switch retained` and

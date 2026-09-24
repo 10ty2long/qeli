@@ -51,7 +51,9 @@ existing admission/recovery rules; legacy or another TUN's chains are preserved 
 explicit recovery. Same-name resources cannot be attributed across arbitrary privileged
 external replacement, and iptables checks plus mutation are not one atomic transaction.
 The saved command path is not a pinned executable/backend identity. DNS resolution,
-operation mutex waits and complete command sequences still belong to D05. Arbitrary
+operation mutex waits and complete command sequences remained D05; the `disengage`
+budget is addressed in the [next phase](AUDIT-Q25-KILL-SWITCH-BUDGET.md), while
+engage/refresh remain open. Arbitrary
 multi-namespace execution in one client process is unsupported; detection fails closed.
 Family/address/rule changes by an external administrator require coordinated recovery.
 

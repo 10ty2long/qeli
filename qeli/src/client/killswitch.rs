@@ -67,6 +67,39 @@ fn operation() -> std::sync::MutexGuard<'static, ()> {
     OPERATION.lock().unwrap_or_else(|error| error.into_inner())
 }
 
+const CLEANUP_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
+
+fn operation_until(
+    lock: &std::sync::Mutex<()>,
+    until: std::time::Instant,
+) -> std::io::Result<std::sync::MutexGuard<'_, ()>> {
+    loop {
+        cleanup_time_left(until)?;
+        let acquired = match lock.try_lock() {
+            Ok(guard) => Some(guard),
+            Err(std::sync::TryLockError::Poisoned(error)) => Some(error.into_inner()),
+            Err(std::sync::TryLockError::WouldBlock) => None,
+        };
+        if let Some(guard) = acquired {
+            cleanup_time_left(until)?;
+            return Ok(guard);
+        }
+        std::thread::sleep(cleanup_time_left(until)?.min(std::time::Duration::from_millis(10)));
+    }
+}
+
+fn cleanup_time_left(until: std::time::Instant) -> std::io::Result<std::time::Duration> {
+    until
+        .checked_duration_since(std::time::Instant::now())
+        .filter(|left| !left.is_zero())
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "kill-switch cleanup deadline expired; ownership retained for retry",
+            )
+        })
+}
+
 /// Dedicated chain (in the `filter` table) holding the kill-switch ruleset.
 /// Chain name for THIS instance.
 ///
@@ -826,11 +859,19 @@ fn live_server_allows(context: &Context, path: &str, chain: &str) -> anyhow::Res
 /// chain is an idempotent success; an inaccessible or still-referenced chain is an error.
 /// Without an in-process owner there is no authority to remove a same-name chain.
 pub fn disengage(tun_if: &str) -> anyhow::Result<()> {
+    disengage_until(tun_if, std::time::Instant::now() + CLEANUP_BUDGET)
+}
+
+fn disengage_until(tun_if: &str, until: std::time::Instant) -> anyhow::Result<()> {
     anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
-    let _operation = operation();
+    let _operation = operation_until(&OPERATION, until)?;
     let Some(context) = Context::lookup(tun_if, true)? else {
         return Ok(());
     };
+    // One budget includes admission and both families. It belongs to this attempt,
+    // not to the retained owner: a later explicit cleanup receives a fresh budget.
+    let context = context.with_cleanup_deadline(until);
+    context.check_budget()?;
     let chain = chain_for(tun_if);
     let mut errors = Vec::new();
     for (_, family) in context.paths() {
@@ -842,6 +883,7 @@ pub fn disengage(tun_if: &str) -> anyhow::Result<()> {
     if !errors.is_empty() {
         anyhow::bail!("kill-switch cleanup failed: {}", errors.join("; "))
     }
+    context.check_budget()?;
     context.forget(tun_if)?;
     log::info!("Kill-switch disengaged (iptables chain {chain} removed)");
     Ok(())
@@ -1229,3 +1271,7 @@ mod command_bounds_tests;
 #[cfg(all(test, target_os = "linux"))]
 #[path = "killswitch/native_tests.rs"]
 mod native_tests;
+
+#[cfg(test)]
+#[path = "killswitch/cleanup_budget_tests.rs"]
+mod cleanup_budget_tests;

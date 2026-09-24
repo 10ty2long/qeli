@@ -68,6 +68,7 @@ const MAX_OWNERS: usize = 256;
 pub(super) struct Context {
     owner: Arc<Owner>,
     cleanup: bool,
+    cleanup_until: Option<std::time::Instant>,
 }
 impl Context {
     // Capture before resolution/operation-lock waits. The caller serializes all
@@ -89,6 +90,7 @@ impl Context {
         let context = Self {
             owner,
             cleanup: false,
+            cleanup_until: None,
         };
         context.check()?;
         Ok(context)
@@ -118,11 +120,25 @@ impl Context {
             .cloned();
         owner
             .map(|owner| {
-                let context = Self { owner, cleanup };
+                let context = Self {
+                    owner,
+                    cleanup,
+                    cleanup_until: None,
+                };
                 context.check()?;
                 Ok(context)
             })
             .transpose()
+    }
+    pub(super) fn with_cleanup_deadline(mut self, until: std::time::Instant) -> Self {
+        self.cleanup_until = Some(until);
+        self
+    }
+    pub(super) fn check_budget(&self) -> std::io::Result<()> {
+        if let Some(until) = self.cleanup_until {
+            super::cleanup_time_left(until)?;
+        }
+        Ok(())
     }
     pub(super) fn check(&self) -> anyhow::Result<()> {
         if let Err(error) = self.owner.namespace.verify() {
@@ -197,13 +213,21 @@ impl Context {
                 .is_some_and(|owner| Arc::ptr_eq(owner, &self.owner)),
             "kill-switch owner changed before cleanup completed"
         );
+        self.check_budget()?;
         owners.remove(name);
         Ok(())
     }
     pub(super) fn ipt(&self, path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
         self.check().map_err(std::io::Error::other)?;
-        let result = super::ipt(path, args);
+        self.check_budget()?;
+        let result = match self.cleanup_until {
+            Some(until) => crate::system_command::Command::new(path)
+                .args(args)
+                .output_until(until),
+            None => super::ipt(path, args),
+        };
         self.check().map_err(std::io::Error::other)?;
+        self.check_budget()?;
         result
     }
     pub(super) fn present_checked(&self, path: &str, args: &[&str]) -> anyhow::Result<bool> {
@@ -232,6 +256,7 @@ impl Context {
                 paths: Mutex::new(BTreeMap::new()),
             }),
             cleanup: false,
+            cleanup_until: None,
         }
     }
 }
