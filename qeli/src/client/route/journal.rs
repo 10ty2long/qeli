@@ -47,7 +47,7 @@ static REGISTRY: Mutex<Registry> = Mutex::new(Registry {
     entries: Vec::new(),
 });
 // Serialize check/mutate/journal within this process, including cleanup and roaming.
-// This is not a kernel CAS or a command deadline.
+// This is not a kernel CAS; budget::Operation supplies the command/admission deadline.
 static OPERATIONS: Mutex<()> = Mutex::new(());
 
 fn registry() -> MutexGuard<'static, Registry> {
@@ -56,7 +56,7 @@ fn registry() -> MutexGuard<'static, Registry> {
 
 impl RouteOwner {
     pub(crate) fn new(interface: &str, generation: u64) -> anyhow::Result<Self> {
-        let _operation = OPERATIONS.lock().unwrap_or_else(|e| e.into_inner());
+        let _operation = super::budget::Operation::acquire(&OPERATIONS)?;
         #[cfg(target_os = "linux")]
         let namespace = Arc::new(super::identity::Namespace::capture()?);
         let recovery = {
@@ -99,6 +99,7 @@ impl RouteOwner {
             }
             registry().entries.retain(|e| e.id != id);
         }
+        super::budget::check()?;
         let mut state = registry();
         state.next_id = state
             .next_id
@@ -176,6 +177,7 @@ impl RouteOwner {
                 self.interface()
             );
         }
+        super::budget::check()?;
         self.0
             .tun
             .set(BoundTun {
@@ -280,7 +282,10 @@ impl RouteOwner {
     }
 
     pub(crate) fn verify_plan(&self) -> anyhow::Result<()> {
-        self.check_identity(true)
+        super::budget::check()?;
+        self.check_identity(true)?;
+        super::budget::check()?;
+        Ok(())
     }
 
     pub(super) fn command_output(
@@ -305,8 +310,8 @@ impl RouteOwner {
         RouteScope(Arc::downgrade(&self.0))
     }
 
-    pub(super) fn operation(&self) -> anyhow::Result<MutexGuard<'static, ()>> {
-        let guard = OPERATIONS.lock().unwrap_or_else(|e| e.into_inner());
+    pub(super) fn operation(&self) -> anyhow::Result<super::budget::Operation> {
+        let guard = super::budget::Operation::acquire(&OPERATIONS)?;
         if !registry()
             .entries
             .iter()
@@ -315,20 +320,14 @@ impl RouteOwner {
             anyhow::bail!("route owner is stopped; rejecting stale route operation");
         }
         self.check_identity(false)?;
+        super::budget::check()?;
         Ok(guard)
     }
 
-    pub(super) fn cleanup_operation(&self) -> MutexGuard<'static, ()> {
-        let guard = OPERATIONS.lock().unwrap_or_else(|e| e.into_inner());
-        let mut state = registry();
-        let entry = state
-            .entries
-            .iter_mut()
-            .find(|e| e.id == self.0.id)
-            .expect("live route owner is registered");
-        // Set before the first command. Even failed cleanup must reject a late COMMIT.
-        entry.accepting = false;
-        guard
+    pub(super) fn cleanup_operation(&self) -> anyhow::Result<super::budget::Operation> {
+        // Cleanup failure or admission timeout must still reject a queued late COMMIT.
+        self.stop_admission();
+        Ok(super::budget::Operation::acquire(&OPERATIONS)?)
     }
 
     pub(crate) fn stop_admission(&self) {

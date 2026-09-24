@@ -95,6 +95,7 @@
 | [AUDIT-Q25-TUNNEL-ROUTES.md](reports/AUDIT-Q25-TUNNEL-ROUTES.md) | Q25-F037–F039: общий TUN/TAP installer, строгий route_local и удаление старых парсеров |
 | [AUDIT-Q25-GATEWAY-ROLLBACK.md](reports/AUDIT-Q25-GATEWAY-ROLLBACK.md) | Q25-F040–F042: владение gateway, частичный откат и проверки kill-switch |
 | [AUDIT-Q25-GATEWAY-BUDGET.md](reports/AUDIT-Q25-GATEWAY-BUDGET.md) | Общий срок gateway/exit-node и сохранённый rollback |
+| [AUDIT-Q25-ROUTE-BUDGET.md](reports/AUDIT-Q25-ROUTE-BUDGET.md) | Общий срок route-транзакций и отдельный verified rollback |
 | [AUDIT-Q25-EXIT-OWNERSHIP.md](reports/AUDIT-Q25-EXIT-OWNERSHIP.md) | Q25-F043–F045: независимый exit NAT и допуск конфликтующих kill-switch |
 | [AUDIT-Q25-KILL-SWITCH-LIFETIME.md](reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) | Q25-F046–F047: lifetime lease Linux kill-switch и fail-closed IPv6 |
 | [AUDIT-Q25-CLIENT-NAMESPACE.md](reports/AUDIT-Q25-CLIENT-NAMESPACE.md) | Q25-F048–F049: отключённый IPv6 и общее резервирование клиентского TUN |
@@ -109,7 +110,7 @@
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Общий срок применения DNS и сохранение lease для отдельного rollback |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Свежий Android JNI, исправление cargo-ndk и 154 JVM + 6 emulator tests |
 | [AUDIT-Q34-LINUX-MATRIX.md](reports/AUDIT-Q34-LINUX-MATRIX.md) | Linux: матрица пакетов и RSS soak |
-- [Память release TCP/UDP при 100 переключениях](reports/AUDIT-Q34-RELEASE-SOAK.md).
+| [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Память release TCP/UDP при 100 переключениях |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Владелец namespace, защита reconnect и точная очистка семейств |
 | [AUDIT-Q25-KILL-SWITCH-BUDGET.md](reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md) | Общий срок отключения kill-switch, частичная очистка и безопасный повтор |
 | [AUDIT-Q25-KILL-SWITCH-REFRESH.md](reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md) | Общий срок refresh и запрет вставки при unknown inspection |

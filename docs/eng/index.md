@@ -95,6 +95,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-TUNNEL-ROUTES.md](reports/AUDIT-Q25-TUNNEL-ROUTES.md) | Q25-F037–F039: shared TUN/TAP installer, strict route_local and obsolete parser removal |
 | [AUDIT-Q25-GATEWAY-ROLLBACK.md](reports/AUDIT-Q25-GATEWAY-ROLLBACK.md) | Q25-F040–F042: gateway ownership, partial rollback and kill-switch inspection |
 | [AUDIT-Q25-GATEWAY-BUDGET.md](reports/AUDIT-Q25-GATEWAY-BUDGET.md) | Gateway/exit-node deadline and retained rollback |
+| [AUDIT-Q25-ROUTE-BUDGET.md](reports/AUDIT-Q25-ROUTE-BUDGET.md) | Shared route transaction deadline and separate verified rollback |
 | [AUDIT-Q25-EXIT-OWNERSHIP.md](reports/AUDIT-Q25-EXIT-OWNERSHIP.md) | Q25-F043–F045: independent exit NAT and conflicting kill-switch admission |
 | [AUDIT-Q25-KILL-SWITCH-LIFETIME.md](reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md) | Q25-F046–F047: Linux kill-switch lifetime lease and fail-closed IPv6 |
 | [AUDIT-Q25-CLIENT-NAMESPACE.md](reports/AUDIT-Q25-CLIENT-NAMESPACE.md) | Q25-F048–F049: disabled IPv6 and shared client TUN reservations |
@@ -109,7 +110,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Shared DNS application deadline and retained lease for separate rollback |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Fresh Android JNI, cargo-ndk fixes and 154 JVM + 6 emulator tests |
 | [AUDIT-Q34-LINUX-MATRIX.md](reports/AUDIT-Q34-LINUX-MATRIX.md) | Linux packet matrix and RSS soak |
-- [Release TCP/UDP memory across 100 handovers](reports/AUDIT-Q34-RELEASE-SOAK.md).
+| [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Release TCP/UDP memory across 100 handovers |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Namespace ownership, reconnect protection and exact family cleanup |
 | [AUDIT-Q25-KILL-SWITCH-BUDGET.md](reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md) | Shared kill-switch cleanup deadline, partial cleanup and verified retry |
 | [AUDIT-Q25-KILL-SWITCH-REFRESH.md](reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md) | Shared refresh deadline and refusing insertion after unknown inspection |

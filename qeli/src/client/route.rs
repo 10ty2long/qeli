@@ -13,6 +13,8 @@ mod ownership;
 #[cfg(target_os = "linux")]
 use crate::network_namespace as identity;
 use ownership::{delete_spec, route_matches_spec};
+#[path = "route/budget.rs"]
+mod budget;
 #[path = "route/journal.rs"]
 mod journal;
 #[cfg(all(test, feature = "experimental-roaming"))]
@@ -47,11 +49,18 @@ fn reset_test_owner() {
 
 // Keep the route transaction's command boundary injectable without changing process PATH.
 fn route_command_output(args: &[String]) -> std::io::Result<std::process::Output> {
-    #[cfg(all(test, feature = "experimental-roaming"))]
-    if let Some(output) = candidate_outcome_tests::command_output(args) {
-        return output;
-    }
-    Command::new("ip").args(args).output()
+    let until = budget::deadline();
+    budget::check_until(until)?;
+    let run = || {
+        #[cfg(all(test, feature = "experimental-roaming"))]
+        if let Some(output) = candidate_outcome_tests::command_output(args) {
+            return output;
+        }
+        Command::new("ip").args(args).output_until(until)
+    };
+    let result = run();
+    budget::check_until(until)?;
+    result
 }
 
 #[cfg(all(test, feature = "experimental-roaming"))]
@@ -745,6 +754,7 @@ impl LinuxPreparedPathRoutes {
                 }
             };
             if let Err(error) = result {
+                let _rollback = budget::rollback();
                 let mut rollback_errors = rollback_candidate_route_steps(owner, &applied);
                 let previous = match &step.mutation {
                     CandidateRouteMutation::Replace { previous, .. } => Some(previous.as_slice()),
@@ -777,6 +787,7 @@ impl LinuxPreparedPathRoutes {
             };
             let actual = physical_path_for(owner, route.remote, Some(route.source));
             if actual.as_ref() != Some(&expected) {
+                let _rollback = budget::rollback();
                 let rollback_errors = rollback_candidate_route_steps(owner, &applied);
                 let mut message = format!(
                     "candidate carrier {} failed post-commit FIB verification",
@@ -801,6 +812,7 @@ impl LinuxPreparedPathRoutes {
                     retired.push(route);
                 }
                 Err(error) => {
+                    let _rollback = budget::rollback();
                     let mut rollback_errors = restore_retired_carrier_routes(owner, &retired);
                     rollback_errors.extend(rollback_candidate_route_steps(owner, &applied));
                     if let Err(verification) =
@@ -820,9 +832,17 @@ impl LinuxPreparedPathRoutes {
             }
         }
         if let Err(error) = owner.verify_plan() {
+            let _rollback = budget::rollback();
             let mut errors = restore_retired_carrier_routes(owner, &retired);
             errors.extend(rollback_candidate_route_steps(owner, &applied));
-            anyhow::bail!("{error}; final route rollback: {}", errors.join("; "));
+            if errors.is_empty() {
+                return Err(error);
+            }
+            return Err(RouteCommitStateUnknown::new(format!(
+                "{error}; final route rollback: {}",
+                errors.join("; ")
+            ))
+            .into());
         }
         Ok(())
     }
@@ -939,9 +959,10 @@ fn route_local_capture_cidrs(
 fn connected_rfc1918_prefixes(owner: &RouteOwner) -> anyhow::Result<Vec<Ipv4Net>> {
     owner.verify_plan()?;
     let ifname = owner.interface();
-    let output = Command::new("ip")
-        .args(["-4", "-o", "address", "show", "up", "scope", "global"])
-        .output()?;
+    let output = owner.command_output(
+        &["-4", "-o", "address", "show", "up", "scope", "global"].map(String::from),
+        true,
+    )?;
     if !output.status.success() {
         anyhow::bail!(
             "could not enumerate connected IPv4 networks for route_local: {}",
@@ -1731,7 +1752,7 @@ fn cleanup_routes_with_checks(
     namespace: impl Fn() -> anyhow::Result<()>,
     tunnel: impl Fn() -> anyhow::Result<()>,
 ) -> anyhow::Result<()> {
-    let _operation = owner.cleanup_operation();
+    let _operation = owner.cleanup_operation()?;
     let ifname = owner.interface();
     let command = |args: &[String], needs_tunnel: bool| {
         namespace().map_err(std::io::Error::other)?;
@@ -1800,6 +1821,9 @@ fn cleanup_routes_with_checks(
     errors.extend(reconcile_pending(owner, |spec| {
         ownership::recorded_route_with(spec, &|raw| command(raw, is_tunnel(spec)))
     }));
+    if let Err(error) = budget::check() {
+        errors.push(error.to_string());
+    }
     owner.cleanup_result(!errors.is_empty(), interface_flushed);
     if errors.is_empty() {
         Ok(())

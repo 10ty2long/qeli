@@ -1495,3 +1495,6 @@ mod cleanup_identity_tests;
 
 #[path = "setup_identity_tests.rs"]
 mod setup_identity_tests;
+
+#[path = "budget_tests.rs"]
+mod budget_tests;

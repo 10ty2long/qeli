@@ -2770,6 +2770,8 @@ set -eu
 
 Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Это не общий срок NetworkPlan/shutdown и не прерывание внутреннего I/O. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
 
+Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Это не срок всего NetworkPlan. [Контракт](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+
 Это внутренние пределы, без нового ключа INI. Сроки пользовательских hooks не меняются.
 Эти 15 секунд не задают общий срок shutdown. Текущее состояние последовательностей
 routes/firewall и оставшиеся ограничения отражены в [реестре техдолга](../plans/AUDIT-DEBT.md).

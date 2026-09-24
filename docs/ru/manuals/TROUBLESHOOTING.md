@@ -2194,3 +2194,7 @@ namespace generation` требует подтверждённой очистки
 ### 6.73. Router operation deadline expired
 
 Gateway/exit-node не успел закончить команды или дождаться operation mutex. Сведения об оставшихся правилах и sysctl удерживаются для verified cleanup с новым сроком. Проверьте доступность firewall tools; не удаляйте правила по общему префиксу. Внутренний I/O может вернуться позже срока. [Контракт](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+
+### 6.74. Route operation deadline expired
+
+Проверка/изменение маршрутов или ожидание mutex превысили общий срок. Не считайте timeout доказательством отсутствия изменений. Сохранённый owner допускает verified cleanup; при неизвестном откате COMMIT останавливается. Не удаляйте чужие маршруты и не освобождайте pending-записи вручную без проверки. [Подробности](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
