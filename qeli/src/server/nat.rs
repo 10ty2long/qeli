@@ -27,6 +27,10 @@ use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInpu
 use crate::system_command::Command;
 use std::sync::{Mutex, OnceLock};
 
+mod discovery;
+#[cfg(test)]
+pub(crate) use discovery::with_probe;
+
 const XTABLES_LOCK_WAIT_SECS: &str = "5";
 
 /// iptables comment tag for the rules belonging to `profile`.
@@ -38,15 +42,8 @@ fn tag(profile: &str) -> String {
 /// as an error + log + panel warning. Checks the usual sbin locations first (cheap,
 /// no exec) then falls back to a PATH probe.
 pub fn iptables_path() -> Option<String> {
-    for p in [
-        "/usr/sbin/iptables",
-        "/sbin/iptables",
-        "/usr/bin/iptables",
-        "/bin/iptables",
-    ] {
-        if std::path::Path::new(p).exists() {
-            return Some(p.to_string());
-        }
+    if let Some(path) = discovery::installed(discovery::Tool::Ipv4) {
+        return Some(path);
     }
     if Command::new("iptables")
         .args(["--version"])
@@ -59,22 +56,8 @@ pub fn iptables_path() -> Option<String> {
     None
 }
 
-fn installed_ip6tables() -> Option<String> {
-    for path in [
-        "/usr/sbin/ip6tables",
-        "/sbin/ip6tables",
-        "/usr/bin/ip6tables",
-        "/bin/ip6tables",
-    ] {
-        if std::path::Path::new(path).exists() {
-            return Some(path.to_string());
-        }
-    }
-    None
-}
-
 pub fn ip6tables_path() -> Option<String> {
-    installed_ip6tables().or_else(|| {
+    discovery::installed(discovery::Tool::Ipv6).or_else(|| {
         Command::new("ip6tables")
             .args(["--version"])
             .output()
@@ -84,19 +67,16 @@ pub fn ip6tables_path() -> Option<String> {
     })
 }
 
+pub async fn iptables_path_async(until: tokio::time::Instant) -> std::io::Result<Option<String>> {
+    discovery::find_async(discovery::Tool::Ipv4, until).await
+}
+
 pub async fn ip6tables_path_async(until: tokio::time::Instant) -> Option<String> {
-    if let Some(path) = installed_ip6tables() {
-        return Some(path);
-    }
-    crate::hook_process::run_output(
-        tokio::process::Command::new("ip6tables").arg("--version"),
-        until,
-        64 * 1024,
-    )
-    .await
-    .ok()
-    .filter(|output| output.status.success())
-    .map(|_| "ip6tables".to_string())
+    // Quick Start enables IPv6 management only when availability was established.
+    discovery::find_async(discovery::Tool::Ipv6, until)
+        .await
+        .ok()
+        .flatten()
 }
 
 /// Whether `iptables` is available on this host (used by the panel to warn).

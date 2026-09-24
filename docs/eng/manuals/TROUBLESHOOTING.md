@@ -1299,9 +1299,9 @@ There are no new INI keys.
 
 ### 6.36 Server: preflight delay or unavailable network state
 
-The four `ip` queries for IPv4/IPv6 addresses/routes now use the shared runner:
-15 seconds per command, with separate 16 MiB stdout/stderr limits. Oversized output
-is never parsed partially.
+The four `ip` queries for IPv4/IPv6 addresses/routes share one 15-second budget,
+with separate 16 MiB stdout/stderr limits per command. Oversized output is never
+parsed partially.
 
 The warning `pre-flight: could not read the host's network state` means the IPv4
 snapshot is unavailable: causes include missing `ip`, nonzero exit, read errors,
@@ -1312,10 +1312,10 @@ An IPv6 address or route query failure preserves IPv4 and the available IPv6 par
 there is still no separate warning for this partial failure. Observed collisions
 continue to block application. Successful empty output is valid.
 
-The complete preflight and panel transaction can take longer than 15 seconds:
-commands run sequentially and process termination can extend the call. Synchronous
-waiting in panel handlers remains. There are no new INI keys.
-[Scope and limitations](../reports/AUDIT-Q05-PREFLIGHT.md).
+The panel runs preflight asynchronously before the config lock; later steps receive
+only the remaining budget. The full transaction, file I/O and final kill/reap can
+take longer than 15 seconds. There are no new INI keys.
+[Current contract](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 
 ### 6.37 Linux client: path observation failure or delayed stop
@@ -2083,3 +2083,17 @@ and references to namespace fds; this is not a total limit of 256 descriptors. O
 `per-interface sysctl descriptor limit reached`, finish verified cleanup and inspect
 fds and remaining entries. Do not raise limits instead of identifying the cause.
 [Analysis, v2 → v3 migration and tests](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
+
+### 6.65. Panel: iptables availability could not be verified
+
+`Could not verify iptables availability` appears in Status/Transport health when the
+PATH probe fails: timeout, execution permissions, nonzero exit or excessive output.
+Check the installed tool and service-account access, then retry diagnostics. This is
+a warning; confirmed absence of iptables receives a separate critical diagnostic.
+
+Async `iptables/ip6tables --version` probes share four slots and a 15-second per-request
+budget including queue time. Each stdout/stderr stream is limited to 64 KiB. Request
+cancellation stops its owned process group; ordinary timeout waits for child completion.
+Kill/reap and synchronous file checks have no hard upper bound here, so this is not
+a whole-HTTP-request latency promise. Finding the tool also does not verify firewall
+correctness. [Analysis](../reports/AUDIT-Q05-HEALTH-PROBES.md).

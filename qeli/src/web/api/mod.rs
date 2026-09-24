@@ -2,6 +2,7 @@ mod backup;
 mod client;
 mod config;
 mod control;
+mod firewall;
 mod hash;
 mod identity;
 mod login;

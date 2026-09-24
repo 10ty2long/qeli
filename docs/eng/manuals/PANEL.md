@@ -234,6 +234,15 @@ socket/TUN buffers and connection limits. Alerts call out an unavailable worker,
 `iptables` for requested NAT, observed drops and liveness combinations that could retain a dead
 peer. The page refreshes every 5 s and pauses background polling in a hidden browser tab.
 
+Status and Transport health share asynchronous iptables discovery. If the tool is
+not found in standard system directories, its PATH `--version` probe has 15 seconds
+including waiting for a slot. At most four such async iptables/ip6tables probes run
+at once, including Quick Start IPv6 discovery. These two pages skip the probe when
+no profile requests NAT. `Could not verify iptables availability` reports a failed
+check, such as timeout or denied access; Transport health presents it as a warning.
+Confirmed tool absence remains critical. Finding the tool does not verify NAT rules.
+[Responsiveness checks and limitations](../reports/AUDIT-Q05-HEALTH-PROBES.md).
+
 The projection selects safe fields individually: obfs/reality credentials, passwords, identity
 private keys and session keys are never returned by `/api/transport/health`.
 

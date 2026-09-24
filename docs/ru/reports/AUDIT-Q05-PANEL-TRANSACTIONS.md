@@ -81,3 +81,5 @@ D05 ещё открыт: `tar`/архивирование/публикация r
 [Предыдущий preflight](AUDIT-Q05-PREFLIGHT.md) · [Инструкции](../manuals/TROUBLESHOOTING.md)
 
 Обновление D05/D09: [бюджет backup/restore и полнота снимка](AUDIT-Q05-ARCHIVE-BUDGET.md). Остальные сетевые последовательности и filesystem fault E2E остаются открытыми.
+
+Продолжение D05/D09: [async-проверки Status/Transport health](AUDIT-Q05-HEALTH-PROBES.md) и соседний HTTP-запрос на current-thread executor.

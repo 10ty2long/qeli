@@ -81,3 +81,5 @@ support or ABI changes were introduced.
 [Previous preflight](AUDIT-Q05-PREFLIGHT.md) · [Instructions](../manuals/TROUBLESHOOTING.md)
 
 D05/D09 update: [backup/restore budget and snapshot completeness](AUDIT-Q05-ARCHIVE-BUDGET.md). Other network sequences and filesystem fault E2E remain open.
+
+D05/D09 continuation: [async Status/Transport health probes](AUDIT-Q05-HEALTH-PROBES.md) and a neighboring HTTP request on a current-thread executor.

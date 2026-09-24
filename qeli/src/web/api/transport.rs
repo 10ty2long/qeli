@@ -28,7 +28,7 @@ pub async fn health(
         )));
     };
 
-    let nat_available = crate::server::nat::available();
+    let nat_warning = super::firewall::nat_warning(&config).await;
     let mut profiles = Vec::with_capacity(config.profiles.len());
     let mut total_sent = 0u64;
     let mut total_recv = 0u64;
@@ -83,11 +83,13 @@ pub async fn health(
                 "message": format!("{dropped} outbound packet(s) were dropped by server backpressure."),
             }));
         }
-        if profile.routing.nat.enabled && !nat_available {
-            alerts.push(json!({
-                "severity": "critical",
-                "message": "NAT is enabled but iptables is unavailable; full-tunnel internet egress will fail.",
-            }));
+        if profile.routing.nat.enabled {
+            if let Some(warning) = &nat_warning {
+                alerts.push(json!({
+                    "severity": warning.severity,
+                    "message": warning.message,
+                }));
+            }
         }
         if profile.bind.transport == "udp"
             && profile.performance.udp.recv_buffer_auto

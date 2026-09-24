@@ -191,12 +191,8 @@ pub async fn status(
     // here (the data-plane worker also logs an ERROR).
     let mut warnings: Vec<String> = Vec::new();
     if let Some(cfg) = &cfg {
-        if cfg.profiles.iter().any(|p| p.routing.nat.enabled) && !crate::server::nat::available() {
-            warnings.push(
-                "NAT masquerade is enabled on a profile, but `iptables` is not installed — \
-                full-tunnel internet egress will NOT work. Install it: apt install iptables."
-                    .to_string(),
-            );
+        if let Some(warning) = super::firewall::nat_warning(cfg).await {
+            warnings.push(warning.message);
         }
     }
     // A restart that was ACCEPTED but never happened. `full_restart` has to answer before
