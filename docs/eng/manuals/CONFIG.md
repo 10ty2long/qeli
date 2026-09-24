@@ -1942,12 +1942,24 @@ check for leftover rules before reusing the interface.
 
 ## Kill-switch (`kill_switch`)
 
+Kill-switch setup (`engage`) receives a shared 15-second deadline: resolver time,
+operation-mutex admission, tool discovery, policy admission and IPv4/IPv6 commands.
+Partial-setup rollback gets a separate 15 seconds from its first recovery operation,
+shared by all inner and final attempts across both families. Unverified cleanup rejects
+setup even with `allow_ipv4_leak`/`allow_ipv6_leak`: those flags accept an unprotected family,
+but cannot accept incomplete rollback as success. Ownership and tool paths remain for
+verified cleanup in the same process; after process exit, inspect exact remaining chains.
+Some rules may already be gone, so incomplete rollback does not establish intact protection.
+DNS/NSS and other synchronous boundaries cannot be interrupted by the timer: this is not
+a promise to finish within 30 seconds.
+[Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).
+
 Linux `disengage` shares 15 seconds across operation-mutex admission and IPv4/IPv6
 cleanup. Expired attempts start no new commands and retain ownership for retry in the
 same process. Some rules may already be gone: timeout establishes neither complete
 removal nor intact protection. Resolve the firewall delay and retry cleanup; after
 process exit inspect leftovers in the original namespace using the recovery instructions.
-This is not a whole-client shutdown bound; setup still uses per-command deadlines.
+This is not a whole-client shutdown bound.
 [Details and validation](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
 
 Server-IP refresh before reconnect also shares 15 seconds across resolver, queue and

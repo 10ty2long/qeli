@@ -81,7 +81,8 @@ inspection, spawn and kill/reap cannot be forcibly interrupted by the timer. The
 remains synchronous. Failures may leave partial additions or already confirmed deletions
 of stale addresses. Process-local ownership is not persistent crash recovery; after
 process exit remaining rules require inspection. INI parameters and ABI are unchanged.
-Engage, NAT/routes/gateway, other lock waits and full D04/D05/D09 remain open.
+[Setup and rollback](AUDIT-Q25-KILL-SWITCH-SETUP.md) are addressed by the following phase.
+NAT/routes/gateway, other lock waits and full D04/D05/D09 remain open.
 
 [Previous cleanup phase](AUDIT-Q25-KILL-SWITCH-BUDGET.md) ·
 [Manual](../manuals/CONFIG.md#kill-switch-kill_switch) ·

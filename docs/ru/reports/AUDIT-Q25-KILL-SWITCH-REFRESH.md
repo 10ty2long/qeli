@@ -80,7 +80,8 @@ spawn и kill/reap не получают принудительного прер
 При ошибке возможны частичные добавления или уже подтверждённые удаления устаревших
 адресов. Process-local owner не заменяет persistent crash recovery; после выхода
 процесса требуется проверка оставшихся правил. Параметры INI и ABI не менялись.
-Engage, NAT/routes/gateway, прочие lock waits и полный D04/D05/D09 остаются открытыми.
+[Установка и откат](AUDIT-Q25-KILL-SWITCH-SETUP.md) рассмотрены следующей фазой.
+NAT/routes/gateway, прочие lock waits и полные D04/D05/D09 остаются открытыми.
 
 [Предыдущая фаза очистки](AUDIT-Q25-KILL-SWITCH-BUDGET.md) ·
 [Мануал](../manuals/CONFIG.md#kill-switch-kill_switch) ·

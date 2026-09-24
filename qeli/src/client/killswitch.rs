@@ -63,6 +63,10 @@ pub(crate) mod ipv6_state;
 // namespace lease for its whole session, before DNS recovery and the first engage.
 // Old binaries and external administrators do not participate in that lease.
 static OPERATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+// Timing fixtures must control who waits for OPERATION; unrelated fixtures are not contenders.
+#[cfg(all(test, target_os = "linux"))]
+static BUDGET_TEST_SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
+#[cfg(test)]
 fn operation() -> std::sync::MutexGuard<'static, ()> {
     OPERATION.lock().unwrap_or_else(|error| error.into_inner())
 }
@@ -147,6 +151,13 @@ fn resolve_ips(server_addr: &str, server_port: u16) -> Vec<String> {
 /// approach as `server::nat::iptables_path` (duplicated because the server module is
 /// `cfg`-excluded from the client/.so builds).
 pub(crate) fn ipt_path(bin: &str) -> Option<String> {
+    ipt_path_with(bin, |program| ipt(program, &["--version"]))
+}
+
+fn ipt_path_with(
+    bin: &str,
+    probe: impl FnOnce(&str) -> std::io::Result<std::process::Output>,
+) -> Option<String> {
     #[cfg(test)]
     if let Some(path) = ownership::test_support::path(bin) {
         return path;
@@ -175,12 +186,7 @@ pub(crate) fn ipt_path(bin: &str) -> Option<String> {
             return Some(p);
         }
     }
-    if Command::new(bin)
-        .args(["--version"])
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-    {
+    if probe(bin).map(|o| o.status.success()).unwrap_or(false) {
         return Some(bin.to_string());
     }
     None
@@ -348,10 +354,48 @@ fn system_resolvers() -> Vec<String> {
     out
 }
 
+struct Rollback<'a> {
+    context: &'a Context,
+    budget: std::cell::OnceCell<Budget>,
+    limit: std::time::Duration,
+    failure: std::cell::RefCell<Option<String>>,
+}
+impl<'a> Rollback<'a> {
+    fn new(context: &'a Context, limit: std::time::Duration) -> Self {
+        Self {
+            context,
+            budget: std::cell::OnceCell::new(),
+            limit,
+            failure: std::cell::RefCell::new(None),
+        }
+    }
+    fn family(&self, path: &str, chain: &str) -> anyhow::Result<()> {
+        let budget = *self.budget.get_or_init(|| Budget {
+            until: std::time::Instant::now() + self.limit,
+            operation: "setup rollback",
+        });
+        let recovery = self.context.clone().with_budget(budget);
+        let result = teardown_family(&recovery, path, chain);
+        if let Err(error) = &result {
+            self.failure
+                .borrow_mut()
+                .get_or_insert_with(|| error.to_string());
+        }
+        result
+    }
+    fn check(&self) -> anyhow::Result<()> {
+        if let Some(error) = self.failure.borrow().as_ref() {
+            anyhow::bail!("kill-switch setup rollback failed: {error}");
+        }
+        Ok(())
+    }
+}
+
 /// Build the `QELI_KS` chain on one family and hook it at the top of OUTPUT.
 /// `allow_ips` are the server addresses of THIS family to let through.
 fn engage_family(
     context: &Context,
+    rollback: &Rollback<'_>,
     path: &str,
     tun_if: &str,
     allow_ips: &[String],
@@ -449,7 +493,8 @@ fn engage_family(
         require(&["-d", ip.as_str(), "-j", "ACCEPT"]);
     }
     if !missing.is_empty() {
-        let cleanup = teardown_family(context, path, chain)
+        let cleanup = rollback
+            .family(path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -463,7 +508,8 @@ fn engage_family(
     // Terminal DROP — everything not explicitly allowed above. This is the rule that
     // makes it a kill-switch, so its presence is mandatory.
     if !add(&["-j", "DROP"]) {
-        let cleanup = teardown_family(context, path, chain)
+        let cleanup = rollback
+            .family(path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -476,7 +522,8 @@ fn engage_family(
         let _ = context.ipt(path, &["-I", "OUTPUT", "1", "-j", chain]);
     }
     if !context.present(path, &["-C", "OUTPUT", "-j", chain]) {
-        let cleanup = teardown_family(context, path, chain)
+        let cleanup = rollback
+            .family(path, chain)
             .err()
             .map(|error| format!("; rollback also failed: {error}"))
             .unwrap_or_default();
@@ -495,7 +542,8 @@ fn engage_family(
             let _ = context.ipt(path, &["-I", "FORWARD", "1", "-j", chain]);
         }
         if !context.present(path, &["-C", "FORWARD", "-j", chain]) {
-            let cleanup = teardown_family(context, path, chain)
+            let cleanup = rollback
+                .family(path, chain)
                 .err()
                 .map(|error| format!("; rollback also failed: {error}"))
                 .unwrap_or_default();
@@ -511,13 +559,17 @@ fn engage_family(
 /// Only a successful empty address inventory rules out global IPv6. In particular,
 /// an inaccessible/missing procfs or a failed command is not an IPv4-only host.
 /// The shared command boundary bounds runtime and output, including partial replies.
+#[cfg(test)]
 fn host_may_have_global_ipv6() -> bool {
+    host_may_have_global_ipv6_with(|args| ipt("ip", args))
+}
+fn host_may_have_global_ipv6_with(
+    query: impl FnOnce(&[&str]) -> std::io::Result<std::process::Output>,
+) -> bool {
     if ipv6_state::globally_disabled() {
         return false;
     }
-    Command::new("ip")
-        .args(["-6", "address", "show", "scope", "global"])
-        .output()
+    query(&["-6", "address", "show", "scope", "global"])
         .map(|output| !output.status.success() || !output.stdout.is_empty())
         .unwrap_or(true)
 }
@@ -536,12 +588,56 @@ pub fn engage(
     // packets bypass OUTPUT entirely, so the chain must also cover FORWARD.
     guard_forward: bool,
 ) -> anyhow::Result<()> {
+    let until = std::time::Instant::now() + OPERATION_BUDGET;
+    engage_until(
+        Setup {
+            server_addr,
+            tun_if,
+            allow_ipv4_leak,
+            allow_ipv6_leak,
+            guard_forward,
+        },
+        until,
+        OPERATION_BUDGET,
+        || resolve_ips(server_addr, server_port),
+    )
+}
+
+struct Setup<'a> {
+    server_addr: &'a str,
+    tun_if: &'a str,
+    allow_ipv4_leak: bool,
+    allow_ipv6_leak: bool,
+    guard_forward: bool,
+}
+
+fn engage_until(
+    setup: Setup<'_>,
+    until: std::time::Instant,
+    rollback_limit: std::time::Duration,
+    resolve: impl FnOnce() -> Vec<String>,
+) -> anyhow::Result<()> {
+    let Setup {
+        server_addr,
+        tun_if,
+        allow_ipv4_leak,
+        allow_ipv6_leak,
+        guard_forward,
+    } = setup;
+    let budget = Budget {
+        until,
+        operation: "setup",
+    };
     if !valid_ifname(tun_if) {
         anyhow::bail!("kill-switch: invalid TUN interface name {tun_if:?}");
     }
-    let context = Context::prepare(tun_if)?;
+    budget.remaining()?;
+    let context = Context::prepare(tun_if)?.with_budget(budget);
+    context.check_budget()?;
     let chain = chain_for(tun_if);
-    let ips = resolve_ips(server_addr, server_port);
+    // DNS/NSS is synchronous; reject its late result before any firewall work.
+    let ips = resolve();
+    context.check_budget()?;
     if ips.is_empty() {
         anyhow::bail!(
             "kill-switch NOT engaged: cannot resolve server '{}' to an IP to allow through \
@@ -568,95 +664,115 @@ pub fn engage(
     // ignoring a missing tool on a dual-stack host would be the opposite (false security).
     // Protect a family whenever its firewall is available, and otherwise use the same
     // evidence + explicit escape-hatch rule for both families.
-    let _operation = operation();
+    let _operation = budget.lock(&OPERATION)?;
     context.check()?;
-    let v4_path = ipt_path("iptables");
-    let v6_path = ipt_path("ip6tables");
-    // Inspect both available families before changing either one. A conflict is
-    // host-wide policy incompatibility, not permission to use a leak escape hatch.
-    for path in [v4_path.as_deref(), v6_path.as_deref()]
-        .into_iter()
-        .flatten()
-    {
-        admission::check(&context, path, &chain)?;
-    }
-    context.bind(tun_if)?;
-    let v4_protected = match v4_path.as_deref() {
-        Some(path) => {
-            context.remember(false, path)?;
-            match engage_family(&context, path, tun_if, &v4, guard_forward) {
-                Ok(()) => true,
-                Err(error) => {
-                    log::warn!("kill-switch: IPv4 leg not engaged ({error})");
-                    false
-                }
-            }
-        }
-        None => false,
-    };
-    context.check()?;
-    context.protected(false, v4_protected, guard_forward);
-    if !v4_protected {
-        let needs_protection = !allow_ipv4_leak && host_may_have_ipv4_default_route();
+    context.check_budget()?;
+    let rollback = Rollback::new(&context, rollback_limit);
+    let mut bound = false;
+    let result = (|| -> anyhow::Result<()> {
+        let v4_path = ipt_path_with("iptables", |bin| context.ipt(bin, &["--version"]));
         context.check()?;
-        if needs_protection {
-            anyhow::bail!(
-                "kill-switch: IPv4 egress is present or could not be ruled out, but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
-            );
-        }
-        log::warn!(
-            "kill-switch: IPv4 egress is NOT restricted (no IPv4 default route detected, or allow_ipv4_leak is set)"
-        );
-    }
-
-    // IPv6 leg. Program ip6tables where present; where it's missing (or programming
-    // fails) the host would leak over v6 while the switch reports ENGAGED — a false
-    // sense of security. Require protection when global IPv6 exists OR its absence
-    // could not be verified, unless the operator explicitly accepts the leak.
-    let v6_protected = match v6_path.as_deref() {
-        Some(v6_path) => {
-            context.remember(true, v6_path)?;
-            match engage_family(&context, v6_path, tun_if, &v6, guard_forward) {
-                Ok(()) => true,
-                Err(e) => {
-                    log::warn!("kill-switch: IPv6 leg not engaged ({e})");
-                    false
-                }
-            }
-        }
-        None => false,
-    };
-    context.check()?;
-    context.protected(true, v6_protected, guard_forward);
-    if !v6_protected {
-        let needs_protection = !allow_ipv6_leak && host_may_have_global_ipv6();
+        context.check_budget()?;
+        let v6_path = ipt_path_with("ip6tables", |bin| context.ipt(bin, &["--version"]));
         context.check()?;
-        if needs_protection {
-            // Roll back the v4 leg we may have armed so a refusal leaves the host exactly
-            // as it was — not half-locked to a server the client will never reach.
-            if v4_protected {
-                if let Some(path) = v4_path.as_deref() {
-                    if let Err(rollback) = teardown_family(&context, path, &chain_for(tun_if)) {
-                        anyhow::bail!(
-                            "kill-switch: IPv6 protection is unavailable and rollback of the \
-                             already-installed IPv4 leg also failed: {rollback}. Manual firewall \
-                             cleanup may be required before retrying"
-                        );
+        context.check_budget()?;
+        // Inspect both available families before changing either one. A conflict is
+        // host-wide policy incompatibility, not permission to use a leak escape hatch.
+        for path in [v4_path.as_deref(), v6_path.as_deref()]
+            .into_iter()
+            .flatten()
+        {
+            admission::check(&context, path, &chain)?;
+        }
+        context.check_budget()?;
+        context.bind(tun_if)?;
+        bound = true;
+        context.check_budget()?;
+        let v4_protected = match v4_path.as_deref() {
+            Some(path) => {
+                context.remember(false, path)?;
+                match engage_family(&context, &rollback, path, tun_if, &v4, guard_forward) {
+                    Ok(()) => true,
+                    Err(error) => {
+                        log::warn!("kill-switch: IPv4 leg not engaged ({error})");
+                        false
                     }
                 }
             }
-            anyhow::bail!(
+            None => false,
+        };
+        context.check()?;
+        context.check_budget()?;
+        rollback.check()?;
+        context.protected(false, v4_protected, guard_forward);
+        if !v4_protected {
+            let needs_protection = !allow_ipv4_leak
+                && host_may_have_ipv4_default_route_with(|args| context.ipt("ip", args));
+            context.check()?;
+            context.check_budget()?;
+            if needs_protection {
+                anyhow::bail!(
+                "kill-switch: IPv4 egress is present or could not be ruled out, but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
+            );
+            }
+            log::warn!(
+            "kill-switch: IPv4 egress is NOT restricted (no IPv4 default route detected, or allow_ipv4_leak is set)"
+        );
+        }
+
+        // IPv6 leg. Program ip6tables where present; where it's missing (or programming
+        // fails) the host would leak over v6 while the switch reports ENGAGED — a false
+        // sense of security. Require protection when global IPv6 exists OR its absence
+        // could not be verified, unless the operator explicitly accepts the leak.
+        let v6_protected = match v6_path.as_deref() {
+            Some(v6_path) => {
+                context.remember(true, v6_path)?;
+                match engage_family(&context, &rollback, v6_path, tun_if, &v6, guard_forward) {
+                    Ok(()) => true,
+                    Err(e) => {
+                        log::warn!("kill-switch: IPv6 leg not engaged ({e})");
+                        false
+                    }
+                }
+            }
+            None => false,
+        };
+        context.check()?;
+        context.check_budget()?;
+        rollback.check()?;
+        context.protected(true, v6_protected, guard_forward);
+        if !v6_protected {
+            let needs_protection =
+                !allow_ipv6_leak && host_may_have_global_ipv6_with(|args| context.ipt("ip", args));
+            context.check()?;
+            context.check_budget()?;
+            if needs_protection {
+                // Roll back the v4 leg we may have armed so a refusal leaves the host exactly
+                // as it was — not half-locked to a server the client will never reach.
+                if v4_protected {
+                    if let Some(path) = v4_path.as_deref() {
+                        if let Err(rollback) = rollback.family(path, &chain_for(tun_if)) {
+                            anyhow::bail!(
+                                "kill-switch: IPv6 protection is unavailable and rollback of the \
+                             already-installed IPv4 leg also failed: {rollback}. Manual firewall \
+                             cleanup may be required before retrying"
+                            );
+                        }
+                    }
+                }
+                anyhow::bail!(
                 "kill-switch: global IPv6 is present or could not be ruled out, but ip6tables is unavailable or could not be programmed — refusing to engage a leaking kill-switch. Install/fix ip6tables and IPv6 inspection, or set allow_ipv6_leak = true to connect and accept the IPv6 leak."
             );
-        }
-        log::warn!(
+            }
+            log::warn!(
             "kill-switch: IPv6 egress is NOT restricted (IPv6 module disabled, global IPv6 inventory verified empty, \
              or allow_ipv6_leak is set)"
         );
-    }
+        }
 
-    context.check()?;
-    log::warn!(
+        context.check()?;
+        context.check_budget()?;
+        log::warn!(
         "Kill-switch ENGAGED (iptables chain {chain}): egress restricted to lo, {tun_if}, DHCP, \
          DNS and {}. It stays up across reconnects and is removed only on a clean stop; a crash \
          leaves it (no leak) — clear manually with \
@@ -664,16 +780,40 @@ pub fn engage(
          (and the same with ip6tables).",
         ips.join(", ")
     );
+        Ok(())
+    })();
+    if let Err(error) = result {
+        if bound {
+            let mut failures = Vec::new();
+            for (ipv6, family) in context.paths() {
+                match rollback.family(&family.path, &chain) {
+                    Ok(()) => context.protected(ipv6, false, family.guard_forward),
+                    Err(failure) => failures.push(failure.to_string()),
+                }
+            }
+            if !failures.is_empty() {
+                return Err(error.context(format!(
+                    "kill-switch setup rollback incomplete; ownership retained: {}",
+                    failures.join("; "),
+                )));
+            }
+        }
+        return Err(error);
+    }
     Ok(())
 }
 
 /// Only a successfully inspected empty default-route list permits skipping IPv4
 /// protection. Failed status, timeout, output overflow and spawn errors are unknown,
 /// not proof that an unprotected IPv4 path is absent.
+#[cfg(test)]
 fn host_may_have_ipv4_default_route() -> bool {
-    Command::new("ip")
-        .args(["-4", "route", "show", "default"])
-        .output()
+    host_may_have_ipv4_default_route_with(|args| ipt("ip", args))
+}
+fn host_may_have_ipv4_default_route_with(
+    query: impl FnOnce(&[&str]) -> std::io::Result<std::process::Output>,
+) -> bool {
+    query(&["-4", "route", "show", "default"])
         .map(|output| !output.status.success() || !output.stdout.is_empty())
         .unwrap_or(true)
 }
@@ -1057,8 +1197,10 @@ mod fault_injection {
     fn engage_test(ipt: &Ipt, tun_if: &str, guard_forward: bool) -> anyhow::Result<()> {
         let path = ipt.dir.join("iptables");
         let path = path.to_string_lossy().into_owned();
+        let context = Context::fixture();
         engage_family(
-            &Context::fixture(),
+            &context,
+            &Rollback::new(&context, OPERATION_BUDGET),
             &path,
             tun_if,
             &["203.0.113.7".to_string()],
@@ -1316,3 +1458,7 @@ mod cleanup_budget_tests;
 #[cfg(all(test, target_os = "linux"))]
 #[path = "killswitch/refresh_budget_tests.rs"]
 mod refresh_budget_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "killswitch/setup_budget_tests.rs"]
+mod setup_budget_tests;

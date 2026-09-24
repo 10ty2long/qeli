@@ -9,9 +9,11 @@ use std::{
 struct Fixture {
     dir: PathBuf,
     name: &'static str,
+    _serial: std::sync::MutexGuard<'static, ()>,
 }
 impl Fixture {
     fn new(name: &'static str, scripts: [&str; 2]) -> Self {
+        let serial = BUDGET_TEST_SERIAL.lock().unwrap_or_else(|e| e.into_inner());
         let dir = std::env::temp_dir().join(format!(
             "qeli-ks-refresh-{}-{}",
             std::process::id(),
@@ -30,7 +32,11 @@ impl Fixture {
             context.remember(i == 1, path.to_str().unwrap()).unwrap();
             context.protected(i == 1, true, false);
         }
-        Self { dir, name }
+        Self {
+            dir,
+            name,
+            _serial: serial,
+        }
     }
     fn refresh(&self, until: Instant) -> anyhow::Result<()> {
         refresh_until(self.name, until, || vec!["203.0.113.8".into()])

@@ -2121,3 +2121,20 @@ the error: resolve its cause, then perform controlled recovery/restart. A partia
 new address may remain alongside the previous one. A separate refresh call in the same
 process gets a new deadline, but no automatic retry was added here.
 [Analysis](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
+
+### 6.68. Linux: kill-switch setup or rollback failed
+
+`kill-switch setup deadline expired` means resolver, queue or commands exhausted the
+shared 15-second setup deadline. Check DNS/NSS, competing operations and firewall replies.
+A late result cannot start new setup commands; changes already started require rollback,
+which receives a separate shared 15-second budget.
+
+`kill-switch setup rollback incomplete; ownership retained` means cleanup of recorded
+families was not verified. `allow_ipv4_leak`/`allow_ipv6_leak` cannot bypass this refusal.
+Do not assume successful setup, intact protection or complete removal: some rules may
+already be gone. Resolve the cause and perform verified cleanup. In the live process it
+uses the original namespace and remembered tool paths; after process exit, inspect exact
+`QELI_KS_<tun>` chains and jumps in the original namespace before manual recovery,
+preserving unrelated rules. A deadline before ownership binding does not itself mean new
+rules were installed. This is not a hard connection deadline or automatic crash recovery.
+[Analysis](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).

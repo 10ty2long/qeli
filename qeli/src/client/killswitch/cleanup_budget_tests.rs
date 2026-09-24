@@ -89,9 +89,11 @@ mod linux {
     struct Fixture {
         dir: PathBuf,
         name: &'static str,
+        _serial: std::sync::MutexGuard<'static, ()>,
     }
     impl Fixture {
         fn new(name: &'static str, scripts: [&str; 2]) -> Self {
+            let serial = BUDGET_TEST_SERIAL.lock().unwrap_or_else(|e| e.into_inner());
             let dir = std::env::temp_dir().join(format!(
                 "qeli-ks-budget-{}-{}",
                 std::process::id(),
@@ -111,7 +113,11 @@ mod linux {
                     .remember(index == 1, path.to_str().unwrap())
                     .unwrap();
             }
-            Self { dir, name }
+            Self {
+                dir,
+                name,
+                _serial: serial,
+            }
         }
         fn retained(&self) {
             let context = Context::lookup(self.name, true)

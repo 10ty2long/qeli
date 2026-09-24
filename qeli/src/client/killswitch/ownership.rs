@@ -65,6 +65,7 @@ struct Owner {
 static OWNERS: Mutex<BTreeMap<String, Arc<Owner>>> = Mutex::new(BTreeMap::new());
 const MAX_OWNERS: usize = 256;
 
+#[derive(Clone)]
 pub(super) struct Context {
     owner: Arc<Owner>,
     cleanup: bool,

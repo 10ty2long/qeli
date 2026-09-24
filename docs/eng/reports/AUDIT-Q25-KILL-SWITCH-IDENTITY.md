@@ -52,8 +52,8 @@ explicit recovery. Same-name resources cannot be attributed across arbitrary pri
 external replacement, and iptables checks plus mutation are not one atomic transaction.
 The saved command path is not a pinned executable/backend identity. DNS resolution,
 operation mutex waits and complete command sequences remained D05; the `disengage`
-budget is addressed in the [next phase](AUDIT-Q25-KILL-SWITCH-BUDGET.md), while
-engage/refresh remain open. Arbitrary
+budget is addressed in the [next phase](AUDIT-Q25-KILL-SWITCH-BUDGET.md);
+later refresh/engage phases are linked below. Arbitrary
 multi-namespace execution in one client process is unsupported; detection fails closed.
 Family/address/rule changes by an external administrator require coordinated recovery.
 
@@ -61,4 +61,4 @@ Family/address/rule changes by an external administrator require coordinated rec
 
 Linux test binary SHA256: `805ae05534408637e5295370b38f5e786717e5b7a12f086f9a77dc659cbff544`.
 
-Next phase: [shared refresh deadline and unknown inspections](AUDIT-Q25-KILL-SWITCH-REFRESH.md). The refresh command sequence is addressed within the stated limits; synchronous DNS/NSS and engage remain open.
+Next phase: [shared refresh deadline and unknown inspections](AUDIT-Q25-KILL-SWITCH-REFRESH.md). The refresh command sequence is addressed within the stated limits; [setup and rollback](AUDIT-Q25-KILL-SWITCH-SETUP.md) are addressed by the following phase. Synchronous DNS/NSS remains open.
