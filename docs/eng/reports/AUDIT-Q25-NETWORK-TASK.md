@@ -128,3 +128,5 @@ certify those runtimes or a fresh Android package.
 
 Debt: **4/15 DONE (26.7%), 9 IN_PROGRESS, 2 TODO**.
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/OPERATIONS.md).
+
+Follow-up: [Q25-F106](AUDIT-Q25-TUN-TEARDOWN.md) shares graceful established TCP/UDP tunnel teardown on a joined worker. Early error/Drop fallback and overall D05 remain open; historical results above are retained.

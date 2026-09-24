@@ -129,3 +129,5 @@ Windows VM, Mac/iOS и физический роутер — **SKIPPED по ре
 
 Техдолг: **4/15 DONE (26,7%), 9 IN_PROGRESS, 2 TODO**.
 [Реестр](../plans/AUDIT-DEBT.md) · [Мануал](../manuals/OPERATIONS.md).
+
+Продолжение: [Q25-F106](AUDIT-Q25-TUN-TEARDOWN.md) объединяет штатную очистку установленного TCP/UDP-туннеля в присоединяемом потоке. Ранний error/Drop fallback и общий D05 остаются открыты; исторические результаты выше сохранены.

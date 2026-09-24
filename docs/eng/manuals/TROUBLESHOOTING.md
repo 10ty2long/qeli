@@ -2453,3 +2453,15 @@ NET/mount context; `worker panicked` reports worker failure, not successful setu
 Retain journals when cleanup is unverified. Established-tunnel teardown and kill-switch
 still have their previous synchronous-section limitations.
 [Operation and tests](../reports/AUDIT-Q25-NETWORK-TASK.md).
+
+### 6.88. Linux: cleanup error after an established connection
+
+During graceful DNS/route/forwarding teardown, neighboring async tasks keep running,
+but the TUN and network lease remain owned until cleanup finishes. A stop signal does
+not confirm that the interface is ready for reuse.
+
+A `network transaction` cleanup error means worker creation/context failure or panic.
+Hook reason `network_cleanup_failed` and code `network_cleanup` remain unchanged.
+Do not assume an enabled kill-switch was removed after this exit, or automatically
+remove it merely because the client window closed. Early errors and forced Drop may
+still run fallback synchronously. [Details](../reports/AUDIT-Q25-TUN-TEARDOWN.md).

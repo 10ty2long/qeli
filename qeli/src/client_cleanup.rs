@@ -33,15 +33,16 @@ pub(crate) enum Resource {
     Dns,
     Routes,
     Forwarding,
+    Transaction,
 }
 
-const RESOURCE_NAMES: [&str; 3] = ["DNS", "routes", "forwarding/NAT"];
+const RESOURCE_NAMES: [&str; 4] = ["DNS", "routes", "forwarding/NAT", "network transaction"];
 const ERROR_CHARS: usize = 2048;
 
 /// Sticky, bounded evidence shared by one Linux client and its resource guards.
 /// A later successful Drop retry must not erase an already returned cleanup failure.
 #[derive(Clone, Default)]
-pub(crate) struct Failures(Arc<Mutex<[Option<String>; 3]>>);
+pub(crate) struct Failures(Arc<Mutex<[Option<String>; 4]>>);
 
 #[derive(Debug, thiserror::Error)]
 #[error("network resource cleanup reported failure: {0}")]
@@ -510,7 +511,12 @@ mod tests {
     #[test]
     fn failure_evidence_is_bounded_and_keeps_first_error_for_each_resource() {
         let failures = Failures::default();
-        for resource in [Resource::Dns, Resource::Routes, Resource::Forwarding] {
+        for resource in [
+            Resource::Dns,
+            Resource::Routes,
+            Resource::Forwarding,
+            Resource::Transaction,
+        ] {
             let _ = failures.observe::<()>(
                 resource,
                 Err(anyhow::anyhow!("{}", "é".repeat(ERROR_CHARS * 4))),
@@ -518,7 +524,7 @@ mod tests {
             let _ = failures.observe::<()>(resource, Err(anyhow::anyhow!("replacement")));
         }
         let errors = failures.0.lock().unwrap();
-        assert_eq!(errors.iter().flatten().count(), 3);
+        assert_eq!(errors.iter().flatten().count(), RESOURCE_NAMES.len());
         for error in errors.iter().flatten() {
             assert_eq!(error.chars().count(), ERROR_CHARS);
             assert!(!error.contains("replacement"));
@@ -533,6 +539,7 @@ mod tests {
                 (Resource::Dns, "dns fault"),
                 (Resource::Routes, "route fault"),
                 (Resource::Forwarding, "nat fault"),
+                (Resource::Transaction, "worker fault"),
             ] {
                 let copy = failures.clone();
                 scope.spawn(move || {
@@ -545,6 +552,7 @@ mod tests {
             "DNS: dns fault",
             "routes: route fault",
             "forwarding/NAT: nat fault",
+            "network transaction: worker fault",
         ] {
             assert!(message.contains(expected), "{message}");
         }

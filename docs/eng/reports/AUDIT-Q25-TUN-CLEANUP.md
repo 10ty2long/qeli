@@ -74,3 +74,5 @@ and an overall shutdown deadline remain open.
 Follow-up: [Q25-F059–F060](AUDIT-Q25-TUN-LIFETIME.md) removes name-based TUN deletion and retains original descriptors through cleanup. DNS/route identity during external replacement and worker timeout remain open.
 
 Follow-up: [Q25-F105](AUDIT-Q25-NETWORK-TASK.md) moves NetworkPlan application and unadopted-result rollback to a joined worker. Established-tunnel cleanup remains separate D05 work; historical results above are retained.
+
+Follow-up: [Q25-F106](AUDIT-Q25-TUN-TEARDOWN.md) shares graceful established TCP/UDP tunnel teardown on a joined worker. Early error/Drop fallback and overall D05 remain open; historical results above are retained.

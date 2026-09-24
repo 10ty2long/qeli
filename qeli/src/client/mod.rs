@@ -6339,33 +6339,15 @@ where
     // Seal admission before aborting producers and streams together. Await every task
     // (including Linux path workers) before restoring DNS or releasing the TUN.
     connection_tasks.finish().await;
-    #[cfg(target_os = "linux")]
-    let dns_cleanup_error = tun_guard.restore_dns().err();
-    drop(tun_write_tx);
-    tun_pump.shutdown().await;
-    // TunGuard retains the original descriptor through DNS/routes cleanup and retries.
-    // Attach mode: the interface + routes belong to an external owner — leave them
-    // (we only borrowed the fd). Otherwise remove our routes before the guard closes its fd.
-    #[cfg(target_os = "linux")]
-    let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_routes(&tun_guard.routes, &tun_guard._tun, &tun_guard.failures).err()
-    } else {
-        None
+    let pump_shutdown = async move {
+        drop(tun_write_tx);
+        tun_pump.shutdown().await;
     };
     #[cfg(target_os = "linux")]
-    let result = {
-        let dns_cleanup = dns_cleanup_error.map_or(Ok(()), |error| {
-            Err(anyhow::anyhow!("DNS cleanup failed: {error}"))
-        });
-        let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
-        let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
-        let cleanup =
-            crate::client_cleanup::with_cleanup_error(cleanup, tun_guard.restore_router());
-        if cleanup.is_ok() {
-            tun_guard.disarm();
-        }
-        crate::client_cleanup::with_cleanup_error(result, cleanup)
-    };
+    let result =
+        crate::client_cleanup::with_cleanup_error(result, tun_guard.shutdown(pump_shutdown).await);
+    #[cfg(not(target_os = "linux"))]
+    pump_shutdown.await;
     if result.is_ok() {
         log::info!("Client disconnected");
     }
@@ -6898,6 +6880,39 @@ impl TunGuard {
             routes,
             armed: true,
         }
+    }
+
+    async fn shutdown(
+        self,
+        pump_shutdown: impl std::future::Future<Output = ()>,
+    ) -> anyhow::Result<()> {
+        let failures = self.failures.clone();
+        let result = network_task::teardown(
+            self,
+            Self::restore_dns,
+            pump_shutdown,
+            |guard, dns_cleanup| {
+                let dns_cleanup =
+                    dns_cleanup.map_err(|error| anyhow::anyhow!("DNS cleanup failed: {error}"));
+                let routes_cleanup = if guard.owns_device {
+                    cleanup_owned_routes(&guard.routes, &guard._tun, &guard.failures)
+                } else {
+                    Ok(())
+                };
+                let cleanup =
+                    crate::client_cleanup::with_cleanup_error(dns_cleanup, routes_cleanup);
+                let cleanup =
+                    crate::client_cleanup::with_cleanup_error(cleanup, guard.restore_router());
+                if cleanup.is_ok() {
+                    guard.disarm();
+                }
+                cleanup
+            },
+        )
+        .await;
+        // Thread creation/context errors and panics are cleanup failures too. Keeping
+        // them sticky prevents reconnect or release of the kill-switch after uncertainty.
+        failures.observe(crate::client_cleanup::Resource::Transaction, result)?
     }
 
     fn restore_dns(&mut self) -> anyhow::Result<()> {
@@ -11984,32 +11999,15 @@ pub(crate) async fn run_udp_tunnel(
         }
     }
 
-    #[cfg(target_os = "linux")]
-    let dns_cleanup_error = tun_guard.restore_dns().err();
-    drop(tun_write_tx);
-    tun_pump.shutdown().await;
-    // TunGuard retains the original descriptor through DNS/routes cleanup and retries.
-    // Attach mode: the interface + routes belong to an external owner — leave them.
-    #[cfg(target_os = "linux")]
-    let tun_cleanup_error = if !config.tun.attach_existing {
-        cleanup_owned_routes(&tun_guard.routes, &tun_guard._tun, &tun_guard.failures).err()
-    } else {
-        None
+    let pump_shutdown = async move {
+        drop(tun_write_tx);
+        tun_pump.shutdown().await;
     };
     #[cfg(target_os = "linux")]
-    let result = {
-        let dns_cleanup = dns_cleanup_error.map_or(Ok(()), |error| {
-            Err(anyhow::anyhow!("DNS cleanup failed: {error}"))
-        });
-        let tun_cleanup = tun_cleanup_error.map_or(Ok(()), Err);
-        let cleanup = crate::client_cleanup::with_cleanup_error(dns_cleanup, tun_cleanup);
-        let cleanup =
-            crate::client_cleanup::with_cleanup_error(cleanup, tun_guard.restore_router());
-        if cleanup.is_ok() {
-            tun_guard.disarm();
-        }
-        crate::client_cleanup::with_cleanup_error(result, cleanup)
-    };
+    let result =
+        crate::client_cleanup::with_cleanup_error(result, tun_guard.shutdown(pump_shutdown).await);
+    #[cfg(not(target_os = "linux"))]
+    pump_shutdown.await;
     if result.is_ok() {
         log::info!("UDP client disconnected");
     }

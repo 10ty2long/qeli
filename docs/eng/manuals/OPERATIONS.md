@@ -520,3 +520,16 @@ Sending a signal alone does not make a TUN ready for reuse. Wait for process exi
 verify cleanup. Forcibly dropping a future may synchronously wait for the worker join;
 there is no single hard shutdown deadline yet.
 [Validation and limits](../reports/AUDIT-Q25-NETWORK-TASK.md).
+
+## Stopping an established Linux tunnel
+
+TCP and UDP share this order: stop connection tasks → restore DNS → stop and join TUN
+packet workers → clean owned routes and forwarding → close the original TUN descriptor.
+DNS/routes/forwarding run on a separate thread; the client waits for completion.
+Failure of one stage does not skip the remaining cleanup attempts.
+
+On `network resource cleanup reported failure`, automatic reconnect is prohibited and
+an enabled kill-switch is retained. A successful guard retry does not turn the initial
+failure into successful exit. Retain logs and investigate before a new explicit start.
+Forced Drop may synchronously await completion; there is still no single hard shutdown
+deadline. [Design and checks](../reports/AUDIT-Q25-TUN-TEARDOWN.md).

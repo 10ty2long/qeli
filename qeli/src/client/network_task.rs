@@ -135,6 +135,73 @@ pub(crate) async fn run<T: Send + 'static>(
     }
 }
 
+/// Keep one resource on its original worker across an async pump shutdown.
+/// Dropping the waiter drops the pump future before joining the worker's fallback Drop.
+pub(crate) async fn teardown<T: Send + 'static, B, R: Send + 'static>(
+    resource: T,
+    before: impl FnOnce(&mut T) -> B + Send + 'static,
+    middle: impl std::future::Future<Output = ()>,
+    after: impl FnOnce(&mut T, B) -> R + Send + 'static,
+) -> anyhow::Result<R> {
+    let start = (|| -> anyhow::Result<_> {
+        let context = Context::capture()?;
+        let (ready, waiting) = tokio::sync::oneshot::channel();
+        let (finished, completion) = tokio::sync::oneshot::channel();
+        let (resume, continuation) = mpsc::channel();
+        let thread = std::thread::Builder::new()
+            .name("qeli-network-cleanup".into())
+            .spawn(move || {
+                // The resource, including fallback cleanup, dies before finished is sent.
+                let result = (|| {
+                    let mut resource = resource;
+                    context.verify()?;
+                    let state = before(&mut resource);
+                    let _ = ready.send(());
+                    continuation.recv().map_err(|_| cancelled())?;
+                    Ok(after(&mut resource, state))
+                })();
+                let _ = finished.send(());
+                Some(result)
+            })?;
+        Ok((
+            Job {
+                adopt: Some(resume),
+                thread: Some(thread),
+            },
+            waiting,
+            completion,
+        ))
+    })();
+    let (job, waiting, completion) = match start {
+        Ok(start) => start,
+        Err(error) => {
+            // A spawn/context failure must still stop and join packet workers.
+            middle.await;
+            return Err(error);
+        }
+    };
+    struct Waiter<R, F> {
+        // Struct fields drop in declaration order. Stop/join the pump FIRST, then close
+        // continuation and join resource cleanup, even when this future is abandoned.
+        middle: Option<std::pin::Pin<Box<F>>>,
+        job: Job<R>,
+    }
+    let mut waiter = Waiter {
+        middle: Some(Box::pin(middle)),
+        job,
+    };
+    let _ = waiting.await; // Also closes on worker panic; the pump must still be joined.
+    waiter.middle.as_mut().expect("pump shutdown future").await;
+    waiter.middle.take();
+    waiter.job.decide(true);
+    let _ = completion.await;
+    waiter.job.finish()
+}
+
 #[cfg(test)]
 #[path = "network_task/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "network_task/teardown_tests.rs"]
+mod teardown_tests;
