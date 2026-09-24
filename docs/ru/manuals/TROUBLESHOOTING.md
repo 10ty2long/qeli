@@ -1235,7 +1235,7 @@ lease теперь сохраняет прежнего владельца, чт�
 повторный запуск не восстанавливает такое свидетельство. Не удаляйте журнал ради обхода
 проверки. [Текущий контракт](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
 
-Журнал v3 разделён по network namespace. `host sysctl PID namespace mismatch` или
+Журнал v4 разделён по network namespace. `host sysctl PID namespace mismatch` или
 `host sysctl time namespace mismatch` означает обращение к одной сети из другого
 контекста наблюдения процессов; выполняйте recovery в исходных PID/time namespace.
 `procfs PID namespace mismatch or unavailable NStgid` требует procfs текущего PID namespace
@@ -2180,3 +2180,13 @@ INPUT-правила. После выхода worker требуется отде
 и запрещает успех установки. После устранения задержки lifecycle cleanup проверяет
 остатки заново. Не очищайте чужие правила и не считайте timeout доказательством отсутствия
 мутации. [Разбор](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).
+
+### 6.72. Sysctl: namespace generation или legacy v3
+
+`host sysctl network namespace generation mismatch` сохраняет журнал и отказывает
+до проверки владельцев и sysctl I/O. Совпавшего inode недостаточно; не присваивайте
+старому журналу текущий cookie. `SO_NETNS_COOKIE is required` требует ядра с поддержкой
+этой socket option для управления sysctl. `legacy v3 host sysctl journal lacks durable
+namespace generation` требует подтверждённой очистки в исходной сети до обновления
+либо плановой перезагрузки. Сохраните журнал, не меняйте cookie/version/boot-id ради
+запуска. [Подробности](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).

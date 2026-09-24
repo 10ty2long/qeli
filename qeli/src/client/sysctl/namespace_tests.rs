@@ -8,6 +8,9 @@ const BOOT: &str = "namespace-test-boot";
 #[derive(Default)]
 struct Kernel {
     net: u64,
+    cookie: Option<u64>,
+    cookie_error: Option<io::ErrorKind>,
+    no_cookie: bool,
     pid_ns: u64,
     time_ns: Option<u64>,
     time_error: Option<io::ErrorKind>,
@@ -52,6 +55,15 @@ fn run(test: impl FnOnce(&Fixture)) {
             let mut k = kernel.borrow_mut();
             match op {
                 Operation::Target(path) => panic!("unexpected target {path}"),
+                Operation::NetworkCookie => {
+                    if let Some(error) = k.cookie_error {
+                        return Err(error.into());
+                    }
+                    if k.no_cookie {
+                        return Ok("unsupported".into());
+                    }
+                    Ok(k.cookie.unwrap_or(k.net + 1000).to_string())
+                }
                 Operation::Namespace(path) => {
                     if let Some(error) = k.namespace_error {
                         return Err(error.into());
@@ -417,6 +429,7 @@ fn failed_oversized_persist_preserves_previous_journal() {
             .collect();
         for n in 0..32 {
             let mut journal = SysctlJournal::empty("4:20".into());
+            journal.network_cookie = Some(1000 + n);
             journal.entries.insert(KNOB.into(), entry.clone());
             store.namespaces.insert(format!("4:{}", 100 + n), journal);
         }
@@ -662,5 +675,91 @@ fn context_loss_after_write_preserves_evidence_and_poisoned_transaction_cannot_c
         release_at(f, "edge").unwrap();
         assert_eq!(f.kernel.borrow().values[&10], "0\n");
         assert!(!f.path.exists());
+    });
+}
+
+#[test]
+fn reused_namespace_inode_cannot_replay_original_or_prune_owners() {
+    run(|f| {
+        seed_owned(f);
+        let before = std::fs::read(&f.path).unwrap();
+        f.kernel.borrow_mut().cookie = Some(2020);
+        for result in [
+            recover_at(f),
+            acquire_at(f, "1", "new"),
+            release_at(f, "edge"),
+        ] {
+            assert!(result
+                .unwrap_err()
+                .to_string()
+                .contains("generation mismatch"));
+        }
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert_eq!(f.kernel.borrow().probes, 0);
+    });
+}
+#[test]
+fn missing_or_unreadable_cookie_never_changes_owned_state() {
+    for error in [io::ErrorKind::PermissionDenied, io::ErrorKind::Other] {
+        run(|f| {
+            seed_owned(f);
+            let before = std::fs::read(&f.path).unwrap();
+            f.kernel.borrow_mut().cookie_error = Some(error);
+            assert!(recover_at(f).is_err());
+            assert_eq!(std::fs::read(&f.path).unwrap(), before);
+            assert!(f.kernel.borrow().writes.is_empty());
+        });
+    }
+    run(|f| {
+        f.kernel.borrow_mut().no_cookie = true;
+        recover_at(f).unwrap();
+        assert!(acquire_at(f, "1", "edge")
+            .unwrap_err()
+            .to_string()
+            .contains("SO_NETNS_COOKIE"));
+        assert!(!f.path.exists());
+        assert!(f.kernel.borrow().writes.is_empty());
+    });
+}
+#[test]
+fn legacy_v3_same_boot_requires_verified_upgrade_without_replay() {
+    run(|f| {
+        seed_owned(f);
+        let mut old: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&f.path).unwrap()).unwrap();
+        old["version"] = 3.into();
+        old["namespaces"]["4:10"]
+            .as_object_mut()
+            .unwrap()
+            .remove("network_cookie");
+        let before = serde_json::to_vec(&old).unwrap();
+        std::fs::write(&f.path, &before).unwrap();
+        assert!(recover_at(f).unwrap_err().to_string().contains("legacy v3"));
+        assert_eq!(std::fs::read(&f.path).unwrap(), before);
+        assert!(f.kernel.borrow().writes.is_empty());
+        assert!(decode_store(&before, "next-boot")
+            .unwrap()
+            .namespaces
+            .is_empty());
+    });
+}
+#[test]
+fn invalid_v4_cookie_is_rejected_even_from_previous_boot() {
+    run(|f| {
+        seed_owned(f);
+        let base: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&f.path).unwrap()).unwrap();
+        for cookie in [
+            serde_json::Value::Null,
+            serde_json::json!(0),
+            serde_json::json!("1010"),
+        ] {
+            let mut value = base.clone();
+            value["namespaces"]["4:10"]["network_cookie"] = cookie;
+            let bytes = serde_json::to_vec(&value).unwrap();
+            assert!(decode_store(&bytes, BOOT).is_err());
+            assert!(decode_store(&bytes, "next-boot").is_err());
+        }
     });
 }

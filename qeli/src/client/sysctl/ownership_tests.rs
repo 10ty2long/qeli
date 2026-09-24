@@ -16,6 +16,7 @@ impl Kernel {
     fn command(&mut self, op: Operation<'_>) -> io::Result<String> {
         match op {
             Operation::Target(path) => panic!("unexpected target {path}"),
+            Operation::NetworkCookie => Ok("1010".into()),
             Operation::Namespace(path) => match path {
                 "/proc/thread-self/ns/net" => Ok("4:10".into()),
                 "/proc/thread-self/ns/pid" => Ok("4:20".into()),

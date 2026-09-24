@@ -2308,7 +2308,7 @@ reports `cannot verify host sysctl owner(s)`. Releasing a verified scope continu
 independent cleanup and reports remaining failures. Failed sysctl reads/writes retain
 the original value for recovery.
 
-Internal `sysctls.state` version 3 separates entries by network namespace. Each group
+Internal `sysctls.state` version 4 separates entries by network namespace. Each group
 also records PID and exposed time namespace identity; mismatch stops the operation
 before checking owners or changing settings. Foreign network groups remain intact and
 their PIDs are not probed. Participants in one network must share a state directory
@@ -2323,19 +2323,22 @@ value into a new interface. `ENOENT` does not authorize forgetting the original 
 After all live descriptors are lost, including SIGKILL, the entry remains for manual
 recovery and startup recovery returns an error. Exception: if `original == managed`,
 Qeli changed nothing and can release the entry without accessing the interface. Global
-settings and `all`/`default` retain the previous namespace contract. Automatic recovery
-across namespace reuse after a crash has not yet been qualified.
+settings and `all`/`default` additionally require matching `network_cookie`
+and boot-id. Reused dev/inode with a different cookie never authorizes replay. Managed
+sysctls require `SO_NETNS_COOKIE`: unsupported kernels allow empty recovery but refuse
+acquire before mutation. Cookie does not replace the original named-interface fd.
 
-Nonempty v1/v2 journals from the current boot are not migrated automatically. Version 2
+Nonempty v1/v2/v3 journals from the current boot are not migrated automatically. Version 2
 reports `legacy v2 host sysctl journal lacks live descriptor ownership`; v1 retains
 `legacy host sysctl journal has no namespace identity`. Before upgrading, stop old
 participants and complete recovery in the original namespaces while the original
 interfaces remain verified. Do not blindly run old recovery after an interface was
-replaced. Alternatively, use a planned host reboot. Empty v1/v2 or valid previous-boot
+replaced. Alternatively, use a planned host reboot. Empty v1/v2/v3 or valid previous-boot
 state allows transition; old values are not replayed after reboot. Do not manually
 change version/boot-id or remove the journal to force startup. Mixed journal versions
 are unsupported. User configs remain INI; no new keys were added.
-[Contract, migration and limits](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
+V3 reports `legacy v3 host sysctl journal lacks durable namespace generation`.
+[V4 contract, migration and limits](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).
 
 On Unix shared atomic writes and removal of the final sysctl journal sync the
 parent directory. `published ... persistence is uncertain` means the file was

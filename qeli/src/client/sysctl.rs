@@ -26,7 +26,7 @@ mod state_dir;
 #[path = "sysctl/target.rs"]
 mod target;
 
-const JOURNAL_VERSION: u8 = 3;
+const JOURNAL_VERSION: u8 = 4;
 const JOURNAL_LIMIT: u64 = 128 * 1024;
 const BOOT_ID_PATH: &str = "/proc/sys/kernel/random/boot_id";
 const JOURNAL_NAME: &str = "sysctls.state";
@@ -65,6 +65,8 @@ struct ManagedSysctl {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct SysctlJournal {
+    #[serde(default)]
+    network_cookie: Option<u64>,
     pid_namespace: String,
     time_namespace: Option<String>,
     entries: BTreeMap<String, ManagedSysctl>,
@@ -73,6 +75,7 @@ struct SysctlJournal {
 impl SysctlJournal {
     fn empty(pid_namespace: String) -> Self {
         Self {
+            network_cookie: None,
             pid_namespace,
             time_namespace: None,
             entries: BTreeMap::new(),
@@ -103,8 +106,14 @@ impl JournalStore {
             .or_insert_with(|| {
                 let mut journal = SysctlJournal::empty(context.pid.clone());
                 journal.time_namespace = context.time.clone();
+                journal.network_cookie = context.cookie;
                 journal
             });
+        if journal.network_cookie != context.cookie
+            || (!journal.entries.is_empty() && context.cookie.is_none())
+        {
+            anyhow::bail!("host sysctl network namespace generation mismatch or unavailable SO_NETNS_COOKIE; keep sysctls.state and recover from the original namespace");
+        }
         if journal.pid_namespace != context.pid {
             anyhow::bail!(
                 "host sysctl PID namespace mismatch for network namespace {}: saved {}, current {}; keep sysctls.state and recover from the original PID namespace",
@@ -350,6 +359,9 @@ fn validate(journal: &SysctlJournal) -> anyhow::Result<()> {
 }
 
 fn validate_store(store: &JournalStore) -> anyhow::Result<()> {
+    validate_store_schema(store, true)
+}
+fn validate_store_schema(store: &JournalStore, require_cookie: bool) -> anyhow::Result<()> {
     if store.version != JOURNAL_VERSION
         || !valid_boot_id(&store.boot_id)
         || store.namespaces.len() > 256
@@ -368,6 +380,11 @@ fn validate_store(store: &JournalStore) -> anyhow::Result<()> {
             anyhow::bail!("invalid host sysctl network namespace identity");
         }
         validate(journal)?;
+        if journal.network_cookie == Some(0)
+            || (require_cookie && !journal.entries.is_empty() && journal.network_cookie.is_none())
+        {
+            anyhow::bail!("host sysctl journal lacks a valid network namespace generation");
+        }
         for (path, entry) in &journal.entries {
             if let Some(target) = &entry.target {
                 if !leases.insert(target.lease()) {
@@ -429,6 +446,15 @@ fn decode_store(bytes: &[u8], boot_id: &str) -> anyhow::Result<JournalStore> {
         }
         if old.boot_id == boot_id && old.namespaces.values().any(|j| !j.entries.is_empty()) {
             anyhow::bail!("legacy v2 host sysctl journal lacks live descriptor ownership; keep sysctls.state and complete recovery before upgrading, or perform a planned host reboot");
+        }
+        return Ok(JournalStore::empty(boot_id.to_owned()));
+    }
+    if header.version == 3 {
+        let mut old: JournalStore = serde_json::from_slice(bytes)?;
+        old.version = JOURNAL_VERSION;
+        validate_store_schema(&old, false)?;
+        if old.boot_id == boot_id && old.namespaces.values().any(|j| !j.entries.is_empty()) {
+            anyhow::bail!("legacy v3 host sysctl journal lacks durable namespace generation; keep sysctls.state and complete recovery before upgrading, or perform a planned host reboot");
         }
         return Ok(JournalStore::empty(boot_id.to_owned()));
     }
@@ -682,6 +708,11 @@ fn acquire_in(
     value: &str,
     scope: &str,
 ) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        transaction.context.context().cookie.is_some(),
+        "SO_NETNS_COOKIE is required for managed host sysctls; no sysctl was changed"
+    );
+
     require_known_owners(uncertain)?;
     if !valid_sysctl_path(path) || !valid_value(value) {
         anyhow::bail!("refusing unmanaged sysctl request {path}={value:?}");

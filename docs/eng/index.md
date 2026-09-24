@@ -103,6 +103,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q25-ATOMIC-STATE.md](reports/AUDIT-Q25-ATOMIC-STATE.md) | Temporary-file cleanup, directory fsync and uncertain publication outcomes |
 | [AUDIT-Q25-STATE-DIRECTORY.md](reports/AUDIT-Q25-STATE-DIRECTORY.md) | Pinned trusted sysctl directory, root/User=qeli and shared-lock replacement during waiting |
 | [AUDIT-Q25-NAMESPACE-PIN.md](reports/AUDIT-Q25-NAMESPACE-PIN.md) | Network/PID/time namespace fd lifetime across lock waits and sysctl I/O |
+| [AUDIT-Q25-NAMESPACE-GENERATION.md](reports/AUDIT-Q25-NAMESPACE-GENERATION.md) | Network namespace generation, journal v4 and D02 closure |
 | [AUDIT-Q25-SYSCTL-TARGET.md](reports/AUDIT-Q25-SYSCTL-TARGET.md) | Original sysctl fd, rename/replacement/crash refusal and journal v3 migration |
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Shared DNS application deadline and retained lease for separate rollback |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Fresh Android JNI, cargo-ndk fixes and 154 JVM + 6 emulator tests |

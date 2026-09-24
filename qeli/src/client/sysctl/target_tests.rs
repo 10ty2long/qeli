@@ -49,6 +49,7 @@ fn run(test: impl FnOnce(&Fixture)) {
         move |op| {
             let mut k = kernel.borrow_mut();
             match op {
+                Operation::NetworkCookie => Ok("1010".into()),
                 Operation::Namespace(path) => match path {
                     "/proc/thread-self/ns/net" => Ok("4:10".into()),
                     "/proc/thread-self/ns/pid" => Ok("4:20".into()),
@@ -260,7 +261,7 @@ fn v2_current_boot_is_preserved_but_empty_or_previous_boot_may_upgrade() {
             decode_store(&serde_json::to_vec(&store).unwrap(), BOOT)
                 .unwrap()
                 .version,
-            3
+            JOURNAL_VERSION
         );
     });
 }

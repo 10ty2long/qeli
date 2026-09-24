@@ -107,3 +107,5 @@ Source archive SHA256: `1f7d8d5ee80d6f59f1db2da5985cfccc80f13534116ef01546ed7e0e
 
 [Предыдущая фаза namespace pins](AUDIT-Q25-NAMESPACE-PIN.md) ·
 [Конфигурационный контракт](../manuals/CONFIG.md)
+
+Последующее закрытие D02: [поколение namespace и журнал v4](AUDIT-Q25-NAMESPACE-GENERATION.md). Результаты v3 выше относятся к прежнему снимку; per-interface witness остаётся обязательным.

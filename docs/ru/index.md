@@ -103,6 +103,7 @@
 | [AUDIT-Q25-ATOMIC-STATE.md](reports/AUDIT-Q25-ATOMIC-STATE.md) | Cleanup временных файлов, directory fsync и неопределённый результат публикации |
 | [AUDIT-Q25-STATE-DIRECTORY.md](reports/AUDIT-Q25-STATE-DIRECTORY.md) | Доверенный каталог sysctl по fd, root/User=qeli и замена общего lock во время ожидания |
 | [AUDIT-Q25-NAMESPACE-PIN.md](reports/AUDIT-Q25-NAMESPACE-PIN.md) | Удержание network/PID/time namespace fd через lock waits и sysctl I/O |
+| [AUDIT-Q25-NAMESPACE-GENERATION.md](reports/AUDIT-Q25-NAMESPACE-GENERATION.md) | Поколение network namespace, журнал v4 и закрытие D02 |
 | [AUDIT-Q25-SYSCTL-TARGET.md](reports/AUDIT-Q25-SYSCTL-TARGET.md) | Исходный sysctl fd, отказ при rename/replacement/crash и миграция журнала v3 |
 | [AUDIT-Q25-DNS-BUDGET.md](reports/AUDIT-Q25-DNS-BUDGET.md) | Общий срок применения DNS и сохранение lease для отдельного rollback |
 | [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Свежий Android JNI, исправление cargo-ndk и 154 JVM + 6 emulator tests |

@@ -1240,7 +1240,7 @@ the object may have been renamed or replaced. Restarting cannot recreate evidenc
 a lost live sysctl descriptor. Do not remove the journal to bypass the check.
 [Current contract](../reports/AUDIT-Q25-SYSCTL-TARGET.md).
 
-Version 3 separates groups by network namespace. `host sysctl PID namespace mismatch`
+Version 4 separates groups by network namespace. `host sysctl PID namespace mismatch`
 or `host sysctl time namespace mismatch` means the same network is being accessed from
 a different process-observation context; recover in the original PID/time namespace.
 `procfs PID namespace mismatch or unavailable NStgid` requires procfs for the current
@@ -2179,3 +2179,13 @@ has a separate shared deadline. `NAT rollback incomplete` retains exact records 
 prevents successful setup. Once the delay is resolved, lifecycle cleanup verifies the
 remaining rules again. Preserve unrelated rules; timeout does not prove no mutation.
 [Analysis](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).
+
+### 6.72. Sysctl: namespace generation or legacy v3
+
+`host sysctl network namespace generation mismatch` retains the journal and refuses
+before owner probes and sysctl I/O. Matching inode alone is insufficient; never assign
+the current cookie to old state. `SO_NETNS_COOKIE is required` needs kernel support
+for this socket option to manage sysctls. `legacy v3 host sysctl journal lacks durable
+namespace generation` requires verified cleanup in the original network before upgrading
+or a planned reboot. Preserve state; never edit cookie/version/boot-id to bypass refusal.
+[Details](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).

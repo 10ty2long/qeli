@@ -107,3 +107,5 @@ run tested an intermediate snapshot and does not replace these final results.
 
 [Previous namespace pin phase](AUDIT-Q25-NAMESPACE-PIN.md) ·
 [Configuration contract](../manuals/CONFIG.md)
+
+Subsequent D02 closure: [namespace generation and journal v4](AUDIT-Q25-NAMESPACE-GENERATION.md). V3 results above describe the earlier snapshot; per-interface witness remains required.

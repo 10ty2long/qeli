@@ -4,6 +4,7 @@ use super::host;
 #[derive(Clone)]
 pub(super) struct Context {
     pub network: String,
+    pub cookie: Option<u64>,
     pub pid: String,
     pub time: Option<String>,
     // Capture before waiting for either journal lock and retain through final I/O.
@@ -13,7 +14,10 @@ pub(super) struct Context {
 
 impl PartialEq for Context {
     fn eq(&self, other: &Self) -> bool {
-        self.network == other.network && self.pid == other.pid && self.time == other.time
+        self.network == other.network
+            && self.cookie == other.cookie
+            && self.pid == other.pid
+            && self.time == other.time
     }
 }
 impl Eq for Context {}
@@ -59,6 +63,7 @@ pub(super) fn current() -> anyhow::Result<Context> {
     // setns affects the calling thread, so /proc/self/ns/net is insufficient.
     let network_pin = host::pin_namespace("/proc/thread-self/ns/net")?;
     let network = network_pin.identity.clone();
+    let cookie = host::network_cookie()?;
     let pid_pin = host::pin_namespace("/proc/thread-self/ns/pid")?;
     let pid = pid_pin.identity.clone();
     let mut pins = vec![network_pin, pid_pin];
@@ -83,6 +88,7 @@ pub(super) fn current() -> anyhow::Result<Context> {
     }
     Ok(Context {
         network,
+        cookie,
         pid,
         time,
         _pins: std::sync::Arc::new(pins),
