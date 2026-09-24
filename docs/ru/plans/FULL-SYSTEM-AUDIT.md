@@ -1932,15 +1932,13 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** продолжить 25/21/22 с внутренним sysctl journal: проверки после
-ожидания lock, stale owners, смена namespace и переиспользование имён TUN/WAN. Затем
-самостоятельный kill-switch lifecycle. Q25-F067–F068 закрывает gateway command boundaries
-и cleanup при живом исходном fd; не весь sysctl backend. Исполнить семь native route
-identity tests, семь TUN ioctl tests и Linux DNS/filesystem/firewall cases. Physical uplinks,
-resolver service/bus namespace, имена parser/backend, procfs/sysfs/journal trust, deadlines,
-crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 workers/FD и preflight waits
-остаются открыты. Native certification и новый benchmark не выполнялись; статусы целых
-разделов не изменены.
+**Ближайшая работа:** закрывать [реестр техдолга](AUDIT-DEBT.md), не открывая новые
+разделы. В D02 остаются durable namespace identity и исходное поколение интерфейса;
+затем D04 crash recovery и оставшиеся D05/D06 network budgets/resource context.
+Проверки lock/I/O, доверия к каталогу, отдельного kill-switch и Linux route/TUN
+уже выполнены в описанных ниже границах. Runtime-контракты, полная интеграционная
+матрица, другие платформы, release A/B, soak и новый benchmark остаются открытыми.
+Статусы полных разделов не изменены.
 
 **24 сентября, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight до config lock, общий бюджет проб, отказ устаревшего snapshot, owned guard для отменяемого backup/restore, bounded restart dispatch. Разделы остаются IN_PROGRESS; архивные операции и полный HTTP/systemd E2E не закрыты.
 
@@ -1951,3 +1949,5 @@ crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 wor
 D02/D05/D09: [атомарная запись состояния](../reports/AUDIT-Q25-ATOMIC-STATE.md) очищает частичные временные файлы и синхронизирует каталог на Unix; реальные partial-write/fsync fault probes PASS. Остальные критерии этих групп остаются открыты.
 
 D02/D05/D09: [каталог состояния и целостность lock](../reports/AUDIT-Q25-STATE-DIRECTORY.md). Parent trust закрыт в описанных границах; durable namespace identity и исходное поколение интерфейса остаются D02. Группы целиком ещё не закрыты.
+
+D08/D11/D12: [Android JNI и emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.

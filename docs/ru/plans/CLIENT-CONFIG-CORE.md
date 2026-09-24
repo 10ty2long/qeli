@@ -179,3 +179,5 @@ Linux unit-тест этой границы требует исполнения;
 
 Эти результаты подтверждают перенос исходников и работу C ABI/JNI на хосте;
 они не закрывают платформенную сертификацию и выпуск пакетов.
+
+D08/D11/D12: [Android JNI и emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.

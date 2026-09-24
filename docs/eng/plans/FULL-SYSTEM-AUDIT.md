@@ -1923,14 +1923,13 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** continue 25/21/22 with sysctl journal internals: checks after lock waits,
-stale owners, namespace changes and TUN/WAN name reuse. Then review independent kill-switch
-lifecycle. Q25-F067–F068 covers gateway command boundaries and cleanup while the original
-fd is alive, not the entire sysctl backend. Run seven native route identity tests, seven
-TUN ioctl tests and Linux DNS/filesystem/firewall cases. Physical uplinks, resolver service/bus
-namespace, parser/backend names, procfs/sysfs/journal trust, deadlines, crash recovery, dynamic
-IPv6, DNS/carrier globals, Q14-F027 workers/FD and preflight waits remain open. Native
-certification and a new benchmark were not run; full section statuses are unchanged.
+**Next work:** close the [debt register](AUDIT-DEBT.md) before starting new sections.
+D02 still needs durable namespace identity and original-interface generation;
+then D04 crash recovery and remaining D05/D06 network budgets/resource context.
+Lock/I/O, directory-trust, standalone kill-switch and Linux route/TUN checks have
+already run within the boundaries documented below. Runtime contracts, the full
+integration matrix, other platforms, release A/B, soak and a current benchmark
+remain open. Full section statuses are unchanged.
 
 **24 September, D05:** [Q05-F002–F004](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md): async preflight before config locking, shared probe budget, stale-snapshot refusal, owned guard for cancelled backup/restore and bounded restart dispatch. Sections remain IN_PROGRESS; archive operations and full HTTP/systemd E2E remain open.
 
@@ -1941,3 +1940,5 @@ certification and a new benchmark were not run; full section statuses are unchan
 D02/D05/D09: [atomic state publication](../reports/AUDIT-Q25-ATOMIC-STATE.md) cleans partial temporary files and syncs the directory on Unix; actual partial-write/fsync fault probes PASS. Other criteria of these groups remain open.
 
 D02/D05/D09: [state-directory and lock identity](../reports/AUDIT-Q25-STATE-DIRECTORY.md). Parent trust is closed within the stated boundaries; durable namespace identity and original-interface generation remain D02. The groups are not yet fully closed.
+
+D08/D11/D12: [Android JNI and emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): fixed cargo-ndk cwd/API flag, removed the obsolete JSON-config harness; 154 JVM + 6 instrumentation tests PASS. The fresh dev x86_64 APK is SHA-verified. Release A/B, the full config/runtime contract and other platforms remain open.

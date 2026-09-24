@@ -37,12 +37,13 @@ def main() -> None:
             env["ANDROID_NDK_HOME"] = str(Path(sdk) / "ndk" / DEFAULT_ANDROID_NDK)
         if not Path(env.get("ANDROID_NDK_HOME", "/missing-ndk")).is_dir():
             p.error(f"Install Android NDK {DEFAULT_ANDROID_NDK} and cargo-ndk {DEFAULT_CARGO_NDK_VERSION}; set ANDROID_NDK_HOME")
-        command += ["ndk", "-p", "28", "-o", str(stage)]
+        command += ["ndk", "--platform", "28", "-o", str(stage)]
         for abi in a.abis: command += ["-t", abi]
     command += ["build", "--manifest-path", str(ROOT / "qeli/Cargo.toml"), "--locked", "--no-default-features", "--features", "transport-core-ffi", "--lib"]
     if not a.debug: command += ["--release"]
     if a.offline: command += ["--offline"]
-    subprocess.run(command, cwd=ROOT, env=env, check=True)
+    # cargo-ndk reads project metadata before forwarding --manifest-path to cargo.
+    subprocess.run(command, cwd=ROOT / "qeli", env=env, check=True)
     variables = {}
     if a.android:
         for abi in a.abis:

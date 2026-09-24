@@ -171,3 +171,5 @@ confirms compilation. See the [Q02 register](../reports/AUDIT-Q02-CLIENT-PARSERS
 
 These results verify the source migration and host C ABI/JNI integration;
 they do not complete platform certification or package delivery.
+
+D08/D11/D12: [Android JNI and emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): fixed cargo-ndk cwd/API flag, removed the obsolete JSON-config harness; 154 JVM + 6 instrumentation tests PASS. The fresh dev x86_64 APK is SHA-verified. Release A/B, the full config/runtime contract and other platforms remain open.

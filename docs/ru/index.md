@@ -98,6 +98,7 @@
 | [AUDIT-Q25-SYSCTL-CONTEXT-IO.md](reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) | Namespace на границах PID/sysctl I/O и persistence; сохранение evidence после смены контекста |
 | [AUDIT-Q25-ATOMIC-STATE.md](reports/AUDIT-Q25-ATOMIC-STATE.md) | Cleanup временных файлов, directory fsync и неопределённый результат публикации |
 | [AUDIT-Q25-STATE-DIRECTORY.md](reports/AUDIT-Q25-STATE-DIRECTORY.md) | Доверенный каталог sysctl по fd, root/User=qeli и замена общего lock во время ожидания |
+| [AUDIT-Q34-ANDROID-RUNTIME.md](reports/AUDIT-Q34-ANDROID-RUNTIME.md) | Свежий Android JNI, исправление cargo-ndk и 154 JVM + 6 emulator tests |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Владелец namespace, защита reconnect и точная очистка семейств |
 | [AUDIT-Q25-LINK-OBSERVATION.md](reports/AUDIT-Q25-LINK-OBSERVATION.md) | Общие сведения об интерфейсе текущего namespace: NDP, TAP, hooks, sysctl и панель |
 | [AUDIT-Q25-SYSCTL-NAMESPACE.md](reports/AUDIT-Q25-SYSCTL-NAMESPACE.md) | Q25-F052–F053: изоляция sysctl по namespace и миграция журнала v2 |

@@ -397,7 +397,7 @@ impl FileLock {
 
     /// Additional admission policy for shared privileged state. Check the opened
     /// inode before flock/chown, not a separate lookup of a replaceable pathname.
-    #[cfg(all(unix, any(test, feature = "client", feature = "server")))]
+    #[cfg(all(target_os = "linux", any(test, feature = "client", feature = "server")))]
     pub(crate) fn acquire_timeout_owned(
         path: impl AsRef<Path>,
         timeout: std::time::Duration,
@@ -537,7 +537,7 @@ impl FileLock {
         Ok(FileLock(f))
     }
 
-    #[cfg(all(not(unix), test))]
+    #[cfg(all(not(target_os = "linux"), test))]
     pub(crate) fn acquire_timeout_owned(
         path: impl AsRef<Path>,
         timeout: std::time::Duration,

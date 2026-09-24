@@ -25,7 +25,7 @@ app/src/main/kotlin/com/qeli/
 ├── MainActivity.kt        — UI: профили, импорт (QR/ссылка/файл), лог, настройки, бэкап
 ├── QeliService.kt         — platform adapter: protect/trust, NetworkPlan/TUN, reconnect
 ├── TransportCore.kt       — JNI owner общего Rust transport и native UDP diagnostic
-├── ProfileStore.kt        — хранилище профилей (EncryptedSharedPreferences)
+├── ProfileStore.kt        — хранилище профилей (AES-GCM + Android Keystore)
 ├── QeliTileService.kt     — плитка в «Быстрых настройках»
 ├── QeliWidgetProvider.kt  — виджет на рабочий стол
 ├── BootReceiver.kt        — автоподключение после перезагрузки
@@ -104,3 +104,27 @@ For JVM tests, run `python scripts/build_client_core.py --debug` from repository
 and set the printed `QELI_CONFIG_NATIVE_LIBRARY`. For APK builds, build with `--android`
 and set `QELI_NATIVE_JNI_DIR` before Gradle. This replaces the jniLibs inputs.
 See [shared configuration](../docs/eng/plans/CLIENT-CONFIG-CORE.md) for prerequisites and release A/B gates.
+
+
+## Проверки JNI и Android runtime
+
+JVM-тесты используют текущую host-библиотеку, указанную через
+`QELI_CONFIG_NATIVE_LIBRARY`. Для тестового APK сначала соберите Android-ядро
+командой `python scripts/build_client_core.py --android --debug` из корня
+репозитория и передайте напечатанный `QELI_NATIVE_JNI_DIR` в окружение Gradle.
+Для x86_64 эмулятора можно добавить `--abis x86_64`. Нужны NDK 26.3.11579264
+и cargo-ndk 4.1.2; скрипт выбирает Android API 28 через `--platform`.
+
+На выделенном эмуляторе после `installDebug` разрешите VPN для тестового приложения
+через `adb shell appops set com.qeli ACTIVATE_VPN allow`, затем выполните
+`./gradlew connectedDebugAndroidTest`. Проверяются упакованный ConfigCore JNI
+(INI round-trip, отказ от JSON-конфига и поддельной ссылки), Android Keystore,
+диагностический журнал и настоящий `VpnService.Builder.establish()` для трёх
+сетевых планов. Это ещё не проверка передачи трафика через удалённый VPN-сервер.
+
+Устаревший `e2e_android.py` (каталог `scripts/`), создававший JSON-конфиги и подставлявший старые
+plaintext preferences, удалён. Служебные JSON-контейнеры и миграция старого
+app-owned хранилища не меняются. Release A/B, arm64 и остальные runtime-режимы
+проверяются отдельно от этой тестовой сборки.
+
+Результаты прогона 24 сентября: [154 JVM + 6 Android instrumentation tests](../docs/ru/reports/AUDIT-Q34-ANDROID-RUNTIME.md).
