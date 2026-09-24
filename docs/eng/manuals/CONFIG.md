@@ -2277,6 +2277,11 @@ parent directory. `published ... persistence is uncertain` means the file was
 already replaced, but crash durability was not confirmed; reread state before
 retrying. [Troubleshooting](TROUBLESHOOTING.md#661-published--persistence-is-uncertain).
 
+Sysctl requires a real absolute state directory: `STATE_DIRECTORY` or `/var/lib/qeli`.
+Symlinks/`..` in the path and group/world write are rejected; operations stay bound
+to one open directory. Root and the service-directory owner retain shared access.
+[Access policy](../reports/AUDIT-Q25-STATE-DIRECTORY.md).
+
 ### Caveats
 
 - **Linux only** (`iptables` and, when IPv6 is negotiated, `ip6tables`), like

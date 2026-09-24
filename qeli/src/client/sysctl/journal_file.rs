@@ -43,6 +43,19 @@ impl Opened {
         #[cfg(unix)]
         {
             use std::os::unix::fs::MetadataExt;
+            let parent = path
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or_else(|| Path::new("."));
+            let parent_metadata = std::fs::metadata(parent)?;
+            if !parent_metadata.is_dir()
+                || parent_metadata.mode() & 0o022 != 0
+                || (metadata.uid() != 0 && metadata.uid() != parent_metadata.uid())
+            {
+                return Err(io::Error::other(
+                    "sysctl journal owner or parent permissions are untrusted",
+                ));
+            }
             if metadata.nlink() != 1 || metadata.mode() & 0o022 != 0 {
                 return Err(io::Error::other(
                     "sysctl journal must be single-link and not group/world-writable",

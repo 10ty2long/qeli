@@ -383,7 +383,7 @@ pub struct FileLock(#[allow(dead_code)] std::fs::File);
 impl FileLock {
     #[cfg(unix)]
     pub fn acquire(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        Self::acquire_inner(path, None)
+        Self::acquire_inner(path, None, None)
     }
 
     /// Bound advisory-lock contention without changing ordinary file opens/writes.
@@ -392,13 +392,25 @@ impl FileLock {
         path: impl AsRef<Path>,
         timeout: std::time::Duration,
     ) -> anyhow::Result<Self> {
-        Self::acquire_inner(path, Some(timeout))
+        Self::acquire_inner(path, Some(timeout), None)
+    }
+
+    /// Additional admission policy for shared privileged state. Check the opened
+    /// inode before flock/chown, not a separate lookup of a replaceable pathname.
+    #[cfg(all(unix, any(test, feature = "client", feature = "server")))]
+    pub(crate) fn acquire_timeout_owned(
+        path: impl AsRef<Path>,
+        timeout: std::time::Duration,
+        owner: u32,
+    ) -> anyhow::Result<Self> {
+        Self::acquire_inner(path, Some(timeout), Some(owner))
     }
 
     #[cfg(unix)]
     fn acquire_inner(
         path: impl AsRef<Path>,
         timeout: Option<std::time::Duration>,
+        owner: Option<u32>,
     ) -> anyhow::Result<Self> {
         use std::os::unix::fs::OpenOptionsExt;
         use std::os::unix::io::AsRawFd;
@@ -441,6 +453,13 @@ impl FileLock {
                     meta.nlink()
                 ));
             }
+            if let Some(owner) = owner {
+                anyhow::ensure!(
+                    (meta.uid() == 0 || meta.uid() == owner) && meta.mode() & 0o022 == 0,
+                    "refusing untrusted lock owner or permissions for {}",
+                    lock_path
+                );
+            }
         }
         let started = std::time::Instant::now();
         let flags = libc::LOCK_EX | if timeout.is_some() { libc::LOCK_NB } else { 0 };
@@ -467,23 +486,44 @@ impl FileLock {
             }
             return Err(anyhow::anyhow!("cannot lock {}: {}", lock_path, error));
         }
+        {
+            use std::os::unix::fs::MetadataExt;
+            let meta = f.metadata()?;
+            let named = std::fs::symlink_metadata(&lock_path)?;
+            anyhow::ensure!(
+                meta.is_file()
+                    && meta.nlink() == 1
+                    && !named.file_type().is_symlink()
+                    && (meta.dev(), meta.ino()) == (named.dev(), named.ino()),
+                "lock changed while waiting: {}",
+                lock_path
+            );
+            if let Some(owner) = owner {
+                anyhow::ensure!(
+                    (meta.uid() == 0 || meta.uid() == owner) && meta.mode() & 0o022 == 0,
+                    "trusted lock owner or permissions changed while waiting: {}",
+                    lock_path
+                );
+            }
+        }
         // Hand the lock to whoever owns the file it guards. The CLI (`qeli add-client`)
         // is normally run with sudo while the daemon runs as an unprivileged account, so
         // a root-created 0600 sidecar would be unopenable by the service — and every
         // later users-file change from the panel or the control socket would fail with
         // EACCES. Best effort: only root can chown, and a mismatch is not fatal on a
         // single-user setup.
-        let ownership = std::fs::metadata(path.as_ref()).or_else(|_| {
-            // A first writer has no target to inherit from. The directory owns the future
-            // state file, so use its uid/gid; otherwise a root CLI can create a root-only
-            // sidecar that the packaged User=qeli service can never reopen.
-            let parent = path
-                .as_ref()
-                .parent()
-                .filter(|value| !value.as_os_str().is_empty())
-                .unwrap_or_else(|| Path::new("."));
+        let parent = path
+            .as_ref()
+            .parent()
+            .filter(|value| !value.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        // A state lock inherits its admitted directory, never an as-yet unvalidated
+        // journal's uid. Ordinary callers keep their existing target-owner behavior.
+        let ownership = if owner.is_some() {
             std::fs::metadata(parent)
-        });
+        } else {
+            std::fs::metadata(path.as_ref()).or_else(|_| std::fs::metadata(parent))
+        };
         if let Ok(target) = ownership {
             use std::os::unix::fs::MetadataExt;
             if let Ok(lock_meta) = f.metadata() {
@@ -495,6 +535,15 @@ impl FileLock {
             }
         }
         Ok(FileLock(f))
+    }
+
+    #[cfg(all(not(unix), test))]
+    pub(crate) fn acquire_timeout_owned(
+        path: impl AsRef<Path>,
+        timeout: std::time::Duration,
+        _owner: u32,
+    ) -> anyhow::Result<Self> {
+        Self::acquire_timeout(path, timeout)
     }
 
     #[cfg(not(unix))]

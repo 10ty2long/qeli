@@ -2234,6 +2234,11 @@ Host-wide значения forwarding, `rp_filter` и IPv6 `accept_ra` испо�
 означает, что файл уже заменён, но сохранность после crash не подтверждена;
 перечитайте состояние перед повтором. [Диагностика](TROUBLESHOOTING.md#661-published--persistence-is-uncertain).
 
+Sysctl использует реальный абсолютный каталог состояния: `STATE_DIRECTORY`
+либо `/var/lib/qeli`. Symlink/`..` в пути и group/world write запрещены; операции
+закреплены за одним открытым каталогом. Совместная работа root и владельца каталога
+сервиса сохраняется. [Политика доступа](../reports/AUDIT-Q25-STATE-DIRECTORY.md).
+
 ### Оговорки
 
 - **Только Linux** (`iptables`, а при согласованном IPv6 ещё и `ip6tables`) — как

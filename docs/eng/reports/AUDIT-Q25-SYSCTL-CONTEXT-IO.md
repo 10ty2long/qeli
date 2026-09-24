@@ -60,3 +60,5 @@ next design but is not an implemented sysctl lease contract yet.
 [Previous stage](AUDIT-Q25-SYSCTL-JOURNAL-IO.md) · [Instructions](../manuals/TROUBLESHOOTING.md)
 
 Continuation: [temporary-file cleanup and directory fsync](AUDIT-Q25-ATOMIC-STATE.md).
+
+Subsequent parent-trust closure: [state directory and shared lock](AUDIT-Q25-STATE-DIRECTORY.md).

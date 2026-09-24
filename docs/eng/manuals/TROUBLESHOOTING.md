@@ -2030,3 +2030,17 @@ the name may already be absent; retry still performs fsync. Do not delete
 `sysctls.state` to bypass the error. Errors before rename preserve the previous
 file and remove the incomplete temporary file when the filesystem permits it.
 [Analysis and guarantee limits](../reports/AUDIT-Q25-ATOMIC-STATE.md).
+
+### 6.62. Unsafe sysctl state directory or replaced lock
+
+`unsafe sysctl state directory` refuses the operation before journal loading/recovery.
+Use an absolute real `STATE_DIRECTORY` without symlinks or `..`; do not grant the
+directory or journal group/world write. The standard `/var/lib/qeli` may belong to
+the service account; root CLI cooperation is preserved. Root does not adopt a foreign
+directory directly beneath shared sticky `/tmp`. Do not use `chmod 777`.
+
+`lock changed while waiting` means the lock pathname no longer matches the waiting
+process's descriptor. Keep the journal, inspect external directory operations and
+retry once the conflicting operation has ended. Do not remove a lock to “unlock” it:
+that creates an independent flock domain.
+[Analysis and supported policy](../reports/AUDIT-Q25-STATE-DIRECTORY.md).

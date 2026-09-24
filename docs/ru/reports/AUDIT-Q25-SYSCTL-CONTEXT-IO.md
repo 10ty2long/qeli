@@ -61,3 +61,5 @@ delete/recreate старый fd также не обращается к ново
 [Предыдущий этап](AUDIT-Q25-SYSCTL-JOURNAL-IO.md) · [Инструкции](../manuals/TROUBLESHOOTING.md)
 
 Продолжение: [очистка временных файлов и directory fsync](AUDIT-Q25-ATOMIC-STATE.md).
+
+Дальнейшее закрытие parent trust: [каталог состояния и общий lock](AUDIT-Q25-STATE-DIRECTORY.md).

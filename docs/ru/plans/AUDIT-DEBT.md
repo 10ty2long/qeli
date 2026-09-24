@@ -110,10 +110,12 @@ D03: [kill-switch namespace / reconnect](../reports/AUDIT-Q25-KILL-SWITCH-IDENTI
 
 D02/D06: [namespace-aware link observation](../reports/AUDIT-Q25-LINK-OBSERVATION.md).
 
-D05: [async preflight и время жизни транзакции панели](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md). Открыты общий бюджет backup/restore и остальных сетевых последовательностей.
+D05: [async preflight и время жизни транзакции панели](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md). Бюджет backup/restore закрыт следующим этапом; остальные сетевые последовательности открыты.
 
 Обновление D05/D09: [бюджет backup/restore и полнота снимка](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md). Остальные сетевые последовательности и filesystem fault E2E остаются открытыми.
 
-D02: [guard внутренних границ sysctl](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md); durable namespace identity, исходный интерфейс и parent trust ещё открыты.
+D02: [guard внутренних границ sysctl](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md); durable namespace identity и исходный интерфейс ещё открыты; parent trust закрыт последующим этапом.
 
 D02/D05/D09: [атомарная запись состояния](../reports/AUDIT-Q25-ATOMIC-STATE.md) очищает частичные временные файлы и синхронизирует каталог на Unix; реальные partial-write/fsync fault probes PASS. Остальные критерии этих групп остаются открыты.
+
+D02/D05/D09: [каталог состояния и целостность lock](../reports/AUDIT-Q25-STATE-DIRECTORY.md). Parent trust закрыт в описанных границах; durable namespace identity и исходное поколение интерфейса остаются D02. Группы целиком ещё не закрыты.

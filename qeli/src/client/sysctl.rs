@@ -18,6 +18,8 @@ mod host;
 mod journal_file;
 #[path = "sysctl/namespace.rs"]
 mod namespace;
+#[path = "sysctl/state_dir.rs"]
+mod state_dir;
 
 const JOURNAL_VERSION: u8 = 2;
 const JOURNAL_LIMIT: u64 = 128 * 1024;
@@ -519,18 +521,29 @@ fn with_locked_journal<T>(
     let deadline = std::time::Instant::now() + LOCK_WAIT;
     let context = namespace::current()?;
     let _local = wait_local_lock(&IN_PROCESS_LOCK, deadline)?;
-    let path = journal_path();
-    let parent = path
+    let requested = journal_path();
+    let parent = requested
         .parent()
         .ok_or_else(|| anyhow::anyhow!("host sysctl journal has no parent"))?;
-    std::fs::create_dir_all(parent)
-        .map_err(|error| anyhow::anyhow!("cannot create {}: {error}", parent.display()))?;
-    let _file_lock = crate::util::FileLock::acquire_timeout(
+    let directory = state_dir::Directory::open(parent).map_err(|error| {
+        anyhow::anyhow!(
+            "unsafe sysctl state directory {}: {error}",
+            parent.display()
+        )
+    })?;
+    // Every sidecar, snapshot, temporary file and rename is now relative to the
+    // same held directory, even if the original pathname is moved or replaced.
+    let path = directory.journal_path();
+    let _file_lock = crate::util::FileLock::acquire_timeout_owned(
         &path,
         deadline.saturating_duration_since(std::time::Instant::now()),
+        directory.owner(),
     )?;
+    directory.verify()?;
     let boot_id = current_boot_id()?;
-    with_journal_context(&path, &boot_id, context, body)
+    let result = with_journal_context(&path, &boot_id, context, body);
+    directory.verify()?;
+    result
 }
 
 // Kept below the lock boundary so portable tests can exercise real journal I/O

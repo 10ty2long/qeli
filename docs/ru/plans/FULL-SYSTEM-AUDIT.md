@@ -1949,3 +1949,5 @@ crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 wor
 **D02, Q25-F077:** [контекст внутри sysctl transaction](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) проверяется вокруг PID/sysctl I/O и persistence; после потери контекста транзакция не может продолжить запись. Остальные критерии D02 остаются открытыми.
 
 D02/D05/D09: [атомарная запись состояния](../reports/AUDIT-Q25-ATOMIC-STATE.md) очищает частичные временные файлы и синхронизирует каталог на Unix; реальные partial-write/fsync fault probes PASS. Остальные критерии этих групп остаются открыты.
+
+D02/D05/D09: [каталог состояния и целостность lock](../reports/AUDIT-Q25-STATE-DIRECTORY.md). Parent trust закрыт в описанных границах; durable namespace identity и исходное поколение интерфейса остаются D02. Группы целиком ещё не закрыты.

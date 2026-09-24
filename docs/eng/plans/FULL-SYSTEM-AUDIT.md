@@ -1939,3 +1939,5 @@ certification and a new benchmark were not run; full section statuses are unchan
 **D02, Q25-F077:** [context inside sysctl transactions](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) is checked around PID/sysctl I/O and persistence; a transaction cannot continue writing after observed context loss. Other D02 criteria remain open.
 
 D02/D05/D09: [atomic state publication](../reports/AUDIT-Q25-ATOMIC-STATE.md) cleans partial temporary files and syncs the directory on Unix; actual partial-write/fsync fault probes PASS. Other criteria of these groups remain open.
+
+D02/D05/D09: [state-directory and lock identity](../reports/AUDIT-Q25-STATE-DIRECTORY.md). Parent trust is closed within the stated boundaries; durable namespace identity and original-interface generation remain D02. The groups are not yet fully closed.
