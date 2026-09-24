@@ -103,6 +103,7 @@ impl NativeCoreAdapter {
             &config.server.address,
             config.server.port,
             supplied.as_slice(),
+            Duration::from_secs(config.server.connection_timeout_secs.max(1)),
         )
         .await
     }

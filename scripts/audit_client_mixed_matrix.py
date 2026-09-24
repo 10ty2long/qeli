@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--ipv6', required=True, choices=['nft', 'legacy'])
     parser.add_argument('--firewalld', type=Path)
     parser.add_argument('--smoke', action='store_true', help='one DNS6 cell, no full-matrix certification')
+    parser.add_argument('--hostname', action='store_true', help='resolve carrier through a private hosts file')
     parser.add_argument('--inside', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     root = args.artifacts.resolve()
@@ -61,7 +62,7 @@ def main():
         path = root / ('xtables-real-' + backend)
         shutil.copy2(Path(shutil.which('iptables-' + backend)).resolve(strict=True), path)
         real[backend] = str(path)
-    config = dict(backends=[args.ipv4, args.ipv6], real=real,
+    config = dict(backends=[args.ipv4, args.ipv6], real=real, hostname=args.hostname,
                   host_net=os.environ['QELI_CM_HOST_NET'], host_mnt=os.environ['QELI_CM_HOST_MNT'],
                   firewalld=str(args.firewalld.resolve(strict=True)) if args.firewalld else None,
                   worker_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
@@ -84,6 +85,13 @@ def main():
     # Inherited optional fault injection belongs to separate audits.
     for key in ('QELI_PERSIST_TUN_SHIM', 'QELI_ROUTE_IDENTITY_CHECK', 'QELI_IPT_DIR', 'TMPDIR'):
         env.pop(key, None)
+    if args.hostname:
+        hosts = root / 'hosts'
+        hosts.write_text('127.0.0.1 localhost\n::1 localhost\n')
+        run(['mount', '--bind', hosts, '/etc/hosts'])
+        env['QELI_MATRIX_HOSTS_FILE'] = str(hosts)
+    else:
+        env.pop('QELI_MATRIX_HOSTS_FILE', None)
     if args.smoke:
         command = ['bash', str(scripts / 'ipv6_netns_case.sh'), str(binary), '4', 'dual', 'tcp', 'fake-tls', 'full', 'dns6']
     else:

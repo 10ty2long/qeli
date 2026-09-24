@@ -213,3 +213,4 @@
 - [Q14: серверное восстановление mixed nft/legacy/firewalld, 16 сценариев](reports/AUDIT-Q14-MIXED-FIREWALL.md).
 
 - [Q25-F102: клиентский mixed nft/legacy/firewalld и crash recovery](reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md).
+- [Q25-F103: общий DNS/NSS, отмена и остановка клиента](reports/AUDIT-Q25-SYSTEM-RESOLVER.md).

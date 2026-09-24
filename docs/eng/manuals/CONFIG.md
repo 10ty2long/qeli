@@ -1965,6 +1965,13 @@ check for leftover rules before reusing the interface.
 
 ## Kill-switch (`kill_switch`)
 
+System name resolution for kill-switch, connections and UDP diagnostics uses one core
+module: at most four unfinished DNS/NSS calls per core instance in a process, with queue
+time included in the request deadline. Cancellation does not release a live call's slot.
+Numeric IPs bypass admission; addresses supplied by platform adapters remain authoritative.
+There are no new INI parameters.
+[DNS waiting and shutdown](../reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
+
 Kill-switch setup (`engage`) receives a shared 15-second deadline: resolver time,
 operation-mutex admission, tool discovery, policy admission and IPv4/IPv6 commands.
 Partial-setup rollback gets a separate 15 seconds from its first recovery operation,
@@ -1973,8 +1980,9 @@ setup even with `allow_ipv4_leak`/`allow_ipv6_leak`: those flags accept an unpro
 but cannot accept incomplete rollback as success. Ownership and tool paths remain for
 verified cleanup in the same process; after process exit, inspect exact remaining chains.
 Some rules may already be gone, so incomplete rollback does not establish intact protection.
-DNS/NSS and other synchronous boundaries cannot be interrupted by the timer: this is not
-a promise to finish within 30 seconds.
+DNS/NSS waiting is deadline-bound and cancelled on stop; the underlying system call
+may continue in a separate capacity-limited thread. Other synchronous boundaries cannot
+be interrupted by the timer: this is not a promise to finish within 30 seconds.
 [Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).
 
 Linux `disengage` shares 15 seconds across operation-mutex admission and IPv4/IPv6
@@ -1986,8 +1994,8 @@ This is not a whole-client shutdown bound.
 [Details and validation](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
 
 Server-IP refresh before reconnect also shares 15 seconds across resolver, queue and
-both families' commands. DNS/NSS remains synchronous; a late reply cannot start firewall
-work. Unknown inspection of an allowance does not authorize insertion. Refresh failure
+both families' commands. Expiry or stop cancels DNS/NSS waiting; late answers are
+discarded without firewall work. Unknown inspection of an allowance does not authorize insertion. Refresh failure
 stops reconnect while retaining protection; an unverified replacement does not remove
 the previous address. This is not a hard whole-connection time bound.
 [Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).

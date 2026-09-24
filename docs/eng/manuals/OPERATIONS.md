@@ -485,3 +485,11 @@ Keep both families' original backend until client recovery/stop finishes. Exact 
 advice is permitted alongside a recognized missing-rule/chain diagnostic; unknown errors
 are not ignored. Do not flush operator tables to silence that advice.
 [Client diagnostics §6.84](TROUBLESHOOTING.md#684-linux-client-rejects-a-legacy-table-warning).
+
+## Stopping during DNS delays
+
+The shared client resolver bounds waiting and the number of DNS/NSS calls. SIGTERM/SIGINT
+interrupt Linux waiting during kill-switch setup/refresh and initial connection; network
+cleanup remains a verified operation. Four stuck system calls occupy all slots until they
+finish; late answers do not initiate network setup.
+[Troubleshooting §6.85](TROUBLESHOOTING.md#685-client-dns-delay-and-shutdown).

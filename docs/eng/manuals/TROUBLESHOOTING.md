@@ -2138,8 +2138,8 @@ recovery. Preserve unrelated chains. [Analysis](../reports/AUDIT-Q25-KILL-SWITCH
 
 `kill-switch server-address refresh deadline expired; ownership retained for retry`
 means resolver, queue or firewall-command time exhausted the shared 15-second budget.
-Check DNS/NSS, competing firewall operations and iptables/ip6tables replies. Synchronous
-resolution may return after the deadline; it cannot then start new commands.
+Check DNS/NSS, competing firewall operations and iptables/ip6tables replies. DNS waiting
+is deadline-bound; a late system-call result is discarded.
 `firewall inspection failed` while checking an IP allowance cannot authorize insertion.
 The connect loop stops reconnect and retains protection. Do not remove DROP to bypass
 the error: resolve its cause, then perform controlled recovery/restart. A partially added
@@ -2406,3 +2406,20 @@ follow §6.83 without erasing journals/chains. Keep **each family's** original b
 across client startup, crash recovery and stop: automatic nft/legacy migration is not
 certified. Firewalld reload does not replace checks of traffic, DNS and retained kill-switch.
 [Cause, tests and boundaries](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md).
+
+### 6.85. Client: DNS delay and shutdown
+
+`system DNS resolver queue expired` means the request could not acquire a free slot;
+`system DNS resolution timed out` / `deadline expired` means DNS/NSS waiting expired.
+Kill-switch includes this wait in its 15-second budget; connections and UDP diagnostics
+use their own deadlines. Linux setup/refresh and initial connection respond to
+SIGTERM/SIGINT during DNS waiting. Ordinary network cleanup still runs, and cleanup
+failure still requires recovery.
+
+Check name resolution in the same network and mount namespace, `/etc/hosts`,
+`/etc/nsswitch.conf`, and the system resolver. Four stuck calls can occupy all slots;
+retries wait in the shared queue, while numeric IPs bypass it. The system call cannot
+be safely interrupted: it retains its thread/slot until completion, but does not delay
+Tokio runtime destruction and has no authority to change firewall, routes or TUN.
+This is not a hard whole-network-operation shutdown deadline.
+[Validation and limits](../reports/AUDIT-Q25-SYSTEM-RESOLVER.md).

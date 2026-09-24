@@ -2394,6 +2394,13 @@ async fn wait_for_reconnect(delay: Duration, shutdown: &AtomicBool, wakeup: &tok
 }
 
 #[cfg(target_os = "linux")]
+async fn wait_for_shutdown(shutdown: &AtomicBool, wakeup: &tokio::sync::Notify) {
+    if !shutdown.load(Ordering::Acquire) {
+        wakeup.notified().await;
+    }
+}
+
+#[cfg(target_os = "linux")]
 pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     let mut client_tasks = tokio::task::JoinSet::new();
     let mut final_report = None;
@@ -2601,14 +2608,18 @@ async fn run_client_inner(
     // is torn down only on a clean stop. If the user asked for it but it can't be
     // installed (no iptables / unresolvable server), refuse to run unprotected.
     if ks_on {
-        killswitch::engage(
-            &config.server.address,
-            config.server.port,
-            &tun_if,
-            config.routing.allow_ipv4_leak,
-            config.routing.allow_ipv6_leak,
-            gw_on,
-        )?;
+        tokio::select! {
+            biased;
+            _ = wait_for_shutdown(&shutdown_requested, &shutdown_wakeup) => return Ok(()),
+            result = killswitch::engage(
+                &config.server.address,
+                config.server.port,
+                &tun_if,
+                config.routing.allow_ipv4_leak,
+                config.routing.allow_ipv6_leak,
+                gw_on,
+            ) => result?,
+        }
     }
     // Gateway and exit-node firewalling are installed by `setup_tunnel` only after the
     // authenticated NetworkPlan identifies the active families. This keeps an IPv6-only
@@ -2624,9 +2635,12 @@ async fn run_client_inner(
         // through the kill-switch before the next attempt — otherwise a stale
         // allow-list would block every reconnect. Verify the barrier before retrying.
         if ks_on && !shutdown_requested.load(Ordering::Acquire) {
-            if let Err(error) =
-                killswitch::refresh_server_ips(&config.server.address, config.server.port, &tun_if)
-            {
+            let refresh = tokio::select! {
+                biased;
+                _ = wait_for_shutdown(&shutdown_requested, &shutdown_wakeup) => Ok(()),
+                result = killswitch::refresh_server_ips(&config.server.address, config.server.port, &tun_if) => result,
+            };
+            if let Err(error) = refresh {
                 let message = format!("kill-switch verification/address refresh failed: {error}");
                 log::error!("{message}; stopping reconnect and retaining protection");
                 let cleanup = cleanup_routing_features(
@@ -3214,20 +3228,14 @@ async fn connect_tcp_candidates(
         // published A/AAAA record has no safe physical route in this generation.
         pinned
     } else {
-        let resolved =
-            match tokio::time::timeout(total, tokio::net::lookup_host((host, port))).await {
-                Ok(result) => result.map_err(|error| {
-                    anyhow::anyhow!("{label} DNS lookup for {host}:{port} failed: {error}")
-                })?,
-                Err(_) => {
-                    return Err(anyhow::anyhow!(
-                        "{label} DNS lookup for {host}:{port} timed out after {}s",
-                        total.as_secs()
-                    ));
-                }
-            };
+        let resolved = crate::transport_core::resolver::lookup(host, port, deadline)
+            .await
+            .map_err(|error| {
+                anyhow::anyhow!("{label} DNS lookup for {host}:{port} failed: {error}")
+            })?;
         let mut seen = std::collections::HashSet::new();
         resolved
+            .into_iter()
             .map(|address| {
                 std::net::SocketAddr::new(
                     crate::transport_core::carrier::canonical_carrier_ip(address.ip()),
@@ -3652,6 +3660,28 @@ async fn connect_bare_tcp(
     Ok(stream)
 }
 
+// This cancellation boundary owns only initial carrier sockets/handshake work. It
+// never drops an in-progress NetworkPlan mutation; the TCP task owner still joins
+// H2 drivers/bridges after an interrupted initial connection.
+#[cfg(any(target_os = "linux", test))]
+async fn connect_before_tunnel<T>(
+    cancel: Arc<AtomicBool>,
+    connect: impl std::future::Future<Output = anyhow::Result<T>>,
+) -> anyhow::Result<T> {
+    tokio::select! {
+        biased;
+        _ = async {
+            while !cancel.load(Ordering::Acquire) {
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            }
+        } => anyhow::bail!("client stopped during initial carrier connection"),
+        result = connect => result,
+    }
+}
+
+#[cfg(test)]
+mod carrier_cancel_tests;
+
 #[cfg(target_os = "linux")]
 async fn connect_and_run_tcp(
     config: &crate::config::client::ClientConfig,
@@ -3694,7 +3724,11 @@ async fn connect_and_run_tcp_owned(
             ));
         }
         log::info!("Wire mode: obfs (ChaCha20 stream obfuscation)");
-        let first = connect_obfs(config, true, LinuxStreamConnectContext::default()).await?;
+        let first = connect_before_tunnel(
+            core.cancel_token(),
+            connect_obfs(config, true, LinuxStreamConnectContext::default()),
+        )
+        .await?;
         // Connector clones the config so it outlives this scope and can be called
         // by the data-plane to open bonded streams (fixed open / adaptive ramp).
         let cfg = std::sync::Arc::new(config.clone());
@@ -3716,11 +3750,14 @@ async fn connect_and_run_tcp_owned(
     } else if config.obfuscation.mode == "reality-tls" {
         log::info!("Wire mode: reality-tls (real TLS 1.3 carrying the tunnel)");
         let carrier_tasks = tasks.spawner();
-        let first = connect_reality(
-            config,
-            true,
-            LinuxStreamConnectContext::default(),
-            &carrier_tasks,
+        let first = connect_before_tunnel(
+            core.cancel_token(),
+            connect_reality(
+                config,
+                true,
+                LinuxStreamConnectContext::default(),
+                &carrier_tasks,
+            ),
         )
         .await?;
         // Connector clones the config so it outlives this scope and can be called
@@ -3746,7 +3783,11 @@ async fn connect_and_run_tcp_owned(
         // fake-tls / plain: bare TCP transport; the qeli handshake applies the
         // fake-TLS mimicry or the raw framing. Both support stream bonding.
         log::info!("Wire mode: {} (TCP)", config.obfuscation.mode);
-        let first = connect_bare_tcp(config, true, LinuxStreamConnectContext::default()).await?;
+        let first = connect_before_tunnel(
+            core.cancel_token(),
+            connect_bare_tcp(config, true, LinuxStreamConnectContext::default()),
+        )
+        .await?;
         let cfg = std::sync::Arc::new(config.clone());
         #[cfg(feature = "experimental-roaming")]
         let controller = path_controller.clone();
@@ -8031,18 +8072,13 @@ async fn connect_udp_candidates(
 ) -> anyhow::Result<UdpSocket> {
     let host = config.server.address.as_str();
     let port = config.server.port;
-    let resolved = match tokio::time::timeout(total, tokio::net::lookup_host((host, port))).await {
-        Ok(result) => result
-            .map_err(|error| anyhow::anyhow!("UDP DNS lookup for {host}:{port} failed: {error}"))?,
-        Err(_) => {
-            return Err(anyhow::anyhow!(
-                "UDP DNS lookup for {host}:{port} timed out after {}s",
-                total.as_secs()
-            ));
-        }
-    };
+    let resolved =
+        crate::transport_core::resolver::lookup(host, port, tokio::time::Instant::now() + total)
+            .await
+            .map_err(|error| anyhow::anyhow!("UDP DNS lookup for {host}:{port} failed: {error}"))?;
     let mut seen = std::collections::HashSet::new();
     let mut candidates: Vec<std::net::SocketAddr> = resolved
+        .into_iter()
         .map(|address| {
             std::net::SocketAddr::new(
                 crate::transport_core::carrier::canonical_carrier_ip(address.ip()),
@@ -9002,9 +9038,12 @@ async fn connect_and_run_udp(
              (an empty key is publicly derivable → no DPI resistance)"
         ));
     }
-    let raw_socket = connect_udp_candidates(
-        config,
-        Duration::from_secs(config.server.connection_timeout_secs.max(1)),
+    let raw_socket = connect_before_tunnel(
+        core.cancel_token(),
+        connect_udp_candidates(
+            config,
+            Duration::from_secs(config.server.connection_timeout_secs.max(1)),
+        ),
     )
     .await?;
     // The shared UDP path below applies the socket policy before its first handshake packet,

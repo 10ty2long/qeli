@@ -453,3 +453,23 @@ fn native_kill_switch_rebuild_guard_failures_retry_without_unlocking() -> anyhow
     .join()
     .expect("native rebuild recovery test panicked")
 }
+
+fn engage(
+    host: &str,
+    port: u16,
+    tun: &str,
+    v4: bool,
+    v6: bool,
+    forward: bool,
+) -> anyhow::Result<()> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?
+        .block_on(super::engage(host, port, tun, v4, v6, forward))
+}
+fn refresh_server_ips(host: &str, port: u16, tun: &str) -> anyhow::Result<()> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?
+        .block_on(super::refresh_server_ips(host, port, tun))
+}

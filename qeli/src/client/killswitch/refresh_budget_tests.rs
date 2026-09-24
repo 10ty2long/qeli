@@ -54,7 +54,12 @@ impl Fixture {
     fn retry(&self) {
         std::fs::write(self.dir.join("retry"), b"1").unwrap();
         // The public entry must grant a fresh budget to the same retained owner.
-        refresh_server_ips("203.0.113.8", 443, self.name).unwrap();
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(refresh_server_ips("203.0.113.8", 443, self.name))
+            .unwrap();
         self.retained();
     }
 }

@@ -6,7 +6,7 @@ use crate::client::killswitch as ks;
 use crate::client_killswitch as ks;
 
 fn protect(tun: &str, addr: &str) -> anyhow::Result<()> {
-    ks::engage(addr, 443, tun, false, false, true)
+    engage(addr, 443, tun, false, false, true)
 }
 fn seed(kernel: &mut Kernel, ipv6: bool, name: &str) {
     kernel.rules.insert(
@@ -120,7 +120,7 @@ fn regression_legacy_chain_is_not_claimed_by_an_unrelated_profile() {
 fn regression_leak_override_does_not_bypass_ownership_conflict() {
     run(|k| {
         seed(&mut k.borrow_mut(), false, "QELI_KS_other");
-        assert!(ks::engage("203.0.113.7", 443, "ks_a", true, true, false).is_err());
+        assert!(engage("203.0.113.7", 443, "ks_a", true, true, false).is_err());
         assert_eq!(k.borrow().mutations(), 0);
     });
 }
@@ -354,7 +354,7 @@ fn verified_empty_ipv6_query_allows_ipv4_only_protection() {
 fn explicit_ipv6_leak_override_allows_unknown_evidence() {
     run(|k| {
         failed_ipv6(&k, Err(io::ErrorKind::PermissionDenied.into()));
-        ks::engage("203.0.113.7", 443, "ks_a", false, true, true).unwrap();
+        engage("203.0.113.7", 443, "ks_a", false, true, true).unwrap();
         assert!(k
             .borrow()
             .rules
@@ -383,7 +383,7 @@ fn regression_module_disabled_lifecycle_never_touches_ipv6_tables() {
     run(|k| {
         ks::ipv6_state::test_support::with_disabled(true, || {
             protect("ks_a", "203.0.113.7").unwrap();
-            ks::refresh_server_ips("203.0.113.8", 443, "ks_a").unwrap();
+            refresh_server_ips("203.0.113.8", 443, "ks_a").unwrap();
             ks::disengage("ks_a").unwrap();
             assert!(!k.borrow().rules.keys().any(|(ipv6, _, _)| *ipv6));
         });
@@ -437,9 +437,9 @@ fn regression_kill_switch_namespace_change_preserves_foreign_chain() {
         protect("ks_a", "203.0.113.7").unwrap();
         ks::ownership::test_support::set_namespace(2);
         let before = k.borrow().calls.len();
-        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert!(refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
         assert!(ks::disengage("ks_a").is_err());
-        assert!(ks::engage("203.0.113.8", 443, "ks_a", true, true, false).is_err());
+        assert!(engage("203.0.113.8", 443, "ks_a", true, true, false).is_err());
         assert_eq!(
             k.borrow().calls.len(),
             before,
@@ -459,7 +459,7 @@ fn regression_kill_switch_namespace_change_preserves_foreign_chain() {
 fn regression_identity_loss_after_mutation_cannot_use_leak_override() {
     run(|k| {
         k.borrow_mut().lose_kill_namespace_after = Some("-N".into());
-        assert!(ks::engage("203.0.113.7", 443, "ks_a", true, true, false).is_err());
+        assert!(engage("203.0.113.7", 443, "ks_a", true, true, false).is_err());
         assert_eq!(k.borrow().calls.last().unwrap()[0], "-N");
         let before = k.borrow().calls.len();
         assert!(ks::disengage("ks_a").is_err());
@@ -486,7 +486,7 @@ fn regression_refresh_identity_loss_stops_after_current_command() {
     run(|k| {
         protect("ks_a", "203.0.113.7").unwrap();
         k.borrow_mut().lose_kill_namespace_after = Some("-I".into());
-        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert!(refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
         assert_eq!(k.borrow().calls.last().unwrap()[0], "-I");
         ks::ownership::test_support::set_namespace(1);
         ks::disengage("ks_a").unwrap();
@@ -546,7 +546,7 @@ fn regression_reconnect_rejects_removed_output_forward_or_drop() {
                 .unwrap()
                 .retain(|existing| existing != &rule);
             let before = k.borrow().mutations();
-            assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+            assert!(refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
             // The intact IPv6 family has no new server address, so no mutations.
             assert_eq!(k.borrow().mutations(), before);
             ks::disengage("ks_a").unwrap();
@@ -559,7 +559,7 @@ fn regression_refresh_failed_add_keeps_previous_server_allowance() {
     run(|k| {
         protect("ks_a", "203.0.113.7").unwrap();
         k.borrow_mut().lie_add = true;
-        assert!(ks::refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
+        assert!(refresh_server_ips("203.0.113.8", 443, "ks_a").is_err());
         assert!(allow_egress(
             &k.borrow(),
             "OUTPUT",
@@ -577,9 +577,39 @@ fn regression_ipv6_only_cleanup_never_requires_unprogrammed_ipv4() {
     run(|k| {
         ks::ownership::test_support::with_paths([None, Some("model-ip6tables".into())], || {
             protect("ks_a", "2001:db8::7").unwrap();
-            ks::refresh_server_ips("2001:db8::8", 443, "ks_a").unwrap();
+            refresh_server_ips("2001:db8::8", 443, "ks_a").unwrap();
             ks::disengage("ks_a").unwrap();
             assert!(k.borrow().rules.keys().all(|(ipv6, _, _)| *ipv6));
         });
     });
+}
+
+// Keep namespace and thread-local fault fixtures on their owning test thread.
+fn engage(
+    host: &str,
+    port: u16,
+    tun: &str,
+    allow_ipv4_leak: bool,
+    allow_ipv6_leak: bool,
+    guard_forward: bool,
+) -> anyhow::Result<()> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(ks::engage(
+            host,
+            port,
+            tun,
+            allow_ipv4_leak,
+            allow_ipv6_leak,
+            guard_forward,
+        ))
+}
+fn refresh_server_ips(host: &str, port: u16, tun: &str) -> anyhow::Result<()> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(ks::refresh_server_ips(host, port, tun))
 }

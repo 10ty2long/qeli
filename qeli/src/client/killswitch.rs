@@ -49,7 +49,7 @@
 
 use crate::firewall_check::{present as checked_presence, Query};
 use crate::system_command::Command;
-use std::net::{IpAddr, ToSocketAddrs};
+use std::net::IpAddr;
 use std::path::Path;
 
 #[path = "killswitch/admission.rs"]
@@ -135,17 +135,27 @@ const LEGACY_CHAIN: &str = "QELI_KS";
 
 /// Resolve `server_addr:port` to the set of IPs the kill-switch must allow through
 /// (so the tunnel can (re)connect). Returns string IPs (v4 and v6).
-fn resolve_ips(server_addr: &str, server_port: u16) -> Vec<String> {
-    // A bare IP resolves to itself; a hostname resolves via the system resolver
-    // (which still works here — we resolve BEFORE engaging the drop policy).
-    match (server_addr, server_port).to_socket_addrs() {
+async fn resolve_ips(
+    server_addr: &str,
+    server_port: u16,
+    until: std::time::Instant,
+) -> std::io::Result<Vec<String>> {
+    match crate::transport_core::resolver::lookup(
+        server_addr,
+        server_port,
+        tokio::time::Instant::from_std(until),
+    )
+    .await
+    {
         Ok(addrs) => {
-            let mut ips: Vec<String> = addrs.map(|sa| sa.ip().to_string()).collect();
+            let mut ips: Vec<String> = addrs.into_iter().map(|sa| sa.ip().to_string()).collect();
             ips.sort();
             ips.dedup();
-            ips
+            Ok(ips)
         }
-        Err(_) => Vec::new(),
+        Err(error) if error.kind() == std::io::ErrorKind::TimedOut => Err(error),
+        // A failed ordinary refresh keeps old allowances while checking the barrier.
+        Err(_) => Ok(Vec::new()),
     }
 }
 
@@ -582,7 +592,7 @@ fn host_may_have_global_ipv6_with(
 /// IP(s). Idempotent — rebuilds the `QELI_KS` chain on both families. Each family fails
 /// closed when the host has usable egress but its firewall cannot be armed, unless the
 /// matching `allow_ipv*_leak` escape hatch was explicitly enabled.
-pub fn engage(
+pub async fn engage(
     server_addr: &str,
     server_port: u16,
     tun_if: &str,
@@ -593,7 +603,9 @@ pub fn engage(
     guard_forward: bool,
 ) -> anyhow::Result<()> {
     let until = std::time::Instant::now() + OPERATION_BUDGET;
-    engage_until(
+    let context = setup_context(tun_if, until)?;
+    let ips = resolve_ips(server_addr, server_port, until).await?;
+    engage_prepared(
         Setup {
             server_addr,
             tun_if,
@@ -601,9 +613,10 @@ pub fn engage(
             allow_ipv6_leak,
             guard_forward,
         },
+        context,
         until,
         OPERATION_BUDGET,
-        || resolve_ips(server_addr, server_port),
+        ips,
     )
 }
 
@@ -615,11 +628,39 @@ struct Setup<'a> {
     guard_forward: bool,
 }
 
+fn setup_context(tun_if: &str, until: std::time::Instant) -> anyhow::Result<Context> {
+    anyhow::ensure!(
+        valid_ifname(tun_if),
+        "kill-switch: invalid TUN interface name {tun_if:?}"
+    );
+    let budget = Budget {
+        until,
+        operation: "setup",
+    };
+    budget.remaining()?;
+    let context = Context::prepare(tun_if)?.with_budget(budget);
+    context.check_budget()?;
+    Ok(context)
+}
+
+#[cfg(test)]
 fn engage_until(
     setup: Setup<'_>,
     until: std::time::Instant,
     rollback_limit: std::time::Duration,
     resolve: impl FnOnce() -> Vec<String>,
+) -> anyhow::Result<()> {
+    let context = setup_context(setup.tun_if, until)?;
+    let ips = resolve();
+    engage_prepared(setup, context, until, rollback_limit, ips)
+}
+
+fn engage_prepared(
+    setup: Setup<'_>,
+    context: Context,
+    until: std::time::Instant,
+    rollback_limit: std::time::Duration,
+    ips: Vec<String>,
 ) -> anyhow::Result<()> {
     let Setup {
         server_addr,
@@ -632,16 +673,9 @@ fn engage_until(
         until,
         operation: "setup",
     };
-    if !valid_ifname(tun_if) {
-        anyhow::bail!("kill-switch: invalid TUN interface name {tun_if:?}");
-    }
-    budget.remaining()?;
-    let context = Context::prepare(tun_if)?.with_budget(budget);
+    context.check()?;
     context.check_budget()?;
     let chain = chain_for(tun_if);
-    // DNS/NSS is synchronous; reject its late result before any firewall work.
-    let ips = resolve();
-    context.check_budget()?;
     if ips.is_empty() {
         anyhow::bail!(
             "kill-switch NOT engaged: cannot resolve server '{}' to an IP to allow through \
@@ -853,20 +887,23 @@ fn host_may_have_ipv4_default_route_with(
 /// removes stale server allowances only after adding the current ones. A previously
 /// armed family must still have its hooks and DROP. Inspection or update errors stop
 /// reconnect; the retained rules require recovery. Call it before each attempt.
-pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> anyhow::Result<()> {
-    refresh_until(tun_if, std::time::Instant::now() + OPERATION_BUDGET, || {
-        resolve_ips(server_addr, server_port)
-    })
+pub async fn refresh_server_ips(
+    server_addr: &str,
+    server_port: u16,
+    tun_if: &str,
+) -> anyhow::Result<()> {
+    let until = std::time::Instant::now() + OPERATION_BUDGET;
+    let Some(context) = refresh_context(tun_if, until)? else {
+        return Ok(());
+    };
+    let ips = resolve_ips(server_addr, server_port, until).await?;
+    refresh_prepared(tun_if, until, context, ips)
 }
 
-fn refresh_until(
-    tun_if: &str,
-    until: std::time::Instant,
-    resolve: impl FnOnce() -> Vec<String>,
-) -> anyhow::Result<()> {
+fn refresh_context(tun_if: &str, until: std::time::Instant) -> anyhow::Result<Option<Context>> {
     anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
     let Some(context) = Context::lookup(tun_if, false)? else {
-        return Ok(());
+        return Ok(None);
     };
     let budget = Budget {
         until,
@@ -874,11 +911,35 @@ fn refresh_until(
     };
     let context = context.with_budget(budget);
     context.check_budget()?;
-    let chain = chain_for(tun_if);
-    // System name resolution is synchronous and cannot be forcibly interrupted here.
-    // Its elapsed time consumes the budget; never start firewall work after a late reply.
+    Ok(Some(context))
+}
+
+#[cfg(test)]
+fn refresh_until(
+    tun_if: &str,
+    until: std::time::Instant,
+    resolve: impl FnOnce() -> Vec<String>,
+) -> anyhow::Result<()> {
+    let Some(context) = refresh_context(tun_if, until)? else {
+        return Ok(());
+    };
     let ips = resolve();
+    refresh_prepared(tun_if, until, context, ips)
+}
+
+fn refresh_prepared(
+    tun_if: &str,
+    until: std::time::Instant,
+    context: Context,
+    ips: Vec<String>,
+) -> anyhow::Result<()> {
+    let budget = Budget {
+        until,
+        operation: "server-address refresh",
+    };
+    context.check()?;
     context.check_budget()?;
+    let chain = chain_for(tun_if);
     let _operation = budget.lock(&OPERATION)?;
     context.confirm(tun_if)?;
     context.check_budget()?;

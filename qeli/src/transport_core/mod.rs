@@ -35,6 +35,9 @@ pub(crate) mod buffer_pool;
 #[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub(crate) mod carrier;
 
+// System DNS/NSS admission and cancellation are shared by all client adapters.
+pub(crate) mod resolver;
+
 #[cfg(any(test, feature = "transport-core-ffi"))]
 pub(crate) mod diagnostic;
 

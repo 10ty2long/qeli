@@ -213,3 +213,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q14: mixed nft/legacy/firewalld server recovery, 16 scenarios](reports/AUDIT-Q14-MIXED-FIREWALL.md).
 
 - [Q25-F102: client mixed nft/legacy/firewalld and crash recovery](reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md).
+- [Q25-F103: shared DNS/NSS, cancellation and client shutdown](reports/AUDIT-Q25-SYSTEM-RESOLVER.md).

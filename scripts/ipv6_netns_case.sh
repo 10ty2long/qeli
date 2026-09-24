@@ -219,6 +219,23 @@ else
   SERVER_AUTHORITY="[fd46:2::2]:$PORT"
   BIND_ADDRESS=fd46:2::2
 fi
+# Optional resolver regression. The enclosing private mount namespace must bind this
+# file to /etc/hosts; each sequential cell publishes only its own carrier address.
+if [ -n "${QELI_MATRIX_HOSTS_FILE:-}" ]; then
+  python3 - <<'PY_CHECK_PRIVATE'
+import os
+parent = os.environ.get('QELI_CM_HOST_MNT')
+current = os.stat('/proc/self/ns/mnt')
+if not parent or parent == f'{current.st_dev}:{current.st_ino}':
+    raise SystemExit('hostname fixture requires the enclosing private mount namespace')
+PY_CHECK_PRIVATE
+  [ "$?" = 0 ] || exit 2
+  [ -f "$QELI_MATRIX_HOSTS_FILE" ] && [ "$QELI_MATRIX_HOSTS_FILE" -ef /etc/hosts ] || {
+    echo 'hostname fixture requires the same privately mounted hosts file' >&2; exit 2;
+  }
+  printf '127.0.0.1 localhost\n::1 localhost\n%s qeli-matrix.test\n' "$BIND_ADDRESS" > "$QELI_MATRIX_HOSTS_FILE"
+  SERVER_AUTHORITY="qeli-matrix.test:$PORT"
+fi
 
 QUIC=false
 if [ "$WIRE" = quic ]; then QUIC=true; fi
