@@ -46,18 +46,41 @@ pub(super) fn process_exists(pid: u32) -> io::Result<bool> {
         }
     }
 }
-pub(super) fn namespace_identity(path: &str) -> io::Result<String> {
+/// Keep the namespace alive while its dev/inode identity authorizes a transaction.
+/// Test backends carry only the synthetic identity and never touch host procfs.
+pub(super) struct NamespacePin {
+    pub(super) identity: String,
+    #[cfg(target_os = "linux")]
+    _file: Option<std::fs::File>,
+}
+
+pub(super) fn pin_namespace(path: &str) -> io::Result<NamespacePin> {
     #[cfg(test)]
     {
-        test_support::call(test_support::Operation::Namespace(path))
+        let identity = test_support::call(test_support::Operation::Namespace(path))?;
+        Ok(NamespacePin {
+            identity,
+            #[cfg(target_os = "linux")]
+            _file: None,
+        })
     }
     #[cfg(all(not(test), target_os = "linux"))]
     {
-        use std::os::unix::fs::MetadataExt;
-        // Follow the procfs namespace link; the link itself is not the namespace.
-        let metadata = std::fs::metadata(path)?;
-        Ok(format!("{}:{}", metadata.dev(), metadata.ino()))
+        live_pin_namespace(path)
     }
+}
+
+#[cfg(target_os = "linux")]
+fn live_pin_namespace(path: &str) -> io::Result<NamespacePin> {
+    use std::os::unix::fs::MetadataExt;
+    // File::open follows the procfs link and uses CLOEXEC. Obtain identity from
+    // that same held fd, never from a second pathname lookup.
+    let file = std::fs::File::open(path)?;
+    let metadata = file.metadata()?;
+    Ok(NamespacePin {
+        identity: format!("{}:{}", metadata.dev(), metadata.ino()),
+        _file: Some(file),
+    })
 }
 pub(super) fn interface_exists(name: &str) -> io::Result<bool> {
     #[cfg(test)]
@@ -140,4 +163,34 @@ pub(super) mod test_support {
         let _reset = Reset;
         run()
     }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN; isolated thread-owned network namespaces"]
+fn native_namespace_pin_survives_last_member_and_closes_on_drop() -> anyhow::Result<()> {
+    use std::os::fd::AsRawFd;
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        // SAFETY: only this disposable thread enters new namespaces.
+        anyhow::ensure!(unsafe { libc::unshare(libc::CLONE_NEWNET) } == 0);
+        let pin = live_pin_namespace("/proc/thread-self/ns/net")?;
+        let fd = pin._file.as_ref().unwrap().as_raw_fd();
+        // No other process/thread lives in the first namespace after this call.
+        anyhow::ensure!(unsafe { libc::unshare(libc::CLONE_NEWNET) } == 0);
+        let replacement = live_pin_namespace("/proc/thread-self/ns/net")?;
+        anyhow::ensure!(pin.identity != replacement.identity);
+        anyhow::ensure!(unsafe { libc::fcntl(fd, libc::F_GETFD) } & libc::FD_CLOEXEC != 0);
+        // The held namespace still exists and is usable, not merely a saved number.
+        anyhow::ensure!(unsafe { libc::setns(fd, libc::CLONE_NEWNET) } == 0);
+        anyhow::ensure!(live_pin_namespace("/proc/thread-self/ns/net")?.identity == pin.identity);
+        let replacement_fd = replacement._file.as_ref().unwrap().as_raw_fd();
+        anyhow::ensure!(unsafe { libc::setns(replacement_fd, libc::CLONE_NEWNET) } == 0);
+        drop(pin);
+        // This test runs alone; no intervening descriptor allocation can reuse fd.
+        anyhow::ensure!(unsafe { libc::fcntl(fd, libc::F_GETFD) } == -1);
+        anyhow::ensure!(io::Error::last_os_error().raw_os_error() == Some(libc::EBADF));
+        Ok(())
+    })
+    .join()
+    .expect("namespace pin test panicked")
 }

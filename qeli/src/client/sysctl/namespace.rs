@@ -1,12 +1,21 @@
 //! A journal group belongs to one network namespace and one PID coordinate system.
 use super::host;
 
-#[derive(PartialEq, Eq)]
 pub(super) struct Context {
     pub network: String,
     pub pid: String,
     pub time: Option<String>,
+    // Capture before waiting for either journal lock and retain through final I/O.
+    // Strings alone can be reused after the last namespace reference disappears.
+    _pins: Vec<host::NamespacePin>,
 }
+
+impl PartialEq for Context {
+    fn eq(&self, other: &Self) -> bool {
+        self.network == other.network && self.pid == other.pid && self.time == other.time
+    }
+}
+impl Eq for Context {}
 
 pub(super) fn valid_identity(value: &str) -> bool {
     let Some((device, inode)) = value.split_once(':') else {
@@ -47,12 +56,19 @@ pub(super) fn current() -> anyhow::Result<Context> {
     })?;
     require_local_procfs(&status, std::process::id())?;
     // setns affects the calling thread, so /proc/self/ns/net is insufficient.
-    let network = host::namespace_identity("/proc/thread-self/ns/net")?;
-    let pid = host::namespace_identity("/proc/thread-self/ns/pid")?;
+    let network_pin = host::pin_namespace("/proc/thread-self/ns/net")?;
+    let network = network_pin.identity.clone();
+    let pid_pin = host::pin_namespace("/proc/thread-self/ns/pid")?;
+    let pid = pid_pin.identity.clone();
+    let mut pins = vec![network_pin, pid_pin];
     // Linux with no CONFIG_TIME_NS does not expose ns/time. Any other error is
     // uncertainty. A present/absent or changed identity never matches a saved group.
-    let time = match host::namespace_identity("/proc/thread-self/ns/time") {
-        Ok(identity) => Some(identity),
+    let time = match host::pin_namespace("/proc/thread-self/ns/time") {
+        Ok(pin) => {
+            let identity = pin.identity.clone();
+            pins.push(pin);
+            Some(identity)
+        }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
         Err(error) => return Err(error.into()),
     };
@@ -64,7 +80,12 @@ pub(super) fn current() -> anyhow::Result<Context> {
     {
         anyhow::bail!("invalid current host sysctl namespace identity");
     }
-    Ok(Context { network, pid, time })
+    Ok(Context {
+        network,
+        pid,
+        time,
+        _pins: pins,
+    })
 }
 
 /// A transaction becomes unusable after any observed context loss, even if a later

@@ -2044,3 +2044,13 @@ process's descriptor. Keep the journal, inspect external directory operations an
 retry once the conflicting operation has ended. Do not remove a lock to “unlock” it:
 that creates an independent flock domain.
 [Analysis and supported policy](../reports/AUDIT-Q25-STATE-DIRECTORY.md).
+
+### 6.63. Sysctl: namespace pins require available file descriptors
+
+A transaction now opens and retains network, PID and available time namespaces
+until journal work completes, starting before lock waits. An open failure such
+as `Too many open files` or `Permission denied` does not permit recovery without
+verified identity. Check fd limits and access to the service's own procfs view;
+do not remove the journal to bypass the failure. This does not reserve a namespace
+persistently after the process exits.
+[Guarantees and limitations](../reports/AUDIT-Q25-NAMESPACE-PIN.md).
