@@ -2020,3 +2020,13 @@ network, PID/time namespaces and matching procfs, then retry cleanup as a separa
 operation. An error after writing does not mean the sysctl remained unchanged: the
 journal retains the original value for verification/recovery. Returning to the original
 context does not revive a failed transaction. [Analysis](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md).
+
+### 6.61. `published ... persistence is uncertain`
+
+New bytes are already published, but directory synchronization failed. This is
+not a rollback: reread the file and its revision before retrying a save. Check
+filesystem health, free space and I/O errors. After the equivalent removal error
+the name may already be absent; retry still performs fsync. Do not delete
+`sysctls.state` to bypass the error. Errors before rename preserve the previous
+file and remove the incomplete temporary file when the filesystem permits it.
+[Analysis and guarantee limits](../reports/AUDIT-Q25-ATOMIC-STATE.md).

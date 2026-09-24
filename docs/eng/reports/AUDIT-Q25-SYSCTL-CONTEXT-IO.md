@@ -58,3 +58,5 @@ after delete/recreate the old fd also does not address the replacement. This inf
 next design but is not an implemented sysctl lease contract yet.
 
 [Previous stage](AUDIT-Q25-SYSCTL-JOURNAL-IO.md) · [Instructions](../manuals/TROUBLESHOOTING.md)
+
+Continuation: [temporary-file cleanup and directory fsync](AUDIT-Q25-ATOMIC-STATE.md).

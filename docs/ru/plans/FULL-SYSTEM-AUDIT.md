@@ -1947,3 +1947,5 @@ crash recovery, динамический IPv6, DNS/carrier globals, Q14-F027 wor
 **D05/D09, backup/restore:** [Q05-F005–F007](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md): общий бюджет подготовки, bounded stdin/output, полный pre-restore snapshot, немедленный отказ дубликата и приватный API-handler roundtrip. Crash/ENOSPC/systemd и остальные сетевые бюджеты остаются открытыми.
 
 **D02, Q25-F077:** [контекст внутри sysctl transaction](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md) проверяется вокруг PID/sysctl I/O и persistence; после потери контекста транзакция не может продолжить запись. Остальные критерии D02 остаются открытыми.
+
+D02/D05/D09: [атомарная запись состояния](../reports/AUDIT-Q25-ATOMIC-STATE.md) очищает частичные временные файлы и синхронизирует каталог на Unix; реальные partial-write/fsync fault probes PASS. Остальные критерии этих групп остаются открыты.

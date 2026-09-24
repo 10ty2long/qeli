@@ -2272,6 +2272,11 @@ or combine transition with a planned host reboot. Empty v1 or valid previous-boo
 allows transition; old settings are not replayed after reboot. Old and new binaries
 sharing one journal are unsupported. [Migration and limits](../reports/AUDIT-Q25-SYSCTL-NAMESPACE.md).
 
+On Unix shared atomic writes and removal of the final sysctl journal sync the
+parent directory. `published ... persistence is uncertain` means the file was
+already replaced, but crash durability was not confirmed; reread state before
+retrying. [Troubleshooting](TROUBLESHOOTING.md#661-published--persistence-is-uncertain).
+
 ### Caveats
 
 - **Linux only** (`iptables` and, when IPv6 is negotiated, `ip6tables`), like

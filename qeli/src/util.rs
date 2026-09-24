@@ -528,13 +528,29 @@ pub fn write_atomic_private(path: impl AsRef<Path>, bytes: &[u8]) -> anyhow::Res
     write_atomic_inner(path, bytes, true)
 }
 
+#[path = "util/atomic_file.rs"]
+mod atomic_file;
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+pub(crate) use atomic_file::remove_if_exists as remove_file_synced;
+
 fn write_atomic_inner(path: impl AsRef<Path>, bytes: &[u8], private: bool) -> anyhow::Result<()> {
+    write_atomic_with_sync(path.as_ref(), bytes, private, atomic_file::Parent::sync)
+}
+
+fn write_atomic_with_sync(
+    path: &Path,
+    bytes: &[u8],
+    private: bool,
+    sync: impl FnOnce(&atomic_file::Parent) -> std::io::Result<()>,
+) -> anyhow::Result<()> {
     use std::io::Write;
     // Windows has no Unix mode bits, so the flag affects only the cfg(unix) block below.
     // Consume it explicitly on other targets to keep every native-core cross-build clean.
     #[cfg(not(unix))]
     let _ = private;
-    let path = path.as_ref();
     let dir = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -543,6 +559,8 @@ fn write_atomic_inner(path: impl AsRef<Path>, bytes: &[u8], private: bool) -> an
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("qeli-file");
+    // Open before publication: a directory-open failure must leave the old target intact.
+    let parent = atomic_file::Parent::open(dir)?;
 
     // Retry on the (rare) random-name clash.
     let mut last_err: Option<std::io::Error> = None;
@@ -564,7 +582,11 @@ fn write_atomic_inner(path: impl AsRef<Path>, bytes: &[u8], private: bool) -> an
             opts.mode(0o600);
         }
         match opts.open(&tmp) {
-            Ok(mut f) => {
+            Ok(f) => {
+                // Declare the descriptor after its cleanup guard so even unwinding closes
+                // it before unlinking on platforms that disallow deleting an open file.
+                let mut pending = atomic_file::Pending::new(tmp.clone());
+                let mut f = f;
                 // Settle the final mode. A private file stays 0600; otherwise inherit the
                 // target's existing mode (so `/etc/resolv.conf` keeps being readable), and
                 // fall back to 0644 when there is no target yet.
@@ -610,9 +632,19 @@ fn write_atomic_inner(path: impl AsRef<Path>, bytes: &[u8], private: bool) -> an
                     .and_then(|()| f.sync_all())
                     .map_err(|e| anyhow::anyhow!("write {}: {}", tmp.display(), e))?;
                 drop(f);
-                return std::fs::rename(&tmp, path).map_err(|e| {
-                    let _ = std::fs::remove_file(&tmp);
+                std::fs::rename(&tmp, path).map_err(|e| {
                     anyhow::anyhow!("rename {} -> {}: {}", tmp.display(), path.display(), e)
+                })?;
+                pending.published();
+                // The data inode is synced above; the directory entry needs its own
+                // sync. A failure here is an uncertain durable outcome, not a rollback.
+                return sync(&parent).map_err(|e| {
+                    anyhow::anyhow!(
+                        "published {} but cannot sync directory {}: {}; persistence is uncertain",
+                        path.display(),
+                        dir.display(),
+                        e
+                    )
                 });
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
@@ -918,3 +950,7 @@ mod file_lock_tests {
         assert_eq!(std::fs::symlink_metadata(&fifo).unwrap().len(), 0);
     }
 }
+
+#[cfg(test)]
+#[path = "util/atomic_file_tests.rs"]
+mod atomic_file_tests;

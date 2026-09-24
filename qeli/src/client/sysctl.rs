@@ -400,11 +400,8 @@ fn persist(path: &Path, store: &JournalStore) -> anyhow::Result<()> {
         .namespaces
         .retain(|_, journal| !journal.entries.is_empty());
     if snapshot.namespaces.is_empty() {
-        return match std::fs::remove_file(path) {
-            Ok(()) => Ok(()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(anyhow::anyhow!("cannot remove {}: {error}", path.display())),
-        };
+        return crate::util::remove_file_synced(path)
+            .map_err(|error| anyhow::anyhow!("cannot remove {}: {error}", path.display()));
     }
     let bytes = serde_json::to_vec(&snapshot)?;
     if bytes.len() as u64 > JOURNAL_LIMIT {

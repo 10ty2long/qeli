@@ -59,3 +59,5 @@ delete/recreate старый fd также не обращается к ново
 для следующего решения, но пока не реализованный контракт sysctl lease.
 
 [Предыдущий этап](AUDIT-Q25-SYSCTL-JOURNAL-IO.md) · [Инструкции](../manuals/TROUBLESHOOTING.md)
+
+Продолжение: [очистка временных файлов и directory fsync](AUDIT-Q25-ATOMIC-STATE.md).

@@ -115,3 +115,5 @@ D05: [async preflight и время жизни транзакции панели
 Обновление D05/D09: [бюджет backup/restore и полнота снимка](../reports/AUDIT-Q05-ARCHIVE-BUDGET.md). Остальные сетевые последовательности и filesystem fault E2E остаются открытыми.
 
 D02: [guard внутренних границ sysctl](../reports/AUDIT-Q25-SYSCTL-CONTEXT-IO.md); durable namespace identity, исходный интерфейс и parent trust ещё открыты.
+
+D02/D05/D09: [атомарная запись состояния](../reports/AUDIT-Q25-ATOMIC-STATE.md) очищает частичные временные файлы и синхронизирует каталог на Unix; реальные partial-write/fsync fault probes PASS. Остальные критерии этих групп остаются открыты.
