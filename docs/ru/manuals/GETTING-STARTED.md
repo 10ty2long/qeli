@@ -769,6 +769,8 @@ dns         = tunnel
 
 Managed DNS на Linux также требует `SO_NETNS_COOKIE` и доверенного `/var/lib/qeli` без symlink и group/world write. Per-link DNS state не переносится через `STATE_DIRECTORY`. Перед обновлением штатно остановите старый клиент; оставшиеся v1-маркеры требуют ручного разбора, если совпадают с новым link. [Формат v2 и восстановление](TROUBLESHOOTING.md#650-linux-владение-dns-lease-и-восстановление-маркеров).
 
+Managed Linux-клиент также требует `SO_NETNS_COOKIE` и доверенный writable `/var/lib/qeli` для постоянного журнала маршрутов, даже при `dns = off`/`system`. Сохраняйте каталог между запусками; все клиенты в одной сети должны видеть общий журнал. [Восстановление маршрутов](OPERATIONS.md#восстановление-физических-маршрутов-клиента).
+
 ```bash
 sudo qeli client --config /etc/qeli/client.conf
 ```
@@ -1284,7 +1286,8 @@ sudo ip link del vpn0 2>/dev/null; true        # tun — имя из `dev = …`
 # Удалить бинарь, конфиг, состояние:
 sudo rm -f /usr/local/bin/qeli
 rm -f ~/qeli-client.conf                        # ваш путь к клиентскому конфигу
-sudo rm -rf /var/lib/qeli                       # device-id + dns-backup
+# Сначала завершите recovery маршрутов (§6.81) и убедитесь, что здесь нет state сервера.
+sudo rm -rf /var/lib/qeli                       # только после проверенной очистки
 ```
 
 Перед ручной очисткой убедитесь, что клиент-владелец остановлен. Имя TUN теперь

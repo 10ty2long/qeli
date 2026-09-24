@@ -480,7 +480,7 @@ fn tunnel_plan_metric_zero_uses_kernel_effective_identity() {
             assert!(routes[0]
                 .windows(2)
                 .any(|p| p == ["metric", if ipv6 { "1024" } else { "0" }]));
-            note_created_owned(&test_owner(), routes[0].clone());
+            note_created_owned(&test_owner(), routes[0].clone()).unwrap();
             cleanup_routes(&test_owner()).unwrap();
             assert!(!fixture
                 .kernel
@@ -506,7 +506,8 @@ fn tunnel_plan_does_not_mutate_another_live_owners_route() {
                 100,
                 false,
             )),
-        );
+        )
+        .unwrap();
         assert!(case.run().is_err());
         assert!(fixture.mutations().is_empty());
     });

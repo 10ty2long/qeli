@@ -81,3 +81,5 @@ ownership, физические обходы/blackhole могут остатьс
 Windows VM/Mac/iOS/router runtime остаются SKIPPED по решению пользователя.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Эксплуатация](../manuals/OPERATIONS.md)
+
+Продолжение: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) добавляет постоянный intent/confirmed journal и recovery физических маршрутов после SIGKILL. Ограничение отсутствия журнала выше относится к baseline этого отчёта; остальные границы ownership сохраняются.

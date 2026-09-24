@@ -41,7 +41,8 @@ fn add_owned(owner: &RouteOwner, prefix: &str, dev: &str) -> anyhow::Result<()> 
         ["route", "del", prefix, "dev", dev]
             .map(str::to_string)
             .to_vec(),
-    );
+    )
+    .unwrap();
     Ok(())
 }
 

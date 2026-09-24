@@ -98,3 +98,5 @@ Follow-up: [Q25-F033/F034](AUDIT-Q25-SETUP-FLUSH.md) extends pending tracking to
 carrier/exclude/blackhole setup and verifies interface-flush postconditions. Negative
 status with confirmed absence no longer fails cleanup; a missing TUN requires a separate
 link inventory check. Durable crash recovery remains open.
+
+D04 follow-up: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) adds durable physical route ownership and crash recovery. The process-local contract described here is extended with intent/confirmed state; uncertain operations still grant no delete authority.

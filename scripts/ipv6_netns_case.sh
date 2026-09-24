@@ -566,6 +566,33 @@ elif [ "$ROUTING" = split ]; then
     "ip netns exec $CLI_NS ping -6 -c1 -W2 fd46:ffff::2"
 fi
 
+# Optional physical route recovery using a real SIGKILL and a fresh client process.
+ROUTE_CRASH_CHECK=0
+if [ "${QELI_ROUTE_CRASH_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS_UPSTREAM" ]; then
+  ROUTE_CRASH_CHECK=1
+  ip netns exec "$CLI_NS" ip route add 203.0.113.77 via 10.46.1.1 dev "$CLI_IF" proto static
+  ip netns exec "$CLI_NS" ip route show exact 203.0.113.77 > "$WORK/operator-route-before-crash.txt"
+  kill -KILL "$CLIENT_PID"
+  wait "$CLIENT_PID" 2>/dev/null || true
+  CLIENT_PID=
+  check_eventually "route crash releases the original TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
+  check "SIGKILL leaves the physical carrier bypass" "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS | grep -q 'dev $CLI_IF'"
+  if [ "${QELI_EXPECT_ROUTE_JOURNAL:-1}" = 1 ]; then
+    check "SIGKILL retains the durable client route journal" "test -s /var/lib/qeli/client-routes.state && grep -Fq '\"interface\":\"$TUN_IF\"' /var/lib/qeli/client-routes.state"
+    cp /var/lib/qeli/client-routes.state "$WORK/routes-after-crash.state"
+  fi
+  ip netns exec "$CLI_NS" env QELI_KNOWN_HOSTS="$WORK/known-hosts" \
+    QELI_DEVICE_ID_FILE="$WORK/device-id" \
+    "$CLIENT_BIN" client -c "$WORK/client.conf" >"$WORK/client-route-restart.log" 2>&1 &
+  CLIENT_PID=$!
+  check_eventually "route restart creates a new TUN" "ip netns exec $CLI_NS ip link show $TUN_IF"
+  if [ "$INNER" = 4 ]; then
+    check_eventually "route restart carries authenticated IPv4 traffic" "ip netns exec $CLI_NS ping -4 -c1 -W2 198.18.46.1"
+  else
+    check_eventually "route restart carries authenticated IPv6 traffic" "ip netns exec $CLI_NS ping -6 -c1 -W2 fd46:ffff::1"
+  fi
+fi
+
 # Optional crash-recovery stage uses the same real resolved/bus after SIGKILL.
 if [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; then
   CRASH_DNS_MARKER=$DNS_MARKER
@@ -631,7 +658,7 @@ fi
 # Optional operator replacement before clean stop. DNS crash cells already lost
 # the original process journal, so they cannot prove this ownership regression.
 ROUTE_IDENTITY_CHECK=0
-if [ "${QELI_ROUTE_IDENTITY_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS_UPSTREAM" ]; then
+if [ "${QELI_ROUTE_IDENTITY_CHECK:-0}" = 1 ] && [ "$ROUTE_CRASH_CHECK" = 0 ] && [ "$ROUTING" = full ] && [ -z "$DNS_UPSTREAM" ]; then
   ROUTE_IDENTITY_CHECK=1
   if [ "$OUTER" = 4 ]; then CARRIER_GATEWAY=10.46.1.1; else CARRIER_GATEWAY=fd46:1::1; fi
   check "client installed a carrier bypass before operator replacement" \
@@ -648,6 +675,15 @@ else
   bad "client stopped cleanly"
 fi
 CLIENT_PID=
+if [ "$ROUTE_CRASH_CHECK" = 1 ]; then
+  check "stop after route recovery removes the carrier bypass" "test -z \"\$(ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS)\""
+  check "stop after route recovery removes IPv4 blackholes" "test -z \"\$(ip netns exec $CLI_NS ip -4 route show type blackhole)\""
+  check "stop after route recovery removes IPv6 blackholes" "test -z \"\$(ip netns exec $CLI_NS ip -6 route show type blackhole)\""
+  check "route recovery preserves the unrelated operator route" "ip netns exec $CLI_NS ip route show exact 203.0.113.77 > $WORK/operator-route-after-crash.txt && cmp $WORK/operator-route-before-crash.txt $WORK/operator-route-after-crash.txt"
+  if [ "${QELI_EXPECT_ROUTE_JOURNAL:-1}" = 1 ]; then
+    check "clean stop retires the recovered route records" "! grep -Fq '\"interface\":\"$TUN_IF\"' /var/lib/qeli/client-routes.state"
+  fi
+fi
 if [ "$ROUTE_IDENTITY_CHECK" = 1 ]; then
   check "clean stop preserves the operator carrier replacement" \
     "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS > $WORK/operator-carrier-after.txt && cmp $WORK/operator-carrier-before.txt $WORK/operator-carrier-after.txt"

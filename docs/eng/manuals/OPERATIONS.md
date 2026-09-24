@@ -434,7 +434,30 @@ borrowed without destination delete authority.
 
 The owned managed TUN still has its interface routes flushed during teardown. The
 check is not atomic with the next command and cannot distinguish another root's
-identical route. SIGKILL loses the client route journal; disk recovery of physical
-bypasses/blackholes is not implemented yet. Do not flush the entire route table;
-verify the origin of an exact entry before removing it manually.
+identical route. Confirmed physical entries are persisted for the next start after
+SIGKILL; uncertain intents require manual investigation. Do not flush the entire route
+table; verify the origin of an exact entry before removing it manually.
 [Validation and limits](../reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
+
+## Client physical route recovery
+
+The Linux managed-TUN client persists physical bypass/exclude and blackhole routes in
+`/var/lib/qeli/client-routes.state`. This requires `SO_NETNS_COOKIE` and a trusted
+state directory writable by the process owner, without symlinks or group/world write.
+This also applies with `dns = off`/`system`. `STATE_DIRECTORY` does not change the path.
+All clients sharing a network must see the same directory and `client-routes.state.lock`.
+Configuration remains INI; the journal is internal recovery state.
+
+Stop the old client cleanly before upgrading. After SIGKILL, restart with the original
+`dev`, network namespace and state directory. Recovery precedes DNS resolution/handshake.
+Only confirmed entries with unchanged attributes are removed; operator replacements
+remain. Foreign namespace/TUN groups are not cleaned. A live/persistent TUN blocks
+recovery; Qeli does not delete it by name.
+
+An uncertain intent gives no permission to delete a matching route. Incomplete recovery
+aborts startup and retains records. Repair the cause and retry; follow
+[§6.81](TROUBLESHOOTING.md#681-linux-physical-route-journal-recovery) for manual investigation.
+Do not delete the journal or lock to bypass refusal. Empty state and a stable lock after
+clean stop are normal. The journal does not adopt leftovers of older unjournaled versions.
+Limits are 8 MiB, 128 groups and 8192 records. Attach does not manage these routes.
+[Validation and limits](../reports/AUDIT-Q25-ROUTE-JOURNAL.md).

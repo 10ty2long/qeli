@@ -17,19 +17,24 @@ use ownership::{delete_spec, route_matches_spec};
 mod budget;
 #[path = "route/journal.rs"]
 mod journal;
+#[path = "route/persistent.rs"]
+mod persistent;
 #[cfg(all(test, feature = "experimental-roaming"))]
 use journal::created_by_us_owned;
-#[cfg(feature = "experimental-roaming")]
 use journal::forget_created_owned;
 #[cfg(test)]
 use journal::note_created;
 #[cfg(any(test, feature = "experimental-roaming"))]
 use journal::recorded_undo;
+#[cfg(all(target_os = "linux", feature = "client"))]
+pub(crate) use journal::recover_stale;
+#[cfg(test)]
+use journal::take_created;
 pub(crate) use journal::RouteOwner;
 #[cfg(feature = "experimental-roaming")]
 pub(crate) use journal::RouteScope;
 use journal::{
-    ensure_unclaimed, note_created_owned, note_pending, reconcile_pending, take_created,
+    created_records, ensure_unclaimed, note_created_owned, note_pending, reconcile_pending,
 };
 
 #[cfg(test)]
@@ -405,6 +410,7 @@ fn verify_failed_route_unchanged(
     if current.as_deref() != previous {
         anyhow::bail!("failed route mutation for {remote} did not preserve the previous route");
     }
+    owner.cancel_intent(&carrier_route_undo(remote))?;
     Ok(())
 }
 
@@ -421,6 +427,15 @@ fn candidate_route_expected_tokens(route: &LinuxCandidateRoute) -> Vec<String> {
 fn run_ip_owned(owner: &RouteOwner, args: &[String], description: &str) -> anyhow::Result<()> {
     let output = owner.command_output(args, true)?;
     if output.status.success() {
+        let spec = delete_spec(args);
+        let current =
+            ownership::recorded_route_with(&spec, &|raw| owner.command_output(raw, false))?;
+        anyhow::ensure!(
+            current
+                .as_ref()
+                .is_some_and(|row| route_matches_spec(&spec, row)),
+            "{description}: successful command did not establish the requested route"
+        );
         return Ok(());
     }
     anyhow::bail!(
@@ -446,7 +461,9 @@ fn rollback_candidate_route_steps(
             }) {
                 Ok(removed) => {
                     if !journal_was_present {
-                        forget_created_owned(owner, undo);
+                        if let Err(error) = forget_created_owned(owner, undo) {
+                            errors.push(error.to_string());
+                        }
                     }
                     if !removed {
                         errors.push("candidate route ownership changed during rollback".into());
@@ -520,7 +537,7 @@ fn restore_carrier_snapshot(
 ) -> anyhow::Result<()> {
     let current = exact_route_tokens(owner, remote, false)?;
     if current.as_deref() == Some(previous) {
-        note_created_owned(owner, previous_undo.to_vec());
+        note_created_owned(owner, previous_undo.to_vec())?;
         return Ok(());
     }
     let action = match current {
@@ -529,7 +546,7 @@ fn restore_carrier_snapshot(
             "replace"
         }
         Some(_) => {
-            forget_created_owned(owner, previous_undo);
+            forget_created_owned(owner, previous_undo)?;
             anyhow::bail!("carrier route {remote} ownership changed before restoration");
         }
     };
@@ -545,7 +562,7 @@ fn restore_carrier_snapshot(
         anyhow::anyhow!("could not verify restored carrier route {remote}: {error}")
     })?;
     if current.as_deref() == Some(previous) {
-        note_created_owned(owner, previous_undo.to_vec());
+        note_created_owned(owner, previous_undo.to_vec())?;
         return Ok(());
     }
     if current.is_some() {
@@ -562,7 +579,7 @@ fn restore_carrier_snapshot(
 #[cfg(feature = "experimental-roaming")]
 fn retire_carrier_route(owner: &RouteOwner, route: &RetiredCarrierRoute) -> anyhow::Result<()> {
     if exact_route_tokens(owner, route.remote, true)?.as_ref() != Some(&route.previous) {
-        forget_created_owned(owner, &route.undo);
+        forget_created_owned(owner, &route.undo)?;
         anyhow::bail!("carrier route {} changed before retirement", route.remote);
     }
     let completion = owner.command_output(&route.undo, true);
@@ -570,7 +587,7 @@ fn retire_carrier_route(owner: &RouteOwner, route: &RetiredCarrierRoute) -> anyh
         None => Ok(()),
         Some(current) => {
             if current != route.previous {
-                forget_created_owned(owner, &route.undo);
+                forget_created_owned(owner, &route.undo)?;
             }
             anyhow::bail!(
                 "carrier route {} remains after retirement; {}",
@@ -612,9 +629,9 @@ impl LinuxPreparedPathRoutes {
         let lease = self.owner.upgrade()?;
         let owner = &lease;
         let _operation = owner.operation().map_err(|error| {
-            if owner.identity_failed() {
+            if owner.identity_failed() || owner.journal_failed() {
                 anyhow::Error::new(RouteCommitStateUnknown::new(format!(
-                    "route owner identity lost before path commit: {error}"
+                    "route owner identity or journal lost before path commit: {error}"
                 )))
             } else {
                 error
@@ -623,9 +640,9 @@ impl LinuxPreparedPathRoutes {
         let result = owner
             .verify_plan()
             .and_then(|()| self.commit_locked(owner, previous_carriers, refresh_platform));
-        if owner.identity_failed() {
+        if owner.identity_failed() || owner.journal_failed() {
             return Err(RouteCommitStateUnknown::new(format!(
-                "route owner identity lost during path commit: {}",
+                "route owner identity or journal lost during path commit: {}",
                 result
                     .err()
                     .map_or_else(|| "final identity check failed".into(), |e| e.to_string())
@@ -682,7 +699,7 @@ impl LinuxPreparedPathRoutes {
                         previous,
                     })
                 }
-                Some(_) | None => forget_created_owned(owner, &undo),
+                Some(_) | None => forget_created_owned(owner, &undo)?,
             }
         }
         let mut steps = Vec::with_capacity(self.routes.len());
@@ -695,7 +712,7 @@ impl LinuxPreparedPathRoutes {
                 .zip(existing.as_ref())
                 .is_some_and(|(undo, current)| route_matches_spec(undo, current));
             if recorded.is_some() && !owned {
-                forget_created_owned(owner, &key);
+                forget_created_owned(owner, &key)?;
             }
             let undo = delete_spec(&candidate_route_command("add", route));
             let expected = candidate_route_expected_tokens(route);
@@ -738,19 +755,19 @@ impl LinuxPreparedPathRoutes {
                     journal_was_present,
                 } => {
                     let args = candidate_route_command("add", &step.route);
-                    run_ip_owned(owner, &args, "could not add candidate carrier route").map(|()| {
-                        if !journal_was_present {
-                            note_created_owned(owner, undo.clone());
-                        }
-                    })
+                    run_ip_owned(owner, &args, "could not add candidate carrier route").and_then(
+                        |()| {
+                            if !journal_was_present {
+                                note_created_owned(owner, undo.clone())?;
+                            }
+                            Ok(())
+                        },
+                    )
                 }
                 CandidateRouteMutation::Replace { .. } => {
                     let args = candidate_route_command("replace", &step.route);
-                    run_ip_owned(owner, &args, "could not replace qeli-owned carrier route").map(
-                        |()| {
-                            note_created_owned(owner, delete_spec(&args));
-                        },
-                    )
+                    run_ip_owned(owner, &args, "could not replace qeli-owned carrier route")
+                        .and_then(|()| note_created_owned(owner, delete_spec(&args)))
                 }
             };
             if let Err(error) = result {
@@ -806,7 +823,7 @@ impl LinuxPreparedPathRoutes {
         for route in retire {
             match retire_carrier_route(owner, &route) {
                 Ok(()) => {
-                    forget_created_owned(owner, &route.undo);
+                    forget_created_owned(owner, &route.undo)?;
                     // Even a lost/negative command result is a completed retirement when
                     // absence is verified. Include it in rollback if a later route fails.
                     retired.push(route);
@@ -1072,10 +1089,10 @@ fn install_initial_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<
             if completion.as_ref().is_ok_and(|o| o.status.success())
                 && route_matches_spec(&undo, current) =>
         {
-            note_created_owned(owner, undo);
+            note_created_owned(owner, undo)?;
             return Ok(());
         }
-        Ok(None) => {} // Proven absent: there is nothing to claim or reserve.
+        Ok(None) => owner.cancel_intent(&undo)?, // Proven absence retires durable intent.
         Ok(Some(_)) | Err(_) => note_pending(owner, undo),
     }
     let detail = match observed {
@@ -1756,6 +1773,7 @@ fn cleanup_routes_with_checks(
     let ifname = owner.interface();
     let command = |args: &[String], needs_tunnel: bool| {
         namespace().map_err(std::io::Error::other)?;
+        owner.verify_durable().map_err(std::io::Error::other)?;
         if needs_tunnel {
             tunnel().map_err(std::io::Error::other)?;
         }
@@ -1767,29 +1785,21 @@ fn cleanup_routes_with_checks(
     };
     // Physical bypasses remain independently removable if the original namespace is
     // proven. A lost/renamed TUN must not authorize commands on a replacement name.
-    let mut failed = Vec::new();
     let mut errors = Vec::new();
-    for args in take_created(owner) {
+    for args in created_records(owner) {
         match ownership::remove_recorded_route_with(&args, &|raw| command(raw, is_tunnel(&args))) {
-            Ok(true) => {}
-            Ok(false) => {
-                log::info!(
-                    "owned route changed; preserving replacement: ip {}",
-                    args.join(" ")
-                );
+            Ok(removed) => {
+                if !removed {
+                    log::info!(
+                        "owned route changed; preserving replacement: ip {}",
+                        args.join(" ")
+                    );
+                }
+                if let Err(error) = forget_created_owned(owner, &args) {
+                    errors.push(error.to_string());
+                }
             }
-            Err(error) => {
-                errors.push(error.to_string());
-                failed.push(args);
-            }
-        }
-    }
-
-    // A failed deletion is still ours. Keep it in the journal so TunGuard's retry (or a
-    // later explicit cleanup) can try again instead of permanently forgetting ownership.
-    if !failed.is_empty() {
-        for args in failed {
-            note_created_owned(owner, args);
+            Err(error) => errors.push(error.to_string()),
         }
     }
 
@@ -1822,6 +1832,9 @@ fn cleanup_routes_with_checks(
         ownership::recorded_route_with(spec, &|raw| command(raw, is_tunnel(spec)))
     }));
     if let Err(error) = budget::check() {
+        errors.push(error.to_string());
+    }
+    if let Err(error) = owner.reconcile_durable() {
         errors.push(error.to_string());
     }
     owner.cleanup_result(!errors.is_empty(), interface_flushed);
@@ -2584,7 +2597,8 @@ exit 0
                 ],
             ]
             .concat(),
-        );
+        )
+        .unwrap();
         let prepared =
             prepare_candidate_path_routes_on(&ipv4_candidate(), &test_owner(), "eth0").unwrap();
         prepared.commit(&[]).unwrap();
@@ -2661,7 +2675,8 @@ exit 0
                 ],
             ]
             .concat(),
-        );
+        )
+        .unwrap();
         let prepared =
             prepare_candidate_path_routes_on(&ipv6_candidate(), &test_owner(), "eth0").unwrap();
         prepared.commit(&[old]).unwrap();
@@ -2743,7 +2758,8 @@ exit 0
                 ],
             ]
             .concat(),
-        );
+        )
+        .unwrap();
         let prepared =
             prepare_candidate_path_routes_on(&ipv6_candidate(), &test_owner(), "eth0").unwrap();
         let error = prepared.commit(&[old]).unwrap_err().to_string();

@@ -2552,6 +2552,11 @@ async fn run_client_inner(
 
     // Repair any DNS state left behind by a previous run that died without
     // restoring (SIGKILL / power loss / panic). Must run before we touch DNS.
+    if !config.tun.attach_existing {
+        // Physical routes survive the last TUN fd. Recover before name resolution /
+        // handshake so stale blackholes cannot prevent reaching the new server.
+        route::recover_stale(&config.tun.name)?;
+    }
     dns::recover_stale()?;
 
     // Gateway/router NAT + lifecycle hooks (Linux). Resolve the tun interface name
@@ -7760,7 +7765,11 @@ fn setup_tunnel(
     };
     log::info!("TUN MTU: {}", mtu);
 
-    let route_owner = route::RouteOwner::new(&if_name, plan.generation)?;
+    let route_owner = if attach {
+        route::RouteOwner::new(&if_name, plan.generation)?
+    } else {
+        route::RouteOwner::new_persistent(&if_name, plan.generation)?
+    };
     tun_recovery::prepare(&if_name, attach)?;
     log::info!(
         "{} {} interface {}",

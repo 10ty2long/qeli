@@ -766,6 +766,8 @@ On Linux, `dns = tunnel` requires `busctl`, active systemd-resolved and its stub
 
 Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
 
+The managed Linux client also requires `SO_NETNS_COOKIE` and trusted writable `/var/lib/qeli` for its durable route journal, even with `dns = off`/`system`. Preserve this directory across restarts; all clients sharing a network must see the same journal. [Route recovery](OPERATIONS.md#client-physical-route-recovery).
+
 ```bash
 sudo qeli client --config /etc/qeli/client.conf
 ```
@@ -1277,7 +1279,8 @@ sudo ip link del vpn0 2>/dev/null; true        # tun — name from `dev = …`
 # Remove the binary, config, state:
 sudo rm -f /usr/local/bin/qeli
 rm -f ~/qeli-client.conf                        # your client config path
-sudo rm -rf /var/lib/qeli                       # device-id + dns-backup
+# Complete route recovery (§6.81) first and confirm no server shares this state.
+sudo rm -rf /var/lib/qeli                       # only after verified cleanup
 ```
 
 Before manual recovery, establish that the owning client has stopped. The TUN name

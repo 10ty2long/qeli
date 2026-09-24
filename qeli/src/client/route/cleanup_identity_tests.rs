@@ -48,7 +48,7 @@ fn cleanup_identity_foreign_same_name_routes_survive() {
     for ipv6 in [false, true] {
         let spec = record(ipv6, "qtest");
         let fixture = Fixture::new(vec![snapshot(&spec)], None);
-        note_created_owned(&test_owner(), spec.clone());
+        note_created_owned(&test_owner(), spec.clone()).unwrap();
         assert!(cleanup_routes_with_checks(&test_owner(), allowed, denied).is_err());
         assert!(writes(&fixture).is_empty());
         assert!(recorded_undo(&test_owner(), &spec).is_some());
@@ -83,8 +83,8 @@ fn cleanup_identity_physical_cleanup_continues_when_tun_is_lost() {
         }
         .into();
         let fixture = Fixture::new(vec![snapshot(&tunnel), snapshot(&physical)], None);
-        note_created_owned(&test_owner(), tunnel.clone());
-        note_created_owned(&test_owner(), physical.clone());
+        note_created_owned(&test_owner(), tunnel.clone()).unwrap();
+        note_created_owned(&test_owner(), physical.clone()).unwrap();
         assert!(cleanup_routes_with_checks(&test_owner(), allowed, denied).is_err());
         assert_eq!(writes(&fixture), vec![physical]);
         assert!(recorded_undo(&test_owner(), &tunnel).is_some());
@@ -95,7 +95,7 @@ fn cleanup_identity_physical_cleanup_continues_when_tun_is_lost() {
 fn cleanup_identity_foreign_namespace_blocks_all_commands() {
     let physical = record(false, "eth0");
     let fixture = Fixture::new(vec![snapshot(&physical)], None);
-    note_created_owned(&test_owner(), physical.clone());
+    note_created_owned(&test_owner(), physical.clone()).unwrap();
     assert!(cleanup_routes_with_checks(&test_owner(), denied, allowed).is_err());
     assert!(fixture.kernel.lock().unwrap().calls.is_empty());
     assert!(recorded_undo(&test_owner(), &physical).is_some());
@@ -106,7 +106,7 @@ fn cleanup_identity_rechecked_between_snapshot_and_delete() {
     for ipv6 in [false, true] {
         let spec = record(ipv6, "qtest");
         let fixture = Fixture::new(vec![snapshot(&spec)], None);
-        note_created_owned(&test_owner(), spec.clone());
+        note_created_owned(&test_owner(), spec.clone()).unwrap();
         let checks = Cell::new(0);
         assert!(cleanup_routes_with_checks(&test_owner(), allowed, || {
             checks.set(checks.get() + 1);
@@ -159,7 +159,7 @@ fn cleanup_identity_pending_preserved_when_tun_is_unverifiable() {
 fn cleanup_identity_verified_retry_releases_own_records() {
     let spec = record(false, "qtest");
     let fixture = Fixture::new(vec![snapshot(&spec)], None);
-    note_created_owned(&test_owner(), spec.clone());
+    note_created_owned(&test_owner(), spec.clone()).unwrap();
     assert!(cleanup_routes_with_checks(&test_owner(), allowed, denied).is_err());
     cleanup_routes_with_checks(&test_owner(), allowed, allowed).unwrap();
     assert!(recorded_undo(&test_owner(), &spec).is_none());
@@ -170,7 +170,7 @@ fn cleanup_identity_verified_retry_releases_own_records() {
 fn cleanup_identity_namespace_rechecked_before_physical_delete() {
     let spec = record(false, "eth0");
     let fixture = Fixture::new(vec![snapshot(&spec)], None);
-    note_created_owned(&test_owner(), spec.clone());
+    note_created_owned(&test_owner(), spec.clone()).unwrap();
     let checks = Cell::new(0);
     assert!(cleanup_routes_with_checks(
         &test_owner(),
@@ -193,7 +193,7 @@ fn cleanup_identity_namespace_rechecked_before_physical_delete() {
 fn cleanup_identity_lost_postcheck_keeps_record_until_verified_absence() {
     let spec = record(false, "qtest");
     let fixture = Fixture::new(vec![snapshot(&spec)], None);
-    note_created_owned(&test_owner(), spec.clone());
+    note_created_owned(&test_owner(), spec.clone()).unwrap();
     let checks = Cell::new(0);
     assert!(cleanup_routes_with_checks(&test_owner(), allowed, || {
         checks.set(checks.get() + 1);

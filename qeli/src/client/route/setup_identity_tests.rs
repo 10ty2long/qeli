@@ -122,14 +122,16 @@ fn setup_identity_lost_tun_after_candidate_add_rolls_back_physical_route() {
 }
 
 #[test]
-fn setup_identity_lost_namespace_after_candidate_add_preserves_journal() {
+fn setup_identity_lost_namespace_after_candidate_add_preserves_pending() {
     let fixture = Fixture::new(vec![], None);
     intercept_loss(&fixture, "add", true);
     let route = candidate(false);
     let error = plan(vec![route.clone()]).commit(&[]).unwrap_err();
     assert!(unknown(&error));
     assert_eq!(fixture.mutations().len(), 1);
-    assert!(recorded_undo(&test_owner(), &carrier_route_undo(route.remote)).is_some());
+    assert!(recorded_undo(&test_owner(), &carrier_route_undo(route.remote)).is_none());
+    let other = RouteOwner::test_new("other-tun", 8).unwrap();
+    assert!(ensure_unclaimed(&other, &carrier_route_undo(route.remote)).is_err());
 }
 
 #[test]

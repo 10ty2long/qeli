@@ -12,8 +12,11 @@ struct Lease {
     #[cfg(test)]
     evidence: Option<Arc<Mutex<TestEvidence>>>,
     identity_failed: std::sync::atomic::AtomicBool,
+    journal_failed: std::sync::atomic::AtomicBool,
     #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
     tun: std::sync::OnceLock<BoundTun>,
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    persistent: std::sync::OnceLock<Arc<super::persistent::native::Session>>,
     id: u64,
     #[cfg(target_os = "linux")]
     namespace: Arc<super::identity::Namespace>,
@@ -126,11 +129,29 @@ impl RouteOwner {
             #[cfg(target_os = "linux")]
             namespace,
             identity_failed: std::sync::atomic::AtomicBool::new(false),
+            journal_failed: std::sync::atomic::AtomicBool::new(false),
+            #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+            persistent: std::sync::OnceLock::new(),
             #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
             tun: std::sync::OnceLock::new(),
             interface: interface.into(),
             generation,
         })))
+    }
+
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    pub(crate) fn new_persistent(interface: &str, generation: u64) -> anyhow::Result<Self> {
+        let owner = Self::new(interface, generation)?;
+        let _operation = owner.operation()?;
+        let session = super::persistent::native::Session::open(interface)?;
+        let _guard = session.begin()?;
+        session.recover()?;
+        owner
+            .0
+            .persistent
+            .set(session)
+            .map_err(|_| anyhow::anyhow!("route session already initialized"))?;
+        Ok(owner)
     }
 
     #[cfg(test)]
@@ -143,6 +164,14 @@ impl RouteOwner {
             tunnel: true,
         })));
         Ok(owner)
+    }
+
+    #[cfg(all(test, target_os = "linux", any(feature = "client", feature = "server")))]
+    pub(super) fn test_attach_session(&self, session: Arc<super::persistent::native::Session>) {
+        self.0
+            .persistent
+            .set(session)
+            .expect("new synthetic session");
     }
 
     #[cfg(test)]
@@ -246,6 +275,23 @@ impl RouteOwner {
             .load(std::sync::atomic::Ordering::Relaxed)
     }
 
+    #[cfg(feature = "experimental-roaming")]
+    pub(super) fn journal_failed(&self) -> bool {
+        self.0
+            .journal_failed
+            .load(std::sync::atomic::Ordering::Relaxed)
+    }
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    fn journal_result<T>(&self, result: anyhow::Result<T>) -> anyhow::Result<T> {
+        if result.is_err() {
+            self.0
+                .journal_failed
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+            self.stop_admission();
+        }
+        result
+    }
+
     fn check_identity(&self, needs_tunnel: bool) -> anyhow::Result<()> {
         if needs_tunnel && self.identity_failed() {
             anyhow::bail!("route owner previously lost identity; refusing further setup");
@@ -295,7 +341,18 @@ impl RouteOwner {
     ) -> std::io::Result<std::process::Output> {
         self.check_identity(needs_tunnel)
             .map_err(std::io::Error::other)?;
-        super::route_command_output(args)
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if let Some(session) = self.0.persistent.get() {
+            self.journal_result(session.before_command(args))
+                .map_err(std::io::Error::other)?;
+        }
+        let result = super::route_command_output(args);
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if let Some(session) = self.0.persistent.get() {
+            self.journal_result(session.verify())
+                .map_err(std::io::Error::other)?;
+        }
+        result
     }
 
     pub(crate) fn interface(&self) -> &str {
@@ -310,7 +367,7 @@ impl RouteOwner {
         RouteScope(Arc::downgrade(&self.0))
     }
 
-    pub(super) fn operation(&self) -> anyhow::Result<super::budget::Operation> {
+    pub(super) fn operation(&self) -> anyhow::Result<Operation> {
         let guard = super::budget::Operation::acquire(&OPERATIONS)?;
         if !registry()
             .entries
@@ -321,13 +378,57 @@ impl RouteOwner {
         }
         self.check_identity(false)?;
         super::budget::check()?;
-        Ok(guard)
+        self.wrap_operation(guard)
     }
 
-    pub(super) fn cleanup_operation(&self) -> anyhow::Result<super::budget::Operation> {
+    pub(super) fn cleanup_operation(&self) -> anyhow::Result<Operation> {
         // Cleanup failure or admission timeout must still reject a queued late COMMIT.
         self.stop_admission();
-        Ok(super::budget::Operation::acquire(&OPERATIONS)?)
+        self.wrap_operation(super::budget::Operation::acquire(&OPERATIONS)?)
+    }
+
+    fn wrap_operation(&self, guard: super::budget::Operation) -> anyhow::Result<Operation> {
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        let persistent = self
+            .0
+            .persistent
+            .get()
+            .map(|session| self.journal_result(session.begin()))
+            .transpose()?;
+        Ok(Operation {
+            #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+            _persistent: persistent,
+            _local: guard,
+        })
+    }
+    fn durable_change(
+        &self,
+        spec: &[String],
+        change: super::persistent::Change,
+    ) -> anyhow::Result<()> {
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if let Some(session) = self.0.persistent.get() {
+            self.journal_result(session.change(spec, change))?;
+        }
+        let _ = (spec, change);
+        Ok(())
+    }
+    pub(super) fn cancel_intent(&self, spec: &[String]) -> anyhow::Result<()> {
+        self.durable_change(spec, super::persistent::Change::ForgetPending)
+    }
+    pub(super) fn verify_durable(&self) -> anyhow::Result<()> {
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if let Some(session) = self.0.persistent.get() {
+            self.journal_result(session.verify())?;
+        }
+        Ok(())
+    }
+    pub(super) fn reconcile_durable(&self) -> anyhow::Result<()> {
+        #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+        if let Some(session) = self.0.persistent.get() {
+            return self.journal_result(session.reconcile());
+        }
+        Ok(())
     }
 
     pub(crate) fn stop_admission(&self) {
@@ -376,6 +477,10 @@ impl Drop for Lease {
 // A matching route installed by another Qeli owner is not an operator-owned route
 // that we may borrow: its creator may disconnect. Refuse instead of losing its lease.
 pub(super) fn ensure_unclaimed(owner: &RouteOwner, spec: &[String]) -> anyhow::Result<()> {
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    if let Some(session) = owner.0.persistent.get() {
+        session.check_unclaimed(spec)?;
+    }
     let state = registry();
     for entry in &state.entries {
         if entry.id != owner.0.id
@@ -396,9 +501,9 @@ pub(super) fn ensure_unclaimed(owner: &RouteOwner, spec: &[String]) -> anyhow::R
 
 #[cfg(test)]
 pub(super) fn note_created(owner: &RouteOwner, args: &[&str]) {
-    note_created_owned(owner, args.iter().map(|s| s.to_string()).collect());
+    note_created_owned(owner, args.iter().map(|s| s.to_string()).collect()).unwrap();
 }
-pub(super) fn note_created_owned(owner: &RouteOwner, args: Vec<String>) {
+pub(super) fn note_created_owned(owner: &RouteOwner, args: Vec<String>) -> anyhow::Result<()> {
     let mut state = registry();
     let entry = state
         .entries
@@ -406,7 +511,11 @@ pub(super) fn note_created_owned(owner: &RouteOwner, args: Vec<String>) {
         .find(|e| e.id == owner.0.id)
         .expect("live route owner is registered");
     entry.routes.retain(|r| !same_route_key(r, &args));
-    entry.routes.push(args);
+    entry.routes.push(args.clone());
+    drop(state);
+    // RAM retains known authority even if durable confirmation fails. The earlier
+    // intent remains on disk; cleanup may remove the route and then retire that intent.
+    owner.durable_change(&args, super::persistent::Change::Confirm)
 }
 #[cfg(any(test, feature = "experimental-roaming"))]
 pub(super) fn recorded_undo(owner: &RouteOwner, args: &[String]) -> Option<Vec<String>> {
@@ -420,12 +529,23 @@ pub(super) fn recorded_undo(owner: &RouteOwner, args: &[String]) -> Option<Vec<S
 pub(super) fn created_by_us_owned(owner: &RouteOwner, args: &[String]) -> bool {
     recorded_undo(owner, args).is_some()
 }
-#[cfg(feature = "experimental-roaming")]
-pub(super) fn forget_created_owned(owner: &RouteOwner, args: &[String]) {
+pub(super) fn forget_created_owned(owner: &RouteOwner, args: &[String]) -> anyhow::Result<()> {
+    owner.durable_change(args, super::persistent::Change::ForgetOwned)?;
     if let Some(entry) = registry().entries.iter_mut().find(|e| e.id == owner.0.id) {
         entry.routes.retain(|r| !same_route_key(r, args));
     }
+    Ok(())
 }
+pub(super) fn created_records(owner: &RouteOwner) -> Vec<Vec<String>> {
+    registry()
+        .entries
+        .iter()
+        .find(|e| e.id == owner.0.id)
+        .expect("registered route owner")
+        .routes
+        .clone()
+}
+#[cfg(test)]
 pub(super) fn take_created(owner: &RouteOwner) -> Vec<Vec<String>> {
     let mut state = registry();
     let entry = state
@@ -500,4 +620,19 @@ pub(crate) struct TestEvidence {
 struct BoundTun {
     index: u32,
     descriptor: std::sync::Weak<crate::tun::iface::TunInterface>,
+}
+
+// Drop the file lock before restoring the local operation's deadline/unlocking RAM.
+pub(super) struct Operation {
+    #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+    _persistent: Option<super::persistent::native::Guard>,
+    _local: super::budget::Operation,
+}
+
+#[cfg(all(target_os = "linux", feature = "client"))]
+pub(crate) fn recover_stale(interface: &str) -> anyhow::Result<()> {
+    let _operation = super::budget::Operation::acquire(&OPERATIONS)?;
+    let session = super::persistent::native::Session::open(interface)?;
+    let _guard = session.begin()?;
+    session.recover()
 }

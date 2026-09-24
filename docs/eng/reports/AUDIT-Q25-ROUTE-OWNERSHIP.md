@@ -87,3 +87,5 @@ Follow-up: [Q25-F027/F028 — connection owners](AUDIT-Q25-ROUTE-SCOPE.md) separ
 and closes admission on cleanup; the historical limits above describe this report’s baseline.
 
 Follow-up: [Q25-F099](AUDIT-Q25-ROUTE-ATTRIBUTES.md) separates borrowing from ownership and checks implicit route attributes; the earlier comparison of supplied fields no longer grants authority to delete a changed physical route.
+
+D04 follow-up: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) adds durable physical route ownership and crash recovery. The process-local contract described here is extended with intent/confirmed state; uncertain operations still grant no delete authority.

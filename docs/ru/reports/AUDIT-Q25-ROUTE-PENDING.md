@@ -100,3 +100,5 @@ Q14-F027 TUN workers/FD, native certification и полный benchmark оста
 в initial setup carrier/exclude/blackhole и подтверждает постусловия interface flush.
 Отрицательный статус при доказанном отсутствии больше не блокирует cleanup; отсутствующий
 TUN подтверждается отдельным link inventory. Постоянный crash recovery остаётся открытым.
+
+Продолжение D04: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) добавляет постоянное владение физическими маршрутами и recovery после аварии. Описанный здесь process-local контракт дополнен durable intent/confirmed state; неопределённые операции по-прежнему не дают права удалить маршрут.

@@ -654,7 +654,7 @@ fn seed_owned(remote: IpAddr) {
         .unwrap();
     let mut undo = carrier_route_undo(remote);
     undo.extend(snapshot.into_iter().skip(1));
-    note_created_owned(&test_owner(), undo);
+    note_created_owned(&test_owner(), undo).unwrap();
 }
 
 fn install_owned(ipv6: bool) -> (Fixture, LinuxCandidateRoute) {
@@ -1299,7 +1299,7 @@ fn scope_host_prefix_notation_cannot_bypass_another_owners_claim() {
         let mut undo = delete_spec(&candidate_route_command("add", &route));
         let destination = if ipv6 { 3 } else { 2 };
         undo[destination] = format!("{}/{}", route.remote, if ipv6 { 128 } else { 32 });
-        note_created_owned(&other, undo);
+        note_created_owned(&other, undo).unwrap();
         assert!(plan(vec![route]).commit(&[]).is_err());
         assert!(fixture.kernel.lock().unwrap().calls.is_empty());
     }
@@ -1599,4 +1599,112 @@ fn ownership_retirement_preserves_changed_implicit_protocol() {
             Some(&operator)
         );
     }
+}
+
+#[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+#[test]
+fn persistent_retirement_write_failure_is_terminal_and_cleanup_can_retry() {
+    use std::os::unix::fs::PermissionsExt;
+    let old = candidate(false);
+    let fixture = Fixture::new(vec![previous(old.remote)], None);
+    struct Directory(std::path::PathBuf);
+    impl Drop for Directory {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    let dir = Directory(std::env::temp_dir().join(format!(
+        "qeli-route-commit-{}-{}",
+        std::process::id(),
+        rand::random::<u64>()
+    )));
+    std::fs::create_dir(&dir.0).unwrap();
+    std::fs::set_permissions(&dir.0, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let owner = test_owner();
+    let session = super::persistent::native::Session::at(&dir.0, owner.interface()).unwrap();
+    owner.test_attach_session(session);
+    {
+        let _operation = owner.operation().unwrap();
+        seed_owned(old.remote);
+    }
+    let file = dir.0.join("client-routes.state");
+    let saved = dir.0.join("saved.state");
+    let broken_file = file.clone();
+    let saved_file = saved.clone();
+    let kernel = fixture.kernel.clone();
+    let destination = old.remote.to_string();
+    let fired = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let did_fire = fired.clone();
+    EXECUTOR.with(|slot| {
+        *slot.borrow_mut() = Some(Box::new(move |args| {
+            let result = kernel.lock().unwrap().run(args);
+            if args.get(1).is_some_and(|s| s == "del") && args.get(2) == Some(&destination) {
+                std::fs::rename(&broken_file, &saved_file).unwrap();
+                std::fs::create_dir(&broken_file).unwrap();
+                did_fire.store(true, std::sync::atomic::Ordering::Relaxed);
+            }
+            result
+        }))
+    });
+    let error = plan(vec![candidate(true)])
+        .commit(&[old.remote])
+        .unwrap_err();
+    assert!(fired.load(std::sync::atomic::Ordering::Relaxed));
+    assert!(
+        unknown(&error),
+        "a journal failure after retiring the live path must stop this generation: {error}"
+    );
+    assert!(owner.journal_failed());
+    assert!(owner.operation().is_err());
+    assert!(cleanup_routes(&owner).is_err());
+    std::fs::remove_dir(&file).unwrap();
+    std::fs::rename(&saved, &file).unwrap();
+    cleanup_routes(&owner).unwrap();
+    assert!(fixture.kernel.lock().unwrap().routes.is_empty());
+    let disk: serde_json::Value = serde_json::from_slice(&std::fs::read(&file).unwrap()).unwrap();
+    assert_eq!(disk["groups"].as_array().unwrap().len(), 0);
+}
+
+#[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
+#[test]
+fn persistent_intent_write_failure_stops_admission_before_kernel_mutation() {
+    use std::os::unix::fs::PermissionsExt;
+    let fixture = Fixture::new(vec![], None);
+    let dir = std::env::temp_dir().join(format!(
+        "qeli-route-intent-{}-{}",
+        std::process::id(),
+        rand::random::<u64>()
+    ));
+    std::fs::create_dir(&dir).unwrap();
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let owner = test_owner();
+    let session = super::persistent::native::Session::at(&dir, owner.interface()).unwrap();
+    owner.test_attach_session(session);
+    let operation = owner.operation().unwrap();
+    let file = dir.join("client-routes.state");
+    std::fs::create_dir(&file).unwrap();
+    let args = [
+        "route",
+        "add",
+        "198.51.100.42",
+        "via",
+        "192.0.2.1",
+        "dev",
+        "wan0",
+    ]
+    .map(str::to_string);
+    assert!(owner.command_output(&args, false).is_err());
+    assert!(owner.journal_failed());
+    assert!(
+        fixture.mutations().is_empty(),
+        "intent must be durable before the command"
+    );
+    drop(operation);
+    assert!(
+        owner.operation().is_err(),
+        "failed intent closes forward admission"
+    );
+    std::fs::remove_dir(&file).unwrap();
+    cleanup_routes(&owner).unwrap();
+    std::fs::remove_dir_all(&dir).unwrap();
 }

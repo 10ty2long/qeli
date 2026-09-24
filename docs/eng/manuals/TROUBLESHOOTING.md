@@ -2281,6 +2281,33 @@ Qeli detected a changed physical bypass or blackhole and left it to the administ
 Even with the same destination/gateway/device, changes to `proto`, metric, source or
 additional attributes relinquish the previous ownership. This can explain a route left
 after orderly stop. Inspect the original namespace; an address match alone is not
-permission to remove every matching entry. SIGKILL has a separate limitation: the
-process route journal is not persisted to disk.
+permission to remove every matching entry. After SIGKILL the durable journal recovers
+confirmed physical entries on the next start; unresolved intents require §6.81.
 [Operations](OPERATIONS.md#linux-physical-routes-changed-by-an-administrator).
+
+### 6.81. Linux: physical route journal recovery
+
+`client route recovery incomplete` means verified cleanup did not finish.
+`unresolved physical route intent without delete authority` means a command may have
+changed the route without confirming ownership. Matching destination is not permission
+to remove it.
+
+1. Stop the owner and verify the original network namespace, boot ID and `dev`. Save
+   the journal and `ip -4 route show table main` / `ip -6 route show table main`
+   snapshots. Do not move the journal to another network.
+2. Repair unavailable `ip`, permissions or state I/O, then retry. Do not weaken
+   directory permissions or remove the stable lock.
+3. For pending state, establish the exact entry's origin. Delete only an exact route
+   confirmed by the administrator as a Qeli crash leftover. Once it is absent,
+   restart retires the reservation. If another owner needs it, preserve it and reconcile
+   the network plan; pending state is never adopted automatically.
+4. `refuses a live or persistent TUN` requires stopping its owner and inspecting the
+   existing device. Do not delete a foreign TUN based on its name. `still live` means
+   an occupied kernel lease; another state path cannot bypass it.
+
+Malformed/unknown format, capacity overflow, unsafe owner/symlink or `context was lost`
+stops operations. Do not edit boot/cookie/version to bypass checks. A new boot resets
+only valid old state. The journal is required in managed mode even with DNS disabled;
+`SO_NETNS_COOKIE` and trusted writable `/var/lib/qeli` are required. Empty state and
+`.lock` after clean shutdown are normal.
+[Recovery contract](OPERATIONS.md#client-physical-route-recovery).

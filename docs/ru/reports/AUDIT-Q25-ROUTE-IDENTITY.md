@@ -108,3 +108,5 @@ Native certification и новый benchmark не выполнялись. Пла
 setup/roaming и перед прямыми managed MAC/address/up; gateway/firewall остаются отдельной задачей.
 
 Продолжение: [Q25-F099](AUDIT-Q25-ROUTE-ATTRIBUTES.md) отделяет borrowing от ownership и проверяет неявные route attributes; прежнее сравнение только переданных полей больше не даёт права удалить изменённый физический маршрут.
+
+Продолжение D04: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) добавляет постоянное владение физическими маршрутами и recovery после аварии. Описанный здесь process-local контракт дополнен durable intent/confirmed state; неопределённые операции по-прежнему не дают права удалить маршрут.

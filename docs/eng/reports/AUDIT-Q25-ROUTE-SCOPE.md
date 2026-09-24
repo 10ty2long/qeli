@@ -96,3 +96,5 @@ Follow-up: [Q25-F031/F032](AUDIT-Q25-ROUTE-PENDING.md) retains separate pending 
 for unknown roaming outcomes and closes admission on every unknown commit result.
 Read-only orphan release is possible after confirming absent leftovers within the process;
 durable crash recovery remains open.
+
+D04 follow-up: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) adds durable physical route ownership and crash recovery. The process-local contract described here is extended with intent/confirmed state; uncertain operations still grant no delete authority.

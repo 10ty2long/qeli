@@ -81,3 +81,5 @@ private namespaces on `.11`; `.10` was unchanged. Windows VM/Mac/iOS/router runt
 remain SKIPPED by user decision.
 
 [Debt register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md)
+
+Follow-up: [Q25-F100](AUDIT-Q25-ROUTE-JOURNAL.md) adds durable intent/confirmed state and physical route recovery after SIGKILL. The missing-journal limitation above describes this report’s baseline; the other ownership boundaries remain.

@@ -203,3 +203,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - **[../../release/docker/README.md](../../release/docker/README.md)** — running the server in Docker.
 
 - [Q25-F099: ownership of changed Linux routes](reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
+
+- [Q25-F100: physical route journal and SIGKILL recovery](reports/AUDIT-Q25-ROUTE-JOURNAL.md).
