@@ -2216,3 +2216,16 @@ the interface and `resolvectl status`; preserve evidence before manual recovery 
 fallback. A `SetLinkDNSEx` error with a custom port requires resolved supporting this
 API: Qeli does not silently change the port to 53.
 [Analysis and checks](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
+
+### 6.77. Server worker network namespace already owned
+
+Another worker or process holds `qeli.server.worker` in this network. Changing
+control sockets, state directories or mount/PID namespaces does not resolve the
+conflict. Use the existing worker with multiple profiles, or allocate another
+network namespace and separate file paths. If the old worker is still executing
+`post_down`, wait for exit. After actual SIGKILL the kernel lease disappears;
+there is no lease file to delete. Do not remove a live process's control lock.
+
+Unknown holders are not bypassed automatically; a local process can also occupy
+the abstract name. Reservation unavailable may indicate another bind error,
+identified in the message. [Checks and limits](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md).

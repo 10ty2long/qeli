@@ -74,3 +74,5 @@ rename-fixture не объявляются успешными проверкам
 покрывает admission и команды profile/startup/final cleanup; прежние результаты выше
 относятся к своему снимку. NAT setup/rollback, DNS lease Drop/setup admission и
 persistent recovery остаются открытыми.
+
+Продолжение: [Q14-F037](AUDIT-Q14-WORKER-NETWORK-LEASE.md) закрывает обход control lease через другой путь/namespace файловой системы. Новый kernel lease ограничивает server worker на уровне сети; SIGKILL/deleted-profile recovery проверено для доступных tagged rules. Persistent exact-rule journal и mixed nft остаются открыты.

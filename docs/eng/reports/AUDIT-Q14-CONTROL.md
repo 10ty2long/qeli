@@ -50,3 +50,5 @@ systemd upgrades, real SIGTERM/accept failure and shell hooks. Forced outer work
 cancellation/panics, hook descendants, bounded hook stdout/stderr, and binding trusted
 config file descriptors to parsed contents remain separate work. Next: hook process
 ownership/output bounds and startup rollback. Neither Q14 nor the full audit is closed.
+
+Follow-up: [Q14-F037](AUDIT-Q14-WORKER-NETWORK-LEASE.md) prevents bypassing the control lease through another path/filesystem namespace. A new kernel lease scopes server-worker admission to the network; SIGKILL/deleted-profile recovery was tested for listable tagged rules. Persistent exact-rule journaling and mixed nft remain open.

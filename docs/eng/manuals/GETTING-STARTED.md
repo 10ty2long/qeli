@@ -987,6 +987,8 @@ sudo systemctl reload qeli              # required: otherwise the server checks 
 
 ### 10.3. Live management (control socket, NO restart)
 
+Run one worker with multiple profiles per network namespace. Independent workers need separate network namespaces; changing `QELI_CONTROL_SOCKET` alone does not isolate the network. [Details](OPERATIONS.md#local-control-socket).
+
 Over `--socket` (default `/var/run/qeli/control.sock`) — applied immediately:
 
 ```bash

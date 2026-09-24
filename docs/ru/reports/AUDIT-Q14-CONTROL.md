@@ -49,3 +49,5 @@ SIGTERM/accept failure и hook shell ещё обязателен. Принуди
 future/panic, потомки hook-процесса, bounded hook stdout/stderr и связь trusted config fd
 с распарсенным содержимым остаются отдельными задачами. Следующий проход — hook process
 ownership/output limits и startup rollback. Полный Q14 и полный аудит Qeli не закрыты.
+
+Продолжение: [Q14-F037](AUDIT-Q14-WORKER-NETWORK-LEASE.md) закрывает обход control lease через другой путь/namespace файловой системы. Новый kernel lease ограничивает server worker на уровне сети; SIGKILL/deleted-profile recovery проверено для доступных tagged rules. Persistent exact-rule journal и mixed nft остаются открыты.

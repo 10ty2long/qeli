@@ -2216,3 +2216,16 @@ PID namespace, `busctl` установлен, `/proc` доступен, а `DBUS
 скрытого fallback к networkd нет. Ошибка `SetLinkDNSEx` при нестандартном порте требует
 resolved с поддержкой этого API: Qeli не подменяет порт на 53.
 [Разбор и проверки](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
+
+### 6.77. Server worker network namespace already owned
+
+Другой worker или процесс удерживает `qeli.server.worker` в этой сети. Изменение
+control socket, state directory либо mount/PID namespace не устраняет конфликт.
+Используйте существующий worker с несколькими профилями либо выделите другому
+network namespace и отдельные файловые пути. Если прежний worker ещё выполняет
+`post_down`, дождитесь его выхода. После фактического SIGKILL kernel lease исчезает;
+удалять для него файлы не требуется. Не удаляйте control lock живого процесса.
+
+Неизвестный владелец не обходится автоматически; локальный процесс также способен
+занять abstract-имя. Ошибка reservation unavailable может означать иной отказ bind,
+который указан в сообщении. [Проверки и ограничения](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md).

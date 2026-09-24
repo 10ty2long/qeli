@@ -14,11 +14,14 @@ pub const CONTROL_SOCKET: &str = "/var/run/qeli/control.sock";
 /// Every CLI subcommand advertises a `--socket` flag, but the SERVER always bound the
 /// constant, so pointing the flag anywhere else could only ever fail to connect: the flag
 /// was, in effect, decoration. That also made two qeli instances on one host impossible
-/// (they fight over the same path) and blocked any non-root run, where `/var/run` is not
+/// in separate network namespaces (they fight over a shared filesystem path) and blocked
+/// any non-root run, where `/var/run` is not
 /// writable. Honouring one environment variable on BOTH sides makes the flag mean
 /// something without inventing a config key that has no natural section to live in — the
 /// systemd unit or a shell can set it, and the CLI inherits the same default.
-/// (Audit 2026-07-27, S3.)
+/// Workers still share a namespace-wide admission lease: a custom control path does not
+/// permit concurrent workers to sweep each other's firewall in the same network namespace.
+/// (Audit 2026-07-27, S3; namespace admission follow-up 2026-09-24.)
 pub fn control_socket_path() -> String {
     std::env::var("QELI_CONTROL_SOCKET")
         .ok()

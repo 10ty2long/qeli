@@ -4,6 +4,7 @@ pub mod control;
 mod control_socket;
 pub mod dhcp;
 pub mod dns;
+mod network_lease;
 pub(crate) use crate::profile_tasks::{ProfileServices, ProfileTasks};
 pub mod handler;
 pub mod metrics;
@@ -3404,6 +3405,11 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     }
 
     validate_profiles(&config)?;
+    // Filesystem control sockets do not coordinate different mount namespaces or
+    // QELI_CONTROL_SOCKET paths. Hold this kernel network-namespace reservation
+    // before accounting state, crash recovery, hooks or firewall mutations, until
+    // every worker resource has completed shutdown.
+    let _network_lease = network_lease::acquire()?;
     // Defence in depth for every worker entry path, including a hand-started `_worker` and a
     // config changed on disk behind the panel.  The API performs the same check before it
     // stops the current worker, but the worker must not trust that it was its only caller.

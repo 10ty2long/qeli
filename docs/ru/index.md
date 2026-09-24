@@ -141,6 +141,7 @@
 | [AUDIT-Q25-H2-TASKS.md](reports/AUDIT-Q25-H2-TASKS.md) | Владение H2 driver/bridge от connect до завершения TCP-поколения |
 | [AUDIT-Q14-H2-TASKS.md](reports/AUDIT-Q14-H2-TASKS.md) | H2-задачи серверного профиля, join перед teardown и удержание pre-auth при отказе |
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Владение control socket, границы API, shutdown handlers и парность hooks |
+| [AUDIT-Q14-WORKER-NETWORK-LEASE.md](reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md) | Один server worker на network namespace, crash/restart и удалённый профиль |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, владение Child/PID, команды и deadline завершения |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Завершение профиля, ранние ошибки запуска, DNS-слушатели и освобождение сокетов |
 | [AUDIT-Q01-SERVER-INI.md](reports/AUDIT-Q01-SERVER-INI.md) | Первый проход серверного INI: 7 находок, исправления, тесты и ограничения |

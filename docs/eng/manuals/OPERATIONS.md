@@ -354,6 +354,16 @@ server path and the CLI default; an explicit `--socket` selects the command's pa
 This is an administrative API protected by OS permissions. Its JSON envelopes are not
 a configuration format: Qeli configuration remains INI.
 
+One network namespace admits one server worker with all its profiles. Before
+preflight, accounting or firewall recovery it holds the `qeli.server.worker` kernel
+lease (an abstract Unix socket); different control/state directories or mount/PID
+namespaces cannot bypass it. It remains held during `post_down` and is released on
+process exit, startup errors or SIGKILL. Multiple workers require separate network
+namespaces and config/state/control paths; additional profiles within one worker do
+not. The normal supervisor + worker pair is supported. Old binaries do not participate:
+stop the previous worker before upgrading.
+[Fix and boundaries](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md).
+
 The socket directory must belong to the worker user, have mode `0700`, and not be a
 symlink. Qeli creates new directories privately and never chmods existing directories.
 Do not place the socket directly in shared `/tmp`: use, for example,
