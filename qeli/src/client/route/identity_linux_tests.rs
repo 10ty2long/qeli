@@ -218,3 +218,125 @@ fn native_roaming_namespace_change_in_callback_is_terminal() -> anyhow::Result<(
         Ok(())
     })
 }
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip and /dev/net/tun; isolated netns"]
+fn native_cleanup_preserves_operator_route_attribute_changes() -> anyhow::Result<()> {
+    isolated(|| {
+        let owner = RouteOwner::new("qeli-audit0", 1)?;
+        let tun = std::sync::Arc::new(TunInterface::create(owner.interface(), 1400)?);
+        owner.bind_tun(&tun)?;
+        ip(&["link", "set", owner.interface(), "up"])?;
+        dummy("qeli-physical")?;
+        ip(&["addr", "add", "192.0.2.2/24", "dev", "qeli-physical"])?;
+        ip(&[
+            "-6",
+            "addr",
+            "add",
+            "2001:db8:1::2/64",
+            "dev",
+            "qeli-physical",
+            "nodad",
+        ])?;
+        let mut preserved = Vec::new();
+        let mut controls = Vec::new();
+        for ipv6 in [false, true] {
+            let extras = [
+                "proto static",
+                "metric 71",
+                if ipv6 {
+                    "src 2001:db8:1::2"
+                } else {
+                    "src 192.0.2.2"
+                },
+                "mtu 1300",
+            ];
+            for (index, extra) in extras.iter().enumerate() {
+                let destination = if ipv6 {
+                    format!("2001:db8:2::{}", index + 10)
+                } else {
+                    format!("198.51.100.{}", index + 10)
+                };
+                let mut add: Vec<String> = if ipv6 { vec!["-6".into()] } else { Vec::new() };
+                add.extend(
+                    ["route", "add", &destination, "dev", "qeli-physical"].map(str::to_string),
+                );
+                install_initial_route(&owner, &add)?;
+                let mut changed = add.clone();
+                // Metric changes are a different FIB entry. Remove and re-add, as an
+                // administrator replacing that path would; other selectors stay identical.
+                if extra.starts_with("metric") {
+                    ip(&delete_spec(&add)
+                        .iter()
+                        .map(String::as_str)
+                        .collect::<Vec<_>>())?;
+                } else {
+                    changed[usize::from(ipv6) + 1] = "change".into();
+                }
+                changed.extend(extra.split_whitespace().map(str::to_string));
+                ip(&changed.iter().map(String::as_str).collect::<Vec<_>>())?;
+                let mut query = if ipv6 {
+                    vec!["-6".to_string()]
+                } else {
+                    Vec::new()
+                };
+                query.extend(["route", "show", "exact", &destination].map(str::to_string));
+                let before = ip(&query.iter().map(String::as_str).collect::<Vec<_>>())?;
+                assert!(!before.trim().is_empty());
+                preserved.push((query, before));
+            }
+            let destination = if ipv6 {
+                "2001:db8:2::99"
+            } else {
+                "198.51.100.99"
+            };
+            let mut add = if ipv6 {
+                vec!["-6".to_string()]
+            } else {
+                Vec::new()
+            };
+            add.extend(["route", "add", destination, "dev", "qeli-physical"].map(str::to_string));
+            install_initial_route(&owner, &add)?;
+            controls.push(delete_spec(&add));
+            let cidr = if ipv6 { "8000::/1" } else { "0.0.0.0/1" };
+            add_blackhole_half(&owner, cidr)?;
+            let mut change = if ipv6 {
+                vec!["-6".to_string()]
+            } else {
+                Vec::new()
+            };
+            change.extend(
+                ["route", "change", "blackhole", cidr, "proto", "static"].map(str::to_string),
+            );
+            ip(&change.iter().map(String::as_str).collect::<Vec<_>>())?;
+            let mut query = if ipv6 {
+                vec!["-6".to_string()]
+            } else {
+                Vec::new()
+            };
+            query.extend(["route", "show", "exact", cidr].map(str::to_string));
+            let before = ip(&query.iter().map(String::as_str).collect::<Vec<_>>())?;
+            preserved.push((query, before));
+        }
+        cleanup_routes_for_tun(&owner, &tun)?;
+        let mut lost = Vec::new();
+        for (query, before) in preserved {
+            let after = ip(&query.iter().map(String::as_str).collect::<Vec<_>>())?;
+            if before != after {
+                lost.push(format!(
+                    "{}: before={before:?}, after={after:?}",
+                    query.join(" ")
+                ));
+            }
+        }
+        for record in controls {
+            assert!(ownership::recorded_route(&record)?.is_none());
+        }
+        assert!(
+            lost.is_empty(),
+            "operator replacements were changed: {}",
+            lost.join("; ")
+        );
+        Ok(())
+    })
+}

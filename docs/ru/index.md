@@ -201,3 +201,5 @@
 - **[../../SECURITY.md](../../SECURITY.md)** — политика безопасности и приём отчётов.
 - **[../../CONTRIBUTING.md](../../CONTRIBUTING.md)** — как участвовать в разработке.
 - **[../../release/docker/README.md](../../release/docker/README.md)** — запуск сервера в Docker.
+
+- [Q25-F099: владение изменёнными маршрутами Linux](reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).

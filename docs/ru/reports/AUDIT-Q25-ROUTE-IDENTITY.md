@@ -106,3 +106,5 @@ Native certification и новый benchmark не выполнялись. Пла
 
 Продолжение: [Q25-F065–F066](AUDIT-Q25-SETUP-IDENTITY.md) переносит проверки в route
 setup/roaming и перед прямыми managed MAC/address/up; gateway/firewall остаются отдельной задачей.
+
+Продолжение: [Q25-F099](AUDIT-Q25-ROUTE-ATTRIBUTES.md) отделяет borrowing от ownership и проверяет неявные route attributes; прежнее сравнение только переданных полей больше не даёт права удалить изменённый физический маршрут.

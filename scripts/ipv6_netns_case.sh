@@ -628,6 +628,18 @@ PYDNS
   fi
 fi
 
+# Optional operator replacement before clean stop. DNS crash cells already lost
+# the original process journal, so they cannot prove this ownership regression.
+ROUTE_IDENTITY_CHECK=0
+if [ "${QELI_ROUTE_IDENTITY_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS_UPSTREAM" ]; then
+  ROUTE_IDENTITY_CHECK=1
+  if [ "$OUTER" = 4 ]; then CARRIER_GATEWAY=10.46.1.1; else CARRIER_GATEWAY=fd46:1::1; fi
+  check "client installed a carrier bypass before operator replacement" \
+    "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS | grep -Fq 'via $CARRIER_GATEWAY dev $CLI_IF'"
+  check "operator changes the carrier route to static" \
+    "ip netns exec $CLI_NS ip -$OUTER route change $BIND_ADDRESS via $CARRIER_GATEWAY dev $CLI_IF proto static && ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS > $WORK/operator-carrier-before.txt && grep -q 'proto static' $WORK/operator-carrier-before.txt"
+fi
+
 OLD_CLIENT_PID=$CLIENT_PID
 kill -TERM "$CLIENT_PID" 2>/dev/null || true
 if wait_for 100 "! ip netns pids $CLI_NS | grep -qx '$OLD_CLIENT_PID'"; then
@@ -636,6 +648,10 @@ else
   bad "client stopped cleanly"
 fi
 CLIENT_PID=
+if [ "$ROUTE_IDENTITY_CHECK" = 1 ]; then
+  check "clean stop preserves the operator carrier replacement" \
+    "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS > $WORK/operator-carrier-after.txt && cmp $WORK/operator-carrier-before.txt $WORK/operator-carrier-after.txt"
+fi
 if [ -n "$DNS_UPSTREAM" ]; then
   check_eventually "clean stop reverted per-link DNS" \
     "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after.txt && ! grep -Fq 'Link $DNS_INDEX (' $WORK/resolved-after.txt"

@@ -1057,7 +1057,7 @@ fn install_initial_route(owner: &RouteOwner, args: &[String]) -> anyhow::Result<
     if let Some(previous) =
         ownership::recorded_route_with(&undo, &|raw| owner.command_output(raw, true))?
     {
-        if route_matches_spec(&undo, &previous) {
+        if ownership::route_satisfies_spec(&undo, &previous) {
             return Ok(());
         }
         anyhow::bail!(

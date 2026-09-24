@@ -204,7 +204,14 @@ impl Kernel {
             if verb == "add" && self.routes.contains_key(remote) {
                 return output(false, "RTNETLINK answers: File exists");
             }
-            self.routes.insert(remote.clone(), args[2..].to_vec());
+            let mut installed = args[2..].to_vec();
+            // The real IPv6 FIB ignores the scope supplied to a route add.
+            if raw[0] == "-6" {
+                if let Some(index) = installed.iter().position(|s| s == "scope") {
+                    installed.drain(index..index + 2);
+                }
+            }
+            self.routes.insert(remote.clone(), installed);
         }
         if fail {
             match self.fail.as_ref().unwrap().2 {
@@ -1498,3 +1505,98 @@ mod setup_identity_tests;
 
 #[path = "budget_tests.rs"]
 mod budget_tests;
+
+#[test]
+fn ownership_cleanup_preserves_implicit_attribute_changes() {
+    for ipv6 in [false, true] {
+        for extra in [
+            "proto static",
+            "metric 71",
+            "mtu 1300",
+            if ipv6 {
+                "src 2001:db8::99"
+            } else {
+                "src 192.0.2.99"
+            },
+        ] {
+            let (fixture, route) = install_owned(ipv6);
+            let key = route.remote.to_string();
+            fixture
+                .kernel
+                .lock()
+                .unwrap()
+                .routes
+                .get_mut(&key)
+                .unwrap()
+                .extend(extra.split_whitespace().map(str::to_string));
+            let operator = fixture.kernel.lock().unwrap().routes[&key].clone();
+            let before = fixture.mutations();
+            cleanup_routes(&test_owner()).unwrap();
+            assert_eq!(
+                fixture.kernel.lock().unwrap().routes.get(&key),
+                Some(&operator)
+            );
+            assert_eq!(
+                fixture.mutations(),
+                before,
+                "no delete of operator replacement"
+            );
+            assert!(!created_by_us_owned(
+                &test_owner(),
+                &carrier_route_undo(route.remote)
+            ));
+        }
+    }
+}
+
+#[test]
+fn ownership_roaming_never_replaces_changed_implicit_protocol() {
+    for ipv6 in [false, true] {
+        let (fixture, mut route) = install_owned(ipv6);
+        let key = route.remote.to_string();
+        fixture
+            .kernel
+            .lock()
+            .unwrap()
+            .routes
+            .get_mut(&key)
+            .unwrap()
+            .extend(["proto", "static"].map(str::to_string));
+        let operator = fixture.kernel.lock().unwrap().routes[&key].clone();
+        let before = fixture.mutations();
+        route.interface = "new0".into();
+        assert!(plan(vec![route]).commit(&[]).is_err());
+        assert_eq!(fixture.mutations(), before);
+        cleanup_routes(&test_owner()).unwrap();
+        assert_eq!(
+            fixture.kernel.lock().unwrap().routes.get(&key),
+            Some(&operator)
+        );
+    }
+}
+
+#[test]
+fn ownership_retirement_preserves_changed_implicit_protocol() {
+    for ipv6 in [false, true] {
+        let (fixture, route) = install_owned(ipv6);
+        let key = route.remote.to_string();
+        fixture
+            .kernel
+            .lock()
+            .unwrap()
+            .routes
+            .get_mut(&key)
+            .unwrap()
+            .extend(["proto", "static"].map(str::to_string));
+        let operator = fixture.kernel.lock().unwrap().routes[&key].clone();
+        plan(vec![candidate(!ipv6)])
+            .commit(&[route.remote])
+            .unwrap();
+        cleanup_routes(&test_owner()).unwrap();
+        assert_eq!(fixture.kernel.lock().unwrap().routes.len(), 1);
+        assert_eq!(
+            fixture.kernel.lock().unwrap().routes.get(&key),
+            Some(&operator)
+        );
+    }
+}

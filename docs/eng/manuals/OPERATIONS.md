@@ -421,3 +421,20 @@ Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli`
 ## Client kill-switch recovery
 
 Reinstalling a Linux kill-switch over prior protection uses temporary DROP rules `qeli-ks-rebuild:<tun>`. Failure or SIGKILL retains them; successful retry retires them after both required families are ready. Guards may block DNS/loopback until replacement is ready; `allow_ipv*_leak` cannot bypass recovery failure. For manual removal after stopping the owner, inspect guards separately from `QELI_KS_<tun>`. [Procedure §6.79](TROUBLESHOOTING.md#679-linux-kill-switch-rebuild-guard-remains-after-failure).
+
+## Linux: physical routes changed by an administrator
+
+The client removes its physical bypass or blackhole only while the observed entry
+matches its parameters and implicit defaults. A replacement with `proto static`, a
+different metric/source/scope or additional attributes is preserved at stop. The log
+`owned route changed; preserving replacement` means Qeli relinquished its previous
+ownership. Inspect that remaining entry in the original network namespace; it now
+requires an administrator decision. A suitable route present before connection is
+borrowed without destination delete authority.
+
+The owned managed TUN still has its interface routes flushed during teardown. The
+check is not atomic with the next command and cannot distinguish another root's
+identical route. SIGKILL loses the client route journal; disk recovery of physical
+bypasses/blackholes is not implemented yet. Do not flush the entire route table;
+verify the origin of an exact entry before removing it manually.
+[Validation and limits](../reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).

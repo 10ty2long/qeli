@@ -100,3 +100,5 @@ and a new benchmark were not run. Plan: 37 sections, 19 IN_PROGRESS, 18 TODO, no
 
 Follow-up: [Q25-F065–F066](AUDIT-Q25-SETUP-IDENTITY.md) adds checks to route setup/roaming
 and before direct managed MAC/address/up; gateway/firewall remain a separate task.
+
+Follow-up: [Q25-F099](AUDIT-Q25-ROUTE-ATTRIBUTES.md) separates borrowing from ownership and checks implicit route attributes; the earlier comparison of supplied fields no longer grants authority to delete a changed physical route.

@@ -25,7 +25,7 @@ pub(super) fn delete_spec(command: &[String]) -> Vec<String> {
 
 /// Compare requested identity fields, not kernel-added defaults or display order.
 /// Scope is not an IPv6 delete selector; on-link identity is checked by absence of via.
-pub(super) fn route_matches_spec(spec: &[String], tokens: &[String]) -> bool {
+pub(super) fn route_satisfies_spec(spec: &[String], tokens: &[String]) -> bool {
     let key = route_key(spec);
     let blackhole = key.iter().any(|arg| arg == "blackhole");
     if tokens.first().is_some_and(|s| s == "blackhole") != blackhole {
@@ -77,6 +77,114 @@ pub(super) fn route_matches_spec(spec: &[String], tokens: &[String]) -> bool {
         }
     }
     true
+}
+
+/// Ownership is stronger than usability. An operator can keep the same destination,
+/// gateway and device while changing the protocol, priority, preferred source, scope
+/// or next-hop form. Missing requested fields mean the defaults of our own add, not
+/// permission to delete every route satisfying the requested path.
+pub(super) fn route_matches_spec(spec: &[String], tokens: &[String]) -> bool {
+    if !route_satisfies_spec(spec, tokens) {
+        return false;
+    }
+    let key = route_key(spec);
+    let ipv6 = spec[0] == "-6";
+    let blackhole = key.iter().any(|s| s == "blackhole");
+    let Some(expected) = identity_attrs(&spec[key.len()..]) else {
+        return false;
+    };
+    let Some(observed) = identity_attrs(&tokens[1 + usize::from(blackhole)..]) else {
+        return false;
+    };
+    let implicit_dev = if ipv6 && blackhole { Some("lo") } else { None };
+    for field in ["via", "dev", "src"] {
+        let fallback = if field == "dev" { implicit_dev } else { None };
+        if expected.get(field).copied().or(fallback) != observed.get(field).copied().or(fallback) {
+            return false;
+        }
+    }
+    let metric = |attrs: &std::collections::BTreeMap<&str, &str>| {
+        let value = attrs
+            .get("metric")
+            .copied()
+            .unwrap_or(if ipv6 { "1024" } else { "0" });
+        value
+            .parse::<u32>()
+            .ok()
+            .map(|n| if ipv6 && n == 0 { 1024 } else { n })
+    };
+    if metric(&expected).is_none() || metric(&expected) != metric(&observed) {
+        return false;
+    }
+    // iproute2 normally hides RTPROT_BOOT and IPv4 metric zero. Accept their
+    // explicit forms as well; do not treat a static/kernel/DHCP route as ours.
+    let protocol = |attrs: &std::collections::BTreeMap<&str, &str>| match attrs
+        .get("proto")
+        .copied()
+        .unwrap_or("boot")
+    {
+        "3" | "boot" => "boot".to_string(),
+        value => value.to_string(),
+    };
+    if protocol(&expected) != protocol(&observed) {
+        return false;
+    }
+    if ipv6 {
+        // Linux does not retain a requested `scope link` for IPv6 route adds.
+        // IPv6 blackholes are displayed with dev lo and the normal user priority.
+        if observed
+            .get("scope")
+            .is_some_and(|s| !matches!(*s, "global" | "universe" | "0"))
+        {
+            return false;
+        }
+        if expected.get("pref").copied().unwrap_or("medium")
+            != observed.get("pref").copied().unwrap_or("medium")
+        {
+            return false;
+        }
+    } else {
+        let default = if !blackhole && expected.contains_key("dev") && !expected.contains_key("via")
+        {
+            "link"
+        } else {
+            "global"
+        };
+        let scope = |attrs: &std::collections::BTreeMap<&str, &str>| match attrs
+            .get("scope")
+            .copied()
+            .unwrap_or(default)
+        {
+            "universe" | "0" => "global".to_string(),
+            "253" => "link".to_string(),
+            value => value.to_string(),
+        };
+        if scope(&expected) != scope(&observed) || observed.contains_key("pref") {
+            return false;
+        }
+    }
+    true
+}
+
+fn identity_attrs(tokens: &[String]) -> Option<std::collections::BTreeMap<&str, &str>> {
+    let mut attrs = std::collections::BTreeMap::new();
+    let mut tokens = tokens.iter();
+    while let Some(field) = tokens.next() {
+        if field == "linkdown" {
+            continue; // Dynamic carrier flag, not an administrator-supplied route selector.
+        }
+        if !matches!(
+            field.as_str(),
+            "via" | "dev" | "src" | "metric" | "proto" | "scope" | "pref"
+        ) {
+            return None; // Includes multipath, nhid, onlink and route metrics such as mtu.
+        }
+        let value = tokens.next()?;
+        if attrs.insert(field.as_str(), value.as_str()).is_some() {
+            return None;
+        }
+    }
+    Some(attrs)
 }
 
 fn prefix(value: &str) -> Option<(std::net::IpAddr, u8)> {
@@ -231,3 +339,7 @@ pub(super) fn verify_interface_routes_absent_with(
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "ownership_identity_tests.rs"]
+mod identity_tests;

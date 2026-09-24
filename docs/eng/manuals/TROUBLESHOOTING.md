@@ -2274,3 +2274,13 @@ reserved for Qeli. `kill-switch conflict` can refer to another client's guard ev
 without its ordinary chain. First installation without prior protection creates no
 guards: this contract covers replacement of an existing barrier.
 [Leak reproduction and validation](../reports/AUDIT-Q25-KILL-SWITCH-REBUILD.md).
+
+### 6.80. Linux: owned route changed; preserving replacement
+
+Qeli detected a changed physical bypass or blackhole and left it to the administrator.
+Even with the same destination/gateway/device, changes to `proto`, metric, source or
+additional attributes relinquish the previous ownership. This can explain a route left
+after orderly stop. Inspect the original namespace; an address match alone is not
+permission to remove every matching entry. SIGKILL has a separate limitation: the
+process route journal is not persisted to disk.
+[Operations](OPERATIONS.md#linux-physical-routes-changed-by-an-administrator).

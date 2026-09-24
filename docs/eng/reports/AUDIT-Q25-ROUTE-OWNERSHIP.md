@@ -85,3 +85,5 @@ Previous pass: [mutation outcomes](AUDIT-Q25-ROUTE-OUTCOME.md).
 
 Follow-up: [Q25-F027/F028 — connection owners](AUDIT-Q25-ROUTE-SCOPE.md) separates journals
 and closes admission on cleanup; the historical limits above describe this report’s baseline.
+
+Follow-up: [Q25-F099](AUDIT-Q25-ROUTE-ATTRIBUTES.md) separates borrowing from ownership and checks implicit route attributes; the earlier comparison of supplied fields no longer grants authority to delete a changed physical route.
