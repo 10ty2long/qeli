@@ -67,37 +67,43 @@ fn operation() -> std::sync::MutexGuard<'static, ()> {
     OPERATION.lock().unwrap_or_else(|error| error.into_inner())
 }
 
-const CLEANUP_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
+const OPERATION_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
 
-fn operation_until(
-    lock: &std::sync::Mutex<()>,
+#[derive(Clone, Copy)]
+struct Budget {
     until: std::time::Instant,
-) -> std::io::Result<std::sync::MutexGuard<'_, ()>> {
-    loop {
-        cleanup_time_left(until)?;
-        let acquired = match lock.try_lock() {
-            Ok(guard) => Some(guard),
-            Err(std::sync::TryLockError::Poisoned(error)) => Some(error.into_inner()),
-            Err(std::sync::TryLockError::WouldBlock) => None,
-        };
-        if let Some(guard) = acquired {
-            cleanup_time_left(until)?;
-            return Ok(guard);
-        }
-        std::thread::sleep(cleanup_time_left(until)?.min(std::time::Duration::from_millis(10)));
-    }
+    operation: &'static str,
 }
-
-fn cleanup_time_left(until: std::time::Instant) -> std::io::Result<std::time::Duration> {
-    until
-        .checked_duration_since(std::time::Instant::now())
-        .filter(|left| !left.is_zero())
-        .ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::TimedOut,
-                "kill-switch cleanup deadline expired; ownership retained for retry",
-            )
-        })
+impl Budget {
+    fn remaining(self) -> std::io::Result<std::time::Duration> {
+        self.until
+            .checked_duration_since(std::time::Instant::now())
+            .filter(|left| !left.is_zero())
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    format!(
+                        "kill-switch {} deadline expired; ownership retained for retry",
+                        self.operation
+                    ),
+                )
+            })
+    }
+    fn lock(self, lock: &std::sync::Mutex<()>) -> std::io::Result<std::sync::MutexGuard<'_, ()>> {
+        loop {
+            self.remaining()?;
+            let acquired = match lock.try_lock() {
+                Ok(guard) => Some(guard),
+                Err(std::sync::TryLockError::Poisoned(error)) => Some(error.into_inner()),
+                Err(std::sync::TryLockError::WouldBlock) => None,
+            };
+            if let Some(guard) = acquired {
+                self.remaining()?;
+                return Ok(guard);
+            }
+            std::thread::sleep(self.remaining()?.min(std::time::Duration::from_millis(10)));
+        }
+    }
 }
 
 /// Dedicated chain (in the `filter` table) holding the kill-switch ruleset.
@@ -681,14 +687,34 @@ fn host_may_have_ipv4_default_route() -> bool {
 /// armed family must still have its hooks and DROP. Inspection or update errors stop
 /// reconnect; the retained rules require recovery. Call it before each attempt.
 pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> anyhow::Result<()> {
+    refresh_until(tun_if, std::time::Instant::now() + OPERATION_BUDGET, || {
+        resolve_ips(server_addr, server_port)
+    })
+}
+
+fn refresh_until(
+    tun_if: &str,
+    until: std::time::Instant,
+    resolve: impl FnOnce() -> Vec<String>,
+) -> anyhow::Result<()> {
     anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
     let Some(context) = Context::lookup(tun_if, false)? else {
         return Ok(());
     };
+    let budget = Budget {
+        until,
+        operation: "server-address refresh",
+    };
+    let context = context.with_budget(budget);
+    context.check_budget()?;
     let chain = chain_for(tun_if);
-    let ips = resolve_ips(server_addr, server_port);
-    let _operation = operation();
+    // System name resolution is synchronous and cannot be forcibly interrupted here.
+    // Its elapsed time consumes the budget; never start firewall work after a late reply.
+    let ips = resolve();
+    context.check_budget()?;
+    let _operation = budget.lock(&OPERATION)?;
     context.confirm(tun_if)?;
+    context.check_budget()?;
     let mut errors = Vec::new();
     for (want_v6, family) in context.paths() {
         if !family.protected {
@@ -732,8 +758,14 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
             let rule = ["-d", canon.as_str(), "-j", "ACCEPT"];
             let mut check: Vec<&str> = vec!["-C", chain.as_str()];
             check.extend_from_slice(&rule);
-            if context.present(&path, &check) {
-                continue; // already allowed
+            match context.present_checked(&path, &check) {
+                Ok(true) => continue, // already allowed
+                Ok(false) => {}
+                Err(error) => {
+                    // Unknown is not absence: do not add a rule or retire the old path.
+                    errors.push(error.to_string());
+                    continue;
+                }
             }
             // Insert at the top so it precedes the terminal DROP (appending would
             // land AFTER the DROP and never match).
@@ -813,6 +845,7 @@ pub fn refresh_server_ips(server_addr: &str, server_port: u16, tun_if: &str) -> 
         }
     }
     context.check()?;
+    context.check_budget()?;
     if errors.is_empty() {
         Ok(())
     } else {
@@ -859,18 +892,22 @@ fn live_server_allows(context: &Context, path: &str, chain: &str) -> anyhow::Res
 /// chain is an idempotent success; an inaccessible or still-referenced chain is an error.
 /// Without an in-process owner there is no authority to remove a same-name chain.
 pub fn disengage(tun_if: &str) -> anyhow::Result<()> {
-    disengage_until(tun_if, std::time::Instant::now() + CLEANUP_BUDGET)
+    disengage_until(tun_if, std::time::Instant::now() + OPERATION_BUDGET)
 }
 
 fn disengage_until(tun_if: &str, until: std::time::Instant) -> anyhow::Result<()> {
     anyhow::ensure!(valid_ifname(tun_if), "invalid kill-switch interface name");
-    let _operation = operation_until(&OPERATION, until)?;
+    let budget = Budget {
+        until,
+        operation: "cleanup",
+    };
+    let _operation = budget.lock(&OPERATION)?;
     let Some(context) = Context::lookup(tun_if, true)? else {
         return Ok(());
     };
     // One budget includes admission and both families. It belongs to this attempt,
     // not to the retained owner: a later explicit cleanup receives a fresh budget.
-    let context = context.with_cleanup_deadline(until);
+    let context = context.with_budget(budget);
     context.check_budget()?;
     let chain = chain_for(tun_if);
     let mut errors = Vec::new();
@@ -1275,3 +1312,7 @@ mod native_tests;
 #[cfg(test)]
 #[path = "killswitch/cleanup_budget_tests.rs"]
 mod cleanup_budget_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "killswitch/refresh_budget_tests.rs"]
+mod refresh_budget_tests;

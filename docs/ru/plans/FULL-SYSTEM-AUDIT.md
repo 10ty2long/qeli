@@ -1961,3 +1961,5 @@ D05: [Q25-F084 — общий срок DNS](../reports/AUDIT-Q25-DNS-BUDGET.md):
 D05/D09: [Q05-F008 — async health probes](../reports/AUDIT-Q05-HEALTH-PROBES.md): Status/Transport health не блокируют executor ожиданием `--version`; четыре общих async-слота, deadline включает очередь. 8 новых обычных + 1 privileged HTTP-router тест PASS; 2 контрольных возврата старого поведения дают ожидаемый FAIL. Общие сроки сетевых мутаций и полный HTTP/systemd/fault охват остаются открытыми.
 
 D05/D09: [Q25-F085 — общий срок очистки kill-switch](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md): 15 секунд включают operation mutex и обе семьи; частичный результат сохраняет owner для нового verified retry. 5 регрессий PASS, 2 контрольных FAIL старого поведения. Engage/refresh, NAT/routes/gateway и прочие lock waits ещё открыты.
+
+D05/D09: [Q25-F086/F087 — refresh kill-switch](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md): общий срок admission/команд учитывает resolver; unknown не разрешает вставку. 6 новых регрессий и 5 повторных cleanup PASS; 3 контрольных FAIL прежнего поведения. DNS/NSS остаётся синхронным; engage, NAT/routes/gateway и прочие ожидания открыты.

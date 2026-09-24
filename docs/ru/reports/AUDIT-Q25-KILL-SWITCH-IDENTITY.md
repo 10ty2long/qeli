@@ -59,3 +59,5 @@ fail-closed. Внешнее изменение семейств/адресов/�
 [Операционные инструкции](../manuals/TROUBLESHOOTING.md).
 
 Linux test binary SHA256: `805ae05534408637e5295370b38f5e786717e5b7a12f086f9a77dc659cbff544`.
+
+Следующий этап: [общий срок refresh и unknown-проверки](AUDIT-Q25-KILL-SWITCH-REFRESH.md). Командная последовательность refresh закрыта в описанных границах; синхронный DNS/NSS и engage остаются открыты.

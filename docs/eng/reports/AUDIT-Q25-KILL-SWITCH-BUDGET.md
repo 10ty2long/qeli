@@ -82,3 +82,5 @@ require administrator verification. D04/D05/D09 are not fully closed.
 [Ownership and identity](AUDIT-Q25-KILL-SWITCH-IDENTITY.md) ·
 [Manual](../manuals/CONFIG.md#kill-switch-kill_switch) ·
 [Troubleshooting](../manuals/TROUBLESHOOTING.md)
+
+Next phase: [shared refresh deadline and unknown inspections](AUDIT-Q25-KILL-SWITCH-REFRESH.md). The refresh command sequence is addressed within the stated limits; synchronous DNS/NSS and engage remain open.

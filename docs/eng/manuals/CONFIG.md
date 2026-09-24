@@ -1947,8 +1947,15 @@ cleanup. Expired attempts start no new commands and retain ownership for retry i
 same process. Some rules may already be gone: timeout establishes neither complete
 removal nor intact protection. Resolve the firewall delay and retry cleanup; after
 process exit inspect leftovers in the original namespace using the recovery instructions.
-This is not a whole-client shutdown bound; setup/refresh still use per-command deadlines.
+This is not a whole-client shutdown bound; setup still uses per-command deadlines.
 [Details and validation](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
+
+Server-IP refresh before reconnect also shares 15 seconds across resolver, queue and
+both families' commands. DNS/NSS remains synchronous; a late reply cannot start firewall
+work. Unknown inspection of an allowance does not authorize insertion. Refresh failure
+stops reconnect while retaining protection; an unverified replacement does not remove
+the previous address. This is not a hard whole-connection time bound.
+[Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
 
 On Linux, successful transport-core teardown and gateway/exit-node forwarding cleanup,
 with no recorded DNS/route/TUN cleanup failures, are required before releasing an enabled

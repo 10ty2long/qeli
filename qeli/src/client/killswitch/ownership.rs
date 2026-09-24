@@ -68,7 +68,7 @@ const MAX_OWNERS: usize = 256;
 pub(super) struct Context {
     owner: Arc<Owner>,
     cleanup: bool,
-    cleanup_until: Option<std::time::Instant>,
+    budget: Option<super::Budget>,
 }
 impl Context {
     // Capture before resolution/operation-lock waits. The caller serializes all
@@ -90,7 +90,7 @@ impl Context {
         let context = Self {
             owner,
             cleanup: false,
-            cleanup_until: None,
+            budget: None,
         };
         context.check()?;
         Ok(context)
@@ -123,20 +123,20 @@ impl Context {
                 let context = Self {
                     owner,
                     cleanup,
-                    cleanup_until: None,
+                    budget: None,
                 };
                 context.check()?;
                 Ok(context)
             })
             .transpose()
     }
-    pub(super) fn with_cleanup_deadline(mut self, until: std::time::Instant) -> Self {
-        self.cleanup_until = Some(until);
+    pub(super) fn with_budget(mut self, budget: super::Budget) -> Self {
+        self.budget = Some(budget);
         self
     }
     pub(super) fn check_budget(&self) -> std::io::Result<()> {
-        if let Some(until) = self.cleanup_until {
-            super::cleanup_time_left(until)?;
+        if let Some(budget) = self.budget {
+            budget.remaining()?;
         }
         Ok(())
     }
@@ -220,10 +220,10 @@ impl Context {
     pub(super) fn ipt(&self, path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
         self.check().map_err(std::io::Error::other)?;
         self.check_budget()?;
-        let result = match self.cleanup_until {
-            Some(until) => crate::system_command::Command::new(path)
+        let result = match self.budget {
+            Some(budget) => crate::system_command::Command::new(path)
                 .args(args)
-                .output_until(until),
+                .output_until(budget.until),
             None => super::ipt(path, args),
         };
         self.check().map_err(std::io::Error::other)?;
@@ -256,7 +256,7 @@ impl Context {
                 paths: Mutex::new(BTreeMap::new()),
             }),
             cleanup: false,
-            cleanup_until: None,
+            budget: None,
         }
     }
 }

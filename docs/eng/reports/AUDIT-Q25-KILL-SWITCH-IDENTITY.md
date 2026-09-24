@@ -60,3 +60,5 @@ Family/address/rule changes by an external administrator require coordinated rec
 [Operational instructions](../manuals/TROUBLESHOOTING.md#656-linux-kill-switch-identity-or-reconnect-verification-failed).
 
 Linux test binary SHA256: `805ae05534408637e5295370b38f5e786717e5b7a12f086f9a77dc659cbff544`.
+
+Next phase: [shared refresh deadline and unknown inspections](AUDIT-Q25-KILL-SWITCH-REFRESH.md). The refresh command sequence is addressed within the stated limits; synchronous DNS/NSS and engage remain open.

@@ -1,22 +1,34 @@
 use super::*;
 use std::time::{Duration, Instant};
+fn cleanup_budget(until: Instant) -> Budget {
+    Budget {
+        until,
+        operation: "cleanup",
+    }
+}
 
 #[test]
 fn cleanup_admission_rejects_expired_and_busy_locks() {
     let lock = std::sync::Mutex::new(());
     assert_eq!(
-        operation_until(&lock, Instant::now()).unwrap_err().kind(),
+        cleanup_budget(Instant::now())
+            .lock(&lock)
+            .unwrap_err()
+            .kind(),
         std::io::ErrorKind::TimedOut
     );
     let held = lock.lock().unwrap();
     assert_eq!(
-        operation_until(&lock, Instant::now() + Duration::from_millis(25))
+        cleanup_budget(Instant::now() + Duration::from_millis(25))
+            .lock(&lock)
             .unwrap_err()
             .kind(),
         std::io::ErrorKind::TimedOut
     );
     drop(held);
-    assert!(operation_until(&lock, Instant::now() + Duration::from_secs(1)).is_ok());
+    assert!(cleanup_budget(Instant::now() + Duration::from_secs(1))
+        .lock(&lock)
+        .is_ok());
 }
 
 #[test]
@@ -24,7 +36,7 @@ fn expired_cleanup_context_starts_no_more_commands() {
     crate::system_command::test_support::with_commands(
         |_| panic!("expired cleanup spawned a command"),
         || {
-            let context = Context::fixture().with_cleanup_deadline(Instant::now());
+            let context = Context::fixture().with_budget(cleanup_budget(Instant::now()));
             assert_eq!(
                 context
                     .ipt("fixture", &["-S", "QELI_KS_budget"])
@@ -57,7 +69,7 @@ fn cleanup_rejects_an_acknowledgement_after_its_budget() {
             }))
         },
         || {
-            let context = Context::fixture().with_cleanup_deadline(until);
+            let context = Context::fixture().with_budget(cleanup_budget(until));
             assert_eq!(
                 context
                     .ipt("fixture", &["-D", "OUTPUT", "-j", "QELI_KS_budget"])

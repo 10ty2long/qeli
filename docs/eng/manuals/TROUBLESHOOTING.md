@@ -2108,3 +2108,16 @@ Some jumps/chains may already have been removed; neither intact protection nor s
 shutdown is established by timeout. After process exit the in-memory owner is lost:
 inspect exact `QELI_KS_<tun>` chains in the original namespace and perform verified
 recovery. Preserve unrelated chains. [Analysis](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
+
+### 6.67. Linux: kill-switch refresh stopped reconnect
+
+`kill-switch server-address refresh deadline expired; ownership retained for retry`
+means resolver, queue or firewall-command time exhausted the shared 15-second budget.
+Check DNS/NSS, competing firewall operations and iptables/ip6tables replies. Synchronous
+resolution may return after the deadline; it cannot then start new commands.
+`firewall inspection failed` while checking an IP allowance cannot authorize insertion.
+The connect loop stops reconnect and retains protection. Do not remove DROP to bypass
+the error: resolve its cause, then perform controlled recovery/restart. A partially added
+new address may remain alongside the previous one. A separate refresh call in the same
+process gets a new deadline, but no automatic retry was added here.
+[Analysis](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).

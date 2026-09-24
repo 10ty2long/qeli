@@ -82,3 +82,5 @@ persistent crash recovery. После выхода процесса его regis
 [Ownership и identity](AUDIT-Q25-KILL-SWITCH-IDENTITY.md) ·
 [Мануал](../manuals/CONFIG.md#kill-switch-kill_switch) ·
 [Диагностика](../manuals/TROUBLESHOOTING.md)
+
+Следующий этап: [общий срок refresh и unknown-проверки](AUDIT-Q25-KILL-SWITCH-REFRESH.md). Командная последовательность refresh закрыта в описанных границах; синхронный DNS/NSS и engage остаются открыты.
