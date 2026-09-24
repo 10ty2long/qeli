@@ -17,6 +17,7 @@ use std::path::Path;
 
 const RESOLV_PATH: &str = "/etc/resolv.conf";
 const STATE_DIR: &str = "/var/lib/qeli";
+const DNS_SETUP_BUDGET: std::time::Duration = std::time::Duration::from_secs(15);
 const BACKUP_PATH: &str = "/var/lib/qeli/dns-backup.json";
 pub(crate) struct DnsLease(crate::dns_lease::Lease);
 
@@ -68,6 +69,7 @@ pub(crate) fn setup_network_plan_dns(
     tun: &crate::tun::iface::TunInterface,
     owned: &mut Option<DnsLease>,
 ) -> anyhow::Result<()> {
+    let until = std::time::Instant::now() + DNS_SETUP_BUDGET;
     if owned.is_some() {
         anyhow::bail!("DNS plan already owns a lease");
     }
@@ -118,6 +120,7 @@ pub(crate) fn setup_network_plan_dns(
                 .ok_or_else(|| anyhow::anyhow!("TUN disappeared during DNS setup"))
         },
         &resolver_args,
+        until,
     )?;
     log::info!(
         "DNS set via resolvectl on ifindex {}: {}",
@@ -320,18 +323,30 @@ fn routing_domains(config: &ClientDnsConfig) -> Vec<String> {
 
 #[cfg(test)]
 fn try_resolvectl(config: &ClientDnsConfig, ifname: &str, dns_addr: &str) -> bool {
-    try_resolvectl_many(config, || Ok(ifname.to_string()), &[dns_addr.to_string()]).is_ok()
+    try_resolvectl_many(
+        config,
+        || Ok(ifname.to_string()),
+        &[dns_addr.to_string()],
+        std::time::Instant::now() + DNS_SETUP_BUDGET,
+    )
+    .is_ok()
 }
 
 fn try_resolvectl_many(
     config: &ClientDnsConfig,
     mut current_target: impl FnMut() -> anyhow::Result<String>,
     dns_addrs: &[String],
+    until: std::time::Instant,
 ) -> anyhow::Result<()> {
     let domains = routing_domains(config);
     for (operation, values) in [("dns", dns_addrs), ("domain", domains.as_slice())] {
         if values.is_empty() {
             continue;
+        }
+        if std::time::Instant::now() >= until {
+            anyhow::bail!(
+                "DNS setup command budget exhausted; generation rollback retains its DNS lease"
+            );
         }
         // Recheck the original descriptor before each mutation; use its captured numeric
         // index so a rename does not redirect a later operation to a same-name replacement.
@@ -339,7 +354,7 @@ fn try_resolvectl_many(
         let output = resolvectl_cmd()
             .args([operation, &index])
             .args(values)
-            .output()?;
+            .output_until(until)?;
         if !output.status.success() {
             anyhow::bail!("resolvectl {operation} on {index} failed with {}: {}; generation rollback retains its DNS lease",output.status,String::from_utf8_lossy(&output.stderr).trim());
         }
@@ -887,8 +902,95 @@ mod fault_injection {
                 Ok("42".to_string())
             },
             &["10.0.0.1".to_string()],
+            std::time::Instant::now() + DNS_SETUP_BUDGET,
         );
         assert!(result.is_err());
+        assert_eq!(rc.calls().trim(), "dns 42 10.0.0.1");
+    }
+
+    #[test]
+    fn dns_and_domain_share_deadline_and_partial_lease_survives() {
+        let rc = Resolvectl::new("shared-budget", &[]);
+        let script = format!(
+            "#!/bin/sh\necho \"$@\" >> '{}'\ncase \"$1\" in\n dns) sleep 0.15;;\n domain) sleep 0.70;;\nesac\nexit 0\n",
+            rc.dir.join("calls.log").display()
+        );
+        std::fs::write(rc.dir.join("resolvectl"), script).unwrap();
+        let mut lease = crate::dns_lease::Lease::acquire(
+            &rc.dir,
+            crate::dns_lease::Link {
+                scope: crate::dns_lease::Scope {
+                    boot: "00000000-0000-0000-0000-000000000001".into(),
+                    device: 4,
+                    inode: 42,
+                },
+                index: 42,
+                name: "qtest".into(),
+            },
+        )
+        .unwrap();
+        let marker = std::fs::read_dir(&rc.dir)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| crate::dns_lease::is_marker(p.file_name().unwrap().to_str().unwrap()))
+            .unwrap();
+        let original = std::fs::read(&marker).unwrap();
+        let until = std::time::Instant::now() + std::time::Duration::from_millis(600);
+        let result = try_resolvectl_many(
+            &redirect_all(),
+            || Ok("42".into()),
+            &["10.0.0.1".into()],
+            until,
+        );
+        assert!(
+            result.is_err(),
+            "two commands must not receive independent budgets"
+        );
+        assert!(rc.calls().contains("dns 42 10.0.0.1"));
+        assert!(rc.calls().contains("domain 42 ~."));
+        assert!(!rc.calls().contains("revert"));
+        assert_eq!(std::fs::read(&marker).unwrap(), original);
+        // Rollback is a separate owned operation with its own command deadline.
+        lease.cleanup(|_| revert_resolvectl_link("42")).unwrap();
+        assert!(rc.calls().contains("revert 42"));
+        assert!(!marker.exists());
+    }
+
+    #[test]
+    fn expired_dns_budget_starts_no_target_probe_or_command() {
+        let rc = Resolvectl::new("expired-budget", &[]);
+        let result = try_resolvectl_many(
+            &redirect_all(),
+            || panic!("expired operation must not probe the target"),
+            &["10.0.0.1".into()],
+            std::time::Instant::now(),
+        );
+        assert!(result.unwrap_err().to_string().contains("budget exhausted"));
+        assert!(rc.calls().is_empty());
+    }
+
+    #[test]
+    fn slow_target_probe_cannot_start_domain_after_shared_deadline() {
+        let rc = Resolvectl::new("target-budget", &[]);
+        let until = std::time::Instant::now() + std::time::Duration::from_millis(250);
+        let mut probes = 0;
+        let result = try_resolvectl_many(
+            &redirect_all(),
+            || {
+                probes += 1;
+                if probes == 2 {
+                    std::thread::sleep(
+                        until.saturating_duration_since(std::time::Instant::now())
+                            + std::time::Duration::from_millis(10),
+                    );
+                }
+                Ok("42".into())
+            },
+            &["10.0.0.1".into()],
+            until,
+        );
+        assert!(result.is_err());
+        assert_eq!(probes, 2);
         assert_eq!(rc.calls().trim(), "dns 42 10.0.0.1");
     }
 }

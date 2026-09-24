@@ -1094,6 +1094,11 @@ or 16 MiB on one output stream. Spawn errors and nonzero exit codes remain disti
 attempts to terminate the child and, on Linux, its group, then waits for exit; partial output
 is never accepted as a command result.
 
+DNS application (`dns` + `domain`) shares 15 seconds from setup entry.
+`DNS setup command budget exhausted` means the shared deadline expired before the
+next step; the second command can time out before its own 15 seconds. The generation
+retains its lease for separate rollback. [Validation](../reports/AUDIT-Q25-DNS-BUDGET.md).
+
 Timeout does not prove that nothing changed. A failed `resolvectl revert` retains its marker
 for the owning guard's retry. Startup does not revert live links from a marker alone (see §6.50).
 Generation rollback failures appear in the log; an attempted rollback

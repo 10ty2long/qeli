@@ -2739,6 +2739,14 @@ Timeout or output overflow returns an error after attempting to terminate and wa
 process. Partial output is not used. The DNS marker remains until confirmed revert; timeout
 does not mean that the command made no changes.
 
+DNS application commands `resolvectl dns` and `resolvectl domain` share one 15-second
+budget starting at DNS setup entry, including time spent in preliminary checks. The
+second command receives only the remaining time; no new command starts after expiry.
+Partial failure preserves the generation lease; its later `revert` has a separate
+15-second deadline, so setup expiry does not prevent owned rollback. This budget does
+not give synchronous file I/O, spawn or kill/reap a hard upper bound.
+[DNS shared deadline validation](../reports/AUDIT-Q25-DNS-BUDGET.md).
+
 These are internal bounds, with no new INI key. User-hook deadlines are unchanged. 15 seconds
 does not define total shutdown time. Current route/firewall sequence coverage and remaining
 limits are tracked in the [debt register](../plans/AUDIT-DEBT.md). IPv4/IPv6 preflight shares

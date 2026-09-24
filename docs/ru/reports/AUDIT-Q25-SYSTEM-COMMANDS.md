@@ -101,3 +101,5 @@ Linux runtime, реальные TUN/firewall/DNS, SSH/systemd/Actions, native re
 Продолжение: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) делает общий NAT sweep конечным
 и добавляет диагностику. Сроки server NAT-команд добавлены в [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md);
 общий срок операций и полная передача ошибок teardown остаются открытыми.
+
+Продолжение D05: [общий срок применения клиентского DNS](AUDIT-Q25-DNS-BUDGET.md). Последовательность dns/domain теперь делит один deadline; откат остаётся отдельной owned-операцией.

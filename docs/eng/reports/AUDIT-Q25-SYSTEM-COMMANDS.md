@@ -101,3 +101,5 @@ Previous passes: [cleanup failures](AUDIT-Q25-TUN-CLEANUP.md) and
 Follow-up: [Q14-F024/F025](AUDIT-Q14-NAT-CLEANUP.md) makes the generic NAT sweep finite
 and adds diagnostics. Server NAT command deadlines are added in [Q14-F032](AUDIT-Q14-NAT-COMMANDS.md);
 overall operation deadlines and complete teardown error propagation remain open.
+
+D05 continuation: [shared client DNS application deadline](AUDIT-Q25-DNS-BUDGET.md). The dns/domain sequence now shares one deadline; rollback remains a separate owned operation.
