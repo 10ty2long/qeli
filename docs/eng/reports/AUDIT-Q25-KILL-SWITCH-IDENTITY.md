@@ -62,3 +62,5 @@ Family/address/rule changes by an external administrator require coordinated rec
 Linux test binary SHA256: `805ae05534408637e5295370b38f5e786717e5b7a12f086f9a77dc659cbff544`.
 
 Next phase: [shared refresh deadline and unknown inspections](AUDIT-Q25-KILL-SWITCH-REFRESH.md). The refresh command sequence is addressed within the stated limits; [setup and rollback](AUDIT-Q25-KILL-SWITCH-SETUP.md) are addressed by the following phase. Synchronous DNS/NSS remains open.
+
+Follow-up: [Q25-F098](AUDIT-Q25-KILL-SWITCH-REBUILD.md) fixes the crash-rebuild leak window. Exact temporary DROP guards survive failure/repeated SIGKILL and retire after replacements are ready; the earlier limitations describe the historical snapshot. Overall deadlines, external firewall writers and remaining D04 criteria stay separate.

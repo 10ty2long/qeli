@@ -144,7 +144,7 @@ mod linux {
     #[test]
     fn cleanup_families_share_one_budget_and_can_retry() {
         let absent = "echo 'iptables: No chain/target/match by that name.' >&2; exit 1";
-        let v4 = format!("[ -e retry ] || sleep 0.06\n{absent}");
+        let v4 = format!("[ -e retry ] || sleep 0.03\n{absent}");
         let v6 = format!("[ -e retry ] || sleep 0.45\n{absent}");
         let f = Fixture::new("ks_budget_fam", [&v4, &v6]);
         let result = disengage_until(f.name, Instant::now() + Duration::from_millis(650));
@@ -154,10 +154,11 @@ mod linux {
         );
         let v4_calls = std::fs::read_to_string(f.dir.join("iptables.calls")).unwrap();
         let v6_calls = std::fs::read_to_string(f.dir.join("ip6tables.calls")).unwrap();
-        assert_eq!(
-            v4_calls.lines().count(),
-            5,
-            "first family did not complete the fixture"
+        assert!(
+            v4_calls.ends_with(
+                "-C FORWARD -m comment --comment qeli-ks-rebuild:ks_budget_fam -j DROP\n"
+            ),
+            "first family did not finish ordinary-chain and rebuild-guard cleanup: {v4_calls}"
         );
         assert_eq!(
             v6_calls.lines().count(),

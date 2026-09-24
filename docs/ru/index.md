@@ -144,6 +144,7 @@
 | [AUDIT-Q14-WORKER-NETWORK-LEASE.md](reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md) | Один server worker на network namespace, crash/restart и удалённый профиль |
 | [AUDIT-Q14-FIREWALL-JOURNAL.md](reports/AUDIT-Q14-FIREWALL-JOURNAL.md) | Точный журнал server firewall, SIGKILL и recovery без listing |
 | [AUDIT-Q25-DNS-MARKER-STORAGE.md](reports/AUDIT-Q25-DNS-MARKER-STORAGE.md) | Доверенное DNS state, namespace cookie v2 и SIGKILL/restart |
+| [AUDIT-Q25-KILL-SWITCH-REBUILD.md](reports/AUDIT-Q25-KILL-SWITCH-REBUILD.md) | Защита kill-switch при SIGKILL, отказах перестройки и retry |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, владение Child/PID, команды и deadline завершения |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Завершение профиля, ранние ошибки запуска, DNS-слушатели и освобождение сокетов |
 | [AUDIT-Q01-SERVER-INI.md](reports/AUDIT-Q01-SERVER-INI.md) | Первый проход серверного INI: 7 находок, исправления, тесты и ограничения |

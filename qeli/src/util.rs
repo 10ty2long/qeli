@@ -964,7 +964,10 @@ mod file_lock_tests {
         assert!(started.elapsed() < Duration::from_secs(2));
         assert!(FileLock::acquire_timeout(f.path(), Duration::ZERO).is_err());
         drop(owner);
-        FileLock::acquire_timeout(f.path(), Duration::ZERO).unwrap();
+        // A parallel subprocess may briefly inherit the fd between fork and exec
+        // despite CLOEXEC. Wait for that inherited reference instead of assuming
+        // release is immediately observable by a zero-duration probe.
+        FileLock::acquire_timeout(f.path(), Duration::from_secs(1)).unwrap();
     }
     #[test]
     fn fifo_lock_is_rejected_before_waiting_for_a_peer() {

@@ -86,3 +86,5 @@ NAT/routes/gateway, прочие lock waits и полные D04/D05/D09 оста
 [Предыдущая фаза очистки](AUDIT-Q25-KILL-SWITCH-BUDGET.md) ·
 [Мануал](../manuals/CONFIG.md#kill-switch-kill_switch) ·
 [Диагностика](../manuals/TROUBLESHOOTING.md)
+
+Продолжение: [Q25-F098](AUDIT-Q25-KILL-SWITCH-REBUILD.md) устраняет окно утечки при перестройке после аварии. Точные временные DROP guards сохраняются при отказе/повторном SIGKILL и снимаются после готовности замены; ограничения выше относятся к прежнему снимку. Общие сроки, внешние firewall writers и остальной D04 остаются отдельными критериями.

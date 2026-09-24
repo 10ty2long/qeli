@@ -40,6 +40,16 @@ fn inspect(text: &str, own_chain: &str) -> anyhow::Result<()> {
             }
             ["-A", chain, rule @ ..] if !rule.is_empty() => {
                 reject_other(chain, own_chain)?;
+                for pair in rule.windows(2) {
+                    if pair[0] == "--comment" {
+                        if let Some(tun) = pair[1]
+                            .trim_matches('"')
+                            .strip_prefix(super::rebuild::COMMENT_PREFIX)
+                        {
+                            reject_other(&super::chain_for(tun), own_chain)?;
+                        }
+                    }
+                }
                 sources.insert(*chain);
             }
             _ => {
@@ -62,4 +72,34 @@ fn reject_other(chain: &str, own_chain: &str) -> anyhow::Result<()> {
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    const POLICIES: &str = "-P INPUT ACCEPT\n-P OUTPUT ACCEPT\n-P FORWARD ACCEPT\n";
+    #[test]
+    fn own_rebuild_guard_can_recover_without_an_ordinary_chain() {
+        for hook in ["OUTPUT", "FORWARD"] {
+            for comment in ["qeli-ks-rebuild:vpn0", "\"qeli-ks-rebuild:vpn0\""] {
+                assert!(inspect(
+                    &format!("{POLICIES}-A {hook} -m comment --comment {comment} -j DROP\n"),
+                    "QELI_KS_vpn0"
+                )
+                .is_ok());
+            }
+        }
+    }
+    #[test]
+    fn foreign_rebuild_guard_blocks_admission_even_without_a_chain() {
+        for hook in ["OUTPUT", "FORWARD"] {
+            for comment in ["qeli-ks-rebuild:vpn1", "\"qeli-ks-rebuild:vpn1\""] {
+                assert!(inspect(
+                    &format!("{POLICIES}-A {hook} -m comment --comment {comment} -j DROP\n"),
+                    "QELI_KS_vpn0"
+                )
+                .is_err());
+            }
+        }
+    }
 }

@@ -1231,6 +1231,8 @@ its TUN descriptors. The kill-switch is released only after successful cleanup. 
 sessions leave `/etc/resolv.conf` intact; legacy file backups have a separate recovery path.
 For DNS ownership and stale markers see [§6.50](TROUBLESHOOTING.md). After a crash:
 
+Reinstalling a Linux kill-switch over prior protection uses temporary DROP rules `qeli-ks-rebuild:<tun>`. Failure or SIGKILL retains them; successful retry retires them after both required families are ready. Guards may block DNS/loopback until replacement is ready; `allow_ipv*_leak` cannot bypass recovery failure. For manual removal after stopping the owner, inspect guards separately from `QELI_KS_<tun>`. [Procedure §6.79](TROUBLESHOOTING.md#679-linux-kill-switch-rebuild-guard-remains-after-failure).
+
 ```bash
 sudo pkill -f 'qeli client'                    # kill if it's stuck
 # DNS: inspect per-link state and ownership markers first (TROUBLESHOOTING §6.50).

@@ -2243,3 +2243,34 @@ identified in the message. [Checks and limits](../reports/AUDIT-Q14-WORKER-NETWO
 ### 6.78. Server firewall recovery incomplete
 
 The worker does not launch profiles when exact rules in `server-firewall.state` cannot be removed or verified. Keep the journal and `.lock`, use the original state/network namespace/backend, fix the iptables or permission failure and retry. `iptables backend changed` requires restoring the original nft/legacy backend; `server firewall journal requires SO_NETNS_COOKIE` requires kernel support for that option. Corrupt or unsupported state cannot be automatically reset. An empty journal after success is normal. [Recovery procedure](OPERATIONS.md#server-firewall-recovery).
+
+### 6.79. Linux: kill-switch rebuild guard remains after failure
+
+Rules `-m comment --comment qeli-ks-rebuild:<tun> -j DROP` close OUTPUT and, when needed,
+FORWARD while replacing prior kill-switch protection. A same-`dev` restart in the same
+namespace/backend verifies guards, then rebuilds ordinary chains. Guards retire only
+after every required family is ready. Setup failure or another SIGKILL retains protection;
+`allow_ipv*_leak` cannot bypass recovery failure. Guard retirement errors do not remove
+completed replacement chains.
+
+Temporary guards are stricter than the normal allow-list: before the new chain is ready,
+they may block DNS and loopback. A retained guard can prevent hostname-based startup
+from passing resolution; use a verified server IP or administrator recovery. Resolve
+the original firewall error first and retry the same client. For manual removal, stop
+the owner, inspect exact OUTPUT/FORWARD rules in both families in the original namespace,
+and deliberately choose to restore direct egress. After clearing the ordinary
+`QELI_KS_<tun>` chain, remove only verified surviving guards:
+
+```bash
+# Example for dev = vpn0; run only for verified remaining rules.
+sudo iptables  -D OUTPUT  -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo iptables  -D FORWARD -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo ip6tables -D OUTPUT  -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo ip6tables -D FORWARD -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+```
+
+Never flush the whole table or remove another TUN's guards. This comment prefix is
+reserved for Qeli. `kill-switch conflict` can refer to another client's guard even
+without its ordinary chain. First installation without prior protection creates no
+guards: this contract covers replacement of an existing barrier.
+[Leak reproduction and validation](../reports/AUDIT-Q25-KILL-SWITCH-REBUILD.md).

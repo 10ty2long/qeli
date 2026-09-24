@@ -2039,6 +2039,8 @@ Qeli servers, external interface owners and old clients do not participate: this
 replace existing-device checks or authorize deletion of another owner's TUN.
 
 
+Reinstalling a Linux kill-switch over prior protection uses temporary DROP rules `qeli-ks-rebuild:<tun>`. Failure or SIGKILL retains them; successful retry retires them after both required families are ready. Guards may block DNS/loopback until replacement is ready; `allow_ipv*_leak` cannot bypass recovery failure. For manual removal after stopping the owner, inspect guards separately from `QELI_KS_<tun>`. [Procedure §6.79](TROUBLESHOOTING.md#679-linux-kill-switch-rebuild-guard-remains-after-failure).
+
 How it works (matters for manual teardown and for several instances on one host):
 
 - Rules use a **separate chain per interface**, `QELI_KS_<tun_if>` (for example

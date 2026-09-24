@@ -2243,3 +2243,34 @@ network namespace и отдельные файловые пути. Если пр
 ### 6.78. Server firewall recovery incomplete
 
 Worker не запускает профили, если точные правила из `server-firewall.state` не удалось удалить или проверить. Сохраните журнал и `.lock`, используйте прежние state/network namespace/backend, устраните отказ iptables или проблему прав и повторите запуск. Сообщение `iptables backend changed` требует возврата исходного nft/legacy backend; `server firewall journal requires SO_NETNS_COOKIE` — ядра с поддержкой этой опции. Файл с повреждённым/неподдерживаемым содержимым нельзя автоматически сбрасывать. Пустой журнал после успеха нормален. [Порядок восстановления](OPERATIONS.md#восстановление-серверного-firewall).
+
+### 6.79. Linux: kill-switch rebuild guard остаётся после отказа
+
+Правила `-m comment --comment qeli-ks-rebuild:<tun> -j DROP` закрывают OUTPUT и при
+необходимости FORWARD на время замены прежнего kill-switch. Новый запуск с тем же
+`dev` в том же namespace/backend сначала проверяет guards, затем перестраивает
+обычные цепочки. Guards снимаются только после готовности всех требуемых семей.
+При отказе установки или ещё одном SIGKILL защита сохраняется; `allow_ipv*_leak`
+не обходят отказ восстановления. Ошибка снятия guard не удаляет готовые новые цепочки.
+
+Временные guards строже обычного allow-list: до готовности новой цепочки они могут
+блокировать DNS и loopback. Если guard остался после отказа, запуск по имени сервера
+может остановиться на resolve; используйте проверенный IP либо ручное восстановление.
+Сначала устраните исходную ошибку firewall и повторите запуск того же клиента.
+Для ручного снятия остановите владельца, проверьте точные OUTPUT/FORWARD правила
+обеих семей в исходном namespace и сознательно выберите восстановление прямого выхода.
+После очистки обычной `QELI_KS_<tun>` удалите только найденные точные guard-правила:
+
+```bash
+# Пример для dev = vpn0; выполнять только для подтверждённых оставшихся правил.
+sudo iptables  -D OUTPUT  -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo iptables  -D FORWARD -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo ip6tables -D OUTPUT  -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+sudo ip6tables -D FORWARD -m comment --comment qeli-ks-rebuild:vpn0 -j DROP
+```
+
+Не очищайте таблицу целиком и не удаляйте guards другого TUN. Комментарии этого
+префикса зарезервированы за Qeli. `kill-switch conflict` может означать guard другого
+клиента даже без его обычной цепочки. При первой установке без прежней защиты guards
+не создаются: контракт относится к замене существующего барьера.
+[Воспроизведение утечки и проверки](../reports/AUDIT-Q25-KILL-SWITCH-REBUILD.md).

@@ -31,13 +31,14 @@
 //!
 //! FAIL-SAFE LIFECYCLE — this is the whole point, read carefully:
 //!   * [`engage`] pins the calling network namespace and installs `QELI_KS_<tun>` + OUTPUT jump and is idempotent (it
-//!     tears down any existing copy first, then rebuilds). It is installed ONCE,
+//!     rebuilds existing rules under temporary DROP guards). It is installed ONCE,
 //!     before the connect loop, and deliberately stays up across every reconnect.
 //!   * [`disengage`] removes the chain and is called only on a CLEAN stop
 //!     (user disconnect / SIGINT / SIGTERM / loop exit).
 //!   * A crashed run (SIGKILL / panic / power loss) leaves the chain in place — the
 //!     machine stays locked (no leak) until qeli runs again, which `engage`
-//!     replaces it. To unlock without reconnecting:
+//!     replaces it. A failed rebuild retains exact `qeli-ks-rebuild:<tun>` DROP guards
+//!     until a successful retry or explicit clean stop. To unlock without reconnecting:
 //!     use the exact per-TUN chain shown in the log, in its original network namespace.
 //!     Remove its OUTPUT/FORWARD jumps before flushing/deleting that exact chain.
 //!     Repeat for `ip6tables` when IPv6 was programmed; preserve unrelated chains.
@@ -55,6 +56,8 @@ use std::path::Path;
 mod admission;
 #[path = "killswitch/ownership.rs"]
 pub(crate) mod ownership;
+#[path = "killswitch/rebuild.rs"]
+mod rebuild;
 use ownership::Context;
 #[path = "killswitch/ipv6_state.rs"]
 pub(crate) mod ipv6_state;
@@ -669,7 +672,8 @@ fn engage_until(
     context.check()?;
     context.check_budget()?;
     let rollback = Rollback::new(&context, rollback_limit);
-    let mut bound = false;
+    let mut attempted = Vec::new();
+    let mut guarded = Vec::new();
     let result = (|| -> anyhow::Result<()> {
         let v4_path = ipt_path_with("iptables", |bin| context.ipt(bin, &["--version"]));
         context.check()?;
@@ -687,11 +691,20 @@ fn engage_until(
         }
         context.check_budget()?;
         context.bind(tun_if)?;
-        bound = true;
         context.check_budget()?;
+        // Preserve crash leftovers before touching either family's ordinary chain.
+        // Admission/guard failures do not authorize rollback of an inherited chain.
+        for (ipv6, path) in [(false, v4_path.as_deref()), (true, v6_path.as_deref())] {
+            if let Some(path) = path {
+                context.remember(ipv6, path)?;
+                if rebuild::arm(&context, path, tun_if, guard_forward)? {
+                    guarded.push((ipv6, path.to_owned()));
+                }
+            }
+        }
         let v4_protected = match v4_path.as_deref() {
             Some(path) => {
-                context.remember(false, path)?;
+                attempted.push((false, path.to_owned()));
                 match engage_family(&context, &rollback, path, tun_if, &v4, guard_forward) {
                     Ok(()) => true,
                     Err(error) => {
@@ -707,6 +720,10 @@ fn engage_until(
         rollback.check()?;
         context.protected(false, v4_protected, guard_forward);
         if !v4_protected {
+            anyhow::ensure!(
+                !guarded.iter().any(|(ipv6, _)| !ipv6),
+                "IPv4 kill-switch rebuild failed; prior protection retained by recovery guard"
+            );
             let needs_protection = !allow_ipv4_leak
                 && host_may_have_ipv4_default_route_with(|args| context.ipt("ip", args));
             context.check()?;
@@ -727,7 +744,7 @@ fn engage_until(
         // could not be verified, unless the operator explicitly accepts the leak.
         let v6_protected = match v6_path.as_deref() {
             Some(v6_path) => {
-                context.remember(true, v6_path)?;
+                attempted.push((true, v6_path.to_owned()));
                 match engage_family(&context, &rollback, v6_path, tun_if, &v6, guard_forward) {
                     Ok(()) => true,
                     Err(e) => {
@@ -743,6 +760,10 @@ fn engage_until(
         rollback.check()?;
         context.protected(true, v6_protected, guard_forward);
         if !v6_protected {
+            anyhow::ensure!(
+                !guarded.iter().any(|(ipv6, _)| *ipv6),
+                "IPv6 kill-switch rebuild failed; prior protection retained by recovery guard"
+            );
             let needs_protection =
                 !allow_ipv6_leak && host_may_have_global_ipv6_with(|args| context.ipt("ip", args));
             context.check()?;
@@ -773,22 +794,14 @@ fn engage_until(
 
         context.check()?;
         context.check_budget()?;
-        log::warn!(
-        "Kill-switch ENGAGED (iptables chain {chain}): egress restricted to lo, {tun_if}, DHCP, \
-         DNS and {}. It stays up across reconnects and is removed only on a clean stop; a crash \
-         leaves it (no leak) — clear manually with \
-         `sudo iptables -D OUTPUT -j {chain}; sudo iptables -F {chain}; sudo iptables -X {chain}` \
-         (and the same with ip6tables).",
-        ips.join(", ")
-    );
         Ok(())
     })();
     if let Err(error) = result {
-        if bound {
+        if !attempted.is_empty() {
             let mut failures = Vec::new();
-            for (ipv6, family) in context.paths() {
-                match rollback.family(&family.path, &chain) {
-                    Ok(()) => context.protected(ipv6, false, family.guard_forward),
+            for (ipv6, path) in attempted {
+                match rollback.family(&path, &chain) {
+                    Ok(()) => context.protected(ipv6, false, guard_forward),
                     Err(failure) => failures.push(failure.to_string()),
                 }
             }
@@ -801,6 +814,19 @@ fn engage_until(
         }
         return Err(error);
     }
+    // Commit is separate from rollback: if retiring a guard fails, leave all
+    // completed chains in place, including families whose guard is already gone.
+    for (_, path) in &guarded {
+        rebuild::clear(&context, path, tun_if)?;
+    }
+    log::warn!(
+        "Kill-switch ENGAGED (iptables chain {chain}): egress restricted to lo, {tun_if}, DHCP, \
+         DNS and {}. It stays up across reconnects and is removed only on a clean stop; a crash \
+         leaves it (no leak) — clear manually with \
+         `sudo iptables -D OUTPUT -j {chain}; sudo iptables -F {chain}; sudo iptables -X {chain}` \
+         (and the same with ip6tables).",
+        ips.join(", ")
+    );
     Ok(())
 }
 
@@ -822,8 +848,8 @@ fn host_may_have_ipv4_default_route_with(
 /// Re-resolve the server hostname and ADD any newly-seen server IP(s) to the live
 /// kill-switch chain, inserted before the terminal DROP — WITHOUT tearing the chain
 /// down. So a DDNS / round-robin server whose address rotates mid-session can still
-/// be reconnected to, with NO leak window (unlike re-calling [`engage`], which
-/// briefly removes the OUTPUT jump). Idempotent: never removes the DROP or existing
+/// be reconnected to without rebuilding the protection. Re-calling [`engage`] uses
+/// temporary DROP guards and can interrupt availability. Idempotent: never removes the DROP or existing
 /// removes stale server allowances only after adding the current ones. A previously
 /// armed family must still have its hooks and DROP. Inspection or update errors stop
 /// reconnect; the retained rules require recovery. Call it before each attempt.
@@ -1053,8 +1079,13 @@ fn disengage_until(tun_if: &str, until: std::time::Instant) -> anyhow::Result<()
     let chain = chain_for(tun_if);
     let mut errors = Vec::new();
     for (_, family) in context.paths() {
-        if let Err(error) = teardown_family(&context, &family.path, &chain) {
-            errors.push(error.to_string());
+        match teardown_family(&context, &family.path, &chain) {
+            Ok(()) => {
+                if let Err(error) = rebuild::clear(&context, &family.path, tun_if) {
+                    errors.push(error.to_string());
+                }
+            }
+            Err(error) => errors.push(error.to_string()),
         }
     }
     context.check()?;

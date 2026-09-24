@@ -183,3 +183,273 @@ fn native_kill_switch_packets_stay_blocked_across_tun_reconnect() -> anyhow::Res
     .join()
     .expect("native kill-switch packet test panicked")
 }
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and real dual-stack iptables; isolated netns"]
+fn native_kill_switch_failed_restart_preserves_packet_barrier() -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        use crate::system_command::test_support::{arguments, with_commands, Action};
+        use std::os::unix::process::ExitStatusExt;
+        new_namespace()?;
+        command("ip", &["link", "set", "lo", "up"])?;
+        command("ip", &["link", "add", "wan0", "type", "dummy"])?;
+        command("ip", &["link", "set", "wan0", "up"])?;
+        command("ip", &["addr", "add", "192.0.2.1/24", "dev", "wan0"])?;
+        command(
+            "ip",
+            &[
+                "-6",
+                "addr",
+                "add",
+                "2001:db8::1/64",
+                "dev",
+                "wan0",
+                "nodad",
+            ],
+        )?;
+        command("ip", &["route", "add", "default", "dev", "wan0"])?;
+        command("ip", &["-6", "route", "add", "default", "dev", "wan0"])?;
+        let paths = tools()?;
+        let tun = "ks_crash0";
+        let chain = chain_for(tun);
+        for path in &paths {
+            command(
+                path,
+                &[
+                    "-A",
+                    "OUTPUT",
+                    "-m",
+                    "comment",
+                    "--comment",
+                    "audit-wan-sentinel",
+                    "-j",
+                    "ACCEPT",
+                ],
+            )?;
+        }
+        engage("203.0.113.7", 443, tun, false, false, true)?;
+        // Simulate losing all process-local authority while retaining the kernel rules.
+        Context::lookup(tun, true)?
+            .expect("initial owner")
+            .forget(tun)?;
+        let packets = || -> anyhow::Result<Vec<u64>> {
+            paths
+                .iter()
+                .map(|path| packets(path, "OUTPUT", "ACCEPT", None))
+                .collect()
+        };
+        let before = packets()?;
+        let injected = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let count = injected.clone();
+        let failed = with_commands(
+            move |cmd| {
+                let args = arguments(cmd);
+                let reject = cmd.get_program().to_string_lossy().ends_with("ip6tables")
+                    && args == ["-A", &chain, "-j", "DROP"];
+                let output = if reject {
+                    count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    Ok(std::process::Output {
+                        status: std::process::ExitStatus::from_raw(1 << 8),
+                        stdout: vec![],
+                        stderr: b"injected DROP failure".to_vec(),
+                    })
+                } else {
+                    std::process::Command::new(cmd.get_program())
+                        .args(cmd.get_args())
+                        .output()
+                };
+                // Real UDP packets after each firewall mutation sample the complete rebuild,
+                // including its rollback, instead of only checking the final ruleset.
+                if args
+                    .first()
+                    .is_some_and(|a| ["-N", "-A", "-I", "-D", "-F", "-X"].contains(&a.as_str()))
+                {
+                    for (local, target) in [
+                        ("0.0.0.0:0", "203.0.113.9:43889"),
+                        ("[::]:0", "[2001:db8:1::9]:43889"),
+                    ] {
+                        let socket = std::net::UdpSocket::bind(local).expect("bind packet probe");
+                        let _ = socket.send_to(b"restart-barrier", target);
+                    }
+                }
+                Action::Reply(output)
+            },
+            || engage("203.0.113.8", 443, tun, false, false, true),
+        );
+        let after = packets()?;
+        let injected = injected.load(std::sync::atomic::Ordering::Relaxed);
+        disengage(tun)?;
+        anyhow::ensure!(
+            failed.is_err() && injected > 0,
+            "fault did not exercise setup failure: {failed:?}, injected={injected}"
+        );
+        anyhow::ensure!(
+            before == after,
+            "restart/rollback exposed WAN egress: before={before:?}, after={after:?}"
+        );
+        Ok(())
+    })
+    .join()
+    .expect("native restart test panicked")
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and real dual-stack iptables; isolated netns"]
+fn native_kill_switch_rebuild_guard_failures_retry_without_unlocking() -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        use crate::system_command::test_support::{arguments, with_commands, Action};
+        use std::os::unix::process::ExitStatusExt;
+        new_namespace()?;
+        let paths = tools()?;
+        let tun = "ks_crash1";
+        let chain = chain_for(tun);
+        let comment = format!("qeli-ks-rebuild:{tun}");
+        let snapshot = || -> anyhow::Result<Vec<String>> {
+            paths
+                .iter()
+                .map(|p| command(p, &["-t", "filter", "-S"]))
+                .collect()
+        };
+        let intact = || -> anyhow::Result<()> {
+            for p in &paths {
+                for args in [
+                    vec!["-C", "OUTPUT", "-j", &chain],
+                    vec!["-C", "FORWARD", "-j", &chain],
+                    vec!["-C", &chain, "-j", "DROP"],
+                ] {
+                    anyhow::ensure!(
+                        present_checked(p, &args)?,
+                        "ordinary protection lost: {p} {args:?}"
+                    );
+                }
+            }
+            Ok(())
+        };
+        let guard = |p: &str, hook: &str| {
+            present_checked(
+                p,
+                &[
+                    "-C",
+                    hook,
+                    "-m",
+                    "comment",
+                    "--comment",
+                    &comment,
+                    "-j",
+                    "DROP",
+                ],
+            )
+        };
+        for p in &paths {
+            command(p, &["-N", "OPERATOR_SENTINEL"])?;
+            command(p, &["-A", "OPERATOR_SENTINEL", "-j", "RETURN"])?;
+        }
+        engage("203.0.113.7", 443, tun, false, false, true)?;
+        // Guard insertion can report success without changing the kernel. It must
+        // fail before either family's inherited ordinary protection is removed.
+        let result = with_commands(
+            |cmd| {
+                let args = arguments(cmd);
+                let reject = cmd.get_program().to_string_lossy().ends_with("ip6tables")
+                    && args.first().is_some_and(|x| x == "-I")
+                    && args.iter().any(|x| x.starts_with("qeli-ks-rebuild:"));
+                let output = if reject {
+                    Ok(std::process::Output {
+                        status: std::process::ExitStatus::from_raw(0),
+                        stdout: vec![],
+                        stderr: vec![],
+                    })
+                } else {
+                    std::process::Command::new(cmd.get_program())
+                        .args(cmd.get_args())
+                        .output()
+                };
+                Action::Reply(output)
+            },
+            || engage("203.0.113.8", 443, tun, true, true, true),
+        );
+        anyhow::ensure!(result.is_err(), "no-op guard insertion was accepted");
+        intact()?;
+        anyhow::ensure!(guard(&paths[0], "OUTPUT")? && !guard(&paths[1], "OUTPUT")?);
+        // Failure retiring the second family's guard must not roll back already
+        // committed ordinary protection after the first guard has been retired.
+        let result = with_commands(
+            |cmd| {
+                let args = arguments(cmd);
+                let reject = cmd.get_program().to_string_lossy().ends_with("ip6tables")
+                    && args.first().is_some_and(|x| x == "-D")
+                    && args.iter().any(|x| x.starts_with("qeli-ks-rebuild:"));
+                let output = if reject {
+                    Ok(std::process::Output {
+                        status: std::process::ExitStatus::from_raw(1 << 8),
+                        stdout: vec![],
+                        stderr: b"injected guard delete failure".to_vec(),
+                    })
+                } else {
+                    std::process::Command::new(cmd.get_program())
+                        .args(cmd.get_args())
+                        .output()
+                };
+                Action::Reply(output)
+            },
+            || engage("203.0.113.8", 443, tun, true, true, true),
+        );
+        anyhow::ensure!(result.is_err(), "failed guard retirement was accepted");
+        intact()?;
+        anyhow::ensure!(!guard(&paths[0], "OUTPUT")? && guard(&paths[1], "OUTPUT")?);
+        // Explicit leak exceptions cannot unlock a failed replacement of previously
+        // armed protection. Rollback leaves only guards; model another process loss.
+        let result = with_commands(
+            |cmd| {
+                let args = arguments(cmd);
+                let reject = cmd.get_program().to_string_lossy().ends_with("ip6tables")
+                    && args.first().is_some_and(|x| x == "-A")
+                    && args.last().is_some_and(|x| x == "DROP");
+                let output = if reject {
+                    Ok(std::process::Output {
+                        status: std::process::ExitStatus::from_raw(1 << 8),
+                        stdout: vec![],
+                        stderr: b"injected DROP failure".to_vec(),
+                    })
+                } else {
+                    std::process::Command::new(cmd.get_program())
+                        .args(cmd.get_args())
+                        .output()
+                };
+                Action::Reply(output)
+            },
+            || engage("203.0.113.8", 443, tun, true, true, true),
+        );
+        anyhow::ensure!(result.is_err(), "leak flags bypassed rebuild failure");
+        for p in &paths {
+            anyhow::ensure!(guard(p, "OUTPUT")? && guard(p, "FORWARD")?);
+            anyhow::ensure!(!chain_exists(&Context::fixture(), p, &chain)?);
+        }
+        Context::lookup(tun, true)?
+            .expect("retained owner")
+            .forget(tun)?;
+        let before = snapshot()?;
+        anyhow::ensure!(engage("203.0.113.8", 443, "ks_foreign", true, true, true).is_err());
+        anyhow::ensure!(
+            before == snapshot()?,
+            "foreign TUN changed recovery-only protection"
+        );
+        engage("203.0.113.8", 443, tun, false, false, true)?;
+        intact()?;
+        for p in &paths {
+            anyhow::ensure!(!guard(p, "OUTPUT")? && !guard(p, "FORWARD")?);
+        }
+        disengage(tun)?;
+        for p in &paths {
+            anyhow::ensure!(!chain_exists(&Context::fixture(), p, &chain)?);
+            anyhow::ensure!(!guard(p, "OUTPUT")? && !guard(p, "FORWARD")?);
+            anyhow::ensure!(present_checked(
+                p,
+                &["-C", "OPERATOR_SENTINEL", "-j", "RETURN"]
+            )?);
+        }
+        Ok(())
+    })
+    .join()
+    .expect("native rebuild recovery test panicked")
+}

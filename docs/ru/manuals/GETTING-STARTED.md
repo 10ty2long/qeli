@@ -1238,6 +1238,8 @@ sudo netfilter-persistent save 2>/dev/null; true
 подключения не меняют `/etc/resolv.conf`; старые файловые backup восстанавливаются отдельно.
 Владение DNS и старые маркеры описаны в [§6.50](TROUBLESHOOTING.md). После аварии:
 
+Повторная установка Linux kill-switch поверх прежней защиты выполняется под временными DROP-правилами `qeli-ks-rebuild:<tun>`. При ошибке или SIGKILL они остаются; успешный retry снимает их после готовности обеих требуемых семей. Guards могут блокировать DNS/loopback до готовности замены; `allow_ipv*_leak` не обходят отказ восстановления. Для ручного снятия после остановки владельца проверьте guards отдельно от `QELI_KS_<tun>`. [Процедура §6.79](TROUBLESHOOTING.md#679-linux-kill-switch-rebuild-guard-остаётся-после-отказа).
+
 ```bash
 sudo pkill -f 'qeli client'                    # прибить, если висит
 # DNS: сначала проверьте per-link состояние и маркеры владения (TROUBLESHOOTING §6.50).

@@ -94,3 +94,5 @@ NAT/routes/gateway deadlines, durable recovery and full D04/D05/D09 remain open.
 [Previous refresh phase](AUDIT-Q25-KILL-SWITCH-REFRESH.md) ·
 [Manual](../manuals/CONFIG.md#kill-switch-kill_switch) ·
 [Troubleshooting](../manuals/TROUBLESHOOTING.md)
+
+Follow-up: [Q25-F098](AUDIT-Q25-KILL-SWITCH-REBUILD.md) fixes the crash-rebuild leak window. Exact temporary DROP guards survive failure/repeated SIGKILL and retire after replacements are ready; the earlier limitations describe the historical snapshot. Overall deadlines, external firewall writers and remaining D04 criteria stay separate.

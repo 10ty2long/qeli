@@ -281,6 +281,8 @@ fi
 if [ "$FLAVOR" = mtu ]; then
   CLIENT_MTU=1280
 fi
+CLIENT_KILL_SWITCH=false
+if [ -n "$DNS_UPSTREAM" ] && [ "${QELI_DNS_KILL_SWITCH:-0}" = 1 ]; then CLIENT_KILL_SWITCH=true; fi
 SERVER_ROAMING_LINE="roaming.enabled = true"
 SERVER_DEVICE_LINE="tun.device_type = $SERVER_DEVICE_TYPE"
 CLIENT_ROAMING_LINE="roaming = required"
@@ -371,6 +373,7 @@ $CLIENT_DEVICE_LINE
 gateway = $GATEWAY
 $CLIENT_IPV6_LINE
 dns = $CLIENT_DNS
+kill_switch = $CLIENT_KILL_SWITCH
 mtu = $CLIENT_MTU
 $CLIENT_LEAK_LINES
 timeout = 8
@@ -449,6 +452,11 @@ if [ "$ACTIVE_CHECKS" = 6 ] || [ "$ACTIVE_CHECKS" = dual ]; then
     "ip netns exec $CLI_NS ping -6 -c3 -W2 fd46:ffff::1"
 fi
 if [ -n "$DNS_UPSTREAM" ]; then
+  if [ "$CLIENT_KILL_SWITCH" = true ]; then
+    for tool in iptables ip6tables; do
+      check "DNS tunnel has an active $tool kill-switch" "ip netns exec $CLI_NS $tool -C OUTPUT -j QELI_KS_$TUN_IF && ip netns exec $CLI_NS $tool -C QELI_KS_$TUN_IF -j DROP"
+    done
+  fi
   DNS_INDEX=$(ip netns exec "$CLI_NS" ip -j link show dev "$TUN_IF" | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["ifindex"])')
   case "$DNS_INDEX" in ''|*[!0-9]*|0) bad "DNS target has a valid numeric ifindex"; exit 1 ;; esac
   DNS_BOOT=$(cat /proc/sys/kernel/random/boot_id)
@@ -570,6 +578,11 @@ if [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; then
   check_eventually "SIGKILL removes DNS from real resolved with its link" \
     "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after-crash.txt && ! grep -Fq 'Link $CRASH_DNS_INDEX (' $WORK/resolved-after-crash.txt"
   check "SIGKILL retains the original DNS ownership marker" "cmp $CRASH_DNS_MARKER $WORK/dns-before-crash.state"
+  if [ "$CLIENT_KILL_SWITCH" = true ]; then
+    for tool in iptables ip6tables; do
+      check "SIGKILL retains the $tool kill-switch" "ip netns exec $CLI_NS $tool -C OUTPUT -j QELI_KS_$TUN_IF && ip netns exec $CLI_NS $tool -C QELI_KS_$TUN_IF -j DROP"
+    done
+  fi
   # Model the same nsfs inode with a different kernel generation. This does not
   # claim to force real inode reuse; startup must leave this evidence untouched.
   python3 - "$CRASH_DNS_MARKER" "$WORK" <<'PYDNS'
@@ -608,6 +621,11 @@ PYDNS
   check_eventually "restart reports legacy evidence without adopting it" "grep -q 'Legacy DNS v1 marker' $WORK/client-restart.log"
   check "DNS queries work through the stub after restart" \
     "ip netns exec $CLI_NS python3 $SCRIPT_DIR/dns_test_server.py query --server 127.0.0.53 --name after-crash.release.test --type A --expect 192.0.2.80"
+  if [ "$CLIENT_KILL_SWITCH" = true ]; then
+    for tool in iptables ip6tables; do
+      check "restart commits $tool protection and retires its guard" "ip netns exec $CLI_NS $tool -C OUTPUT -j QELI_KS_$TUN_IF && ip netns exec $CLI_NS $tool -C QELI_KS_$TUN_IF -j DROP && ! ip netns exec $CLI_NS $tool -C OUTPUT -m comment --comment qeli-ks-rebuild:$TUN_IF -j DROP"
+    done
+  fi
 fi
 
 OLD_CLIENT_PID=$CLIENT_PID
@@ -624,6 +642,11 @@ if [ -n "$DNS_UPSTREAM" ]; then
   check "clean stop removed the resolver ownership marker" \
     "test ! -e $DNS_MARKER"
 fi
+  if [ "$CLIENT_KILL_SWITCH" = true ]; then
+    for tool in iptables ip6tables; do
+      check "clean stop retires $tool kill-switch and recovery guard" "! ip netns exec $CLI_NS $tool -S QELI_KS_$TUN_IF && ! ip netns exec $CLI_NS $tool -C OUTPUT -m comment --comment qeli-ks-rebuild:$TUN_IF -j DROP"
+    done
+  fi
 check "clean stop removed the TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
 check "clean stop restored direct IPv4 routing" \
   "ip netns exec $CLI_NS ping -4 -c1 -W2 198.18.46.1"
