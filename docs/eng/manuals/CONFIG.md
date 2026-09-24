@@ -2802,6 +2802,8 @@ not give synchronous file I/O, spawn or kill/reap a hard upper bound.
 
 `dns = tunnel` requires `busctl` and an already running systemd-resolved in the same network namespace; the D-Bus broker must share the caller PID namespace. Commands target a specific unique owner on a bus with a pinned AUTH GUID. Replacing the service/bus aborts the operation and retains the lease. There is no autoactivation or networkd fallback; `LinkBusy` requires adjusting TUN ownership or selecting `dns = off`/`system`. Nonstandard NetworkPlan ports require `SetLinkDNSEx`; port 53 uses `SetLinkDNS`. [Context and validation](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
 
+Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
+
 These are internal bounds, with no new INI key. User-hook deadlines are unchanged. 15 seconds
 does not define total shutdown time. Current route/firewall sequence coverage and remaining
 limits are tracked in the [debt register](../plans/AUDIT-DEBT.md). IPv4/IPv6 preflight shares

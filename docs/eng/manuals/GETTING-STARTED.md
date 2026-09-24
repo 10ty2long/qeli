@@ -764,6 +764,8 @@ dns         = tunnel
 
 On Linux, `dns = tunnel` requires `busctl`, active systemd-resolved and its stub in `/etc/resolv.conf`. Client and resolved must share a network namespace, and client and D-Bus broker a PID namespace. For platform-managed DNS, use `dns = off`/`system`. [Exact contract](CONFIG.md#linux-tun-and-dns-system-commands).
 
+Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
+
 ```bash
 sudo qeli client --config /etc/qeli/client.conf
 ```

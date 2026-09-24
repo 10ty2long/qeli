@@ -2770,6 +2770,8 @@ set -eu
 
 Для `dns = tunnel` нужен `busctl` и уже работающий systemd-resolved в той же сети; брокер D-Bus должен быть в том же PID namespace. Команды адресованы конкретному unique owner на шине с закреплённым AUTH GUID. Смена службы/шины прерывает операцию и сохраняет lease. Автоактивация и fallback к networkd отсутствуют; `LinkBusy` требует настроить владение TUN или выбрать `dns = off`/`system`. Нестандартный порт из NetworkPlan требует `SetLinkDNSEx`, порт 53 использует `SetLinkDNS`. [Контекст и проверка](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
 
+Managed DNS на Linux также требует `SO_NETNS_COOKIE` и доверенного `/var/lib/qeli` без symlink и group/world write. Per-link DNS state не переносится через `STATE_DIRECTORY`. Перед обновлением штатно остановите старый клиент; оставшиеся v1-маркеры требуют ручного разбора, если совпадают с новым link. [Формат v2 и восстановление](TROUBLESHOOTING.md#650-linux-владение-dns-lease-и-восстановление-маркеров).
+
 Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Это не общий срок NetworkPlan/shutdown и не прерывание внутреннего I/O. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
 
 Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Это не срок всего NetworkPlan. [Контракт](../reports/AUDIT-Q25-ROUTE-BUDGET.md).

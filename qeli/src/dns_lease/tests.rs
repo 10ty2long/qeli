@@ -10,6 +10,11 @@ impl Fixture {
             rand::random::<u64>()
         ));
         std::fs::create_dir(&dir).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)).unwrap();
+        }
         Self(dir)
     }
     fn lease(&self) -> Lease {
@@ -29,6 +34,7 @@ fn scope() -> Scope {
         boot: "12345678-1234-1234-1234-123456789abc".into(),
         device: 4,
         inode: 17,
+        network_cookie: 123,
     }
 }
 fn link() -> Link {
@@ -194,7 +200,7 @@ fn invalid_record_version_token_or_path_is_rejected() {
         let mut record = lease.record.clone();
         drop(lease);
         match field {
-            "version" => record.version = 2,
+            "version" => record.version = 3,
             "token" => record.token = "bad".into(),
             _ => record.link.index += 1,
         }
@@ -419,4 +425,211 @@ fn child_refuses_live_owner() {
         .unwrap()
         .to_string()
         .contains("active owner"));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn state_directory_symlink_is_rejected_before_creating_evidence() {
+    let f = Fixture::new();
+    let alias = f.0.join("alias");
+    std::os::unix::fs::symlink(&f.0, &alias).unwrap();
+    let result = Lease::acquire(&alias, link());
+    assert!(
+        result.is_err(),
+        "DNS ownership followed a directory symlink"
+    );
+    assert!(!f.path().exists());
+}
+#[cfg(target_os = "linux")]
+#[test]
+fn state_directory_writable_by_others_is_rejected() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    std::fs::set_permissions(&f.0, std::fs::Permissions::from_mode(0o777)).unwrap();
+    assert!(
+        Lease::acquire(&f.0, link()).is_err(),
+        "DNS ownership used a world-writable state directory"
+    );
+    assert!(!f.path().exists());
+}
+#[cfg(target_os = "linux")]
+#[test]
+fn state_directory_recovery_refuses_untrusted_marker_before_index_probe() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    drop(f.lease());
+    std::fs::set_permissions(f.path(), std::fs::Permissions::from_mode(0o666)).unwrap();
+    let probed = Cell::new(false);
+    let result = recover(&f.path(), &scope(), |_| {
+        probed.set(true);
+        Ok(false)
+    });
+    assert!(
+        result.is_err(),
+        "unsafe marker was accepted: {result:?}; index probed={}",
+        probed.get()
+    );
+    assert!(!probed.get());
+    assert!(f.path().exists());
+}
+
+#[test]
+fn v2_cookie_distinguishes_reused_namespace_inode_without_probing_or_retiring() {
+    let f = Fixture::new();
+    drop(f.lease());
+    let before = saved(&f);
+    let mut other = scope();
+    other.network_cookie += 1;
+    assert_eq!(
+        recover(&f.path(), &other, |_| panic!("foreign generation probe")).unwrap(),
+        Recovery::Foreign
+    );
+    assert_eq!(saved(&f), before);
+    assert!(command_target(&link(), &other, Some(link().index)).is_err());
+    assert!(command_target(&link(), &other, None).is_err());
+}
+#[test]
+fn v2_marker_name_carries_the_kernel_generation() {
+    let f = Fixture::new();
+    let mut other = link();
+    other.scope.network_cookie += 1;
+    let _a = f.lease();
+    let _b = Lease::acquire(&f.0, other.clone()).unwrap();
+    assert_ne!(f.path(), other.path(&f.0));
+    assert!(f
+        .path()
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .starts_with("dns-link-v2-"));
+    assert_eq!(
+        serde_json::from_slice::<Record>(&saved(&f))
+            .unwrap()
+            .version,
+        2
+    );
+}
+#[test]
+fn cookie_zero_is_rejected_before_creating_state() {
+    let f = Fixture::new();
+    let mut bad = link();
+    bad.scope.network_cookie = 0;
+    assert!(Lease::acquire(&f.0, bad).is_err());
+    assert_eq!(std::fs::read_dir(&f.0).unwrap().count(), 0);
+}
+#[test]
+fn v1_evidence_is_preserved_and_cannot_be_adopted_on_matching_inode() {
+    let f = Fixture::new();
+    let l = link();
+    let path = f.0.join(format!(
+        "dns-link-v1-{}-{}-{}-{}.state",
+        l.scope.boot, l.scope.device, l.scope.inode, l.index
+    ));
+    let bytes = br#"{"version":1,"legacy":"not sufficient to infer a namespace generation"}"#;
+    std::fs::write(&path, bytes).unwrap();
+    assert_eq!(
+        recover(&path, &scope(), |_| panic!("v1 is not authority")).unwrap(),
+        Recovery::Legacy
+    );
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    assert!(Lease::acquire(&f.0, l)
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("legacy DNS v1 marker"));
+    assert!(!f.path().exists());
+}
+#[test]
+fn marker_enumeration_recognizes_v2_and_retains_legacy_v1() {
+    for name in ["dns-link-v1-example.state", "dns-link-v2-example.state"] {
+        assert!(is_marker(name));
+    }
+    for name in [
+        "dns-link-v2-example.lock",
+        "unrelated.state",
+        "dns-link-v3-example.state",
+    ] {
+        assert!(!is_marker(name));
+    }
+}
+#[cfg(target_os = "linux")]
+#[test]
+fn moving_the_state_directory_never_retires_a_replacement_markers_inode() {
+    let f = Fixture::new();
+    let state = f.0.join("state");
+    let moved = f.0.join("moved");
+    let mut lease = Lease::acquire(&state, link()).unwrap();
+    let name = lease.path.file_name().unwrap().to_owned();
+    let bytes = std::fs::read(state.join(&name)).unwrap();
+    std::fs::rename(&state, &moved).unwrap();
+    std::fs::create_dir(&state).unwrap();
+    std::fs::write(state.join(&name), &bytes).unwrap();
+    lease.cleanup(|_| Ok(())).unwrap();
+    assert!(!moved.join(&name).exists());
+    assert_eq!(std::fs::read(state.join(&name)).unwrap(), bytes);
+}
+#[cfg(target_os = "linux")]
+#[test]
+fn lost_directory_permissions_stop_revert_and_preserve_the_marker() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    let mut lease = f.lease();
+    let before = saved(&f);
+    std::fs::set_permissions(&f.0, std::fs::Permissions::from_mode(0o777)).unwrap();
+    assert!(lease.cleanup(|_| panic!("untrusted directory")).is_err());
+    assert_eq!(saved(&f), before);
+    std::fs::set_permissions(&f.0, std::fs::Permissions::from_mode(0o700)).unwrap();
+    lease.cleanup(|_| Ok(())).unwrap();
+}
+#[cfg(target_os = "linux")]
+#[test]
+fn unsafe_sidecar_permissions_are_rejected_before_marker_creation() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    let path = f.path().with_extension("lock");
+    std::fs::write(&path, b"").unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o666)).unwrap();
+    assert!(Lease::acquire(&f.0, link()).is_err());
+    assert!(!f.path().exists());
+}
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "requires root; validates privileged DNS state owners"]
+fn native_dns_state_refuses_foreign_marker_and_sidecar_owners() {
+    use std::os::unix::ffi::OsStrExt;
+    for lock in [false, true] {
+        let f = Fixture::new();
+        drop(f.lease());
+        let path = if lock {
+            f.path().with_extension("lock")
+        } else {
+            f.path()
+        };
+        let name = std::ffi::CString::new(path.as_os_str().as_bytes()).unwrap();
+        assert_eq!(unsafe { libc::chown(name.as_ptr(), 65534, 65534) }, 0);
+        let before = saved(&f);
+        assert!(recover(&f.path(), &scope(), |_| panic!("foreign owner")).is_err());
+        assert_eq!(saved(&f), before);
+    }
+}
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "requires root; validates delegated service directory ownership"]
+fn native_root_dns_files_inherit_the_admitted_service_directory_owner() {
+    use std::os::unix::{ffi::OsStrExt, fs::MetadataExt};
+    let f = Fixture::new();
+    let state = f.0.join("state");
+    std::fs::create_dir(&state).unwrap();
+    let path = std::ffi::CString::new(state.as_os_str().as_bytes()).unwrap();
+    assert_eq!(unsafe { libc::chown(path.as_ptr(), 65534, 65534) }, 0);
+    let mut lease = Lease::acquire(&state, link()).unwrap();
+    let marker = link().path(&state);
+    for path in [marker.clone(), marker.with_extension("lock")] {
+        let md = std::fs::metadata(path).unwrap();
+        assert_eq!(md.uid(), 65534);
+        assert_eq!(md.mode() & 0o777, 0o600);
+    }
+    lease.cleanup(|_| Ok(())).unwrap();
+    assert!(!marker.exists());
 }

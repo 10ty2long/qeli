@@ -95,3 +95,5 @@ criteria. This run is not final release benchmarking or platform certification.
 Windows VM/Mac/iOS/router runtime is skipped by the user's decision.
 
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md)
+
+Follow-up: [Q25-F096/F097](AUDIT-Q25-DNS-MARKER-STORAGE.md) moves DNS markers to v2 with SO_NETNS_COOKIE and a trusted held directory, testing SIGKILL/restart with real resolved. Counts and the v1 contract above describe the historical snapshot; current operations are in TROUBLESHOOTING §6.50.

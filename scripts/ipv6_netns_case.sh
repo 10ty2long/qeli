@@ -453,7 +453,8 @@ if [ -n "$DNS_UPSTREAM" ]; then
   case "$DNS_INDEX" in ''|*[!0-9]*|0) bad "DNS target has a valid numeric ifindex"; exit 1 ;; esac
   DNS_BOOT=$(cat /proc/sys/kernel/random/boot_id)
   DNS_NAMESPACE=$(ip netns exec "$CLI_NS" stat -Lc '%d-%i' /proc/self/ns/net)
-  DNS_MARKER="/var/lib/qeli/dns-link-v1-$DNS_BOOT-$DNS_NAMESPACE-$DNS_INDEX.state"
+  DNS_COOKIE=$(ip netns exec "$CLI_NS" python3 -c 'import socket,struct; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); print(struct.unpack("=Q",s.getsockopt(socket.SOL_SOCKET,getattr(socket,"SO_NETNS_COOKIE",71),8))[0])')
+  DNS_MARKER="/var/lib/qeli/dns-link-v2-$DNS_BOOT-$DNS_NAMESPACE-$DNS_COOKIE-$DNS_INDEX.state"
   check_eventually "DNS owns the current link marker" "test -f $DNS_MARKER"
   RESOLVER_PID=$(cat "$WORK/resolved.pid")
   check_eventually "real resolved reports both tunnel DNS servers" \
@@ -555,6 +556,58 @@ elif [ "$ROUTING" = split ]; then
     "ip netns exec $CLI_NS ping -4 -c1 -W2 198.18.46.2"
   check "unrelated split IPv6 remains reachable" \
     "ip netns exec $CLI_NS ping -6 -c1 -W2 fd46:ffff::2"
+fi
+
+# Optional crash-recovery stage uses the same real resolved/bus after SIGKILL.
+if [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; then
+  CRASH_DNS_MARKER=$DNS_MARKER
+  CRASH_DNS_INDEX=$DNS_INDEX
+  cp "$DNS_MARKER" "$WORK/dns-before-crash.state"
+  kill -KILL "$CLIENT_PID"
+  wait "$CLIENT_PID" 2>/dev/null || true
+  CLIENT_PID=
+  check_eventually "SIGKILL releases the client TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
+  check_eventually "SIGKILL removes DNS from real resolved with its link" \
+    "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after-crash.txt && ! grep -Fq 'Link $CRASH_DNS_INDEX (' $WORK/resolved-after-crash.txt"
+  check "SIGKILL retains the original DNS ownership marker" "cmp $CRASH_DNS_MARKER $WORK/dns-before-crash.state"
+  # Model the same nsfs inode with a different kernel generation. This does not
+  # claim to force real inode reuse; startup must leave this evidence untouched.
+  python3 - "$CRASH_DNS_MARKER" "$WORK" <<'PYDNS'
+import json,sys
+from pathlib import Path
+source, work = Path(sys.argv[1]), Path(sys.argv[2])
+record = json.loads(source.read_text())
+record['link']['scope']['network_cookie'] += 1
+scope, index = record['link']['scope'], record['link']['index']
+foreign = source.parent / f"dns-link-v2-{scope['boot']}-{scope['device']}-{scope['inode']}-{scope['network_cookie']}-{index}.state"
+foreign.write_text(json.dumps(record)); foreign.chmod(0o600)
+(work/'foreign-marker-path').write_text(str(foreign))
+(work/'foreign-marker-before.state').write_bytes(foreign.read_bytes())
+record['version'] = 1
+record['link']['scope'].pop('network_cookie')
+legacy = source.parent / f"dns-link-v1-{scope['boot']}-{scope['device']}-{scope['inode']}-{index}.state"
+legacy.write_text(json.dumps(record)); legacy.chmod(0o600)
+(work/'legacy-marker-path').write_text(str(legacy))
+(work/'legacy-marker-before.state').write_bytes(legacy.read_bytes())
+PYDNS
+  FOREIGN_DNS_MARKER=$(cat "$WORK/foreign-marker-path")
+  LEGACY_DNS_MARKER=$(cat "$WORK/legacy-marker-path")
+  nsenter -t "$RESOLVER_PID" -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus \
+    QELI_KNOWN_HOSTS="$WORK/known-hosts" QELI_DEVICE_ID_FILE="$WORK/device-id" \
+    "$CLIENT_BIN" client -c "$WORK/client.conf" >"$WORK/client-restart.log" 2>&1 &
+  CLIENT_PID=$!
+  check_eventually "restart retires only the absent original DNS marker" "test ! -e $CRASH_DNS_MARKER"
+  check_eventually "restart creates a new client TUN" "ip netns exec $CLI_NS ip link show $TUN_IF"
+  DNS_INDEX=$(ip netns exec "$CLI_NS" ip -j link show dev "$TUN_IF" | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["ifindex"])')
+  DNS_MARKER="/var/lib/qeli/dns-link-v2-$DNS_BOOT-$DNS_NAMESPACE-$DNS_COOKIE-$DNS_INDEX.state"
+  check_eventually "restart owns a new v2 DNS marker" "test -f $DNS_MARKER"
+  check_eventually "restart restores tunnel DNS in real resolved" \
+    "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns $DNS_INDEX | grep -Fq '10.86.0.1 fd86::1'"
+  check "foreign namespace generation marker remains unchanged" "cmp $FOREIGN_DNS_MARKER $WORK/foreign-marker-before.state"
+  check "legacy v1 evidence remains unchanged" "cmp $LEGACY_DNS_MARKER $WORK/legacy-marker-before.state"
+  check_eventually "restart reports legacy evidence without adopting it" "grep -q 'Legacy DNS v1 marker' $WORK/client-restart.log"
+  check "DNS queries work through the stub after restart" \
+    "ip netns exec $CLI_NS python3 $SCRIPT_DIR/dns_test_server.py query --server 127.0.0.53 --name after-crash.release.test --type A --expect 192.0.2.80"
 fi
 
 OLD_CLIENT_PID=$CLIENT_PID

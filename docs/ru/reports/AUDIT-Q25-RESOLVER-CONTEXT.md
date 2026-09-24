@@ -96,3 +96,5 @@ release benchmark или платформенной сертификацией. 
 пропущен по решению пользователя.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Мануал](../manuals/CONFIG.md)
+
+Продолжение: [Q25-F096/F097](AUDIT-Q25-DNS-MARKER-STORAGE.md) переводит DNS-маркеры на v2 с SO_NETNS_COOKIE и доверенным открытым каталогом, проверяет SIGKILL/restart с реальным resolved. Исторические цифры и v1-контракт выше описывают прежний снимок; актуальная эксплуатация — в §6.50 TROUBLESHOOTING.

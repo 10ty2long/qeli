@@ -1604,12 +1604,21 @@ DNS и route cleanup дополнительно проверяют исходн�
 
 `DNS link already has an active owner` означает lock другого поколения на этом интерфейсе.
 `unrecovered DNS ownership marker` означает оставшуюся запись; она не перезаписывается.
-Новые файлы — `dns-link-v1-<boot>-<netns-device>-<netns-inode>-<ifindex>.state` и `.lock`.
+Новые файлы — `dns-link-v2-<boot>-<netns-device>-<netns-inode>-<cookie>-<ifindex>.state` и `.lock`
+в `/var/lib/qeli`; `STATE_DIRECTORY` не переносит per-link DNS state. Cookie берётся из
+`SO_NETNS_COOKIE`; его отсутствие запрещает managed DNS. Каталог должен быть без symlink,
+чужих владельцев и group/world write. Новые файлы получают 0600; небезопасные существующие
+права или владелец вызывают ошибку без автоматического исправления. Не снимайте эти проверки
+удалением evidence; сначала устраните причину и проверьте фактическое состояние DNS.
 Startup пропускает активных/чужих владельцев, сохраняет живые индексы и удаляет маркеры
 подтверждённо отсутствующих индексов без resolver-команды. Сохранённые имя/индекс сами
 по себе не запускают revert живого интерфейса.
 
+`Legacy DNS v1 marker ... lacks namespace generation` означает сохранённый `dns-link-v1-*`.
+Он не мигрирует автоматически: старый inode не доказывает поколение namespace. Совпадающие
+boot/device/inode/ifindex блокируют новый lease до ручного восстановления.
 `legacy DNS marker ... needs administrator recovery` относится к старым `dns-resolvectl-*`.
+Перед обновлением штатно остановите старый клиент, чтобы он удалил собственный маркер.
 Остановите затронутого владельца, определите настоящий интерфейс, проверьте `resolvectl status`
 и восстановите DNS ответственным сетевым менеджером либо выполните revert проверенного
 Qeli-интерфейса. Только затем архивируйте/удалите точный осиротевший маркер. Не удаляйте
@@ -1623,7 +1632,8 @@ ioctl и доступные namespace/boot metadata procfs. `cannot verify TUN n
 исходного fd; обычный rename поддерживается, а отключённый от удалённого устройства fd
 не даёт права делать revert замены. Сервис resolved должен обслуживать тот же network namespace.
 Внешние изменения после последней проверки и внешние DNS writers остаются ограничениями.
-[Находки, проверки и границы](../reports/AUDIT-Q25-DNS-LEASES.md).
+[Контракт lease](../reports/AUDIT-Q25-DNS-LEASES.md) ·
+[Безопасность файлов и переход на v2](../reports/AUDIT-Q25-DNS-MARKER-STORAGE.md).
 
 ---
 

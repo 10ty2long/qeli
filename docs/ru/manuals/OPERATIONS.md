@@ -410,3 +410,7 @@ NAT/FORWARD/MSS/DNS INPUT/REDIRECT правила до выполнения ко
 Исторические правила старых бинарников без журнала по-прежнему зависят от tagged
 sweep и доступного listing. Остановите старый worker перед обновлением.
 [Проверки и границы](../reports/AUDIT-Q14-FIREWALL-JOURNAL.md).
+
+## Восстановление клиентского DNS
+
+Managed DNS на Linux также требует `SO_NETNS_COOKIE` и доверенного `/var/lib/qeli` без symlink и group/world write. Per-link DNS state не переносится через `STATE_DIRECTORY`. Перед обновлением штатно остановите старый клиент; оставшиеся v1-маркеры требуют ручного разбора, если совпадают с новым link. [Формат v2 и восстановление](TROUBLESHOOTING.md#650-linux-владение-dns-lease-и-восстановление-маркеров).

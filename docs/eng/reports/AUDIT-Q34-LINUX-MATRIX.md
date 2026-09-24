@@ -59,3 +59,5 @@ Mac/iOS and router checks are excluded by user decision, not declared PASS.
 [Debt register](../plans/AUDIT-DEBT.md) · [Full plan](../plans/FULL-SYSTEM-AUDIT.md)
 
 D13: [100 release TCP/UDP handovers each](AUDIT-Q34-RELEASE-SOAK.md): 30/30 assertions PASS, RSS growth within the unchanged 32 MiB limit; debug FAIL retained. Full resource/fault coverage and final-source measurements remain open.
+
+Follow-up: [Q25-F096/F097](AUDIT-Q25-DNS-MARKER-STORAGE.md) moves DNS markers to v2 with SO_NETNS_COOKIE and a trusted held directory, testing SIGKILL/restart with real resolved. Counts and the v1 contract above describe the historical snapshot; current operations are in TROUBLESHOOTING §6.50.

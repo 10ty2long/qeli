@@ -143,6 +143,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q14-CONTROL.md](reports/AUDIT-Q14-CONTROL.md) | Control socket ownership, API bounds, handler shutdown and hook pairing |
 | [AUDIT-Q14-WORKER-NETWORK-LEASE.md](reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md) | One server worker per network namespace, crash/restart and deleted profiles |
 | [AUDIT-Q14-FIREWALL-JOURNAL.md](reports/AUDIT-Q14-FIREWALL-JOURNAL.md) | Exact server firewall journal, SIGKILL and recovery without listing |
+| [AUDIT-Q25-DNS-MARKER-STORAGE.md](reports/AUDIT-Q25-DNS-MARKER-STORAGE.md) | Trusted DNS state, namespace cookie v2 and SIGKILL/restart |
 | [AUDIT-Q14-SUPERVISOR.md](reports/AUDIT-Q14-SUPERVISOR.md) | Supervisor: stop/retry, Child/PID ownership, commands and termination deadlines |
 | [AUDIT-Q14-Q19-LIFECYCLE.md](reports/AUDIT-Q14-Q19-LIFECYCLE.md) | Profile shutdown, early startup errors, DNS listeners and socket release |
 | [AUDIT-Q01-SERVER-INI.md](reports/AUDIT-Q01-SERVER-INI.md) | First server INI pass: 7 findings, fixes, tests and remaining limits |

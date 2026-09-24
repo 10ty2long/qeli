@@ -1609,11 +1609,20 @@ An active lease is retained through setup rollback and disconnect; DNS errors re
 
 `DNS link already has an active owner` means another generation holds this link's lock.
 `unrecovered DNS ownership marker` means a prior record remains; it is not overwritten.
-New state uses `dns-link-v1-<boot>-<netns-device>-<netns-inode>-<ifindex>.state` plus `.lock`.
+New state uses `dns-link-v2-<boot>-<netns-device>-<netns-inode>-<cookie>-<ifindex>.state` plus `.lock`
+in `/var/lib/qeli`; `STATE_DIRECTORY` does not relocate per-link DNS state. The cookie comes
+from `SO_NETNS_COOKIE`; missing support refuses managed DNS. The directory must have no
+symlinks, untrusted owners or group/world write. New files use 0600; unsafe existing modes
+or ownership fail without automatic repair. Do not bypass these checks by deleting evidence;
+resolve the cause and inspect the actual DNS state first.
 Startup skips active/foreign owners, retains live indices and retires confirmed absent ones
 without a resolver command. A saved name/index alone never triggers revert of a live link.
 
+`Legacy DNS v1 marker ... lacks namespace generation` means a retained `dns-link-v1-*` file.
+It is not migrated automatically: the old inode cannot prove namespace generation. Matching
+boot/device/inode/ifindex block a new lease until administrator recovery.
 `legacy DNS marker ... needs administrator recovery` refers to old `dns-resolvectl-*`.
+Stop the old client cleanly before upgrading so it retires its own marker.
 Stop the affected owner, identify the actual interface, inspect `resolvectl status`, and
 restore DNS through the responsible network manager or revert a verified Qeli-owned link.
 Only then archive/remove the exact orphaned marker. Do not delete live `.lock` sidecars,
@@ -1627,7 +1636,8 @@ mutation and preserve evidence. DNS commands use the captured numeric index afte
 the original fd; ordinary rename is supported and a detached original never authorizes
 revert on its replacement. The resolved service must manage the same network namespace.
 External mutation after the last check and external DNS writers remain limitations.
-[Findings, tests and boundaries](../reports/AUDIT-Q25-DNS-LEASES.md).
+[Lease contract](../reports/AUDIT-Q25-DNS-LEASES.md) ·
+[Storage checks and the v2 transition](../reports/AUDIT-Q25-DNS-MARKER-STORAGE.md).
 
 ---
 

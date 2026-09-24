@@ -35,6 +35,11 @@ fn current_scope() -> anyhow::Result<crate::dns_lease::Scope> {
             .to_string(),
         device: net.dev(),
         inode: net.ino(),
+        network_cookie: crate::network_namespace::cookie()?.ok_or_else(|| {
+            anyhow::anyhow!(
+                "DNS ownership requires SO_NETNS_COOKIE; refusing unscoped DNS mutation"
+            )
+        })?,
     })
 }
 
@@ -107,7 +112,6 @@ pub(crate) fn setup_network_plan_dns(
     }
 
     let resolver = resolver_context::Context::capture(until)?;
-    ensure_state_dir()?;
     let (name, index) = tun
         .attached_link()?
         .ok_or_else(|| anyhow::anyhow!("TUN disappeared before DNS setup"))?;
@@ -116,7 +120,8 @@ pub(crate) fn setup_network_plan_dns(
         index,
         name,
     };
-    let lease = crate::dns_lease::Lease::acquire(Path::new(STATE_DIR), link)?;
+    let lease = crate::dns_lease::Lease::acquire(Path::new(STATE_DIR), link)
+        .map_err(|e| anyhow::anyhow!("DNS ownership in {STATE_DIR}: {e}"))?;
     // Transfer ownership BEFORE the first resolver mutation, including partial failures.
     *owned = Some(DnsLease { lease, resolver });
     let lease = owned.as_ref().expect("lease just installed");
@@ -201,15 +206,12 @@ fn restore_legacy_dns() -> anyhow::Result<()> {
 /// Startup never reverts a live link from a durable marker alone. Only the generation
 /// holding the original TUN descriptor and DNS lease may issue a resolver mutation.
 pub fn recover_stale() -> anyhow::Result<()> {
-    let entries = match std::fs::read_dir(STATE_DIR) {
-        Ok(entries) => Some(entries),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
-        Err(error) => return Err(error.into()),
-    };
+    let directory = crate::dns_lease::Directory::existing(Path::new(STATE_DIR))?;
+    let namespace = crate::network_namespace::Namespace::capture()?;
     let mut errors = Vec::new();
     let mut scope = None;
-    if let Some(entries) = entries {
-        for entry in entries {
+    if let Some(directory) = directory {
+        for entry in directory.entries()? {
             let entry = match entry {
                 Ok(entry) => entry,
                 Err(error) => {
@@ -218,18 +220,29 @@ pub fn recover_stale() -> anyhow::Result<()> {
                 }
             };
             let name = entry.file_name();
+            let visible = Path::new(STATE_DIR).join(&name);
             let name = name.to_string_lossy();
+            if crate::dns_lease::is_legacy_marker(&name) {
+                log::warn!("Legacy DNS v1 marker {} lacks namespace generation; retained for administrator recovery", visible.display());
+                continue;
+            }
             if crate::dns_lease::is_marker(&name) {
                 if scope.is_none() {
                     scope = Some(current_scope()?);
                 }
-                match crate::dns_lease::recover(&entry.path(),scope.as_ref().expect("scope initialized"), index_exists) {
-                    Ok(crate::dns_lease::Recovery::Live) => log::warn!("DNS marker {} still names a live index; automatic revert cannot prove device ownership",entry.path().display()),
+                match crate::dns_lease::recover_in(&directory, &entry.file_name(), scope.as_ref().expect("scope initialized"), |index| {
+                    namespace.verify()?;
+                    let present = index_exists(index)?;
+                    namespace.verify()?;
+                    Ok(present)
+                }) {
+                    Ok(crate::dns_lease::Recovery::Legacy) => log::warn!("Legacy DNS v1 marker {} lacks namespace generation; retained for administrator recovery", visible.display()),
+                    Ok(crate::dns_lease::Recovery::Live) => log::warn!("DNS marker {} still names a live index; automatic revert cannot prove device ownership",visible.display()),
                     Ok(_) => {},
-                    Err(error) => errors.push(format!("DNS marker {} retained: {error}",entry.path().display())),
+                    Err(error) => errors.push(format!("DNS marker {} retained: {error}",visible.display())),
                 }
             } else if name.starts_with("dns-resolvectl-") {
-                log::warn!("Legacy DNS marker {} retained for administrator recovery; a saved name is not ownership",entry.path().display());
+                log::warn!("Legacy DNS marker {} retained for administrator recovery; a saved name is not ownership",visible.display());
             }
         }
     }
@@ -958,6 +971,7 @@ mod fault_injection {
                     boot: "00000000-0000-0000-0000-000000000001".into(),
                     device: 4,
                     inode: 42,
+                    network_cookie: 123,
                 },
                 index: 42,
                 name: "qtest".into(),

@@ -61,3 +61,5 @@ D09/D10/D13/D14 целиком не закрыты. Остаются полны�
 [Реестр](../plans/AUDIT-DEBT.md) · [Полный план](../plans/FULL-SYSTEM-AUDIT.md)
 
 D13: [release TCP/UDP по 100 handover](AUDIT-Q34-RELEASE-SOAK.md): 30/30 утверждений PASS, прирост RSS в прежнем лимите 32 MiB; debug FAIL сохранён. Полный ресурсный/fault охват и итоговый снимок ещё открыты.
+
+Продолжение: [Q25-F096/F097](AUDIT-Q25-DNS-MARKER-STORAGE.md) переводит DNS-маркеры на v2 с SO_NETNS_COOKIE и доверенным открытым каталогом, проверяет SIGKILL/restart с реальным resolved. Исторические цифры и v1-контракт выше описывают прежний снимок; актуальная эксплуатация — в §6.50 TROUBLESHOOTING.

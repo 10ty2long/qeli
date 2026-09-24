@@ -413,3 +413,7 @@ valid records from a previous boot no longer supply commands. Historical rules f
 older binaries without journals still depend on tagged sweeps and available listing.
 Stop the old worker before upgrading.
 [Checks and limits](../reports/AUDIT-Q14-FIREWALL-JOURNAL.md).
+
+## Client DNS recovery
+
+Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
