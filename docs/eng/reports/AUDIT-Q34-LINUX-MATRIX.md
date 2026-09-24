@@ -57,3 +57,5 @@ release A/B/benchmark. The next gateway phase is not in this binary. Windows VM,
 Mac/iOS and router checks are excluded by user decision, not declared PASS.
 
 [Debt register](../plans/AUDIT-DEBT.md) · [Full plan](../plans/FULL-SYSTEM-AUDIT.md)
+
+D13: [100 release TCP/UDP handovers each](AUDIT-Q34-RELEASE-SOAK.md): 30/30 assertions PASS, RSS growth within the unchanged 32 MiB limit; debug FAIL retained. Full resource/fault coverage and final-source measurements remain open.

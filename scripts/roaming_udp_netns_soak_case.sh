@@ -63,6 +63,7 @@ run_udp_soak_case() {
   server_socket_max=$server_socket_before
   client_rss_max=$client_rss_before
   server_rss_max=$server_rss_before
+  echo "  RESOURCE baseline transport=udp client_pid=$CLIENT_PID server_pid=$server_pid client_rss_kib=$client_rss_before server_rss_kib=$server_rss_before client_fd=$client_fd_before server_fd=$server_fd_before client_sockets=$client_socket_before server_sockets=$server_socket_before"
 
   if ! udp_roaming_stats \
       || [ "$UDP_ATTEMPTS:$UDP_COMMITS:$UDP_FAILURES:$UDP_SESSIONS:$UDP_CANDIDATES:$UDP_CID_ALIASES" != "0:0:0:1:0:2" ]; then
@@ -143,6 +144,7 @@ run_udp_soak_case() {
   server_socket_after=$(find "/proc/$server_pid/fd" -mindepth 1 -maxdepth 1 -lname 'socket:*' 2>/dev/null | wc -l)
   client_rss_after=$(awk '/^VmRSS:/ { print $2 }' "/proc/$CLIENT_PID/status")
   server_rss_after=$(awk '/^VmRSS:/ { print $2 }' "/proc/$server_pid/status")
+  echo "  RESOURCE final transport=udp client_rss_kib=$client_rss_after server_rss_kib=$server_rss_after client_rss_delta_kib=$((client_rss_after - client_rss_before)) server_rss_delta_kib=$((server_rss_after - server_rss_before)) client_rss_peak_delta_kib=$((client_rss_max - client_rss_before)) server_rss_peak_delta_kib=$((server_rss_max - server_rss_before)) client_fd=$client_fd_after server_fd=$server_fd_after client_sockets=$client_socket_after server_sockets=$server_socket_after"
 
   check "soak committed every requested client/server path transaction exactly once" \
     "test '$commit_count' -eq '$iterations' && test '$server_commits' -eq '$iterations'"

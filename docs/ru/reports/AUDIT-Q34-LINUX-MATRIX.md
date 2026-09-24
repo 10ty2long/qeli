@@ -59,3 +59,5 @@ D09/D10/D13/D14 целиком не закрыты. Остаются полны�
 пользователя, без заявления PASS.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Полный план](../plans/FULL-SYSTEM-AUDIT.md)
+
+D13: [release TCP/UDP по 100 handover](AUDIT-Q34-RELEASE-SOAK.md): 30/30 утверждений PASS, прирост RSS в прежнем лимите 32 MiB; debug FAIL сохранён. Полный ресурсный/fault охват и итоговый снимок ещё открыты.
