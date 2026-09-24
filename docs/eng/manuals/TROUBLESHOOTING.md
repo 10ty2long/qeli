@@ -2197,3 +2197,7 @@ Gateway/exit-node did not complete commands or router mutex admission within its
 ### 6.74. Route operation deadline expired
 
 Route queries/mutations or mutex admission exceeded the shared deadline. Timeout does not prove that nothing changed. The retained owner permits verified cleanup; unknown rollback stops COMMIT. Preserve foreign routes and do not discard pending reservations without verification. [Details](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+
+### 6.75. DNS: systemd-resolved is not the active system resolver
+
+For `dns = tunnel`, Qeli checks `/etc/resolv.conf` contents, including the symlink target. An upstream file, commented stub address or mixed DNS list is insufficient. Use an operating stub or `dns = off`/`system` for platform-managed DNS. Qeli does not rewrite the file automatically. [Validation and boundaries](../reports/AUDIT-Q25-RESOLVER-CONFIG.md).

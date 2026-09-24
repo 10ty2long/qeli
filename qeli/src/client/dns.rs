@@ -245,23 +245,13 @@ fn index_exists(index: u32) -> anyhow::Result<bool> {
 
 // ── resolvectl ────────────────────────────────────────────────────────────
 
-/// Is systemd-resolved actually the system resolver? Its per-link DNS only takes
-/// effect if the box resolves THROUGH it — i.e. `/etc/resolv.conf` points at the
-/// stub (`127.0.0.53`) or systemd's run dir. On a box where systemd-resolved is
-/// merely installed (so `resolvectl` exists and returns success) but resolv.conf
-/// lists real nameservers or is managed by something else, `resolvectl dns` is a
-/// silent no-op and the tunnel's pushed DNS is ignored (a leak). When this returns
-/// false the client refuses a persistent resolv.conf takeover.
+#[path = "dns/resolver_config.rs"]
+mod resolver_config;
+
+// This proves only the configured stub path. Resolver service/bus identity remains
+// a separate D06 boundary; this check must not be mistaken for that proof.
 fn resolved_is_active() -> bool {
-    if let Ok(target) = std::fs::read_link(RESOLV_PATH) {
-        let t = target.to_string_lossy();
-        if t.contains("systemd/resolve") || t.contains("stub-resolv.conf") {
-            return true;
-        }
-    }
-    std::fs::read_to_string(RESOLV_PATH)
-        .map(|c| c.contains("127.0.0.53"))
-        .unwrap_or(false)
+    resolver_config::uses_stub(Path::new(RESOLV_PATH))
 }
 
 /// Path to the `resolvectl` binary, if it is installed at all.
@@ -628,9 +618,9 @@ mod tests {
     use std::path::PathBuf;
 
     /// Unique temp workspace per test.
-    struct Tmp(PathBuf);
+    pub(super) struct Tmp(PathBuf);
     impl Tmp {
-        fn new(tag: &str) -> Self {
+        pub(super) fn new(tag: &str) -> Self {
             let p = std::env::temp_dir().join(format!(
                 "qeli-dns-{}-{}-{}",
                 tag,
@@ -643,7 +633,7 @@ mod tests {
             std::fs::create_dir_all(&p).unwrap();
             Tmp(p)
         }
-        fn path(&self, name: &str) -> PathBuf {
+        pub(super) fn path(&self, name: &str) -> PathBuf {
             self.0.join(name)
         }
     }

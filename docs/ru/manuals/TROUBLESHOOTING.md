@@ -2198,3 +2198,7 @@ Gateway/exit-node не успел закончить команды или до�
 ### 6.74. Route operation deadline expired
 
 Проверка/изменение маршрутов или ожидание mutex превысили общий срок. Не считайте timeout доказательством отсутствия изменений. Сохранённый owner допускает verified cleanup; при неизвестном откате COMMIT останавливается. Не удаляйте чужие маршруты и не освобождайте pending-записи вручную без проверки. [Подробности](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+
+### 6.75. DNS: systemd-resolved is not the active system resolver
+
+Для `dns = tunnel` проверяется содержимое `/etc/resolv.conf`, включая цель symlink. Ссылка на upstream-файл, комментарий с адресом stub и смешанный список DNS не подходят. Используйте действующий stub или `dns = off`/`system` для управления DNS платформой. Qeli не переписывает файл автоматически. [Проверка и её границы](../reports/AUDIT-Q25-RESOLVER-CONFIG.md).

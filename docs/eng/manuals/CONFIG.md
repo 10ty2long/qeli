@@ -607,7 +607,7 @@ be changed on the server **without re-issuing links** (see "What is NOT pushed" 
 | `client_ip` / `server_ip` / `prefix` | projection of IPv4, or the sole IPv6 address in an IPv6-only plan | backward-compatible fields; a v2 client verifies that they agree with `addresses` |
 | `mtu` | the profile's `tun.mtu` | a client on `mtu = 0` (default, auto) **adopts** it; a client with its own `mtu > 0` keeps it |
 | `dns_servers` | `dns.push_servers` or the active IPv4/IPv6 proxy listeners | typed resolver list, restricted to negotiated families and applied only with `dns = tunnel` |
-| `dns` | first compatible resolver | legacy resolver projection |
+| `dns` | first compatible resolver | legacy resolver projection Linux checks actual `nameserver` entries in `/etc/resolv.conf`: only stub `127.0.0.53`/`127.0.0.54`, without external fallback; symlink names/comments do not prove this path. Regular file, up to 64 KiB. [Contract](../reports/AUDIT-Q25-RESOLVER-CONFIG.md). |
 | `dns_port` | always **53** | no client platform can express another port (neither `VpnService.Builder` nor `NEDNSSettings` takes one), so 53 is pushed unconditionally; when the proxy listens elsewhere the tunnel redirects 53 → `dns.port` with an iptables rule |
 | `routes` | the user's **personal** routes, otherwise the profile's `route =` | installs the routes (since 0.7.12 — **always**) |
 | `obfuscation` | `obf.padding.*`, `obf.heartbeat.*`, `obf.traffic_normalization.*`, `obf.traffic_shaping.*` | applies the obfuscation parameters live |

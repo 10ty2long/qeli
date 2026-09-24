@@ -600,7 +600,7 @@ mtu = 1280
 | `client_ip` / `server_ip` / `prefix` | проекция IPv4 либо единственного IPv6-адреса IPv6-only плана | backward-compatible поля; v2-клиент проверяет их согласованность с `addresses` |
 | `mtu` | `tun.mtu` профиля | клиент с `mtu = 0` (дефолт, auto) **принимает**; клиент со своим `mtu > 0` оставляет своё |
 | `dns_servers` | `dns.push_servers` либо активные IPv4/IPv6 listeners прокси | типизированный список, только для согласованных families и только при `dns = tunnel` |
-| `dns` | первый совместимый resolver | legacy-проекция резолвера |
+| `dns` | первый совместимый resolver | legacy-проекция резолвера Linux проверяет фактические `nameserver` в `/etc/resolv.conf`: только stub `127.0.0.53`/`127.0.0.54`, без внешнего fallback; имя symlink и комментарий не подтверждают этот путь. Файл regular, до 64 KiB. [Контракт](../reports/AUDIT-Q25-RESOLVER-CONFIG.md). |
 | `dns_port` | всегда **53** | клиенты не умеют другой порт (ни `VpnService.Builder`, ни `NEDNSSettings` его не принимают), поэтому пушится строго 53; если прокси слушает не на 53, туннель сам перенаправляет 53 → `dns.port` правилом iptables |
 | `routes` | **персональные** маршруты юзера, иначе профильные `route =` | ставит маршруты (с 0.7.12 — **всегда**) |
 | `obfuscation` | `obf.padding.*`, `obf.heartbeat.*`, `obf.traffic_normalization.*`, `obf.traffic_shaping.*` | применяет параметры обфускации на лету |
