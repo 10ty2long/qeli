@@ -70,3 +70,8 @@ unlistable mixed nft chains without saved specifications and persistent recovery
 remain D04. This does not add atomicity against privileged external changes, a whole
 cleanup deadline, new benchmarks, native release certification or device tests.
 Individual command deadlines are unchanged. INI/API/ABI/wire contracts are unchanged.
+
+Follow-up: [Q14-F034 — shared cleanup deadline](AUDIT-Q14-NAT-CLEANUP-BUDGET.md)
+covers profile/startup/final cleanup admission and commands; the earlier results above
+refer to their own snapshot. NAT setup/rollback, DNS lease Drop/setup admission and
+persistent recovery remain open.

@@ -85,6 +85,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q05-ARCHIVE-BUDGET.md](reports/AUDIT-Q05-ARCHIVE-BUDGET.md) | Backup/restore budget, bounded stdin and complete rollback snapshots |
 | [AUDIT-Q05-HEALTH-PROBES.md](reports/AUDIT-Q05-HEALTH-PROBES.md) | Async Status/Transport health probes, shared admission and HTTP-router responsiveness |
 | [AUDIT-Q14-NAT-COMMANDS.md](reports/AUDIT-Q14-NAT-COMMANDS.md) | Q14-F032: server NAT shares the bounded command runner; ownership after timeout |
+| [AUDIT-Q14-NAT-CLEANUP-BUDGET.md](reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md) | Shared NAT/DNS cleanup deadline and retained unverified rules |
 | [AUDIT-Q14-DNS-OWNERSHIP.md](reports/AUDIT-Q14-DNS-OWNERSHIP.md) | Retained DNS rule specifications after cleanup/rollback failure, retries and generation identity |
 | [AUDIT-Q14-Q25-FIREWALL-CHECKS.md](reports/AUDIT-Q14-Q25-FIREWALL-CHECKS.md) | Shared server/client firewall checks, exact DNS cleanup and the 1024-rule boundary |
 | [AUDIT-Q14-NAT-CLEANUP.md](reports/AUDIT-Q14-NAT-CLEANUP.md) | Finite NAT cleanup, verification, diagnostics and open teardown findings |

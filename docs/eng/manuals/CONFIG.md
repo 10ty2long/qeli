@@ -431,6 +431,18 @@ perf.connection.idle_timeout_secs = 300
 (A full, exhaustively commented example — [server.conf](../../../qeli/config/server.conf); a
 runnable dual-stack deployment — [server-ipv6.conf](../../../qeli/config/server-ipv6.conf)).
 
+## Server network-rule cleanup
+
+One profile-cleanup attempt, startup worker cleanup or final verification receives
+15 seconds for lock admission and firewall commands. IPv4/IPv6 and retired DNS UDP/TCP
+share the deadline; a late deletion acknowledgement is not success. Unverified exact
+rules remain in worker memory for retry. After process exit, inspect leftovers separately;
+historical tag sweeps do not guarantee removal of unlistable mixed nft rules. This is
+not a whole-shutdown bound: profiles use separate calls, and synchronous sysctl/I/O
+may return after the deadline. NAT setup and DNS lease Drop/setup admission still
+lack a shared operation deadline.
+[Description and validation](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
+
 ## Server multi-core (`tun.queues`)
 
 By default the data plane uses **all cores**: per-connection encryption/decryption

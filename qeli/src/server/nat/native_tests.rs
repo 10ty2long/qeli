@@ -57,7 +57,7 @@ fn native_exact_cleanup_removes_duplicates_both_families_and_preserves_sibling(
                 }
             }
             // Test the exact path itself, without a preceding successful -S tag sweep.
-            retry_owned_rules(Some("audit-owned"))?;
+            retry_owned_rules(Some("audit-owned"), Budget::new())?;
             for path in [&v4, &v6] {
                 anyhow::ensure!(!present(path, &parent)?);
                 anyhow::ensure!(!present(path, &nat)?);

@@ -2138,3 +2138,19 @@ uses the original namespace and remembered tool paths; after process exit, inspe
 preserving unrelated rules. A deadline before ownership binding does not itself mean new
 rules were installed. This is not a hard connection deadline or automatic crash recovery.
 [Analysis](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).
+
+### 6.69. Server: NAT cleanup deadline expired
+
+`NAT cleanup deadline expired; unresolved ownership retained for retry` means one
+cleanup attempt spent its 15 seconds on admission or command sequences. Inspect
+iptables/ip6tables delays, competing firewall changes and the number of rules. A
+separate attempt in the same worker gets a new deadline and checks remaining state.
+An applied but late-acknowledged deletion remains pending; that does not prove the
+rule still exists. A profile/worker cleanup failure is not successful shutdown.
+
+After worker exit, its exact in-memory registries are gone: before recovery inspect
+rules with the exact `qeli-nat:<profile>` comment, DNS INPUT and the sysctl journal in
+the original namespace. Preserve unrelated rules; do not substitute a broad firewall
+flush or journal deletion for verification. The deadline does not interrupt sysctl/I/O
+already started or guarantee whole-shutdown time.
+[Analysis](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).

@@ -70,3 +70,8 @@ release and benchmarks were not run.
 
 Previous passes: [shared TUN/DNS runner](AUDIT-Q25-SYSTEM-COMMANDS.md) and
 [partial IPv6 acquisition](AUDIT-Q14-IPV6-PARTIAL-ACQUIRE.md).
+
+Follow-up: [Q14-F034 — shared cleanup deadline](AUDIT-Q14-NAT-CLEANUP-BUDGET.md)
+covers profile/startup/final cleanup admission and commands; the earlier results above
+refer to their own snapshot. NAT setup/rollback, DNS lease Drop/setup admission and
+persistent recovery remain open.

@@ -27,7 +27,9 @@ use crate::nat_dns_input::{dns_input_rule, DnsInputId, DnsInputRegistry, DnsInpu
 use crate::system_command::Command;
 use std::sync::{Mutex, OnceLock};
 
+mod cleanup_budget;
 mod discovery;
+use cleanup_budget::Budget;
 #[cfg(test)]
 pub(crate) use discovery::with_probe;
 
@@ -424,26 +426,18 @@ fn owned_rules() -> &'static Mutex<crate::nat_owned_rules::Registry> {
 }
 
 /// Caller holds firewall_program_lock, including while recording/retrying ownership.
-fn retry_owned_rules(profile: Option<&str>) -> anyhow::Result<()> {
-    owned_rules()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .cleanup(profile, |rule| {
-            let path = if rule.ipv6 {
-                ip6tables_path()
-            } else {
-                iptables_path()
-            }
-            .ok_or_else(|| {
-                anyhow::anyhow!("firewall tool unavailable; exact ownership retained")
-            })?;
-            cleanup_exact_rules_with(
-                &rule.table,
-                &rule.chain,
-                [("managed rule", rule.args.as_slice())],
-                |args| ipt(&path, args),
-            )
-        })
+fn retry_owned_rules(profile: Option<&str>, budget: Budget) -> anyhow::Result<()> {
+    budget.lock(owned_rules())?.cleanup(profile, |rule| {
+        let path = budget.find(rule.ipv6)?.ok_or_else(|| {
+            anyhow::anyhow!("firewall tool unavailable; exact ownership retained")
+        })?;
+        cleanup_exact_rules_with(
+            &rule.table,
+            &rule.chain,
+            [("managed rule", rule.args.as_slice())],
+            |args| budget.ipt(&path, args),
+        )
+    })
 }
 
 fn install_rule(profile: &str, ipv6: bool, path: &str, rule: &Rule) -> bool {
@@ -934,12 +928,11 @@ fn dns_input_registry() -> &'static Mutex<DnsInputRegistry> {
 
 /// Caller holds firewall_program_lock; this function must not re-enter the registry.
 fn cleanup_dns_rules(owned: &DnsInputRules) -> anyhow::Result<()> {
-    let path = if owned.ipv6 {
-        ip6tables_path()
-    } else {
-        iptables_path()
-    }
-    .ok_or_else(|| {
+    cleanup_dns_rules_until(owned, Budget::new())
+}
+
+fn cleanup_dns_rules_until(owned: &DnsInputRules, budget: Budget) -> anyhow::Result<()> {
+    let path = budget.find(owned.ipv6)?.ok_or_else(|| {
         anyhow::anyhow!("cannot remove DNS INPUT permits because the firewall tool is unavailable")
     })?;
     cleanup_exact_rules_with(
@@ -948,17 +941,24 @@ fn cleanup_dns_rules(owned: &DnsInputRules) -> anyhow::Result<()> {
         ["udp", "tcp"]
             .into_iter()
             .zip(owned.rules.iter().map(Vec::as_slice)),
-        |args| ipt(&path, args),
+        |args| budget.ipt(&path, args),
     )
     .map_err(|error| anyhow::anyhow!("DNS INPUT cleanup failed: {error}"))
 }
 
 /// Caller holds firewall_program_lock. Failed records stay in the registry for retry.
-fn retry_dns_input(profile: Option<&str>) -> anyhow::Result<()> {
-    dns_input_registry()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .retry(profile, cleanup_dns_rules)
+fn retry_dns_input(profile: Option<&str>, budget: Budget) -> anyhow::Result<()> {
+    budget
+        .lock(dns_input_registry())?
+        .retry(profile, |owned| cleanup_dns_rules_until(owned, budget))
+}
+
+fn release_ipv6_sysctls_until(profile: &str, budget: Budget) -> anyhow::Result<()> {
+    budget
+        .lock(ipv6_sysctl_leases())?
+        .release(profile, |scope| {
+            budget.checked(|| crate::sysctl::release_scope(scope))
+        })
 }
 
 /// A generation token for its exact DNS INPUT rules. The worker registry owns the
@@ -1341,19 +1341,30 @@ pub fn enable_dns_redirect(profile: &str, tun: &str, listen: &str, port: u16) ->
 /// Sweep historical tags, then verify every exact specification retained by this worker.
 /// Missing tools are an error when rules remain owned; an unmanaged profile is a no-op.
 pub fn cleanup(profile: &str) -> anyhow::Result<()> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    cleanup_until(profile, Budget::new())
+}
+
+fn cleanup_until(profile: &str, budget: Budget) -> anyhow::Result<()> {
+    let _firewall_guard = budget.lock(firewall_program_lock())?;
     let mut errors = crate::nat_cleanup::Errors::default();
-    errors.record("DNS INPUT", retry_dns_input(Some(profile)));
-    if let Some(path) = iptables_path() {
-        cleanup_with(&path, profile);
+    errors.record("DNS INPUT", retry_dns_input(Some(profile), budget));
+    for ipv6 in [false, true] {
+        errors.record(
+            "tag sweep admission",
+            (|| {
+                if let Some(path) = budget.find(ipv6)? {
+                    cleanup_matching_until(&path, &tag(profile), true, budget);
+                }
+                budget.check().map_err(Into::into)
+            })(),
+        );
     }
-    if let Some(path) = ip6tables_path() {
-        cleanup_with(&path, profile);
-    }
-    errors.record("exact NAT/routing rules", retry_owned_rules(Some(profile)));
-    errors.record("IPv6 sysctls", release_ipv6_sysctls_checked(profile));
+    errors.record(
+        "exact NAT/routing rules",
+        retry_owned_rules(Some(profile), budget),
+    );
+    errors.record("IPv6 sysctls", release_ipv6_sysctls_until(profile, budget));
+    errors.record("deadline", budget.check().map_err(Into::into));
     errors.finish()
 }
 
@@ -1361,54 +1372,59 @@ pub fn cleanup(profile: &str) -> anyhow::Result<()> {
 /// Call only AFTER all profile supervisors have stopped and the generic tag sweeps ran.
 /// Includes NAT/routing/DNS redirects; historical rules without a saved spec need the tag sweep.
 pub(crate) fn finish_owned_cleanup() -> anyhow::Result<()> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let profiles = ipv6_sysctl_leases()
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .profiles();
+    finish_owned_cleanup_until(Budget::new(), || {
+        crate::sysctl::release_scope("server-ipv4")
+    })
+}
+
+fn finish_owned_cleanup_until(
+    budget: Budget,
+    release_ipv4: impl FnOnce() -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let _firewall_guard = budget.lock(firewall_program_lock())?;
+    let profiles = budget.lock(ipv6_sysctl_leases())?.profiles();
     let mut errors = crate::nat_cleanup::Errors::default();
-    errors.record("exact NAT/routing rules", retry_owned_rules(None));
+    errors.record("exact NAT/routing rules", retry_owned_rules(None, budget));
     errors.record(
         "DNS and IPv6 sysctls",
         crate::nat_cleanup::finish_owned_cleanup_with(
             || {
-                dns_input_registry()
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .finish_shutdown(cleanup_dns_rules)
+                budget
+                    .lock(dns_input_registry())?
+                    .finish_shutdown(|owned| cleanup_dns_rules_until(owned, budget))
             },
             &profiles,
-            release_ipv6_sysctls_checked,
+            |profile| release_ipv6_sysctls_until(profile, budget),
         ),
     );
-    errors.record(
-        "IPv4 forwarding",
-        crate::sysctl::release_scope("server-ipv4"),
-    );
+    errors.record("IPv4 forwarding", budget.checked(release_ipv4));
+    errors.record("deadline", budget.check().map_err(Into::into));
     errors.finish()
 }
 
 /// Restore a killed worker's host-wide IPv6 sysctls, then remove EVERY qeli-managed NAT rule
 /// (`qeli-nat:*`, any profile). Called once at worker startup so rules left behind by a profile
-/// that has since been REMOVED
-/// from the config — whose own [`cleanup`] is never called again — don't leak
-/// forever. Active profiles re-install their rules immediately afterwards.
+/// that has since been REMOVED from the config do not leak forever. Active profiles
+/// reinstall their rules afterwards. Non-deadline historical sweep failures remain warnings.
 pub fn cleanup_all() -> anyhow::Result<()> {
-    let _firewall_guard = firewall_program_lock()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    if let Err(error) = retry_dns_input(None) {
+    cleanup_all_until(Budget::new(), crate::sysctl::recover)
+}
+
+fn cleanup_all_until(
+    budget: Budget,
+    recover: impl FnOnce() -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let _firewall_guard = budget.lock(firewall_program_lock())?;
+    if let Err(error) = retry_dns_input(None, budget) {
         log::error!("DNS INPUT retry incomplete: {error}");
     }
-    crate::sysctl::recover()?;
-    if let Some(path) = iptables_path() {
-        cleanup_matching(&path, "qeli-nat:", false);
+    budget.checked(recover)?;
+    for ipv6 in [false, true] {
+        if let Some(path) = budget.find(ipv6)? {
+            cleanup_matching_until(&path, "qeli-nat:", false, budget);
+        }
     }
-    if let Some(path) = ip6tables_path() {
-        cleanup_matching(&path, "qeli-nat:", false);
-    }
+    budget.check()?;
     Ok(())
 }
 
@@ -1430,6 +1446,14 @@ fn cleanup_matching(path: &str, needle: &str, exact: bool) {
     // which cannot be listed through iptables-nft. A failed sweep is now observable.
     // Do not retry a successful no-op indefinitely or skip later rules after a failure.
     if let Err(error) = cleanup_matching_with(needle, exact, |args| ipt(path, args)) {
+        log::warn!("NAT cleanup via {path} for '{needle}' incomplete: {error}");
+    }
+}
+
+fn cleanup_matching_until(path: &str, needle: &str, exact: bool, budget: Budget) {
+    // Historical tag sweeps remain best effort for mixed nft compatibility. The caller
+    // checks the shared deadline separately and cannot report a timed-out attempt as success.
+    if let Err(error) = cleanup_matching_with(needle, exact, |args| budget.ipt(path, args)) {
         log::warn!("NAT cleanup via {path} for '{needle}' incomplete: {error}");
     }
 }
@@ -1867,3 +1891,7 @@ mod tests {
 #[cfg(test)]
 #[path = "nat/native_tests.rs"]
 mod native_tests;
+
+#[cfg(test)]
+#[path = "nat/cleanup_budget_tests.rs"]
+mod cleanup_budget_tests;

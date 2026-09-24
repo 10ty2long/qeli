@@ -69,3 +69,8 @@ rename-fixture не объявляются успешными проверкам
 остаются D04. Не добавлены атомарность при сторонних root-изменениях, общий deadline
 всей cleanup, новый benchmark, native release certification или проверки устройств.
 Сроки отдельных команд прежние. INI/API/ABI/wire-контракт не изменён.
+
+Следующая фаза: [Q14-F034 — общий срок очистки](AUDIT-Q14-NAT-CLEANUP-BUDGET.md)
+покрывает admission и команды profile/startup/final cleanup; прежние результаты выше
+относятся к своему снимку. NAT setup/rollback, DNS lease Drop/setup admission и
+persistent recovery остаются открытыми.
