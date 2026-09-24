@@ -100,6 +100,8 @@ pub(crate) mod udp_batch;
 pub(crate) mod udp_buffer;
 pub(crate) mod udp_client_framing;
 pub(crate) mod udp_receive;
+#[cfg(any(target_os = "linux", target_os = "android"))]
+pub(crate) mod udp_source;
 
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) mod network;

@@ -1054,13 +1054,66 @@ fn obfs_datagram_open_in_place(key: &[u8; 32], datagram: &mut [u8]) -> Option<us
 /// socket API the handlers use (`send_to`/`recv_from` on the server, the
 /// connected `send`/`recv` on the client).
 pub struct ObfsUdp {
-    sock: tokio::net::UdpSocket,
+    sock: std::sync::Arc<tokio::net::UdpSocket>,
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    source: Option<crate::transport_core::udp_source::LocalAddress>,
     key: Option<[u8; 32]>,
 }
 
 impl ObfsUdp {
     pub fn new(sock: tokio::net::UdpSocket, key: Option<[u8; 32]>) -> Self {
-        Self { sock, key }
+        Self {
+            sock: std::sync::Arc::new(sock),
+            key,
+            #[cfg(any(target_os = "linux", target_os = "android"))]
+            source: None,
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)] // Server admission must fail if packet info cannot be enabled.
+    pub(crate) fn server(sock: tokio::net::UdpSocket, key: Option<[u8; 32]>) -> io::Result<Self> {
+        crate::transport_core::udp_source::enable(&sock)?;
+        Ok(Self::new(sock, key))
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)]
+    pub(crate) fn reply_from(
+        &self,
+        source: crate::transport_core::udp_source::LocalAddress,
+    ) -> Self {
+        Self {
+            sock: self.sock.clone(),
+            key: self.key,
+            source: Some(source),
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)]
+    pub(crate) fn has_source(
+        &self,
+        source: crate::transport_core::udp_source::LocalAddress,
+    ) -> bool {
+        self.source == Some(source)
+    }
+
+    /// Two immutable views may refer to the same socket and local endpoint.
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)]
+    pub(crate) fn same_path(&self, other: &Self) -> bool {
+        std::sync::Arc::ptr_eq(&self.sock, &other.sock) && self.source == other.source
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)]
+    pub(crate) fn local_addr(&self) -> io::Result<std::net::SocketAddr> {
+        let bound = self.sock.local_addr()?;
+        Ok(self
+            .source
+            .map(|source| source.socket_addr(bound.port()))
+            .unwrap_or(bound))
     }
 
     /// Borrow the underlying socket for getsockopt/setsockopt telemetry only.
@@ -1120,10 +1173,24 @@ impl ObfsUdp {
     }
 
     pub async fn send_to(&self, data: &[u8], addr: std::net::SocketAddr) -> io::Result<usize> {
-        match &self.key {
-            Some(k) => self.sock.send_to(&obfs_datagram_seal(k, data), addr).await,
-            None => self.sock.send_to(data, addr).await,
+        let sealed;
+        let wire = match &self.key {
+            Some(key) => {
+                sealed = obfs_datagram_seal(key, data);
+                sealed.as_slice()
+            }
+            None => data,
+        };
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        if let Some(source) = self.source {
+            return self
+                .sock
+                .async_io(tokio::io::Interest::WRITABLE, || {
+                    crate::transport_core::udp_source::send(&self.sock, wire, addr, source)
+                })
+                .await;
         }
+        self.sock.send_to(wire, addr).await
     }
 
     /// Non-blocking datagram send used by atomic control-path publication. Success means the
@@ -1138,7 +1205,16 @@ impl ObfsUdp {
             }
             None => data,
         };
-        match self.sock.try_send_to(wire, addr) {
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        let sent = match self.source {
+            Some(source) => self.sock.try_io(tokio::io::Interest::WRITABLE, || {
+                crate::transport_core::udp_source::send(&self.sock, wire, addr, source)
+            }),
+            None => self.sock.try_send_to(wire, addr),
+        };
+        #[cfg(not(any(target_os = "linux", target_os = "android")))]
+        let sent = self.sock.try_send_to(wire, addr);
+        match sent {
             Ok(sent) if sent == wire.len() => Ok(()),
             Ok(_) => Err(io::Error::new(
                 io::ErrorKind::WriteZero,
@@ -1211,6 +1287,11 @@ impl ObfsUdp {
                 )
             })
             .await?;
+        self.open_batch(slots, received);
+        Ok(received)
+    }
+
+    fn open_batch(&self, slots: &mut [BytesMut], received: usize) {
         if let Some(key) = &self.key {
             for slot in slots.iter_mut().take(received) {
                 match obfs_datagram_open_in_place(key, &mut slot[..]) {
@@ -1219,6 +1300,25 @@ impl ObfsUdp {
                 }
             }
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(dead_code)] // Server receives an exact local endpoint for every datagram.
+    pub(crate) async fn recv_batch_local(
+        &self,
+        slots: &mut [BytesMut],
+        addrs: &mut [std::net::SocketAddr],
+        scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    ) -> io::Result<usize> {
+        let received = self
+            .sock
+            .async_io(tokio::io::Interest::READABLE, || {
+                crate::transport_core::udp_batch::recv_batch_local(
+                    &self.sock, slots, addrs, scratch,
+                )
+            })
+            .await?;
+        self.open_batch(slots, received);
         Ok(received)
     }
 
@@ -1270,6 +1370,12 @@ impl ObfsUdp {
         };
         self.sock
             .async_io(tokio::io::Interest::WRITABLE, || {
+                #[cfg(any(target_os = "linux", target_os = "android"))]
+                if let Some(source) = self.source {
+                    return crate::transport_core::udp_batch::send_batch_from(
+                        &self.sock, &wire, peer, source, scratch,
+                    );
+                }
                 crate::transport_core::udp_batch::send_batch_to(&self.sock, &wire, peer, scratch)
             })
             .await

@@ -123,3 +123,5 @@ D06/D10/D11/D12/D13 and the final benchmark remain open. No new full-audit secti
 were opened. Windows VM, Mac/iOS and physical-router runtime remain **SKIPPED by user decision**;
 no fresh Android package is tested here. Debt: **4/15 DONE (26.7%), 9 IN_PROGRESS, 2 TODO**.
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/OPERATIONS.md).
+
+Follow-up: [Q15-F002](AUDIT-Q15-UDP-LOCAL-ADDRESS.md) confirmed Qeli reply sources by packet capture and fixed wildcard UDP. The original FAIL above is retained; overall D06/D10 remains open.

@@ -2477,3 +2477,13 @@ exact IPv4/IPv6 family. A chain with unconfirmed hook removal is not automatical
 flushed. Retain logs and resolve the command failure before a new start; `failed`
 alone proves neither absence nor complete retention of protection.
 [Cancellation and recovery scenarios](../reports/AUDIT-Q25-FIREWALL-TASK.md).
+
+### 6.90. UDP: no ServerHello through the server's secondary IP
+
+Older wildcard listeners could reply from the primary IP instead of the destination.
+Compare request/reply IPs in a capture: an open UDP port alone does not confirm the right
+source. The fix retains each packet's local destination. An older build can explicitly
+set `bind.address` to the required address; this does not fix wildcard mode.
+`UDP destination packet info missing`/`truncated UDP packet info` indicates that address
+context could not be obtained; retain logs and OS/socket details.
+[Reproduction and fix](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).

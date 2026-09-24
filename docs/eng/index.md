@@ -222,3 +222,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F106: asynchronous teardown of established tunnels](reports/AUDIT-Q25-TUN-TEARDOWN.md).
 
 - [Q25-F107/F108: asynchronous firewall and chain retention on unhook failure](reports/AUDIT-Q25-FIREWALL-TASK.md).
+
+- [Q15-F002: wildcard UDP local reply address](reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md)

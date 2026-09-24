@@ -418,7 +418,7 @@ impl UdpActiveEgress {
             .unwrap_or_else(|poisoned| poisoned.into_inner());
         if path_epoch == current.path_epoch {
             let committed = (current.peer == peer
-                && Arc::ptr_eq(&current.socket, socket)
+                && current.socket.same_path(socket)
                 && matches!(&current.framing, UdpEgressFraming::RoamingCid(_)))
             .then_some(UdpRoamingIngressPath::Committed);
             drop(current);
@@ -443,7 +443,7 @@ impl UdpActiveEgress {
             let snapshot = &previous.snapshot;
             (snapshot.path_epoch == path_epoch
                 && snapshot.peer == peer
-                && Arc::ptr_eq(&snapshot.socket, socket)
+                && snapshot.socket.same_path(socket)
                 && matches!(&snapshot.framing, UdpEgressFraming::RoamingCid(_)))
             .then_some(UdpRoamingIngressPath::Draining)
         })
@@ -862,7 +862,7 @@ async fn schedule_downlink_mtu_probe(
         let Some((first, _)) = flights.first() else {
             return;
         };
-        let local_addr = match egress.socket.raw_socket().local_addr() {
+        let local_addr = match egress.socket.local_addr() {
             Ok(value) => value,
             Err(error) => {
                 log::debug!(
@@ -1536,7 +1536,7 @@ pub(crate) async fn run_udp_server(
     } else {
         None
     };
-    let socket = Arc::new(crate::protocol::obfs::ObfsUdp::new(socket, obfs_key));
+    let socket = Arc::new(crate::protocol::obfs::ObfsUdp::server(socket, obfs_key)?);
 
     // Keep one task blocked in recvmsg while this task decrypts, reassembles and forwards the
     // previous datagram. The FIFO is bounded and has exactly one allocation per position, so
@@ -1568,6 +1568,10 @@ pub(crate) async fn run_udp_server(
         );
         let mut slots: Vec<bytes::BytesMut> =
             Vec::with_capacity(crate::transport_core::udp_batch::MAX_BATCH);
+        // Bounded cache of immutable views; all share the listener fd. Session owners
+        // keep their views alive across eviction; identity compares fd ownership + source.
+        let mut reply_sockets: Vec<Arc<crate::protocol::obfs::ObfsUdp>> = Vec::new();
+        let mut next_reply_slot = 0;
         let mut addrs = vec![
             std::net::SocketAddr::from(([0, 0, 0, 0], 0));
             crate::transport_core::udp_batch::MAX_BATCH
@@ -1592,7 +1596,7 @@ pub(crate) async fn run_udp_server(
             }
 
             let received = match receive_socket
-                .recv_batch(&mut slots, Some(&mut addrs), &mut scratch)
+                .recv_batch_local(&mut slots, &mut addrs, &mut scratch)
                 .await
             {
                 Ok(received) => received,
@@ -1612,12 +1616,38 @@ pub(crate) async fn run_udp_server(
                     }
                     continue;
                 }
+                let Some(source) = scratch.local_address(index) else {
+                    log::error!(
+                        "UDP local destination missing on profile '{}'",
+                        receive_profile
+                    );
+                    if receive_recycler_task.send(slot).await.is_err() {
+                        return;
+                    }
+                    continue;
+                };
+                let reply_socket = if let Some(socket) = reply_sockets
+                    .iter()
+                    .find(|socket| socket.has_source(source))
+                {
+                    socket.clone()
+                } else {
+                    let socket = Arc::new(receive_socket.reply_from(source));
+                    if reply_sockets.len() < crate::transport_core::udp_batch::MAX_BATCH {
+                        reply_sockets.push(socket.clone());
+                    } else {
+                        reply_sockets[next_reply_slot] = socket.clone();
+                        next_reply_slot = (next_reply_slot + 1) % reply_sockets.len();
+                    }
+                    socket
+                };
                 batch.push((
                     crate::transport::udp::PooledUdpDatagram::new(
                         slot,
                         receive_recycler_task.clone(),
                     ),
                     addrs[index],
+                    reply_socket,
                 ));
             }
             if !batch.is_empty() && received_tx.send(batch).await.is_err() {
@@ -1690,6 +1720,7 @@ pub(crate) async fn run_udp_server(
     let mut pending_batch = std::collections::VecDeque::<(
         crate::transport::udp::PooledUdpDatagram,
         std::net::SocketAddr,
+        Arc<crate::protocol::obfs::ObfsUdp>,
     )>::new();
     loop {
         tokio::select! {
@@ -1725,7 +1756,7 @@ pub(crate) async fn run_udp_server(
                     }
                 }
             } => {
-                let Some((recv_buf, addr)) = received else {
+                let Some((recv_buf, addr, socket)) = received else {
                     return Err(anyhow::anyhow!(
                         "UDP receive pump stopped on profile '{}'",
                         profile.name
@@ -2734,7 +2765,7 @@ async fn handle_udp_roaming_ingress(
             // current CID with another socket or peer.
             if egress.path_epoch != lookup.path_epoch()
                 || egress.peer != received_path.peer()
-                || !Arc::ptr_eq(&egress.socket, &envelope.socket)
+                || !egress.socket.same_path(&envelope.socket)
             {
                 return;
             }

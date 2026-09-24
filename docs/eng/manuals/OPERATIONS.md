@@ -547,3 +547,11 @@ Do not manually flush that chain before inspecting its hooks. Another firewall f
 may already have been removed; one retained chain does not establish host-wide protection.
 After resolving the cause, a new explicit start performs ordinary recovery.
 [Validation and limits](../reports/AUDIT-Q25-FIREWALL-TASK.md).
+
+## UDP servers with multiple local addresses
+
+With wildcard `bind.address = 0.0.0.0` or `::`, replies use the local address that received
+the client packet. This covers handshake, data and control messages without a new INI
+option. Clients using different addresses cannot change each other's source. If the OS
+does not provide valid pktinfo, the server does not substitute another address.
+[Checks and limits](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
