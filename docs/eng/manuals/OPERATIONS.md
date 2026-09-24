@@ -555,3 +555,16 @@ the client packet. This covers handshake, data and control messages without a ne
 option. Clients using different addresses cannot change each other's source. If the OS
 does not provide valid pktinfo, the server does not substitute another address.
 [Checks and limits](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
+
+## Stopping during Linux client startup recovery
+
+Before connecting, Qeli reserves its network lease, recovers owned physical routes and
+checks DNS markers on a separate joined thread. SIGTERM/SIGINT does not interrupt
+admitted recovery: the client retains the lease and awaits the result. Success after
+stop exits without a new connection; errors retain `failed`. `dev_attach = true` skips
+physical-route recovery but still checks DNS. Startup does not change a live resolver
+solely from a stored marker.
+
+Wait for client exit and inspect the final error before restarting. The 15-second route
+operation budget is not a single hard shutdown deadline; forced Drop may synchronously
+join the worker. [Validation and limits](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).

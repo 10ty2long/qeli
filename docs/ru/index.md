@@ -224,3 +224,5 @@
 - [Q25-F107/F108: асинхронный firewall и сохранение цепочки при отказе unhook](reports/AUDIT-Q25-FIREWALL-TASK.md).
 
 - [Q15-F002: локальный адрес UDP wildcard](reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md)
+
+- [Q25-F109: startup recovery, остановка и сохранение сетевого lease](reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md)

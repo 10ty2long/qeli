@@ -125,3 +125,5 @@ no fresh Android package is tested here. Debt: **4/15 DONE (26.7%), 9 IN_PROGRES
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/OPERATIONS.md).
 
 Follow-up: [Q15-F002](AUDIT-Q15-UDP-LOCAL-ADDRESS.md) confirmed Qeli reply sources by packet capture and fixed wildcard UDP. The original FAIL above is retained; overall D06/D10 remains open.
+
+Reconciled after Q25-F109: startup route/DNS recovery now runs on a joined worker retaining its lease and late errors. This specific obligation is addressed; the other D05 limits above remain. [Result](AUDIT-Q25-STARTUP-RECOVERY-TASK.md).

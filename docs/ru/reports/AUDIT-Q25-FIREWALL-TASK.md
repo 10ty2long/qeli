@@ -126,3 +126,5 @@ D06/D10/D11/D12/D13 и итоговый benchmark открыты. Новые р�
 [Реестр](../plans/AUDIT-DEBT.md) · [Мануал](../manuals/OPERATIONS.md).
 
 Продолжение: [Q15-F002](AUDIT-Q15-UDP-LOCAL-ADDRESS.md) подтвердил источник ответов захватом пакетов Qeli и исправил wildcard UDP. Исходный FAIL выше сохранён; общий D06/D10 остаётся открытым.
+
+Сверка после Q25-F109: startup route/DNS recovery перенесён в joined worker с сохранением lease и поздних ошибок. Этот конкретный долг закрыт; прочие границы D05 выше остаются. [Результат](AUDIT-Q25-STARTUP-RECOVERY-TASK.md).

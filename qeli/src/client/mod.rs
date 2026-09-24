@@ -2588,16 +2588,37 @@ async fn run_client_inner(
     // a kill-switch. Protected clients additionally claim the namespace-wide policy.
     // Both guards survive reconnect and all terminal cleanup/post_down paths.
     let ks_on = killswitch::should_engage(&config.routing);
-    _network_lease = network_lease::acquire(&config.tun.name, ks_on)?;
-
-    // Repair any DNS state left behind by a previous run that died without
-    // restoring (SIGKILL / power loss / panic). Must run before we touch DNS.
-    if !config.tun.attach_existing {
-        // Physical routes survive the last TUN fd. Recover before name resolution /
-        // handshake so stale blackholes cannot prevent reaching the new server.
-        route::recover_stale(&config.tun.name)?;
+    let recovery_tun = config.tun.name.clone();
+    let attach_existing = config.tun.attach_existing;
+    let recovered = network_task::prepared(
+        async move {
+            Ok(move || {
+                // The same worker owns admission and all recovery, including blocking
+                // journal locks/I/O. Once admitted, stop must join its actual outcome.
+                let lease = network_lease::acquire(&recovery_tun, ks_on)?;
+                if !attach_existing {
+                    // Physical routes outlive the TUN fd. Repair them before resolving
+                    // or dialing the server; attached interfaces retain their routes.
+                    route::recover_stale(&recovery_tun)?;
+                }
+                // Only retire eligible stale markers; never revert a live resolver
+                // from a durable marker alone. Preserve ambiguous state for recovery.
+                dns::recover_stale()?;
+                Ok(lease)
+            })
+        },
+        wait_for_shutdown(&shutdown_requested, &shutdown_wakeup),
+    )
+    .await?;
+    let Some(lease) = recovered else {
+        return Ok(());
+    };
+    _network_lease = lease;
+    // A stop during admitted recovery still observes its errors, but successful
+    // recovery must not proceed to hooks, firewall preparation or a new connection.
+    if shutdown_requested.load(Ordering::Acquire) {
+        return Ok(());
     }
-    dns::recover_stale()?;
 
     // Gateway/router NAT + lifecycle hooks (Linux). Resolve the tun interface name
     // once — both the kill-switch and the gateway NAT key their rules on it.

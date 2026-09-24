@@ -2487,3 +2487,13 @@ set `bind.address` to the required address; this does not fix wildcard mode.
 `UDP destination packet info missing`/`truncated UDP packet info` indicates that address
 context could not be obtained; retain logs and OS/socket details.
 [Reproduction and fix](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
+
+### 6.91. Linux: stop waits for startup recovery or the journal lock
+
+While another process holds `client-routes.state.lock`, admitted recovery retains the
+TUN/namespace lease. Heartbeat and stop handling continue, but exit awaits the result.
+Lock timeout, a malformed journal or legacy global DNS retain `failed` even after stop.
+Keep the evidence and resolve the lock/error cause; do not delete a live owner's lockfile.
+
+A stopped client starts no handshake after successful recovery. `dev_attach = true`
+does not bypass DNS checks. [Scenarios](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).

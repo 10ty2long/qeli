@@ -2492,3 +2492,14 @@ IPv4/IPv6-семейство. Цепочка с неподтверждённым
 Ошибка `UDP destination packet info missing`/`truncated UDP packet info` означает отказ
 получения адресного контекста; сохраните журнал и сведения об ОС/сокете.
 [Воспроизведение и исправление](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
+
+### 6.91. Linux: остановка ждёт startup recovery или journal lock
+
+Пока другой процесс держит `client-routes.state.lock`, уже допущенное восстановление
+остаётся владельцем TUN/namespace lease. Heartbeat и обработка stop продолжаются,
+но выход ждёт результата. Ошибка ожидания, повреждённый journal или legacy global DNS
+сохраняют `failed`, даже если stop уже отправлен. Сохраните evidence и устраните
+причину блокировки/ошибки; не удаляйте lock-файл действующего владельца.
+
+После успешного recovery остановленный клиент не начинает handshake. `dev_attach = true`
+не является обходом DNS-проверок. [Сценарии](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).

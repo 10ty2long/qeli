@@ -224,3 +224,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F107/F108: asynchronous firewall and chain retention on unhook failure](reports/AUDIT-Q25-FIREWALL-TASK.md).
 
 - [Q15-F002: wildcard UDP local reply address](reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md)
+
+- [Q25-F109: startup recovery, stop and retained network lease](reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md)

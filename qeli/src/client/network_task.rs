@@ -137,7 +137,8 @@ pub(crate) async fn run<T: Send + 'static>(
 
 /// Cancellation may abandon read-only preparation, never a started mutation.
 /// Once admitted, join and preserve its actual result even if stop becomes ready.
-/// Abandoning the whole future also joins; firewall state remains owned by its registry.
+/// Abandoning the whole future also joins and drops unadopted resources on the worker.
+/// External firewall state remains owned by its registry.
 pub(crate) async fn prepared<T: Send + 'static, W>(
     preparation: impl std::future::Future<Output = anyhow::Result<W>>,
     stop: impl std::future::Future<Output = ()>,
