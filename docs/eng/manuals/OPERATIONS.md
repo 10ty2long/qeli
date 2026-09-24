@@ -463,3 +463,11 @@ Do not delete the journal or lock to bypass refusal. Empty state and a stable lo
 clean stop are normal. The journal does not adopt leftovers of older unjournaled versions.
 Limits are 8 MiB, 128 groups and 8192 records. Attach does not manage these routes.
 [Validation and limits](../reports/AUDIT-Q25-ROUTE-JOURNAL.md).
+
+## Persistent TUN/TAP after a client crash
+
+Qeli does not delete or adopt a surviving device by matching its name. Stop its owners,
+verify the orphan's origin, retain evidence, manually remove only that device if
+appropriate, and restart in the original context. Retain the kill-switch and journals
+until recovery completes. Procedure and limits:
+[§6.82](TROUBLESHOOTING.md#682-linux-persistent-tuntap-survives-client-termination).

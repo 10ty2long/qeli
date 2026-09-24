@@ -2327,3 +2327,35 @@ only valid old state. The journal is required in managed mode even with DNS disa
 `SO_NETNS_COOKIE` and trusted writable `/var/lib/qeli` are required. Empty state and
 `.lock` after clean shutdown are normal.
 [Recovery contract](OPERATIONS.md#client-physical-route-recovery).
+
+### 6.82. Linux: persistent TUN/TAP survives client termination
+
+`client route recovery refuses a live or persistent TUN` means the device with the
+previous `dev` still exists. Closing the last queue fd deletes an ordinary nonpersistent
+TUN; persistence keeps it after SIGKILL. A matching name and ifindex do not prove that
+the new process may delete it. Qeli preserves the journal and refuses this recovery.
+Per-link DNS for a live index is not reverted from a retained marker alone either.
+
+1. Stop the previous client and automatic restarts. In the original network namespace,
+   establish who created the device and who holds its queues; stopping one PID alone
+   does not prove that no other owner remains.
+2. Save the journal, DNS markers, `ip -d link show dev vpn0`, addresses, IPv4/IPv6
+   routes and firewall rules. Inspect `ip tuntap show dev vpn0`, `resolvectl status`
+   and the current ifindex. `vpn0` is an example; use your actual `dev`.
+3. Preserve the device and investigate if another process needs it or its origin is
+   unknown. Do not delete the journal or change cookie/boot ID to force startup.
+   `dev_attach = true` is not a crash-recovery command.
+4. Only for a confirmed orphan that is no longer needed, remove **that exact device
+   in its original network**: `ip tuntap del dev vpn0 mode tun`; use `mode tap` for a
+   verified TAP. Recheck the device and owners immediately before the command.
+   This is an explicit administrator decision, not an automatic Qeli operation.
+5. Confirm that the device is absent, then start the original INI with the same `dev`,
+   namespace and state directory. Qeli recovers confirmed physical routes and retires
+   the DNS marker for the absent link; uncertain intents require separate investigation
+   (§6.81). Verify the new interface, connectivity and DNS.
+
+Removing the interface does not remove a retained kill-switch. Keep the barrier until
+the new connection is ready; use §6.79 when deliberately returning to direct access.
+Do not flush shared firewall/route tables. Automatically adopting a persistent device
+or another owner's DNS configuration is not supported.
+[SIGKILL and manual recovery validation](../reports/AUDIT-Q25-PERSISTENT-TUN.md).

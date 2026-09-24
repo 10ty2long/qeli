@@ -92,3 +92,5 @@ persistent TUN и mixed nft/firewalld; всего **3/15 групп DONE (20%)**
 Windows VM/Mac/iOS/router runtime остаются SKIPPED по решению пользователя.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Эксплуатация](../manuals/OPERATIONS.md)
+
+Продолжение 24 сентября: [persistent TUN/TAP проверен в 17 crash-сценариях](AUDIT-Q25-PERSISTENT-TUN.md). Безопасный отказ и ручное удаление подтверждённого остатка закрывают эту часть D04; полная mixed firewall матрица остаётся открытой.

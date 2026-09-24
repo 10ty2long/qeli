@@ -90,3 +90,5 @@ remain; overall **3/15 groups DONE (20%)**. `.10` was untouched; native tests us
 namespaces on `.11`. Windows VM/Mac/iOS/router runtime remain SKIPPED by user decision.
 
 [Debt register](../plans/AUDIT-DEBT.md) · [Operations](../manuals/OPERATIONS.md)
+
+24 September follow-up: [persistent TUN/TAP validated in 17 crash scenarios](AUDIT-Q25-PERSISTENT-TUN.md). Safe refusal and explicit removal of a verified orphan close this portion of D04; the full mixed firewall matrix remains open.

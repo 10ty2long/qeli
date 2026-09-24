@@ -381,6 +381,39 @@ timeout = 8
 level = info
 EOF
 chmod 600 "$WORK/client.conf"
+# Fault injection is confined to the initial test client. Restarts use the plain
+# binary; full-routing crash checks must be enabled before making a queue persist.
+INITIAL_CLIENT_BIN=$CLIENT_BIN
+PERSISTENT_CHECK=0
+TUN_RELEASE_CAUSE=SIGKILL
+if [ -n "${QELI_PERSIST_TUN_SHIM:-}" ] && [ "$ROUTING" = full ]; then
+  if [ -n "$DNS_UPSTREAM" ]; then CRASH_ENABLED=${QELI_DNS_CRASH_CHECK:-0}; else CRASH_ENABLED=${QELI_ROUTE_CRASH_CHECK:-0}; fi
+  [ "$CRASH_ENABLED" = 1 ] && [ -f "$QELI_PERSIST_TUN_SHIM" ] || { echo 'persistent test requires crash checks and a compiled test shim' >&2; exit 2; }
+  PERSISTENT_CHECK=1
+  TUN_RELEASE_CAUSE="operator removal after SIGKILL"
+  INITIAL_CLIENT_BIN=$WORK/initial-client.sh
+  cat >"$INITIAL_CLIENT_BIN" <<EOF
+#!/bin/sh
+exec env LD_PRELOAD="$QELI_PERSIST_TUN_SHIM" QELI_TEST_PERSIST_NAME="$TUN_IF" QELI_TEST_PERSIST_MARKER="$WORK/persist.ready" "$CLIENT_BIN" "\$@"
+EOF
+  chmod 700 "$INITIAL_CLIENT_BIN"
+fi
+persistent_before_release() {
+  [ "$PERSISTENT_CHECK" = 1 ] || return 0
+  local kind=tun
+  local extra=()
+  [ "$FLAVOR" != tap ] || kind=tap
+  if [ -n "$DNS_UPSTREAM" ]; then extra=(--resolver-pid "$RESOLVER_PID" --dns-marker "$DNS_MARKER"); fi
+  if python3 "$SCRIPT_DIR/audit_persistent_tun.py" --namespace "$CLI_NS" --tun "$TUN_IF" \
+      --work "$WORK" --binary "$CLIENT_BIN" --owner-pid "$CRASH_CLIENT_PID" --kind "$kind" \
+      "${extra[@]}" > "$WORK/persistent-check.log" 2>&1; then
+    ok "persistent $kind refusal preserves state before explicit operator removal"
+  else
+    bad "persistent $kind refusal preserves state before explicit operator removal"
+    cat "$WORK/persistent-check.log" >&2
+    exit 1
+  fi
+}
 if [ -n "$DNS_UPSTREAM" ]; then
   printf '%s\n' 'nameserver 127.0.0.53' >"$WORK/resolv.conf"
   cat >"$WORK/client-mount.sh" <<EOF
@@ -407,7 +440,7 @@ for attempt in \$(seq 1 100); do
 done
 [ "\$ready" = 1 ]
 exec env QELI_KNOWN_HOSTS="$WORK/known-hosts" QELI_DEVICE_ID_FILE="$WORK/device-id" \
-  "$CLIENT_BIN" client -c "$WORK/client.conf"
+  "$INITIAL_CLIENT_BIN" client -c "$WORK/client.conf"
 EOF
   chmod 700 "$WORK/client-mount.sh"
   ip netns exec "$CLI_NS" unshare --mount --propagation private \
@@ -415,7 +448,7 @@ EOF
 else
   ip netns exec "$CLI_NS" env QELI_KNOWN_HOSTS="$WORK/known-hosts" \
     QELI_DEVICE_ID_FILE="$WORK/device-id" \
-    "$CLIENT_BIN" client -c "$WORK/client.conf" >"$WORK/client.log" 2>&1 &
+    "$INITIAL_CLIENT_BIN" client -c "$WORK/client.conf" >"$WORK/client.log" 2>&1 &
 fi
 CLIENT_PID=$!
 if wait_for 150 "ip netns exec $CLI_NS ip link show $TUN_IF"; then
@@ -425,6 +458,10 @@ else
   tail -n 160 "$WORK/client.log"
   tail -n 100 "$WORK/server.log"
   exit 1
+fi
+
+if [ "$PERSISTENT_CHECK" = 1 ]; then
+  ip netns exec "$CLI_NS" ip -j link show dev "$TUN_IF" | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["ifindex"])' > "$WORK/persist.ifindex"
 fi
 
 if [ "$OUTER" = 4 ]; then
@@ -572,10 +609,12 @@ if [ "${QELI_ROUTE_CRASH_CHECK:-0}" = 1 ] && [ "$ROUTING" = full ] && [ -z "$DNS
   ROUTE_CRASH_CHECK=1
   ip netns exec "$CLI_NS" ip route add 203.0.113.77 via 10.46.1.1 dev "$CLI_IF" proto static
   ip netns exec "$CLI_NS" ip route show exact 203.0.113.77 > "$WORK/operator-route-before-crash.txt"
+  CRASH_CLIENT_PID=$CLIENT_PID
   kill -KILL "$CLIENT_PID"
   wait "$CLIENT_PID" 2>/dev/null || true
   CLIENT_PID=
-  check_eventually "route crash releases the original TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
+  persistent_before_release
+  check_eventually "$TUN_RELEASE_CAUSE releases the original TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
   check "SIGKILL leaves the physical carrier bypass" "ip netns exec $CLI_NS ip -$OUTER route show exact $BIND_ADDRESS | grep -q 'dev $CLI_IF'"
   if [ "${QELI_EXPECT_ROUTE_JOURNAL:-1}" = 1 ]; then
     check "SIGKILL retains the durable client route journal" "test -s /var/lib/qeli/client-routes.state && grep -Fq '\"interface\":\"$TUN_IF\"' /var/lib/qeli/client-routes.state"
@@ -598,11 +637,13 @@ if [ "${QELI_DNS_CRASH_CHECK:-0}" = 1 ] && [ -n "$DNS_UPSTREAM" ]; then
   CRASH_DNS_MARKER=$DNS_MARKER
   CRASH_DNS_INDEX=$DNS_INDEX
   cp "$DNS_MARKER" "$WORK/dns-before-crash.state"
+  CRASH_CLIENT_PID=$CLIENT_PID
   kill -KILL "$CLIENT_PID"
   wait "$CLIENT_PID" 2>/dev/null || true
   CLIENT_PID=
-  check_eventually "SIGKILL releases the client TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
-  check_eventually "SIGKILL removes DNS from real resolved with its link" \
+  persistent_before_release
+  check_eventually "$TUN_RELEASE_CAUSE releases the client TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
+  check_eventually "$TUN_RELEASE_CAUSE removes DNS from real resolved with its link" \
     "nsenter -t $RESOLVER_PID -m -n env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/qeli-matrix-bus $RESOLVECTL_REAL dns > $WORK/resolved-after-crash.txt && ! grep -Fq 'Link $CRASH_DNS_INDEX (' $WORK/resolved-after-crash.txt"
   check "SIGKILL retains the original DNS ownership marker" "cmp $CRASH_DNS_MARKER $WORK/dns-before-crash.state"
   if [ "$CLIENT_KILL_SWITCH" = true ]; then

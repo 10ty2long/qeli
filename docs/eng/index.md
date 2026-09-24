@@ -207,3 +207,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F100: physical route journal and SIGKILL recovery](reports/AUDIT-Q25-ROUTE-JOURNAL.md).
 
 - [Q25-F101: refuse unscoped legacy global DNS recovery](reports/AUDIT-Q25-LEGACY-DNS.md).
+
+- [Q25: persistent TUN/TAP runtime and manual recovery validation](reports/AUDIT-Q25-PERSISTENT-TUN.md).

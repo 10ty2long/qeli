@@ -207,3 +207,5 @@
 - [Q25-F100: журнал физических маршрутов и SIGKILL recovery](reports/AUDIT-Q25-ROUTE-JOURNAL.md).
 
 - [Q25-F101: безопасный отказ от старого глобального DNS recovery](reports/AUDIT-Q25-LEGACY-DNS.md).
+
+- [Q25: runtime-проверка persistent TUN/TAP и ручного recovery](reports/AUDIT-Q25-PERSISTENT-TUN.md).
