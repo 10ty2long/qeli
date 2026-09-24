@@ -1973,3 +1973,5 @@ D05/D09: [Q14-F035 — сроки и retirement DNS INPUT lease](../reports/AUDI
 D05/D09: [Q14-F036 — установка NAT/forwarding и DNS REDIRECT](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md): общие сроки setup и точного rollback; 10 новых регрессий, 7 контрольных отказов, 1991 Linux + 31 privileged + 8 E2E PASS. Client routes/gateway, scheduler isolation и полный D05 остаются открытыми.
 
 D02 закрыт: [Q25-F090 — поколение namespace и журнал v4](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). D04/D05 и остальные критерии сохраняются. Проверки Windows VM, Mac/iOS и роутера исключены из текущего объёма по решению пользователя; они не объявляются PASS.
+
+D09/D10: [17/17 Linux packet matrix PASS](../reports/AUDIT-Q34-LINUX-MATRIX.md). D13: 100 TCP handover сохранили сессию/fd, но RSS превысил критерий; FAIL сохранён, долг открыт.

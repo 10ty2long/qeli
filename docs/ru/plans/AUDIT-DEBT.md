@@ -28,7 +28,7 @@
 | D10 | 17/18/19/21/22/23 | TODO | Сетевая интеграционная матрица | Проверить off/manual/route/nat66 × NDP, DNS UDP/TCP, multiprofile, iptables/nft/firewalld, setup rollback/stop/restart и сохранение чужих ресурсов. |
 | D11 | 00/24/27/34 | IN_PROGRESS | Актуальные native cores и provenance | Из чистого commit пересобрать изменённые ядра по закреплённым рецептам, сравнить A/B, обновить копии и настоящие provenance; проверить ABI/exports и пакеты. |
 | D12 | 24/25/27/34 | IN_PROGRESS | Платформенное подтверждение | Android: 154 JVM + 6 API 34/x86_64 instrumentation PASS со свежим JNI; итоговый снимок ещё требуется. Windows VM, Mac/Xcode/iOS и router runtime **SKIPPED по решению пользователя 24 сентября 2026**: стендов не будет. Эти платформы не сертифицированы; это исключение из текущего объёма, не PASS. |
-| D13 | 14/19/22/25 | TODO | Удержание ресурсов под нагрузкой | Измерить fd/tasks/threads/TUN/routes/firewall/journals/RSS до и после churn/reconnect/stop, включая отказы и несколько профилей; конечный deadline и критерии отсутствия роста. |
+| D13 | 14/19/22/25 | IN_PROGRESS | Удержание ресурсов под нагрузкой | Измерить fd/tasks/threads/TUN/routes/firewall/journals/RSS до и после churn/reconnect/stop, включая отказы и несколько профилей; конечный deadline и критерии отсутствия роста. |
 | D14 | 00/34 | TODO | Текущий benchmark и certification | После корректности выполнить воспроизводимый benchmark нужных режимов с текущим SHA, окружением и метриками; собрать certification только из фактических результатов. Старые результаты 0.8.0 не закрывают 0.8.2. |
 | D15 | Все начатые разделы | IN_PROGRESS | Согласование evidence и документации | Сопоставить старые открытые пункты с поздними fixes; проверить применимость патчей, diff/commit и RU/EN ссылки. Каждый долг закрывать отдельным результатом, не числом коммитов. |
 
@@ -143,3 +143,5 @@ D05/D09: [Q14-F035 — сроки и retirement DNS INPUT lease](../reports/AUDI
 D05/D09: [Q14-F036 — установка NAT/forwarding и DNS REDIRECT](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md): общие сроки setup и точного rollback; 10 новых регрессий, 7 контрольных отказов, 1991 Linux + 31 privileged + 8 E2E PASS. Client routes/gateway, scheduler isolation и полный D05 остаются открытыми.
 
 D02 закрыт: [Q25-F090 — поколение namespace и журнал v4](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). D04/D05 и остальные критерии сохраняются. Проверки Windows VM, Mac/iOS и роутера исключены из текущего объёма по решению пользователя; они не объявляются PASS.
+
+D09/D10: [17/17 Linux packet matrix PASS](../reports/AUDIT-Q34-LINUX-MATRIX.md). D13: 100 TCP handover сохранили сессию/fd, но RSS превысил критерий; FAIL сохранён, долг открыт.

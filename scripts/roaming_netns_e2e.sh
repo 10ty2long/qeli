@@ -42,7 +42,10 @@ if [ "$CASE" = grace-expiry ]; then
 fi
 SERVER_ROAMING_GRACE_SECS=${QELI_ROAMING_SERVER_GRACE_SECS:-$DEFAULT_SERVER_ROAMING_GRACE_SECS}
 CLIENT_ROAMING_POLICY=${QELI_ROAMING_CLIENT_POLICY:-$DEFAULT_CLIENT_ROAMING_POLICY}
-WORK=/tmp/qeli-roaming-netns-${WIRE_MODE}-${DEVICE_TYPE}-${MULTIPATH_MODE}
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-roaming-netns-XXXXXX") || exit 2
+# Each test creates new namespaces; never reuse the host or another case's journal.
+export STATE_DIRECTORY="$WORK/state"
+mkdir -m 700 "$STATE_DIRECTORY" || exit 2
 CLI_NS=qrm-cli
 RTR_NS=qrm-rtr
 SRV_NS=qrm-srv
@@ -240,7 +243,6 @@ cleanup() {
 }
 trap cleanup EXIT
 cleanup
-mkdir -p "$WORK"
 rm -f "$WORK"/*.log "$WORK"/*.conf "$WORK"/*.key "$WORK"/*.crt \
   "$WORK"/*-known-hosts "$WORK"/*-device-id
 

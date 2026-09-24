@@ -26,7 +26,10 @@ BIN=${1:-${BIN:-/opt/qeli-src/target/release/qeli}}
 CASE=${2:-${CASE:-success}}
 WIRE_MODE=${QELI_ROAMING_UDP_WIRE_MODE:-quic}
 DEVICE_TYPE=${QELI_ROAMING_DEVICE_TYPE:-tun}
-WORK=/tmp/qeli-roaming-udp-netns-${DEVICE_TYPE}
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-roaming-udp-netns-XXXXXX") || exit 2
+# Each test creates new namespaces; never reuse the host or another case's journal.
+export STATE_DIRECTORY="$WORK/state"
+mkdir -m 700 "$STATE_DIRECTORY" || exit 2
 CLI_NS=qru-cli
 RTR_NS=qru-rtr
 SRV_NS=qru-srv
@@ -150,7 +153,6 @@ cleanup() {
 }
 trap cleanup EXIT
 cleanup
-mkdir -p "$WORK"
 rm -f "$WORK"/*.log "$WORK"/*.conf
 : "${WORK:?UDP roaming work directory must be set}"
 rm -rf -- "${WORK:?}/bin" "${WORK:?}"/commit-race-*

@@ -77,7 +77,10 @@ SRV_IF=v6s${TAG}
 RTR_S_IF=v6sr${TAG}
 TUN_IF=vpn${TAG}
 PORT=$(( 4600 + TAG % 200 ))
-WORK=/tmp/qeli-ipv6-${TAG}
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-ipv6-XXXXXX") || exit 2
+# Each test creates new namespaces; never reuse the host or another case's journal.
+export STATE_DIRECTORY="$WORK/state"
+mkdir -m 700 "$STATE_DIRECTORY" || exit 2
 SERVER_PID=
 CLIENT_PID=
 DNS_PID=
@@ -118,7 +121,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$WORK"
 for ns in "$CLI_NS" "$RTR_NS" "$SRV_NS"; do ip netns add "$ns"; done
 ip link add "$CLI_IF" type veth peer name "$RTR_C_IF"
 ip link add "$SRV_IF" type veth peer name "$RTR_S_IF"
@@ -415,7 +417,7 @@ fi
 if [ "$ACTIVE_CHECKS" = 4 ] || [ "$ACTIVE_CHECKS" = dual ]; then
   check_eventually "authenticated IPv4 address is installed" \
     "ip netns exec $CLI_NS ip -4 addr show dev $TUN_IF | grep -q '10.86.0.2/$CLIENT_IPV4_PREFIX'"
-  check "IPv4 target route uses the tunnel" \
+  check_eventually "IPv4 target route uses the tunnel" \
     "ip netns exec $CLI_NS ip -4 route get 198.18.46.1 | grep -q 'dev $TUN_IF'"
   check "inner IPv4 traffic crosses the tunnel" \
     "ip netns exec $CLI_NS ping -4 -c3 -W2 198.18.46.1"
@@ -423,16 +425,22 @@ fi
 if [ "$ACTIVE_CHECKS" = 6 ] || [ "$ACTIVE_CHECKS" = dual ]; then
   check_eventually "authenticated IPv6 address is installed" \
     "ip netns exec $CLI_NS ip -6 addr show dev $TUN_IF | grep -q 'fd86::2/$CLIENT_IPV6_PREFIX'"
-  check "IPv6 target route uses the tunnel" \
+  check_eventually "IPv6 target route uses the tunnel" \
     "ip netns exec $CLI_NS ip -6 route get fd46:ffff::1 | grep -q 'dev $TUN_IF'"
   check "inner IPv6 traffic crosses the tunnel" \
     "ip netns exec $CLI_NS ping -6 -c3 -W2 fd46:ffff::1"
 fi
 if [ -n "$DNS_UPSTREAM" ]; then
+  DNS_INDEX=$(ip netns exec "$CLI_NS" ip -j link show dev "$TUN_IF" | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["ifindex"])')
+  case "$DNS_INDEX" in ''|*[!0-9]*|0) bad "DNS target has a valid numeric ifindex"; exit 1 ;; esac
+  DNS_BOOT=$(cat /proc/sys/kernel/random/boot_id)
+  DNS_NAMESPACE=$(ip netns exec "$CLI_NS" stat -Lc '%d-%i' /proc/self/ns/net)
+  DNS_MARKER="/var/lib/qeli/dns-link-v1-$DNS_BOOT-$DNS_NAMESPACE-$DNS_INDEX.state"
+  check_eventually "DNS owns the current link marker" "test -f $DNS_MARKER"
   check_eventually "dual DNS servers were applied to the tunnel link" \
-    "grep -Fxq 'dns $TUN_IF 10.86.0.1 fd86::1' $WORK/resolvectl.log"
+    "grep -Fxq 'dns $DNS_INDEX 10.86.0.1 fd86::1' $WORK/resolvectl.log"
   check_eventually "tunnel DNS owns the catch-all routing domain" \
-    "grep -Fxq 'domain $TUN_IF ~.' $WORK/resolvectl.log"
+    "grep -Fxq 'domain $DNS_INDEX ~.' $WORK/resolvectl.log"
   if ip netns exec "$CLI_NS" python3 "$SCRIPT_DIR/dns_test_server.py" query \
     --server 10.86.0.1 --name a-v4.release.test --type A --expect 192.0.2.80; then
     ok "A query resolves through the IPv4 tunnel DNS listener"
@@ -528,9 +536,9 @@ fi
 CLIENT_PID=
 if [ -n "$DNS_UPSTREAM" ]; then
   check_eventually "clean stop reverted per-link DNS" \
-    "grep -Fxq 'revert $TUN_IF' $WORK/resolvectl.log"
+    "grep -Fxq 'revert $DNS_INDEX' $WORK/resolvectl.log"
   check "clean stop removed the resolver ownership marker" \
-    "test ! -e /var/lib/qeli/dns-resolvectl-$TUN_IF"
+    "test ! -e $DNS_MARKER"
 fi
 check "clean stop removed the TUN" "! ip netns exec $CLI_NS ip link show $TUN_IF"
 check "clean stop restored direct IPv4 routing" \
