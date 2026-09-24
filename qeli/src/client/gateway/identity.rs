@@ -1,5 +1,6 @@
 //! Router authority is retained until both firewall and sysctl cleanup succeed.
 //! A reservation pins the original namespace, never the TUN descriptor.
+use super::Budget;
 #[cfg(all(target_os = "linux", feature = "client"))]
 use crate::client::route::RouteOwner;
 #[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
@@ -15,8 +16,10 @@ enum Owner {
 static OWNERS: Mutex<BTreeMap<String, Owner>> = Mutex::new(BTreeMap::new());
 
 pub(super) fn bind(owner: &RouteOwner) -> anyhow::Result<()> {
-    let _operation = super::router_operation();
+    let budget = Budget::new();
+    let _operation = super::router_operation(budget)?;
     owner.verify_router_plan()?;
+    budget.check()?;
     let mut owners = OWNERS.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(previous) = owners.get(owner.interface()) {
         anyhow::ensure!(
@@ -63,19 +66,21 @@ pub(super) fn forget(name: &str) {
 pub(super) struct Context {
     owner: Owner,
     cleanup: bool,
+    budget: Budget,
 }
 impl Context {
-    pub(super) fn forward(name: &str) -> anyhow::Result<Self> {
+    pub(super) fn forward(name: &str, budget: Budget) -> anyhow::Result<Self> {
         let owner = lookup(name)
             .ok_or_else(|| anyhow::anyhow!("router {name} has no bound NetworkPlan owner"))?;
         let context = Self {
             owner,
             cleanup: false,
+            budget,
         };
         context.check(true)?;
         Ok(context)
     }
-    pub(super) fn cleanup(name: &str) -> anyhow::Result<Option<Self>> {
+    pub(super) fn cleanup(name: &str, budget: Budget) -> anyhow::Result<Option<Self>> {
         let Some(owner) = lookup(name) else {
             return Ok(None);
         };
@@ -87,12 +92,14 @@ impl Context {
         let context = Self {
             owner,
             cleanup: true,
+            budget,
         };
         context.check(false)?;
         Ok(Some(context))
     }
     fn check(&self, needs_tunnel: bool) -> anyhow::Result<()> {
-        match &self.owner {
+        self.budget.check()?;
+        let result = match &self.owner {
             Owner::Managed(owner) if self.cleanup => owner.verify_cleanup_identity(needs_tunnel),
             Owner::Managed(owner) => owner.verify_router_plan(),
             #[cfg(test)]
@@ -108,7 +115,9 @@ impl Context {
                 );
                 Ok(())
             }
-        }
+        };
+        self.budget.check()?;
+        result
     }
     pub(super) fn finish(&self) -> anyhow::Result<()> {
         self.check(!self.cleanup)
@@ -124,11 +133,32 @@ impl Context {
         result
     }
     pub(super) fn ipt(&self, path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
-        self.checked(!self.cleanup, || super::ipt(path, args).map_err(Into::into))
-            .map_err(std::io::Error::other)
+        self.checked(!self.cleanup, || {
+            crate::system_command::Command::new(path)
+                .args(args)
+                .output_until(self.budget.until)
+                .map_err(Into::into)
+        })
+        .map_err(std::io::Error::other)
     }
     pub(super) fn present(&self, path: &str, args: &[&str]) -> anyhow::Result<bool> {
-        self.checked(!self.cleanup, || super::present_checked(path, args))
+        self.checked(!self.cleanup, || {
+            let output = self.ipt(path, args)?;
+            crate::firewall_check::present(
+                &output,
+                crate::firewall_check::Query::Rule {
+                    missing_target: super::expected_qeli_chain(args),
+                },
+            )
+            .map_err(|error| anyhow::anyhow!("{path} {}: {error}", args.join(" ")))
+        })
+    }
+    pub(super) fn path(&self, binary: &str) -> anyhow::Result<Option<String>> {
+        self.checked(!self.cleanup, || {
+            Ok(super::ipt_path_with(binary, |path| {
+                self.ipt(path, &["--version"])
+            }))
+        })
     }
     pub(super) fn acquire(&self, path: &str, value: &str, scope: &str) -> bool {
         let result = self.checked(true, || {
@@ -158,7 +188,7 @@ impl Context {
         self.checked(true, || {
             crate::system_command::Command::new("ip")
                 .args(args)
-                .output()
+                .output_until(self.budget.until)
                 .map_err(Into::into)
         })
         .map_err(std::io::Error::other)

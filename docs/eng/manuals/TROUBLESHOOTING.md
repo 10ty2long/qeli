@@ -2189,3 +2189,7 @@ for this socket option to manage sysctls. `legacy v3 host sysctl journal lacks d
 namespace generation` requires verified cleanup in the original network before upgrading
 or a planned reboot. Preserve state; never edit cookie/version/boot-id to bypass refusal.
 [Details](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).
+
+### 6.73. Router operation deadline expired
+
+Gateway/exit-node did not complete commands or router mutex admission within its deadline. Remaining rules and sysctl ownership are retained for verified cleanup with a fresh deadline. Check firewall tool availability; do not delete rules by a broad prefix. Internal I/O may return after the deadline. [Contract](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).

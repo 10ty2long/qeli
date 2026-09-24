@@ -3439,3 +3439,5 @@ defaults are `gateway=true`, padding `0..255`, `heartbeat_jitter=2000` ms. Set
 `gateway=false` explicitly to retain an older CLI split tunnel. Files remain INI.
 See [shared client configuration](../plans/CLIENT-CONFIG-CORE.md) for migration, platform
 constraints and build instructions.
+
+Gateway/exit-node setup, refresh and cleanup each share 15 seconds across router mutex admission, discovery, WAN and firewall commands. Cleanup includes both families; partial records remain for a fresh attempt. This does not bound whole NetworkPlan/shutdown or preempt internal I/O. [Details](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).

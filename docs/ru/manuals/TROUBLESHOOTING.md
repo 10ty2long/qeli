@@ -2190,3 +2190,7 @@ INPUT-правила. После выхода worker требуется отде
 namespace generation` требует подтверждённой очистки в исходной сети до обновления
 либо плановой перезагрузки. Сохраните журнал, не меняйте cookie/version/boot-id ради
 запуска. [Подробности](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).
+
+### 6.73. Router operation deadline expired
+
+Gateway/exit-node не успел закончить команды или дождаться operation mutex. Сведения об оставшихся правилах и sysctl удерживаются для verified cleanup с новым сроком. Проверьте доступность firewall tools; не удаляйте правила по общему префиксу. Внутренний I/O может вернуться позже срока. [Контракт](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).

@@ -23,9 +23,9 @@
 //! the tagged rules for this interface/subnet before manual recovery.
 
 #[cfg(all(target_os = "linux", feature = "client"))]
-use super::killswitch::{ipt, ipt_path, present_checked, valid_ifname};
+use super::killswitch::{expected_qeli_chain, ipt_path, ipt_path_with, valid_ifname};
 #[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
-use crate::client_killswitch::{ipt, ipt_path, present_checked, valid_ifname};
+use crate::client_killswitch::{expected_qeli_chain, ipt_path, ipt_path_with, valid_ifname};
 
 #[path = "gateway/host.rs"]
 mod host;
@@ -37,6 +37,9 @@ use wan::{detect_wan, detect_wan_ipv6};
 #[path = "gateway/identity.rs"]
 mod identity;
 use identity::Context;
+#[path = "gateway/budget.rs"]
+mod budget;
+use budget::Budget;
 
 #[cfg(all(target_os = "linux", feature = "client"))]
 use super::route::RouteOwner;
@@ -48,11 +51,12 @@ pub(crate) fn bind_owner(owner: &RouteOwner) -> anyhow::Result<()> {
 }
 
 pub(crate) fn disengage_owned(owner: &RouteOwner) -> anyhow::Result<()> {
-    let _operation = router_operation();
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
     if !identity::matches(owner)? {
         return Ok(());
     }
-    disengage_locked(owner.interface())
+    disengage_locked(owner.interface(), budget)
 }
 
 /// Comment tag on every rule we own, so teardown removes exactly ours.
@@ -108,10 +112,8 @@ static EXIT_WANS_V6: std::sync::Mutex<ExitWansByTun> =
 // Serialize each public router operation, including sysctl release, so cleanup cannot
 // forget a concurrent acquisition. This is not a transaction around the entire NetworkPlan.
 static ROUTER_OPERATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
-fn router_operation() -> std::sync::MutexGuard<'static, ()> {
-    ROUTER_OPERATION
-        .lock()
-        .unwrap_or_else(|error| error.into_inner())
+fn router_operation(budget: Budget) -> std::io::Result<std::sync::MutexGuard<'static, ()>> {
+    budget.lock(&ROUTER_OPERATION)
 }
 
 #[derive(Default)]
@@ -378,8 +380,9 @@ fn exit_mss(tun_if: &str) -> Vec<&str> {
 /// Called from `setup_tunnel` after the interface is up, on every connect.
 /// (Audit 2026-07-27, R1.)
 pub fn apply_tun_rp_filter(tun_if: &str) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    let context = Context::forward(tun_if)?;
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !managed_sysctl(
         ctx,
@@ -395,8 +398,9 @@ pub fn apply_tun_rp_filter(tun_if: &str) -> anyhow::Result<()> {
 }
 
 pub fn engage_exit(tun_if: &str) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    let context = Context::forward(tun_if)?;
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node: invalid TUN interface name {tun_if:?}");
@@ -421,7 +425,7 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
     if !valid_ifname(wan) {
         anyhow::bail!("exit-node: detected WAN interface name {wan:?} is invalid");
     }
-    let path = ipt_path("iptables").ok_or_else(|| {
+    let path = ctx.path("iptables")?.ok_or_else(|| {
         anyhow::anyhow!("exit-node: `iptables` is not installed (apt install iptables)")
     })?;
 
@@ -513,8 +517,9 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
 /// WAN interfaces, and an `ipv6 = auto` client must not require `ip6tables` when the
 /// server ultimately assigns IPv4 only.
 pub fn engage_exit_ipv6(tun_if: &str) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    let context = Context::forward(tun_if)?;
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node IPv6: invalid TUN interface name {tun_if:?}");
@@ -538,7 +543,7 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
     if !valid_ifname(&wan) {
         anyhow::bail!("exit-node IPv6: detected WAN interface name {wan:?} is invalid");
     }
-    let path = ipt_path("ip6tables").ok_or_else(|| {
+    let path = ctx.path("ip6tables")?.ok_or_else(|| {
         anyhow::anyhow!(
             "exit-node IPv6 requires `ip6tables`; refusing a negotiated IPv6 plan that would black-hole forwarded traffic"
         )
@@ -651,13 +656,14 @@ pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
     {
         return Ok(());
     }
-    let _operation = router_operation();
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
     let ipv4_active = !exit_wans_for(&EXIT_WANS_V4, tun_if).is_empty();
     let ipv6_active = !exit_wans_for(&EXIT_WANS_V6, tun_if).is_empty();
     if !ipv4_active && !ipv6_active {
         return Ok(());
     }
-    let context = Context::forward(tun_if)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node roaming TUN interface {tun_if:?} is invalid");
@@ -729,7 +735,7 @@ fn remove_exit_rules(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
         if remembered.is_empty() {
             return Ok(());
         }
-        let Some(path) = ipt_path(binary) else {
+        let Some(path) = ctx.path(binary)? else {
             anyhow::bail!(
                 "exit-node cleanup: `{binary}` is unavailable; rules tagged `{EXIT_TAG}` may remain"
             );
@@ -875,13 +881,14 @@ fn mss(tun_if: &str) -> Vec<&str> {
 /// unrestricted so the far side can initiate to the LAN. Idempotent. Empty `lan_subnet`
 /// masquerades everything leaving the tun.
 pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    let context = Context::forward(tun_if)?;
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !valid_ifname(tun_if) {
         anyhow::bail!("gateway-nat: invalid TUN interface name {tun_if:?}");
     }
-    let path = ipt_path("iptables").ok_or_else(|| {
+    let path = ctx.path("iptables")?.ok_or_else(|| {
         anyhow::anyhow!("gateway-nat: `iptables` is not installed (apt install iptables)")
     })?;
     // Mark before the first host mutation so rollback also covers a partially applied plan.
@@ -979,13 +986,14 @@ pub fn engage(tun_if: &str, lan_subnet: &str, masquerade: bool) -> anyhow::Resul
 /// keep working with an IPv4-only server without requiring ip6tables, while a negotiated
 /// dual/IPv6 plan still fails closed if the router cannot actually forward that family.
 pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    let context = Context::forward(tun_if)?;
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let context = Context::forward(tun_if, budget)?;
     let ctx = &context;
     if !valid_ifname(tun_if) {
         anyhow::bail!("gateway IPv6: invalid TUN interface name {tun_if:?}");
     }
-    let path = ipt_path("ip6tables").ok_or_else(|| {
+    let path = ctx.path("ip6tables")?.ok_or_else(|| {
         anyhow::anyhow!(
             "gateway IPv6 requires `ip6tables`; refusing a negotiated IPv6 plan that would not forward LAN traffic"
         )
@@ -1093,7 +1101,7 @@ fn remove_gateway_rules(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
         if subnets.is_empty() {
             return Ok(());
         }
-        let path = ipt_path(binary).ok_or_else(|| {
+        let path = ctx.path(binary)?.ok_or_else(|| {
             anyhow::anyhow!("'{binary}' is unavailable; gateway rules on {tun_if} may remain")
         })?;
         let mut errors = Vec::new();
@@ -1148,12 +1156,13 @@ fn remove_gateway_rules(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
 /// Failures are aggregated and failed rule records retained for retry. This is used for
 /// both a clean process stop and a rejected NetworkPlan; kernel changes are not atomic.
 pub fn disengage_plan(tun_if: &str) -> anyhow::Result<()> {
-    let _operation = router_operation();
-    disengage_locked(tun_if)
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    disengage_locked(tun_if, budget)
 }
 
-fn disengage_locked(tun_if: &str) -> anyhow::Result<()> {
-    let Some(context) = Context::cleanup(tun_if)? else {
+fn disengage_locked(tun_if: &str, budget: Budget) -> anyhow::Result<()> {
+    let Some(context) = Context::cleanup(tun_if, budget)? else {
         return Ok(());
     };
     let ctx = &context;

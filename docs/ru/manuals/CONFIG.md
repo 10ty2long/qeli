@@ -2768,6 +2768,8 @@ set -eu
 файловый I/O, spawn и kill/reap не получают жёсткой верхней границы этим бюджетом.
 [Проверки общего срока DNS](../reports/AUDIT-Q25-DNS-BUDGET.md).
 
+Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Это не общий срок NetworkPlan/shutdown и не прерывание внутреннего I/O. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+
 Это внутренние пределы, без нового ключа INI. Сроки пользовательских hooks не меняются.
 Эти 15 секунд не задают общий срок shutdown. Текущее состояние последовательностей
 routes/firewall и оставшиеся ограничения отражены в [реестре техдолга](../plans/AUDIT-DEBT.md).

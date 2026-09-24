@@ -154,7 +154,7 @@ pub(crate) fn ipt_path(bin: &str) -> Option<String> {
     ipt_path_with(bin, |program| ipt(program, &["--version"]))
 }
 
-fn ipt_path_with(
+pub(crate) fn ipt_path_with(
     bin: &str,
     probe: impl FnOnce(&str) -> std::io::Result<std::process::Output>,
 ) -> Option<String> {
@@ -200,7 +200,7 @@ pub(crate) fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Ou
     Command::new(path).args(args).output()
 }
 
-fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
+pub(crate) fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
     let candidate = args
         .windows(2)
         .find_map(|pair| (pair[0] == "-j").then_some(pair[1]))
@@ -216,6 +216,7 @@ fn expected_qeli_chain<'a>(args: &'a [&'a str]) -> Option<&'a str> {
 
 /// Presence check for guarded setup and teardown, where "absent" and "could not inspect the
 /// firewall" must not collapse into the same `false` result.
+#[cfg(test)]
 pub(crate) fn present_checked(path: &str, args: &[&str]) -> anyhow::Result<bool> {
     let output = ipt(path, args)
         .map_err(|error| anyhow::anyhow!("cannot run {path} {}: {error}", args.join(" ")))?;

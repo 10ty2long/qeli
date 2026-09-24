@@ -21,6 +21,7 @@ struct Kernel {
     calls: Vec<Vec<String>>,
     releases: Vec<String>,
     leases: BTreeMap<String, Vec<String>>,
+    delay_once: Option<(String, std::time::Duration)>,
     query_fault: Option<&'static str>,
     hook_fault: bool,
     delete_fault: Option<bool>,
@@ -336,6 +337,14 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
                 kernel.lose_kill_namespace_after = None;
                 kill_switch::ownership::test_support::set_namespace(2);
             }
+            if kernel
+                .delay_once
+                .as_ref()
+                .is_some_and(|(token, _)| args.contains(token))
+            {
+                let (_, delay) = kernel.delay_once.take().unwrap();
+                std::thread::sleep(delay);
+            }
             Action::Reply(result)
         },
         || {
@@ -426,7 +435,7 @@ fn regression_unknown_rule_snapshot_never_authorizes_add() {
     run(|kernel| {
         kernel.borrow_mut().query_fault = Some("iptables: Permission denied");
         assert!(!ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "nat",
@@ -445,7 +454,7 @@ fn regression_unknown_kill_switch_snapshot_never_authorizes_permit() {
         );
         kernel.borrow_mut().hook_fault = true;
         assert!(!ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -539,7 +548,7 @@ fn permit_remains_after_first_kill_switch_jump() {
             vec![vec!["-j".into(), "QELI_KS_gw_a".into()]],
         );
         assert!(ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -556,7 +565,7 @@ fn permit_remains_after_first_kill_switch_jump() {
 fn permit_with_absent_kill_switch_is_installed_and_verified() {
     run(|kernel| {
         assert!(ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -577,7 +586,7 @@ fn misplaced_kill_switch_refuses_new_permit() {
             ],
         );
         assert!(!ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -609,7 +618,7 @@ fn regression_existing_permit_ahead_of_kill_switch_is_not_accepted() {
             ],
         );
         assert!(!ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "iptables",
             "gw_a",
             "filter",
@@ -665,7 +674,7 @@ fn ipv6_unknown_rule_snapshot_cannot_authorize_nat66() {
     run(|kernel| {
         kernel.borrow_mut().query_fault = Some("ip6tables: backend unavailable");
         assert!(!ensure_rule(
-            &Context::forward("gw_a").unwrap(),
+            &Context::forward("gw_a", Budget::new()).unwrap(),
             "ip6tables",
             "gw_a",
             "nat",
@@ -706,7 +715,7 @@ fn rollback_after_later_rule_failure_removes_already_installed_nat() {
 #[test]
 fn inactive_exit_refresh_does_not_wait_for_another_router_operation() {
     let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
-    let operation = router_operation();
+    let operation = router_operation(Budget::new()).unwrap();
     let (send, receive) = std::sync::mpsc::channel();
     let worker = std::thread::spawn(move || {
         send.send(refresh_exit_paths_if_active("ordinary_noexit"))
@@ -731,3 +740,6 @@ mod identity_tests;
 
 #[path = "owner_tests.rs"]
 mod owner_tests;
+
+#[path = "budget_tests.rs"]
+mod budget_tests;
