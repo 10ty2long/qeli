@@ -493,3 +493,17 @@ interrupt Linux waiting during kill-switch setup/refresh and initial connection;
 cleanup remains a verified operation. Four stuck system calls occupy all slots until they
 finish; late answers do not initiate network setup.
 [Troubleshooting §6.85](TROUBLESHOOTING.md#685-client-dns-delay-and-shutdown).
+
+## Resolver files before installing protection
+
+Linux kill-switch reads `/run/systemd/resolve/resolv.conf` and `/etc/resolv.conf` in
+advance, using one snapshot for IPv4/IPv6. Reading shares the four DNS/NSS slots and
+the setup deadline; this wait still applies with a numeric server address. Files must
+be regular and at most 64 KiB; the list is limited to 64 distinct entries. Invalid or
+unreadable files grant no DNS allowances; exceeding the merged list limit aborts setup.
+The `nameserver` token must be separate, with whitespace before a trailing comment.
+Scoped IPv6 with `%interface`/`%index` grants no unrestricted interface-independent
+allowance and does not discard other valid entries. Later DNS changes do not refresh
+firewall rules automatically. [Resolver-file reads](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+
+[§6.86](TROUBLESHOOTING.md#686-linux-resolver-files-and-kill-switch-dns-allowances).

@@ -1965,8 +1965,18 @@ check for leftover rules before reusing the interface.
 
 ## Kill-switch (`kill_switch`)
 
+Linux kill-switch reads `/run/systemd/resolve/resolv.conf` and `/etc/resolv.conf` in
+advance, using one snapshot for IPv4/IPv6. Reading shares the four DNS/NSS slots and
+the setup deadline; this wait still applies with a numeric server address. Files must
+be regular and at most 64 KiB; the list is limited to 64 distinct entries. Invalid or
+unreadable files grant no DNS allowances; exceeding the merged list limit aborts setup.
+The `nameserver` token must be separate, with whitespace before a trailing comment.
+Scoped IPv6 with `%interface`/`%index` grants no unrestricted interface-independent
+allowance and does not discard other valid entries. Later DNS changes do not refresh
+firewall rules automatically. [Resolver-file reads](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+
 System name resolution for kill-switch, connections and UDP diagnostics uses one core
-module: at most four unfinished DNS/NSS calls per core instance in a process, with queue
+module: at most four unfinished DNS/NSS calls or resolver-file reads per core instance in a process, with queue
 time included in the request deadline. Cancellation does not release a live call's slot.
 Numeric IPs bypass admission; addresses supplied by platform adapters remain authoritative.
 There are no new INI parameters.

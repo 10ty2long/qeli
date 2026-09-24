@@ -345,27 +345,16 @@ fn usable_resolver(ip: &IpAddr) -> bool {
     }
 }
 
-fn system_resolvers() -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
-    for path in ["/run/systemd/resolve/resolv.conf", "/etc/resolv.conf"] {
-        let Ok(text) = std::fs::read_to_string(path) else {
-            continue;
-        };
-        for line in text.lines() {
-            let line = line.trim();
-            if let Some(rest) = line.strip_prefix("nameserver") {
-                if let Ok(ip) = rest.trim().parse::<IpAddr>() {
-                    if usable_resolver(&ip) {
-                        let s = ip.to_string();
-                        if !out.contains(&s) {
-                            out.push(s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    out
+async fn system_resolvers(until: std::time::Instant) -> std::io::Result<Vec<String>> {
+    Ok(
+        crate::transport_core::resolver::system_upstreams(tokio::time::Instant::from_std(until))
+            .await?
+            .into_iter()
+            .map(|address| address.ip())
+            .filter(usable_resolver)
+            .map(|ip| ip.to_string())
+            .collect(),
+    )
 }
 
 struct Rollback<'a> {
@@ -413,6 +402,7 @@ fn engage_family(
     path: &str,
     tun_if: &str,
     allow_ips: &[String],
+    resolvers: &[String],
     guard_forward: bool,
 ) -> anyhow::Result<()> {
     let chain = &chain_for(tun_if);
@@ -471,8 +461,8 @@ fn engage_family(
         .file_name()
         .map(|n| n.to_string_lossy().starts_with("ip6"))
         .unwrap_or(false);
-    let resolvers: Vec<String> = system_resolvers()
-        .into_iter()
+    let resolvers: Vec<&String> = resolvers
+        .iter()
         .filter(|r| r.parse::<IpAddr>().map(|ip| ip.is_ipv6()) == Ok(is_v6))
         .collect();
     for r in &resolvers {
@@ -605,6 +595,8 @@ pub async fn engage(
     let until = std::time::Instant::now() + OPERATION_BUDGET;
     let context = setup_context(tun_if, until)?;
     let ips = resolve_ips(server_addr, server_port, until).await?;
+    // Read once, before any family is changed; cancellation cannot strand a partial chain.
+    let resolvers = system_resolvers(until).await?;
     engage_prepared(
         Setup {
             server_addr,
@@ -617,6 +609,7 @@ pub async fn engage(
         until,
         OPERATION_BUDGET,
         ips,
+        resolvers,
     )
 }
 
@@ -652,7 +645,7 @@ fn engage_until(
 ) -> anyhow::Result<()> {
     let context = setup_context(setup.tun_if, until)?;
     let ips = resolve();
-    engage_prepared(setup, context, until, rollback_limit, ips)
+    engage_prepared(setup, context, until, rollback_limit, ips, Vec::new())
 }
 
 fn engage_prepared(
@@ -661,6 +654,7 @@ fn engage_prepared(
     until: std::time::Instant,
     rollback_limit: std::time::Duration,
     ips: Vec<String>,
+    resolvers: Vec<String>,
 ) -> anyhow::Result<()> {
     let Setup {
         server_addr,
@@ -739,7 +733,15 @@ fn engage_prepared(
         let v4_protected = match v4_path.as_deref() {
             Some(path) => {
                 attempted.push((false, path.to_owned()));
-                match engage_family(&context, &rollback, path, tun_if, &v4, guard_forward) {
+                match engage_family(
+                    &context,
+                    &rollback,
+                    path,
+                    tun_if,
+                    &v4,
+                    &resolvers,
+                    guard_forward,
+                ) {
                     Ok(()) => true,
                     Err(error) => {
                         log::warn!("kill-switch: IPv4 leg not engaged ({error})");
@@ -779,7 +781,15 @@ fn engage_prepared(
         let v6_protected = match v6_path.as_deref() {
             Some(v6_path) => {
                 attempted.push((true, v6_path.to_owned()));
-                match engage_family(&context, &rollback, v6_path, tun_if, &v6, guard_forward) {
+                match engage_family(
+                    &context,
+                    &rollback,
+                    v6_path,
+                    tun_if,
+                    &v6,
+                    &resolvers,
+                    guard_forward,
+                ) {
                     Ok(()) => true,
                     Err(e) => {
                         log::warn!("kill-switch: IPv6 leg not engaged ({e})");
@@ -1297,6 +1307,7 @@ mod fault_injection {
             &path,
             tun_if,
             &["203.0.113.7".to_string()],
+            &[],
             guard_forward,
         )
     }

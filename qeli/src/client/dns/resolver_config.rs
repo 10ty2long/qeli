@@ -1,54 +1,20 @@
 //! A filename or a commented stub address cannot prove the system DNS path.
-use std::{fs::OpenOptions, io::Read, os::unix::fs::OpenOptionsExt, path::Path};
-const LIMIT: u64 = 64 * 1024;
+use crate::transport_core::resolver::system_config;
+use std::path::Path;
+#[cfg(test)]
+const LIMIT: u64 = system_config::BYTE_LIMIT;
 
 pub(super) fn uses_stub(path: &Path) -> bool {
-    read_stub(path).unwrap_or(false)
-}
-fn read_stub(path: &Path) -> std::io::Result<bool> {
-    // Follow the normal resolv.conf symlink, but validate/read one opened regular file.
-    // NONBLOCK avoids hanging on a FIFO substituted for the configuration file.
-    let mut file = OpenOptions::new()
-        .read(true)
-        .custom_flags(libc::O_NONBLOCK | libc::O_CLOEXEC)
-        .open(path)?;
-    let before = file.metadata()?;
-    if !before.is_file() || before.len() > LIMIT {
-        return Ok(false);
-    }
-    let mut contents = String::new();
-    file.by_ref()
-        .take(LIMIT + 1)
-        .read_to_string(&mut contents)?;
-    let after = file.metadata()?;
-    if contents.len() as u64 > LIMIT
-        || contents.len() as u64 != after.len()
-        || crate::config_source::Stamp::of(&before) != crate::config_source::Stamp::of(&after)
-    {
-        return Ok(false);
-    }
-    Ok(stub_only(&contents))
+    system_config::read(path)
+        .map(|text| stub_only(&text))
+        .unwrap_or(false)
 }
 fn stub_only(contents: &str) -> bool {
-    if contents.contains('\0') {
-        return false;
-    }
-    let mut found = false;
-    for line in contents.lines() {
-        let mut fields = line
-            .split(['#', ';'])
-            .next()
-            .unwrap_or_default()
-            .split_ascii_whitespace();
-        if fields.next() != Some("nameserver") {
-            continue;
-        }
-        if !matches!(fields.next(), Some("127.0.0.53" | "127.0.0.54")) || fields.next().is_some() {
-            return false;
-        }
-        found = true;
-    }
-    found
+    system_config::nameservers(contents).is_ok_and(|addresses| {
+        !addresses.is_empty() && addresses.iter().all(|address| {
+            !address.scoped && matches!(address.address, std::net::IpAddr::V4(v4) if v4 == std::net::Ipv4Addr::new(127, 0, 0, 53) || v4 == std::net::Ipv4Addr::new(127, 0, 0, 54))
+        })
+    })
 }
 
 #[cfg(test)]
@@ -70,6 +36,9 @@ mod tests {
             "nameserver 127.0.0.530",
             "nameserver 127.0.0.53\nnameserver 192.0.2.53",
             "nameserver 127.0.0.53 extra",
+            "nameserver 127.0.0.53#attached",
+            "nameserver 127.0.0.53\nnameserver fe80::53%wan0",
+            "nameserver 127.0.0.53\nnameserver 2001:db8::53%2",
             "nameserver\n",
             "nameserver 127.0.0.53\0\nnameserver 192.0.2.53",
         ] {

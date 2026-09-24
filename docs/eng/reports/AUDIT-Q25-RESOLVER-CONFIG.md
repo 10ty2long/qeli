@@ -54,3 +54,5 @@ runtime is skipped by user decision.
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md)
 
 Follow-up: [Q25-F094/F095](AUDIT-Q25-RESOLVER-CONTEXT.md) binds the bus/service context and command receiver, validates real resolved and fixes nonstandard DNS ports. Historical results above are unchanged.
+
+Follow-up: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) moves resolver-file reads before firewall setup, shares bounded admission with NSS and unifies the reader/parser with stub detection. Historical results above are unchanged.

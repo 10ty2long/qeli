@@ -96,3 +96,5 @@ runtime remain **SKIPPED by user decision**. Debt totals remain **4/15 DONE (26.
 9 IN_PROGRESS, 2 TODO**.
 
 [Register](../plans/AUDIT-DEBT.md) · [Manual](../manuals/CONFIG.md#kill-switch-kill_switch).
+
+Follow-up: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) moves resolver-file reads before firewall setup, shares bounded admission with NSS and unifies the reader/parser with stub detection. Historical results above are unchanged.

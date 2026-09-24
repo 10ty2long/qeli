@@ -1,7 +1,7 @@
-//! Bounded admission/waiting for system DNS/NSS across client entry points.
+//! Bounded admission/waiting for system DNS/NSS and resolver-file discovery.
 //!
 //! libc resolution cannot be forcibly cancelled. A dedicated, capacity-limited thread
-//! owns only host/port and its permit, never a platform/network mutation callback. It
+//! owns read-only work and its permit, never a platform/network mutation callback. It
 //! inherits the spawning thread's OS context and cannot hold up Tokio runtime shutdown.
 use std::io;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
@@ -70,3 +70,18 @@ async fn lookup_with(
 
 #[cfg(test)]
 mod tests;
+
+// Resolver-file discovery is read-only and shares the same bounded worker admission.
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+pub(crate) async fn system_upstreams(until: Instant) -> io::Result<Vec<SocketAddr>> {
+    lookup_with(SLOTS.clone(), until, || {
+        system_config::snapshot(&[
+            std::path::Path::new("/run/systemd/resolve/resolv.conf"),
+            std::path::Path::new("/etc/resolv.conf"),
+        ])
+    })
+    .await
+}
+
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
+pub(crate) mod system_config;

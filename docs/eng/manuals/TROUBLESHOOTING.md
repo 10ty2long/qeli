@@ -2423,3 +2423,19 @@ be safely interrupted: it retains its thread/slot until completion, but does not
 Tokio runtime destruction and has no authority to change firewall, routes or TUN.
 This is not a hard whole-network-operation shutdown deadline.
 [Validation and limits](../reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
+
+### 6.86. Linux: resolver files and kill-switch DNS allowances
+
+If DNS fails while protection is active, inspect both resolver files from the same
+mount/network namespace. Ordinary symlinks are allowed; a FIFO, directory, file over
+64 KiB, NUL/invalid UTF-8 or malformed `nameserver` directive grants no allowances
+from that file. Write `nameserver 192.0.2.53 # comment`, with whitespace separators.
+Scoped IPv6 (`%wan0`/`%2`) receives no address-only rule that would lose its scope;
+other valid entries remain usable. Do not broaden the rule to arbitrary `--dport 53`.
+
+Reading before setup uses the shared queue in §6.85, even with a numeric server.
+If waiting expires, new installation does not begin; existing protection still needs
+ordinary recovery/cleanup. SIGTERM cancels waiting for the read-only worker; synchronous
+network mutations retain their previous boundaries. Changed system DNS needs a new
+installation cycle: refreshing VPN server addresses does not reread DNS allowances.
+[Causes and lab validation](../reports/AUDIT-Q25-RESOLVER-FILES.md).

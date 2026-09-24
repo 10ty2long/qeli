@@ -96,3 +96,5 @@ Mac/iOS и physical-router runtime остаются **SKIPPED по решени�
 Итог техдолга: **4/15 DONE (26,7%), 9 IN_PROGRESS, 2 TODO**.
 
 [Реестр](../plans/AUDIT-DEBT.md) · [Мануал](../manuals/CONFIG.md#kill-switch-kill_switch).
+
+Продолжение: [Q25-F104](AUDIT-Q25-RESOLVER-FILES.md) переносит чтение DNS-файлов до firewall, делит ограниченную очередь с NSS и объединяет reader/parser с проверкой stub. Исторические результаты выше не изменены.
