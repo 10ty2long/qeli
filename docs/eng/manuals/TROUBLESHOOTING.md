@@ -2497,3 +2497,11 @@ Keep the evidence and resolve the lock/error cause; do not delete a live owner's
 
 A stopped client starts no handshake after successful recovery. `dev_attach = true`
 does not bypass DNS checks. [Scenarios](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
+
+### 6.92. Linux: TUN packet pump startup failed
+
+Retain the full error chain: fcntl can fail on a descriptor and packet-thread creation
+can fail because of OS resources. An already started reader is joined before releasing
+the original TUN. A route/DNS/forwarding cleanup failure retains `failed` and kill-switch
+even after SIGTERM. Resolve the cause and start explicitly; `post_up` alone does not
+prove a working data plane. [fcntl/thread-failure reproduction](../reports/AUDIT-Q25-PUMP-START.md).

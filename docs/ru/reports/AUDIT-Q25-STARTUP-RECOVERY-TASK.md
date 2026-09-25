@@ -86,3 +86,5 @@ locks/I/O/диагностика и общий NetworkPlan/shutdown deadline. О
 Это не benchmark и не сертификация всей сетевой матрицы D10. Windows VM, Mac/iOS,
 физический роутер — SKIPPED по решению пользователя; Android final snapshot впереди.
 Техдолг: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+Сверка после Q25-F110: запуск Linux TUN pump и его ранний откат выполняются в joined worker; чистая проверка recordizer/budgets проходит перед применением плана. Остальные границы D05 сохраняются. [Отчёт](AUDIT-Q25-PUMP-START.md).

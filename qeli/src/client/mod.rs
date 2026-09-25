@@ -5414,6 +5414,21 @@ where
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let (tap_gateway_ipv4, tap_ipv4_prefix_len, tap_gateway_ipv6, tap_ipv6_prefix_len) =
         (None, 0, None, 0);
+    // Validate data-plane parameters before acquiring platform resources or invoking hooks.
+    let validated_tun_mtu = usize::try_from(tun_mtu)
+        .map_err(|_| anyhow::anyhow!("authenticated TUN MTU is negative"))?;
+    let recordizer = pushed_obf
+        .as_ref()
+        .and_then(|pushed| pushed.recordizer.as_ref())
+        .map(|config| {
+            crate::protocol::recordizer::RuntimeConfig::from_config(
+                config,
+                crate::protocol::packet::MAX_TUNNEL_MTU,
+                validated_tun_mtu.saturating_add(64),
+            )
+        })
+        .transpose()
+        .map_err(|error| anyhow::anyhow!("invalid negotiated recordizer: {error}"))?;
     let tunnel = core.prepare_tunnel(config, plan).await?;
     run_pending_post_up(core).await;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
@@ -5491,34 +5506,31 @@ where
     // `EAGAIN`/`ENOBUFS` drop is observable.
     let runtime_counters = core.counters();
 
-    // Everything below can bail out through `?`, which would skip the teardown at the
-    // end of this function; from here on the guard covers that (see `TunGuard`).
-    #[cfg(target_os = "linux")]
-    let mut tun_guard = tunnel.guard;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
-    let mut tun_pump = LinuxTunPump::start(
-        reader_fd,
-        writer_fd,
-        LinuxTunPumpConfig {
-            buffer_size: tun_buf_size,
-            downlink_record_bytes: downlink_record_budget(tun_mtu, padding_max, norm_sizes),
-            write_drops: Some(runtime_counters.udp.sink(InternalDrop::TunWrite)),
-            framing: if cfg!(target_os = "macos") {
-                TunFraming::Utun
-            } else if is_tap {
-                TunFraming::Tap(TapHeaders {
-                    client_mac: tap_mac,
-                    gateway_mac,
-                    gateway_ipv4: tap_gateway_ipv4,
-                    ipv4_prefix_len: tap_ipv4_prefix_len,
-                    gateway_ipv6: tap_gateway_ipv6,
-                    ipv6_prefix_len: tap_ipv6_prefix_len,
-                })
-            } else {
-                TunFraming::Raw
-            },
+    let pump_config = LinuxTunPumpConfig {
+        buffer_size: tun_buf_size,
+        downlink_record_bytes: downlink_record_budget(tun_mtu, padding_max, norm_sizes),
+        write_drops: Some(runtime_counters.udp.sink(InternalDrop::TunWrite)),
+        framing: if cfg!(target_os = "macos") {
+            TunFraming::Utun
+        } else if is_tap {
+            TunFraming::Tap(TapHeaders {
+                client_mac: tap_mac,
+                gateway_mac,
+                gateway_ipv4: tap_gateway_ipv4,
+                ipv4_prefix_len: tap_ipv4_prefix_len,
+                gateway_ipv6: tap_gateway_ipv6,
+                ipv6_prefix_len: tap_ipv6_prefix_len,
+            })
+        } else {
+            TunFraming::Raw
         },
-    )?;
+    };
+    #[cfg(target_os = "linux")]
+    let (tun_guard, mut tun_pump) =
+        start_linux_tun_pump(tunnel.guard, reader_fd, writer_fd, pump_config).await?;
+    #[cfg(any(target_os = "android", target_os = "macos"))]
+    let mut tun_pump = LinuxTunPump::start(reader_fd, writer_fd, pump_config)?;
     #[cfg(target_os = "windows")]
     let mut tun_pump = match tunnel.windows_tun {
         WindowsTunSetup::Ring(adapter_name) => WindowsTunPump::open(
@@ -5530,8 +5542,6 @@ where
     };
     #[cfg(target_os = "ios")]
     let mut tun_pump = tunnel.packet_tun;
-    #[cfg(target_os = "linux")]
-    tun_guard.attach_pump(tun_pump.stop_handle());
     let tun_write_tx = tun_pump.sender_to_tun();
     let cancel = core.cancel_token();
     // Keep one timer across select iterations. Recreating `sleep(100ms)` inside the loop
@@ -5595,20 +5605,6 @@ where
 
     let shaping = eff_obf.traffic_shaping.to_shaping();
     let cover_budget = crate::protocol::Shaper::shared_budget(&shaping, std::time::Instant::now());
-    let recordizer = pushed_obf
-        .as_ref()
-        .and_then(|pushed| pushed.recordizer.as_ref())
-        .map(|config| {
-            crate::protocol::recordizer::RuntimeConfig::from_config(
-                config,
-                crate::protocol::packet::MAX_TUNNEL_MTU,
-                usize::try_from(tun_mtu)
-                    .unwrap_or_default()
-                    .saturating_add(64),
-            )
-        })
-        .transpose()
-        .map_err(|error| anyhow::anyhow!("invalid negotiated recordizer: {error}"))?;
     if recordizer.is_some() {
         log::info!("Packet recordizer: PACKET_MUX_V1 active on TCP");
     }
@@ -5623,8 +5619,7 @@ where
         heartbeat_enabled,
         heartbeat_interval,
         idle_timeout,
-        tun_mtu: usize::try_from(tun_mtu)
-            .map_err(|_| anyhow::anyhow!("authenticated TUN MTU is negative"))?,
+        tun_mtu: validated_tun_mtu,
         hb_data: hb_config.data_size_bytes,
         hb_jitter: hb_config.jitter_ms,
         padding_enabled,
@@ -6863,19 +6858,45 @@ impl TunnelSetup {
     }
 }
 
-/// Unconditional TUN teardown, for the paths the graceful one cannot reach.
+/// Start packet workers with the platform guard on an owning network worker. A
+/// partial pump failure joins its threads before guard rollback. Keep ordinary pump
+/// errors distinct from worker/context/panic failures that make cleanup uncertain.
+#[cfg(target_os = "linux")]
+async fn start_linux_tun_pump(
+    mut guard: TunGuard,
+    reader_fd: OwnedFd,
+    writer_fd: OwnedFd,
+    config: LinuxTunPumpConfig,
+) -> anyhow::Result<(TunGuard, LinuxTunPump)> {
+    let failures = guard.failures.clone();
+    let started = network_task::run(Arc::new(AtomicBool::new(false)), move || {
+        let pump = match LinuxTunPump::start(reader_fd, writer_fd, config) {
+            Ok(pump) => pump,
+            Err(error) => {
+                let message = format!("TUN packet pump startup failed: {error}");
+                return Ok(Err(anyhow::Error::new(error).context(message)));
+            }
+        };
+        guard.attach_pump(pump.stop_handle());
+        // A rejected result must drop/join the pump before releasing the original TUN.
+        // Tuple fields drop in order; successful adoption unpacks them without an await.
+        Ok(Ok((pump, guard)))
+    })
+    .await;
+    let (pump, guard) =
+        failures.observe(crate::client_cleanup::Resource::Transaction, started)??;
+    Ok((guard, pump))
+}
+
+/// Fallback platform cleanup when a joined graceful teardown cannot be reached.
+/// Normal data-plane exits await shutdown; pump-start failure drops this guard on
+/// the startup worker. Unwinding or abandoning earlier futures may still use Drop
+/// on the caller. The pump owns duplicate descriptors, not DNS/routes/forwarding.
 ///
-/// The cleanup at the end of `run_tcp_tunnel` / `connect_and_run_udp` runs only when
-/// the data plane exits NORMALLY. Every `?` in those functions — the uplink dying when
-/// a modem is power-cycled, say — returns early and skips the route/DNS/device teardown.
-/// The shared TUN pump releases its `OwnedFd` workers on `Drop`, but it deliberately does
-/// not own these platform resources.
-///
-/// This guard carries the platform parts that must happen no matter how we leave: request
-/// pump cancellation before touching the device, restore the resolver, and remove the
-/// routes we installed, then close our original descriptor. TunnelSetup owns it before
-/// the core ACK, then the data-plane loop takes ownership. The normal path `disarm()`s it after the fuller
-/// graceful sequence, whose `.await`s are impossible in `Drop`.
+/// The guard requests pump stop before restoring network resources and keeps the
+/// original TUN descriptor alive throughout cleanup. TunnelSetup owns it before
+/// core ACK, the startup worker then transfers it with the pump, and successful
+/// graceful cleanup disarms it. Failures remain sticky even after a later retry.
 #[cfg(target_os = "linux")]
 struct TunGuard {
     // A field stays alive throughout Drop, including retries after failed graceful cleanup.
@@ -9844,6 +9865,36 @@ pub(crate) async fn run_udp_tunnel(
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let (tap_gateway_ipv4, tap_ipv4_prefix_len, tap_gateway_ipv6, tap_ipv6_prefix_len) =
         (None, 0, None, 0);
+    // Reject unusable authenticated budgets before platform mutation and post_up.
+    let mut data_record_budget =
+        crate::protocol::data_frag::unfragmented_record_budget_with_wrapper(
+            uplink_udp_payload_budget,
+            socket.seal_overhead(),
+            udp_framing.wrapper_len(),
+        )?;
+    let mut mux_payload_budget = client_tx
+        .max_data_for_record_budget(data_record_budget)
+        .map_err(|error| anyhow::anyhow!("UDP recordizer budget is invalid: {error}"))?;
+    let udp_recordizer_config = pushed_obf
+        .as_ref()
+        .and_then(|pushed| pushed.recordizer.as_ref())
+        .cloned();
+    let udp_recordizer_runtime = udp_recordizer_config
+        .as_ref()
+        .map(|config| {
+            crate::protocol::recordizer::RuntimeConfig::from_config(
+                config,
+                mux_payload_budget,
+                crate::protocol::packet::MAX_TUNNEL_MTU,
+            )
+        })
+        .transpose()
+        .map_err(|error| anyhow::anyhow!("invalid negotiated UDP recordizer: {error}"))?;
+    let mut max_empty_record_padding = client_tx
+        .max_padding_for_record_budget(0, data_record_budget)
+        .map_err(|error| {
+            anyhow::anyhow!("UDP record budget cannot carry control traffic: {error}")
+        })?;
     let tun_setup = core.prepare_tunnel(config, plan).await?;
     run_pending_post_up(core).await;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
@@ -9907,34 +9958,31 @@ pub(crate) async fn run_udp_tunnel(
     };
     let norm_sizes = &eff_obf.traffic_normalization.round_sizes;
 
-    // Everything below can bail out through `?`, which would skip the teardown at the
-    // end of this function; from here on the guard covers that (see `TunGuard`).
-    #[cfg(target_os = "linux")]
-    let mut tun_guard = tun_setup.guard;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
-    let mut tun_pump = LinuxTunPump::start(
-        reader_fd,
-        writer_fd,
-        LinuxTunPumpConfig {
-            buffer_size: tun_buf_size,
-            downlink_record_bytes: downlink_record_budget(tun_mtu, padding_max, norm_sizes),
-            write_drops: Some(runtime_counters.udp.sink(InternalDrop::TunWrite)),
-            framing: if cfg!(target_os = "macos") {
-                TunFraming::Utun
-            } else if is_tap {
-                TunFraming::Tap(TapHeaders {
-                    client_mac: tap_mac,
-                    gateway_mac,
-                    gateway_ipv4: tap_gateway_ipv4,
-                    ipv4_prefix_len: tap_ipv4_prefix_len,
-                    gateway_ipv6: tap_gateway_ipv6,
-                    ipv6_prefix_len: tap_ipv6_prefix_len,
-                })
-            } else {
-                TunFraming::Raw
-            },
+    let pump_config = LinuxTunPumpConfig {
+        buffer_size: tun_buf_size,
+        downlink_record_bytes: downlink_record_budget(tun_mtu, padding_max, norm_sizes),
+        write_drops: Some(runtime_counters.udp.sink(InternalDrop::TunWrite)),
+        framing: if cfg!(target_os = "macos") {
+            TunFraming::Utun
+        } else if is_tap {
+            TunFraming::Tap(TapHeaders {
+                client_mac: tap_mac,
+                gateway_mac,
+                gateway_ipv4: tap_gateway_ipv4,
+                ipv4_prefix_len: tap_ipv4_prefix_len,
+                gateway_ipv6: tap_gateway_ipv6,
+                ipv6_prefix_len: tap_ipv6_prefix_len,
+            })
+        } else {
+            TunFraming::Raw
         },
-    )?;
+    };
+    #[cfg(target_os = "linux")]
+    let (tun_guard, mut tun_pump) =
+        start_linux_tun_pump(tun_setup.guard, reader_fd, writer_fd, pump_config).await?;
+    #[cfg(any(target_os = "android", target_os = "macos"))]
+    let mut tun_pump = LinuxTunPump::start(reader_fd, writer_fd, pump_config)?;
     #[cfg(target_os = "windows")]
     let mut tun_pump = match tun_setup.windows_tun {
         WindowsTunSetup::Ring(adapter_name) => WindowsTunPump::open(
@@ -9946,8 +9994,6 @@ pub(crate) async fn run_udp_tunnel(
     };
     #[cfg(target_os = "ios")]
     let mut tun_pump = tun_setup.packet_tun;
-    #[cfg(target_os = "linux")]
-    tun_guard.attach_pump(tun_pump.stop_handle());
     let tun_write_tx = tun_pump.sender_to_tun();
     let cancel = core.cancel_token();
     // Persistent for the same reason as the TCP cancellation tick: high packet rates must
@@ -10022,30 +10068,6 @@ pub(crate) async fn run_udp_tunnel(
     let mut quic_record = Vec::with_capacity(wire_capacity + udp_framing.wrapper_len());
     let mut padding = Vec::with_capacity(crate::protocol::packet::MAX_RECORD_SIZE);
     let mut oversize_tun_drops: u64 = 0;
-    let mut data_record_budget =
-        crate::protocol::data_frag::unfragmented_record_budget_with_wrapper(
-            uplink_udp_payload_budget,
-            socket.seal_overhead(),
-            udp_framing.wrapper_len(),
-        )?;
-    let mut mux_payload_budget = client_tx
-        .max_data_for_record_budget(data_record_budget)
-        .map_err(|error| anyhow::anyhow!("UDP recordizer budget is invalid: {error}"))?;
-    let udp_recordizer_config = pushed_obf
-        .as_ref()
-        .and_then(|pushed| pushed.recordizer.as_ref())
-        .cloned();
-    let udp_recordizer_runtime = udp_recordizer_config
-        .as_ref()
-        .map(|config| {
-            crate::protocol::recordizer::RuntimeConfig::from_config(
-                config,
-                mux_payload_budget,
-                crate::protocol::packet::MAX_TUNNEL_MTU,
-            )
-        })
-        .transpose()
-        .map_err(|error| anyhow::anyhow!("invalid negotiated UDP recordizer: {error}"))?;
     let mut udp_tx_recordizer = udp_recordizer_runtime
         .clone()
         .map(crate::protocol::recordizer::Recordizer::new);
@@ -10054,11 +10076,6 @@ pub(crate) async fn run_udp_tunnel(
     if udp_tx_recordizer.is_some() {
         log::info!("Packet recordizer: PACKET_MUX_V1 active on UDP");
     }
-    let mut max_empty_record_padding = client_tx
-        .max_padding_for_record_budget(0, data_record_budget)
-        .map_err(|error| {
-            anyhow::anyhow!("UDP record budget cannot carry control traffic: {error}")
-        })?;
     let mut tx_record_id: u64 = rand::random();
     let mut data_reassembler = crate::protocol::data_frag::DataReassembler::new();
 

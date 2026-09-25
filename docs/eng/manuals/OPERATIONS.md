@@ -568,3 +568,15 @@ solely from a stored marker.
 Wait for client exit and inspect the final error before restarting. The 15-second route
 operation budget is not a single hard shutdown deadline; forced Drop may synchronously
 join the worker. [Validation and limits](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
+
+## Linux TUN packet-worker startup failure
+
+`TUN packet pump startup failed` means packet handling could not start after applying
+the network plan. Qeli waits for partially started threads and owned-resource cleanup
+on a joined worker, keeping neighboring async tasks responsive. A cleanup error retains
+the kill-switch; inspect logs before another explicit start. Stop does not hide that
+cleanup failure.
+
+Successful `post_up` confirms NetworkPlan application, not completed pump startup.
+Failure to create a cleanup worker or forced Drop can still cause synchronous fallback
+waiting. [Validation and limits](../reports/AUDIT-Q25-PUMP-START.md).

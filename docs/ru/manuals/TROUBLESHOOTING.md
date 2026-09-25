@@ -2503,3 +2503,12 @@ IPv4/IPv6-семейство. Цепочка с неподтверждённым
 
 После успешного recovery остановленный клиент не начинает handshake. `dev_attach = true`
 не является обходом DNS-проверок. [Сценарии](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
+
+### 6.92. Linux: TUN packet pump startup failed
+
+Сохраните полный error chain: fcntl может вернуть ошибку дескриптора, а создание
+packet worker — ошибку ресурсов ОС. Уже запущенный reader присоединяется перед
+освобождением исходного TUN. Отказ очистки маршрутов/DNS/forwarding сохраняет `failed`
+и kill-switch даже после SIGTERM. Устраните причину и выполните новый явный запуск;
+не считайте наличие `post_up` подтверждением работающего data plane.
+[Воспроизведение fcntl/thread failures](../reports/AUDIT-Q25-PUMP-START.md).

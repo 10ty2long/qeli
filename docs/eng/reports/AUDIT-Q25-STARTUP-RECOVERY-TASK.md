@@ -86,3 +86,5 @@ DNS filesystem/kernel stalls were not separately injected. This is neither a ben
 nor certification of the full D10 matrix. Windows VM, Mac/iOS and physical router are
 SKIPPED by user decision; the final Android snapshot remains pending.
 Debt: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+Reconciled after Q25-F110: Linux TUN pump startup and its early rollback now use a joined worker; pure recordizer/budget checks precede platform apply. Other D05 boundaries remain. [Report](AUDIT-Q25-PUMP-START.md).
