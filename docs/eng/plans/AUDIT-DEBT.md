@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v16 -->
+<!-- normative-sync: audit-debt-v17 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -99,6 +99,33 @@ Privileged external mutation between a check and a write has no atomic protectio
 guarantee; this is an OS-interface limitation, not automatically a new feature defect.
 However, identity loss, command errors and unknown outcomes must retain recovery evidence
 and must not produce false success.
+
+
+### Batch A — verified startup result, September 25
+
+The startup part of D05/D09 is closed: stop handlers precede INI reads, the 256 KiB
+client cap precedes content reads/allocation, and loading, capability probes and hook
+canonicalization run on a joined worker. The permission warning uses the same opened
+snapshot. Stop waits for admitted work; late failures remain errors, with no credential
+command or connection started.
+
+Targeted checks: 12 host + 32 Linux tests (15 config source, 8 lifecycle,
+9 prepared worker), Linux Clippy and standalone client build. Frozen baseline
+`a8aba986` reproduced runtime blocking, SIGTERM exit before handler registration, and
+oversized-file reads. Three fixed startup cases and TCP/UDP startup → post_up → stop
+passed in separate NET/mount/PID namespaces, preserving routes and operator firewall.
+The first stop fixture incorrectly used `pass_cmd`: its strict-parser rejection was
+retained and the corrected `password_command` fixture was rerun. Regression retained as
+[scripts/audit_client_startup.py](../../../scripts/audit_client_startup.py) and
+[test shim](../../../scripts/audit_client_startup_shim.c). Commands, manifests, SHA and logs:
+`audit-debt-20260924/batch-a-startup/` under the `qeli` artifact directory.
+
+The server at `a8aba986` (SHA256 `c53dec6b…83c97`) and unchanged teardown fixture are reused;
+this change does not affect server behavior. Earlier broad matrices are not claimed as
+new runs. D05/D06/D09 remain IN_PROGRESS: composed NetworkPlan/cleanup budget, system
+context table and early Drop paths remain. Established boundary: arbitrary kernel/
+filesystem I/O cannot safely be interrupted; forced Drop retains its join. This limit
+does not close the remaining shared command-budget obligation.
 
 ## Sources
 

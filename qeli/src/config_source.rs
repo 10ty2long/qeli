@@ -120,7 +120,21 @@ impl OpenedConfig {
         })
     }
 
-    fn read(mut self) -> io::Result<ConfigSnapshot> {
+    #[cfg(any(feature = "server", test))]
+    fn read(self) -> io::Result<ConfigSnapshot> {
+        self.read_with_limit(u64::MAX)
+    }
+
+    fn read_with_limit(mut self, max_bytes: u64) -> io::Result<ConfigSnapshot> {
+        if self.stamp.len > max_bytes {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "configuration is {} bytes; maximum is {max_bytes}",
+                    self.stamp.len
+                ),
+            ));
+        }
         let mut contents = String::new();
         // Stop at the observed size plus one byte even if a writer keeps appending.
         // Any growth, truncation or other detected metadata change rejects the load.
@@ -170,8 +184,21 @@ fn open(path: &Path) -> io::Result<OpenedConfig> {
     OpenedConfig::from_file(options.open(path)?, None, command_policy)
 }
 
+#[cfg(any(feature = "server", test))]
 pub(crate) fn load(path: impl AsRef<Path>) -> io::Result<ConfigSnapshot> {
     open(path.as_ref())?.read()
+}
+
+// Match the shared client-core limit before allocating or reading file contents.
+// Return advisory permissions from that same opened inode, never a later pathname.
+#[cfg(all(target_os = "linux", feature = "client"))]
+pub(crate) fn load_client(path: impl AsRef<Path>) -> io::Result<(ConfigSnapshot, u32)> {
+    let opened = open(path.as_ref())?;
+    let mode = opened.stamp.unix.2 & 0o777;
+    Ok((
+        opened.read_with_limit(crate::transport_core::MAX_CONFIG_BYTES as u64)?,
+        mode,
+    ))
 }
 
 #[cfg(test)]
@@ -236,6 +263,43 @@ mod tests {
     }
     fn host_open(path: &Path) -> OpenedConfig {
         OpenedConfig::from_file(File::open(path).unwrap(), None, host_policy).unwrap()
+    }
+
+    #[test]
+    fn bounded_snapshot_accepts_exact_limit_and_rejects_oversize_before_reading() {
+        let dir = Fixture::new();
+        let limit = crate::transport_core::MAX_CONFIG_BYTES;
+        let path = dir.write("config", &vec![b'#'; limit], false);
+        assert_eq!(
+            host_open(&path)
+                .read_with_limit(limit as u64)
+                .unwrap()
+                .into_parts()
+                .0
+                .len(),
+            limit
+        );
+        // Invalid UTF-8 would yield a different error if oversized bytes were read.
+        std::fs::write(&path, vec![0xff; limit + 1]).unwrap();
+        let error = host_open(&path)
+            .read_with_limit(limit as u64)
+            .err()
+            .unwrap();
+        assert!(error.to_string().contains("maximum is 262144"));
+    }
+
+    #[test]
+    fn growth_after_bounded_open_still_rejects_the_snapshot() {
+        let dir = Fixture::new();
+        let path = dir.write("config", b"short", false);
+        let opened = host_open(&path);
+        std::fs::write(&path, vec![b'x'; 1024]).unwrap();
+        assert!(opened
+            .read_with_limit(32)
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("changed while reading"));
     }
 
     #[test]

@@ -1940,6 +1940,30 @@ fn linux_roaming_path_supported(config: &crate::config::client::ClientConfig) ->
 
 #[cfg(target_os = "linux")]
 impl LinuxCoreAdapter {
+    /// All startup file work and capability probes run on the admitted worker.
+    fn load_startup(
+        config_path: &str,
+    ) -> anyhow::Result<(
+        Self,
+        crate::config::client::ClientConfig,
+        crate::config_source::CommandTrust,
+    )> {
+        let (snapshot, mode) = crate::config_source::load_client(config_path)?;
+        let (contents, trust) = snapshot.into_parts();
+        let (mut adapter, config) = Self::new(&contents)?;
+        adapter.hook_context = Some(ClientHookContext::new(&config, config_path));
+        if config
+            .auth
+            .password
+            .as_deref()
+            .is_some_and(|p| !p.is_empty())
+            && mode & 0o077 != 0
+        {
+            log::warn!("config '{config_path}' is mode {mode:o} — it contains the VPN password in cleartext and other local accounts can read it. chmod 600 {config_path}");
+        }
+        Ok((adapter, config, trust))
+    }
+
     async fn load_device_identity(
         &mut self,
         path: String,
@@ -2064,14 +2088,8 @@ impl LinuxCoreAdapter {
         generation
     }
 
-    fn configure_hooks(
-        &mut self,
-        config: &crate::config::client::ClientConfig,
-        config_path: &str,
-        post_up: String,
-    ) {
+    fn configure_hooks(&mut self, post_up: String) {
         self.post_up = (!post_up.trim().is_empty()).then_some(post_up);
-        self.hook_context = Some(ClientHookContext::new(config, config_path));
     }
 
     fn post_down_invocation(
@@ -2553,31 +2571,12 @@ async fn run_client_inner(
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     client_tasks.spawn(trace::watch());
 
-    let (config_content, config_command_trust) =
-        crate::config_source::load(config_path)?.into_parts();
-    // STRICT: a misspelled key name and an unreadable value both used to fail open here —
-    // only `check-config` reported them, while the real start substituted defaults in silence.
-    // See `config::parse_client_config_strict`. (Audit 2026-08-01, §4/§5.)
-    // Declare before the adapter so cancellation/unwinding drops network owners
-    // before releasing the namespace claim.
-    let _network_lease;
-    let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
-    *final_report = Some(ClientFinalReport {
-        reporter: core_adapter.diagnostics.clone(),
-        counters: core_adapter.counters.clone(),
-        writer: core_adapter.diagnostic_writer.take(),
-        identity_worker: core_adapter.identity_worker.take(),
-    });
-    core_adapter
-        .diagnostics
-        .start_sampler(core_adapter.counters.clone(), client_tasks);
-    // Register synchronously before any credential command is spawned. One stop token
-    // covers startup, the active carrier and reconnect backoff. The outer wrapper
-    // joins watchers/sampler before final publication, even on an early startup error.
+    // Register before config open/read or any worker/credential command. The token
+    // survives adapter creation and is shared by startup, carriers and backoff.
     use tokio::signal::unix::{signal, SignalKind};
     let mut term = signal(SignalKind::terminate())?;
     let mut interrupt = signal(SignalKind::interrupt())?;
-    let shutdown_requested = core_adapter.cancel_token();
+    let shutdown_requested = Arc::new(AtomicBool::new(false));
     let signal_cancel = shutdown_requested.clone();
     let shutdown_wakeup = Arc::new(tokio::sync::Notify::new());
     let signal_wakeup = shutdown_wakeup.clone();
@@ -2590,40 +2589,32 @@ async fn run_client_inner(
         signal_cancel.store(true, Ordering::Release);
         signal_wakeup.notify_one();
     });
-    // Warn when a config holding a cleartext password is readable by other local accounts.
-    //
-    // Nothing on the LOAD path ever looked at the file mode. `pass = <vpn password>` and a
-    // pinned `key` sit in this file verbatim, and the ordinary way to create it is to paste a
-    // `qeli://` link into an editor under the default umask — which yields 0644. The client
-    // then started without a word, and any local user could read the credential. Permissions
-    // are narrowed on WRITE (`write_atomic_private`), so this only ever bit hand-made files —
-    // i.e. the common case. Snapshot command authorization checks ownership/writability,
-    // whereas this advisory check concerns readability of the credential.
-    //
-    // A warning rather than a refusal: an operator with a 0644 config and no better option
-    // should still be able to bring the tunnel up, and OpenSSH's precedent (refuse) applies
-    // to keys the daemon can regenerate, not to a user's only way in. (Audit 2026-08-04.)
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let has_secret = config
-            .auth
-            .password
-            .as_deref()
-            .is_some_and(|p| !p.is_empty());
-        if has_secret {
-            if let Ok(md) = std::fs::metadata(config_path) {
-                let mode = md.permissions().mode() & 0o777;
-                if mode & 0o077 != 0 {
-                    log::warn!(
-                        "config '{config_path}' is mode {mode:o} — it contains the VPN password \
-                         in cleartext and every local account can read it. `chmod 600 \
-                         {config_path}`."
-                    );
-                }
-            }
-        }
+    // Keep the reservation alive until every network owner has been dropped.
+    let _network_lease;
+    let startup_path = config_path.to_string();
+    let loaded = network_task::prepared(
+        async move { Ok(move || LinuxCoreAdapter::load_startup(&startup_path)) },
+        wait_for_shutdown(&shutdown_requested, &shutdown_wakeup),
+    )
+    .await?;
+    let Some((mut core_adapter, config, config_command_trust)) = loaded else {
+        return Ok(());
+    };
+    core_adapter.cancel = shutdown_requested.clone();
+    // Transfer worker ownership even if stop arrived during loading: the outer
+    // wrapper joins them asynchronously and publishes the final outcome.
+    *final_report = Some(ClientFinalReport {
+        reporter: core_adapter.diagnostics.clone(),
+        counters: core_adapter.counters.clone(),
+        writer: core_adapter.diagnostic_writer.take(),
+        identity_worker: core_adapter.identity_worker.take(),
+    });
+    if shutdown_requested.load(Ordering::Acquire) {
+        return Ok(());
     }
+    core_adapter
+        .diagnostics
+        .start_sampler(core_adapter.counters.clone(), client_tasks);
     let password = if let Some(ref pw) = config.auth.password {
         zeroize::Zeroizing::new(pw.clone())
     } else if let Some(ref pw_file) = config.auth.password_file {
@@ -2769,7 +2760,7 @@ async fn run_client_inner(
     // values, then each committed authenticated NetworkPlan refreshes the actual interface,
     // address, gateway, DNS, route, data-plane and physical-carrier facts. `post_up` consumes
     // the first committed snapshot; `post_down` receives the latest one.
-    core_adapter.configure_hooks(&config, config_path, post_up.clone());
+    core_adapter.configure_hooks(post_up.clone());
 
     // Engage the kill-switch BEFORE the first connect, so even the first attempt
     // and every reconnect window is leak-proof. It stays up across reconnects and

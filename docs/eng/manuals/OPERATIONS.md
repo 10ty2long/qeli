@@ -608,3 +608,16 @@ before reconnect or exit. A late error preserves `failed`; successful persistenc
 finish after cancellation. The 15-second flock bound is not an overall shutdown limit.
 [Worker and cancellation](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
 [Design and validation](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+
+## Reading INI during Linux client startup
+
+SIGTERM/SIGINT handlers are installed before opening the config. Reading, initial
+capability checks and hook-path resolution run on a joined thread. Client INI is capped
+at 256 KiB: a regular file's size is checked before reading its contents. The password
+readability warning uses permissions from the same opened snapshot.
+
+Stop during an admitted read waits for completion. Success exits without running
+password_command, loading device-id, connecting or configuring the network; a late read
+error remains an exit error. This is not a hard filesystem timeout: a stuck system call
+may delay exit, but normal waiting does not block async tasks. This change sets no server
+config size limit.
