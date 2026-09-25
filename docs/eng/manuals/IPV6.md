@@ -129,7 +129,9 @@ routing.ipv6.interface =
 ```
 
 An empty interface means automatic IPv6 uplink detection. Set, for example,
-`routing.ipv6.interface = ens18` if detection is ambiguous.
+`routing.ipv6.interface = ens18` if detection is ambiguous. For managed `route` and
+`nat66`, the selected uplink must exist in the worker network namespace at setup.
+This check does not protect against deletion and reuse of an active WAN name.
 
 ### `manual`
 

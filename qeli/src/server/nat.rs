@@ -193,11 +193,24 @@ fn resolve_wan_until(
 ) -> anyhow::Result<Option<String>> {
     budget.check()?;
     let configured = configured.trim();
-    if configured.is_empty() || (!ipv6 && configured == "eth0") {
+    let selected = if configured.is_empty() || (!ipv6 && configured == "eth0") {
         detect_wan_until(ipv6, budget)
     } else {
         Ok(Some(configured.to_string()))
+    }?;
+    if let Some(wan) = selected.as_deref() {
+        // iptables -o accepts a name that does not exist yet. Such a rule would
+        // silently become active if an unrelated link later acquired that name.
+        // Query the calling NET namespace before changing forwarding or adding
+        // rules; a vanished auto-detected link is an error as well.
+        budget.checked(|| match crate::network_interface::index(wan)? {
+            Some(_) => Ok(()),
+            None => anyhow::bail!(
+                "selected WAN interface '{wan}' is absent in the server network namespace"
+            ),
+        })?;
     }
+    Ok(selected)
 }
 
 /// Select NDP's link independently from firewall setup. A dedicated interface wins,
@@ -1816,6 +1829,31 @@ mod tests {
     fn explicit_eth0_is_not_reinterpreted_as_ipv6_auto_detection() {
         assert_eq!(resolve_wan_ipv6("eth0").as_deref(), Some("eth0"));
         assert_eq!(resolve_wan_ipv6("  eth0  ").as_deref(), Some("eth0"));
+    }
+
+    #[test]
+    fn managed_wan_must_exist_in_the_calling_namespace() {
+        let missing = "qeli-miss0";
+        assert_eq!(crate::network_interface::index(missing).unwrap(), None);
+        for ipv6 in [false, true] {
+            let error = super::resolve_wan_until(
+                missing,
+                ipv6,
+                super::Budget::for_operation("WAN presence test"),
+            )
+            .unwrap_err();
+            assert!(error.to_string().contains("absent"), "{error}");
+            assert_eq!(
+                super::resolve_wan_until(
+                    "lo",
+                    ipv6,
+                    super::Budget::for_operation("WAN presence test"),
+                )
+                .unwrap()
+                .as_deref(),
+                Some("lo")
+            );
+        }
     }
 
     /// Reproduce the substring bug: `web`'s exact tag must NOT match `web2`'s rule, or

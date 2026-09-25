@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v28 -->
+<!-- normative-sync: audit-debt-v29 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -21,7 +21,7 @@
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Восстановление после crash | Persistent server firewall, DNS v2, kill-switch и physical routes проверены; legacy global DNS, persistent TUN и потерянный sysctl witness имеют явные безопасные ручные границы. [Клиентская mixed матрица](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 ячейки, 136 crash/recovery; [серверная](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks повторно PASS. Произвольные zones/policies и multiprofile остаются D10; накопление состояния — D13. |
 | D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; штатные server startup/final cleanup и profile teardown вынесены в присоединяемые потоки; TUN/NAT и DNS firewall setup профиля теперь также в присоединяемых потоках; NDP bind теперь также выполняется в worker с регистрацией AsyncFd в исходном runtime; установка до готовности всех listeners получила общий бюджет 120 секунд; повторный допуск после отмены закрыт [Q25-F130](../reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md); остаются async join при forced Drop и общий срок shutdown. [Серверная установка](../reports/AUDIT-Q25-SERVER-SETUP-WORKER.md), [DNS firewall](../reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md), [NDP bind](../reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md), [готовность и бюджет](../reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md). Произвольные kernel/fs I/O и forced join не прерываются. [Серверная очистка](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
-| D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
+| D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; [Q25-F131](../reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md) запрещает установку управляемых IPv4/IPv6 правил для отсутствующего WAN; проверка не привязывает активное правило к идентичности устройства. Прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
 | D09 | 14/15/25/32/33 | DONE | Linux lifecycle и системные отказы | [Итоговая сверка](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md): на текущем SHA 2175 Linux unit, 8 control, 15 hook-process и 8/8 реальных worker lifecycle PASS; сохранены exit/SHA и сетевые снимки до/после. Ранее 48 privileged и реальные DNS/route/firewall матрицы применимы к неизменённым путям. Полные install/upgrade и сетевые сочетания остаются D11/D10, общий shutdown — D05. |
@@ -332,6 +332,14 @@ nofile=1024 на тесте 512 TCP-соединений; неизменённы
 незавершённого поколения. [Отчёт и проверки](../reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md).
 Это частичное закрытие D05: async join дочерних задач при forced Drop и общий
 срок shutdown остаются открытыми. Реестр: **5/15 DONE**.
+
+### Q25-F131 — наличие WAN при серверной установке
+
+Выбранный IPv4 NAT или управляемый IPv6 uplink теперь проверяется через ioctl
+в network namespace worker до включения forwarding и добавления правил.
+[Отчёт и 1 unit + 8 штатных + 2 отрицательных Linux-прогона](../reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md).
+Открыты повторное использование имени активного WAN, атомарная привязка правил
+к устройству и mixed-backend recovery. D06 остаётся IN_PROGRESS; реестр **5/15 DONE**.
 
 ## Источники
 

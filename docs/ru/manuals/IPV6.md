@@ -130,7 +130,9 @@ routing.ipv6.interface =
 ```
 
 Пустой interface означает автоопределение IPv6 uplink. Если оно неоднозначно, укажите
-например `routing.ipv6.interface = ens18`.
+например `routing.ipv6.interface = ens18`. Для управляемых `route` и `nat66`
+выбранный uplink должен существовать в network namespace worker при запуске.
+Эта проверка не защищает от удаления и повторного использования имени активного WAN.
 
 ### `manual`
 

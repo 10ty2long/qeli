@@ -3282,9 +3282,9 @@ Server-side routing for the profile (client-side routing keys are in the "Client
 | `routing.client_to_client` | `false` | allow client↔client traffic within the tunnel subnet. **Enforced** server-side: when `false` (the default) a packet whose source IP is one client and whose destination is another client is dropped — clients are isolated. Internet traffic (external source) is unaffected |
 | `routing.forward_private` | `true` | forward IPv4 private (RFC1918) networks behind the server to clients; inactive in IPv6-only mode |
 | `routing.nat.enabled` | `false` | IPv4 NAT44/MASQUERADE for client Internet traffic; rejected in IPv6-only mode |
-| `routing.nat.interface` | `eth0` | NAT egress interface (auto-detected when left at default) |
+| `routing.nat.interface` | `eth0` | NAT egress interface (auto-detected when left at default); the selected device must exist in the worker network namespace during rule setup |
 | `routing.ipv6.mode` | `off` | `off` — block IPv6 transit; `manual` — administrator-owned external routing/firewall/forwarding (0.8.2); `route` — forward with client addresses; `nat66` — forward with MASQUERADE. All modes except `manual` require `ip6tables`; [details](IPV6.md#manual) |
-| `routing.ipv6.interface` | — | IPv6 uplink; empty = IPv6 default route when present. Required by `nat66`, optional for LAN-only `route`. In `manual`, supplies the default NDP uplink and hook metadata without configuring routing/firewall |
+| `routing.ipv6.interface` | — | IPv6 uplink; empty = IPv6 default route when present. Required by `nat66`, optional for LAN-only `route`. In `manual`, supplies the default NDP uplink and hook metadata without configuring routing/firewall. In managed `route`/`nat66`, the selected device must exist during rule setup |
 | `routing.ipv6.ndp_proxy` | `off` | Upstream NDP responder: `off`, best-effort `auto`, or mandatory `required`; enabled only with `routing.ipv6.mode = route` or `manual`. Egress `off`/`nat66` requires `ndp_proxy = off`; `required` does not verify packet delivery |
 | `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink for NDP; empty = reuse the effective/configured IPv6 interface or discover the IPv6 uplink, including in `manual` |
 | `route` | — | repeatable: a route advertised to clients, `<cidr> [gateway=<ip>] [metric=<n>]`; maximum 256 |

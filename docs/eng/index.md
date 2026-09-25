@@ -268,3 +268,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [D09: Linux lifecycle and system-failure closure](reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md)
 
 - [Q25-F130: retain server worker lease after forced cancellation](reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md)
+
+- [Q25-F131: verify WAN presence before server rule setup](reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md)
