@@ -165,7 +165,7 @@ D06 reconciliation against current code (no new runtime PASS claim):
 | resolved / system bus | GUID/unique owner/network/PID context already exercised in [resolver context](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md); DNS v2 markers/crash are D04. |
 | procfs / sysfs | Namespace pins, cookie and sysctl witnesses are D02/D04. IPv6 module-disabled evidence uses bounded strict reads; it does not guarantee absence of future IPv6. |
 | TUN attach / names | [Attach](../reports/AUDIT-Q25-TUN-ATTACH.md), leases and route/TUN identity have dedicated checks; WAN selectors need reconciliation. |
-| Physical WAN | `gateway/wan.rs` returns a route's device name; firewall records name selectors. Rename/reuse and supported WAN changes need explicit checks. |
+| Physical WAN | `gateway/wan.rs` returns a route's device name; firewall records name selectors. [Q25-F120](../reports/AUDIT-Q25-GATEWAY-IPV6-ROAM.md) rechecks the IPv6 default route after the roaming COMMIT rule batch. Rename/reuse and supported WAN changes still need explicit checks. |
 | DNS / carrier globals | DNS is per-link; process-global carrier/cycle state is protected by one run_client per process through terminal cleanup. Forced Drop closes readmission until process restart; verification below. |
 | Dynamic IPv6 | Empty global inventory may admit unavailable ip6tables; refresh skips a previously unprotected family. Address arrival after admission remains a required D06/D10 scenario. |
 

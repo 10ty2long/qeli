@@ -167,7 +167,7 @@ TCP/UDP clean/fault shutdown и два явных recovery также PASS. Сц
 | resolved / system bus | GUID/unique owner/network/PID context уже проверены в [resolver context](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md); DNS-маркеры v2 и crash — D04. |
 | procfs / sysfs | Namespace pins, cookie и sysctl witness — D02/D04. IPv6 module-disabled читается ограниченно и строго; это не гарантия отсутствия IPv6 в будущем. |
 | TUN attach / имена | [Attach](../reports/AUDIT-Q25-TUN-ATTACH.md), lease и route/TUN identity имеют отдельные проверки; WAN selectors требуют отдельной сверки. |
-| Физический WAN | `gateway/wan.rs` возвращает имя из маршрута, firewall сохраняет selector имени. Rename/reuse и допустимую смену WAN нужно проверить явно. |
+| Физический WAN | `gateway/wan.rs` возвращает имя из маршрута, firewall сохраняет selector имени. [Q25-F120](../reports/AUDIT-Q25-GATEWAY-IPV6-ROAM.md) повторно проверяет IPv6 default route после rule batch при roaming COMMIT. Rename/reuse и допустимую смену WAN нужно проверить явно. |
 | DNS / carrier globals | DNS per-link; process-global carrier/cycle защищён одним run_client на процесс до terminal cleanup. Forced Drop закрывает повторный допуск до перезапуска процесса; проверка ниже. |
 | Динамический IPv6 | При недоступном ip6tables допустим пустой global inventory; refresh пропускает ранее незащищённое семейство. Появление адреса после admission остаётся обязательным сценарием D06/D10. |
 

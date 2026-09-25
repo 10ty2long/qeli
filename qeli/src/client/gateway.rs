@@ -682,6 +682,9 @@ pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
             anyhow::anyhow!("exit-node roaming: no IPv6 default route remains at platform COMMIT")
         })?;
         engage_exit_ipv6_on(ctx, tun_if, &wan)?;
+        if detect_wan_ipv6(ctx).as_deref() != Some(wan.as_str()) {
+            anyhow::bail!("exit-node roaming: IPv6 default route changed while refreshing {wan}");
+        }
     }
     ctx.finish()
 }

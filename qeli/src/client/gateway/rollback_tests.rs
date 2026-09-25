@@ -15,6 +15,7 @@ type Rules = BTreeMap<(bool, String, String), Vec<Vec<String>>>;
 struct Kernel {
     rules: Rules,
     lose_after_command: Option<(String, bool)>,
+    move_wan_after_command: Option<(String, String)>,
     lose_kill_namespace_after: Option<String>,
     missing_firewall: Option<bool>,
     lose_after_acquire: Option<bool>,
@@ -315,6 +316,16 @@ fn run(test: impl FnOnce(Rc<RefCell<Kernel>>)) {
             let result = commands.borrow_mut().command(cmd);
             let args = arguments(cmd);
             let mut kernel = commands.borrow_mut();
+            if kernel
+                .move_wan_after_command
+                .as_ref()
+                .is_some_and(|(token, _)| args.contains(token))
+            {
+                let (_, wan) = kernel.move_wan_after_command.take().unwrap();
+                kernel.wans
+                    [usize::from(cmd.get_program().to_string_lossy().ends_with("ip6tables"))] =
+                    Some(wan);
+            }
             if kernel
                 .lose_after_command
                 .as_ref()

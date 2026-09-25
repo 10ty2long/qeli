@@ -244,3 +244,5 @@
 - [Q25-F118: привязка NDP proxy вне executor](reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md)
 
 - [Q25-F119: общий бюджет установки профиля и готовность listeners](reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md)
+
+- [Q25-F120: повторная проверка IPv6 WAN при обновлении exit-node](reports/AUDIT-Q25-GATEWAY-IPV6-ROAM.md)

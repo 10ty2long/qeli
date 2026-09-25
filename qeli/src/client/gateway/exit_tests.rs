@@ -105,6 +105,24 @@ fn regression_roaming_cleanup_preserves_each_wan_sibling() {
     });
 }
 #[test]
+fn ipv6_roaming_rejects_wan_change_during_firewall_refresh() {
+    run(|k| {
+        start(&k, "ex_a", "wan0", true);
+        k.borrow_mut().wans[1] = Some("wan1".into());
+        k.borrow_mut().move_wan_after_command = Some(("TCPMSS".into(), "wan2".into()));
+        let error = refresh_exit_paths_if_active("ex_a").unwrap_err();
+        assert!(
+            error.to_string().contains("IPv6 default route changed"),
+            "{error:#}"
+        );
+        assert_eq!(retained_tun("ex_a", true), ["wan0", "wan1"]);
+        assert_eq!(nat_count(&k, "wan1", true), 1);
+        stop("ex_a").unwrap();
+        assert_eq!(nat_count(&k, "wan0", true) + nat_count(&k, "wan1", true), 0);
+    });
+}
+
+#[test]
 fn regression_nat_rules_have_independent_tun_identity() {
     run(|k| {
         start(&k, "ex_a", "wan0", false);
