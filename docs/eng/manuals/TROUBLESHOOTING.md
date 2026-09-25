@@ -1975,6 +1975,11 @@ logs show `exit-node WAN refresh failed`, inspect the default route,
 `iptables`, and selected WAN. With multiple defaults Qeli selects the lowest
 metric; an individual policy route can select another WAN and remain blocked
 by the guard. [Monitor and limits](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md).
+`no unique default WAN` means there is no unambiguous external interface:
+inspect `ip route show default` and `ip -6 route show default`. For ECMP
+or equal lowest metrics on different WANs, give one WAN priority; `route get`
+for one address does not represent every client flow.
+[ECMP verification](../reports/AUDIT-Q25-WAN-ECMP.md).
 
 For a shared WAN, inspect the exact `qeli-exit-node:<tun>` NAT comments in each family.
 The unsuffixed legacy MASQUERADE is preserved during cleanup; do not delete it while

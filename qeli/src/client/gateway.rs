@@ -32,7 +32,7 @@ mod host;
 
 #[path = "gateway/wan.rs"]
 mod wan;
-use wan::{detect_wan, detect_wan_ipv6};
+use wan::{detect_wan, detect_wan_ipv6, select_wan_ipv6, DefaultDevice};
 
 #[path = "gateway/identity.rs"]
 mod identity;
@@ -543,7 +543,7 @@ pub fn engage_exit(tun_if: &str) -> anyhow::Result<()> {
     }
     let wan = detect_wan(ctx).ok_or_else(|| {
         anyhow::anyhow!(
-            "exit-node: no default route found — cannot determine the WAN interface to NAT \
+            "exit-node: no unique default WAN found — cannot determine the interface to NAT \
              out of. An exit node needs its own working internet path to share."
         )
     })?;
@@ -663,7 +663,7 @@ pub fn engage_exit_ipv6(tun_if: &str) -> anyhow::Result<()> {
     }
     let wan = detect_wan_ipv6(ctx).ok_or_else(|| {
         anyhow::anyhow!(
-            "exit-node IPv6: no IPv6 default route found — cannot determine the IPv6 WAN"
+            "exit-node IPv6: no unique IPv6 default WAN found — cannot determine the IPv6 WAN"
         )
     })?;
     engage_exit_ipv6_on(ctx, tun_if, &wan)
@@ -806,18 +806,16 @@ pub(super) fn exit_wan_snapshot_if_active(tun_if: &str) -> anyhow::Result<Option
     }
     let context = Context::forward(tun_if, budget)?;
     let ipv4 = if ipv4_active {
-        Some(
-            detect_wan(&context)
-                .ok_or_else(|| anyhow::anyhow!("exit-node monitor: no IPv4 default WAN remains"))?,
-        )
+        Some(detect_wan(&context).ok_or_else(|| {
+            anyhow::anyhow!("exit-node monitor: no unique IPv4 default WAN remains")
+        })?)
     } else {
         None
     };
     let ipv6 = if ipv6_active {
-        Some(
-            detect_wan_ipv6(&context)
-                .ok_or_else(|| anyhow::anyhow!("exit-node monitor: no IPv6 default WAN remains"))?,
-        )
+        Some(detect_wan_ipv6(&context).ok_or_else(|| {
+            anyhow::anyhow!("exit-node monitor: no unique IPv6 default WAN remains")
+        })?)
     } else {
         None
     };
@@ -859,7 +857,9 @@ pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
     }
     if ipv4_active {
         let wan = detect_wan(ctx).ok_or_else(|| {
-            anyhow::anyhow!("exit-node roaming: no IPv4 default route remains at platform COMMIT")
+            anyhow::anyhow!(
+                "exit-node roaming: no unique IPv4 default WAN remains at platform COMMIT"
+            )
         })?;
         engage_exit_on(ctx, tun_if, &wan)?;
         if detect_wan(ctx).as_deref() != Some(wan.as_str()) {
@@ -868,7 +868,9 @@ pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
     }
     if ipv6_active {
         let wan = detect_wan_ipv6(ctx).ok_or_else(|| {
-            anyhow::anyhow!("exit-node roaming: no IPv6 default route remains at platform COMMIT")
+            anyhow::anyhow!(
+                "exit-node roaming: no unique IPv6 default WAN remains at platform COMMIT"
+            )
         })?;
         engage_exit_ipv6_on(ctx, tun_if, &wan)?;
         if detect_wan_ipv6(ctx).as_deref() != Some(wan.as_str()) {
@@ -1218,12 +1220,17 @@ pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> any
             "gateway IPv6 requires `ip6tables`; refusing a negotiated IPv6 plan that would not forward LAN traffic"
         )
     })?;
-    remember_gateway(tun_if, lan_subnet_ipv6, true);
-
     // Linux stops accepting Router Advertisements when forwarding is enabled unless
     // accept_ra=2. Preserve native outer IPv6 on the default-route interface before
     // flipping the host-wide forwarding bit, and restore both values on clean teardown.
-    let ipv6_wan_before = detect_wan_ipv6(ctx).filter(|interface| valid_ifname(interface));
+    let ipv6_wan_before = match select_wan_ipv6(ctx) {
+        DefaultDevice::Selected(interface) if valid_ifname(&interface) => Some(interface),
+        DefaultDevice::Ambiguous => {
+            anyhow::bail!("gateway IPv6: multiple preferred default WAN interfaces; set one preferred route before enabling forwarding")
+        }
+        _ => None,
+    };
+    remember_gateway(tun_if, lan_subnet_ipv6, true);
     if let Some(wan) = &ipv6_wan_before {
         managed_sysctl(
             ctx,
@@ -1249,11 +1256,17 @@ pub fn engage_ipv6(tun_if: &str, lan_subnet_ipv6: &str, masquerade: bool) -> any
     // kernel's forwarding/RA interaction. A static/no-IPv6 host legitimately has no default,
     // so only enforce this invariant when one existed before the write.
     if ipv6_wan_before.is_some() {
-        let ipv6_wan_after = detect_wan_ipv6(ctx).ok_or_else(|| {
-            anyhow::anyhow!(
-                "gateway IPv6: the IPv6 default route disappeared after enabling forwarding (check accept_ra=2)"
-            )
-        })?;
+        let ipv6_wan_after = match select_wan_ipv6(ctx) {
+            DefaultDevice::Selected(interface) => interface,
+            DefaultDevice::Ambiguous => {
+                anyhow::bail!(
+                    "gateway IPv6: default WAN became ambiguous after enabling forwarding"
+                )
+            }
+            DefaultDevice::Missing => {
+                anyhow::bail!("gateway IPv6: the IPv6 default route disappeared after enabling forwarding (check accept_ra=2)")
+            }
+        };
         if !valid_ifname(&ipv6_wan_after) {
             anyhow::bail!("gateway IPv6: post-forwarding WAN name {ipv6_wan_after:?} is invalid");
         }

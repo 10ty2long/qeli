@@ -25,6 +25,8 @@ namespaces; установленные сервисы не менялись.
 
 Последующий [Q25-F127](AUDIT-Q25-EXIT-WAN-MONITOR.md) добавил отдельный
 монитор exit WAN и проверил обновление без VPN path COMMIT на TCP/UDP.
+Следующий [Q25-F129](AUDIT-Q25-WAN-ECMP.md) отвергает ECMP и равную
+лучшую метрику на разных интерфейсах.
 D06 остаётся открытым для rename/name-reuse
 [Q25-A125](AUDIT-Q25-WAN-NAME-REUSE.md) и иных физических границ;
 policy routing — [Q25-F124](AUDIT-Q25-EXIT-POLICY-ROUTING.md).

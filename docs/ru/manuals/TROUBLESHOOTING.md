@@ -1975,6 +1975,11 @@ exit-node проверяет default route раз в 5 секунд и уста�
 default routes Qeli выбирает наименьшую метрику; индивидуальная policy
 route может выбрать другой WAN и останется заблокированной guard.
 [Монитор и его границы](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md).
+Ошибка `no unique default WAN` означает отсутствие однозначного внешнего
+интерфейса: проверьте `ip route show default` и `ip -6 route show default`.
+При ECMP или равной минимальной метрике на разных WAN задайте один
+приоритетный WAN; `route get` для одного адреса не представляет все
+клиентские потоки. [Проверка ECMP](../reports/AUDIT-Q25-WAN-ECMP.md).
 
 На общем WAN проверяйте точные комментарии NAT `qeli-exit-node:<tun>` в каждой семье.
 Старый MASQUERADE без суффикса сохраняется при очистке; не удаляйте его, пока на него

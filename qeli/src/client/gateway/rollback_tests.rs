@@ -733,6 +733,17 @@ fn inactive_exit_refresh_does_not_wait_for_another_router_operation() {
         .unwrap();
 }
 
+#[test]
+fn ipv6_gateway_rejects_ecmp_before_forwarding_or_ownership() {
+    run(|kernel| {
+        kernel.borrow_mut().wans[1] =
+            Some("wan0\n\tnexthop via 198.51.100.1 dev wan1 weight 1".into());
+        let error = engage_ipv6("gw0", "fd20::/64", true).unwrap_err();
+        assert!(error.to_string().contains("multiple preferred default WAN"));
+        assert_eq!(kernel.borrow().mutations(), 0);
+        assert!(!GATEWAY_SCOPES.lock().unwrap().contains_key("gw0"));
+    });
+}
 #[path = "exit_tests.rs"]
 mod exit_tests;
 

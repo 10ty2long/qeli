@@ -26,6 +26,8 @@ and `cargo fmt --check` — PASS. Bilingual `scripts/check_docs.py`: 9/9 PASS.
 
 The subsequent [Q25-F127](AUDIT-Q25-EXIT-WAN-MONITOR.md) added a dedicated
 exit-WAN monitor and verified refresh without VPN path COMMIT on TCP/UDP.
+The subsequent [Q25-F129](AUDIT-Q25-WAN-ECMP.md) rejects ECMP and equal
+best metrics across interfaces.
 D06 remains open for rename/name reuse
 [Q25-A125](AUDIT-Q25-WAN-NAME-REUSE.md) and other physical boundaries;
 policy routing is covered by [Q25-F124](AUDIT-Q25-EXIT-POLICY-ROUTING.md).

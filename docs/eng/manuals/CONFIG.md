@@ -1928,6 +1928,12 @@ reconnect / container restart.
 - a `FORWARD` accept both ways;
 - a TCP **MSS-clamp** (without it pings pass but sites hang — the tunnel MTU is < 1500).
 
+For negotiated IPv6 the client gateway preserves `accept_ra` on the external
+WAN before enabling forwarding. If the preferred IPv6 default route is
+ambiguous across interfaces, setup stops before changing sysctl/firewall.
+A LAN-only host without an IPv6 default route remains supported.
+[ECMP verification](../reports/AUDIT-Q25-WAN-ECMP.md).
+
 All rules carry a `qeli-gw-nat` comment and are verified with `iptables -C`.
 Within the running process, Qeli records attempted rules by TUN, IP family and LAN
 subnet; cleanup removes saved subnet variants even after configuration changes.
@@ -2293,6 +2299,9 @@ egress. After a confirmed roaming update or the next default-route check
 until installation succeeds.
 If the default route points back to the exit TUN, the exit node rejects setup
 or refresh of that path: it needs a separate external WAN.
+For ECMP across different interfaces or equal best metrics on different WANs,
+the exit node rejects automatic selection; give one external WAN a lower
+metric. [Verification](../reports/AUDIT-Q25-WAN-ECMP.md).
 [Monitor verification](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` cannot be combined
 with `gateway_nat = true` or `forward = true` on the same TUN: those modes
 require different handling of unmarked traffic arriving from the tunnel.
@@ -2333,15 +2342,14 @@ cleaned before releasing the original TUN and reinstalled on full reconnect):
   packet mark, not source subnet: the pool is unknown until after auth, and locally-generated
   host traffic is never marked, so it is never masqueraded);
 - a `FORWARD … ACCEPT` both ways and a `TCPMSS` clamp (without it ping works but TCP/HTTPS stalls);
-- the WAN is auto-detected: **`ip route show default`** is read first (with several defaults
-  the first line wins — the lowest metric, the one the kernel would pick), and only if there
-  is no default route does it fall back to probing with `ip route get 1.1.1.1`. The probe used
-  to be the only method, and on a host that routes that particular address specially (a
-  Pi-hole or corporate resolver at 1.1.1.1 over a management interface, or a blackhole entry
-  for it) `MASQUERADE` and `MARK` were installed on the **wrong interface**: traffic left with
-  a private source address, the return path was a black hole, and the log still said
-  `Exit-node engaged`. IPv6 performs the same lookup with `ip -6 route` and may select a
-  different physical interface from IPv4.
+- the WAN is selected from **`ip route show default`** using the lowest metric
+  among usable routes. If the preferred routes use different interfaces (ECMP
+  or tied priority), Qeli refuses to select just one WAN. Only when there is no
+  usable default route does it fall back to `ip route get 1.1.1.1`; that fallback
+  does not prove every policy route is suitable. IPv6 selects its uplink
+  separately through `ip -6 route` and may use a different interface.
+  [Route metrics](../reports/AUDIT-Q25-WAN-METRIC.md) and
+  [ECMP](../reports/AUDIT-Q25-WAN-ECMP.md).
 
 The rules are removed on a **clean** stop; **a crash leaves them in place** — like the
 kill-switch this is fail-safe, not forgetfulness. Manual cleanup after a crash is in

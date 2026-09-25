@@ -262,3 +262,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F127: exit WAN monitor without VPN path COMMIT](reports/AUDIT-Q25-EXIT-WAN-MONITOR.md)
 
 - [Q25-F128: reject the exit TUN as its own WAN](reports/AUDIT-Q25-EXIT-SELF-WAN.md)
+
+- [Q25-F129: ambiguous ECMP default WAN](reports/AUDIT-Q25-WAN-ECMP.md)

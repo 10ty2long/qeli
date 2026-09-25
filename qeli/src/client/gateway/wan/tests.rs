@@ -167,3 +167,69 @@ fn malformed_default_metric_cannot_take_priority_over_valid_route() {
         assert_eq!(wan.as_deref(), Some("valid"));
     }
 }
+
+#[test]
+fn multipath_default_refuses_destination_specific_fallback() {
+    for ipv6 in [false, true] {
+        let mut calls = 0;
+        let wan = detect_wan_with(ipv6, |args| {
+            assert_eq!(args, expected_queries(ipv6)[0]);
+            calls += 1;
+            let routes = if ipv6 {
+                "default metric 1024 pref medium\n\tnexthop via 2001:db8:1::1 dev wan0 weight 1\n\tnexthop via 2001:db8:2::1 dev wan1 weight 1"
+            } else {
+                "default \n\tnexthop via 198.51.100.1 dev wan0 weight 1 \n\tnexthop via 192.0.2.1 dev wan1 weight 1"
+            };
+            output(true, routes)
+        });
+        assert_eq!(wan, None);
+        assert_eq!(calls, 1, "route-get must not bless one ECMP hash bucket");
+    }
+}
+
+#[test]
+fn equal_best_metrics_across_wans_are_ambiguous() {
+    for ipv6 in [false, true] {
+        let mut calls = 0;
+        let wan = detect_wan_with(ipv6, |args| {
+            assert_eq!(args, expected_queries(ipv6)[0]);
+            calls += 1;
+            output(
+                true,
+                "default via 198.51.100.1 dev wan0 metric 100\ndefault via 192.0.2.1 dev wan1 metric 100",
+            )
+        });
+        assert_eq!(wan, None);
+        assert_eq!(calls, 1);
+    }
+}
+
+#[test]
+fn lower_metric_single_wan_beats_higher_metric_multipath() {
+    for ipv6 in [false, true] {
+        let mut calls = 0;
+        let wan = detect_wan_with(ipv6, |args| {
+            assert_eq!(args, expected_queries(ipv6)[0]);
+            calls += 1;
+            output(
+                true,
+                "default dev fast metric 50\ndefault metric 600\n\tnexthop via 198.51.100.1 dev slow0 weight 1\n\tnexthop via 192.0.2.1 dev slow1 weight 1",
+            )
+        });
+        assert_eq!(wan.as_deref(), Some("fast"));
+        assert_eq!(calls, 1);
+    }
+}
+
+#[test]
+fn equal_best_routes_on_the_same_device_remain_supported() {
+    for ipv6 in [false, true] {
+        let wan = detect_wan_with(ipv6, |_| {
+            output(
+                true,
+                "default via 198.51.100.1 dev wan0 metric 100\ndefault via 198.51.100.3 dev wan0 metric 100",
+            )
+        });
+        assert_eq!(wan.as_deref(), Some("wan0"));
+    }
+}
