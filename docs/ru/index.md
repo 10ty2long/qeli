@@ -270,3 +270,5 @@
 - [Q25-F130: удержание server worker lease после принудительной отмены](reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md)
 
 - [Q25-F131: проверка наличия WAN при установке серверных правил](reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md)
+
+- [Q25-F132: отказ от неоднозначного auto-WAN на сервере](reports/AUDIT-Q25-SERVER-WAN-ECMP.md)

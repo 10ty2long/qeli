@@ -32,7 +32,8 @@ mod host;
 
 #[path = "gateway/wan.rs"]
 mod wan;
-use wan::{detect_wan, detect_wan_ipv6, select_wan_ipv6, DefaultDevice};
+use crate::network_default_route::DefaultDevice;
+use wan::{detect_wan, detect_wan_ipv6, select_wan_ipv6};
 
 #[path = "gateway/identity.rs"]
 mod identity;

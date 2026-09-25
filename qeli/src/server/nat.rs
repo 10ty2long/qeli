@@ -26,6 +26,7 @@ use crate::nat_cleanup::{cleanup_exact_rules_with, cleanup_matching_with, rule_c
 #[cfg(test)]
 use crate::nat_dns_input::DnsInputId;
 use crate::nat_dns_input::{dns_input_rule, DnsInputOwner, DnsInputRegistry, DnsInputRules};
+use crate::network_default_route::{preferred_default_device, DefaultDevice};
 use crate::system_command::Command;
 use std::sync::{Mutex, OnceLock};
 
@@ -102,6 +103,31 @@ fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
 
 /// Resolve a route in the same operation deadline as its subsequent firewall rules.
 fn detect_wan_until(ipv6: bool, budget: Budget) -> anyhow::Result<Option<String>> {
+    // route-get reflects just one destination's ECMP hash bucket. First inspect
+    // all best-metric default candidates; an ambiguous best route must fail
+    // closed rather than authorize rules for only one of its physical uplinks.
+    let mut show = Command::new("ip");
+    if ipv6 {
+        show.args(["-6"]);
+    }
+    show.args(["route", "show", "default"]);
+    let listing = budget.output(&mut show);
+    budget.check()?;
+    if let Ok(output) = listing {
+        if output.status.success() {
+            match preferred_default_device(&String::from_utf8_lossy(&output.stdout)) {
+                DefaultDevice::Selected(wan) => return Ok(Some(wan)),
+                DefaultDevice::Ambiguous => {
+                    anyhow::bail!(
+                        "ambiguous default WAN: multiple equally preferred uplinks or ECMP nexthops"
+                    );
+                }
+                DefaultDevice::Missing => {}
+            }
+        }
+    }
+
+    // Preserve the legacy fallback when no usable default route was reported.
     let mut command = Command::new("ip");
     if ipv6 {
         command.args(["-6"]);

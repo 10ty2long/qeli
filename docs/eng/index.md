@@ -270,3 +270,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F130: retain server worker lease after forced cancellation](reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md)
 
 - [Q25-F131: verify WAN presence before server rule setup](reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md)
+
+- [Q25-F132: reject ambiguous server auto-WAN](reports/AUDIT-Q25-SERVER-WAN-ECMP.md)

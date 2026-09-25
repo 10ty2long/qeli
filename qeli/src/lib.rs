@@ -95,6 +95,13 @@ mod network_namespace;
 #[cfg(all(target_os = "linux", any(test, feature = "client", feature = "server")))]
 mod network_interface;
 
+// One default-route parser for client exit and managed server uplink selection.
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+mod network_default_route;
+
 // Shared interpretation of firewall rule/chain checks; no platform commands in this module.
 #[cfg(any(
     test,
