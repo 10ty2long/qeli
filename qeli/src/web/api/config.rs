@@ -13,6 +13,10 @@ use std::sync::Arc;
 const CONFIG_HISTORY_DIR: &str = ".config-history";
 const CONFIG_HISTORY_KEEP: usize = 10;
 
+fn read_config_text(path: impl AsRef<FsPath>) -> std::io::Result<String> {
+    crate::server::read_config_text(path)
+}
+
 /// Revision of the exact file bytes, comments included. Structured and raw editors therefore
 /// share one optimistic-concurrency token and a hand edit is detected just like a panel edit.
 pub(super) fn config_revision(raw: &str) -> String {
@@ -20,6 +24,17 @@ pub(super) fn config_revision(raw: &str) -> String {
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect()
+}
+
+/// A configured path must never fall back to the startup snapshot after a
+/// read error: that would bypass the revision check and could overwrite a
+/// hand-edited or oversized INI with stale panel state.
+fn read_revision_source(state: &ServerState, path: Option<&str>) -> Result<String, String> {
+    match path {
+        Some(path) => read_config_text(path)
+            .map_err(|error| format!("cannot read current server config '{path}': {error}")),
+        None => Ok(state.config.to_ini_string()),
+    }
 }
 
 fn revision_conflict(body: &Value, current_raw: &str) -> Option<Value> {
@@ -46,7 +61,7 @@ fn external_write_conflict(
     config_path: &FsPath,
     checked_raw: &str,
 ) -> Result<Option<Value>, String> {
-    let actual_raw = std::fs::read_to_string(config_path)
+    let actual_raw = read_config_text(config_path)
         .map_err(|error| format!("re-read config {}: {error}", config_path.display()))?;
     let checked_revision = config_revision(checked_raw);
     let current_revision = config_revision(&actual_raw);
@@ -104,7 +119,7 @@ fn snapshot_config(config_path: &FsPath, current_raw: &str) -> Result<Option<Str
             .map_err(|error| format!("inspect config snapshot {}: {error}", snapshot.display()))?;
         if !metadata.is_file()
             || metadata.file_type().is_symlink()
-            || std::fs::read_to_string(&snapshot).ok().as_deref() != Some(current_raw)
+            || read_config_text(&snapshot).ok().as_deref() != Some(current_raw)
         {
             return Err(format!(
                 "existing config snapshot {} is not the expected regular file",
@@ -140,6 +155,13 @@ pub(super) fn snapshot_before_changed_write(
     current_raw: &str,
     next_raw: &str,
 ) -> Result<Option<String>, String> {
+    if next_raw.len() as u64 > crate::server::MAX_SERVER_INI_BYTES {
+        return Err(format!(
+            "server config is {} bytes; maximum is {}",
+            next_raw.len(),
+            crate::server::MAX_SERVER_INI_BYTES
+        ));
+    }
     if config_revision(current_raw) == config_revision(next_raw) {
         Ok(None)
     } else {
@@ -167,7 +189,7 @@ pub async fn get_config(
     // Return the live on-disk config so the panel reflects Quick-Start / Apply
     // changes (the supervisor's in-memory `config` is only its startup snapshot).
     if let Some(path) = state.config_path.lock().await.clone() {
-        let raw = match std::fs::read_to_string(&path) {
+        let raw = match read_config_text(&path) {
             Ok(raw) => raw,
             Err(error) => {
                 return Ok(Json(super::err_json(format!(
@@ -1084,7 +1106,7 @@ pub async fn apply_quickstart_profile(
         Ok(path) => path,
         Err(error) => return Ok(Json(super::err_json(error))),
     };
-    let current_raw = match std::fs::read_to_string(&canon) {
+    let current_raw = match read_config_text(&canon) {
         Ok(raw) => raw,
         Err(error) => return Ok(Json(super::err_json(format!("read config: {error}")))),
     };
@@ -1195,10 +1217,10 @@ pub async fn put_config(
         Err(error) => return Ok(Json(super::err_json(error))),
     };
     let revision_path = state.config_path.lock().await.clone();
-    let current_raw_for_revision = revision_path
-        .as_deref()
-        .and_then(|path| std::fs::read_to_string(path).ok())
-        .unwrap_or_else(|| state.config.to_ini_string());
+    let current_raw_for_revision = match read_revision_source(&state, revision_path.as_deref()) {
+        Ok(raw) => raw,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     if let Some(conflict) = revision_conflict(&body, &current_raw_for_revision) {
         return Ok(Json(conflict));
     }
@@ -1403,12 +1425,13 @@ pub async fn put_config(
     // SECURITY: post_up/post_down run arbitrary commands as root. They are
     // FILE-ONLY — the panel/API must never set or change them, or a panel
     // compromise becomes RCE. Restore each profile's hooks from the current
-    // on-disk config (discarding whatever the request sent); if the file can't be
-    // read, force-clear them so the panel can never introduce a hook.
-    match std::fs::read_to_string(&canon)
-        .ok()
-        .and_then(|s| crate::config::parse_server_config(&s).ok())
-    {
+    // on-disk config (discarding whatever the request sent). A failed read
+    // aborts the edit; an unparseable file cannot authorize new hooks.
+    let current_for_secrets = match read_config_text(&canon) {
+        Ok(raw) => raw,
+        Err(error) => return Ok(Json(super::err_json(format!("read config: {error}")))),
+    };
+    match crate::config::parse_server_config(&current_for_secrets).ok() {
         Some(cur) => {
             for p in &mut parsed.profiles {
                 let (up, down) = cur
@@ -1623,7 +1646,7 @@ pub async fn get_config_raw(
             ))))
         }
     };
-    match std::fs::read_to_string(&canon) {
+    match read_config_text(&canon) {
         // Secrets are masked on the way out and restored on the way back in
         // (`put_config_raw`), so the raw editor keeps working without the browser ever
         // holding the admin hash or a user's stored password. (Audit 2026-07-27, P1.)
@@ -1857,10 +1880,10 @@ pub async fn put_config_raw(
         Err(error) => return Ok(Json(super::err_json(error))),
     };
     let revision_path = state.config_path.lock().await.clone();
-    let current_raw_for_revision = revision_path
-        .as_deref()
-        .and_then(|path| std::fs::read_to_string(path).ok())
-        .unwrap_or_else(|| state.config.to_ini_string());
+    let current_raw_for_revision = match read_revision_source(&state, revision_path.as_deref()) {
+        Ok(raw) => raw,
+        Err(error) => return Ok(Json(super::err_json(error))),
+    };
     if let Some(conflict) = revision_conflict(&body, &current_raw_for_revision) {
         return Ok(Json(conflict));
     }
@@ -1871,10 +1894,15 @@ pub async fn put_config_raw(
     // (section, key), so hashes cannot be swapped between users. (Audit 2026-07-27, P1.)
     let raw = {
         let path = state.config_path.lock().await.clone();
-        let on_disk = path
-            .as_deref()
-            .and_then(|p| std::fs::read_to_string(p).ok())
-            .unwrap_or_default();
+        let Some(path) = path else {
+            return Ok(Json(super::err_json(
+                "config_path not set — running from in-memory config",
+            )));
+        };
+        let on_disk = match read_config_text(&path) {
+            Ok(raw) => raw,
+            Err(error) => return Ok(Json(super::err_json(format!("read config: {error}")))),
+        };
         match unmask_raw_secrets(&raw, &on_disk) {
             Ok(raw) => raw,
             Err(error) => return Ok(Json(super::err_json(error))),
@@ -1961,9 +1989,11 @@ pub async fn put_config_raw(
     // SECURITY: post_up/post_down are file-only (they execute commands as root).
     // The raw editor must not introduce or change them — reject if the submitted
     // config's hooks differ from what's currently on disk.
-    let on_disk = std::fs::read_to_string(&canon)
-        .ok()
-        .and_then(|s| crate::config::parse_server_config(&s).ok());
+    let current_for_hooks = match read_config_text(&canon) {
+        Ok(raw) => raw,
+        Err(error) => return Ok(Json(super::err_json(format!("read config: {error}")))),
+    };
+    let on_disk = crate::config::parse_server_config(&current_for_hooks).ok();
     for p in &parsed.profiles {
         let (cur_up, cur_down) = on_disk
             .as_ref()
@@ -2096,7 +2126,7 @@ pub async fn list_config_history(
             {
                 continue;
             }
-            let raw = match std::fs::read_to_string(entry.path()) {
+            let raw = match read_config_text(entry.path()) {
                 Ok(raw) => raw,
                 Err(_) => continue,
             };
@@ -2139,7 +2169,7 @@ pub async fn restore_config_history(
         Ok(path) => path,
         Err(error) => return Ok(Json(super::err_json(error))),
     };
-    let current_raw = match std::fs::read_to_string(&canon) {
+    let current_raw = match read_config_text(&canon) {
         Ok(raw) => raw,
         Err(error) => return Ok(Json(super::err_json(format!("read config: {error}")))),
     };
@@ -2177,12 +2207,12 @@ pub async fn restore_config_history(
             ))))
         }
     };
-    if snapshot_meta.len() > 16 * 1024 * 1024 {
+    if snapshot_meta.len() > crate::server::MAX_SERVER_INI_BYTES {
         return Ok(Json(super::err_json(
             "config snapshot is unexpectedly large",
         )));
     }
-    let raw = match std::fs::read_to_string(&snapshot_path) {
+    let raw = match read_config_text(&snapshot_path) {
         Ok(raw) => raw,
         Err(error) => {
             return Ok(Json(super::err_json(format!(
@@ -2286,6 +2316,35 @@ mod raw_secret_tests {
         for invalid in ["../server.conf", "x/y.conf", ".conf", "x.tgz", "x conf"] {
             assert!(!valid_history_id(invalid), "accepted {invalid:?}");
         }
+    }
+
+    #[test]
+    fn oversized_ini_cannot_replace_revision_or_be_saved() {
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-config-size-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("server.conf");
+        std::fs::write(&path, b"[web]\n").unwrap();
+        let state =
+            crate::server::test_api_state(crate::config::server::ServerConfig::default(), &path);
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_len(crate::server::MAX_SERVER_INI_BYTES + 1)
+            .unwrap();
+        let error = read_revision_source(&state, Some(path.to_str().unwrap())).unwrap_err();
+        assert!(error.contains("maximum is 16777216"));
+        assert!(external_write_conflict(&path, "[web]\n").is_err());
+        let large = "x".repeat(crate::server::MAX_SERVER_INI_BYTES as usize + 1);
+        let error = snapshot_before_changed_write(&path, "[web]\n", &large).unwrap_err();
+        assert!(error.contains("maximum is 16777216"));
+        assert!(!dir.join(CONFIG_HISTORY_DIR).exists());
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
     }
 
     #[test]

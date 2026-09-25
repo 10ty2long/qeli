@@ -1176,7 +1176,7 @@ impl ServerState {
             Some(p) => p,
             None => return,
         };
-        let new_web = std::fs::read_to_string(&path)
+        let new_web = read_config_text(&path)
             .ok()
             .and_then(|s| crate::config::parse_server_config(&s).ok())
             .map(|c| c.web);
@@ -1226,6 +1226,14 @@ impl ServerState {
         }
     }
 }
+
+/// Read the same bounded, descriptor-stable INI snapshot as the worker.
+/// CLI commands use this instead of unbounded `read_to_string`.
+pub fn read_config_text(path: impl AsRef<std::path::Path>) -> std::io::Result<String> {
+    crate::config_source::load(path).map(|snapshot| snapshot.into_parts().0)
+}
+
+pub const MAX_SERVER_INI_BYTES: u64 = crate::config_source::MAX_SERVER_INI_BYTES;
 
 /// Directory holding per-profile server identity keys.
 pub const IDENTITY_DIR: &str = "/etc/qeli/identity";

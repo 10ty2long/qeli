@@ -25,6 +25,9 @@ Configs are **text flat-INI**. Structure:
 
 The panel provides a **form and an INI editor**; there is no configuration JSON editor.
 JSON in the internal HTTP API carries form data and status, not a configuration file format.
+The server INI is limited to **16 MiB**: `check-config`, startup, SIGHUP and panel
+reads refuse a larger file before parsing. The form, INI editor, Quick Start and
+snapshot restore cannot write a config above this limit.
 A failed load blocks saving; edits made during a pending save remain marked unsaved.
 Panel address/port/TLS/base_path changes require a full process restart, not just a worker restart.
 

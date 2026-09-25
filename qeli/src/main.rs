@@ -294,7 +294,7 @@ enum Commands {
 /// up before the rest of the config is parsed. Falls back to (info, stderr) on
 /// any error — the real parse later will surface config problems.
 fn peek_logging(path: &PathBuf) -> (String, Option<String>, String) {
-    if let Ok(s) = std::fs::read_to_string(path) {
+    if let Ok(s) = server::read_config_text(path) {
         // The only config format is flat INI: read its `[logging]` section.
         if let Ok(doc) = config::format::IniDoc::parse(&s) {
             if let Some(log) = doc.section("logging") {
@@ -514,8 +514,12 @@ async fn main() -> anyhow::Result<()> {
 
         Commands::CheckConfig { config, client } => {
             let path = config.display().to_string();
-            let text = std::fs::read_to_string(&config)
-                .map_err(|e| anyhow::anyhow!("cannot read {}: {}", path, e))?;
+            let text = if client {
+                std::fs::read_to_string(&config)
+            } else {
+                server::read_config_text(&config)
+            }
+            .map_err(|e| anyhow::anyhow!("cannot read {}: {}", path, e))?;
 
             if client {
                 config::parse_client_config_strict(&text)
@@ -634,7 +638,7 @@ async fn main() -> anyhow::Result<()> {
         Commands::ShowIdentity { config } => {
             #[cfg(target_os = "linux")]
             {
-                let s = std::fs::read_to_string(&config)?;
+                let s = server::read_config_text(&config)?;
                 let cfg: config::server::ServerConfig = config::parse_server_config(&s)?;
                 println!(
                     "{:<14} {:<22} SERVER PUBLIC KEY (pin on client)",
@@ -657,7 +661,7 @@ async fn main() -> anyhow::Result<()> {
         Commands::RotateIdentity { profile, config } => {
             #[cfg(target_os = "linux")]
             {
-                let s = std::fs::read_to_string(&config)?;
+                let s = server::read_config_text(&config)?;
                 let cfg: config::server::ServerConfig = config::parse_server_config(&s)?;
                 let p = cfg
                     .profiles
@@ -1048,7 +1052,7 @@ fn add_client(
     use config::users::{UserEntry, UsersDb};
 
     // Resolve the users file from the server config.
-    let cfg_str = std::fs::read_to_string(&config)
+    let cfg_str = server::read_config_text(&config)
         .map_err(|e| anyhow::anyhow!("cannot read server config {}: {}", config.display(), e))?;
     let server_cfg: config::server::ServerConfig = config::parse_server_config(&cfg_str)?;
     let users_file = server_cfg.auth.users_file.clone();
@@ -1233,7 +1237,7 @@ fn set_web_password(
     enable: bool,
     config: PathBuf,
 ) -> anyhow::Result<()> {
-    let cfg_str = std::fs::read_to_string(&config)
+    let cfg_str = server::read_config_text(&config)
         .map_err(|e| anyhow::anyhow!("cannot read server config {}: {}", config.display(), e))?;
     // Validate the existing file parses before we touch it, so we never overwrite
     // a broken config (and so the [web] section we edit is well-formed).
@@ -1266,6 +1270,11 @@ fn set_web_password(
     // Re-parse the edited config as a safety net before writing it back.
     config::parse_server_config(&new_cfg)
         .map_err(|e| anyhow::anyhow!("internal error: edited config no longer parses: {}", e))?;
+    anyhow::ensure!(
+        new_cfg.len() as u64 <= server::MAX_SERVER_INI_BYTES,
+        "edited server config exceeds {} bytes",
+        server::MAX_SERVER_INI_BYTES
+    );
     qeli::util::write_atomic_private(&config, new_cfg.as_bytes())
         .map_err(|e| anyhow::anyhow!("cannot write {}: {}", config.display(), e))?;
 
@@ -1308,7 +1317,7 @@ fn share_link(
     reset: bool,
     config: PathBuf,
 ) -> anyhow::Result<()> {
-    let cfg_str = std::fs::read_to_string(&config)
+    let cfg_str = server::read_config_text(&config)
         .map_err(|e| anyhow::anyhow!("cannot read {}: {}", config.display(), e))?;
     let server_cfg: config::server::ServerConfig = config::parse_server_config(&cfg_str)?;
 

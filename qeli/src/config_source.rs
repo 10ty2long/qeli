@@ -7,6 +7,11 @@ use std::{
     time::SystemTime,
 };
 
+/// Largest server INI accepted by the worker, CLI and panel. The panel's
+/// request-body ceiling is also 16 MiB; serialized edits are checked again
+/// before writing because JSON-to-INI expansion can exceed the request size.
+pub(crate) const MAX_SERVER_INI_BYTES: u64 = 16 * 1024 * 1024;
+
 #[derive(Clone, Debug)]
 pub(crate) struct CommandTrust(Result<(), String>);
 impl CommandTrust {
@@ -122,7 +127,7 @@ impl OpenedConfig {
 
     #[cfg(any(feature = "server", test))]
     fn read(self) -> io::Result<ConfigSnapshot> {
-        self.read_with_limit(u64::MAX)
+        self.read_with_limit(MAX_SERVER_INI_BYTES)
     }
 
     fn read_with_limit(mut self, max_bytes: u64) -> io::Result<ConfigSnapshot> {
@@ -286,6 +291,21 @@ mod tests {
             .err()
             .unwrap();
         assert!(error.to_string().contains("maximum is 262144"));
+    }
+
+    #[test]
+    fn server_snapshot_rejects_oversize_before_reading() {
+        let dir = Fixture::new();
+        let path = dir.write("server.conf", b"", false);
+        File::options()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_len(MAX_SERVER_INI_BYTES + 1)
+            .unwrap();
+        let error = load(&path).err().unwrap();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("maximum is 16777216"));
     }
 
     #[test]

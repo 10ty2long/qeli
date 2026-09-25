@@ -263,7 +263,7 @@ fn backup_preflight(
     let conflict = |error: String| (StatusCode::CONFLICT, error);
     archive_budget(until).map_err(internal)?;
     // The shared loader refuses special files without waiting on FIFO open and
-    // verifies one stable inode snapshot. No new server-config size limit here.
+    // verifies one stable inode snapshot and enforces the worker's INI size limit.
     let (current_raw, _) = crate::config_source::load(config_path)
         .map_err(|error| internal(error.to_string()))?
         .into_parts();
@@ -741,8 +741,9 @@ fn restore_blocking(
     }
     let network_check = (|| -> Result<(), String> {
         let relative = qeli_relative_path(config_path).ok_or("invalid active config path")?;
-        let raw = std::fs::read_to_string(std::path::Path::new(&staged_root).join(relative))
-            .map_err(|error| error.to_string())?;
+        let raw =
+            crate::server::read_config_text(std::path::Path::new(&staged_root).join(relative))
+                .map_err(|error| error.to_string())?;
         let config = crate::config::parse_server_config(&raw).map_err(|error| error.to_string())?;
         crate::server::preflight::run_until(&config, until).map_err(|error| {
             format!("refused: restored config conflicts with host networking: {error}")
@@ -888,7 +889,7 @@ fn hook_referenced_files(config_path: &str) -> std::collections::HashSet<String>
     // `-c /etc/qeli/qeli.conf` — or any other name — produced an EMPTY set and the whole
     // gate went inert, silently. `ServerState::config_path` is what every other part of the
     // server uses. (Audit 2026-08-04.)
-    if let Ok(text) = std::fs::read_to_string(config_path) {
+    if let Ok(text) = crate::server::read_config_text(config_path) {
         if let Ok(cfg) = crate::config::parse_server_config(&text) {
             for p in &cfg.profiles {
                 add(&p.routing.post_up);
@@ -929,9 +930,13 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
     if let Some(relative) = qeli_relative_path(config_path) {
         let staged_path = std::path::Path::new(root).join(&relative);
         if staged_path.is_file() {
-            let staged = std::fs::read_to_string(&staged_path)
+            let staged = crate::server::read_config_text(&staged_path)
                 .map_err(|e| format!("cannot read staged '{}': {e}", relative.display()))?;
-            let live = std::fs::read_to_string(config_path).unwrap_or_default();
+            let live = match crate::server::read_config_text(config_path) {
+                Ok(raw) => raw,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => String::new(),
+                Err(error) => return Err(format!("cannot read live server config: {error}")),
+            };
             vet_server_config(&relative.to_string_lossy(), &staged, &live)?;
 
             // The restored main config is authoritative. Runtime merges its external users
@@ -1082,6 +1087,13 @@ fn vet_staged_dir(
 /// Apply the hook/validation rules to one staged `.conf`, given the file it would
 /// replace (empty when it is a new file).
 fn vet_server_config(name: &str, staged: &str, live: &str) -> Result<(), String> {
+    if staged.len() as u64 > crate::server::MAX_SERVER_INI_BYTES {
+        return Err(format!(
+            "refused: server config '{name}' is {} bytes; maximum is {}",
+            staged.len(),
+            crate::server::MAX_SERVER_INI_BYTES
+        ));
+    }
     let (config, findings) = crate::config::parse_server_config_reporting(staged)
         .map_err(|e| format!("refused: server config '{name}' is invalid: {e}"))?;
     if !findings.is_empty() {
@@ -1308,6 +1320,13 @@ fn prune_pre_restore_snapshots(keep: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn oversized_server_ini_is_rejected_before_restore_publication() {
+        let oversized = "#".repeat(crate::server::MAX_SERVER_INI_BYTES as usize + 1);
+        let error = vet_server_config("server.conf", &oversized, "").unwrap_err();
+        assert!(error.contains("maximum is 16777216"));
+    }
 
     #[test]
     fn staged_users_are_validated_against_inline_groups_and_reservations() {

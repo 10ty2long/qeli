@@ -160,7 +160,7 @@ pub(super) async fn current_server_config(
     let Some(path) = path else {
         return Ok(state.config.clone());
     };
-    let text = std::fs::read_to_string(&path)
+    let text = crate::server::read_config_text(&path)
         .map_err(|error| format!("cannot read current server config '{}': {error}", path))?;
     let (config, findings) = crate::config::parse_server_config_reporting(&text)
         .map_err(|error| format!("cannot parse current server config '{}': {error}", path))?;

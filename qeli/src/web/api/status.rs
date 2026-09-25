@@ -588,10 +588,12 @@ pub async fn set_blocked_settings(
                 ))));
             }
         };
-    let mut raw = match std::fs::read_to_string(&canon) {
+    let mut raw = match crate::server::read_config_text(&canon) {
         Ok(s) => s,
         Err(e) => return Ok(Json(super::err_json(format!("read error: {}", e)))),
     };
+
+    let checked_raw = raw.clone();
 
     // Surgical, comment-preserving patch: VPN keys under [auth], panel keys under [web].
     if let Some((enabled, max, window, lockout)) = vpn {
@@ -610,10 +612,15 @@ pub async fn set_blocked_settings(
             e
         ))));
     }
-    let old_raw = match std::fs::read_to_string(&canon) {
+    let old_raw = match crate::server::read_config_text(&canon) {
         Ok(raw) => raw,
         Err(e) => return Ok(Json(super::err_json(format!("read error: {}", e)))),
     };
+    if old_raw != checked_raw {
+        return Ok(Json(super::err_json(
+            "config changed on disk while editing brute-force settings; reload and retry",
+        )));
+    }
     if let Err(error) = super::config::snapshot_before_changed_write(&canon, &old_raw, &raw) {
         return Ok(Json(super::err_json(format!(
             "refusing to save without a rollback snapshot: {error}"
