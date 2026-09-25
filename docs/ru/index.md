@@ -228,3 +228,5 @@
 - [Q25-F109: startup recovery, остановка и сохранение сетевого lease](reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md)
 
 - [Q25-F110: запуск TUN pump и ранний откат в присоединяемом worker](reports/AUDIT-Q25-PUMP-START.md)
+
+- [Q25-F111: последовательная диагностика клиента и ожидание итоговой записи](reports/AUDIT-Q25-STATUS-WRITER.md)

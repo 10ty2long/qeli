@@ -97,3 +97,5 @@ Recordizer-validation ordering was checked in code and existing tests; no malfor
 remote-push injection was performed here. This is not a benchmark or D10 certification.
 Windows VM, Mac/iOS and physical router remain SKIPPED by user decision; final Android
 validation remains D12. Debt: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+25 September 2026 reconciliation: blocking client diagnostics writes are addressed in [Q25-F111](AUDIT-Q25-STATUS-WRITER.md). Other D05 limits remain.

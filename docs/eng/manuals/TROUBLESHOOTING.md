@@ -2505,3 +2505,15 @@ can fail because of OS resources. An already started reader is joined before rel
 the original TUN. A route/DNS/forwarding cleanup failure retains `failed` and kill-switch
 even after SIGTERM. Resolve the cause and start explicitly; `post_up` alone does not
 prove a working data plane. [fcntl/thread-failure reproduction](../reports/AUDIT-Q25-PUMP-START.md).
+
+### 6.93. Linux: panel status is delayed or unchanged after exit
+
+Check `cannot publish client diagnostics`, storage availability and permissions on the
+`QELI_CLIENT_STATUS` directory. `cannot start client diagnostics writer` means its
+thread could not be created; the VPN can continue without updating the file. Failure
+to publish terminal status does not change the VPN exit code and may retain old state.
+
+On slow fsync, ordinary exit awaits the writer; forced owner destruction also joins it.
+A displayed `running` does not prove the process is alive, and missing an intermediate
+state does not prove a lost connection: the queue coalesces snapshots.
+[Design and validation](../reports/AUDIT-Q25-STATUS-WRITER.md).

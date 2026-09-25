@@ -13,6 +13,8 @@ mod roaming_linux;
 #[cfg(target_os = "linux")]
 pub mod route;
 #[cfg(target_os = "linux")]
+mod status_writer;
+#[cfg(target_os = "linux")]
 mod tun_recovery;
 
 use crate::crypto::{
@@ -1701,6 +1703,7 @@ struct LinuxCoreAdapter {
     cancel: Arc<AtomicBool>,
     counters: Arc<RuntimeCounters>,
     diagnostics: ClientStatusReporter,
+    diagnostic_writer: Option<status_writer::Writer<serde_json::Value>>,
     cleanup_failures: crate::client_cleanup::Failures,
     post_up: Option<String>,
     hook_context: Option<ClientHookContext>,
@@ -1717,7 +1720,7 @@ struct LinuxCoreAdapter {
 #[cfg(target_os = "linux")]
 #[derive(Clone)]
 struct ClientStatusReporter {
-    path: Option<Arc<std::path::PathBuf>>,
+    sender: Option<status_writer::Sender<serde_json::Value>>,
     state: Arc<std::sync::Mutex<ClientDiagnosticState>>,
 }
 
@@ -1735,27 +1738,51 @@ struct ClientDiagnosticState {
 
 #[cfg(target_os = "linux")]
 impl ClientStatusReporter {
-    fn from_env() -> Self {
+    fn from_env() -> (Self, Option<status_writer::Writer<serde_json::Value>>) {
         let path = std::env::var("QELI_CLIENT_STATUS")
             .ok()
             .map(|value| value.trim().to_string())
             .filter(|value| !value.is_empty())
-            .map(std::path::PathBuf::from)
-            .map(Arc::new);
+            .map(std::path::PathBuf::from);
         let profile =
             std::env::var("QELI_CLIENT_PROFILE").unwrap_or_else(|_| "standalone".to_string());
-        Self {
-            path,
-            state: Arc::new(std::sync::Mutex::new(ClientDiagnosticState {
-                profile,
-                state: "created".to_string(),
-                generation: 0,
-                reconnects: 0,
-                retry_in_secs: None,
-                last_error: None,
-                plan: None,
-            })),
-        }
+        let (sender, writer) = match path {
+            Some(path) => match status_writer::Writer::start(move |body: serde_json::Value| {
+                if let Some(parent) = path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                if let Ok(encoded) = serde_json::to_vec(&body) {
+                    if let Err(error) = crate::util::write_atomic_private(&path, &encoded) {
+                        log::debug!(
+                            "cannot publish client diagnostics {}: {error}",
+                            path.display()
+                        );
+                    }
+                }
+            }) {
+                Ok((sender, writer)) => (Some(sender), Some(writer)),
+                Err(error) => {
+                    log::warn!("cannot start client diagnostics writer: {error}");
+                    (None, None)
+                }
+            },
+            None => (None, None),
+        };
+        (
+            Self {
+                sender,
+                state: Arc::new(std::sync::Mutex::new(ClientDiagnosticState {
+                    profile,
+                    state: "created".to_string(),
+                    generation: 0,
+                    reconnects: 0,
+                    retry_in_secs: None,
+                    last_error: None,
+                    plan: None,
+                })),
+            },
+            writer,
+        )
     }
 
     fn state_name(state: ClientState) -> &'static str {
@@ -1832,11 +1859,11 @@ impl ClientStatusReporter {
     }
 
     fn publish(&self, counters: &RuntimeCounters) {
-        let Some(path) = self.path.as_deref() else {
+        let Some(sender) = &self.sender else {
             return;
         };
         let current = match self.state.lock() {
-            Ok(current) => current.clone(),
+            Ok(current) => current,
             Err(_) => return,
         };
         let udp = counters.udp.snapshot();
@@ -1870,21 +1897,13 @@ impl ClientStatusReporter {
                 "udp_recv_buffer_bytes": udp.granted_recv_bytes,
             },
         });
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        if let Ok(encoded) = serde_json::to_vec(&body) {
-            if let Err(error) = crate::util::write_atomic_private(path, &encoded) {
-                log::debug!(
-                    "cannot publish client diagnostics {}: {error}",
-                    path.display()
-                );
-            }
-        }
+        // Keep the state lock until enqueue: an older sampled state must never be
+        // submitted after a newer event. The worker performs all file I/O unlocked.
+        sender.submit(body);
     }
 
     fn start_sampler(&self, counters: Arc<RuntimeCounters>, tasks: &mut tokio::task::JoinSet<()>) {
-        if self.path.is_none() {
+        if self.sender.is_none() {
             return;
         }
         let reporter = self.clone();
@@ -1955,7 +1974,7 @@ impl LinuxCoreAdapter {
             config.tun.name.clone(),
         ));
         let counters = Arc::new(RuntimeCounters::default());
-        let diagnostics = ClientStatusReporter::from_env();
+        let (diagnostics, diagnostic_writer) = ClientStatusReporter::from_env();
         diagnostics.publish(&counters);
         Ok((
             Self {
@@ -1964,6 +1983,7 @@ impl LinuxCoreAdapter {
                 cancel: Arc::new(AtomicBool::new(false)),
                 counters,
                 diagnostics,
+                diagnostic_writer,
                 cleanup_failures: crate::client_cleanup::Failures::default(),
                 post_up: None,
                 hook_context: None,
@@ -2438,21 +2458,33 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     let mut client_tasks = tokio::task::JoinSet::new();
     let mut final_report = None;
     let result = run_client_inner(config_path, &mut client_tasks, &mut final_report).await;
-    crate::client_tasks::finish(&mut client_tasks, || {
-        if let Some((reporter, counters)) = final_report {
-            reporter.terminal(result.as_ref().err());
-            reporter.publish(&counters);
+    crate::client_tasks::finish(&mut client_tasks, || {}).await;
+    if let Some(mut report) = final_report {
+        report.reporter.terminal(result.as_ref().err());
+        report.reporter.publish(&report.counters);
+        if let Some(writer) = report.writer.as_mut() {
+            if let Err(error) = writer.finish().await {
+                // Diagnostics remain best effort; their failure cannot change the
+                // transport result or cause a reconnect after successful cleanup.
+                log::warn!("cannot finish client diagnostics: {error}");
+            }
         }
-    })
-    .await;
+    }
     result
+}
+
+#[cfg(target_os = "linux")]
+struct ClientFinalReport {
+    reporter: ClientStatusReporter,
+    counters: Arc<RuntimeCounters>,
+    writer: Option<status_writer::Writer<serde_json::Value>>,
 }
 
 #[cfg(target_os = "linux")]
 async fn run_client_inner(
     config_path: &str,
     client_tasks: &mut tokio::task::JoinSet<()>,
-    final_report: &mut Option<(ClientStatusReporter, Arc<RuntimeCounters>)>,
+    final_report: &mut Option<ClientFinalReport>,
 ) -> anyhow::Result<()> {
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).
     client_tasks.spawn(trace::watch());
@@ -2466,10 +2498,11 @@ async fn run_client_inner(
     // before releasing the namespace claim.
     let _network_lease;
     let (mut core_adapter, config) = LinuxCoreAdapter::new(&config_content)?;
-    *final_report = Some((
-        core_adapter.diagnostics.clone(),
-        core_adapter.counters.clone(),
-    ));
+    *final_report = Some(ClientFinalReport {
+        reporter: core_adapter.diagnostics.clone(),
+        counters: core_adapter.counters.clone(),
+        writer: core_adapter.diagnostic_writer.take(),
+    });
     core_adapter
         .diagnostics
         .start_sampler(core_adapter.counters.clone(), client_tasks);

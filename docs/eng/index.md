@@ -228,3 +228,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F109: startup recovery, stop and retained network lease](reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md)
 
 - [Q25-F110: TUN pump startup and early rollback on a joined worker](reports/AUDIT-Q25-PUMP-START.md)
+
+- [Q25-F111: ordered client diagnostics and joined final publication](reports/AUDIT-Q25-STATUS-WRITER.md)

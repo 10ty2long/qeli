@@ -580,3 +580,14 @@ cleanup failure.
 Successful `post_up` confirms NetworkPlan application, not completed pump startup.
 Failure to create a cleanup worker or forced Drop can still cause synchronous fallback
 waiting. [Validation and limits](../reports/AUDIT-Q25-PUMP-START.md).
+
+## Linux client diagnostics on slow storage
+
+With `QELI_CLIENT_STATUS` set, one dedicated thread writes status. While a write is
+busy, only the latest pending snapshot is retained; intermediate states may never
+appear in the file. Schema 1 and `0600` permissions are unchanged.
+
+Ordinary exit awaits terminal publication after stopping the sampler. Slow fsync keeps
+neighboring async tasks responsive but can delay process exit; there is no hard overall
+deadline. Diagnostics failures do not change the VPN result. If a write fails, the file
+may be stale: inspect exit status and logs. [Validation and limits](../reports/AUDIT-Q25-STATUS-WRITER.md).
