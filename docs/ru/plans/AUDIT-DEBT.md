@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v30 -->
+<!-- normative-sync: audit-debt-v31 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -26,7 +26,7 @@
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
 | D09 | 14/15/25/32/33 | DONE | Linux lifecycle и системные отказы | [Итоговая сверка](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md): на текущем SHA 2175 Linux unit, 8 control, 15 hook-process и 8/8 реальных worker lifecycle PASS; сохранены exit/SHA и сетевые снимки до/после. Ранее 48 privileged и реальные DNS/route/firewall матрицы применимы к неизменённым путям. Полные install/upgrade и сетевые сочетания остаются D11/D10, общий shutdown — D05. |
 | D10 | 17/18/19/21/22/23 | IN_PROGRESS | Сетевая интеграционная матрица | Проверить off/manual/route/nat66 × NDP, DNS UDP/TCP, multiprofile, iptables/nft/firewalld, setup rollback/stop/restart и сохранение чужих ресурсов. |
-| D11 | 00/24/27/34 | IN_PROGRESS | Актуальные native cores и provenance | Из чистого commit пересобрать изменённые ядра по закреплённым рецептам, сравнить A/B, обновить копии и настоящие provenance; проверить ABI/exports и пакеты. |
+| D11 | 00/24/27/34 | IN_PROGRESS | Актуальные native cores и provenance | Из чистого commit пересобрать изменённые ядра по закреплённым рецептам, сравнить A/B, обновить копии и настоящие provenance; проверить ABI/exports и пакеты. [Q25-F133](../reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md) устраняет два client-only compile errors у Linux WAN monitor; client-only, server-only и router binary проверены, но общий D11 ещё открыт. |
 | D12 | 24/25/27/34 | IN_PROGRESS | Платформенное подтверждение | Android: 154 JVM + 6 API 34/x86_64 instrumentation PASS со свежим JNI; итоговый снимок ещё требуется. Windows VM, Mac/Xcode/iOS и router runtime **SKIPPED по решению пользователя 24 сентября 2026**: стендов не будет. Эти платформы не сертифицированы; это исключение из текущего объёма, не PASS. |
 | D13 | 14/19/22/25 | IN_PROGRESS | Удержание ресурсов под нагрузкой | Измерить fd/tasks/threads/TUN/routes/firewall/journals/RSS до и после churn/reconnect/stop, включая отказы и несколько профилей; конечный deadline и критерии отсутствия роста. |
 | D14 | 00/34 | TODO | Текущий benchmark и certification | После корректности выполнить воспроизводимый benchmark нужных режимов с текущим SHA, окружением и метриками; собрать certification только из фактических результатов. Старые результаты 0.8.0 не закрывают 0.8.2. |
@@ -348,6 +348,15 @@ nofile=1024 на тесте 512 TCP-соединений; неизменённы
 [отчёт: 11 parser + 1 WAN unit, 8 обычных и 2 отрицательных Linux-сценария](../reports/AUDIT-Q25-SERVER-WAN-ECMP.md).
 Явный WAN, отдельные policy routes и runtime-смена остаются D06/D10;
 реестр **5/15 DONE**.
+
+### Q25-F133 — сборка клиентского ядра без roaming feature
+
+Монитор exit WAN работает на Linux независимо от experimental-roaming, но имя
+TUN в TCP и UDP объявлялось только под этим feature. Сборка client-only
+падала с двумя E0425; область объявления расширена до Linux.
+[Отчёт, baseline FAIL и исправленные feature-сборки](../reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md).
+Клиентский router binary собран и запущен с --help; платформенный runtime
+и provenance остаются D11/D12. Реестр **5/15 DONE**.
 
 ## Источники
 

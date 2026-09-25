@@ -272,3 +272,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F131: verify WAN presence before server rule setup](reports/AUDIT-Q25-SERVER-WAN-PRESENCE.md)
 
 - [Q25-F132: reject ambiguous server auto-WAN](reports/AUDIT-Q25-SERVER-WAN-ECMP.md)
+
+- [Q25-F133: fix the client-only Linux build](reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md)

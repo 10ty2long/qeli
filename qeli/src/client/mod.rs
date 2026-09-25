@@ -5676,7 +5676,7 @@ where
     let reader_fd = tunnel.reader_fd;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let writer_fd = tunnel.writer_fd;
-    #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
+    #[cfg(target_os = "linux")]
     let tun_name = tunnel.if_name;
     #[cfg(any(target_os = "linux", target_os = "android"))]
     let is_tap = tunnel.is_tap;
@@ -10119,7 +10119,7 @@ pub(crate) async fn run_udp_tunnel(
     let reader_fd = tun_setup.reader_fd;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
     let writer_fd = tun_setup.writer_fd;
-    #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
+    #[cfg(target_os = "linux")]
     let tun_name = tun_setup.if_name;
     #[cfg(any(target_os = "linux", target_os = "android"))]
     let is_tap = tun_setup.is_tap;

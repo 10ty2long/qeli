@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v30 -->
+<!-- normative-sync: audit-debt-v31 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -26,7 +26,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
 | D09 | 14/15/25/32/33 | DONE | Linux lifecycle and system failures | [Closure evidence](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md): current SHA 2175 Linux unit, 8 control, 15 hook-process and 8/8 live worker lifecycle PASS, with exit/SHA and before/after network snapshots. Earlier 48 privileged and real DNS/route/firewall matrices still apply to unchanged paths. Full install/upgrade and network combinations remain D11/D10; whole shutdown remains D05. |
 | D10 | 17/18/19/21/22/23 | IN_PROGRESS | Network integration matrix | Verify off/manual/route/nat66 × NDP, DNS UDP/TCP, multiple profiles, iptables/nft/firewalld, setup rollback/stop/restart and preservation of foreign resources. |
-| D11 | 00/24/27/34 | IN_PROGRESS | Current native cores and provenance | Rebuild affected cores from a clean commit using pinned recipes, compare A/B outputs, update copies and genuine provenance; verify ABI/exports and packages. |
+| D11 | 00/24/27/34 | IN_PROGRESS | Current native cores and provenance | Rebuild affected cores from a clean commit using pinned recipes, compare A/B outputs, update copies and genuine provenance; verify ABI/exports and packages. [Q25-F133](../reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md) fixes two client-only compile errors in the Linux WAN monitor; client-only, server-only and router binary were checked, while overall D11 remains open. |
 | D12 | 24/25/27/34 | IN_PROGRESS | Platform evidence | Android: 154 JVM + 6 API 34/x86_64 instrumentation tests PASS with fresh JNI; final snapshot remains required. Windows VM, Mac/Xcode/iOS and router runtime **SKIPPED by user decision on 24 September 2026**: those environments will not be provided. These platforms are not certified; this is a scope exclusion, not PASS. |
 | D13 | 14/19/22/25 | IN_PROGRESS | Resource retention under load | Measure fd/tasks/threads/TUN/routes/firewall/journals/RSS before and after churn/reconnect/stop, including failures and multiple profiles; bounded duration and explicit growth criteria. |
 | D14 | 00/34 | TODO | Current benchmark and certification | After correctness, run reproducible benchmarks for required modes with the current SHA, environment and metrics; build certification only from actual results. Historical 0.8.0 results do not certify 0.8.2. |
@@ -346,6 +346,15 @@ on different WANs. Server auto mode refuses before forwarding and new rules;
 [report: 11 parser + 1 WAN unit, 8 ordinary and 2 negative Linux cases](../reports/AUDIT-Q25-SERVER-WAN-ECMP.md).
 Explicit WAN, policy routes and runtime changes remain D06/D10;
 register **5/15 DONE**.
+
+### Q25-F133 — client core build without the roaming feature
+
+The exit WAN monitor runs on Linux regardless of experimental-roaming, but TCP
+and UDP declared the TUN name only under that feature. The client-only build
+failed with two E0425 errors; the declaration is now Linux-scoped.
+[Report, baseline FAIL and fixed feature builds](../reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md).
+The router client binary built and ran with --help; platform runtime and
+provenance remain D11/D12. Register **5/15 DONE**.
 
 ## Sources
 
