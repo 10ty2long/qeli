@@ -171,6 +171,54 @@ fn validate_rule(rule: &Rule) -> anyhow::Result<()> {
                 && !arg.chars().any(char::is_control)),
         "invalid server firewall arguments"
     );
+    // The NAT44 off-WAN guard uses repeated iprange matches. Recovery must
+    // accept only the exact form emitted by rules(), not arbitrary extension
+    // arguments supplied through a damaged or foreign journal.
+    if rule
+        .args
+        .windows(2)
+        .any(|pair| pair[0] == "-m" && pair[1] == "iprange")
+    {
+        let a = rule.args.as_slice();
+        anyhow::ensure!(
+            !rule.ipv6
+                && rule.table == "filter"
+                && rule.chain == "FORWARD"
+                && a.len() == 26
+                && a[0] == "-i"
+                && !a[1].starts_with('-')
+                && a[1] != "!"
+                && a[2] == "!"
+                && a[3] == "-o"
+                && !a[4].starts_with('-')
+                && a[4] != "!"
+                && a[5] == "-m"
+                && a[6] == "iprange"
+                && a[7] == "!"
+                && a[8] == "--dst-range"
+                && a[9] == "10.0.0.0-10.255.255.255"
+                && a[10] == "-m"
+                && a[11] == "iprange"
+                && a[12] == "!"
+                && a[13] == "--dst-range"
+                && a[14] == "172.16.0.0-172.31.255.255"
+                && a[15] == "-m"
+                && a[16] == "iprange"
+                && a[17] == "!"
+                && a[18] == "--dst-range"
+                && a[19] == "192.168.0.0-192.168.255.255"
+                && a[20] == "-j"
+                && a[21] == "DROP"
+                && a[22] == "-m"
+                && a[23] == "comment"
+                && a[24] == "--comment"
+                && a[25]
+                    .strip_prefix("qeli-nat:")
+                    .is_some_and(crate::util::is_valid_profile_name),
+            "invalid NAT44 off-WAN firewall guard"
+        );
+        return Ok(());
+    }
     let mut i = 0;
     let (mut comments, mut targets) = (0, 0);
     while i < rule.args.len() {

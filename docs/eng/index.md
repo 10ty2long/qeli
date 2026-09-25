@@ -276,3 +276,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F133: fix the client-only Linux build](reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md)
 - [Q25-F134: bind NAT66 transit to the selected WAN](reports/AUDIT-Q25-SERVER-NAT66-EGRESS.md)
 - [Q25-F135: refuse NAT auto-WAN without default routes](reports/AUDIT-Q25-SERVER-AUTO-WAN-FAILURE.md)
+- [Q25-F136: NAT44 off-WAN boundary and private LAN](reports/AUDIT-Q25-SERVER-NAT44-EGRESS.md)

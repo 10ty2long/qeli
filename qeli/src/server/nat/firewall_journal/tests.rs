@@ -76,6 +76,65 @@ fn foreign_comments_and_command_switches_are_never_replayed() {
     assert!(validate_rule(&bad).is_err());
 }
 #[test]
+fn nat44_guard_journal_accepts_only_generated_iprange_form() {
+    let mut owned = Rule {
+        ipv6: false,
+        table: "filter".into(),
+        chain: "FORWARD".into(),
+        args: [
+            "-i",
+            "qeli0",
+            "!",
+            "-o",
+            "wan0",
+            "-m",
+            "iprange",
+            "!",
+            "--dst-range",
+            "10.0.0.0-10.255.255.255",
+            "-m",
+            "iprange",
+            "!",
+            "--dst-range",
+            "172.16.0.0-172.31.255.255",
+            "-m",
+            "iprange",
+            "!",
+            "--dst-range",
+            "192.168.0.0-192.168.255.255",
+            "-j",
+            "DROP",
+            "-m",
+            "comment",
+            "--comment",
+            "qeli-nat:edge",
+        ]
+        .map(str::to_owned)
+        .to_vec(),
+    };
+    let mut interface_named_iprange = rule(false);
+    interface_named_iprange.args[1] = "iprange".into();
+    validate_rule(&interface_named_iprange).unwrap();
+    validate_rule(&owned).unwrap();
+    let mut store = Store::new("boot");
+    store.retain(11, owned.clone(), Backend::Nft).unwrap();
+    assert_eq!(
+        Store::decode(&store.encode().unwrap(), "boot")
+            .unwrap()
+            .rules(11),
+        vec![owned.clone()]
+    );
+    owned.args[9] = "0.0.0.0-255.255.255.255".into();
+    assert!(validate_rule(&owned).is_err());
+    owned.args[9] = "10.0.0.0-10.255.255.255".into();
+    owned.args[7] = "-d".into();
+    assert!(validate_rule(&owned).is_err());
+    owned.args[7] = "!".into();
+    owned.ipv6 = true;
+    assert!(validate_rule(&owned).is_err());
+}
+
+#[test]
 fn configured_profile_names_are_preserved_verbatim() {
     for name in [
         "edge.eu",

@@ -341,6 +341,40 @@ fn rules(
         r
     };
     let mut managed = cross_profile_drop_rules(profile, tun, peer_tuns);
+    // A permissive host FORWARD chain must not leak unmasqueraded Internet
+    // traffic through another uplink. Preserve access to RFC1918 networks
+    // behind the server; unlike NAT66, NAT44 commonly shares those routes.
+    // Match the tunnel rather than only pool_cidr so client_subnet traffic is
+    // subject to the same public-destination boundary.
+    managed.push(Rule {
+        table: "filter",
+        chain: "FORWARD",
+        args: cm(vec![
+            "-i".into(),
+            tun.into(),
+            "!".into(),
+            "-o".into(),
+            wan.into(),
+            "-m".into(),
+            "iprange".into(),
+            "!".into(),
+            "--dst-range".into(),
+            "10.0.0.0-10.255.255.255".into(),
+            "-m".into(),
+            "iprange".into(),
+            "!".into(),
+            "--dst-range".into(),
+            "172.16.0.0-172.31.255.255".into(),
+            "-m".into(),
+            "iprange".into(),
+            "!".into(),
+            "--dst-range".into(),
+            "192.168.0.0-192.168.255.255".into(),
+            "-j".into(),
+            "DROP".into(),
+        ]),
+        essential: true,
+    });
     managed.extend([
         // ESSENTIAL — MASQUERADE the client pool out the WAN interface.
         Rule {
@@ -1580,7 +1614,7 @@ mod tests {
     use super::{
         chain_policy_from_output, cross_profile_drop_rules, dns_input_rule, exact_delete_args,
         forward_permit_position_from_listing, ipv6_off_rules, ipv6_rules, resolve_wan_ipv6,
-        rule_comment, tag,
+        rule_comment, rules, tag,
     };
     use crate::config::server::Ipv6RoutingMode;
 
@@ -1852,6 +1886,27 @@ mod tests {
 -A FORWARD -i lan1 -j ACCEPT
 ";
         assert_eq!(forward_permit_position_from_listing(listing), 5);
+    }
+
+    #[test]
+    fn nat44_drops_public_off_uplink_transit_but_spares_private_lan() {
+        let rules = rules("nat44", "wan0", "qeli4", "10.73.0.0/24", &[], 1340);
+        let guard = rules
+            .iter()
+            .find(|rule| has_sequence(&rule.args, &["-i", "qeli4", "!", "-o", "wan0"]))
+            .expect("NAT44 must guard public off-uplink transit");
+        assert_eq!((guard.table, guard.chain), ("filter", "FORWARD"));
+        assert!(guard.essential);
+        assert!(has_sequence(&guard.args, &["-j", "DROP"]));
+        assert!(!guard.args.iter().any(|value| value == "-s"));
+        for range in [
+            "10.0.0.0-10.255.255.255",
+            "172.16.0.0-172.31.255.255",
+            "192.168.0.0-192.168.255.255",
+        ] {
+            assert!(has_sequence(&guard.args, &["!", "--dst-range", range]));
+        }
+        assert!(guard.args.iter().any(|value| value == "qeli-nat:nat44"));
     }
 
     #[test]

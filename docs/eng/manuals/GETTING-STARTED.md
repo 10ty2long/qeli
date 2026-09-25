@@ -484,12 +484,13 @@ and resources behind the server) — skip this.
 
 Flip one toggle in the profile — the server itself, via `iptables`, enables IP
 forwarding and installs MASQUERADE + FORWARD + MSS-clamp, and removes the rules again
-when it stops:
+when it stops. IPv4 traffic outside RFC1918 is blocked on another interface,
+while access to RFC1918 LANs follows the administrator firewall policy:
 
 ```ini
 # in [profile:tcp]
 routing.nat.enabled  = true
-# WAN egress interface. Leave empty/default to auto-detect (ip route get 1.1.1.1),
+# WAN egress interface. Leave empty/default to detect one unambiguous default route,
 # or set it explicitly, e.g. ens3.
 routing.nat.interface =
 # IPv6 ULA egress: MASQUERADE through the public IPv6 default-route interface

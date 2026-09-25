@@ -487,13 +487,14 @@ tcp       tcp://0.0.0.0:443   33f399e6d9b8a31a41e5ffa8b1e1ce457f10d8bbf07c145377
 
 Достаточно включить один тумблер в профиле — сервер **сам** через `iptables`
 включит IP-форвардинг и поставит MASQUERADE + FORWARD + MSS-clamp, а при остановке
-снимет правила:
+снимет правила. IPv4-трафик к назначениям вне RFC1918 через другой интерфейс блокируется, а
+доступ к RFC1918 LAN зависит от firewall администратора:
 
 ```ini
 # в [profile:tcp]
 routing.nat.enabled  = true
 # WAN-интерфейс наружу. Оставьте пустым/по умолчанию — определится автоматически
-# (ip route get 1.1.1.1); либо задайте явно, напр. ens3.
+# (по однозначному default route); либо задайте явно, напр. ens3.
 routing.nat.interface =
 # выход ULA IPv6: MASQUERADE через интерфейс публичного IPv6 default route
 routing.ipv6.mode = nat66
