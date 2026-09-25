@@ -173,3 +173,55 @@ async fn cancelled_host_cleanup_joins_before_releasing_owned_resource() {
     assert!(cleanup.await.unwrap_err().is_cancelled());
     assert!(released.load(Ordering::SeqCst));
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cancelled_setup_joins_before_outer_guard_and_drops_unadopted_result() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    struct Outer(Arc<AtomicBool>, Arc<AtomicBool>, Arc<AtomicBool>);
+    impl Drop for Outer {
+        fn drop(&mut self) {
+            if !self.0.load(Ordering::SeqCst) || !self.1.load(Ordering::SeqCst) {
+                self.2.store(true, Ordering::SeqCst);
+            }
+        }
+    }
+    struct ResultOwner(Arc<AtomicBool>);
+    impl Drop for ResultOwner {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+    let worker_done = Arc::new(AtomicBool::new(false));
+    let result_dropped = Arc::new(AtomicBool::new(false));
+    let early_outer_drop = Arc::new(AtomicBool::new(false));
+    let (started, entered) = tokio::sync::oneshot::channel();
+    let (resume, continue_work) = std::sync::mpsc::channel();
+    let worker_done_in = worker_done.clone();
+    let result_dropped_in = result_dropped.clone();
+    let outer = Outer(
+        worker_done.clone(),
+        result_dropped.clone(),
+        early_outer_drop.clone(),
+    );
+    let setup = tokio::spawn(async move {
+        let _outer = outer;
+        let _result = blocking("qeli-test-profile-setup", move || {
+            let _ = started.send(());
+            continue_work.recv_timeout(Duration::from_secs(2)).unwrap();
+            worker_done_in.store(true, Ordering::SeqCst);
+            ResultOwner(result_dropped_in)
+        })
+        .await
+        .unwrap();
+    });
+    entered.await.unwrap();
+    setup.abort();
+    tokio::time::sleep(Duration::from_millis(30)).await;
+    assert!(!worker_done.load(Ordering::SeqCst));
+    assert!(!result_dropped.load(Ordering::SeqCst));
+    resume.send(()).unwrap();
+    assert!(setup.await.unwrap_err().is_cancelled());
+    assert!(worker_done.load(Ordering::SeqCst));
+    assert!(result_dropped.load(Ordering::SeqCst));
+    assert!(!early_outer_drop.load(Ordering::SeqCst));
+}

@@ -236,3 +236,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F114: owned TOFU worker and cancellation-safe errors](reports/AUDIT-Q25-IDENTITY-WORKER.md)
 
 - [Q25-F115: joined server cleanup worker](reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md)
+
+- [Q25-F116: server profile TUN/NAT setup off the executor](reports/AUDIT-Q25-SERVER-SETUP-WORKER.md)

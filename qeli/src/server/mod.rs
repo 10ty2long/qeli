@@ -4784,21 +4784,18 @@ async fn run_profile(
     crate::profile_teardown::Outcome::new(result, failures.result())
 }
 
-async fn run_profile_generation(
-    state: Arc<ServerState>,
-    pcfg: ProfileConfig,
-    teardown: &mut ProfileTeardown,
-    tasks: ProfileTasks,
-    shutdown: &mut tokio::sync::watch::Receiver<bool>,
-    services: &mut ProfileServices,
-) -> anyhow::Result<()> {
-    let name = pcfg.name.clone();
-    let ProfileServices {
-        services: service_set,
-        listeners: listener_set,
-        ..
-    } = services;
+/// TUN fds stay local until setup completes. An abandoned worker result closes its
+/// non-persistent device; once adopted, ProfileTeardown owns the original queues.
+struct ProfileTunSetup {
+    queues: Vec<TunInterface>,
+    ifname: String,
+    dev_type: DeviceType,
+    profile_subnet: Option<crate::config::server::PoolSubnet>,
+    queue_count: usize,
+}
 
+fn setup_profile_tun(pcfg: &ProfileConfig) -> anyhow::Result<ProfileTunSetup> {
+    let name = pcfg.name.clone();
     // Setup TUN interface(s). With tun.queues>1 we open several IFF_MULTI_QUEUE fds
     // attached to ONE device; the kernel RSS-spreads packets across them so the data
     // plane reads/writes the interface — and runs the per-queue encrypt — on multiple
@@ -4843,8 +4840,7 @@ async fn run_profile_generation(
         // pointless (idle pollers), but explicit values are honoured up to the limit.
         n.clamp(1, 256)
     };
-    teardown.queues = TunInterface::create_multiqueue(&pcfg.tun.name, pcfg.tun.mtu, dev_type, nq)?;
-    let queues = &teardown.queues;
+    let queues = TunInterface::create_multiqueue(&pcfg.tun.name, pcfg.tun.mtu, dev_type, nq)?;
     // The name the KERNEL gave the device, not the one we asked for. TUNSETIFF copies at most
     // IFNAMSIZ-1 = 15 bytes and writes back what it actually used; `create_multiqueue` has
     // always read that back, and this code then threw it away and kept configuring
@@ -4867,7 +4863,7 @@ async fn run_profile_generation(
     } else {
         None
     };
-    let ipv6_subnet = crate::config::server::validate_ipv6_profile(&pcfg)
+    let ipv6_subnet = crate::config::server::validate_ipv6_profile(pcfg)
         .map_err(|error| anyhow::anyhow!("profile '{}': {}", name, error))?;
     if pcfg.tun.ip_mode != crate::config::server::IpMode::Ipv6 {
         TunInterface::set_address(
@@ -4915,6 +4911,23 @@ async fn run_profile_generation(
         }
     );
 
+    Ok(ProfileTunSetup {
+        queues,
+        ifname,
+        dev_type,
+        profile_subnet,
+        queue_count: nq,
+    })
+}
+
+/// ProfileTeardown already owns the TUN before this worker starts. Cancelling its
+/// waiter joins the worker first, then the outer guard can remove every NAT rule.
+fn setup_profile_nat(
+    state: &Arc<ServerState>,
+    pcfg: &ProfileConfig,
+    ifname: &str,
+) -> anyhow::Result<(String, String)> {
+    let name = pcfg.name.clone();
     // Host NAT (iptables) for full-tunnel egress. Always clear any rules we left
     // behind first (covers an unclean exit, or routing.nat toggled off then a
     // restart), then (re)install if this profile requests masquerading.
@@ -4932,7 +4945,7 @@ async fn run_profile_generation(
             &pcfg.name,
             &pcfg.routing.nat.interface,
             &pcfg.pool.cidr,
-            &ifname,
+            ifname,
             &peer_tuns,
             pcfg.tun.mtu,
         ) {
@@ -4965,7 +4978,7 @@ async fn run_profile_generation(
         // only the route and works regardless (#13).
         // Fails the profile rather than logging: `forward_private` promises transit routing,
         // and a profile that cannot route it serves clients whose packets vanish.
-        nat::enable_routing(&pcfg.name, &ifname, &peer_tuns, pcfg.tun.mtu)
+        nat::enable_routing(&pcfg.name, ifname, &peer_tuns, pcfg.tun.mtu)
             .map_err(|e| anyhow::anyhow!("profile '{}': {e}", pcfg.name))?;
     }
     let mut wan_ipv6 = String::new();
@@ -4975,7 +4988,7 @@ async fn run_profile_generation(
             pcfg.routing.ipv6.mode,
             &pcfg.routing.ipv6.interface,
             &pcfg.pool.ipv6.cidr,
-            &ifname,
+            ifname,
             &peer_tuns,
             pcfg.tun.mtu,
         )? {
@@ -4997,6 +5010,49 @@ async fn run_profile_generation(
     if pcfg.routing.ipv6.mode == crate::config::server::Ipv6RoutingMode::Manual {
         log::info!("Profile '{}': manual IPv6; firewall, forwarding, accept_ra and external routing are administrator-managed", name);
     }
+    Ok((wan_ipv4, wan_ipv6))
+}
+
+async fn run_profile_generation(
+    state: Arc<ServerState>,
+    pcfg: ProfileConfig,
+    teardown: &mut ProfileTeardown,
+    tasks: ProfileTasks,
+    shutdown: &mut tokio::sync::watch::Receiver<bool>,
+    services: &mut ProfileServices,
+) -> anyhow::Result<()> {
+    let name = pcfg.name.clone();
+    let ProfileServices {
+        services: service_set,
+        listeners: listener_set,
+        ..
+    } = services;
+
+    // Each synchronous host phase runs on its own joined worker. The first returns
+    // non-persistent TUN fds; the profile guard adopts them before NAT can mutate
+    // global state. A cancelled waiter joins its worker before this guard is dropped.
+    let tun_pcfg = pcfg.clone();
+    let ProfileTunSetup {
+        queues: created_queues,
+        ifname,
+        dev_type,
+        profile_subnet,
+        queue_count: nq,
+    } = crate::profile_teardown::blocking("qeli-profile-tun-setup", move || {
+        setup_profile_tun(&tun_pcfg)
+    })
+    .await??;
+    teardown.queues = created_queues;
+    let queues = &teardown.queues;
+
+    let nat_state = state.clone();
+    let nat_pcfg = pcfg.clone();
+    let nat_ifname = ifname.clone();
+    let (wan_ipv4, wan_ipv6) =
+        crate::profile_teardown::blocking("qeli-profile-nat-setup", move || {
+            setup_profile_nat(&nat_state, &nat_pcfg, &nat_ifname)
+        })
+        .await??;
     let ndp_proxy = if pcfg.routing.ipv6.ndp_proxy == crate::config::server::Ipv6NdpProxyMode::Off {
         None
     } else {
