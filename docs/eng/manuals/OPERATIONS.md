@@ -663,3 +663,24 @@ Nested tasks receive cancellation requests, but Drop cannot guarantee their asyn
 a new generation must not overlap tasks still finishing. An unpolled future does not
 acquire admission. This rule applies to the Linux `run_client` runtime, not to every
 shared transport-core instance on other platforms.
+
+
+## Hook and backup file operations
+
+Linux hooks perform script metadata checks, private context-file creation, command
+execution and file removal on one joined thread with its own async runtime. Normal
+waiting does not block the client/server executor. Cancellation during preparation
+allows admitted file I/O to finish, removes the file and skips command startup.
+Cancellation of a running command terminates its group and reaps the shell before
+file removal. Forced Drop joins synchronously and may wait on the filesystem for more
+than 30 seconds. The command/output deadline remains 30 seconds after preparation.
+A background service deliberately detached by a hook with closed pipes retains its
+existing contract.
+
+Panel backup reads and checks the active config on a blocking worker that holds the
+config write lease until work ends, even if the HTTP request is cancelled. Reading uses
+the shared stable regular-file loader: FIFO is rejected without waiting for a writer.
+Preparation spends the same 60-second budget as archive creation/verification; late
+results neither start tar nor publish a backup. This timer cannot safely interrupt a
+stuck syscall. INI format, hook authorization, archive contents and restore policy are
+unchanged. [Validation and remaining audit work](../plans/AUDIT-DEBT.md).

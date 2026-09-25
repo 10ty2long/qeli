@@ -254,6 +254,29 @@ fn critical_backup_paths(
     Ok(paths)
 }
 
+// File reads/stat/open and parsing run while the worker retains the config write lease.
+fn backup_preflight(
+    config_path: &str,
+    until: Instant,
+) -> Result<(String, String), (StatusCode, String)> {
+    let internal = |error: String| (StatusCode::INTERNAL_SERVER_ERROR, error);
+    let conflict = |error: String| (StatusCode::CONFLICT, error);
+    archive_budget(until).map_err(internal)?;
+    // The shared loader refuses special files without waiting on FIFO open and
+    // verifies one stable inode snapshot. No new server-config size limit here.
+    let (current_raw, _) = crate::config_source::load(config_path)
+        .map_err(|error| internal(error.to_string()))?
+        .into_parts();
+    archive_budget(until).map_err(internal)?;
+    let config = crate::config::parse_server_config(&current_raw)
+        .map_err(|error| conflict(error.to_string()))?;
+    let critical_paths = critical_backup_paths(&config, config_path).map_err(conflict)?;
+    validate_critical_sources(&critical_paths).map_err(internal)?;
+    let archived_path = managed_archive_path(config_path, "server config").map_err(conflict)?;
+    archive_budget(until).map_err(internal)?;
+    Ok((current_raw, archived_path))
+}
+
 /// Stream a gzip tarball of `/etc/qeli` (config + users file + identity keys) for
 /// off-box backup. Authed-admin only; a GET so the browser downloads it straight
 /// to disk carrying the session cookie. Restore = extract it back into `/etc`
@@ -273,47 +296,29 @@ pub async fn download_backup(
         .await
         .clone()
         .unwrap_or_else(|| "/etc/qeli/server.conf".to_string());
-    let current_raw = match std::fs::read_to_string(&config_path) {
-        Ok(raw) => raw,
-        Err(error) => {
-            return Ok((StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response())
-        }
-    };
-    let config = match crate::config::parse_server_config(&current_raw) {
-        Ok(config) => config,
-        Err(error) => return Ok((StatusCode::CONFLICT, error.to_string()).into_response()),
-    };
-    let critical_paths = match critical_backup_paths(&config, &config_path) {
-        Ok(paths) => paths,
-        Err(error) => return Ok((StatusCode::CONFLICT, error).into_response()),
-    };
-    if let Err(error) = validate_critical_sources(&critical_paths) {
-        return Ok((StatusCode::INTERNAL_SERVER_ERROR, error).into_response());
-    }
+    let worker_path = config_path.clone();
     let out = crate::config_transaction::blocking(write_guard, move || {
-        // Non-critical local artefacts may be unreadable; the critical set is preflighted and
-        // then verified against the actual archive member list below.
+        let (current_raw, archived_config_path) = backup_preflight(&worker_path, until)?;
+        // Non-critical local artefacts may be unreadable; required members are verified below.
         let command = create_archive_command(Path::new("/etc"), true);
-        crate::system_command::Command::from(command).output_bounded(
-            until,
-            PORTABLE_ARCHIVE_LIMIT,
-            None,
-        )
+        let output = crate::system_command::Command::from(command)
+            .output_bounded(until, PORTABLE_ARCHIVE_LIMIT, None)
+            .map_err(|error| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("tar execution failed: {error}"),
+                )
+            })?;
+        Ok::<_, (StatusCode, String)>((output, current_raw, archived_config_path))
     })
     .await;
 
     // tar exits non-zero (1/2) when it skipped unreadable files, yet still produces
     // a valid archive — accept any non-empty gzip stream (magic 1f 8b).
     let is_gzip = |b: &[u8]| b.len() > 2 && b[0] == 0x1f && b[1] == 0x8b;
-    let (write_guard, o) = match out {
-        Ok((guard, Ok(o))) => (guard, o),
-        Ok((_, Err(e))) => {
-            return Ok((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("tar execution failed: {e}"),
-            )
-                .into_response())
-        }
+    let (write_guard, (o, current_raw, archived_config_path)) = match out {
+        Ok((guard, Ok(output))) => (guard, output),
+        Ok((_, Err((status, message)))) => return Ok((status, message).into_response()),
         Err(e) => {
             return Ok((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -332,8 +337,6 @@ pub async fn download_backup(
     // Do not infer completeness from tar stderr: an already-missing path need not be named.
     // List the archive that will actually be returned and require every runtime dependency.
     let tar_stderr = String::from_utf8_lossy(&o.stderr).trim().to_string();
-    let archived_config_path = managed_archive_path(&config_path, "server config")
-        .map_err(|error| (StatusCode::CONFLICT, Json(super::err_json(error))))?;
     let inspected =
         crate::config_transaction::blocking(write_guard, move || -> Result<_, String> {
             let (bytes, members) = inspect_backup_archive(o.stdout, until)?;
@@ -1876,3 +1879,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
+
+#[cfg(test)]
+#[path = "backup_io_tests.rs"]
+mod io_tests;

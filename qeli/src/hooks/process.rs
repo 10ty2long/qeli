@@ -196,25 +196,62 @@ impl Drop for OwnedProcess {
     }
 }
 
+#[cfg(test)]
 pub(crate) async fn run(mut command: Command, deadline: Duration) -> Result<HookOutput, RunError> {
     let until = tokio::time::Instant::now() + deadline;
     let process = OwnedProcess::spawn(&mut command).map_err(RunError::Spawn)?;
     collect(process, until).await
 }
 
+#[cfg(test)]
 async fn collect(
-    mut process: OwnedProcess,
+    process: OwnedProcess,
     until: tokio::time::Instant,
 ) -> Result<HookOutput, RunError> {
+    collect_cancellable(process, until, std::future::pending())
+        .await
+        .map(|output| output.expect("no cancellation"))
+}
+
+/// Stop preparation without spawning, or terminate and reap an admitted leader.
+/// Used by the joined hook worker so runtime destruction cannot abandon reaping.
+pub(crate) async fn run_cancellable(
+    mut command: Command,
+    deadline: Duration,
+    stop: impl std::future::Future<Output = ()>,
+) -> Result<Option<HookOutput>, RunError> {
+    tokio::pin!(stop);
+    tokio::select! {
+        biased;
+        _ = &mut stop => return Ok(None),
+        _ = std::future::ready(()) => {},
+    }
+    let until = tokio::time::Instant::now() + deadline;
+    let process = OwnedProcess::spawn(&mut command).map_err(RunError::Spawn)?;
+    collect_cancellable(process, until, stop).await
+}
+
+async fn collect_cancellable(
+    mut process: OwnedProcess,
+    until: tokio::time::Instant,
+    stop: impl std::future::Future<Output = ()>,
+) -> Result<Option<HookOutput>, RunError> {
     let stdout = process.child.stdout.take().expect("piped hook stdout");
     let stderr = process.child.stderr.take().expect("piped hook stderr");
     let mut out_tail = OutputTail::default();
     let mut err_tail = OutputTail::default();
-    let completed = tokio::time::timeout_at(until, async {
-        tokio::try_join!(drain(stdout, &mut out_tail), drain(stderr, &mut err_tail))?;
-        process.wait().await
-    })
-    .await;
+    let completed = tokio::select! {
+        biased;
+        _ = stop => None,
+        result = tokio::time::timeout_at(until, async {
+            tokio::try_join!(drain(stdout, &mut out_tail), drain(stderr, &mut err_tail))?;
+            process.wait().await
+        }) => Some(result),
+    };
+    let Some(completed) = completed else {
+        process.terminate().await.map_err(RunError::Io)?;
+        return Ok(None);
+    };
     let (status, timed_out) = match completed {
         Ok(Ok(status)) => (status, false),
         Ok(Err(error)) => {
@@ -224,12 +261,12 @@ async fn collect(
         }
         Err(_) => (process.terminate().await.map_err(RunError::Io)?, true),
     };
-    Ok(HookOutput {
+    Ok(Some(HookOutput {
         status,
         timed_out,
         stdout: out_tail,
         stderr: err_tail,
-    })
+    }))
 }
 
 #[cfg(test)]
@@ -370,6 +407,59 @@ mod tests {
         assert!(tail.truncated);
         assert!(tail.text().ends_with('\u{fffd}'));
         assert!(tail.text().len() < MAX_TAIL_BYTES * 3 + 100);
+    }
+
+    #[tokio::test]
+    async fn cooperative_stop_before_admission_does_not_spawn() {
+        let missing = std::env::temp_dir().join(format!("missing-hook-{}", rand::random::<u64>()));
+        assert!(
+            run_cancellable(Command::new(missing), DEADLINE, std::future::ready(()))
+                .await
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn cooperative_stop_terminates_and_reaps_admitted_child() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let mut command = fixture("hang");
+        command.env(
+            "QELI_HOOK_TEST_WITNESS",
+            listener.local_addr().unwrap().to_string(),
+        );
+        let process = OwnedProcess::spawn(&mut command).unwrap();
+        #[cfg(target_os = "linux")]
+        let pid = process.child.id().unwrap() as libc::pid_t;
+        let (mut peer, _) = tokio::time::timeout(DEADLINE, listener.accept())
+            .await
+            .unwrap()
+            .unwrap();
+        let mut ready = [0; 5];
+        tokio::time::timeout(DEADLINE, peer.read_exact(&mut ready))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(collect_cancellable(
+            process,
+            tokio::time::Instant::now() + DEADLINE,
+            std::future::ready(())
+        )
+        .await
+        .unwrap()
+        .is_none());
+        assert_peer_closed(peer).await;
+        #[cfg(target_os = "linux")]
+        {
+            assert_eq!(
+                unsafe { libc::waitpid(pid, std::ptr::null_mut(), libc::WNOHANG) },
+                -1
+            );
+            assert_eq!(
+                std::io::Error::last_os_error().raw_os_error(),
+                Some(libc::ECHILD)
+            );
+        }
     }
 
     #[tokio::test]

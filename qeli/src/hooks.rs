@@ -15,6 +15,9 @@
 
 #[cfg(target_os = "linux")]
 use std::time::Duration;
+#[cfg(target_os = "linux")]
+#[path = "hooks/worker.rs"]
+mod worker;
 
 /// Hard timeout for a single hook invocation.
 #[cfg(target_os = "linux")]
@@ -149,6 +152,48 @@ pub async fn run_with_context(
     if cmd.trim().is_empty() {
         return HookStatus::Skipped;
     }
+    let label = label.to_owned();
+    let worker_label = label.clone();
+    let cmd = cmd.to_owned();
+    let env = env.to_vec();
+    let arguments = positional_arguments.to_vec();
+    let context = context_json.map(str::to_owned);
+    match worker::run(move |stop| async move {
+        run_owned(
+            &worker_label,
+            &cmd,
+            &env,
+            &arguments,
+            context.as_deref(),
+            stop,
+        )
+        .await
+    })
+    .await
+    {
+        Ok(status) => status,
+        Err(error) => {
+            log::warn!("hook[{label}]: worker failed: {error}");
+            HookStatus::IoFailure
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+async fn run_owned(
+    label: &str,
+    cmd: &str,
+    env: &[(String, String)],
+    positional_arguments: &[String],
+    context_json: Option<&str>,
+    mut stop: tokio::sync::oneshot::Receiver<()>,
+) -> HookStatus {
+    if !matches!(
+        stop.try_recv(),
+        Err(tokio::sync::oneshot::error::TryRecvError::Empty)
+    ) {
+        return HookStatus::Skipped;
+    }
     // Best-effort warning: callers authorize the loaded config snapshot, but the
     // SCRIPT it points to is not. If the command is a bare path to an existing
     // world-writable file, a local non-owner could swap its contents -- flag it.
@@ -200,8 +245,13 @@ pub async fn run_with_context(
         .env("QELI_CONTEXT_FILE", &context_path)
         .env("QELI_NETWORK_PLAN_FILE", &context_path);
 
-    match crate::hook_process::run(command, HOOK_TIMEOUT).await {
-        Ok(output) => {
+    match crate::hook_process::run_cancellable(command, HOOK_TIMEOUT, async {
+        let _ = stop.await;
+    })
+    .await
+    {
+        Ok(None) => HookStatus::Skipped,
+        Ok(Some(output)) => {
             let tail = output.logged_output();
             if output.timed_out {
                 log::warn!("hook[{label}]: timed out after {}s -- process group termination requested; leader reaped -- {tail}", HOOK_TIMEOUT.as_secs());
@@ -297,3 +347,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(all(test, target_os = "linux"))]
+#[path = "hooks/io_tests.rs"]
+mod io_tests;

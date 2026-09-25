@@ -2803,9 +2803,11 @@ These rules apply to both client and server hooks:
   all output. Truncation is marked in the log. Reading continues after the retention limit,
   so a full pipe cannot block the command. Timeout diagnostics retain the collected tails.
 - Each Linux hook gets an isolated process group. Timeout, read failure or cancellation
-  sends `SIGKILL` to that group, with a direct shell fallback. Timeout/error cleanup awaits
-  the shell; cancellation delegates eventual reaping to Tokio. This cannot guarantee a
-  30-second return when a process is stuck in uninterruptible kernel sleep.
+  sends `SIGKILL` to that group, with a direct shell fallback. The owning thread awaits
+  and reaps the shell on timeout, error and cancellation. Context-file preparation/removal
+  also runs there. Forced Drop joins that thread; stuck filesystem/kernel calls cannot be
+  preempted. The 30 seconds bound command/output work, not file preparation or whole shutdown.
+  [Details](OPERATIONS.md#hook-and-backup-file-operations).
 - Normal shell completion with closed stdout/stderr preserves intentionally launched
   background services. Redirect both streams, for example to the service's own log, and
   arrange its shutdown through your `post_down` or a service manager. A descendant keeping

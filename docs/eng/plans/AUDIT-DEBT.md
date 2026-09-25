@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v19 -->
+<!-- normative-sync: audit-debt-v20 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -20,7 +20,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D02 | 14/25 | DONE | Internal sysctl boundaries | Lock/I/O/context, trusted directory, namespace fd pins, original per-interface fd/witness and v4 network_cookie verified. 1995 Linux + 32 privileged + 8 lifecycle and SIGKILL/mismatch worker E2E PASS. Lost interface witness stays for manual recovery; general persistent firewall/DNS/routes remains D04. [Report](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Standalone kill switch | Pinned namespace, retained exact-family owner, fail-closed reconnect and safe address rotation. 11 portable + 2 native regressions; actual IPv4/IPv6 filter counters and 2 baseline failures. [Report](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Crash recovery | Persistent server firewall, DNS v2, kill-switch and physical routes verified; legacy global DNS, persistent TUN and lost sysctl witnesses have explicit safe manual boundaries. [Client mixed matrix](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 cells, 136 crash/recovery; [server](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks rerun PASS. Arbitrary zones/policies and multiprofile remain D10; state accumulation remains D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; server/panel and hook/backup file preparation remain; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; hook/backup file preparation is closed by the continuation below; server profile setup/cleanup remains; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -199,10 +199,40 @@ Linux client early-path reconciliation against current code and previous evidenc
 | Internal locks / waits | Carrier/core/diagnostic state changes under short mutexes without await; writer queues release their mutex before external I/O. TunWorkers deliberately holds its join lock through all threads so cancellation cannot abandon fd ownership. [TUN workers](../reports/AUDIT-Q25-TUN-WORKERS.md). Non-preemptible kernel/fs I/O and forced join remain a documented boundary, not a 15-second process-exit guarantee. |
 
 This closes reconciliation of the listed Linux early-Drop paths and process-global
-admission. D05/D06/D09 remain open: the consolidated server/panel wait review,
-synchronous metadata/context-file operations in hooks and backup read/preflight before
-the blocking worker remain; these are statically identified I/O items, without a new
-runtime reproducer. WAN/dynamic IPv6 remain in D06. No new platform or network packet PASS is claimed.
+admission. D05/D06/D09 were not closed at that stage: hook/backup file preparation
+needed runtime reproduction. The following batch continuation closes that part;
+server setup/cleanup still requires checking. WAN/dynamic IPv6 remain in D06. No new platform or network packet PASS is claimed.
+
+
+
+**Hook and backup file I/O (batch A continuation).** Executor stalls during hook context
+write/removal and active backup INI reading were reproduced and fixed. One joined thread
+owns hook preparation, command runtime and cleanup; cancellation before spawn skips the
+command, while cancellation of a running shell waits for termination/reaping before
+context removal. Backup preflight uses the existing blocking worker with its config
+lease; HTTP cancellation cannot release it before the operation ends. The shared loader
+rejects FIFO and checks a stable source file. Hook authorization and INI/API formats
+are unchanged.
+
+Validation: **37 host + 77 Linux tests, 8 native scenarios PASS**, Linux Clippy and separate
+client/server builds. The reproducer delays actual write/unlink/read by 2 seconds:
+original `0645a8b0` handlers deliver 0/0/2 heartbeat ticks (3 expected FAIL), fixed handlers
+178/178/179. Cancelled preparation leaves no command-start marker; cancellation of a live
+hook verifies reaping/process absence and context removal. Cancelled backup retains the
+config lease, preserves config and delivers 178 ticks. Backup → overlay/exact restore and
+incomplete rollback-snapshot rejection ran in private NET/mount/PID namespaces and tmpfs
+`/etc/qeli`, `/tmp`. Shim: [audit_hook_backup_io_shim.c](../../../scripts/audit_hook_backup_io_shim.c).
+Logs/commands/362-file source manifest: `audit-debt-20260925/batch-a-file-io/`;
+fixed test binary SHA256 `208e91b7…500bba`. Baseline combines the original handlers with
+the new test harness; it is not an old released binary.
+
+This hook/backup item is closed; D05 remains IN_PROGRESS. Server code review specifies
+the next batch: `run_worker` invokes synchronous `nat::cleanup_all`;
+`run_profile_generation` performs TUN/NAT setup, and ordinary `run_profile` calls
+`drop(ProfileTeardown)` with NAT cleanup/worker joins on its async path. NAT component
+budgets already have coverage; scheduler isolation and a composed profile deadline
+still need checking. Non-preemptible kernel/fs calls and forced joins are not claimed
+to have a hard timer bound. D06 WAN/dynamic IPv6 and other groups remain; **4/15 DONE**.
 
 ## Sources
 

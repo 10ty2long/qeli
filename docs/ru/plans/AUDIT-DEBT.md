@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v19 -->
+<!-- normative-sync: audit-debt-v20 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -20,7 +20,7 @@
 | D02 | 14/25 | DONE | Внутренние границы sysctl | Lock/I/O/context, trusted directory, namespace fd pins, исходный per-interface fd/witness и network_cookie v4 проверены. 1995 Linux + 32 privileged + 8 lifecycle и SIGKILL/mismatch worker E2E PASS. Потерянный interface witness сохраняется для ручного recovery; общий persistent firewall/DNS/routes остаётся D04. [Отчёт](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Восстановление после crash | Persistent server firewall, DNS v2, kill-switch и physical routes проверены; legacy global DNS, persistent TUN и потерянный sysctl witness имеют явные безопасные ручные границы. [Клиентская mixed матрица](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 ячейки, 136 crash/recovery; [серверная](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks повторно PASS. Произвольные zones/policies и multiprofile остаются D10; накопление состояния — D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; остаются server/panel и файловая подготовка hooks/backup; произвольные kernel/fs I/O и forced join не прерываются. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; остаётся server profile setup/cleanup; произвольные kernel/fs I/O и forced join не прерываются. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
@@ -200,10 +200,41 @@ TaskGroup не гарантируют async join при Drop. Это явная 
 | Внутренние locks / ожидания | Carrier/core/diagnostic state меняется под короткими mutex без await; очереди writer освобождают mutex перед внешним I/O. TunWorkers удерживает join lock до всех потоков специально, чтобы отмена не оставляла fd без владельца. [TUN workers](../reports/AUDIT-Q25-TUN-WORKERS.md). Непрерываемые kernel/fs I/O и forced join остаются описанной границей, не обещанием 15-секундного process exit. |
 
 Это закрывает сверку перечисленных Linux early-Drop путей и process-global допуска.
-D05/D06/D09 целиком не закрыты: остаются сводная сверка server/panel waits,
-синхронные metadata/context-file операции в hooks и чтение/preflight backup до blocking
-worker; это статически выявленный остаток I/O, без нового runtime воспроизведения.
+На этом этапе D05/D06/D09 не закрывались: файловая подготовка hooks и backup
+требовала runtime воспроизведения. Она закрывается следующим продолжением пакета ниже;
+серверные setup/cleanup ещё требуют проверки.
 WAN/dynamic IPv6 остаются в D06; никакие новые платформенные или сетевые packet PASS не заявляются.
+
+
+
+**Файловый I/O hooks и backup (продолжение пакета A).** Подтверждены и исправлены
+блокировки executor при записи/удалении hook context и чтении активного INI для backup.
+Hooks владеют подготовкой, command runtime и cleanup в одном присоединяемом потоке;
+отмена до запуска не выполняет команду, отмена работающего shell ждёт terminate/reap
+до удаления context. Backup preflight выполняется в существующем blocking worker с
+config lease; отмена HTTP-запроса не освобождает её раньше операции. Общий загрузчик
+отвергает FIFO и проверяет стабильность исходного файла. Права исполнения hooks и
+форматы INI/API не менялись.
+
+Проверки: **37 host + 77 Linux tests, 8 native-сценариев PASS**, Linux Clippy и отдельные
+client/server builds. Воспроизводитель задерживает настоящий write/unlink/read на 2 секунды:
+исходные обработчики `0645a8b0` дают 0/0/2 heartbeat тика (3 ожидаемых FAIL), исправленные —
+178/178/179. Отмена подготовки не создаёт marker запуска; отмена работающего hook подтверждает
+reap/отсутствие процесса и удаление context. Отменённый backup удерживает config lease,
+сохраняет конфиг и даёт 178 тиков. Backup → overlay/exact restore и отказ неполного rollback
+snapshot проверены в приватных NET/mount/PID namespace и tmpfs `/etc/qeli`, `/tmp`.
+Shim: [audit_hook_backup_io_shim.c](../../../scripts/audit_hook_backup_io_shim.c).
+Логи/команды/manifest 362 исходных файлов:
+`audit-debt-20260925/batch-a-file-io/`; fixed test binary SHA256 `208e91b7…500bba`.
+Baseline — исходные обработчики с новым тестовым harness, не старый выпущенный бинарник.
+
+Этот остаток hooks/backup закрыт; D05 целиком остаётся IN_PROGRESS. Сверка server-кода
+уточнила следующий пакет: `run_worker` вызывает `nat::cleanup_all` синхронно;
+`run_profile_generation` выполняет TUN/NAT setup, а штатный `run_profile` вызывает
+`drop(ProfileTeardown)` с NAT cleanup/worker joins на async-пути. Компонентные сроки NAT
+уже проверены; scheduler isolation и составной срок профиля ещё требуют проверки.
+Непрерываемые kernel/fs вызовы и forced join не объявляются жёстко ограниченными таймером.
+D06 WAN/dynamic IPv6 и остальные группы сохраняются; итог **4/15 DONE**.
 
 ## Источники
 
