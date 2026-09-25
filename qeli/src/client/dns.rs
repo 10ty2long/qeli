@@ -50,7 +50,7 @@ fn target(
 
 impl DnsLease {
     pub(crate) fn restore(&mut self, tun: &crate::tun::iface::TunInterface) -> anyhow::Result<()> {
-        let until = std::time::Instant::now() + DNS_SETUP_BUDGET;
+        let until = crate::operation_budget::limit(std::time::Instant::now() + DNS_SETUP_BUDGET);
         self.lease.cleanup(|link| {
             if let Some(index) = target(link, tun)? {
                 revert_link_with(&index, Some(&self.resolver), until)?;
@@ -68,7 +68,7 @@ pub(crate) fn setup_network_plan_dns(
     tun: &crate::tun::iface::TunInterface,
     owned: &mut Option<DnsLease>,
 ) -> anyhow::Result<()> {
-    let until = std::time::Instant::now() + DNS_SETUP_BUDGET;
+    let until = crate::operation_budget::limit(std::time::Instant::now() + DNS_SETUP_BUDGET);
     if owned.is_some() {
         anyhow::bail!("DNS plan already owns a lease");
     }

@@ -405,3 +405,42 @@ fn expired_input_command_never_spawns_or_waits_for_stdin() {
         io::ErrorKind::TimedOut
     );
 }
+
+#[test]
+fn transaction_deadline_limits_default_and_explicit_command_deadlines() {
+    for explicit in [false, true] {
+        let _budget =
+            crate::operation_budget::Scope::enter(Instant::now() + Duration::from_millis(100));
+        let result = if explicit {
+            fixture("slow").output_until(Instant::now() + TEST_DEADLINE)
+        } else {
+            fixture("slow").output()
+        };
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::TimedOut);
+        // A new stage cannot reset an expired transaction or even attempt spawn.
+        assert_eq!(
+            Command::new("qeli-nonexistent-expired-budget-command")
+                .output()
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::TimedOut
+        );
+    }
+}
+
+#[test]
+fn rollback_can_run_after_expired_setup_without_reviving_setup() {
+    let _setup = crate::operation_budget::Scope::enter(Instant::now());
+    assert_eq!(
+        fixture("stdin").output().unwrap_err().kind(),
+        io::ErrorKind::TimedOut
+    );
+    {
+        let _cleanup = crate::operation_budget::Scope::enter(Instant::now() + TEST_DEADLINE);
+        assert!(fixture("stdin").output().unwrap().status.success());
+    }
+    assert_eq!(
+        fixture("stdin").output().unwrap_err().kind(),
+        io::ErrorKind::TimedOut
+    );
+}

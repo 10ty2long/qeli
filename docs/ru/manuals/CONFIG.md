@@ -2806,9 +2806,9 @@ Managed DNS на Linux также требует `SO_NETNS_COOKIE` и довер
 
 Managed Linux-клиент сохраняет физические bypass/exclude и blackhole в `/var/lib/qeli/client-routes.state`. Поэтому `SO_NETNS_COOKIE` и доверенный writable state каталог обязательны также при `dns = off`/`system`. `STATE_DIRECTORY` не меняет этот путь; клиенты одной сети должны видеть общий журнал и lock. Нового INI-параметра нет. [Recovery и ограничения](OPERATIONS.md#восстановление-физических-маршрутов-клиента).
 
-Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Это не общий срок NetworkPlan/shutdown и не прерывание внутреннего I/O. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Внутри NetworkPlan/cleanup действует также остаток общего командного бюджета; внутренний I/O не прерывается. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
 
-Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Это не срок всего NetworkPlan. [Контракт](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Внутри NetworkPlan/cleanup этот предел ограничен остатком общего командного бюджета. [Контракт](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
 
 Это внутренние пределы, без нового ключа INI. Сроки пользовательских hooks не меняются.
 Эти 15 секунд не задают общий срок shutdown. Текущее состояние последовательностей
@@ -3444,3 +3444,5 @@ INI, ссылки, проверки и defaults теперь обрабатыв�
 `heartbeat_jitter=2000` мс; для прежнего split tunnel CLI явно задайте `gateway=false`.
 Формат файлов остаётся INI. Подробности миграции, ограничений платформ и сборки:
 [общая конфигурация клиентов](../plans/CLIENT-CONFIG-CORE.md).
+
+Общий командный срок Linux NetworkPlan — 15 секунд; rollback/cleanup получает отдельные общие 15 секунд, включая последующие фазы и автоматический Drop. [Контракт и ограничения](OPERATIONS.md#общий-командный-срок-networkplan-и-очистки).

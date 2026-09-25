@@ -15,11 +15,11 @@ impl Budget {
             return Self { until };
         }
         Self {
-            until: Instant::now() + Duration::from_secs(15),
+            until: crate::operation_budget::limit(Instant::now() + Duration::from_secs(15)),
         }
     }
     fn remaining(self) -> io::Result<Duration> {
-        self.until
+        crate::operation_budget::limit(self.until)
             .checked_duration_since(Instant::now())
             .filter(|left| !left.is_zero())
             .ok_or_else(|| {
@@ -60,4 +60,22 @@ pub(super) fn with_deadline<T>(until: Instant, run: impl FnOnce() -> T) -> T {
     }
     let _reset = Reset(DEADLINE.with(|slot| slot.replace(Some(until))));
     run()
+}
+
+#[cfg(test)]
+mod composition_tests {
+    use super::*;
+    #[test]
+    fn exhausted_plan_refuses_router_mutex_even_with_fresh_component_budget() {
+        let mutex = Mutex::new(());
+        let _scope = crate::operation_budget::Scope::enter(Instant::now());
+        let budget = Budget {
+            until: Instant::now() + Duration::from_secs(15),
+        };
+        assert_eq!(
+            budget.lock(&mutex).unwrap_err().kind(),
+            io::ErrorKind::TimedOut
+        );
+        assert!(mutex.try_lock().is_ok());
+    }
 }

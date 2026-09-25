@@ -45,6 +45,8 @@ impl Command {
     }
 
     pub(crate) fn output_until(&mut self, until: Instant) -> io::Result<Output> {
+        let until = crate::operation_budget::limit(until);
+        crate::operation_budget::check_until(until)?;
         #[cfg(test)]
         if let Some(action) = test_support::intercept(self.inner.as_std()) {
             return action.run();
@@ -73,6 +75,8 @@ impl Command {
         limit: usize,
         input: Option<&[u8]>,
     ) -> io::Result<Output> {
+        let until = crate::operation_budget::limit(until);
+        crate::operation_budget::check_until(until)?;
         std::thread::scope(|scope| {
             std::thread::Builder::new()
                 .name("qeli-system-command".to_string())

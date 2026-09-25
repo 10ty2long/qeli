@@ -621,3 +621,25 @@ password_command, loading device-id, connecting or configuring the network; a la
 error remains an exit error. This is not a hard filesystem timeout: a stuck system call
 may delay exit, but normal waiting does not block async tasks. This change sets no server
 config size limit.
+
+## Shared NetworkPlan and cleanup command deadline
+
+Linux NetworkPlan setup shares **15 seconds** across TUN, gateway, route and DNS
+commands. A component may shorten the remaining time but cannot restart its own
+15 seconds. Expiry prevents new commands and successful NetworkPlan acknowledgement.
+
+Cleanup receives separate **15 seconds** from the first resource cleanup in the current
+attempt. DNS, pump waiting, routes, gateway and subsequent kill-switch removal share
+that deadline. Automatic Drop retries retain the same remainder. The next connection
+attempt receives a new deadline only after previous owners complete; sticky cleanup
+failures are not cleared and still prohibit ordinary reconnect. Resource cleanup failure
+prevents entering kill-switch removal. A failure inside firewall removal may occur after
+some rules were deleted: intact protection is not guaranteed in that case.
+
+This bounds commands and their admission, not process exit: kernel/filesystem I/O,
+packet-worker joins, TOFU/status writers and user hooks are not aborted by this timer.
+Their waiting consumes an already-started cleanup budget. On timeout inspect the log
+and leftovers in the original namespace; do not delete retained ownership evidence to
+bypass the error. [Validation and remaining audit work](../plans/AUDIT-DEBT.md).
+
+After a gateway timeout and process exit, restarting may reach `lost live per-interface sysctl evidence`: the original TUN is closed, so its saved value cannot be replayed onto a new same-name interface. Follow [manual recovery §6.64](TROUBLESHOOTING.md); a restart loop does not resolve it.

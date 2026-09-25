@@ -83,7 +83,7 @@ struct Budget {
 }
 impl Budget {
     fn remaining(self) -> std::io::Result<std::time::Duration> {
-        self.until
+        crate::operation_budget::limit(self.until)
             .checked_duration_since(std::time::Instant::now())
             .filter(|left| !left.is_zero())
             .ok_or_else(|| {

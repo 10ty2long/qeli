@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v17 -->
+<!-- normative-sync: audit-debt-v18 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -20,7 +20,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D02 | 14/25 | DONE | Internal sysctl boundaries | Lock/I/O/context, trusted directory, namespace fd pins, original per-interface fd/witness and v4 network_cookie verified. 1995 Linux + 32 privileged + 8 lifecycle and SIGKILL/mismatch worker E2E PASS. Lost interface witness stays for manual recovery; general persistent firewall/DNS/routes remains D04. [Report](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Standalone kill switch | Pinned namespace, retained exact-family owner, fail-closed reconnect and safe address rotation. 11 portable + 2 native regressions; actual IPv4/IPv6 filter counters and 2 baseline failures. [Report](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Crash recovery | Persistent server firewall, DNS v2, kill-switch and physical routes verified; legacy global DNS, persistent TUN and lost sysctl witnesses have explicit safe manual boundaries. [Client mixed matrix](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 cells, 136 crash/recovery; [server](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks rerun PASS. Arbitrary zones/policies and multiprofile remain D10; state accumulation remains D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Async panel preflight/health, backup/restore, command budgets, DNS/NSS, resolver files, NetworkPlan application and graceful TunGuard cleanup are addressed; [kill-switch setup/refresh and terminal firewall cleanup](../reports/AUDIT-Q25-FIREWALL-TASK.md) also run on joined workers. [Startup route/DNS recovery](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md) also preserves its lease and late errors on a joined worker. Remaining: early error/Drop paths, other internal locks/I/O and whole NetworkPlan/shutdown deadlines. Forced Drop may synchronously join workers. [TUN pump startup and early rollback](../reports/AUDIT-Q25-PUMP-START.md) now use a joined worker; pure data-plane checks run before TUN setup. [Client diagnostics](../reports/AUDIT-Q25-STATUS-WRITER.md) now use a bounded queue and joined writer; other I/O and the overall deadline remain. [Device-id/TOFU](../reports/AUDIT-Q25-IDENTITY-FILES.md): ID is cached and loaded on a joined worker; bounded reads and atomic TOFU are fixed. [TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md) removes synchronous callback I/O while awaiting admitted writes and retaining late failures; the overall deadline remains. |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Final early-Drop/internal-wait inventory remains; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -126,6 +126,48 @@ new runs. D05/D06/D09 remain IN_PROGRESS: composed NetworkPlan/cleanup budget, s
 context table and early Drop paths remain. Established boundary: arbitrary kernel/
 filesystem I/O cannot safely be interrupted; forced Drop retains its join. This limit
 does not close the remaining shared command-budget obligation.
+
+
+**Shared command budget (batch A continuation).** TUN/gateway/routes/DNS setup shares
+15 seconds. Rollback/cleanup receives a separate shared deadline, retained across pump
+join, worker threads, fallback Drop and terminal firewall cleanup. Errors remain sticky;
+a new attempt after previous owners finish receives a fresh budget. Ownership selectors,
+namespace guards and kill-switch release prerequisites are not weakened.
+
+Validated: 1594 host tests, 471 targeted Linux tests and 18 privileged; Linux Clippy,
+client-only and server-only builds. Eight native baseline/fixed TCP/UDP cases inject
+successive 9+9 second delays: old `efc9f949` takes 19–20 seconds. Fixed setup expires
+commands at the shared deadline and finishes rollback about 15.9 seconds after the first
+marker; cleanup takes about 14.8 seconds from its first mutation marker (its budget began
+earlier). Setup leaves clean networking; failed cleanup retains both DROP families and
+`failed`, preserving operator rules/routes. Four ordinary TCP/UDP clean/fault shutdown
+cases and two explicit recovery runs also PASS. Fixture:
+[audit_network_budget.py](../../../scripts/audit_network_budget.py). Evidence:
+`audit-debt-20260924/batch-a-budget/`, 359-file source manifest, driver SHA256
+`ef126a15…934a4f7`. Server `a8aba986` is reused; its runtime is not claimed as a new build.
+
+A separate restart after **gateway timeout** confirmed the D02 boundary: a lost
+per-interface sysctl witness prevents automatic cleanup completion. The initial automatic
+recovery expectation produced 2 FAIL retained in `ab3`; this is not successful recovery.
+Validation checks preservation of the original record, absence of TUN/routes and both
+DROP families; follow [§6.64](../manuals/TROUBLESHOOTING.md) for manual recovery.
+The two successful recovery cases above refer to the earlier route-fault scenario without
+lost witnesses.
+
+Command composition is closed within these limits; no hard arbitrary-kernel-I/O timeout
+is promised. D05 remains IN_PROGRESS pending the final early-Drop/internal-wait inventory;
+D06 remains open for the checks below. Group totals remain 4/15 DONE.
+
+D06 reconciliation against current code (no new runtime PASS claim):
+
+| Boundary | Existing evidence / remainder |
+|---|---|
+| resolved / system bus | GUID/unique owner/network/PID context already exercised in [resolver context](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md); DNS v2 markers/crash are D04. |
+| procfs / sysfs | Namespace pins, cookie and sysctl witnesses are D02/D04. IPv6 module-disabled evidence uses bounded strict reads; it does not guarantee absence of future IPv6. |
+| TUN attach / names | [Attach](../reports/AUDIT-Q25-TUN-ATTACH.md), leases and route/TUN identity have dedicated checks; WAN selectors need reconciliation. |
+| Physical WAN | `gateway/wan.rs` returns a route's device name; firewall records name selectors. Rename/reuse and supported WAN changes need explicit checks. |
+| DNS / carrier globals | DNS is now per-link; CONNECTED_PEER, CARRIER_CANDIDATES and DELIBERATE_CYCLE remain process-global. CLI calls one run_client; public run_client has no simultaneous-call admission guard. Check and define the contract. |
+| Dynamic IPv6 | Empty global inventory may admit unavailable ip6tables; refresh skips a previously unprotected family. Address arrival after admission remains a required D06/D10 scenario. |
 
 ## Sources
 

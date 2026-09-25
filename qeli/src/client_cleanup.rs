@@ -42,13 +42,25 @@ const ERROR_CHARS: usize = 2048;
 /// Sticky, bounded evidence shared by one Linux client and its resource guards.
 /// A later successful Drop retry must not erase an already returned cleanup failure.
 #[derive(Clone, Default)]
-pub(crate) struct Failures(Arc<Mutex<[Option<String>; 4]>>);
+pub(crate) struct Failures(
+    Arc<Mutex<[Option<String>; 4]>>,
+    Arc<Mutex<Option<std::time::Instant>>>,
+);
 
 #[derive(Debug, thiserror::Error)]
 #[error("network resource cleanup reported failure: {0}")]
 struct NetworkCleanupError(String);
 
 impl Failures {
+    /// Only after the previous carrier and resource owners have been joined.
+    pub(crate) fn start_attempt(&self) {
+        *crate::util::lock_or_recover(&self.1, "client::cleanup_deadline") = None;
+    }
+    pub(crate) fn cleanup_deadline(&self) -> std::time::Instant {
+        *crate::util::lock_or_recover(&self.1, "client::cleanup_deadline")
+            .get_or_insert_with(|| std::time::Instant::now() + crate::operation_budget::LIMIT)
+    }
+
     pub(crate) fn observe<T>(
         &self,
         resource: Resource,
@@ -135,6 +147,54 @@ pub(crate) fn with_cleanup_error(
 mod tests {
     use super::*;
     use std::cell::{Cell, RefCell};
+
+    #[test]
+    fn cleanup_deadline_is_shared_across_guards_and_retry_does_not_extend_it() {
+        let failures = Failures::default();
+        let expired = std::time::Instant::now();
+        *failures.1.lock().unwrap() = Some(expired);
+        let guard = failures.clone();
+        assert_eq!(guard.cleanup_deadline(), expired);
+        assert_eq!(failures.cleanup_deadline(), expired);
+        let other = Failures::default();
+        assert!(other.cleanup_deadline() > expired);
+        let _ = failures.observe::<()>(Resource::Routes, Err(anyhow::anyhow!("retained route")));
+        failures.start_attempt();
+        assert!(guard.cleanup_deadline() > expired);
+        assert!(failures
+            .result()
+            .unwrap_err()
+            .to_string()
+            .contains("retained route"));
+    }
+
+    #[test]
+    fn exhausted_composed_cleanup_preserves_egress_and_sticky_failure() {
+        let failures = Failures::default();
+        *failures.1.lock().unwrap() = Some(std::time::Instant::now());
+        let _scope = crate::operation_budget::Scope::enter(failures.cleanup_deadline());
+        let released = Cell::new(false);
+        let cleanup = routing(
+            Ok(()),
+            true,
+            || {
+                failures.observe(
+                    Resource::Forwarding,
+                    crate::operation_budget::check().map_err(Into::into),
+                )
+            },
+            || {
+                released.set(true);
+                Ok(())
+            },
+        );
+        assert!(cleanup
+            .unwrap_err()
+            .to_string()
+            .contains("kill-switch retained"));
+        assert!(!released.get());
+        assert!(failures.result().is_err());
+    }
 
     #[test]
     fn failed_forwarding_cleanup_keeps_the_egress_barrier() {

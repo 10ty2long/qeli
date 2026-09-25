@@ -3478,6 +3478,8 @@ defaults are `gateway=true`, padding `0..255`, `heartbeat_jitter=2000` ms. Set
 See [shared client configuration](../plans/CLIENT-CONFIG-CORE.md) for migration, platform
 constraints and build instructions.
 
-Gateway/exit-node setup, refresh and cleanup each share 15 seconds across router mutex admission, discovery, WAN and firewall commands. Cleanup includes both families; partial records remain for a fresh attempt. This does not bound whole NetworkPlan/shutdown or preempt internal I/O. [Details](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+Gateway/exit-node setup, refresh and cleanup each share 15 seconds across router mutex admission, discovery, WAN and firewall commands. Cleanup includes both families; partial records remain for a fresh attempt. Inside NetworkPlan/cleanup the remaining shared command budget also applies; internal I/O is not preempted. [Details](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
 
-Client route setup/prepare/COMMIT/cleanup each share 15 seconds across the operation mutex and commands of both families. COMMIT rollback receives a separate shared 15 seconds; unknown changes remain reserved for verified retry. This is not a whole-NetworkPlan deadline. [Contract](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+Client route setup/prepare/COMMIT/cleanup each share 15 seconds across the operation mutex and commands of both families. COMMIT rollback receives a separate shared 15 seconds; unknown changes remain reserved for verified retry. Inside NetworkPlan/cleanup this limit is capped by the remaining shared command budget. [Contract](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+
+Linux NetworkPlan commands share 15 seconds; rollback/cleanup receives separate shared 15 seconds, including subsequent stages and automatic Drop. [Contract and limits](OPERATIONS.md#shared-networkplan-and-cleanup-command-deadline).

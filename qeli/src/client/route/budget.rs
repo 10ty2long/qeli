@@ -15,12 +15,14 @@ thread_local! { static CURRENT: Cell<Option<Instant>> = const { Cell::new(None) 
 thread_local! { static REQUESTED: Cell<Option<Instant>> = const { Cell::new(None) }; }
 
 pub(super) fn deadline() -> Instant {
-    CURRENT
-        .with(Cell::get)
-        .unwrap_or_else(|| Instant::now() + LIMIT)
+    crate::operation_budget::limit(
+        CURRENT
+            .with(Cell::get)
+            .unwrap_or_else(|| Instant::now() + LIMIT),
+    )
 }
 fn remaining(until: Instant) -> io::Result<Duration> {
-    until
+    crate::operation_budget::limit(until)
         .checked_duration_since(Instant::now())
         .filter(|d| !d.is_zero())
         .ok_or_else(|| {
@@ -142,5 +144,22 @@ mod tests {
             assert_eq!(error.kind(), io::ErrorKind::TimedOut);
         });
         assert!(started.elapsed() < Duration::from_secs(2));
+    }
+}
+
+#[cfg(test)]
+mod composition_tests {
+    use super::*;
+    #[test]
+    fn exhausted_plan_refuses_route_mutex_and_explicit_cleanup_can_acquire_it() {
+        static LOCK: Mutex<()> = Mutex::new(());
+        let _setup = crate::operation_budget::Scope::enter(Instant::now());
+        assert!(matches!(Operation::acquire(&LOCK), Err(e) if e.kind() == io::ErrorKind::TimedOut));
+        {
+            let _cleanup = crate::operation_budget::Scope::enter(Instant::now() + LIMIT);
+            let _operation = Operation::acquire(&LOCK).unwrap();
+            check().unwrap();
+        }
+        assert!(matches!(Operation::acquire(&LOCK), Err(e) if e.kind() == io::ErrorKind::TimedOut));
     }
 }

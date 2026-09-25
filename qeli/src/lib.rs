@@ -221,6 +221,13 @@ mod hook_process;
 ))]
 mod system_command;
 
+#[cfg(any(
+    test,
+    all(target_os = "linux", any(feature = "client", feature = "server"))
+))]
+#[cfg_attr(not(any(test, feature = "client")), allow(dead_code))]
+mod operation_budget;
+
 // Headless credential I/O, shutdown ordering and cleanup policy have portable host tests.
 #[cfg(any(test, all(target_os = "linux", feature = "client")))]
 mod client_cleanup;

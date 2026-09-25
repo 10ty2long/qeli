@@ -1109,6 +1109,7 @@ impl ClientHookContext {
 
 #[cfg(target_os = "linux")]
 async fn cleanup_routing_features(
+    failures: &crate::client_cleanup::Failures,
     checks: impl Into<crate::client_cleanup::Checks>,
     kill_switch: bool,
     gateway_enabled: bool,
@@ -1116,8 +1117,10 @@ async fn cleanup_routing_features(
     tun_if: &str,
 ) -> anyhow::Result<()> {
     let checks = checks.into();
+    let until = failures.cleanup_deadline();
     let tun_if = tun_if.to_owned();
     network_task::run(Arc::new(AtomicBool::new(false)), move || {
+        let _budget = crate::operation_budget::Scope::enter(until);
         crate::client_cleanup::routing(
             checks,
             kill_switch,
@@ -2792,6 +2795,7 @@ async fn run_client_inner(
     let mut carrier_generation = 0usize;
 
     loop {
+        core_adapter.cleanup_failures.start_attempt();
         let started = std::time::Instant::now();
         // Re-resolve the server so a rotated (DDNS / round-robin) address is allowed
         // through the kill-switch before the next attempt — otherwise a stale
@@ -2806,6 +2810,7 @@ async fn run_client_inner(
                 let message = format!("kill-switch verification/address refresh failed: {error}");
                 log::error!("{message}; stopping reconnect and retaining protection");
                 let cleanup = cleanup_routing_features(
+                    &core_adapter.cleanup_failures,
                     crate::client_cleanup::Checks {
                         core: Ok(()),
                         network: Err(anyhow::anyhow!("{message}")),
@@ -2878,7 +2883,15 @@ async fn run_client_inner(
             // reported by Drop guards before the connection future returned.
             let (reason, error_code) =
                 failure_reason.unwrap_or(("core_start_failed", "core_start"));
-            let cleanup = cleanup_routing_features(checks, ks_on, gw_on, exit_on, &tun_if).await;
+            let cleanup = cleanup_routing_features(
+                &core_adapter.cleanup_failures,
+                checks,
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+            )
+            .await;
             let result = crate::client_cleanup::with_cleanup_error(result, identity_outcome);
             let terminal = crate::client_cleanup::with_cleanup_error(result, cleanup);
             let message = terminal
@@ -2897,7 +2910,15 @@ async fn run_client_inner(
                 Err(connection) => format!("{error:#}; connection ended: {connection:#}"),
                 Ok(()) => format!("{error:#}"),
             };
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+            let cleanup = cleanup_routing_features(
+                &core_adapter.cleanup_failures,
+                Ok(()),
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+            )
+            .await;
             run_client_post_down(
                 &core_adapter,
                 &post_down,
@@ -2914,8 +2935,15 @@ async fn run_client_inner(
                 .downcast_ref::<ServerKickError>()
                 .is_some_and(|kick| !kick.reconnect_allowed)
             {
-                let cleanup =
-                    cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+                let cleanup = cleanup_routing_features(
+                    &core_adapter.cleanup_failures,
+                    Ok(()),
+                    ks_on,
+                    gw_on,
+                    exit_on,
+                    &tun_if,
+                )
+                .await;
                 run_client_post_down(
                     &core_adapter,
                     &post_down,
@@ -2933,7 +2961,15 @@ async fn run_client_inner(
         }
 
         if shutdown_requested.load(Ordering::Acquire) {
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+            let cleanup = cleanup_routing_features(
+                &core_adapter.cleanup_failures,
+                Ok(()),
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+            )
+            .await;
             let transport_error = result
                 .as_ref()
                 .err()
@@ -2973,7 +3009,15 @@ async fn run_client_inner(
         if stop_reason == Some("disabled") {
             // Clean exit (reconnect disabled): lift the kill-switch / gateway NAT so
             // the host isn't left firewalled or NAT'ing after the client returns.
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+            let cleanup = cleanup_routing_features(
+                &core_adapter.cleanup_failures,
+                Ok(()),
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+            )
+            .await;
             let (error_code, error_message) = match result.as_ref() {
                 Ok(()) => ("", String::new()),
                 Err(error) => ("transport_error", error.to_string()),
@@ -2998,7 +3042,15 @@ async fn run_client_inner(
         }
 
         if stop_reason == Some("retry_limit") {
-            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+            let cleanup = cleanup_routing_features(
+                &core_adapter.cleanup_failures,
+                Ok(()),
+                ks_on,
+                gw_on,
+                exit_on,
+                &tun_if,
+            )
+            .await;
             let transport_error = result
                 .as_ref()
                 .err()
@@ -7017,11 +7069,15 @@ impl TunGuard {
         pump_shutdown: impl std::future::Future<Output = ()>,
     ) -> anyhow::Result<()> {
         let failures = self.failures.clone();
+        let until = failures.cleanup_deadline();
         let result = network_task::teardown(
             self,
-            Self::restore_dns,
+            move |guard| {
+                let budget = crate::operation_budget::Scope::enter(until);
+                (budget, guard.restore_dns())
+            },
             pump_shutdown,
-            |guard, dns_cleanup| {
+            |guard, (_budget, dns_cleanup)| {
                 let dns_cleanup =
                     dns_cleanup.map_err(|error| anyhow::anyhow!("DNS cleanup failed: {error}"));
                 let routes_cleanup = if guard.owns_device {
@@ -7092,6 +7148,7 @@ impl Drop for TunGuard {
         if !self.armed {
             return;
         }
+        let _budget = crate::operation_budget::Scope::enter(self.failures.cleanup_deadline());
         log::warn!(
             "connection ended on an error path — releasing TUN {}",
             self.if_name
@@ -7888,6 +7945,7 @@ impl Drop for NetworkPlanApplyGuard<'_> {
         if !self.armed {
             return;
         }
+        let _budget = crate::operation_budget::Scope::enter(self.failures.cleanup_deadline());
         log::warn!(
             "Linux NetworkPlan failed before commit — rolling back platform state for {}",
             self.if_name
@@ -7958,6 +8016,10 @@ fn setup_tunnel(
     plan: &NetworkPlan,
     cleanup_failures: crate::client_cleanup::Failures,
 ) -> anyhow::Result<TunnelSetup> {
+    let until =
+        crate::operation_budget::limit(std::time::Instant::now() + crate::operation_budget::LIMIT);
+    let _budget = crate::operation_budget::Scope::enter(until);
+    crate::operation_budget::check()?;
     let client_ip = plan.tunnel_address.as_str();
     let mtu = i32::from(plan.mtu);
     let is_tap = is_tap_mode(&config.tun.device_type);
@@ -8003,6 +8065,7 @@ fn setup_tunnel(
     } else {
         DeviceType::Tun
     };
+    crate::operation_budget::check()?;
     let tun_res = if attach {
         TunInterface::attach(&if_name, mtu, device_type)
     } else if is_tap {
@@ -8209,6 +8272,7 @@ fn setup_tunnel(
     if !attach || router_enabled {
         route_owner.verify_plan()?;
     }
+    crate::operation_budget::check()?;
     publish_network_plan_state(plan)?;
     let dns = plan_guard.dns.take();
     plan_guard.disarm();
