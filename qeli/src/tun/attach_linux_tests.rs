@@ -203,3 +203,64 @@ fn descriptor_namespace_mismatch_does_not_resolve_same_name() -> io::Result<()> 
         Ok(())
     })
 }
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, /dev/net/tun and ip; isolated mount/net namespaces"]
+fn inherited_sysfs_same_name_different_index_is_rejected() -> io::Result<()> {
+    std::thread::spawn(|| {
+        // Both namespace mutations are confined to this disposable thread. Prevent
+        // mount propagation before replacing /sys with this namespace's sysfs.
+        if unsafe { libc::unshare(libc::CLONE_NEWNS | libc::CLONE_NEWNET) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let private = unsafe {
+            libc::mount(
+                std::ptr::null(),
+                b"/\0".as_ptr().cast(),
+                std::ptr::null(),
+                (libc::MS_PRIVATE | libc::MS_REC) as _,
+                std::ptr::null(),
+            )
+        };
+        if private != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let mounted = unsafe {
+            libc::mount(
+                b"sysfs\0".as_ptr().cast(),
+                b"/sys\0".as_ptr().cast(),
+                b"sysfs\0".as_ptr().cast(),
+                0,
+                std::ptr::null(),
+            )
+        };
+        if mounted != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let name = "qeli-audit0";
+        let _old_owner = TunInterface::create_multiqueue(name, 1400, DeviceType::Tun, 1)?;
+        drop(TunInterface::attach(name, 1400, DeviceType::Tun)?);
+        let foreign_index: u32 = std::fs::read_to_string(format!("/sys/class/net/{name}/ifindex"))?
+            .trim()
+            .parse()
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        if unsafe { libc::unshare(libc::CLONE_NEWNET) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        ip_link(&["add", "qeli-pad", "type", "dummy"])?;
+        let _current_owner = TunInterface::create_multiqueue(name, 1400, DeviceType::Tun, 1)?;
+        let current_index = open::interface_index(name)?.expect("current TUN exists");
+        assert_ne!(current_index, foreign_index);
+        let error = TunInterface::attach(name, 1400, DeviceType::Tun)
+            .err()
+            .expect("foreign sysfs flags must be rejected before TUNSETIFF");
+        assert!(
+            error.to_string().contains("refusing foreign tun_flags"),
+            "{error}"
+        );
+        assert_eq!(open::interface_index(name)?, Some(current_index));
+        Ok(())
+    })
+    .join()
+    .expect("isolated TUN test thread panicked")
+}

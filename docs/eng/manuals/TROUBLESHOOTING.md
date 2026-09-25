@@ -1591,8 +1591,11 @@ process. Provide a separate TUN/TAP without VNET_HDR, with NO_PI and matching
 
 Supported ONE_QUEUE/NAPI/NAPI_FRAGS and queue mode are preserved; persistence is unchanged.
 The external manager must retain the device and stable framing during opening.
-Sysfs must describe the current network namespace. The guard does not prove the
-identity of a same-name replacement. Descriptor-based release is described in §6.49;
+Sysfs must describe the current network namespace. `refusing foreign tun_flags`
+means the current namespace's `ifindex` differs from `/sys/class/net/<name>/ifindex`;
+correct the sysfs mount rather than changing the foreign device's flags. Equal
+indexes across namespaces are possible, so the guard does not prove the identity
+of a same-name replacement. Descriptor-based release is described in §6.49;
 DNS/route identity during external replacement remains open.
 [Report, Linux tests and limits](../reports/AUDIT-Q25-TUN-ATTACH.md).
 

@@ -80,6 +80,7 @@ impl TunInterface {
     /// the configured name. Linux requires IFF_MULTI_QUEUE to match the existing device;
     /// TUNSETIFF otherwise fails with EINVAL. qeli's packet pump also requires IFF_NO_PI.
     pub fn attach(name: &str, mtu: i32, device_type: DeviceType) -> io::Result<Self> {
+        let index = Self::verify_sysfs_index(name)?;
         let flags_path = format!("/sys/class/net/{name}/tun_flags");
         let flags_text = std::fs::read_to_string(&flags_path).map_err(|error| {
             io::Error::new(
@@ -88,11 +89,44 @@ impl TunInterface {
             )
         })?;
         let observed = open::parse_tun_flags(&flags_text)?;
-        Self::open_device(
-            name,
-            mtu,
-            open::attachment_flags(name, device_type, observed)?,
-        )
+        let flags = open::attachment_flags(name, device_type, observed)?;
+        if Self::verify_sysfs_index(name)? != index {
+            return Err(io::Error::other(format!(
+                "existing TUN/TAP '{name}' changed while inspecting sysfs"
+            )));
+        }
+        Self::open_device(name, mtu, flags)
+    }
+
+    /// sysfs can remain mounted from another network namespace after setns/unshare.
+    /// An index mismatch proves its tun_flags belong to a different link. Matching
+    /// indexes alone do not prove identity across namespaces (indexes can be reused).
+    fn verify_sysfs_index(name: &str) -> io::Result<u32> {
+        let current = open::interface_index(name)?.ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("TUN/TAP '{name}' does not exist"),
+            )
+        })?;
+        let path = format!("/sys/class/net/{name}/ifindex");
+        let text = std::fs::read_to_string(&path).map_err(|error| {
+            io::Error::new(
+                error.kind(),
+                format!("could not inspect existing TUN/TAP '{name}' via {path}: {error}"),
+            )
+        })?;
+        let mounted = text.trim().parse::<u32>().map_err(|error| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("invalid TUN/TAP ifindex in {path}: {error}"),
+            )
+        })?;
+        if current != mounted {
+            return Err(io::Error::other(format!(
+                "TUN/TAP '{name}' has index {current} in the current network namespace but index {mounted} in sysfs; refusing foreign tun_flags"
+            )));
+        }
+        Ok(current)
     }
 
     fn create_device(name: &str, mtu: i32, device_type: DeviceType) -> io::Result<Self> {

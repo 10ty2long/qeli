@@ -1822,7 +1822,9 @@ use the first queue's actual name. The server immediately refuses an occupied
 `dev_attach` and additional multiqueue descriptors require permitted `TUNSETIFINDEX`
 to prevent creation if the original device disappears. An ioctl refusal has no
 unguarded fallback. The external owner must keep the device and framing stable
-during opening, and sysfs must match the current network namespace.
+during opening, and sysfs must match the current network namespace. Qeli rejects a
+detected `ifindex` mismatch, but equal indexes across namespaces do not prove that
+the sysfs mount belongs to the current namespace.
 See [diagnostics §6.48](TROUBLESHOOTING.md).
 
 Qeli retains original TUN descriptors through cleanup, then closes them; disconnect,
