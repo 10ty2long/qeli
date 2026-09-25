@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v21 -->
+<!-- normative-sync: audit-debt-v22 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -245,7 +245,7 @@ NAT and TUN cleanup keep their order; a worker failure enters `Outcome`.
 
 Host: 1602 tests PASS, 1 pre-existing ignored; Linux cross-check and all-targets
 Clippy PASS. Lab `.11`: 10 targeted Linux tests and eight real TCP/UDP ×
-`off`/`manual`/`route`/`nat66` lifecycle cases PASS in private NET/mount/PID
+`off`/`manual`/`route`/`nat66` lifecycle cases and 2 bind-failure/rollback/retry cases PASS in private NET/mount/PID
 namespaces. Exact source manifest and logs:
 `audit-debt-20260925/server-cleanup-phase/`. D05 remains IN_PROGRESS:
 synchronous TUN/NAT setup, emergency Drop, a composed profile deadline and

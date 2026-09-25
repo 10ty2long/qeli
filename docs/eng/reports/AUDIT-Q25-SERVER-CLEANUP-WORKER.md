@@ -38,5 +38,13 @@ TCP/UDP × IPv6 `off`/`manual`/`route`/`nat66` start/stop cases PASS, including
 absence of residual TUN, IPv4/IPv6 NAT and sysctl leases. Tests used private
 NET/mount/PID namespaces; installed services were untouched.
 Source and logs: `C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260925/server-cleanup-phase/`.
+An additional fault run occupied the TCP/UDP bind port after `post_up`:
+**2/2 PASS**. The failed generation removed TUN and NAT while retaining the
+worker-lifetime IPv4 forwarding lease and its journal. Releasing the port let
+the profile restart; final worker stop restored forwarding and removed the
+journal. The first test expectation incorrectly required forwarding to turn off
+after a profile failure, contrary to worker-level ownership; the fixture, not
+the product, was corrected. Logs and results: `server-bind-failure-v4/`.
+
 No old-code runtime binary was run for this item: the previous synchronous call
 was established by direct source comparison. D05 remains IN_PROGRESS.

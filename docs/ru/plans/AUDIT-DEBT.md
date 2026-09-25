@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v21 -->
+<!-- normative-sync: audit-debt-v22 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -247,7 +247,7 @@ NAT sweep/ownership check и `usage.flush` выполняются в присо�
 
 На host: 1602 теста PASS, 1 заранее ignored; Linux cross-check и all-targets Clippy
 PASS. В лабе `.11` 10 адресных Linux-тестов и восемь реальных TCP/UDP ×
-`off`/`manual`/`route`/`nat66` lifecycle-сценариев PASS в частных пространствах
+`off`/`manual`/`route`/`nat66` lifecycle-сценариев и 2 bind-failure/rollback/retry сценария PASS в частных пространствах
 NET/mount/PID. Точный manifest/логи: `audit-debt-20260925/server-cleanup-phase/`.
 D05 остаётся IN_PROGRESS: синхронная TUN/NAT setup, аварийный Drop, составной
 срок профиля и непрерываемые системные вызовы ещё требуют отдельного решения.
