@@ -264,3 +264,5 @@
 - [Q25-F128: отказ от собственного exit-TUN как WAN](reports/AUDIT-Q25-EXIT-SELF-WAN.md)
 
 - [Q25-F129: неоднозначный ECMP default WAN](reports/AUDIT-Q25-WAN-ECMP.md)
+
+- [D09: итоговая проверка Linux lifecycle и системных отказов](reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md)

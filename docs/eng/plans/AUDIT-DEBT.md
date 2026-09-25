@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v26 -->
+<!-- normative-sync: audit-debt-v27 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -24,7 +24,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
-| D09 | 14/15/25/32/33 | IN_PROGRESS | Linux lifecycle and system failures | Run Linux flock/permissions/control/hooks/process-group and worker/services/TUN/route/DNS tests; retain stdout, exit status, SHA and before/after state. Run privileged ignored tests explicitly. |
+| D09 | 14/15/25/32/33 | DONE | Linux lifecycle and system failures | [Closure evidence](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md): current SHA 2175 Linux unit, 8 control, 15 hook-process and 8/8 live worker lifecycle PASS, with exit/SHA and before/after network snapshots. Earlier 48 privileged and real DNS/route/firewall matrices still apply to unchanged paths. Full install/upgrade and network combinations remain D11/D10; whole shutdown remains D05. |
 | D10 | 17/18/19/21/22/23 | IN_PROGRESS | Network integration matrix | Verify off/manual/route/nat66 × NDP, DNS UDP/TCP, multiple profiles, iptables/nft/firewalld, setup rollback/stop/restart and preservation of foreign resources. |
 | D11 | 00/24/27/34 | IN_PROGRESS | Current native cores and provenance | Rebuild affected cores from a clean commit using pinned recipes, compare A/B outputs, update copies and genuine provenance; verify ABI/exports and packages. |
 | D12 | 24/25/27/34 | IN_PROGRESS | Platform evidence | Android: 154 JVM + 6 API 34/x86_64 instrumentation tests PASS with fresh JNI; final snapshot remains required. Windows VM, Mac/Xcode/iOS and router runtime **SKIPPED by user decision on 24 September 2026**: those environments will not be provided. These platforms are not certified; this is a scope exclusion, not PASS. |
@@ -307,6 +307,20 @@ rustfmt and docs checks PASS. Failed first run and corrected rerun are in
 `audit-debt-20260925/server-setup-budget-phase/`. D05 stays IN_PROGRESS:
 forced Drop, whole-shutdown deadline and non-preemptible kernel/fs I/O.
 Register: **4/15 DONE**.
+
+### D09 — final Linux lifecycle reconciliation, 25 September
+
+The [report](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md) ties the current
+Linux suite (2175 PASS), 8 control and 15 hook-process tests to eight live
+worker cases. Raw before/after firewall/routes/links/forwarding snapshots, binary
+and harness SHA, stdout and exit codes are retained. An initial snapshot assertion
+falsely flagged empty xtables-nft built-in tables; raw dumps remain and the comparison
+was corrected. The first full suite hit EMFILE at nofile=1024 in a 512-connection
+TCP test; unchanged code passed with nofile=4096. Prior privileged/DNS/route/crash
+evidence was checked against the unchanged paths.
+**D09 DONE; register: 5/15 DONE (33.3%), 8 IN_PROGRESS, 2 TODO.**
+Install/upgrade and systemd runtime remain separate full-audit and D11 work;
+D05/D06/D10 retain their status.
 
 ## Sources
 

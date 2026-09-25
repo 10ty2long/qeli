@@ -43,6 +43,24 @@ def main():
     run(['ip','-6','addr','add','2001:db8::1/64','dev','wan0','nodad'])
     run(['ip','-6','route','add','default','dev','wan0'])
     (configdir/'users.conf').write_text('')
+    def network_snapshot():
+        return {
+            'ipv4_rules': run(['iptables-save']).stdout,
+            'ipv6_rules': run(['ip6tables-save']).stdout,
+            'ipv4_routes': run(['ip', '-4', 'route', 'show', 'table', 'all']).stdout,
+            'ipv6_routes': run(['ip', '-6', 'route', 'show', 'table', 'all']).stdout,
+            'links': sorted(x['ifname'] for x in json.loads(run(['ip', '-j', 'link', 'show']).stdout)),
+            'forwarding4': Path('/proc/sys/net/ipv4/ip_forward').read_text().strip(),
+            'forwarding6': Path('/proc/sys/net/ipv6/conf/all/forwarding').read_text().strip(),
+        }
+    def owned_firewall_lines(snapshot):
+        # xtables-nft may materialize otherwise empty built-in tables on first use.
+        # Compare actual rules and user-defined chains while retaining full raw dumps.
+        return {
+            key: [line for line in snapshot[key].splitlines()
+                  if line.startswith('-A ') or (line.startswith(':') and ' - ' in line)]
+            for key in ('ipv4_rules', 'ipv6_rules')
+        }
     results=[]
     for transport in ['tcp','udp']:
       for mode in ['off','manual','route','nat66']:
@@ -92,6 +110,8 @@ obf.mode = fake-tls
         cfg.write_text(good+'tun.mtu = broken\n')
         assert run([str(binary),'check-config','-c',str(cfg)],False).returncode!=0
         cfg.write_text(good)
+        before=network_snapshot()
+        (case/'network-before.json').write_text(json.dumps(before, indent=2))
         with (case/'worker.log').open('w') as log:
           worker=subprocess.Popen([str(binary),'_worker','-c',str(cfg)],env=env,stdout=log,stderr=subprocess.STDOUT)
           try:
@@ -131,6 +151,10 @@ obf.mode = fake-tls
         assert Path('/proc/sys/net/ipv6/conf/all/forwarding').read_text().strip()=='0','IPv6 forwarding lease leaked'
         assert Path('/proc/sys/net/ipv6/conf/wan0/accept_ra').read_text().strip()==before_ra,'WAN accept_ra leaked'
         assert not (state/'sysctls.state').exists(),'journal ownership leaked'
+        after=network_snapshot()
+        (case/'network-after.json').write_text(json.dumps(after, indent=2))
+        assert owned_firewall_lines(after)==owned_firewall_lines(before), 'firewall rules changed after stop'
+        assert {k:v for k,v in after.items() if k not in ('ipv4_rules','ipv6_rules')}=={k:v for k,v in before.items() if k not in ('ipv4_rules','ipv6_rules')}, 'network state changed after stop'
         results.append(dict(transport=transport,mode=mode,status='PASS'))
         (root/'results.json').write_text(json.dumps(results,indent=2))
         print(transport,mode,'PASS',flush=True)

@@ -264,3 +264,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F128: reject the exit TUN as its own WAN](reports/AUDIT-Q25-EXIT-SELF-WAN.md)
 
 - [Q25-F129: ambiguous ECMP default WAN](reports/AUDIT-Q25-WAN-ECMP.md)
+
+- [D09: Linux lifecycle and system-failure closure](reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md)

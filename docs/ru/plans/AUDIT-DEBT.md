@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v26 -->
+<!-- normative-sync: audit-debt-v27 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -24,7 +24,7 @@
 | D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
-| D09 | 14/15/25/32/33 | IN_PROGRESS | Linux lifecycle и системные отказы | Выполнить Linux tests для flock/permissions/control/hooks/process groups, worker/services/TUN/route/DNS; сохранить stdout, exit, SHA и before/after. Привилегированные ignored tests запускать явно. |
+| D09 | 14/15/25/32/33 | DONE | Linux lifecycle и системные отказы | [Итоговая сверка](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md): на текущем SHA 2175 Linux unit, 8 control, 15 hook-process и 8/8 реальных worker lifecycle PASS; сохранены exit/SHA и сетевые снимки до/после. Ранее 48 privileged и реальные DNS/route/firewall матрицы применимы к неизменённым путям. Полные install/upgrade и сетевые сочетания остаются D11/D10, общий shutdown — D05. |
 | D10 | 17/18/19/21/22/23 | IN_PROGRESS | Сетевая интеграционная матрица | Проверить off/manual/route/nat66 × NDP, DNS UDP/TCP, multiprofile, iptables/nft/firewalld, setup rollback/stop/restart и сохранение чужих ресурсов. |
 | D11 | 00/24/27/34 | IN_PROGRESS | Актуальные native cores и provenance | Из чистого commit пересобрать изменённые ядра по закреплённым рецептам, сравнить A/B, обновить копии и настоящие provenance; проверить ABI/exports и пакеты. |
 | D12 | 24/25/27/34 | IN_PROGRESS | Платформенное подтверждение | Android: 154 JVM + 6 API 34/x86_64 instrumentation PASS со свежим JNI; итоговый снимок ещё требуется. Windows VM, Mac/Xcode/iOS и router runtime **SKIPPED по решению пользователя 24 сентября 2026**: стендов не будет. Эти платформы не сертифицированы; это исключение из текущего объёма, не PASS. |
@@ -309,6 +309,20 @@ rustfmt и docs checks PASS. Первый отказ и исправленный
 `audit-debt-20260925/server-setup-budget-phase/`. D05 остаётся IN_PROGRESS:
 forced Drop, общий срок shutdown и непрерываемый kernel/fs I/O.
 Реестр: **4/15 DONE**.
+
+### D09 — итоговая Linux lifecycle сверка, 25 сентября
+
+[Отчёт](../reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md) связывает текущий полный
+Linux-набор (2175 PASS), 8 control и 15 hook-process тестов с восемью реальными
+worker-сценариями. У каждого сохранены raw-снимки firewall/routes/links/forwarding
+до и после, бинарный и сценарный SHA, stdout и exit. Первый дополнительный
+снимок ложно сработал на пустые builtin таблицы xtables-nft; исходные дампы
+сохранены, правило сравнения исправлено. Первый полный набор упал с EMFILE при
+nofile=1024 на тесте 512 TCP-соединений; неизменённый код прошёл при nofile=4096.
+Предыдущие privileged/DNS/route/crash прогоны сверены с неизменёнными путями.
+**D09 DONE; реестр: 5/15 DONE (33,3%), 8 IN_PROGRESS, 2 TODO.**
+Установка/обновление и systemd runtime остаются отдельными пунктами полного аудита
+и D11; D05/D06/D10 не меняют статус.
 
 ## Источники
 
