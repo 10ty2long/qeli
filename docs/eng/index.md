@@ -246,3 +246,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F119: shared profile setup budget and listener readiness](reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md)
 
 - [Q25-F120: recheck the IPv6 exit WAN during roaming refresh](reports/AUDIT-Q25-GATEWAY-IPV6-ROAM.md)
+
+- [Q25-F121: late IPv6 cannot bypass the kill switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV6.md)

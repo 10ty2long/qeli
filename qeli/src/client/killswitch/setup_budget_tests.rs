@@ -290,7 +290,7 @@ fn owned_fallback_and_egress_queries_use_the_remaining_budget() {
     let f = Fixture::new("ks_setup_probe");
     f.flag("iptables.probe-delay", "0.45");
     let path = f.dir.join("iptables").to_str().unwrap().to_owned();
-    for phase in 0..3 {
+    for phase in 0..2 {
         let context = Context::fixture().with_budget(Budget {
             until: Instant::now() + Duration::from_millis(100),
             operation: "setup",
@@ -303,12 +303,6 @@ fn owned_fallback_and_egress_queries_use_the_remaining_budget() {
             assert!(host_may_have_ipv4_default_route_with(
                 |_| context.ipt(&path, &["--version"])
             ));
-        } else {
-            ipv6_state::test_support::with_disabled(false, || {
-                assert!(host_may_have_global_ipv6_with(
-                    |_| context.ipt(&path, &["--version"])
-                ))
-            });
         }
         assert_eq!(
             context.check_budget().unwrap_err().kind(),

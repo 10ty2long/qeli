@@ -167,48 +167,6 @@ fn command_bounds_ipv4_spawn_and_io_errors_keep_protection_required() {
 }
 
 #[test]
-fn command_bounds_unknown_ipv6_address_inventory_keeps_protection_required() {
-    ipv6_state::test_support::with_disabled(false, || {
-        for mode in ["slow", "bytes"] {
-            with_commands(
-                move |command| {
-                    assert_eq!(command.get_program(), "ip");
-                    assert_eq!(
-                        arguments(command),
-                        ["-6", "address", "show", "scope", "global"]
-                    );
-                    Action::Probe { mode }
-                },
-                || assert!(host_may_have_global_ipv6()),
-            );
-        }
-    });
-}
-
-#[test]
-fn only_successful_empty_ipv6_address_inventory_skips_protection() {
-    ipv6_state::test_support::with_disabled(false, || {
-        for (success, stdout, required) in [
-            (true, &b""[..], false),
-            (
-                true,
-                &b"2: eth0\n    inet6 fd00::1/64 scope global\n"[..],
-                true,
-            ),
-            (false, &b""[..], true),
-            (false, &b"partial"[..], true),
-            (true, &b"\xff"[..], true),
-            (true, &b" "[..], true),
-        ] {
-            with_commands(
-                move |_| query_output(success, stdout),
-                || assert_eq!(host_may_have_global_ipv6(), required),
-            );
-        }
-    });
-}
-
-#[test]
 fn teardown_preserves_referenced_chain_when_jump_deletion_does_not_work() {
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;

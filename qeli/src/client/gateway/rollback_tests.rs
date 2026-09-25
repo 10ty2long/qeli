@@ -35,7 +35,6 @@ struct Kernel {
     fail_mark_delete: bool,
     fail_nat_add: bool,
     fail_ipv6_drop: bool,
-    ipv6_observation: Option<io::Result<Output>>,
     inventory_failure: Option<bool>,
     inventory_override: Option<(bool, Vec<u8>)>,
 }
@@ -62,12 +61,6 @@ impl Kernel {
         self.calls.push(args.clone());
         let program = cmd.get_program().to_string_lossy();
         if program == "ip" {
-            if args == ["-6", "address", "show", "scope", "global"] {
-                return self
-                    .ipv6_observation
-                    .take()
-                    .unwrap_or_else(|| Ok(output(0, "", "")));
-            }
             let wan = &self.wans[usize::from(args.first().is_some_and(|arg| arg == "-6"))];
             let text = wan
                 .as_ref()

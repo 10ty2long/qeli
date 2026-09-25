@@ -262,12 +262,9 @@ fn concurrent_public_start_admits_only_one_policy() {
     ks::ownership::test_support::clear();
 }
 
-// Force IPv6 installation to fail after IPv4 has been armed. The observation
-// is supplied at the production command boundary; no host routes are changed.
-fn failed_ipv6(k: &Rc<RefCell<Kernel>>, observation: io::Result<Output>) {
-    let mut k = k.borrow_mut();
-    k.fail_ipv6_drop = true;
-    k.ipv6_observation = Some(observation);
+// Force IPv6 firewall installation to fail after IPv4 has been armed.
+fn failed_ipv6(k: &Rc<RefCell<Kernel>>) {
+    k.borrow_mut().fail_ipv6_drop = true;
 }
 fn assert_ipv4_removed(k: &Rc<RefCell<Kernel>>) {
     assert!(!k
@@ -276,52 +273,9 @@ fn assert_ipv4_removed(k: &Rc<RefCell<Kernel>>) {
         .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
 }
 #[test]
-fn regression_unknown_ipv6_refuses_and_rolls_back_ipv4() {
-    for kind in [
-        io::ErrorKind::NotFound,
-        io::ErrorKind::PermissionDenied,
-        io::ErrorKind::TimedOut,
-        io::ErrorKind::InvalidData,
-    ] {
-        run(|k| {
-            failed_ipv6(&k, Err(kind.into()));
-            assert!(
-                protect("ks_a", "203.0.113.7").is_err(),
-                "unknown IPv6 evidence: {kind:?}"
-            );
-            assert_ipv4_removed(&k);
-        });
-    }
-}
-#[test]
-fn regression_failed_ipv6_query_refuses_and_rolls_back_ipv4() {
+fn regression_failed_ipv6_firewall_refuses_and_rolls_back_ipv4() {
     run(|k| {
-        failed_ipv6(&k, Ok(output(2, "", "query failed")));
-        assert!(protect("ks_a", "203.0.113.7").is_err());
-        assert_ipv4_removed(&k);
-    });
-}
-#[test]
-fn regression_observed_ipv6_refuses_and_rolls_back_ipv4() {
-    run(|k| {
-        failed_ipv6(
-            &k,
-            Ok(output(
-                0,
-                "2: eth0\n    inet6 2001:db8::1/64 scope global\n",
-                "",
-            )),
-        );
-        assert!(protect("ks_a", "203.0.113.7").is_err());
-        assert_ipv4_removed(&k);
-    });
-}
-#[test]
-fn regression_unrecognized_ipv6_output_requires_protection() {
-    run(|k| {
-        let mut reply = output(0, "", "");
-        reply.stdout = vec![0xff];
-        failed_ipv6(&k, Ok(reply));
+        failed_ipv6(&k);
         assert!(protect("ks_a", "203.0.113.7").is_err());
         assert_ipv4_removed(&k);
     });
@@ -329,7 +283,7 @@ fn regression_unrecognized_ipv6_output_requires_protection() {
 #[test]
 fn regression_ipv6_refusal_reports_failed_ipv4_rollback() {
     run(|k| {
-        failed_ipv6(&k, Err(io::ErrorKind::PermissionDenied.into()));
+        failed_ipv6(&k);
         k.borrow_mut().lie_delete = true;
         let error = protect("ks_a", "203.0.113.7").unwrap_err().to_string();
         assert!(error.contains("rollback"), "{error}");
@@ -340,21 +294,29 @@ fn regression_ipv6_refusal_reports_failed_ipv4_rollback() {
     });
 }
 #[test]
-fn verified_empty_ipv6_query_allows_ipv4_only_protection() {
+fn regression_missing_ipv6_firewall_refuses_even_before_global_address_arrives() {
     run(|k| {
-        failed_ipv6(&k, Ok(output(0, "", "")));
-        protect("ks_a", "203.0.113.7").unwrap();
-        assert!(k
-            .borrow()
-            .rules
-            .contains_key(&(false, "filter".into(), "QELI_KS_ks_a".into())));
+        let error =
+            ks::ownership::test_support::with_paths([Some("model-iptables".into()), None], || {
+                protect("ks_a", "203.0.113.7").unwrap_err().to_string()
+            });
+        assert!(error.contains("IPv6 can become active"), "{error}");
+        assert_ipv4_removed(&k);
+        assert!(
+            !k.borrow()
+                .calls
+                .iter()
+                .any(|args| args == &["-6", "address", "show", "scope", "global"]),
+            "an address snapshot cannot prove lifetime safety"
+        );
     });
 }
 #[test]
-fn explicit_ipv6_leak_override_allows_unknown_evidence() {
+fn explicit_ipv6_leak_override_allows_missing_firewall() {
     run(|k| {
-        failed_ipv6(&k, Err(io::ErrorKind::PermissionDenied.into()));
-        engage("203.0.113.7", 443, "ks_a", false, true, true).unwrap();
+        ks::ownership::test_support::with_paths([Some("model-iptables".into()), None], || {
+            engage("203.0.113.7", 443, "ks_a", false, true, true).unwrap()
+        });
         assert!(k
             .borrow()
             .rules
@@ -386,19 +348,6 @@ fn regression_module_disabled_lifecycle_never_touches_ipv6_tables() {
             refresh_server_ips("203.0.113.8", 443, "ks_a").unwrap();
             ks::disengage("ks_a").unwrap();
             assert!(!k.borrow().rules.keys().any(|(ipv6, _, _)| *ipv6));
-        });
-    });
-}
-#[test]
-fn regression_module_disabled_does_not_require_an_ipv6_address_probe() {
-    run(|k| {
-        failed_ipv6(&k, Err(io::ErrorKind::Unsupported.into()));
-        ks::ipv6_state::test_support::with_disabled(true, || {
-            protect("ks_a", "203.0.113.7").unwrap();
-            assert!(
-                k.borrow().ipv6_observation.is_some(),
-                "disabled module needs no address query"
-            );
         });
     });
 }

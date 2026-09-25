@@ -246,3 +246,5 @@
 - [Q25-F119: общий бюджет установки профиля и готовность listeners](reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md)
 
 - [Q25-F120: повторная проверка IPv6 WAN при обновлении exit-node](reports/AUDIT-Q25-GATEWAY-IPV6-ROAM.md)
+
+- [Q25-F121: поздний IPv6 не обходит kill-switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV6.md)

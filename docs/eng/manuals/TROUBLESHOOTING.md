@@ -1977,12 +1977,11 @@ after a crash. Establish ownership of remaining chains before the precise recove
 [GETTING-STARTED.md](GETTING-STARTED.md). There is no lease lock file to delete.
 Old versions and manual firewall changes need separate coordination during upgrades.
 
-`global IPv6 is present or could not be ruled out` after IPv6 setup failure means that
-skipping protection could not be justified. Check `ip6tables` and the successful completion
-of `ip -6 address show scope global`. Empty output with a failing status is insufficient.
-`allow_ipv6_leak = true` explicitly accepts leakage. If IPv4 rollback also failed,
+`IPv6 can become active` after IPv6 setup failure means that starting without
+`ip6tables` could leak if an address appears later. Install/fix `ip6tables` or disable
+IPv6 globally; `allow_ipv6_leak = true` explicitly accepts leakage. If IPv4 rollback also failed,
 do not assume the remaining firewall was cleaned up.
-[Checks and limits](../reports/AUDIT-Q25-KILL-SWITCH-LIFETIME.md).
+[Checks and limits](../reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV6.md).
 
 ### Linux: TUN name already reserved
 

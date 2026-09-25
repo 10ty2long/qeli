@@ -569,24 +569,6 @@ fn engage_family(
     Ok(())
 }
 
-/// Only a successful empty address inventory rules out global IPv6. In particular,
-/// an inaccessible/missing procfs or a failed command is not an IPv4-only host.
-/// The shared command boundary bounds runtime and output, including partial replies.
-#[cfg(test)]
-fn host_may_have_global_ipv6() -> bool {
-    host_may_have_global_ipv6_with(|args| ipt("ip", args))
-}
-fn host_may_have_global_ipv6_with(
-    query: impl FnOnce(&[&str]) -> std::io::Result<std::process::Output>,
-) -> bool {
-    if ipv6_state::globally_disabled() {
-        return false;
-    }
-    query(&["-6", "address", "show", "scope", "global"])
-        .map(|output| !output.status.success() || !output.stdout.is_empty())
-        .unwrap_or(true)
-}
-
 /// Prepare a kill-switch mutation: allow only loopback, `tun_if`, DHCP, DNS, and the server
 /// IP(s). Idempotent — rebuilds the `QELI_KS` chain on both families. Each family fails
 /// closed when the host has usable egress but its firewall cannot be armed, unless the
@@ -788,9 +770,10 @@ fn engage_prepared(
         }
 
         // IPv6 leg. Program ip6tables where present; where it's missing (or programming
-        // fails) the host would leak over v6 while the switch reports ENGAGED — a false
-        // sense of security. Require protection when global IPv6 exists OR its absence
-        // could not be verified, unless the operator explicitly accepts the leak.
+        // fails) a currently IPv4-only host can acquire global IPv6 later. An empty
+        // address inventory is only a snapshot and cannot authorize an unprotected
+        // lifetime. Only a globally disabled IPv6 module or an explicit leak override
+        // permits this leg to remain unprotected.
         let v6_protected = match v6_path.as_deref() {
             Some(v6_path) => {
                 attempted.push((true, v6_path.to_owned()));
@@ -821,8 +804,7 @@ fn engage_prepared(
                 !guarded.iter().any(|(ipv6, _)| *ipv6),
                 "IPv6 kill-switch rebuild failed; prior protection retained by recovery guard"
             );
-            let needs_protection =
-                !allow_ipv6_leak && host_may_have_global_ipv6_with(|args| context.ipt("ip", args));
+            let needs_protection = !allow_ipv6_leak && !ipv6_state::globally_disabled();
             context.check()?;
             context.check_budget()?;
             if needs_protection {
@@ -840,12 +822,11 @@ fn engage_prepared(
                     }
                 }
                 anyhow::bail!(
-                "kill-switch: global IPv6 is present or could not be ruled out, but ip6tables is unavailable or could not be programmed — refusing to engage a leaking kill-switch. Install/fix ip6tables and IPv6 inspection, or set allow_ipv6_leak = true to connect and accept the IPv6 leak."
+                "kill-switch: IPv6 can become active, but ip6tables is unavailable or could not be programmed — refusing to engage a leaking kill-switch. Install/fix ip6tables, disable IPv6 globally, or set allow_ipv6_leak = true to connect and accept the IPv6 leak."
             );
             }
             log::warn!(
-            "kill-switch: IPv6 egress is NOT restricted (IPv6 module disabled, global IPv6 inventory verified empty, \
-             or allow_ipv6_leak is set)"
+            "kill-switch: IPv6 egress is NOT restricted (IPv6 module disabled or allow_ipv6_leak is set)"
         );
         }
 

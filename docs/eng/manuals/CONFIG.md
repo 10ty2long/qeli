@@ -2107,13 +2107,12 @@ How it works (matters for manual teardown and for several instances on one host)
   module functionality (`ipv6.disable=1`), unlike `net.ipv6.conf.*.disable_ipv6`.
   A missing/unreadable file, any other content or an empty address list does not authorize
   bypassing failed firewall ownership inspection. IPv4 checks remain in force.
-- IPv6 is programmed symmetrically (`ip6tables`). If installation is unavailable or fails,
-  skipping IPv6 protection requires a successful empty
-  `ip -6 address show scope global` result or explicit `allow_ipv6_leak = true`.
-  Errors, timeouts, output overflow, a missing `ip` or any nonempty response require
-  protection; unreadable host state no longer proves the absence of IPv6.
-  Refusal rolls back an already installed IPv4 leg and reports any rollback failure.
-  This is a startup snapshot, not monitoring for IPv6 appearing later.
+- IPv6 is programmed symmetrically (`ip6tables`). If the tool is unavailable or installation
+  fails, the kill switch refuses even when the current global IPv6 address list is empty:
+  an address may arrive during the session. The exceptions are verified global disabling
+  of the IPv6 module or explicit `allow_ipv6_leak = true`. Refusal rolls back an already
+  installed IPv4 leg and reports rollback failures. An IPv4-only host with the IPv6 module
+  enabled now also needs working `ip6tables` or an explicit leak override.
   See also the `::/1`+`8000::/1` blackhole in the client routing-keys table.
 
 It is removed automatically on a **clean** stop (Ctrl+C / SIGTERM); a crash leaves the
