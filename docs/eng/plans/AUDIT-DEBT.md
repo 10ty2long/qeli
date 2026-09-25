@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v15 -->
+<!-- normative-sync: audit-debt-v16 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -32,12 +32,68 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D14 | 00/34 | TODO | Current benchmark and certification | After correctness, run reproducible benchmarks for required modes with the current SHA, environment and metrics; build certification only from actual results. Historical 0.8.0 results do not certify 0.8.2. |
 | D15 | All started sections | IN_PROGRESS | Evidence and documentation reconciliation | Map historical open items to later fixes; verify patch applicability, diff/commit and RU/EN links. Close each debt item with evidence, not a commit count. |
 
-## Closure order
+## Debt completion: workflow from 25 September
 
-1. D01–D06: code and regressions for confirmed defects; run D09 alongside useful local work.
-2. D07–D10: runtime/contracts and failure cases on the corrected snapshot.
-3. D11–D13: clean builds, clients/devices and resource measurements.
-4. D14–D15: current measurements, package/report reconciliation and final closure evidence.
+At the user's request, work proceeds in batches with tests selected by change risk.
+The verified reference snapshot is `a8aba986`: 1584 host, 71 config, 2157 Linux,
+48 privileged, 8 lifecycle, 38 native cases and 2 recoveries; see
+[TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md). These results belong to that
+snapshot and do not automatically certify subsequent changes.
+
+| Batch | Groups | Remaining work and completion condition |
+|---|---|---|
+| A. Startup, shutdown and system context | D05/D06/D09 | Review startup config_source::load/metadata/canonicalize, composed NetworkPlan/cleanup budgets and remaining early Drop paths in one pass; complete the WAN/resolved/attach/dynamic IPv6 table. Record each path as fixed and tested, already covered by referenced evidence, or a justified limitation. Finish with targeted Linux tests of affected boundaries. |
+| B. Configuration and remaining network compatibility | D07/D08/D10 | Complete the server field → parse/validate/runtime/serialize table and the 81+3 client contract; cover save/reload/import, malformed input and concurrent edits. Run only uncovered IPv6/NDP, DNS, multiprofile and firewall combinations, grouping related fixes. |
+| C. Builds, Android and resources | D11/D12/D13 | Rebuild affected cores at an agreed clean commit, verify A/B/ABI/provenance and Android. Run one bounded churn/reconnect/fault campaign with cycles and fd/tasks/threads/RSS/network-object growth criteria recorded before execution. Retain platform SKIPPED decisions. |
+| D. Final regression and measurements | D14/D15 | Run one overall regression campaign on the final candidate, a current benchmark and package/documentation reconciliation. Give every obligation evidence or an explicit unresolved remainder; unverified work cannot be declared closed. |
+
+Batches specify completion order, not a promise of four runs or a calendar deadline.
+Fixes and short checks happen inside a batch; advancing does not require another
+permission request.
+
+### Test selection
+
+- Each change gets its defect regression, affected module tests and necessary build.
+  Docs-only changes get docs/link/diff checks, without Rust or lab runs.
+- Related fixes share one test campaign. Run full Linux/host suites at batch boundaries;
+  run the full feature/platform matrix on the final candidate, or earlier when
+  cfg/features/ABI/dependencies change.
+- New native fault/cancel/crash scenarios remain required for changes to ownership of
+  networking, keys or persisted state. Unchanged transport and firewall matrices do
+  not need to run after every local fix.
+- Reproduce against the old binary once. Reuse that baseline with its SHA; repeat it
+  only when its scenario, assumptions or an ambiguity changes.
+- Reuse evidence only after checking affected code/dependencies and lab conditions,
+  recording the original SHA and applicability reason. A newly built binary does not
+  invalidate every independent check. The final candidate still gets overall validation.
+- Run independent builds/tests concurrently; operations sharing mutable sources,
+  target directories or network resources stay sequential. Do not repeat successful
+  checks without a relevant subsequent change.
+
+### Scope and reporting
+
+Existing D01–D15 obligations remain. Record new noncritical improvements and unproven
+hypotheses in the later full-audit queue without expanding this batch. Include confirmed
+security, data/traffic loss or core functional defects with a specific reproducer.
+
+Uninterruptible syscalls and forced Drop require a supported-boundary and ownership
+explanation; they do not by themselves restart the audit cycle. Ordinary hangs, lost
+errors and ownerless mutations remain mandatory defects. Relabelling a defect as a
+limitation does not close it.
+
+Use one batch result entry in this register; small fixes need no separate report.
+Preserve logs, commands and hashes as machine artifacts. User-facing results state
+behavior changes, closed criteria and a finite remainder. The 4/15 figure counts fully
+closed groups; it is not a time or work-completion estimate. Rescheduling alone changes
+no completion status.
+
+Initial batch A reconciliation at `a8aba986`: config_source already rejects special
+files with NONBLOCK + fstat and validates one opened snapshot. Do not re-audit those
+properties unless they change. Remaining checks are synchronous loading before signal
+registration, no overall size cap in the loader itself, and startup metadata/canonicalize.
+These are concrete review targets. Individual DNS/route/gateway/kill-switch budgets and
+joined workers already have evidence; inspect their composition and early exits instead
+of repeating every previous scenario.
 
 Privileged external mutation between a check and a write has no atomic protection
 guarantee; this is an OS-interface limitation, not automatically a new feature defect.
