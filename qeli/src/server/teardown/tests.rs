@@ -126,3 +126,50 @@ fn primary_error_does_not_hide_unsafe_cleanup() {
     assert!(healthy.can_restart());
     assert!(healthy.into_result().is_ok());
 }
+
+#[tokio::test(flavor = "current_thread")]
+async fn blocking_host_cleanup_keeps_executor_responsive() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let ticks = Arc::new(AtomicUsize::new(0));
+    let ticker_ticks = ticks.clone();
+    let ticker = tokio::spawn(async move {
+        while ticker_ticks.load(Ordering::SeqCst) < 4 {
+            tokio::time::sleep(Duration::from_millis(15)).await;
+            ticker_ticks.fetch_add(1, Ordering::SeqCst);
+        }
+    });
+    blocking("qeli-test-host-work", || {
+        std::thread::sleep(Duration::from_millis(120))
+    })
+    .await
+    .unwrap();
+    assert!(ticks.load(Ordering::SeqCst) >= 4);
+    ticker.await.unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cancelled_host_cleanup_joins_before_releasing_owned_resource() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    let released = Arc::new(AtomicBool::new(false));
+    struct Resource(Arc<AtomicBool>);
+    impl Drop for Resource {
+        fn drop(&mut self) {
+            self.0.store(true, Ordering::SeqCst);
+        }
+    }
+    let resource = Resource(released.clone());
+    let (started, entered) = tokio::sync::oneshot::channel();
+    let (resume, continue_work) = std::sync::mpsc::channel();
+    let cleanup = tokio::spawn(blocking("qeli-test-owned-cleanup", move || {
+        let _resource = resource;
+        let _ = started.send(());
+        continue_work.recv_timeout(Duration::from_secs(2)).unwrap();
+    }));
+    entered.await.unwrap();
+    cleanup.abort();
+    tokio::time::sleep(Duration::from_millis(30)).await;
+    assert!(!released.load(Ordering::SeqCst));
+    resume.send(()).unwrap();
+    assert!(cleanup.await.unwrap_err().is_cancelled());
+    assert!(released.load(Ordering::SeqCst));
+}

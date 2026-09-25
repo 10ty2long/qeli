@@ -4,6 +4,42 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+/// Run a synchronous host operation away from the Tokio executor. A cancelled waiter
+/// still joins its worker before the caller can release the network namespace lease or
+/// profile resources. The worker owns captures until its operation has fully returned.
+pub(crate) async fn blocking<R: Send + 'static>(
+    name: &'static str,
+    operation: impl FnOnce() -> R + Send + 'static,
+) -> anyhow::Result<R> {
+    struct JoinOnDrop<R>(Option<JoinHandle<R>>);
+    impl<R> Drop for JoinOnDrop<R> {
+        fn drop(&mut self) {
+            if let Some(thread) = self.0.take() {
+                if thread.join().is_err() {
+                    log::error!("server host worker panicked during cancelled cleanup");
+                }
+            }
+        }
+    }
+
+    let (finished, waiting) = tokio::sync::oneshot::channel();
+    let thread = std::thread::Builder::new()
+        .name(name.into())
+        .spawn(move || {
+            let result = operation();
+            let _ = finished.send(());
+            result
+        })?;
+    let mut owned = JoinOnDrop(Some(thread));
+    let _ = waiting.await; // A panic closes the sender; join below reports it.
+    owned
+        .0
+        .take()
+        .expect("server host worker")
+        .join()
+        .map_err(|_| anyhow::anyhow!("server host worker '{name}' panicked"))
+}
+
 /// The wrapper reads this after dropping its guard. Sharing preserves the existing
 /// RAII cleanup order without running resource teardown a second time.
 #[derive(Clone, Default)]

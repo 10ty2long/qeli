@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v20 -->
+<!-- normative-sync: audit-debt-v21 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -20,7 +20,7 @@
 | D02 | 14/25 | DONE | Внутренние границы sysctl | Lock/I/O/context, trusted directory, namespace fd pins, исходный per-interface fd/witness и network_cookie v4 проверены. 1995 Linux + 32 privileged + 8 lifecycle и SIGKILL/mismatch worker E2E PASS. Потерянный interface witness сохраняется для ручного recovery; общий persistent firewall/DNS/routes остаётся D04. [Отчёт](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Восстановление после crash | Persistent server firewall, DNS v2, kill-switch и physical routes проверены; legacy global DNS, persistent TUN и потерянный sysctl witness имеют явные безопасные ручные границы. [Клиентская mixed матрица](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 ячейки, 136 crash/recovery; [серверная](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks повторно PASS. Произвольные zones/policies и multiprofile остаются D10; накопление состояния — D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; остаётся server profile setup/cleanup; произвольные kernel/fs I/O и forced join не прерываются. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; штатные server startup/final cleanup и profile teardown вынесены в присоединяемые потоки; остаются sync setup профиля, forced Drop и общий срок всей операции. Произвольные kernel/fs I/O и forced join не прерываются. [Серверная очистка](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
@@ -235,6 +235,23 @@ Baseline — исходные обработчики с новым тестов�
 уже проверены; scheduler isolation и составной срок профиля ещё требуют проверки.
 Непрерываемые kernel/fs вызовы и forced join не объявляются жёстко ограниченными таймером.
 D06 WAN/dynamic IPv6 и остальные группы сохраняются; итог **4/15 DONE**.
+
+### Q25-F115 — серверная очистка вне async executor
+
+Синхронные `nat::cleanup_all`, штатный `ProfileTeardown::drop`, итоговые
+NAT sweep/ownership check и `usage.flush` выполняются в присоединяемых потоках.
+Отмена ожидающего async-кода ждёт рабочий поток, поэтому network namespace lease и
+профильные ресурсы не освобождаются до завершения принятой очистки. Порядок
+остановки дочерних задач, удаления регистрационной записи, NAT и TUN сохранён;
+ошибка worker входит в `Outcome`. [Отчёт](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md).
+
+На host: 1602 теста PASS, 1 заранее ignored; Linux cross-check и all-targets Clippy
+PASS. В лабе `.11` 10 адресных Linux-тестов и восемь реальных TCP/UDP ×
+`off`/`manual`/`route`/`nat66` lifecycle-сценариев PASS в частных пространствах
+NET/mount/PID. Точный manifest/логи: `audit-debt-20260925/server-cleanup-phase/`.
+D05 остаётся IN_PROGRESS: синхронная TUN/NAT setup, аварийный Drop, составной
+срок профиля и непрерываемые системные вызовы ещё требуют отдельного решения.
+Итого по реестру **4/15 DONE**.
 
 ## Источники
 

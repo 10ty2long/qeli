@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v20 -->
+<!-- normative-sync: audit-debt-v21 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -20,7 +20,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D02 | 14/25 | DONE | Internal sysctl boundaries | Lock/I/O/context, trusted directory, namespace fd pins, original per-interface fd/witness and v4 network_cookie verified. 1995 Linux + 32 privileged + 8 lifecycle and SIGKILL/mismatch worker E2E PASS. Lost interface witness stays for manual recovery; general persistent firewall/DNS/routes remains D04. [Report](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Standalone kill switch | Pinned namespace, retained exact-family owner, fail-closed reconnect and safe address rotation. 11 portable + 2 native regressions; actual IPv4/IPv6 filter counters and 2 baseline failures. [Report](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Crash recovery | Persistent server firewall, DNS v2, kill-switch and physical routes verified; legacy global DNS, persistent TUN and lost sysctl witnesses have explicit safe manual boundaries. [Client mixed matrix](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 cells, 136 crash/recovery; [server](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks rerun PASS. Arbitrary zones/policies and multiprofile remain D10; state accumulation remains D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; hook/backup file preparation is closed by the continuation below; server profile setup/cleanup remains; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; hook/backup file preparation is closed by the continuation below; ordinary server startup/final cleanup and profile teardown now use joined workers; synchronous profile setup, forced Drop and a composed whole-operation deadline remain. Arbitrary kernel/fs I/O and forced joins are not preempted. [Server cleanup](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -233,6 +233,24 @@ the next batch: `run_worker` invokes synchronous `nat::cleanup_all`;
 budgets already have coverage; scheduler isolation and a composed profile deadline
 still need checking. Non-preemptible kernel/fs calls and forced joins are not claimed
 to have a hard timer bound. D06 WAN/dynamic IPv6 and other groups remain; **4/15 DONE**.
+
+### Q25-F115 — server cleanup off the async executor
+
+Synchronous `nat::cleanup_all`, ordinary `ProfileTeardown::drop`, final NAT
+sweep/ownership checks and `usage.flush` run on joined workers. Cancelling an async
+waiter joins its worker, so the network namespace lease and profile resources cannot
+be released before accepted cleanup finishes. Child-task shutdown, registry removal,
+NAT and TUN cleanup keep their order; a worker failure enters `Outcome`.
+[Report](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md).
+
+Host: 1602 tests PASS, 1 pre-existing ignored; Linux cross-check and all-targets
+Clippy PASS. Lab `.11`: 10 targeted Linux tests and eight real TCP/UDP ×
+`off`/`manual`/`route`/`nat66` lifecycle cases PASS in private NET/mount/PID
+namespaces. Exact source manifest and logs:
+`audit-debt-20260925/server-cleanup-phase/`. D05 remains IN_PROGRESS:
+synchronous TUN/NAT setup, emergency Drop, a composed profile deadline and
+non-preemptible system calls still need separate resolution. Register total:
+**4/15 DONE**.
 
 ## Sources
 

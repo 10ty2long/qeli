@@ -3499,7 +3499,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // Control socket (shared across profiles) — the supervisor's panel reaches
     // live client data (list/kick/bandwidth) through this.
     // Fail before spawning services; the socket lease rolls back on startup errors.
-    nat::cleanup_all()?;
+    crate::profile_teardown::blocking("qeli-start-cleanup", nat::cleanup_all).await??;
     let control_listener = control_socket
         .listener
         .take()
@@ -3675,7 +3675,13 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         // there is nothing to delete, so running it always is strictly safer — it also
         // covers a profile whose NAT was toggled off while running.
         // (Audit 2026-07-27, B6.)
-        if let Err(error) = nat::cleanup(&pcfg.name) {
+        let profile_name = pcfg.name.clone();
+        let cleanup = crate::profile_teardown::blocking("qeli-final-cleanup", move || {
+            nat::cleanup(&profile_name)
+        })
+        .await
+        .and_then(|result| result);
+        if let Err(error) = cleanup {
             log::error!("Profile '{}': final sweep incomplete: {error}", pcfg.name);
         }
         // Skips any profile whose hook already ran when that profile ended on its own — the
@@ -3688,8 +3694,15 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // stopped, and persists while the exclusive worker lease is still held.
     // Earlier Drop/sweep failures may have been transient. Decide from this final
     // exact ownership pass, while still attempting the accounting flush on failure.
-    let owned_cleanup = nat::finish_owned_cleanup();
-    let usage_flush = state.usage.flush();
+    let owned_cleanup =
+        crate::profile_teardown::blocking("qeli-owned-cleanup", nat::finish_owned_cleanup)
+            .await
+            .and_then(|result| result);
+    let flush_state = state.clone();
+    let usage_flush =
+        crate::profile_teardown::blocking("qeli-usage-flush", move || flush_state.usage.flush())
+            .await
+            .and_then(|result| result);
     let result = crate::server_shutdown::result(
         fatal_reason,
         task_failures.result(),
@@ -4762,7 +4775,11 @@ async fn run_profile(
     .await;
     let service_cleanup = services.shutdown(&tasks).await;
     teardown.unregister().await;
-    drop(teardown);
+    let teardown_cleanup = crate::profile_teardown::blocking("qeli-profile-teardown", move || {
+        drop(teardown);
+    })
+    .await;
+    failures.record("profile teardown worker", teardown_cleanup);
     failures.record("profile tasks/services", service_cleanup);
     crate::profile_teardown::Outcome::new(result, failures.result())
 }
