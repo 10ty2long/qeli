@@ -755,18 +755,17 @@ fn engage_prepared(
                 !guarded.iter().any(|(ipv6, _)| !ipv6),
                 "IPv4 kill-switch rebuild failed; prior protection retained by recovery guard"
             );
-            let needs_protection = !allow_ipv4_leak
-                && host_may_have_ipv4_default_route_with(|args| context.ipt("ip", args));
+            // A missing default route is only a snapshot; DHCP or the administrator
+            // can add one later without another kill-switch admission.
+            let needs_protection = !allow_ipv4_leak;
             context.check()?;
             context.check_budget()?;
             if needs_protection {
                 anyhow::bail!(
-                "kill-switch: IPv4 egress is present or could not be ruled out, but iptables is unavailable or could not be programmed, so IPv4 egress can't be locked — refusing to engage a leaking kill-switch. Install iptables, remove the IPv4 default route, or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
+                "kill-switch: IPv4 can become active, but iptables is unavailable or could not be programmed — refusing to engage a leaking kill-switch. Install/fix iptables or set allow_ipv4_leak = true to connect and accept the IPv4 leak."
             );
             }
-            log::warn!(
-            "kill-switch: IPv4 egress is NOT restricted (no IPv4 default route detected, or allow_ipv4_leak is set)"
-        );
+            log::warn!("kill-switch: IPv4 egress is NOT restricted (allow_ipv4_leak is set)");
         }
 
         // IPv6 leg. Program ip6tables where present; where it's missing (or programming
@@ -866,21 +865,6 @@ fn engage_prepared(
         ips.join(", ")
     );
     Ok(())
-}
-
-/// Only a successfully inspected empty default-route list permits skipping IPv4
-/// protection. Failed status, timeout, output overflow and spawn errors are unknown,
-/// not proof that an unprotected IPv4 path is absent.
-#[cfg(test)]
-fn host_may_have_ipv4_default_route() -> bool {
-    host_may_have_ipv4_default_route_with(|args| ipt("ip", args))
-}
-fn host_may_have_ipv4_default_route_with(
-    query: impl FnOnce(&[&str]) -> std::io::Result<std::process::Output>,
-) -> bool {
-    query(&["-4", "route", "show", "default"])
-        .map(|output| !output.status.success() || !output.stdout.is_empty())
-        .unwrap_or(true)
 }
 
 /// Re-resolve the server hostname and ADD any newly-seen server IP(s) to the live

@@ -108,65 +108,6 @@ fn command_bounds_firewall_preserves_complete_success_and_nonzero_exit() {
 }
 
 #[test]
-fn command_bounds_unknown_ipv4_route_keeps_protection_required() {
-    for mode in ["slow", "bytes"] {
-        with_commands(
-            move |command| {
-                assert_eq!(command.get_program(), "ip");
-                assert_eq!(arguments(command), ["-4", "route", "show", "default"]);
-                Action::Probe { mode }
-            },
-            || {
-                assert!(
-                    host_may_have_ipv4_default_route(),
-                    "unknown is not an IPv6-only host"
-                )
-            },
-        );
-    }
-}
-
-fn query_output(success: bool, stdout: &[u8]) -> Action {
-    #[cfg(unix)]
-    use std::os::unix::process::ExitStatusExt;
-    #[cfg(windows)]
-    use std::os::windows::process::ExitStatusExt;
-    Action::Reply(Ok(std::process::Output {
-        status: std::process::ExitStatus::from_raw(if success { 0 } else { 256 }),
-        stdout: stdout.to_vec(),
-        stderr: Vec::new(),
-    }))
-}
-#[test]
-fn command_bounds_only_successful_empty_ipv4_query_skips_protection() {
-    for (success, stdout, required) in [
-        (true, &b""[..], false),
-        (true, &b"default via 192.0.2.1 dev eth0\n"[..], true),
-        (false, &b""[..], true),
-        (false, &b"default via 192.0.2.1 dev eth0\n"[..], true),
-        (true, &b"\xff"[..], true),
-    ] {
-        with_commands(
-            move |_| query_output(success, stdout),
-            || assert_eq!(host_may_have_ipv4_default_route(), required),
-        );
-    }
-}
-#[test]
-fn command_bounds_ipv4_spawn_and_io_errors_keep_protection_required() {
-    for kind in [
-        io::ErrorKind::NotFound,
-        io::ErrorKind::PermissionDenied,
-        io::ErrorKind::BrokenPipe,
-    ] {
-        with_commands(
-            move |_| Action::Reply(Err(kind.into())),
-            || assert!(host_may_have_ipv4_default_route()),
-        );
-    }
-}
-
-#[test]
 fn teardown_preserves_referenced_chain_when_jump_deletion_does_not_work() {
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;

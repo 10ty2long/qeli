@@ -286,27 +286,19 @@ fn incomplete_rollback_cannot_be_accepted_by_leak_escape_hatches() {
 }
 
 #[test]
-fn owned_fallback_and_egress_queries_use_the_remaining_budget() {
+fn owned_firewall_probe_uses_the_remaining_budget() {
     let f = Fixture::new("ks_setup_probe");
     f.flag("iptables.probe-delay", "0.45");
     let path = f.dir.join("iptables").to_str().unwrap().to_owned();
-    for phase in 0..2 {
-        let context = Context::fixture().with_budget(Budget {
-            until: Instant::now() + Duration::from_millis(100),
-            operation: "setup",
-        });
-        if phase == 0 {
-            assert!(ipt_path_with("qeli-absent-tool-fixture", |_| context
-                .ipt(&path, &["--version"]))
-            .is_none());
-        } else if phase == 1 {
-            assert!(host_may_have_ipv4_default_route_with(
-                |_| context.ipt(&path, &["--version"])
-            ));
-        }
-        assert_eq!(
-            context.check_budget().unwrap_err().kind(),
-            std::io::ErrorKind::TimedOut
-        );
-    }
+    let context = Context::fixture().with_budget(Budget {
+        until: Instant::now() + Duration::from_millis(100),
+        operation: "setup",
+    });
+    assert!(ipt_path_with("qeli-absent-tool-fixture", |_| context
+        .ipt(&path, &["--version"]))
+    .is_none());
+    assert_eq!(
+        context.check_budget().unwrap_err().kind(),
+        std::io::ErrorKind::TimedOut
+    );
 }

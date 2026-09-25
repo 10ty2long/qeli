@@ -294,6 +294,40 @@ fn regression_ipv6_refusal_reports_failed_ipv4_rollback() {
     });
 }
 #[test]
+fn regression_missing_ipv4_firewall_refuses_before_default_route_arrives() {
+    run(|k| {
+        let error =
+            ks::ownership::test_support::with_paths([None, Some("model-ip6tables".into())], || {
+                engage("2001:db8::7", 443, "ks_a", false, false, true)
+                    .unwrap_err()
+                    .to_string()
+            });
+        assert!(error.contains("IPv4 can become active"), "{error}");
+        assert_eq!(k.borrow().mutations(), 0);
+        assert!(
+            !k.borrow()
+                .calls
+                .iter()
+                .any(|args| args == &["-4", "route", "show", "default"]),
+            "a route snapshot cannot prove lifetime safety"
+        );
+    });
+}
+#[test]
+fn explicit_ipv4_leak_override_allows_missing_firewall() {
+    run(|k| {
+        ks::ownership::test_support::with_paths([None, Some("model-ip6tables".into())], || {
+            engage("2001:db8::7", 443, "ks_a", true, false, true).unwrap()
+        });
+        assert!(k
+            .borrow()
+            .rules
+            .contains_key(&(true, "filter".into(), "QELI_KS_ks_a".into())));
+        ks::disengage("ks_a").unwrap();
+    });
+}
+
+#[test]
 fn regression_missing_ipv6_firewall_refuses_even_before_global_address_arrives() {
     run(|k| {
         let error =
@@ -522,10 +556,10 @@ fn regression_refresh_failed_add_keeps_previous_server_allowance() {
 }
 
 #[test]
-fn regression_ipv6_only_cleanup_never_requires_unprogrammed_ipv4() {
+fn regression_explicit_ipv6_only_cleanup_never_requires_unprogrammed_ipv4() {
     run(|k| {
         ks::ownership::test_support::with_paths([None, Some("model-ip6tables".into())], || {
-            protect("ks_a", "2001:db8::7").unwrap();
+            engage("2001:db8::7", 443, "ks_a", true, false, true).unwrap();
             refresh_server_ips("2001:db8::8", 443, "ks_a").unwrap();
             ks::disengage("ks_a").unwrap();
             assert!(k.borrow().rules.keys().all(|(ipv6, _, _)| *ipv6));

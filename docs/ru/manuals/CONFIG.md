@@ -1755,7 +1755,7 @@ route = 192.168.50.0/24 gateway=10.9.0.1 metric=50
 | `include` | список IPv4/IPv6 CIDR, которые **завернуть** в туннель (split-tunnel — актуально, когда `gateway` не задан). Маршрут принимается только для семейства, согласованного в аутентифицированном NetworkPlan |
 | `allow_lan` (Android/iOS, дефолт `false`) | работающий только в full-tunnel ярлык поверх `exclude`: вырезать из default capture **все** приватные диапазоны (RFC1918 + link-local `169.254/16` + link-local multicast `224.0.0.0/24` + SSDP `239.255.255.250/32`) — доступ к устройствам домашней Wi-Fi-сети без отключения VPN. В split-tunnel он не вычитает аутентифицированные pushed/include routes. Есть и глобальный тумблер «Allow local network access» в Настройках приложения. Android 13+ — `excludeRoute`, старее — точное дополнение тех же исключений к `0.0.0.0/0`; iOS применяет эквивалентные исключения Network Extension |
 | `ipv6` (дефолт `auto`) | аутентифицированная политика inner family. `auto` включает IPv6, только когда сервер, Rust-ядро и platform adapter объявили полный набор capabilities; `required` запрещает IPv4 downgrade; `off` запрашивает IPv4-часть dual-профиля и отказывается от IPv6-only |
-| `allow_ipv6_leak` / `allow_ipv4_leak` (дефолт `false`) | симметричные escape-hatch для full-tunnel. Если в согласованном плане нет одной семьи, qeli по умолчанию блокирует её native egress; соответствующий `true` осознанно разрешает обход VPN. `allow_ipv6_leak` также отключает IPv6-плечо Linux kill-switch readiness check |
+| `allow_ipv6_leak` / `allow_ipv4_leak` (дефолт `false`) | симметричные escape-hatch для full-tunnel. Если в согласованном плане нет одной семьи, qeli по умолчанию блокирует её native egress; соответствующий `true` осознанно разрешает обход VPN. `allow_ipv4_leak` и `allow_ipv6_leak` также допускают отсутствие соответствующего плеча Linux kill-switch при явном согласии на утечку |
 | `kill_switch` | firewall kill-switch (Linux/iptables, только при full-tunnel): пока туннель лежит, блокировать весь egress кроме loopback/tun/DHCP/IP сервера — чтобы обрыв не «протёк» на физический интерфейс |
 | `gateway_nat` | router-режим (Linux/iptables): клиент сам ставит `ip_forward` + `MASQUERADE` из tun (+FORWARD +MSS-clamp), чтобы LAN **за** клиентом выходил в интернет через туннель — без ручного iptables. Идемпотентно в рамках поколения; снимается до освобождения исходного TUN и устанавливается заново при полном reconnect. Краш может оставить правила |
 | `lan_subnet` / `lan_subnet_ipv6` | ограничить `gateway_nat`/`forward` одной source-подсетью каждой семьи; пусто = применять ко всему трафику этой семьи, уходящему в tun |
@@ -2057,6 +2057,10 @@ reconnect и освобождаются после terminal cleanup; для ни
 - В **router-режиме** (`gateway_nat`) цепочка дополнительно цепляется из **FORWARD** —
   маршрутизируемый трафик LAN за клиентом не проходит через OUTPUT, и без FORWARD-хука он
   остался бы незащищён в окне реконнекта.
+- Для IPv4 kill-switch нужен работающий `iptables` даже если сейчас нет default route:
+  DHCP или администратор могут добавить маршрут во время сессии. При недоступном firewall
+  запуск разрешён только с явным `allow_ipv4_leak = true`; пустой снимок
+  `ip -4 route show default` больше не является основанием для пропуска защиты.
 - При подтверждённом `/sys/module/ipv6/parameters/disable = 1` Qeli пропускает
   IPv6 firewall и адресную проверку при запуске, refresh и cleanup. Это отключение
   функциональности модуля (`ipv6.disable=1`), а не `net.ipv6.conf.*.disable_ipv6`.

@@ -1514,10 +1514,9 @@ An unreadable firewall chain is not considered absent either. Inspect preceding 
 iproute2/iptables availability and the affected interface; child exit alone does not
 establish successful cleanup.
 
-`IPv4 egress is present or could not be ruled out` means the IPv4 firewall leg is
-unprotected and absence of an IPv4 default route has not been established. Spawn errors,
-negative status, timeout and overflow require protection. Only a successful empty listing
-permits skipping IPv4 protection without explicit `allow_ipv4_leak = true`.
+`IPv4 can become active` means the IPv4 firewall leg is unavailable. No current
+default route does not guarantee the absence of an IPv4 path for the whole session: a route
+may appear later. Fix `iptables` or deliberately set `allow_ipv4_leak = true`.
 That option permits an IPv4 leak; it does not restore the firewall.
 
 No configuration keys were added. Linux runtime, complete gateway rollback and an

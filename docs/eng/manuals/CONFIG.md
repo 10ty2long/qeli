@@ -1800,7 +1800,7 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `include` | comma-separated IPv4/IPv6 CIDRs to route **into** the tunnel (split-tunnel — relevant when `gateway` is not set). A route is accepted only when that family was negotiated in the authenticated NetworkPlan |
 | `allow_lan` (Android/iOS, default `false`) | full-tunnel-only shortcut over `exclude`: carve **all** private ranges out of the default capture (RFC1918 + link-local `169.254/16` + link-local multicast `224.0.0.0/24` + SSDP `239.255.255.250/32`) so home Wi-Fi/LAN devices stay reachable without disconnecting. It never subtracts authenticated pushed/include routes in split-tunnel mode. Also exposed as an "Allow local network access" toggle in app Settings. Android 13+ uses `excludeRoute`; older versions compute the exact complement of the same exclusions against `0.0.0.0/0`; iOS applies equivalent Network Extension exclusions |
 | `ipv6` (default `auto`) | authenticated inner-family policy. `auto` uses IPv6 only when server, Rust core and platform adapter all advertise the complete capability set; `required` refuses an IPv4 downgrade; `off` requests the IPv4 side of a dual profile and refuses IPv6-only |
-| `allow_ipv6_leak` / `allow_ipv4_leak` (default `false`) | symmetric full-tunnel escape hatches. When the negotiated plan lacks one family, qeli blocks that family's native egress by default; the matching `true` deliberately lets it bypass the VPN. `allow_ipv6_leak` also opts out of the IPv6 half of the Linux kill-switch readiness check |
+| `allow_ipv6_leak` / `allow_ipv4_leak` (default `false`) | symmetric full-tunnel escape hatches. When the negotiated plan lacks one family, qeli blocks that family's native egress by default; the matching `true` deliberately lets it bypass the VPN. `allow_ipv4_leak` and `allow_ipv6_leak` also permit an unavailable Linux kill-switch leg when the matching leak is explicitly accepted |
 | `kill_switch` | firewall kill-switch (Linux/iptables, full-tunnel only): while the tunnel is down, block all egress except loopback/tun/DHCP/server IP, so a drop can't leak onto the physical interface |
 | `gateway_nat` | router mode (Linux/iptables): the client programs `ip_forward` + `MASQUERADE` out the tun (+FORWARD +MSS-clamp) so a LAN **behind** it reaches the internet through the tunnel — no manual iptables. Idempotent within a generation; removed before releasing the original TUN and reinstalled on full reconnect. A crash may leave rules |
 | `lan_subnet` / `lan_subnet_ipv6` | restrict `gateway_nat`/`forward` to one source CIDR per family; empty = apply to all traffic of that family leaving the tun |
@@ -2102,6 +2102,10 @@ How it works (matters for manual teardown and for several instances on one host)
 - In **router mode** (`gateway_nat`) the chain is also hooked from **FORWARD** — routed
   LAN traffic behind the client never traverses OUTPUT, so without the FORWARD hook it
   would be unprotected during a reconnect.
+- The IPv4 kill switch needs working `iptables` even when there is currently no
+  default route: DHCP or an administrator can add one during the session. If the firewall
+  is unavailable, startup requires explicit `allow_ipv4_leak = true`; an empty
+  `ip -4 route show default` snapshot no longer authorizes skipping protection.
 - With positively verified `/sys/module/ipv6/parameters/disable = 1`, Qeli skips
   IPv6 firewall and address inspection during startup, refresh and cleanup. This disables
   module functionality (`ipv6.disable=1`), unlike `net.ipv6.conf.*.disable_ipv6`.

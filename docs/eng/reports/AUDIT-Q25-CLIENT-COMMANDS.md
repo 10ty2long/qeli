@@ -82,3 +82,5 @@ throughput measurements or claims that the full audit is complete.
 Previous pass: [initial setup and flush](AUDIT-Q25-SETUP-FLUSH.md).
 
 Next pass: [TUN/TAP and route_local](AUDIT-Q25-TUNNEL-ROUTES.md). Call-graph clarification: old apply_pushed_routes/apply_local_networks were unused; active pushed/local routes already used NetworkPlan. Those obsolete duplicates were removed in the next pass.
+
+D06 continuation: [Q25-F122](AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV4.md) removes the one-time empty default-route admission described above. Earlier results describe the 23 September snapshot.

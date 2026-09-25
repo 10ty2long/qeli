@@ -82,3 +82,5 @@ ownership и постусловий. Далее: эти операции, общ
 Предыдущий этап: [начальная установка и flush](AUDIT-Q25-SETUP-FLUSH.md).
 
 Следующий проход: [TUN/TAP и route_local](AUDIT-Q25-TUNNEL-ROUTES.md). Уточнение call graph: старые apply_pushed_routes/apply_local_networks не вызывались; активные pushed/local routes уже применялись через NetworkPlan. Неиспользуемые дубли удалены в следующем этапе.
+
+Продолжение D06: [Q25-F122](AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV4.md) удаляет описанный выше допуск IPv4 по разовому пустому default-route снимку. Старые результаты относятся к состоянию на 23 сентября.

@@ -109,6 +109,50 @@ fn probe(address: &str, ipv6: bool) -> anyhow::Result<()> {
 }
 #[test]
 #[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip, ping and iptables/ip6tables; isolated netns"]
+fn native_late_ipv4_route_stays_behind_existing_kill_switch() -> anyhow::Result<()> {
+    std::thread::spawn(|| -> anyhow::Result<()> {
+        new_namespace()?;
+        command("ip", &["link", "set", "lo", "up"])?;
+        command("ip", &["link", "add", "wan0", "type", "dummy"])?;
+        command("ip", &["link", "set", "wan0", "up"])?;
+        command(
+            "ip",
+            &[
+                "-6",
+                "addr",
+                "add",
+                "2001:db8::1/64",
+                "dev",
+                "wan0",
+                "nodad",
+            ],
+        )?;
+        command("ip", &["-6", "route", "add", "default", "dev", "wan0"])?;
+        anyhow::ensure!(
+            command("ip", &["-4", "route", "show", "default"])?.is_empty(),
+            "fixture must start without an IPv4 default route"
+        );
+        let paths = tools()?;
+        let tun = "ks_latev4";
+        let chain = chain_for(tun);
+        engage("2001:db8::7", 443, tun, false, false, true)?;
+        anyhow::ensure!(present_checked(&paths[0], &["-C", "OUTPUT", "-j", &chain])?);
+        command("ip", &["addr", "add", "192.0.2.1/24", "dev", "wan0"])?;
+        command("ip", &["route", "add", "default", "dev", "wan0"])?;
+        probe("203.0.113.9", false)?;
+        anyhow::ensure!(
+            packets(&paths[0], &chain, "DROP", None)? > 0,
+            "late IPv4 default route bypassed the existing kill switch"
+        );
+        disengage(tun)?;
+        Ok(())
+    })
+    .join()
+    .expect("native late-IPv4 test thread panicked")
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN, ip, ping and iptables/ip6tables; isolated netns"]
 fn native_late_ipv6_address_stays_behind_existing_kill_switch() -> anyhow::Result<()> {
     std::thread::spawn(|| -> anyhow::Result<()> {
         new_namespace()?;
