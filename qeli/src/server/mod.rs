@@ -5013,6 +5013,26 @@ fn setup_profile_nat(
     Ok((wan_ipv4, wan_ipv6))
 }
 
+/// The DNS lease can run a blocking exact-rule cleanup in Drop. The worker
+/// keeps an unadopted result in its own namespace until cancellation is joined.
+async fn setup_profile_dns_firewall(
+    profile: &str,
+    tun: &str,
+    pool_cidr: &str,
+    listen: &str,
+    port: u16,
+    ipv6_mode: crate::config::server::Ipv6RoutingMode,
+) -> anyhow::Result<Option<nat::DnsInputLease>> {
+    let profile = profile.to_owned();
+    let tun = tun.to_owned();
+    let pool_cidr = pool_cidr.to_owned();
+    let listen = listen.to_owned();
+    crate::profile_teardown::blocking("qeli-profile-dns-setup", move || {
+        nat::setup_dns_firewall(&profile, &tun, &pool_cidr, &listen, port, ipv6_mode)
+    })
+    .await?
+}
+
 async fn run_profile_generation(
     state: Arc<ServerState>,
     pcfg: ProfileConfig,
@@ -6020,14 +6040,16 @@ async fn run_profile_generation(
         };
         // A manual IPv6 profile leaves DNS INPUT/REDIRECT rules to the administrator
         // too. Managed IPv6 and IPv4 still require verified access before advertising DNS.
-        if let Some(lease) = nat::setup_dns_firewall(
+        if let Some(lease) = setup_profile_dns_firewall(
             &name,
             &ifname,
             primary_dns_pool,
             &primary_dns_cfg.listen,
             primary_dns_cfg.port,
             pcfg.routing.ipv6.mode,
-        )? {
+        )
+        .await?
+        {
             teardown.dns_input_leases.push(lease);
         }
 
@@ -6111,14 +6133,16 @@ async fn run_profile_generation(
                 pcfg.dns.listen_ipv6.clone().ok_or_else(|| {
                     anyhow::anyhow!("profile '{}': missing dns.listen_ipv6", name)
                 })?;
-            if let Some(lease) = nat::setup_dns_firewall(
+            if let Some(lease) = setup_profile_dns_firewall(
                 &name,
                 &ifname,
                 &pcfg.pool.ipv6.cidr,
                 &listen_ipv6,
                 pcfg.dns.port,
                 pcfg.routing.ipv6.mode,
-            )? {
+            )
+            .await?
+            {
                 teardown.dns_input_leases.push(lease);
             }
             let mut ipv6_dns_cfg = pcfg.dns.clone();

@@ -129,22 +129,22 @@ fn primary_error_does_not_hide_unsafe_cleanup() {
 
 #[tokio::test(flavor = "current_thread")]
 async fn blocking_host_cleanup_keeps_executor_responsive() {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    let ticks = Arc::new(AtomicUsize::new(0));
-    let ticker_ticks = ticks.clone();
-    let ticker = tokio::spawn(async move {
-        while ticker_ticks.load(Ordering::SeqCst) < 4 {
-            tokio::time::sleep(Duration::from_millis(15)).await;
-            ticker_ticks.fetch_add(1, Ordering::SeqCst);
-        }
-    });
-    blocking("qeli-test-host-work", || {
-        std::thread::sleep(Duration::from_millis(120))
+    let (started, entered) = tokio::sync::oneshot::channel();
+    let (resume, continue_work) = std::sync::mpsc::channel();
+    let cleanup = tokio::spawn(blocking("qeli-test-host-work", move || {
+        let _ = started.send(());
+        continue_work.recv_timeout(Duration::from_secs(5)).unwrap();
+    }));
+    entered.await.unwrap();
+    // This timer must run on the SAME executor that awaits the worker. If setup
+    // blocks it, the worker's five-second gate fails before release can be sent.
+    tokio::time::timeout(Duration::from_secs(2), async {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        resume.send(()).unwrap();
     })
     .await
     .unwrap();
-    assert!(ticks.load(Ordering::SeqCst) >= 4);
-    ticker.await.unwrap();
+    cleanup.await.unwrap().unwrap();
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -185,19 +185,23 @@ async fn cancelled_setup_joins_before_outer_guard_and_drops_unadopted_result() {
             }
         }
     }
-    struct ResultOwner(Arc<AtomicBool>);
+    struct ResultOwner(Arc<AtomicBool>, Arc<AtomicBool>, std::thread::ThreadId);
     impl Drop for ResultOwner {
         fn drop(&mut self) {
             self.0.store(true, Ordering::SeqCst);
+            self.1
+                .store(std::thread::current().id() == self.2, Ordering::SeqCst);
         }
     }
     let worker_done = Arc::new(AtomicBool::new(false));
     let result_dropped = Arc::new(AtomicBool::new(false));
+    let result_dropped_on_worker = Arc::new(AtomicBool::new(false));
     let early_outer_drop = Arc::new(AtomicBool::new(false));
     let (started, entered) = tokio::sync::oneshot::channel();
     let (resume, continue_work) = std::sync::mpsc::channel();
     let worker_done_in = worker_done.clone();
     let result_dropped_in = result_dropped.clone();
+    let on_worker_in = result_dropped_on_worker.clone();
     let outer = Outer(
         worker_done.clone(),
         result_dropped.clone(),
@@ -209,7 +213,7 @@ async fn cancelled_setup_joins_before_outer_guard_and_drops_unadopted_result() {
             let _ = started.send(());
             continue_work.recv_timeout(Duration::from_secs(2)).unwrap();
             worker_done_in.store(true, Ordering::SeqCst);
-            ResultOwner(result_dropped_in)
+            ResultOwner(result_dropped_in, on_worker_in, std::thread::current().id())
         })
         .await
         .unwrap();
@@ -223,5 +227,6 @@ async fn cancelled_setup_joins_before_outer_guard_and_drops_unadopted_result() {
     assert!(setup.await.unwrap_err().is_cancelled());
     assert!(worker_done.load(Ordering::SeqCst));
     assert!(result_dropped.load(Ordering::SeqCst));
+    assert!(result_dropped_on_worker.load(Ordering::SeqCst));
     assert!(!early_outer_drop.load(Ordering::SeqCst));
 }

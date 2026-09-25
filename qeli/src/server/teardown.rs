@@ -4,17 +4,23 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-/// Run a synchronous host operation away from the Tokio executor. A cancelled waiter
-/// still joins its worker before the caller can release the network namespace lease or
-/// profile resources. The worker owns captures until its operation has fully returned.
+/// Run a synchronous host operation away from the Tokio executor. A cancelled
+/// waiter joins its worker before the caller can release its outer resources.
+/// An unadopted result (including a firewall lease with a blocking Drop) is
+/// destroyed on that worker, in the network namespace where it was created.
 pub(crate) async fn blocking<R: Send + 'static>(
     name: &'static str,
     operation: impl FnOnce() -> R + Send + 'static,
 ) -> anyhow::Result<R> {
-    struct JoinOnDrop<R>(Option<JoinHandle<R>>);
+    struct JoinOnDrop<R> {
+        adopt: Option<std::sync::mpsc::Sender<()>>,
+        thread: Option<JoinHandle<Option<R>>>,
+    }
     impl<R> Drop for JoinOnDrop<R> {
         fn drop(&mut self) {
-            if let Some(thread) = self.0.take() {
+            // Closing admission makes the worker drop an unadopted result first.
+            self.adopt.take();
+            if let Some(thread) = self.thread.take() {
                 if thread.join().is_err() {
                     log::error!("server host worker panicked during cancelled cleanup");
                 }
@@ -23,21 +29,36 @@ pub(crate) async fn blocking<R: Send + 'static>(
     }
 
     let (finished, waiting) = tokio::sync::oneshot::channel();
+    let (adopt, decision) = std::sync::mpsc::channel();
     let thread = std::thread::Builder::new()
         .name(name.into())
         .spawn(move || {
             let result = operation();
             let _ = finished.send(());
-            result
+            if decision.recv().is_ok() {
+                Some(result)
+            } else {
+                drop(result);
+                None
+            }
         })?;
-    let mut owned = JoinOnDrop(Some(thread));
+    let mut owned = JoinOnDrop {
+        adopt: Some(adopt),
+        thread: Some(thread),
+    };
     let _ = waiting.await; // A panic closes the sender; join below reports it.
+                           // No await after adoption: a cancelled future closes the channel instead and
+                           // joins rollback in Drop, before its enclosing profile guard can disappear.
+    if let Some(adopt) = owned.adopt.take() {
+        let _ = adopt.send(());
+    }
     owned
-        .0
+        .thread
         .take()
         .expect("server host worker")
         .join()
-        .map_err(|_| anyhow::anyhow!("server host worker '{name}' panicked"))
+        .map_err(|_| anyhow::anyhow!("server host worker '{name}' panicked"))?
+        .ok_or_else(|| anyhow::anyhow!("server host worker '{name}' was not adopted"))
 }
 
 /// The wrapper reads this after dropping its guard. Sharing preserves the existing

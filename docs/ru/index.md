@@ -238,3 +238,5 @@
 - [Q25-F115: серверная очистка в присоединяемом worker](reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md)
 
 - [Q25-F116: TUN/NAT setup серверного профиля вне executor](reports/AUDIT-Q25-SERVER-SETUP-WORKER.md)
+
+- [Q25-F117: DNS firewall серверного профиля вне executor](reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md)
