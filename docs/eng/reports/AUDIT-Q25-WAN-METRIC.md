@@ -24,10 +24,8 @@ namespaces only; installed services were unchanged.
 Code checks on `.11`: 7/7 focused WAN tests, 113/113 gateway tests,
 and `cargo fmt --check` — PASS. Bilingual `scripts/check_docs.py`: 9/9 PASS.
 
-Remaining D06: `refresh_exit_paths_if_active` runs on VPN path COMMIT. The
-Linux physical-path sampler watches the interface to the VPN server. If it
-stays the same while a separate exit WAN changes, COMMIT may not occur: the
-guard blocks traffic until another path change or profile restart. A dedicated
-exit-WAN monitor must coordinate with NetworkPlan ownership and teardown.
-Rename/name reuse is covered by [Q25-A125](AUDIT-Q25-WAN-NAME-REUSE.md);
-policy routing by [Q25-F124](AUDIT-Q25-EXIT-POLICY-ROUTING.md).
+The subsequent [Q25-F127](AUDIT-Q25-EXIT-WAN-MONITOR.md) added a dedicated
+exit-WAN monitor and verified refresh without VPN path COMMIT on TCP/UDP.
+D06 remains open for rename/name reuse
+[Q25-A125](AUDIT-Q25-WAN-NAME-REUSE.md) and other physical boundaries;
+policy routing is covered by [Q25-F124](AUDIT-Q25-EXIT-POLICY-ROUTING.md).

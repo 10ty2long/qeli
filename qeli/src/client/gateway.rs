@@ -229,12 +229,18 @@ fn exit_drop_position_in_output(
         rule[..rule.len() - 6].join(" "),
         rule[rule.len() - 1]
     );
+    // xtables quotes comments containing ':' (notably our cleanup lockdown tag).
+    let canonical_quoted = format!(
+        "-A FORWARD {} -m comment --comment \"{}\" -j DROP",
+        rule[..rule.len() - 6].join(" "),
+        rule[rule.len() - 1]
+    );
     for (index, line) in text
         .lines()
         .filter(|line| line.starts_with("-A FORWARD "))
         .enumerate()
     {
-        if line == literal || line == canonical {
+        if line == literal || line == canonical || line == canonical_quoted {
             return Some(index + 1);
         }
         let fields = line.split_whitespace().collect::<Vec<_>>();
@@ -767,7 +773,50 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
     ctx.finish()
 }
 
-/// Refresh WAN-dependent exit-node state at the Linux platform COMMIT boundary.
+/// Read the WANs selected for this active exit plan without changing firewall state.
+/// The monitor compares snapshots and retries a failed refresh: recorded WAN names
+/// alone cannot prove success because ownership is recorded before rule installation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) struct ExitWanSnapshot {
+    ipv4: Option<String>,
+    ipv6: Option<String>,
+}
+
+pub(super) fn exit_wan_snapshot_if_active(tun_if: &str) -> anyhow::Result<Option<ExitWanSnapshot>> {
+    if exit_wans_for(&EXIT_WANS_V4, tun_if).is_empty()
+        && exit_wans_for(&EXIT_WANS_V6, tun_if).is_empty()
+    {
+        return Ok(None);
+    }
+    let budget = Budget::new();
+    let _operation = router_operation(budget)?;
+    let ipv4_active = !exit_wans_for(&EXIT_WANS_V4, tun_if).is_empty();
+    let ipv6_active = !exit_wans_for(&EXIT_WANS_V6, tun_if).is_empty();
+    if !ipv4_active && !ipv6_active {
+        return Ok(None);
+    }
+    let context = Context::forward(tun_if, budget)?;
+    let ipv4 = if ipv4_active {
+        Some(
+            detect_wan(&context)
+                .ok_or_else(|| anyhow::anyhow!("exit-node monitor: no IPv4 default WAN remains"))?,
+        )
+    } else {
+        None
+    };
+    let ipv6 = if ipv6_active {
+        Some(
+            detect_wan_ipv6(&context)
+                .ok_or_else(|| anyhow::anyhow!("exit-node monitor: no IPv6 default WAN remains"))?,
+        )
+    } else {
+        None
+    };
+    context.finish()?;
+    Ok(Some(ExitWanSnapshot { ipv4, ipv6 }))
+}
+
+/// Refresh WAN-dependent exit-node state at platform COMMIT or on a physical WAN change.
 ///
 /// The initial authenticated NetworkPlan records which inner families were actually
 /// enabled for this exact TUN. A normal profile therefore returns before validating its
@@ -776,7 +825,7 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
 /// is not necessarily either exit WAN, and dual-stack hosts may use different uplinks.
 ///
 /// Rules for the old WAN are intentionally not removed here. Removing them before transport
-/// COMMIT would break in-flight flows; removing them afterwards would make platform rollback
+/// changes could break in-flight flows; removing them at COMMIT would make platform rollback
 /// lossy. They are narrow `-i/-o` rules, harmless once that interface is no longer selected,
 /// and remembered-WAN cleanup removes them before this generation releases its TUN.
 pub fn refresh_exit_paths_if_active(tun_if: &str) -> anyhow::Result<()> {
@@ -1363,8 +1412,8 @@ fn restore_sysctls(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        exit_drop_position_in_output, exit_unmarked_drop, exit_wans_for, forget_exit_tun,
-        forward_insert_position, policy_output_accepts_forward,
+        exit_drop_position_in_output, exit_lockdown_drop, exit_unmarked_drop, exit_wans_for,
+        forget_exit_tun, forward_insert_position, policy_output_accepts_forward,
         policy_output_has_first_forward_jump, refresh_exit_paths_if_active, remember_exit_wan,
         ExitWansByTun,
     };
@@ -1404,6 +1453,21 @@ mod tests {
         assert_eq!(
             exit_drop_position_in_output(&other, &guard, "ex_a", false),
             Some(3)
+        );
+    }
+
+    #[test]
+    fn quoted_lockdown_tag_is_recognized_ahead_of_exit_permits() {
+        let lockdown = exit_lockdown_drop("ex_a");
+        let real = "-P FORWARD ACCEPT\n-A FORWARD -i ex_a -m comment --comment \"qeli-exit-node:lockdown\" -j DROP\n-A FORWARD -i ex_a -o wan1 -j ACCEPT\n";
+        assert_eq!(
+            exit_drop_position_in_output(real, &lockdown, "ex_a", false),
+            Some(1)
+        );
+        let bypass = format!("-P FORWARD ACCEPT\n-A FORWARD -i ex_a -j ACCEPT\n{real}");
+        assert_eq!(
+            exit_drop_position_in_output(&bypass, &lockdown, "ex_a", false),
+            None
         );
     }
 

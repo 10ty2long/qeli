@@ -329,3 +329,46 @@ fn exit_guard_refuses_a_forward_kill_switch_hook_that_can_accept_tun_ingress() {
         assert_eq!(kernel.borrow().mutations(), 0);
     });
 }
+
+#[test]
+fn exit_wan_snapshot_tracks_a_separate_default_change() {
+    run(|k| {
+        assert!(exit_wan_snapshot_if_active("ex_a").unwrap().is_none());
+        start(&k, "ex_a", "wan0", false);
+        let initial = exit_wan_snapshot_if_active("ex_a").unwrap().unwrap();
+        assert_eq!(initial.ipv4.as_deref(), Some("wan0"));
+        assert_eq!(initial.ipv6, None);
+        k.borrow_mut().wans[0] = Some("wan1".into());
+        let changed = exit_wan_snapshot_if_active("ex_a").unwrap().unwrap();
+        assert_eq!(changed.ipv4.as_deref(), Some("wan1"));
+        assert_ne!(initial, changed);
+        assert_eq!(nat_count(&k, "wan1", false), 0);
+        refresh_exit_paths_if_active("ex_a").unwrap();
+        assert_eq!(nat_count(&k, "wan1", false), 1);
+        stop("ex_a").unwrap();
+        assert!(exit_wan_snapshot_if_active("ex_a").unwrap().is_none());
+    });
+}
+
+#[test]
+fn partial_refresh_still_exposes_selected_wan_for_retry() {
+    run(|k| {
+        start(&k, "ex_a", "wan0", false);
+        k.borrow_mut().wans[0] = Some("wan1".into());
+        k.borrow_mut().fail_nat_add = true;
+        assert!(refresh_exit_paths_if_active("ex_a").is_err());
+        assert_eq!(retained_tun("ex_a", false), ["wan0", "wan1"]);
+        assert_eq!(
+            exit_wan_snapshot_if_active("ex_a")
+                .unwrap()
+                .unwrap()
+                .ipv4
+                .as_deref(),
+            Some("wan1")
+        );
+        k.borrow_mut().fail_nat_add = false;
+        refresh_exit_paths_if_active("ex_a").unwrap();
+        assert_eq!(nat_count(&k, "wan1", false), 1);
+        stop("ex_a").unwrap();
+    });
+}

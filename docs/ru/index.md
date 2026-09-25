@@ -258,3 +258,5 @@
 - [Q25-A125: повторное использование имени физического WAN](reports/AUDIT-Q25-WAN-NAME-REUSE.md)
 
 - [Q25-F126: выбор WAN по метрике default route](reports/AUDIT-Q25-WAN-METRIC.md)
+
+- [Q25-F127: монитор exit WAN без VPN path COMMIT](reports/AUDIT-Q25-EXIT-WAN-MONITOR.md)

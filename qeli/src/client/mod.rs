@@ -1107,6 +1107,50 @@ impl ClientHookContext {
     }
 }
 
+/// Observe the exit uplink independently of the VPN carrier. The connection task
+/// group joins this worker before its NetworkPlan owner or TUN is cleaned up.
+#[cfg(target_os = "linux")]
+fn spawn_exit_wan_monitor(tun_if: String, tasks: &crate::transport_core::tasks::Spawner) {
+    tasks.spawn(async move {
+        let mut tick = tokio::time::interval(Duration::from_secs(5));
+        tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        tick.tick().await; // The authenticated plan installed the initial rules.
+        let mut last_refreshed = None;
+        let cancel = Arc::new(AtomicBool::new(false));
+        loop {
+            tick.tick().await;
+            let name = tun_if.clone();
+            let snapshot = network_task::run(cancel.clone(), move || {
+                gateway::exit_wan_snapshot_if_active(&name)
+            })
+            .await;
+            let snapshot = match snapshot {
+                Ok(snapshot) => snapshot,
+                Err(error) => {
+                    log::warn!("exit-node WAN observation failed: {error}");
+                    continue;
+                }
+            };
+            if snapshot == last_refreshed {
+                continue;
+            }
+            if snapshot.is_none() {
+                last_refreshed = None;
+                continue;
+            }
+            let name = tun_if.clone();
+            match network_task::run(cancel.clone(), move || {
+                gateway::refresh_exit_paths_if_active(&name)
+            })
+            .await
+            {
+                Ok(()) => last_refreshed = snapshot,
+                Err(error) => log::warn!("exit-node WAN refresh failed; will retry: {error}"),
+            }
+        }
+    });
+}
+
 #[cfg(target_os = "linux")]
 async fn cleanup_routing_features(
     failures: &crate::client_cleanup::Failures,
@@ -6471,6 +6515,11 @@ where
         ));
     }
 
+    #[cfg(target_os = "linux")]
+    if config.routing.exit_node {
+        spawn_exit_wan_monitor(tun_name.clone(), &stream_tasks);
+    }
+
     // Distributor: FLOW-PIN TUN packets across the live bonded streams (by inner
     // 5-tuple) so each connection stays in order. Each stream's tasks own
     // encrypt/heartbeat/idle; a dead stream fires dead_rx.
@@ -10404,6 +10453,11 @@ pub(crate) async fn run_udp_tunnel(
     #[cfg(all(feature = "experimental-roaming", any(unix, windows)))]
     let mut early_candidate_data = ClientUdpEarlyDataQueue::default();
     let mut committed_early_data = std::collections::VecDeque::<ClientUdpReceivedDatagram>::new();
+
+    #[cfg(target_os = "linux")]
+    if config.routing.exit_node {
+        spawn_exit_wan_monitor(tun_name.clone(), &tasks);
+    }
 
     let mut unsupported_inner_drops = 0u64;
     let mut result = Ok(());

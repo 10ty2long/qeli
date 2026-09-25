@@ -2288,8 +2288,10 @@ rules: stopping one does not delete another's rule. MARK/FORWARD/MSS keep the
 `0x51/0x51` are reserved for Qeli exit traffic and must not be reused by other marking.
 An exit-TUN packet without that mark is dropped in FORWARD: if policy routing
 sends it to a WAN Qeli has not selected, the client's original address cannot
-egress. After a confirmed roaming update Qeli adds rules for the new WAN;
-until then its packets remain blocked. `exit_node = true` cannot be combined
+egress. After a confirmed roaming update or the next default-route check
+(every 5 seconds), Qeli adds rules for the new WAN; packets remain blocked
+until installation succeeds.
+[Monitor verification](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` cannot be combined
 with `gateway_nat = true` or `forward = true` on the same TUN: those modes
 require different handling of unmarked traffic arriving from the tunnel.
 
