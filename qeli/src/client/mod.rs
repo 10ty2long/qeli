@@ -1914,7 +1914,11 @@ impl ClientStatusReporter {
         sender.submit(body);
     }
 
-    fn start_sampler(&self, counters: Arc<RuntimeCounters>, tasks: &mut tokio::task::JoinSet<()>) {
+    fn start_sampler(
+        &self,
+        counters: Arc<RuntimeCounters>,
+        tasks: &mut crate::client_tasks::Owner,
+    ) {
         if self.sender.is_none() {
             return;
         }
@@ -2532,9 +2536,17 @@ async fn wait_for_shutdown(shutdown: &AtomicBool, wakeup: &tokio::sync::Notify) 
     }
 }
 
+/// Run one Linux client per process, including startup and terminal cleanup.
+/// Concurrent calls fail before reading config or registering signal handlers.
+/// Dropping this future before completion requires a process restart, because Drop
+/// cannot join every nested transport task. Signal-driven stop waits for cleanup.
+/// Use separate processes for independent clients; shared transport-core adapters
+/// are not governed by this Linux runtime entry point.
 #[cfg(target_os = "linux")]
 pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
-    let mut client_tasks = tokio::task::JoinSet::new();
+    let mut client_tasks = crate::client_tasks::Owner::acquire()?;
+    reset_carrier_candidates(0);
+    DELIBERATE_CYCLE.store(false, Ordering::Release);
     let mut final_report = None;
     let mut result = run_client_inner(config_path, &mut client_tasks, &mut final_report).await;
     if let Some(report) = final_report.as_mut() {
@@ -2542,7 +2554,7 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             result = crate::client_cleanup::with_cleanup_error(result, worker.finish().await);
         }
     }
-    crate::client_tasks::finish(&mut client_tasks, || {}).await;
+    client_tasks.finish().await;
     if let Some(mut report) = final_report {
         report.reporter.terminal(result.as_ref().err());
         report.reporter.publish(&report.counters);
@@ -2554,6 +2566,7 @@ pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
             }
         }
     }
+    client_tasks.complete();
     result
 }
 
@@ -2568,7 +2581,7 @@ struct ClientFinalReport {
 #[cfg(target_os = "linux")]
 async fn run_client_inner(
     config_path: &str,
-    client_tasks: &mut tokio::task::JoinSet<()>,
+    client_tasks: &mut crate::client_tasks::Owner,
     final_report: &mut Option<ClientFinalReport>,
 ) -> anyhow::Result<()> {
     // SIGUSR1 dumps the packet trace, when one is armed (no-op otherwise).

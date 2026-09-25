@@ -643,3 +643,23 @@ and leftovers in the original namespace; do not delete retained ownership eviden
 bypass the error. [Validation and remaining audit work](../plans/AUDIT-DEBT.md).
 
 After a gateway timeout and process exit, restarting may reach `lost live per-interface sysctl evidence`: the original TUN is closed, so its saved value cannot be replayed onto a new same-name interface. Follow [manual recovery §6.64](TROUBLESHOOTING.md); a restart loop does not resolve it.
+
+
+## One Linux client per process
+
+The public `run_client` admits one active invocation per process, including INI loading,
+connection, cleanup and final diagnostics. A simultaneous second call returns
+`a Linux client is already running in this process` before reading config or registering
+signal handlers. Carrier addresses and the cycle flag reset only after successful
+admission. Independent Linux clients require separate processes; existing shared
+namespace/TUN/kill-switch restrictions still apply.
+
+After `run_client` returns success or error, another invocation is allowed; leftover
+network-resource checks still apply. For graceful stop, send SIGTERM/SIGINT and await
+return. Forcibly destroying an already-started future, for example through
+`JoinHandle::abort`, an outer timeout or panic, makes subsequent calls return
+`previous Linux client was cancelled before cleanup completed; restart the process`.
+Nested tasks receive cancellation requests, but Drop cannot guarantee their async join;
+a new generation must not overlap tasks still finishing. An unpolled future does not
+acquire admission. This rule applies to the Linux `run_client` runtime, not to every
+shared transport-core instance on other platforms.

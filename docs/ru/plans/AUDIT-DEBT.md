@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v18 -->
+<!-- normative-sync: audit-debt-v19 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -20,7 +20,7 @@
 | D02 | 14/25 | DONE | Внутренние границы sysctl | Lock/I/O/context, trusted directory, namespace fd pins, исходный per-interface fd/witness и network_cookie v4 проверены. 1995 Linux + 32 privileged + 8 lifecycle и SIGKILL/mismatch worker E2E PASS. Потерянный interface witness сохраняется для ручного recovery; общий persistent firewall/DNS/routes остаётся D04. [Отчёт](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Восстановление после crash | Persistent server firewall, DNS v2, kill-switch и physical routes проверены; legacy global DNS, persistent TUN и потерянный sysctl witness имеют явные безопасные ручные границы. [Клиентская mixed матрица](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 ячейки, 136 crash/recovery; [серверная](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks повторно PASS. Произвольные zones/policies и multiprofile остаются D10; накопление состояния — D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Осталась конечная сверка ранних Drop/внутренних waits; произвольные kernel/fs I/O и forced join не прерываются. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; остаются server/panel и файловая подготовка hooks/backup; произвольные kernel/fs I/O и forced join не прерываются. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
@@ -168,8 +168,42 @@ TCP/UDP clean/fault shutdown и два явных recovery также PASS. Сц
 | procfs / sysfs | Namespace pins, cookie и sysctl witness — D02/D04. IPv6 module-disabled читается ограниченно и строго; это не гарантия отсутствия IPv6 в будущем. |
 | TUN attach / имена | [Attach](../reports/AUDIT-Q25-TUN-ATTACH.md), lease и route/TUN identity имеют отдельные проверки; WAN selectors требуют отдельной сверки. |
 | Физический WAN | `gateway/wan.rs` возвращает имя из маршрута, firewall сохраняет selector имени. Rename/reuse и допустимую смену WAN нужно проверить явно. |
-| DNS / carrier globals | Текущий DNS per-link; `CONNECTED_PEER`, `CARRIER_CANDIDATES`, `DELIBERATE_CYCLE` остаются process-global. CLI вызывает один run_client; публичный run_client не имеет запрета второго одновременного вызова. Требуется проверка/явный контракт. |
+| DNS / carrier globals | DNS per-link; process-global carrier/cycle защищён одним run_client на процесс до terminal cleanup. Forced Drop закрывает повторный допуск до перезапуска процесса; проверка ниже. |
 | Динамический IPv6 | При недоступном ip6tables допустим пустой global inventory; refresh пропускает ранее незащищённое семейство. Появление адреса после admission остаётся обязательным сценарием D06/D10. |
+
+
+
+**Допуск Linux runtime и сверка ранних выходов (продолжение пакета A).** Устранено
+пересечение process-global carrier/cycle state при двух `run_client`: второй вызов
+отвергается до конфигурации/сигналов, допуск удерживается до завершения cleanup и
+итогового writer. Возвращённая ошибка допускает следующий запуск с обычными проверками
+ресурсов. Forced Drop всей future закрывает допуск до перезапуска процесса: вложенные
+TaskGroup не гарантируют async join при Drop. Это явная граница отмены, а не заявление
+успешной сетевой очистки. [Контракт](../manuals/OPERATIONS.md#один-linux-клиент-на-процесс).
+
+На исходном entry point `b307c913` проверка отказа до чтения отсутствующего INI дала
+ожидаемый FAIL: старый вызов дошёл до открытия файла при занятом process gate.
+Исправленный entry point и проверки simultaneous admission, terminal ownership,
+отмены с работающим ребёнком и panic прошли: 7 host + 85 Linux tests, Linux Clippy.
+Три privileged-теста неизменённых namespace workers оставлены ignored в этом адресном
+прогоне; новый privileged PASS не заявляется. Окончательные команды/коды/manifest: `audit-debt-20260925/batch-a-instance/`.
+
+Сверка ранних путей Linux-клиента с текущим кодом и прежним evidence:
+
+| Путь / ожидание | Результат и граница |
+|---|---|
+| Startup/NetworkPlan до adoption | `network_task::Job::Drop` отклоняет результат и присоединяет исходный поток; частичный guard откатывает на нём же. [Network worker](../reports/AUDIT-Q25-NETWORK-TASK.md), startup и бюджет выше. |
+| Pump-start / частичный план | При отказе writer reader останавливается и присоединяется; непринятый `(pump, guard)` уничтожается в этом порядке. [Pump start](../reports/AUDIT-Q25-PUMP-START.md). |
+| Установленный TUN / обычная ошибка | `TunGuard::shutdown` ждёт DNS → pump → routes/gateway; fallback Drop удерживает TUN fd и общий cleanup deadline. [Teardown](../reports/AUDIT-Q25-TUN-TEARDOWN.md), бюджет выше. |
+| TCP/H2/UDP дочерние задачи | Обычные выходы выполняют TaskGroup finish до terminal cleanup; Drop только закрывает admission/запрашивает abort. Forced cancellation всего run_client теперь запрещает повторный запуск в процессе. [TCP](../reports/AUDIT-Q25-TCP-TASKS.md), [H2](../reports/AUDIT-Q25-H2-TASKS.md), [UDP](../reports/AUDIT-Q25-UDP-TASKS.md). |
+| TOFU/status / файловый I/O | finish ждёт worker; fallback Drop синхронно join. Sender/queue mutex не удерживается во время файловой операции. [TOFU](../reports/AUDIT-Q25-IDENTITY-WORKER.md), [status](../reports/AUDIT-Q25-STATUS-WRITER.md). |
+| Внутренние locks / ожидания | Carrier/core/diagnostic state меняется под короткими mutex без await; очереди writer освобождают mutex перед внешним I/O. TunWorkers удерживает join lock до всех потоков специально, чтобы отмена не оставляла fd без владельца. [TUN workers](../reports/AUDIT-Q25-TUN-WORKERS.md). Непрерываемые kernel/fs I/O и forced join остаются описанной границей, не обещанием 15-секундного process exit. |
+
+Это закрывает сверку перечисленных Linux early-Drop путей и process-global допуска.
+D05/D06/D09 целиком не закрыты: остаются сводная сверка server/panel waits,
+синхронные metadata/context-file операции в hooks и чтение/preflight backup до blocking
+worker; это статически выявленный остаток I/O, без нового runtime воспроизведения.
+WAN/dynamic IPv6 остаются в D06; никакие новые платформенные или сетевые packet PASS не заявляются.
 
 ## Источники
 

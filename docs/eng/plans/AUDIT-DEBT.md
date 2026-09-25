@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v18 -->
+<!-- normative-sync: audit-debt-v19 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -20,7 +20,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D02 | 14/25 | DONE | Internal sysctl boundaries | Lock/I/O/context, trusted directory, namespace fd pins, original per-interface fd/witness and v4 network_cookie verified. 1995 Linux + 32 privileged + 8 lifecycle and SIGKILL/mismatch worker E2E PASS. Lost interface witness stays for manual recovery; general persistent firewall/DNS/routes remains D04. [Report](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Standalone kill switch | Pinned namespace, retained exact-family owner, fail-closed reconnect and safe address rotation. 11 portable + 2 native regressions; actual IPv4/IPv6 filter counters and 2 baseline failures. [Report](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Crash recovery | Persistent server firewall, DNS v2, kill-switch and physical routes verified; legacy global DNS, persistent TUN and lost sysctl witnesses have explicit safe manual boundaries. [Client mixed matrix](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 cells, 136 crash/recovery; [server](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks rerun PASS. Arbitrary zones/policies and multiprofile remain D10; state accumulation remains D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Final early-Drop/internal-wait inventory remains; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; server/panel and hook/backup file preparation remain; arbitrary kernel/fs I/O and forced joins are not preempted. [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -166,8 +166,43 @@ D06 reconciliation against current code (no new runtime PASS claim):
 | procfs / sysfs | Namespace pins, cookie and sysctl witnesses are D02/D04. IPv6 module-disabled evidence uses bounded strict reads; it does not guarantee absence of future IPv6. |
 | TUN attach / names | [Attach](../reports/AUDIT-Q25-TUN-ATTACH.md), leases and route/TUN identity have dedicated checks; WAN selectors need reconciliation. |
 | Physical WAN | `gateway/wan.rs` returns a route's device name; firewall records name selectors. Rename/reuse and supported WAN changes need explicit checks. |
-| DNS / carrier globals | DNS is now per-link; CONNECTED_PEER, CARRIER_CANDIDATES and DELIBERATE_CYCLE remain process-global. CLI calls one run_client; public run_client has no simultaneous-call admission guard. Check and define the contract. |
+| DNS / carrier globals | DNS is per-link; process-global carrier/cycle state is protected by one run_client per process through terminal cleanup. Forced Drop closes readmission until process restart; verification below. |
 | Dynamic IPv6 | Empty global inventory may admit unavailable ip6tables; refresh skips a previously unprotected family. Address arrival after admission remains a required D06/D10 scenario. |
+
+
+
+**Linux runtime admission and early-exit reconciliation (batch A continuation).**
+Concurrent `run_client` calls no longer overlap process-global carrier/cycle state:
+the second call fails before config/signals, and admission lasts through cleanup and
+final writer completion. A returned error permits another invocation with the usual
+resource checks. Forced Drop of the whole future closes admission until process restart:
+nested TaskGroups cannot guarantee async join in Drop. This is an explicit cancellation
+boundary, not a claim of successful network cleanup.
+[Contract](../manuals/OPERATIONS.md#one-linux-client-per-process).
+
+Against the original `b307c913` entry point, the rejection-before-missing-INI check
+produced the expected FAIL: the old invocation reached file open while the process gate
+was occupied. The fixed entry point, simultaneous admission, terminal ownership,
+cancellation with an in-flight child and panic passed: 7 host + 85 Linux tests, Linux
+Clippy. Three privileged tests of unchanged namespace workers remain ignored in this
+targeted run; no new privileged PASS is claimed. Final commands/exit codes/manifest: `audit-debt-20260925/batch-a-instance/`.
+
+Linux client early-path reconciliation against current code and previous evidence:
+
+| Path / wait | Outcome and boundary |
+|---|---|
+| Startup/NetworkPlan before adoption | `network_task::Job::Drop` rejects the result and joins the original thread; partial guards roll back there. [Network worker](../reports/AUDIT-Q25-NETWORK-TASK.md), startup and budget above. |
+| Pump start / partial plan | Writer failure stops and joins the reader; rejected `(pump, guard)` drops in that order. [Pump start](../reports/AUDIT-Q25-PUMP-START.md). |
+| Established TUN / ordinary error | `TunGuard::shutdown` awaits DNS → pump → routes/gateway; fallback Drop retains the TUN fd and shared cleanup deadline. [Teardown](../reports/AUDIT-Q25-TUN-TEARDOWN.md), budget above. |
+| TCP/H2/UDP child tasks | Ordinary exits finish TaskGroups before terminal cleanup; Drop only closes admission/requests abort. Forced cancellation of the entire run_client now prohibits reuse in that process. [TCP](../reports/AUDIT-Q25-TCP-TASKS.md), [H2](../reports/AUDIT-Q25-H2-TASKS.md), [UDP](../reports/AUDIT-Q25-UDP-TASKS.md). |
+| TOFU/status / file I/O | finish awaits the worker; fallback Drop joins synchronously. Sender/queue mutexes are not held during file operations. [TOFU](../reports/AUDIT-Q25-IDENTITY-WORKER.md), [status](../reports/AUDIT-Q25-STATUS-WRITER.md). |
+| Internal locks / waits | Carrier/core/diagnostic state changes under short mutexes without await; writer queues release their mutex before external I/O. TunWorkers deliberately holds its join lock through all threads so cancellation cannot abandon fd ownership. [TUN workers](../reports/AUDIT-Q25-TUN-WORKERS.md). Non-preemptible kernel/fs I/O and forced join remain a documented boundary, not a 15-second process-exit guarantee. |
+
+This closes reconciliation of the listed Linux early-Drop paths and process-global
+admission. D05/D06/D09 remain open: the consolidated server/panel wait review,
+synchronous metadata/context-file operations in hooks and backup read/preflight before
+the blocking worker remain; these are statically identified I/O items, without a new
+runtime reproducer. WAN/dynamic IPv6 remain in D06. No new platform or network packet PASS is claimed.
 
 ## Sources
 
