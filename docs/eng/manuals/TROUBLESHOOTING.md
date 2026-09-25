@@ -1954,6 +1954,15 @@ interface/subnet before manual recovery.
 
 ### Exit-node NAT or kill-switch conflict
 
+If policy routing sends forwarded exit-TUN packets through a WAN other than
+Qeli's selected one, the `qeli-exit-node` guard drops them rather than
+letting the client's original address egress. Inspect `ip rule`,
+`ip route get <destination> from <client-address> iif <tun>`, and the WAN
+logged by Qeli. After a cleanup failure `qeli-exit-node:lockdown` keeps
+blocking the TUN until retry succeeds; do not remove it separately from
+remaining MARK/NAT rules. `exit_node` cannot share a profile with
+`gateway_nat`, `forward`, or `dev_attach`.
+
 For a shared WAN, inspect the exact `qeli-exit-node:<tun>` NAT comments in each family.
 The unsuffixed legacy MASQUERADE is preserved during cleanup; do not delete it while
 an older exit process may still rely on it. No remembered WAN means no automatic

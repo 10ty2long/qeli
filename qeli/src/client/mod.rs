@@ -2746,8 +2746,8 @@ async fn run_client_inner(
     let gw_on = gateway::should_engage(&config.routing);
     // Exit-node: this client is an internet EXIT for OTHER tunnel clients (mirror of
     // gateway_nat — masquerade tun-forwarded traffic out the physical WAN). Independent of
-    // gw_on: exit uses its own engage/disengage, so both can be off, one on, or (unusually)
-    // both.
+    // gw_on: exit uses its own engage/disengage. Validation rejects combining it
+    // with gateway/forward on the same TUN because their egress policies conflict.
     let exit_on = config.routing.exit_node;
     let tun_if = config.tun.name.clone();
     // Config validation already rejects exit_node + every full-tunnel spelling. Its own
@@ -8114,6 +8114,23 @@ fn setup_tunnel(
         route_owner.clone(),
         cleanup_failures.clone(),
     );
+    // An owned exit interface must not receive forwarded traffic before its
+    // fail-closed FORWARD rules are installed, even if host forwarding is already on.
+    let bring_up = || -> anyhow::Result<()> {
+        route_owner.verify_plan()?;
+        TunInterface::set_up(&if_name, mtu)?;
+        log::info!(
+            "{} {} is up (addresses: {})",
+            dev_label,
+            if_name,
+            plan.addresses
+                .iter()
+                .map(|address| format!("{}/{}", address.address, address.prefix_len))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        Ok(())
+    };
     if attach {
         // The interface owner sets L3 (address + link up) — some managers only route
         // through an interface they configured themselves, so if qeli sets the address
@@ -8133,18 +8150,9 @@ fn setup_tunnel(
             route_owner.verify_plan()?;
             TunInterface::set_address(&if_name, &address.address, address.prefix_len)?;
         }
-        route_owner.verify_plan()?;
-        TunInterface::set_up(&if_name, mtu)?;
-        log::info!(
-            "{} {} is up (addresses: {})",
-            dev_label,
-            if_name,
-            plan.addresses
-                .iter()
-                .map(|address| format!("{}/{}", address.address, address.prefix_len))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+        if !config.routing.exit_node {
+            bring_up()?;
+        }
     }
     // Now that the interface exists, apply only the firewall/sysctl families present in
     // the authenticated plan. An IPv6-only router must not depend on IPv4 iptables or
@@ -8157,6 +8165,9 @@ fn setup_tunnel(
         .addresses
         .iter()
         .any(|address| address.family == crate::transport_core::NetworkAddressFamily::Ipv6);
+    if config.routing.exit_node && !has_ipv4 && !has_ipv6 {
+        anyhow::bail!("exit-node requires an authenticated IPv4 or IPv6 TUN address");
+    }
     if router_enabled {
         gateway::bind_owner(&route_owner)?;
         plan_guard.touch_platform_state();
@@ -8188,6 +8199,9 @@ fn setup_tunnel(
         if has_ipv6 {
             crate::client::gateway::engage_exit_ipv6(&if_name)?;
         }
+    }
+    if config.routing.exit_node && !attach {
+        bring_up()?;
     }
     tun.set_nonblocking()?;
 

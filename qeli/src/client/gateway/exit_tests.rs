@@ -37,7 +37,7 @@ fn shared_wan(ipv6: bool) {
         start(&k, "ex_b", "wan0", ipv6);
         stop("ex_a").unwrap();
         assert_eq!(nat_count(&k, "wan0", ipv6), 1, "sibling lost its NAT");
-        assert_eq!(k.borrow().count(ipv6, "ex_b"), 4);
+        assert_eq!(k.borrow().count(ipv6, "ex_b"), 5);
         stop("ex_b").unwrap();
         assert_eq!(nat_count(&k, "wan0", ipv6), 0);
     });
@@ -252,7 +252,7 @@ fn partial_nat_failure_does_not_borrow_or_remove_sibling_rule() {
         assert!(engage_exit("ex_a").is_err());
         stop("ex_a").unwrap();
         assert_eq!(nat_count(&k, "wan0", false), 1);
-        assert_eq!(k.borrow().count(false, "ex_b"), 4);
+        assert_eq!(k.borrow().count(false, "ex_b"), 5);
         stop("ex_b").unwrap();
     });
 }
@@ -266,5 +266,66 @@ fn unknown_cleanup_inspection_retains_exit_scope_for_retry() {
         stop("ex_a").unwrap();
         assert!(retained_tun("ex_a", false).is_empty());
         assert_eq!(nat_count(&k, "wan0", false), 0);
+    });
+}
+
+#[test]
+fn exit_guard_stays_ahead_of_permits_across_wan_refresh() {
+    for ipv6 in [false, true] {
+        run(|k| {
+            start(&k, "ex_a", "wan0", ipv6);
+            let guard: Vec<String> = exit_unmarked_drop("ex_a")
+                .into_iter()
+                .map(str::to_owned)
+                .collect();
+            {
+                let kernel = k.borrow();
+                let rules = &kernel.rules[&(ipv6, "filter".into(), "FORWARD".into())];
+                assert_eq!(rules.first(), Some(&guard));
+            }
+            k.borrow_mut().wans[usize::from(ipv6)] = Some("wan1".into());
+            refresh_exit_paths_if_active("ex_a").unwrap();
+            {
+                let kernel = k.borrow();
+                let rules = &kernel.rules[&(ipv6, "filter".into(), "FORWARD".into())];
+                assert_eq!(rules.first(), Some(&guard));
+            }
+            stop("ex_a").unwrap();
+            assert_eq!(k.borrow().count(ipv6, "ex_a"), 0);
+        });
+    }
+}
+
+#[test]
+fn failed_exit_cleanup_keeps_full_tun_lockdown_until_retry() {
+    run(|k| {
+        start(&k, "ex_a", "wan0", false);
+        k.borrow_mut().fail_mark_delete = true;
+        assert!(stop("ex_a").is_err());
+        let lockdown: Vec<String> = exit_lockdown_drop("ex_a")
+            .into_iter()
+            .map(str::to_owned)
+            .collect();
+        {
+            let kernel = k.borrow();
+            let rules = &kernel.rules[&(false, "filter".into(), "FORWARD".into())];
+            assert_eq!(rules.first(), Some(&lockdown));
+        }
+        k.borrow_mut().fail_mark_delete = false;
+        stop("ex_a").unwrap();
+        assert_eq!(k.borrow().count(false, "ex_a"), 0);
+    });
+}
+
+#[test]
+fn exit_guard_refuses_a_forward_kill_switch_hook_that_can_accept_tun_ingress() {
+    run(|kernel| {
+        kernel.borrow_mut().rules.insert(
+            (false, "filter".into(), "FORWARD".into()),
+            vec![vec!["-j".into(), "QELI_KS_ex_a".into()]],
+        );
+        kernel.borrow_mut().wans[0] = Some("wan0".into());
+        assert!(engage_exit("ex_a").is_err());
+        assert_eq!(kernel.borrow().mutations(), 0);
     });
 }

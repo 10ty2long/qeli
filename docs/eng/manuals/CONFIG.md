@@ -2286,6 +2286,12 @@ Exit NAT rules have an exact `qeli-exit-node:<tun>` comment, for example
 rules: stopping one does not delete another's rule. MARK/FORWARD/MSS keep the
 `qeli-exit-node` comment and are distinguished by interfaces. Bits selected by
 `0x51/0x51` are reserved for Qeli exit traffic and must not be reused by other marking.
+An exit-TUN packet without that mark is dropped in FORWARD: if policy routing
+sends it to a WAN Qeli has not selected, the client's original address cannot
+egress. After a confirmed roaming update Qeli adds rules for the new WAN;
+until then its packets remain blocked. `exit_node = true` cannot be combined
+with `gateway_nat = true` or `forward = true` on the same TUN: those modes
+require different handling of unmarked traffic arriving from the tunnel.
 
 Cleanup uses only WANs remembered during installation, including previous uplinks;
 without ownership records, the current default route cannot authorize deletion.

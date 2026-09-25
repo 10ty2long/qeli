@@ -208,6 +208,79 @@ fn kill_switch_hook_is_first(ctx: &Context, path: &str, chain: &str) -> bool {
         })
 }
 
+/// Return the guard's one-based position only when every preceding rule
+/// either drops packets or can ACCEPT solely from a different input interface.
+/// Other Qeli exit profiles may have their own guards and permits ahead of ours.
+fn exit_drop_position_in_output(
+    text: &str,
+    rule: &[&str],
+    tun_if: &str,
+    hooked: bool,
+) -> Option<usize> {
+    // An exit profile never arms the kill-switch FORWARD hook. Its chain can
+    // ACCEPT tunnel ingress before this guard, so it cannot be skipped safely.
+    if hooked {
+        return None;
+    }
+    let literal = format!("-A FORWARD {}", rule.join(" "));
+    // iptables -S canonicalizes the comment matcher before the DROP target.
+    let canonical = format!(
+        "-A FORWARD {} -m comment --comment {} -j DROP",
+        rule[..rule.len() - 6].join(" "),
+        rule[rule.len() - 1]
+    );
+    for (index, line) in text
+        .lines()
+        .filter(|line| line.starts_with("-A FORWARD "))
+        .enumerate()
+    {
+        if line == literal || line == canonical {
+            return Some(index + 1);
+        }
+        let fields = line.split_whitespace().collect::<Vec<_>>();
+        let jump = fields
+            .windows(2)
+            .find(|pair| pair[0] == "-j")
+            .map(|pair| pair[1]);
+        if matches!(jump, Some("DROP" | "REJECT")) {
+            continue;
+        }
+        let input = fields
+            .windows(2)
+            .find(|pair| pair[0] == "-i")
+            .map(|pair| pair[1]);
+        let negated_input = fields
+            .windows(3)
+            .any(|part| part[0] == "!" && part[1] == "-i" || part[0] == "-i" && part[1] == "!");
+        let input_excludes_tun = input.is_some_and(|interface| {
+            interface != "*"
+                && interface != tun_if
+                && !interface
+                    .strip_suffix('+')
+                    .is_some_and(|prefix| tun_if.starts_with(prefix))
+        });
+        if jump == Some("ACCEPT") && input_excludes_tun && !negated_input {
+            continue;
+        }
+        return None;
+    }
+    None
+}
+
+fn exit_drop_position(
+    ctx: &Context,
+    path: &str,
+    rule: &[&str],
+    tun_if: &str,
+    hooked: bool,
+) -> Option<usize> {
+    ctx.ipt(path, &["-t", "filter", "-S", "FORWARD"])
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .and_then(|text| exit_drop_position_in_output(&text, rule, tun_if, hooked))
+}
+
 /// Install one managed rule and verify it. Narrow filter/FORWARD permits must precede host
 /// DROP rules, but an active qeli kill-switch jump remains first so reconnect traffic still
 /// fails closed. NAT and mangle rules retain append semantics.
@@ -249,21 +322,77 @@ fn ensure_rule(
         );
         return false;
     }
+    let exit_permit = insert && rule.contains(&EXIT_TAG) && rule.contains(&"ACCEPT");
+    let guard_position = if exit_permit {
+        let position = exit_drop_position(ctx, path, &exit_unmarked_drop(tun_if), tun_if, hooked);
+        if position.is_none() {
+            log::error!("exit-node unmarked egress guard is missing or bypassed");
+            return false;
+        }
+        position
+    } else {
+        None
+    };
+    let own_drop = insert
+        && (rule == exit_unmarked_drop(tun_if).as_slice()
+            || rule == exit_lockdown_drop(tun_if).as_slice());
+    if hooked && (exit_permit || own_drop) {
+        log::error!("exit-node cannot protect {tun_if}: an existing kill-switch FORWARD hook may ACCEPT this TUN before the guard");
+        return false;
+    }
     if !exists {
         let mut add: Vec<&str> = vec!["-t", table, if insert { "-I" } else { "-A" }, chain];
+        let position = guard_position
+            .map(|index| (index + 1).to_string())
+            .unwrap_or_else(|| forward_insert_position(hooked).to_string());
         if insert {
-            add.push(forward_insert_position(hooked));
+            add.push(position.as_str());
         }
         add.extend_from_slice(rule);
         let _ = ctx.ipt(path, &add);
     }
     match ctx.present(path, &check) {
+        Ok(true) if own_drop => exit_drop_position(ctx, path, rule, tun_if, hooked).is_some(),
         Ok(present) => present,
         Err(error) => {
             log::error!("cannot verify installed router rule: {error}");
             false
         }
     }
+}
+
+/// Drop traffic from an exit TUN unless a Qeli WAN-specific mangle rule marked it.
+fn exit_unmarked_drop(tun_if: &str) -> Vec<&str> {
+    vec![
+        "-i",
+        tun_if,
+        "-m",
+        "mark",
+        "!",
+        "--mark",
+        EXIT_MARK,
+        "-j",
+        "DROP",
+        "-m",
+        "comment",
+        "--comment",
+        EXIT_TAG,
+    ]
+}
+
+/// Teardown first blocks every packet from this TUN, including packets that
+/// were already marked before MARK/NAT removal. A failed cleanup keeps it.
+fn exit_lockdown_drop(tun_if: &str) -> Vec<&str> {
+    vec![
+        "-i",
+        tun_if,
+        "-j",
+        "DROP",
+        "-m",
+        "comment",
+        "--comment",
+        "qeli-exit-node:lockdown",
+    ]
 }
 
 fn exit_mark_rule<'a>(tun_if: &'a str, wan_if: &'a str) -> Vec<&'a str> {
@@ -377,7 +506,8 @@ fn exit_mss(tun_if: &str) -> Vec<&str> {
 /// RPF on the tun then drops exactly the asymmetric paths gateway-NAT and exit-node
 /// exist to carry, while the log cheerfully reported the feature engaged.
 ///
-/// Called from `setup_tunnel` after the interface is up, on every connect.
+/// Called from `setup_tunnel` after the interface exists; for an owned exit TUN
+/// this runs before link-up so its forwarding guard is ready first.
 /// (Audit 2026-07-27, R1.)
 pub fn apply_tun_rp_filter(tun_if: &str) -> anyhow::Result<()> {
     let budget = Budget::new();
@@ -429,6 +559,19 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
         anyhow::anyhow!("exit-node: `iptables` is not installed (apt install iptables)")
     })?;
 
+    // Install the fail-closed guard before forwarding, MARK or NAT can admit packets.
+    // Record ownership first so every partial setup is cleaned with this generation.
+    remember_exit_wan(&EXIT_WANS_V4, tun_if, wan);
+    if !ensure_rule(
+        ctx,
+        &path,
+        tun_if,
+        "filter",
+        "FORWARD",
+        &exit_unmarked_drop(tun_if),
+    ) {
+        anyhow::bail!("exit-node: could not install unmarked tun egress DROP guard");
+    }
     // ip_forward is load-bearing (same as gateway_nat); rp_filter relaxed for the
     // asymmetric tun<->wan path. The cross-process owner journal restores the pristine
     // values only after the last client plan releases them.
@@ -457,20 +600,12 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
         tun_if,
     );
 
-    // Record the target before the first stateful rule is attempted. An iptables failure can
-    // leave the MARK rule installed while the later MASQUERADE verification fails; teardown
-    // must still know which WAN that partial rule names, including after a roaming event.
-    remember_exit_wan(&EXIT_WANS_V4, tun_if, wan);
-
     let ensure = |table: &str, chain: &str, rule: &[&str]| -> bool {
         ensure_rule(ctx, &path, tun_if, table, chain, rule)
     };
 
     // MARK + MASQUERADE are both essential — without either, tunnel traffic reaches the
     // WAN with a private source and the return path is black-holed.
-    if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, wan)) {
-        anyhow::bail!("exit-node: could not install the tun->wan MARK rule (mangle FORWARD)");
-    }
     if !ensure(
         "nat",
         "POSTROUTING",
@@ -478,23 +613,16 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
     ) {
         anyhow::bail!("exit-node: could not install MASQUERADE out {wan} (nat POSTROUTING)");
     }
-    // FORWARD accepts are conditional — only an empty chain with policy ACCEPT makes them
-    // redundant; on iptables-nft hosts the legacy filter chain can be incompatible.
+    if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, wan)) {
+        anyhow::bail!("exit-node: could not install the tun->wan MARK rule (mangle FORWARD)");
+    }
+    // The guard makes empty-chain ACCEPT fallback impossible: explicit narrow
+    // permits must follow it for every selected WAN.
     let fwd_ok = ensure("filter", "FORWARD", &exit_fwd_out(tun_if, wan))
         & ensure("filter", "FORWARD", &exit_fwd_in(tun_if, wan));
     let mss_ok = ensure("mangle", "FORWARD", &exit_mss(tun_if));
-
     if !fwd_ok {
-        if !forward_policy_accepts(ctx, &path) {
-            anyhow::bail!(
-                "exit-node: FORWARD accept rules are absent and the chain is not empty/ACCEPT"
-            );
-        }
-        log::warn!(
-            "exit-node: FORWARD accept rules not installed (legacy/nft filter conflict?) — \
-             relying on an empty FORWARD chain with policy ACCEPT. If you tighten it, permit \
-             {tun_if}<->{wan} yourself."
-        );
+        anyhow::bail!("exit-node: could not verify guarded FORWARD accepts for {tun_if}<->{wan}");
     }
     if !mss_ok {
         log::warn!(
@@ -549,6 +677,19 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
         )
     })?;
 
+    // Guard the TUN before forwarding or a partial rule batch can pass un-NATed packets.
+    remember_exit_wan(&EXIT_WANS_V6, tun_if, &wan);
+    if !ensure_rule(
+        ctx,
+        &path,
+        tun_if,
+        "filter",
+        "FORWARD",
+        &exit_unmarked_drop(tun_if),
+    ) {
+        anyhow::bail!("exit-node IPv6: could not install unmarked tun egress DROP guard");
+    }
+
     // Enabling IPv6 forwarding normally disables acceptance of Router Advertisements.
     // Preserve the physical WAN's RA-derived default by selecting router+host mode before
     // the host-wide switch, exactly as the IPv6 gateway path does.
@@ -592,18 +733,10 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
         tun_if,
     );
 
-    // See the IPv4 path above: remember the WAN before a partially successful rule batch
-    // can return an error, otherwise a subsequent path change makes that batch unreachable
-    // to clean teardown.
-    remember_exit_wan(&EXIT_WANS_V6, tun_if, &wan);
-
     let ensure = |table: &str, chain: &str, rule: &[&str]| -> bool {
         ensure_rule(ctx, &path, tun_if, table, chain, rule)
     };
 
-    if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, &wan)) {
-        anyhow::bail!("exit-node IPv6: could not install the tun->WAN MARK rule");
-    }
     if !ensure(
         "nat",
         "POSTROUTING",
@@ -611,17 +744,15 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
     ) {
         anyhow::bail!("exit-node IPv6: could not install NAT66 MASQUERADE out {wan}");
     }
+    if !ensure("mangle", "FORWARD", &exit_mark_rule(tun_if, &wan)) {
+        anyhow::bail!("exit-node IPv6: could not install the tun->WAN MARK rule");
+    }
     let forward_ok = ensure("filter", "FORWARD", &exit_fwd_out(tun_if, &wan))
         & ensure("filter", "FORWARD", &exit_fwd_in(tun_if, &wan));
     let mss_ok = ensure("mangle", "FORWARD", &exit_mss(tun_if));
     if !forward_ok {
-        if !forward_policy_accepts(ctx, &path) {
-            anyhow::bail!(
-                "exit-node IPv6: FORWARD rules are absent and the chain is not empty/ACCEPT"
-            );
-        }
-        log::warn!(
-            "exit-node IPv6: FORWARD rules could not be verified; relying on an empty FORWARD chain with policy ACCEPT for {tun_if}<->{wan}"
+        anyhow::bail!(
+            "exit-node IPv6: could not verify guarded FORWARD accepts for {tun_if}<->{wan}"
         );
     }
     if !mss_ok {
@@ -743,6 +874,18 @@ fn remove_exit_rules(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
                 "exit-node cleanup: `{binary}` is unavailable; rules tagged `{EXIT_TAG}` may remain"
             );
         };
+        if !ensure_rule(
+            ctx,
+            &path,
+            tun_if,
+            "filter",
+            "FORWARD",
+            &exit_lockdown_drop(tun_if),
+        ) {
+            anyhow::bail!(
+                "exit-node cleanup: cannot install TUN lockdown before removing {binary} rules"
+            );
+        }
         let mut errors = Vec::new();
         for wan in remembered {
             for result in [
@@ -767,6 +910,22 @@ fn remove_exit_rules(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
                 if let Err(error) = result {
                     errors.push(format!("{binary}/{wan}: {error}"));
                 }
+            }
+        }
+        // Keep the guard after any partial cleanup failure, including MARK/NAT
+        // deletion failures. Removing it last prevents an un-NATed fallback.
+        if errors.is_empty() {
+            if let Err(error) =
+                remove_rule(ctx, &path, "filter", "FORWARD", &exit_unmarked_drop(tun_if))
+            {
+                errors.push(format!("{binary}/guard: {error}"));
+            }
+        }
+        if errors.is_empty() {
+            if let Err(error) =
+                remove_rule(ctx, &path, "filter", "FORWARD", &exit_lockdown_drop(tun_if))
+            {
+                errors.push(format!("{binary}/lockdown: {error}"));
             }
         }
         if errors.is_empty() {
@@ -1204,7 +1363,8 @@ fn restore_sysctls(ctx: &Context, tun_if: &str) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        exit_wans_for, forget_exit_tun, forward_insert_position, policy_output_accepts_forward,
+        exit_drop_position_in_output, exit_unmarked_drop, exit_wans_for, forget_exit_tun,
+        forward_insert_position, policy_output_accepts_forward,
         policy_output_has_first_forward_jump, refresh_exit_paths_if_active, remember_exit_wan,
         ExitWansByTun,
     };
@@ -1213,6 +1373,38 @@ mod tests {
     fn forward_permit_stays_behind_the_qeli_kill_switch_only() {
         assert_eq!(forward_insert_position(false), "1");
         assert_eq!(forward_insert_position(true), "2");
+    }
+
+    #[test]
+    fn real_iptables_guard_inventory_requires_priority() {
+        let real = "-P FORWARD ACCEPT\n-A FORWARD -i ex_a -m mark ! --mark 0x51/0x51 -m comment --comment qeli-exit-node -j DROP\n";
+        let guard = exit_unmarked_drop("ex_a");
+        assert_eq!(
+            exit_drop_position_in_output(real, &guard, "ex_a", false),
+            Some(1)
+        );
+        let hooked = format!("-P FORWARD ACCEPT\n-A FORWARD -j QELI_KS_ex_a\n{real}");
+        assert_eq!(
+            exit_drop_position_in_output(&hooked, &guard, "ex_a", true),
+            None
+        );
+        let bypass = format!("-P FORWARD ACCEPT\n-A FORWARD -i ex_a -j ACCEPT\n{real}");
+        assert_eq!(
+            exit_drop_position_in_output(&bypass, &guard, "ex_a", false),
+            None
+        );
+        let wildcard = format!("-P FORWARD ACCEPT\n-A FORWARD -i ex+ -j ACCEPT\n{real}");
+        assert_eq!(
+            exit_drop_position_in_output(&wildcard, &guard, "ex_a", false),
+            None
+        );
+        let other = format!(
+            "-P FORWARD ACCEPT\n-A FORWARD -i ex_b -j DROP\n-A FORWARD -i ex_b -o wan0 -j ACCEPT\n{real}"
+        );
+        assert_eq!(
+            exit_drop_position_in_output(&other, &guard, "ex_a", false),
+            Some(3)
+        );
     }
 
     #[test]

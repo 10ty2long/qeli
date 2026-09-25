@@ -1388,6 +1388,16 @@ impl ClientConfig {
                 "'exit_node = true' requires split-tunnel routing (`gateway = false` and `routing = split-tunnel`) so the physical WAN remains available"
             );
         }
+        if self.routing.exit_node && self.tun.attach_existing {
+            anyhow::bail!(
+                "'exit_node = true' requires an owned TUN (`dev_attach = false`) so its firewall guard is installed before the interface comes up"
+            );
+        }
+        if self.routing.exit_node && (self.routing.gateway_nat || self.routing.forward) {
+            anyhow::bail!(
+                "'exit_node = true' cannot share its TUN with 'gateway_nat' or 'forward': unmarked off-WAN forwarding is blocked to prevent source-address leaks"
+            );
+        }
         if !self.routing.lan_subnet.trim().is_empty()
             && self
                 .routing
@@ -2016,6 +2026,31 @@ sni    = www.cloudflare.com
         )
         .unwrap();
         split.validate().unwrap();
+    }
+
+    #[test]
+    fn exit_node_rejects_simultaneous_lan_forwarding() {
+        for key in ["gateway_nat", "forward"] {
+            let ini =
+                format!("[qeli]\nserver = vpn.example.com:443\nexit_node = true\ngateway = false\n{key} = true\n");
+            let config = ClientConfig::from_ini(&IniDoc::parse(&ini).unwrap()).unwrap();
+            let error = config.validate().unwrap_err().to_string();
+            assert!(error.contains("cannot share its TUN"), "{key}: {error}");
+        }
+    }
+
+    #[test]
+    fn exit_node_rejects_attached_live_tun() {
+        let ini = IniDoc::parse(
+            "[qeli]\nserver = vpn.example.com:443\nexit_node = true\ngateway = false\ndev_attach = true\n",
+        )
+        .unwrap();
+        let config = ClientConfig::from_ini(&ini).unwrap();
+        assert!(config
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("requires an owned TUN"));
     }
 
     #[test]
