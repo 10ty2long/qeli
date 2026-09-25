@@ -5,7 +5,9 @@ mod output;
 #[cfg(any(test, feature = "client"))]
 #[path = "secret.rs"]
 pub(crate) mod secret;
-pub(crate) use output::{run as run_output, run_with_input as run_output_with_input};
+#[cfg(any(feature = "server", test))]
+pub(crate) use output::run as run_output;
+pub(crate) use output::run_with_input as run_output_with_input;
 
 use std::collections::VecDeque;
 use std::io;

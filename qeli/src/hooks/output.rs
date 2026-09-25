@@ -23,6 +23,7 @@ async fn read_complete(mut reader: impl AsyncRead + Unpin, limit: usize) -> io::
     }
 }
 
+#[cfg(any(feature = "server", test))]
 pub(crate) async fn run(
     command: &mut Command,
     until: tokio::time::Instant,
