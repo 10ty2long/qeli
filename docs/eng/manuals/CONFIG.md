@@ -1232,10 +1232,16 @@ The client pins the key **of the profile** it connects to (by port).
 > **`allow_unpinned_tofu` (client `[qeli]`, default `false`) is an escape hatch only
 > for a TOFU-pin persistence failure.** With no explicit `key`, the client accepts the
 > server-proven key on first contact and **must persist** it in `known_hosts`; later
-> connections verify that pin. If the store is unavailable, the default `false` aborts
+> connections verify that pin. If the new pin cannot be persisted, the default `false` aborts
 > fail-closed. `true` permits continuing unpinned only in that failure case. It never
 > permits a mismatch with an existing `known_hosts` entry or explicit `key`. H-1 and
 > mandatory pinning still require `key`; ordinary TOFU requires `bind_static = false`.
+
+On Linux, the TOFU store must be a regular UTF-8 file of at most 1 MiB. Read errors,
+malformed target records or conflicting duplicates reject connection with either value
+of `allow_unpinned_tofu`. A missing file permits first trust; new pins are published
+atomically. This bounds the local Linux store, not INI configuration.
+[Details](../reports/AUDIT-Q25-IDENTITY-FILES.md).
 
 After `rotate-identity` the public key changes → all clients of that profile must
 receive the new hex (otherwise `SERVER KEY MISMATCH`).

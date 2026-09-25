@@ -230,3 +230,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F110: TUN pump startup and early rollback on a joined worker](reports/AUDIT-Q25-PUMP-START.md)
 
 - [Q25-F111: ordered client diagnostics and joined final publication](reports/AUDIT-Q25-STATUS-WRITER.md)
+
+- [Q25-F112/F113: stable device-id, bounded reads and TOFU integrity](reports/AUDIT-Q25-IDENTITY-FILES.md)

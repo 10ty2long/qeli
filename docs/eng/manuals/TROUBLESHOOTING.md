@@ -2517,3 +2517,15 @@ On slow fsync, ordinary exit awaits the writer; forced owner destruction also jo
 A displayed `running` does not prove the process is alive, and missing an intermediate
 state does not prove a lost connection: the queue coalesces snapshots.
 [Design and validation](../reports/AUDIT-Q25-STATUS-WRITER.md).
+
+### 6.94. Linux: corrupt known_hosts or temporary device-id
+
+`cannot read known_hosts store`, `known_hosts exceeds 1 MiB`, `invalid known_hosts pin`
+and `SERVER KEY MISMATCH` require inspecting the existing file and server key.
+`allow_unpinned_tofu = true` does not disable these checks. Preserve a copy and repair
+the specific record after verifying its key instead of deleting the whole trust store.
+
+`device id will be per-run` indicates a read/lock error; `device id could not be persisted`
+indicates write failure. This run uses one temporary ID, which may not survive restart.
+Check file type, permissions and lock ownership; do not delete a live process's lock.
+[Details](../reports/AUDIT-Q25-IDENTITY-FILES.md).

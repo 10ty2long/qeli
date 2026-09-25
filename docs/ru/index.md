@@ -230,3 +230,5 @@
 - [Q25-F110: запуск TUN pump и ранний откат в присоединяемом worker](reports/AUDIT-Q25-PUMP-START.md)
 
 - [Q25-F111: последовательная диагностика клиента и ожидание итоговой записи](reports/AUDIT-Q25-STATUS-WRITER.md)
+
+- [Q25-F112/F113: стабильный device-id, ограниченное чтение и целостность TOFU](reports/AUDIT-Q25-IDENTITY-FILES.md)

@@ -591,3 +591,17 @@ Ordinary exit awaits terminal publication after stopping the sampler. Slow fsync
 neighboring async tasks responsive but can delay process exit; there is no hard overall
 deadline. Diagnostics failures do not change the VPN result. If a write fails, the file
 may be stale: inspect exit status and logs. [Validation and limits](../reports/AUDIT-Q25-STATUS-WRITER.md).
+
+## Linux client identity files
+
+`/var/lib/qeli/device-id` (`QELI_DEVICE_ID_FILE`) is loaded once before connecting.
+The existing first 16 bytes are retained unless all are zero. If storage is unavailable,
+one temporary ID survives every reconnect until client exit; it may change after restart.
+Lock contention is limited to 15 seconds. Stop awaits admitted work and then starts no connection.
+
+TOFU store `/var/lib/qeli/known_hosts` (`QELI_KNOWN_HOSTS`) must be a regular UTF-8 file
+of at most 1 MiB. `allow_unpinned_tofu` cannot bypass read errors, malformed target pins
+or conflicting duplicates. Preserve the original file and verify the server key before
+repairing it. New pins use atomic publication with `0600`. TOFU I/O can still block the
+async executor; 15 seconds bound flock contention, not overall shutdown.
+[Design and validation](../reports/AUDIT-Q25-IDENTITY-FILES.md).

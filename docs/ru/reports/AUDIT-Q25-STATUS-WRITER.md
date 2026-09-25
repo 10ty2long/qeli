@@ -89,3 +89,5 @@ NetworkPlan/shutdown deadline нет. Остаются ранние error/Drop-�
 путём. Это не benchmark, не закрытие D10/D13 и не сертификация других платформ.
 Windows VM, Mac/iOS и физический роутер — SKIPPED по решению пользователя;
 финальный Android-прогон остаётся D12. Техдолг: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+Сверка 25 сентября 2026: device-id и целостность TOFU рассмотрены в [Q25-F112/F113](AUDIT-Q25-IDENTITY-FILES.md). Синхронный TOFU callback и общий срок остаются D05.

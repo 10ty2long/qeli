@@ -57,6 +57,12 @@ mod client_network_lease;
 #[path = "client/network_task.rs"]
 mod client_network_task;
 
+// Identity-file parsers have portable bounded-reader regressions.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[allow(dead_code)]
+#[path = "client/identity_files.rs"]
+mod client_identity_files;
+
 // Diagnostics queue ownership is portable; tests do not mutate host networking.
 #[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
 #[path = "client/status_writer.rs"]

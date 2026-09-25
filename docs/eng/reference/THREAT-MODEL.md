@@ -1,5 +1,5 @@
 # qeli — Threat Model
-<!-- normative-sync: threat-ipv6-v1 -->
+<!-- normative-sync: threat-identity-v2 -->
 
 This document states **what qeli defends against, what it deliberately does
 not, and the current assurance status.** It is written so a user can decide
@@ -175,6 +175,15 @@ It improves continuity; it does not make the old and new paths unlinkable.
   attacker who can read the process's freed heap can already read the *live* keys
   during a session, so it does not change the threat model. Revisit on a
   dedicated memory-hygiene pass or a cipher-crate change.
+
+### Linux client local trust store
+
+TOFU does not authenticate first contact like a previously verified `key`. Subsequent
+Linux connections enforce stored pins; invalid UTF-8, the 1 MiB limit, read errors and
+conflicting records cannot start fresh trust, even with `allow_unpinned_tofu = true`.
+Atomic publication preserves the old store on partial-write/file-fsync failure. This
+does not defend against an administrator who can replace the store itself.
+[Baseline and fixed binary validation](../reports/AUDIT-Q25-IDENTITY-FILES.md).
 
 ## 5. If your life depends on this
 

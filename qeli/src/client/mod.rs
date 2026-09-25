@@ -3,6 +3,10 @@ pub mod dns;
 #[cfg(target_os = "linux")]
 pub mod gateway;
 #[cfg(target_os = "linux")]
+mod identity_files;
+#[cfg(all(test, target_os = "linux"))]
+use identity_files::{device_id_at, trust_on_first_use_at};
+#[cfg(target_os = "linux")]
 pub mod killswitch;
 #[cfg(target_os = "linux")]
 mod network_lease;
@@ -1703,6 +1707,7 @@ struct LinuxCoreAdapter {
     cancel: Arc<AtomicBool>,
     counters: Arc<RuntimeCounters>,
     diagnostics: ClientStatusReporter,
+    device_identity: Option<[u8; crate::protocol::DEVICE_ID_LEN]>,
     diagnostic_writer: Option<status_writer::Writer<serde_json::Value>>,
     cleanup_failures: crate::client_cleanup::Failures,
     post_up: Option<String>,
@@ -1931,6 +1936,23 @@ fn linux_roaming_path_supported(config: &crate::config::client::ClientConfig) ->
 
 #[cfg(target_os = "linux")]
 impl LinuxCoreAdapter {
+    async fn load_device_identity(
+        &mut self,
+        path: String,
+        stop: impl std::future::Future<Output = ()>,
+    ) -> anyhow::Result<bool> {
+        if self.device_identity.is_some() {
+            return Ok(true);
+        }
+        let loaded = network_task::prepared(
+            async move { Ok(move || Ok(identity_files::device_id_at(&path))) },
+            stop,
+        )
+        .await?;
+        self.device_identity = loaded;
+        Ok(loaded.is_some())
+    }
+
     fn with_core<T>(&self, action: impl FnOnce(&mut ClientCore) -> T) -> T {
         let mut core = crate::util::lock_or_recover(&self.core, "client::linux_core");
         action(&mut core)
@@ -1983,6 +2005,7 @@ impl LinuxCoreAdapter {
                 cancel: Arc::new(AtomicBool::new(false)),
                 counters,
                 diagnostics,
+                device_identity: None,
                 diagnostic_writer,
                 cleanup_failures: crate::client_cleanup::Failures::default(),
                 post_up: None,
@@ -2208,7 +2231,8 @@ impl ClientPlatform for LinuxCoreAdapter {
     }
 
     fn device_id(&self) -> anyhow::Result<[u8; crate::protocol::DEVICE_ID_LEN]> {
-        Ok(device_id())
+        self.device_identity
+            .ok_or_else(|| anyhow::anyhow!("client device identity was not initialized"))
     }
 
     fn identity_verifier(&self, config: &crate::config::client::ClientConfig) -> IdentityVerifier {
@@ -2614,6 +2638,22 @@ async fn run_client_inner(
     config.check_credential_size(&password, pw_source)?;
 
     if shutdown_requested.load(Ordering::Acquire) {
+        return Ok(());
+    }
+
+    // Initialize once, before the first carrier/handshake timeout exists. Even a
+    // nonpersistent fallback must stay stable across reconnects within this run.
+    // Stop awaits an admitted write; no background identity mutation outlives startup.
+    let identity_path = std::env::var("QELI_DEVICE_ID_FILE")
+        .unwrap_or_else(|_| "/var/lib/qeli/device-id".to_string());
+    if !core_adapter
+        .load_device_identity(
+            identity_path,
+            wait_for_shutdown(&shutdown_requested, &shutdown_wakeup),
+        )
+        .await?
+        || shutdown_requested.load(Ordering::Acquire)
+    {
         return Ok(());
     }
 
@@ -6411,60 +6451,6 @@ where
         log::info!("Client disconnected");
     }
     result
-}
-
-/// Load (or first-time generate + persist) this client's stable device id. Stored
-/// at a fixed state path; an unwritable host falls back to a per-run random id
-/// (still works — just not stable across restarts there).
-#[cfg(target_os = "linux")]
-fn device_id() -> [u8; crate::protocol::DEVICE_ID_LEN] {
-    // `QELI_DEVICE_ID_FILE` overrides the path (lets several instances on one host —
-    // or tests — keep distinct device ids).
-    let path = std::env::var("QELI_DEVICE_ID_FILE")
-        .unwrap_or_else(|_| "/var/lib/qeli/device-id".to_string());
-    device_id_at(&path)
-}
-
-#[cfg(target_os = "linux")]
-fn device_id_at(path: &str) -> [u8; crate::protocol::DEVICE_ID_LEN] {
-    let read_valid = || {
-        let bytes = std::fs::read(path).ok()?;
-        let id: [u8; crate::protocol::DEVICE_ID_LEN] = bytes
-            .get(..crate::protocol::DEVICE_ID_LEN)?
-            .try_into()
-            .ok()?;
-        (id != [0u8; crate::protocol::DEVICE_ID_LEN]).then_some(id)
-    };
-    if let Some(id) = read_valid() {
-        return id;
-    }
-    if let Some(parent) = std::path::Path::new(path).parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    // Serialize first creation across processes, then re-read after taking the
-    // lock in case another client won the race while we were waiting.
-    let lock = match crate::util::FileLock::acquire(path) {
-        Ok(lock) => Some(lock),
-        Err(error) => {
-            log::warn!("device id will be per-run because '{path}' cannot be locked: {error}");
-            None
-        }
-    };
-    if lock.is_some() {
-        if let Some(id) = read_valid() {
-            return id;
-        }
-    }
-
-    use rand::prelude::*;
-    let mut id = [0u8; crate::protocol::DEVICE_ID_LEN];
-    rand::rng().fill_bytes(&mut id);
-    if lock.is_some() {
-        if let Err(error) = crate::util::write_atomic_private(path, &id) {
-            log::warn!("device id could not be persisted at '{path}': {error}");
-        }
-    }
-    id
 }
 
 async fn tcp_handshake<S: AsyncRead + AsyncWrite + Unpin>(
@@ -12209,169 +12195,18 @@ fn known_hosts_path() -> String {
     std::env::var("QELI_KNOWN_HOSTS").unwrap_or_else(|_| "/var/lib/qeli/known_hosts".to_string())
 }
 
-/// Trust-on-first-use with persistence. Pins the server's static key on first
-/// sight (recorded under `server_id`), then verifies every later connection
-/// against it — a changed key aborts as a probable MITM. An unwritable store fails
-/// closed unless the explicit `allow_unpinned_tofu` escape hatch is enabled; a
-/// readable existing pin is always enforced.
 #[cfg(target_os = "linux")]
 fn trust_on_first_use(
     server_id: &str,
     received_hex: &str,
     allow_unpinned: bool,
 ) -> anyhow::Result<()> {
-    trust_on_first_use_at(&known_hosts_path(), server_id, received_hex, allow_unpinned)
-}
-
-/// Path-injectable core of [`trust_on_first_use`] — unit-testable without touching
-/// the real `/var/lib/qeli/known_hosts`.
-#[cfg(target_os = "linux")]
-fn trust_on_first_use_at(
-    path: &str,
-    server_id: &str,
-    received_hex: &str,
-    allow_unpinned: bool,
-) -> anyhow::Result<()> {
-    let check_existing = || -> Option<anyhow::Result<()>> {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            for line in content.lines() {
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
-                if let Some((id, key)) = line.split_once(char::is_whitespace) {
-                    if id == server_id {
-                        let pinned = key.trim().to_lowercase();
-                        if pinned == received_hex {
-                            log::debug!("Server key matches the known_hosts pin for {}", server_id);
-                            return Some(Ok(()));
-                        }
-                        return Some(Err(anyhow::anyhow!(
-                            "SERVER KEY MISMATCH for {} — possible MITM attack!\n  Pinned:   {}\n  \
-                             Received: {}\n  If you deliberately rotated the server key, remove the \
-                             '{}' line from {} (or set auth.server_public_key) and reconnect.",
-                            server_id,
-                            pinned,
-                            received_hex,
-                            server_id,
-                            path
-                        )));
-                    }
-                }
-            }
-        }
-        None
-    };
-    if let Some(result) = check_existing() {
-        return result;
-    }
-
-    // First sighting: serialize the read/decision/append across processes. The second read
-    // under the sidecar lock is the important one — another client may have pinned a key
-    // between our optimistic read above and acquiring the lock.
-    if let Some(parent) = std::path::Path::new(path).parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    let _lock = match crate::util::FileLock::acquire(path) {
-        Ok(lock) => lock,
-        Err(error) => {
-            if !allow_unpinned {
-                return Err(anyhow::anyhow!(
-                    "cannot lock the known_hosts store {} for {} ({}). Refusing to make an \
-                     unserialized first-trust decision; fix the path or set \
-                     allow_unpinned_tofu = true to accept the risk.",
-                    path,
-                    server_id,
-                    error
-                ));
-            }
-            log::warn!(
-                "could not lock the TOFU store {} for {} ({}) — continuing UNPINNED by \
-                 explicit allow_unpinned_tofu",
-                path,
-                server_id,
-                error
-            );
-            return Ok(());
-        }
-    };
-    if let Some(result) = check_existing() {
-        return result;
-    }
-
-    use std::io::Write;
-    let mut opts = std::fs::OpenOptions::new();
-    opts.create(true).append(true);
-    // Create known_hosts with 0600 from the start — no world-readable umask window
-    // between create and the set_permissions below (which only re-tightens re-opens).
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        opts.mode(0o600);
-    }
-    match opts.open(path) {
-        Ok(mut f) => {
-            // The result used to be discarded, and the "pinned" message printed anyway —
-            // so on a full or read-only disk the operator was told the key was recorded
-            // when nothing had been written, and the NEXT connection would happily TOFU
-            // a different key. Treat a failed write exactly like a failed open.
-            if let Err(e) =
-                writeln!(f, "{} {}", server_id, received_hex).and_then(|()| f.sync_all())
-            {
-                if !allow_unpinned {
-                    return Err(anyhow::anyhow!(
-                        "cannot pin server key for {} — writing to the known_hosts store {}                          failed ({}). Refusing to continue unpinned; fix the path or set                          allow_unpinned_tofu = true to accept the risk.",
-                        server_id,
-                        path,
-                        e
-                    ));
-                }
-                log::warn!(
-                    "could not record the TOFU pin for {} in {} ({}) — continuing UNPINNED, so                      a future key change will NOT be detected",
-                    server_id,
-                    path,
-                    e
-                );
-                return Ok(());
-            }
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600));
-            }
-            log::warn!(
-                "Pinned server key for {} on first use (TOFU) → recorded in {}. A future key \
-                 change will now abort as a possible MITM. Pin explicitly with \
-                 auth.server_public_key to verify out-of-band.",
-                server_id,
-                path
-            );
-            Ok(())
-        }
-        Err(e) => {
-            if !allow_unpinned {
-                return Err(anyhow::anyhow!(
-                    "cannot pin server key for {} — the known_hosts store {} is unwritable ({}). \
-                     Refusing to connect unpinned (fail closed) to avoid a first-connect MITM \
-                     window. Fix: set auth.server_public_key to pin explicitly (recommended), \
-                     point QELI_KNOWN_HOSTS at a writable path, or set \
-                     allow_unpinned_tofu = true to accept the risk.",
-                    server_id,
-                    path,
-                    e
-                ));
-            }
-            log::warn!(
-                "⚠ Could not record server key in {} ({}). MITM protection NOT pinned this run \
-                 (allow_unpinned_tofu = true); set key in [qeli] to pin explicitly. \
-                 Server key: {}",
-                path,
-                e,
-                received_hex
-            );
-            Ok(())
-        }
-    }
+    identity_files::trust_on_first_use_at(
+        &known_hosts_path(),
+        server_id,
+        received_hex,
+        allow_unpinned,
+    )
 }
 
 #[cfg(all(test, target_os = "linux"))]
@@ -12981,6 +12816,9 @@ mod obf_push_tests {
 }
 
 #[cfg(all(test, target_os = "linux"))]
+mod identity_adapter_tests;
+
+#[cfg(all(test, target_os = "linux"))]
 mod tofu_tests {
     use super::trust_on_first_use_at;
     use std::path::PathBuf;
@@ -13014,7 +12852,7 @@ mod tofu_tests {
     }
 
     #[test]
-    fn unwritable_store_fails_closed_unless_opted_in() {
+    fn nonregular_store_fails_closed_even_when_unpinned_is_allowed() {
         // A directory path can be neither read as a file nor opened for append on
         // any platform, so the first-sight write fails deterministically.
         let dir = tmp("directory");
@@ -13023,8 +12861,8 @@ mod tofu_tests {
         let key = "cc".repeat(32);
         // Default (fail closed): unpinned + unwritable store => abort.
         assert!(trust_on_first_use_at(path, "h:443", &key, false).is_err());
-        // Opt-in escape hatch: accept-any-key TOFU is allowed.
-        assert!(trust_on_first_use_at(path, "h:443", &key, true).is_ok());
+        // The escape hatch applies to persistence failure, not an unreadable existing store.
+        assert!(trust_on_first_use_at(path, "h:443", &key, true).is_err());
         cleanup(path);
         let _ = std::fs::remove_dir(path);
     }

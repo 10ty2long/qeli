@@ -90,3 +90,5 @@ remain open. One writer orders one client's writes, not separate processes shari
 a path. This is not a benchmark, D10/D13 completion or cross-platform certification.
 Windows VM, Mac/iOS and physical router runtime are user-approved SKIPPED;
 final Android validation remains D12. Debt: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+25 September 2026 reconciliation: device-id and TOFU integrity are addressed in [Q25-F112/F113](AUDIT-Q25-IDENTITY-FILES.md). The synchronous TOFU callback and overall deadline remain D05.
