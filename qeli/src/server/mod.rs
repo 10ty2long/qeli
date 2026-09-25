@@ -1180,7 +1180,29 @@ impl ServerState {
             .ok()
             .and_then(|s| crate::config::parse_server_config(&s).ok())
             .map(|c| c.web);
-        if let Some(web) = new_web {
+        if let Some(mut web) = new_web {
+            // The listener/router, TLS transport, session-key source and base path
+            // were fixed when the supervisor started. Keep those values in the live
+            // view as well: CSRF and login read this view on every request.
+            let startup = &self.config.web;
+            web.enabled = startup.enabled;
+            web.bind.clone_from(&startup.bind);
+            web.port = startup.port;
+            web.tls = startup.tls;
+            web.tls_cert.clone_from(&startup.tls_cert);
+            web.tls_key.clone_from(&startup.tls_key);
+            web.base_path.clone_from(&startup.base_path);
+            web.persist_session_key = startup.persist_session_key;
+            if let Err(error) = web.validate_active().and_then(|_| {
+                if web.enabled {
+                    web.brute_force.validate("[web]")
+                } else {
+                    Ok(())
+                }
+            }) {
+                log::error!("panel: REFUSING live web-settings reload: {error}");
+                return;
+            }
             // Fail-closed, mirroring the start-time guard (web/mod.rs): a live reload must
             // never leave a non-loopback panel password-less. put_config restores an empty
             // admin hash from disk, but put_config_raw writes verbatim — so a raw save could
@@ -1218,6 +1240,25 @@ impl ServerState {
                      (web.insecure_no_auth): every local process — and any SSRF on this \
                      host — has full admin access to users, password hashes and the config."
                 );
+            }
+            let bf = &web.brute_force;
+            let desired = (
+                bf.enabled,
+                bf.max_attempts,
+                Duration::from_secs(bf.window_secs.min(MAX_BRUTE_FORCE_SECS)),
+                Duration::from_secs(bf.lockout_secs.min(MAX_BRUTE_FORCE_SECS)),
+            );
+            {
+                let mut tracker = self.failed_auth.lock().await;
+                if tracker.thresholds() != desired {
+                    *tracker = FailedAuthTracker::new(
+                        bf.enabled,
+                        bf.max_attempts,
+                        bf.window_secs,
+                        bf.lockout_secs,
+                    );
+                    log::info!("panel: admin-login brute-force policy changed; tracker reset");
+                }
             }
             *self.live_web.write().await = web;
             log::info!(
@@ -8448,6 +8489,65 @@ pool.cidr = 10.{net}.0.0/24
         let db = load_users_db(&config).unwrap();
         assert_eq!(db.users.len(), 1);
         assert_eq!(db.users[0].username, "solo");
+    }
+
+    #[tokio::test]
+    async fn web_reload_keeps_bound_settings_and_applies_only_valid_live_policy() {
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-web-reload-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("server.conf");
+        let mut startup = ServerConfig::default();
+        startup.web = serde_json::from_str("{}").unwrap();
+        startup.profiles.push(ProfileConfig::baseline());
+        startup.web.enabled = true;
+        startup.web.bind = "127.0.0.1".into();
+        startup.web.port = 8080;
+        startup.web.password_hash = "saved-hash".into();
+        startup.web.base_path = "/old".into();
+        let state = test_api_state(startup.clone(), &path);
+        let ip = "192.0.2.11".parse().unwrap();
+        state.failed_auth.lock().await.record_failure("admin", ip);
+
+        let mut candidate = startup.clone();
+        candidate.web.bind = "0.0.0.0".into();
+        candidate.web.port = 9090;
+        candidate.web.tls = true;
+        candidate.web.enabled = false;
+        candidate.web.base_path = "/new".into();
+        candidate.web.public_host = "panel.example".into();
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        state.reload_web_settings().await;
+        {
+            let live = state.live_web.read().await;
+            assert!(live.enabled);
+            assert_eq!(live.bind, startup.web.bind);
+            assert_eq!(live.port, startup.web.port);
+            assert_eq!(live.tls, startup.web.tls);
+            assert_eq!(live.base_path, startup.web.base_path);
+            assert_eq!(live.public_host, "panel.example");
+        }
+        assert!(state.failed_auth.lock().await.by_ip.contains_key(&ip));
+
+        candidate.web.brute_force.max_attempts = 2;
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        state.reload_web_settings().await;
+        assert_eq!(state.failed_auth.lock().await.thresholds().1, 2);
+        assert!(state.failed_auth.lock().await.by_ip.is_empty());
+        assert_eq!(state.live_web.read().await.brute_force.max_attempts, 2);
+
+        candidate.web.session_ttl_secs = 0;
+        candidate.web.brute_force.max_attempts = 3;
+        candidate.web.public_host = "invalid.example".into();
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        state.reload_web_settings().await;
+        assert_eq!(state.failed_auth.lock().await.thresholds().1, 2);
+        assert_eq!(state.live_web.read().await.public_host, "panel.example");
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
     }
 
     #[tokio::test]

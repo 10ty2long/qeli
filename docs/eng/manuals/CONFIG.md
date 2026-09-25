@@ -30,6 +30,8 @@ reads refuse a larger file before parsing. The form, INI editor, Quick Start and
 snapshot restore cannot write a config above this limit.
 A failed load blocks saving; edits made during a pending save remain marked unsaved.
 Panel address/port/TLS/base_path changes require a full process restart, not just a worker restart.
+Saving changed panel-login thresholds through the form or INI editor applies them immediately;
+existing IP lockouts remain when thresholds are unchanged.
 
 Repeated `[profile:<name>]`, `[user:<name>]`, and `[group:<name>]` sections in one file
 are rejected before applying changes. Profile names cannot contain commas because commas

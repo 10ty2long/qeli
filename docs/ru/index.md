@@ -279,3 +279,4 @@
 - [Q25-F136: граница NAT44 для других интерфейсов и приватных LAN](reports/AUDIT-Q25-SERVER-NAT44-EGRESS.md)
 - [Q25-F137: отказ SIGHUP без частичного обновления auth](reports/AUDIT-Q25-SERVER-SIGHUP-AUTH.md)
 - [Q25-F138: единый предел 16 МиБ для серверного INI](reports/AUDIT-Q25-SERVER-INI-SIZE.md)
+- [Q25-F139: живое состояние панели после сохранения INI](reports/AUDIT-Q25-SERVER-WEB-LIVE.md)

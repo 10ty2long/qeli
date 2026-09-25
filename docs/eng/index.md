@@ -279,3 +279,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F136: NAT44 off-WAN boundary and private LAN](reports/AUDIT-Q25-SERVER-NAT44-EGRESS.md)
 - [Q25-F137: reject partial VPN-auth SIGHUP changes](reports/AUDIT-Q25-SERVER-SIGHUP-AUTH.md)
 - [Q25-F138: one 16 MiB limit for server INI](reports/AUDIT-Q25-SERVER-INI-SIZE.md)
+- [Q25-F139: panel live state after saving INI](reports/AUDIT-Q25-SERVER-WEB-LIVE.md)
