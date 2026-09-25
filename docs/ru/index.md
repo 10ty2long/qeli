@@ -250,3 +250,9 @@
 - [Q25-F121: поздний IPv6 не обходит kill-switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV6.md)
 
 - [Q25-F122: поздний IPv4-маршрут не обходит kill-switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV4.md)
+
+- [Q25-F123: TUN attach и расхождение network namespace](reports/AUDIT-Q25-TUN-ATTACH-CONTEXT.md)
+
+- [Q25-F124: защита exit-node от утечки через другой WAN](reports/AUDIT-Q25-EXIT-POLICY-ROUTING.md)
+
+- [Q25-A125: повторное использование имени физического WAN](reports/AUDIT-Q25-WAN-NAME-REUSE.md)

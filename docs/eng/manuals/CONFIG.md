@@ -2293,6 +2293,14 @@ until then its packets remain blocked. `exit_node = true` cannot be combined
 with `gateway_nat = true` or `forward = true` on the same TUN: those modes
 require different handling of unmarked traffic arriving from the tunnel.
 
+Qeli brings its owned exit-TUN up only after installing the guard;
+`dev_attach = true` is rejected for exit nodes because an external TUN may
+already forward packets. Do not rename, remove, or replace the selected
+physical WAN while an exit node is active: old firewall rules match its name
+and will apply to a new device reusing that name even without refresh.
+Stop the profile, verify successful rule cleanup, change the WAN, and then
+start it again. [Rename/reuse evidence](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+
 Cleanup uses only WANs remembered during installation, including previous uplinks;
 without ownership records, the current default route cannot authorize deletion.
 An old MASQUERADE with an unsuffixed comment is preserved. After confirming its old

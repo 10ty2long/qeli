@@ -1963,6 +1963,11 @@ blocking the TUN until retry succeeds; do not remove it separately from
 remaining MARK/NAT rules. `exit_node` cannot share a profile with
 `gateway_nat`, `forward`, or `dev_attach`.
 
+If the physical WAN was renamed or replaced while exit-node ran, stop the
+profile and verify `qeli-exit-node` cleanup before restarting: a new device
+with the old name can inherit admission from the old rules.
+[Evidence and boundary](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+
 For a shared WAN, inspect the exact `qeli-exit-node:<tun>` NAT comments in each family.
 The unsuffixed legacy MASQUERADE is preserved during cleanup; do not delete it while
 an older exit process may still rely on it. No remembered WAN means no automatic

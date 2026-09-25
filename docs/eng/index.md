@@ -250,3 +250,9 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F121: late IPv6 cannot bypass the kill switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV6.md)
 
 - [Q25-F122: a late IPv4 route cannot bypass the kill switch](reports/AUDIT-Q25-KILL-SWITCH-DYNAMIC-IPV4.md)
+
+- [Q25-F123: TUN attach across network namespaces](reports/AUDIT-Q25-TUN-ATTACH-CONTEXT.md)
+
+- [Q25-F124: guard exit-node against off-WAN source leaks](reports/AUDIT-Q25-EXIT-POLICY-ROUTING.md)
+
+- [Q25-A125: physical WAN name reuse](reports/AUDIT-Q25-WAN-NAME-REUSE.md)
