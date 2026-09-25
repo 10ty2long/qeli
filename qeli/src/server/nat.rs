@@ -102,7 +102,11 @@ fn ipt(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
 }
 
 /// Resolve a route in the same operation deadline as its subsequent firewall rules.
-fn detect_wan_until(ipv6: bool, budget: Budget) -> anyhow::Result<Option<String>> {
+fn detect_wan_until(
+    ipv6: bool,
+    require_default: bool,
+    budget: Budget,
+) -> anyhow::Result<Option<String>> {
     // route-get reflects just one destination's ECMP hash bucket. First inspect
     // all best-metric default candidates; an ambiguous best route must fail
     // closed rather than authorize rules for only one of its physical uplinks.
@@ -113,8 +117,8 @@ fn detect_wan_until(ipv6: bool, budget: Budget) -> anyhow::Result<Option<String>
     show.args(["route", "show", "default"]);
     let listing = budget.output(&mut show);
     budget.check()?;
-    if let Ok(output) = listing {
-        if output.status.success() {
+    match listing {
+        Ok(output) if output.status.success() => {
             match preferred_default_device(&String::from_utf8_lossy(&output.stdout)) {
                 DefaultDevice::Selected(wan) => return Ok(Some(wan)),
                 DefaultDevice::Ambiguous => {
@@ -125,9 +129,28 @@ fn detect_wan_until(ipv6: bool, budget: Budget) -> anyhow::Result<Option<String>
                 DefaultDevice::Missing => {}
             }
         }
+        Ok(output) if require_default => {
+            anyhow::bail!(
+                "cannot verify a unique default WAN: ip route show default exited with {}; set the WAN interface explicitly only if its routing is administrator-controlled",
+                output.status
+            );
+        }
+        Err(error) if require_default => {
+            anyhow::bail!(
+                "cannot verify a unique default WAN: ip route show default failed: {error}; set the WAN interface explicitly only if its routing is administrator-controlled"
+            );
+        }
+        _ => {}
+    }
+    if require_default {
+        anyhow::bail!(
+            "cannot verify a unique default WAN: no usable default route was listed; set the WAN interface explicitly only if its routing is administrator-controlled"
+        );
     }
 
-    // Preserve the legacy fallback when no usable default route was reported.
+    // Route mode and manual NDP may have policy routing or no default route.
+    // Preserve their legacy one-destination fallback; NAT auto-WAN cannot use
+    // it because a route-get result is only one ECMP hash bucket.
     let mut command = Command::new("ip");
     if ipv6 {
         command.args(["-6"]);
@@ -204,7 +227,7 @@ fn acquire_ipv6_sysctls(
 pub(crate) fn resolve_wan_ipv6(configured_iface: &str) -> Option<String> {
     let configured = configured_iface.trim();
     if configured.is_empty() {
-        detect_wan_until(true, Budget::for_operation("WAN discovery"))
+        detect_wan_until(true, false, Budget::for_operation("WAN discovery"))
             .ok()
             .flatten()
     } else {
@@ -215,12 +238,13 @@ pub(crate) fn resolve_wan_ipv6(configured_iface: &str) -> Option<String> {
 fn resolve_wan_until(
     configured: &str,
     ipv6: bool,
+    require_default: bool,
     budget: Budget,
 ) -> anyhow::Result<Option<String>> {
     budget.check()?;
     let configured = configured.trim();
     let selected = if configured.is_empty() || (!ipv6 && configured == "eth0") {
-        detect_wan_until(ipv6, budget)
+        detect_wan_until(ipv6, require_default, budget)
     } else {
         Ok(Some(configured.to_string()))
     }?;
@@ -572,7 +596,7 @@ pub fn setup(
         })?;
         // WAN: an explicit, non-default interface wins; otherwise auto-detect. The config
         // default "eth0" is treated as "auto" (it's just a placeholder).
-        let wan = resolve_wan_until(configured_iface, false, budget)?.ok_or_else(|| {
+        let wan = resolve_wan_until(configured_iface, false, true, budget)?.ok_or_else(|| {
             anyhow::anyhow!(
                 "could not auto-detect the WAN interface; set routing.nat.interface explicitly"
             )
@@ -872,7 +896,12 @@ pub fn setup_ipv6(
             }
             return Ok(None);
         }
-        let wan = resolve_wan_until(configured_iface, true, budget)?;
+        let wan = resolve_wan_until(
+            configured_iface,
+            true,
+            mode == crate::config::server::Ipv6RoutingMode::Nat66,
+            budget,
+        )?;
         if mode == crate::config::server::Ipv6RoutingMode::Nat66 && wan.is_none() {
             anyhow::bail!(
                 "could not detect an IPv6 uplink for NAT66; set routing.ipv6.interface explicitly"
@@ -889,7 +918,11 @@ pub fn setup_ipv6(
         // for a stale uplink and the profile would ACK IPv6 while public traffic has no route.
         if configured_iface.trim().is_empty() {
             if let Some(expected_wan) = wan.as_deref() {
-                match detect_wan_until(true, budget)? {
+                match detect_wan_until(
+                    true,
+                    mode == crate::config::server::Ipv6RoutingMode::Nat66,
+                    budget,
+                )? {
                     Some(active_wan) if active_wan == expected_wan => {}
                     active_wan => {
                         anyhow::bail!(
@@ -1914,6 +1947,101 @@ mod tests {
     }
 
     #[test]
+    fn managed_nat_auto_wan_never_uses_one_destination_after_incomplete_listing() {
+        use crate::system_command::test_support::{with_commands, Action};
+        #[cfg(unix)]
+        use std::os::unix::process::ExitStatusExt;
+        #[cfg(windows)]
+        use std::os::windows::process::ExitStatusExt;
+        use std::process::{ExitStatus, Output};
+
+        for ipv6 in [false, true] {
+            for listing in ["", "default via 192.0.2.1 metric broken\n"] {
+                let listing = listing.as_bytes().to_vec();
+                let result = with_commands(
+                    move |command| {
+                        let args = crate::system_command::test_support::arguments(command);
+                        assert!(args.ends_with(&["route".into(), "show".into(), "default".into()]));
+                        Action::Reply(Ok(Output {
+                            status: ExitStatus::from_raw(0),
+                            stdout: listing.clone(),
+                            stderr: Vec::new(),
+                        }))
+                    },
+                    || {
+                        super::resolve_wan_until(
+                            "",
+                            ipv6,
+                            true,
+                            super::Budget::for_operation("managed auto-WAN test"),
+                        )
+                    },
+                );
+                let error = result.unwrap_err();
+                assert!(error
+                    .to_string()
+                    .contains("cannot verify a unique default WAN"));
+            }
+            let result = with_commands(
+                |command| {
+                    let args = crate::system_command::test_support::arguments(command);
+                    assert!(args.ends_with(&["route".into(), "show".into(), "default".into()]));
+                    Action::Reply(Err(std::io::ErrorKind::NotFound.into()))
+                },
+                || {
+                    super::resolve_wan_until(
+                        "",
+                        ipv6,
+                        true,
+                        super::Budget::for_operation("managed auto-WAN test"),
+                    )
+                },
+            );
+            assert!(result
+                .unwrap_err()
+                .to_string()
+                .contains("ip route show default failed"));
+        }
+    }
+
+    #[test]
+    fn routed_ipv6_keeps_policy_route_get_fallback() {
+        use crate::system_command::test_support::{with_commands, Action};
+        #[cfg(unix)]
+        use std::os::unix::process::ExitStatusExt;
+        #[cfg(windows)]
+        use std::os::windows::process::ExitStatusExt;
+        use std::process::{ExitStatus, Output};
+
+        let selected = with_commands(
+            |command| {
+                let args = crate::system_command::test_support::arguments(command);
+                let stdout = if args.ends_with(&["route".into(), "show".into(), "default".into()]) {
+                    String::new()
+                } else {
+                    assert!(args.iter().any(|arg| arg == "get"));
+                    "2606:4700:4700::1111 via fe80::1 dev lo src ::1\n".into()
+                };
+                Action::Reply(Ok(Output {
+                    status: ExitStatus::from_raw(0),
+                    stdout: stdout.into_bytes(),
+                    stderr: Vec::new(),
+                }))
+            },
+            || {
+                super::resolve_wan_until(
+                    "",
+                    true,
+                    false,
+                    super::Budget::for_operation("route-mode fallback test"),
+                )
+            },
+        )
+        .unwrap();
+        assert_eq!(selected.as_deref(), Some("lo"));
+    }
+
+    #[test]
     fn managed_wan_must_exist_in_the_calling_namespace() {
         let missing = "qeli-miss0";
         assert_eq!(crate::network_interface::index(missing).unwrap(), None);
@@ -1921,6 +2049,7 @@ mod tests {
             let error = super::resolve_wan_until(
                 missing,
                 ipv6,
+                false,
                 super::Budget::for_operation("WAN presence test"),
             )
             .unwrap_err();
@@ -1929,6 +2058,7 @@ mod tests {
                 super::resolve_wan_until(
                     "lo",
                     ipv6,
+                    false,
                     super::Budget::for_operation("WAN presence test"),
                 )
                 .unwrap()

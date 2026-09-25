@@ -15,9 +15,10 @@ accounts for all nexthops and metrics.
 `network_default_route`. The client retains the same algorithm. For auto
 selection, the server first reads all default routes, chooses the unique WAN
 at the lowest metric, and rejects ECMP or equal-best routes on different
-devices. It fails before enabling forwarding or adding new rules. If the
-default-route output is unusable or the command fails, the existing
-`route get` fallback remains; this is a separate open boundary.
+devices. It fails before enabling forwarding or adding new rules. At this
+historical revision, an unusable/failed listing still fell back to `route get`;
+[Q25-F135](AUDIT-Q25-SERVER-AUTO-WAN-FAILURE.md) later removed that fallback
+for NAT44/NAT66.
 
 ## Verification
 
@@ -42,7 +43,9 @@ Logs, exit codes, routes, network snapshots and scripts:
 
 This rejects only **auto** selection when an ambiguous default route is
 observed. An explicit WAN, separate policy tables, failure to read the
-default-route list and route changes after setup are outside this fix.
+default-route list and route changes after setup were outside this original
+fix. [Q25-F135](AUDIT-Q25-SERVER-AUTO-WAN-FAILURE.md) later closed the
+failed-listing fallback for NAT44/NAT66.
 Server NAT44/NAT66 rules match egress by name; if a packet actually exits
 through another interface, MASQUERADE might not match. The
 [NAT66 off-WAN guard](AUDIT-Q25-SERVER-NAT66-EGRESS.md) closes that packet-level

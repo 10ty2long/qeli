@@ -275,3 +275,4 @@
 
 - [Q25-F133: исправление client-only Linux сборки](reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md)
 - [Q25-F134: NAT66 только через выбранный WAN](reports/AUDIT-Q25-SERVER-NAT66-EGRESS.md)
+- [Q25-F135: отказ NAT auto-WAN без списка default routes](reports/AUDIT-Q25-SERVER-AUTO-WAN-FAILURE.md)

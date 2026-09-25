@@ -5014,9 +5014,9 @@ fn setup_profile_nat(
     {
         // No NAT, but pure L3 routing requested: enable forwarding (ip_forward + FORWARD
         // ACCEPT) WITHOUT masquerading, so transit traffic between the tunnel and the
-        // server's networks keeps its real source IPs (site-to-site). NAT above already
-        // does this, hence the else. Server-originated traffic to a client_subnet needs
-        // only the route and works regardless (#13).
+        // server's networks keeps its real source IPs (site-to-site). The NAT branch
+        // instead installs WAN-specific permits; it does not promise server-LAN transit.
+        // Server-originated traffic to a client_subnet needs only the route (#13).
         // Fails the profile rather than logging: `forward_private` promises transit routing,
         // and a profile that cannot route it serves clients whose packets vanish.
         nat::enable_routing(&pcfg.name, ifname, &peer_tuns, pcfg.tun.mtu)
