@@ -4288,26 +4288,34 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
         }
     };
 
+    // Validate the complete candidate before changing either live auth component.
+    // Startup/check-config reject bad profile values and malformed users; SIGHUP
+    // must not apply a new brute-force policy when either half is invalid.
+    if let Err(error) = validate_profiles(&new_config) {
+        log::error!("SIGHUP: invalid server configuration: {error} — keeping current auth state");
+        return;
+    }
+    let db = match load_users_db_for_runtime(&new_config) {
+        Ok(db) => db,
+        Err(error) => {
+            log::error!(
+                "SIGHUP: failed to reload users from '{}': {} — keeping current auth state",
+                new_config.auth.users_file,
+                error
+            );
+            return;
+        }
+    };
+
     // 1. Reload the users database (add/disable users, change routes/limits/
     //    allowed-profiles). Union of the users file (what the panel/add-client
     //    write) and inline [user:*], file wins — so a panel edit always applies
     //    even when the config also carries inline users.
-    match load_users_db_for_runtime(&new_config) {
-        Ok(db) => {
-            let count = db.users.len();
-            let dummy_password_hashes = handler::dummy_password_hash_candidates(&db);
-            *state.users_db.write().await = db;
-            *state.dummy_password_hashes.write().await = dummy_password_hashes;
-            log::info!("SIGHUP: reloaded users database ({} users)", count);
-        }
-        Err(e) => {
-            log::error!(
-                "SIGHUP: failed to reload users from '{}': {} — keeping current users",
-                new_config.auth.users_file,
-                e
-            );
-        }
-    }
+    let count = db.users.len();
+    let dummy_password_hashes = handler::dummy_password_hash_candidates(&db);
+    *state.users_db.write().await = db;
+    *state.dummy_password_hashes.write().await = dummy_password_hashes;
+    log::info!("SIGHUP: reloaded users database ({} users)", count);
 
     // 2. Rebuild the brute-force tracker ONLY when the thresholds actually change.
     //    Rebuilding wipes every in-flight IP lockout, and the panel SIGHUPs the
@@ -8432,6 +8440,63 @@ pool.cidr = 10.{net}.0.0/24
         let db = load_users_db(&config).unwrap();
         assert_eq!(db.users.len(), 1);
         assert_eq!(db.users[0].username, "solo");
+    }
+
+    #[tokio::test]
+    async fn sighup_rejects_invalid_profile_or_users_before_changing_auth_state() {
+        use crate::config::users::UserEntry;
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-sighup-validation-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("server.conf");
+        let users = dir.join("users.conf");
+        let state = test_api_state(ServerConfig::default(), &path);
+        let mut candidate = ServerConfig::default();
+        candidate.auth.users_file = users.to_string_lossy().into_owned();
+        candidate.auth.brute_force.max_attempts = 2;
+        candidate.auth.users.push(UserEntry {
+            username: "alice".into(),
+            password_hash: "$argon2id$x".into(),
+            ..Default::default()
+        });
+        let mut profile = ProfileConfig::baseline();
+        profile.name = "edge".into();
+        profile.tun.mtu = 0;
+        candidate.profiles.push(profile);
+        assert!(validate_profiles(&candidate).is_err());
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        reload_on_sighup(&state).await;
+        assert!(state.users_db.read().await.users.is_empty());
+        assert_eq!(state.failed_auth.lock().await.thresholds().1, 5);
+
+        candidate.profiles[0].tun.mtu = 1400;
+        assert!(validate_profiles(&candidate).is_ok());
+        candidate.auth.users.clear();
+        std::fs::write(
+            &users,
+            "[user:alice]\npassword_hash = x\nmax_sessions = invalid\n",
+        )
+        .unwrap();
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        reload_on_sighup(&state).await;
+        assert!(state.users_db.read().await.users.is_empty());
+        assert_eq!(state.failed_auth.lock().await.thresholds().1, 5);
+
+        std::fs::remove_file(&users).unwrap();
+        candidate.auth.users.push(UserEntry {
+            username: "alice".into(),
+            password_hash: "$argon2id$x".into(),
+            ..Default::default()
+        });
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        reload_on_sighup(&state).await;
+        assert_eq!(state.users_db.read().await.users[0].username, "alice");
+        assert_eq!(state.failed_auth.lock().await.thresholds().1, 2);
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
     }
 
     #[test]

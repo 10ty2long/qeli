@@ -277,3 +277,4 @@
 - [Q25-F134: NAT66 только через выбранный WAN](reports/AUDIT-Q25-SERVER-NAT66-EGRESS.md)
 - [Q25-F135: отказ NAT auto-WAN без списка default routes](reports/AUDIT-Q25-SERVER-AUTO-WAN-FAILURE.md)
 - [Q25-F136: граница NAT44 для других интерфейсов и приватных LAN](reports/AUDIT-Q25-SERVER-NAT44-EGRESS.md)
+- [Q25-F137: отказ SIGHUP без частичного обновления auth](reports/AUDIT-Q25-SERVER-SIGHUP-AUTH.md)

@@ -2950,8 +2950,9 @@ tracking) — use it only behind an external limiter or on a trusted network.
 
 > **Editable in the panel** (Config → Authentication → "Brute-force protection — VPN
 > authentication"), not only in the file. They apply on **Apply & Restart** or on a
-> `SIGHUP` reload — the server rebuilds the tracker with the new values (in-flight lockout
-> counters reset at that moment). The tarpit's internal delays (200 ms … 3 s) are not
+> `SIGHUP` reload — if the new INI and users database validate, the server rebuilds
+> the tracker with the new values (in-flight lockout counters reset at that moment).
+> If either source is invalid, both live users and thresholds remain unchanged. The tarpit's internal delays (200 ms … 3 s) are not
 > configurable. Blocked addresses — the **"Blocked IPs"** tab (split into a VPN-auth and a
 > panel-login journal) / `qeli list-blocked` (see [PANEL.md](PANEL.md),
 > [GETTING-STARTED.md](GETTING-STARTED.md) §10).
