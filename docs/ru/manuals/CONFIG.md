@@ -3085,7 +3085,8 @@ IPv4-only профиле они должны оставаться `off`.
 профиль не сможет унаследовать host-wide forwarding от соседнего профиля ни в одном направлении.
 `route` разрешает source-preserving forwarding между TUN и сетями, выбранными kernel routes
 профиля (WAN, LAN сервера, pool и аутентифицированные динамические IPv6 `client_subnet` routes);
-`nat66` добавляет MASQUERADE и принимает с WAN только related/established ответы.
+`nat66` добавляет MASQUERADE, запрещает выход из TUN через интерфейс, отличный от
+выбранного WAN, и принимает с WAN только related/established ответы.
 Для `route` публичный/default IPv6 uplink не обязателен: на LAN-only/site-to-site роутере пустой
 `routing.ipv6.interface` включает forwarding без `accept_ra`; если uplink найден или указан
 явно, qeli дополнительно арендует `accept_ra=2`, чтобы forwarding не уничтожил SLAAC.

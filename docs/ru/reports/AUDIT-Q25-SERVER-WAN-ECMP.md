@@ -44,6 +44,6 @@ default route. Явно заданный WAN, маршруты отдельны�
 ошибка чтения списка default routes и изменение маршрута после установки
 не защищены этим исправлением. Серверные NAT44/NAT66 правила сопоставляют
 выход по имени; при фактическом выходе через другой интерфейс MASQUERADE
-может не совпасть. Packet-level ограничение egress и mixed-backend recovery
-остаются D06/D10; [повторное использование имени](AUDIT-Q25-WAN-NAME-REUSE.md)
-также остаётся открытым.
+может не совпасть. [NAT66 off-WAN guard](AUDIT-Q25-SERVER-NAT66-EGRESS.md)
+закрывает этот packet-level выход для NAT66. IPv4 NAT44, mixed-backend recovery
+и [повторное использование имени](AUDIT-Q25-WAN-NAME-REUSE.md) остаются D06/D10.

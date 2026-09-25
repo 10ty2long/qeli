@@ -44,6 +44,7 @@ This rejects only **auto** selection when an ambiguous default route is
 observed. An explicit WAN, separate policy tables, failure to read the
 default-route list and route changes after setup are outside this fix.
 Server NAT44/NAT66 rules match egress by name; if a packet actually exits
-through another interface, MASQUERADE might not match. A packet-level
-egress bound and mixed-backend recovery remain D06/D10;
-[name reuse](AUDIT-Q25-WAN-NAME-REUSE.md) remains open too.
+through another interface, MASQUERADE might not match. The
+[NAT66 off-WAN guard](AUDIT-Q25-SERVER-NAT66-EGRESS.md) closes that packet-level
+path for NAT66. IPv4 NAT44, mixed-backend recovery and
+[name reuse](AUDIT-Q25-WAN-NAME-REUSE.md) remain D06/D10 boundaries.

@@ -3113,7 +3113,8 @@ entering or leaving that TUN through any other interface, so an isolated profile
 inherit host-wide forwarding enabled by a sibling profile in either direction. `route` permits
 source-preserving forwarding between the TUN and networks selected by the profile's kernel
 routes (WAN, server LAN, its pool and authenticated dynamic IPv6 `client_subnet` routes);
-`nat66` adds MASQUERADE and accepts only related/established return traffic from the WAN.
+`nat66` adds MASQUERADE, blocks TUN egress through any interface other than the
+selected WAN, and accepts only related/established return traffic from that WAN.
 `route` does not require a public/default IPv6 uplink: on a LAN-only/site-to-site router an
 empty `routing.ipv6.interface` enables forwarding without `accept_ra`; when an uplink is found
 or explicitly configured, qeli also leases `accept_ra=2` so enabling forwarding preserves SLAAC.

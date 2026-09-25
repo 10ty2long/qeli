@@ -274,3 +274,4 @@
 - [Q25-F132: отказ от неоднозначного auto-WAN на сервере](reports/AUDIT-Q25-SERVER-WAN-ECMP.md)
 
 - [Q25-F133: исправление client-only Linux сборки](reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md)
+- [Q25-F134: NAT66 только через выбранный WAN](reports/AUDIT-Q25-SERVER-NAT66-EGRESS.md)

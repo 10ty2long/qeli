@@ -122,6 +122,9 @@ select `nat66`. An IPv4-only profile requires `off` for both keys.
 qeli enables verified forwarding and MASQUERADE through `ip6tables`. It is the portable
 choice for a ULA pool on a normal VPS where the provider does not route a dedicated GUA
 prefix to VPN clients. The WAN needs a public IPv6 address and an IPv6 default route.
+Qeli blocks TUN transit through every other interface before host permits: with a
+`FORWARD ACCEPT` policy, the client's address would otherwise leave without MASQUERADE.
+Use `route` or `manual` for LAN and site-to-site routing.
 
 ```ini
 routing.ipv6.mode = nat66
@@ -133,7 +136,8 @@ An empty interface means automatic IPv6 uplink detection. Set, for example,
 `nat66`, the selected uplink must exist in the worker network namespace at setup.
 Auto selection rejects a best default route spread over different WANs (ECMP);
 set an explicit interface only when the administrator controls that routing.
-These checks do not protect against route changes, deletion or reuse of an active WAN name.
+In `nat66`, a route change to another interface blocks packets but may interrupt
+connectivity. The administrator must still control active WAN deletion and name reuse.
 
 ### `manual`
 

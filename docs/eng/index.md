@@ -274,3 +274,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F132: reject ambiguous server auto-WAN](reports/AUDIT-Q25-SERVER-WAN-ECMP.md)
 
 - [Q25-F133: fix the client-only Linux build](reports/AUDIT-Q25-CLIENT-ONLY-BUILD.md)
+- [Q25-F134: bind NAT66 transit to the selected WAN](reports/AUDIT-Q25-SERVER-NAT66-EGRESS.md)

@@ -662,6 +662,25 @@ fn ipv6_rules(
     };
     let mut rules = cross_profile_drop_rules(profile, tun, peer_tuns);
     if mode == crate::config::server::Ipv6RoutingMode::Nat66 {
+        // A permissive host FORWARD chain (or a sibling route profile) must not
+        // forward this profile's unmasqueraded packets through another uplink.
+        // Match the TUN, not only pool_cidr: authenticated client_subnet traffic
+        // must have the same NAT66 egress boundary. Route/manual have separate
+        // routing contracts and intentionally receive no such guard.
+        rules.push(Rule {
+            table: "filter",
+            chain: "FORWARD",
+            args: annotate(vec![
+                "-i".into(),
+                tun.into(),
+                "!".into(),
+                "-o".into(),
+                wan.into(),
+                "-j".into(),
+                "DROP".into(),
+            ]),
+            essential: true,
+        });
         rules.push(Rule {
             table: "nat",
             chain: "POSTROUTING",
@@ -1800,6 +1819,43 @@ mod tests {
 -A FORWARD -i lan1 -j ACCEPT
 ";
         assert_eq!(forward_permit_position_from_listing(listing), 5);
+    }
+
+    #[test]
+    fn nat66_drops_off_uplink_transit_before_host_permits() {
+        let rules = ipv6_rules(
+            "nat66",
+            "wan6",
+            "qeli6",
+            "fd71:e1:42::/64",
+            &[],
+            1340,
+            Ipv6RoutingMode::Nat66,
+        );
+        let guard = rules
+            .iter()
+            .find(|rule| {
+                has_sequence(
+                    &rule.args,
+                    &["-i", "qeli6", "!", "-o", "wan6", "-j", "DROP"],
+                )
+            })
+            .expect("NAT66 must prevent unmasqueraded off-uplink transit");
+        assert!(guard.essential);
+        assert_eq!((guard.table, guard.chain), ("filter", "FORWARD"));
+        assert!(!guard.args.iter().any(|value| value == "-s"));
+        assert!(guard.args.iter().any(|value| value == "qeli-nat:nat66"));
+        assert!(!ipv6_rules(
+            "route",
+            "wan6",
+            "qeli6",
+            "2001:db8:42::/64",
+            &[],
+            1340,
+            Ipv6RoutingMode::Route,
+        )
+        .iter()
+        .any(|rule| has_sequence(&rule.args, &["!", "-o", "wan6", "-j", "DROP"])));
     }
 
     #[test]
