@@ -94,3 +94,5 @@ startup I/O/Drop paths remain. Path/interprocess context belongs to D06; this is
 benchmark or whole D08/D10/D13 completion. Windows VM, Mac/iOS and router runtime are
 user-approved SKIPPED; final Android validation remains D12.
 Debt: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+25 September 2026 reconciliation: synchronous TOFU callback I/O moved to the [joined Q25-F114 worker](AUDIT-Q25-IDENTITY-WORKER.md). Overall shutdown deadlines remain D05.

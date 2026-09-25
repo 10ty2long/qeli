@@ -95,3 +95,5 @@ deadline и другие startup I/O/Drop-пути. Проверка путей/
 это не benchmark и не закрытие всего D08/D10/D13. Windows VM, Mac/iOS и router runtime —
 SKIPPED по решению пользователя; финальный Android-прогон остаётся D12.
 Техдолг: 4/15 DONE, 9 IN_PROGRESS, 2 TODO.
+
+Сверка 25 сентября 2026: синхронный TOFU callback вынесен в [присоединяемый worker Q25-F114](AUDIT-Q25-IDENTITY-WORKER.md). Общий shutdown deadline остаётся D05.

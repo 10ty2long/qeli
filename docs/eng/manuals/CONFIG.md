@@ -1243,6 +1243,10 @@ of `allow_unpinned_tofu`. A missing file permits first trust; new pins are publi
 atomically. This bounds the local Linux store, not INI configuration.
 [Details](../reports/AUDIT-Q25-IDENTITY-FILES.md).
 
+Linux bounds TOFU waiting by `timeout` for TCP and UDP. An admitted write completes
+before reconnect/exit, so this is not an overall shutdown deadline.
+[Cancellation and retained errors](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
+
 After `rotate-identity` the public key changes → all clients of that profile must
 receive the new hex (otherwise `SERVER KEY MISMATCH`).
 

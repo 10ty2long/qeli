@@ -602,6 +602,9 @@ Lock contention is limited to 15 seconds. Stop awaits admitted work and then sta
 TOFU store `/var/lib/qeli/known_hosts` (`QELI_KNOWN_HOSTS`) must be a regular UTF-8 file
 of at most 1 MiB. `allow_unpinned_tofu` cannot bypass read errors, malformed target pins
 or conflicting duplicates. Preserve the original file and verify the server key before
-repairing it. New pins use atomic publication with `0600`. TOFU I/O can still block the
-async executor; 15 seconds bound flock contention, not overall shutdown.
+repairing it. New pins use atomic publication with `0600`. TOFU file I/O runs on a
+separate joined worker. Stop/timeout stop handshake waiting; an admitted write completes
+before reconnect or exit. A late error preserves `failed`; successful persistence may
+finish after cancellation. The 15-second flock bound is not an overall shutdown limit.
+[Worker and cancellation](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
 [Design and validation](../reports/AUDIT-Q25-IDENTITY-FILES.md).

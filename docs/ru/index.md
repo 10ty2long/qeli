@@ -232,3 +232,5 @@
 - [Q25-F111: последовательная диагностика клиента и ожидание итоговой записи](reports/AUDIT-Q25-STATUS-WRITER.md)
 
 - [Q25-F112/F113: стабильный device-id, ограниченное чтение и целостность TOFU](reports/AUDIT-Q25-IDENTITY-FILES.md)
+
+- [Q25-F114: TOFU worker и сохранение ошибок при отмене](reports/AUDIT-Q25-IDENTITY-WORKER.md)

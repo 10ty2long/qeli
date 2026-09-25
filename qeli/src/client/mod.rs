@@ -4,6 +4,8 @@ pub mod dns;
 pub mod gateway;
 #[cfg(target_os = "linux")]
 mod identity_files;
+#[cfg(target_os = "linux")]
+mod identity_worker;
 #[cfg(all(test, target_os = "linux"))]
 use identity_files::{device_id_at, trust_on_first_use_at};
 #[cfg(target_os = "linux")]
@@ -1708,6 +1710,8 @@ struct LinuxCoreAdapter {
     counters: Arc<RuntimeCounters>,
     diagnostics: ClientStatusReporter,
     device_identity: Option<[u8; crate::protocol::DEVICE_ID_LEN]>,
+    identity_verifier: Option<identity_worker::Verifier>,
+    identity_worker: Option<identity_worker::Worker>,
     diagnostic_writer: Option<status_writer::Writer<serde_json::Value>>,
     cleanup_failures: crate::client_cleanup::Failures,
     post_up: Option<String>,
@@ -1996,6 +2000,18 @@ impl LinuxCoreAdapter {
             config.tun.name.clone(),
         ));
         let counters = Arc::new(RuntimeCounters::default());
+        let (identity_verifier, identity_worker) = if config.auth.server_public_key.is_none() {
+            let path = known_hosts_path();
+            let server_id = format!("{}:{}", config.server.address, config.server.port);
+            let allow_unpinned = config.auth.allow_unpinned_tofu;
+            let (verifier, worker) = identity_worker::Worker::start(move |received| {
+                let hex: String = received.iter().map(|b| format!("{b:02x}")).collect();
+                identity_files::trust_on_first_use_at(&path, &server_id, &hex, allow_unpinned)
+            })?;
+            (Some(verifier), Some(worker))
+        } else {
+            (None, None)
+        };
         let (diagnostics, diagnostic_writer) = ClientStatusReporter::from_env();
         diagnostics.publish(&counters);
         Ok((
@@ -2006,6 +2022,8 @@ impl LinuxCoreAdapter {
                 counters,
                 diagnostics,
                 device_identity: None,
+                identity_verifier,
+                identity_worker,
                 diagnostic_writer,
                 cleanup_failures: crate::client_cleanup::Failures::default(),
                 post_up: None,
@@ -2237,12 +2255,28 @@ impl ClientPlatform for LinuxCoreAdapter {
 
     fn identity_verifier(&self, config: &crate::config::client::ClientConfig) -> IdentityVerifier {
         let expected = config.auth.server_public_key.clone();
-        let server_id = format!("{}:{}", config.server.address, config.server.port);
-        let allow_tofu = config.auth.allow_unpinned_tofu;
+        let verifier = self.identity_verifier.clone();
+        let cancel = self.cancel.clone();
+        let timeout = Duration::from_secs(config.server.connection_timeout_secs.max(1));
         Arc::new(move |received| {
             let expected = expected.clone();
-            let server_id = server_id.clone();
-            Box::pin(async move { verify_server_key(&received, &expected, &server_id, allow_tofu) })
+            let verifier = verifier.clone();
+            let cancel = cancel.clone();
+            Box::pin(async move {
+                if let Some(expected) = expected {
+                    return verify_pinned_key(&received, &expected);
+                }
+                let verifier =
+                    verifier.ok_or_else(|| anyhow::anyhow!("TOFU worker is unavailable"))?;
+                tokio::time::timeout(timeout, verifier.verify(received, cancel))
+                    .await
+                    .map_err(|_| {
+                        anyhow::anyhow!(
+                            "server identity verification timed out after {}s",
+                            timeout.as_secs()
+                        )
+                    })?
+            })
         })
     }
 
@@ -2481,7 +2515,12 @@ async fn wait_for_shutdown(shutdown: &AtomicBool, wakeup: &tokio::sync::Notify) 
 pub async fn run_client(config_path: &str) -> anyhow::Result<()> {
     let mut client_tasks = tokio::task::JoinSet::new();
     let mut final_report = None;
-    let result = run_client_inner(config_path, &mut client_tasks, &mut final_report).await;
+    let mut result = run_client_inner(config_path, &mut client_tasks, &mut final_report).await;
+    if let Some(report) = final_report.as_mut() {
+        if let Some(worker) = report.identity_worker.as_mut() {
+            result = crate::client_cleanup::with_cleanup_error(result, worker.finish().await);
+        }
+    }
     crate::client_tasks::finish(&mut client_tasks, || {}).await;
     if let Some(mut report) = final_report {
         report.reporter.terminal(result.as_ref().err());
@@ -2502,6 +2541,7 @@ struct ClientFinalReport {
     reporter: ClientStatusReporter,
     counters: Arc<RuntimeCounters>,
     writer: Option<status_writer::Writer<serde_json::Value>>,
+    identity_worker: Option<identity_worker::Worker>,
 }
 
 #[cfg(target_os = "linux")]
@@ -2526,6 +2566,7 @@ async fn run_client_inner(
         reporter: core_adapter.diagnostics.clone(),
         counters: core_adapter.counters.clone(),
         writer: core_adapter.diagnostic_writer.take(),
+        identity_worker: core_adapter.identity_worker.take(),
     });
     core_adapter
         .diagnostics
@@ -2822,6 +2863,13 @@ async fn run_client_inner(
                 }
             }
         };
+        // Transport task groups have stopped all handshake waiters. Retain the
+        // namespace lease and egress protection while admitted TOFU work finishes.
+        let identity_outcome = if let Some(verifier) = &core_adapter.identity_verifier {
+            verifier.drain().await
+        } else {
+            Ok(())
+        };
         let connected_ms = core_adapter
             .attempt_connected_since
             .map(|started| i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX));
@@ -2840,6 +2888,7 @@ async fn run_client_inner(
             let (reason, error_code) =
                 failure_reason.unwrap_or(("core_start_failed", "core_start"));
             let cleanup = cleanup_routing_features(checks, ks_on, gw_on, exit_on, &tun_if).await;
+            let result = crate::client_cleanup::with_cleanup_error(result, identity_outcome);
             let terminal = crate::client_cleanup::with_cleanup_error(result, cleanup);
             let message = terminal
                 .as_ref()
@@ -2848,6 +2897,25 @@ async fn run_client_inner(
                 .unwrap_or_default();
             run_client_post_down(&core_adapter, &post_down, reason, error_code, &message).await;
             return terminal;
+        }
+
+        if let Err(error) = identity_outcome {
+            // A late disk/trust error must not become signal-success or be hidden
+            // by reconnect after the handshake's timeout discarded its receiver.
+            let message = match &result {
+                Err(connection) => format!("{error:#}; connection ended: {connection:#}"),
+                Ok(()) => format!("{error:#}"),
+            };
+            let cleanup = cleanup_routing_features(Ok(()), ks_on, gw_on, exit_on, &tun_if).await;
+            run_client_post_down(
+                &core_adapter,
+                &post_down,
+                "identity_failed",
+                "identity",
+                &message,
+            )
+            .await;
+            return crate::client_cleanup::with_cleanup_error(Err(error.context(message)), cleanup);
         }
 
         if let Err(error) = &result {
@@ -12156,36 +12224,15 @@ fn prefix_to_netmask(prefix: u8) -> String {
     std::net::Ipv4Addr::from(mask).to_string()
 }
 
-/// Verify the server static public key.
-/// * `pinned_hex` Some — the received bytes must match exactly (explicit pin).
-/// * `pinned_hex` None — trust-on-first-use *with persistence*: the key is pinned
-///   in a `known_hosts` store on first sight (keyed by `server_id` = host:port) and
-///   verified against it on every later connection, so a later key change aborts as
-///   a probable MITM (instead of the old behaviour of warning and accepting any key
-///   every time).
+/// Explicit pins remain a pure in-memory check, independent of local TOFU files.
 #[cfg(target_os = "linux")]
-fn verify_server_key(
-    received: &[u8],
-    pinned_hex: &Option<String>,
-    server_id: &str,
-    allow_unpinned: bool,
-) -> anyhow::Result<()> {
-    let received_hex: String = received.iter().map(|b| format!("{:02x}", b)).collect();
-    match pinned_hex {
-        Some(expected) => {
-            let expected_clean = expected.replace([':', '-', ' '], "").to_lowercase();
-            if received_hex != expected_clean {
-                return Err(anyhow::anyhow!(
-                    "SERVER KEY MISMATCH — possible MITM attack!\n  Expected: {}\n  Received: {}",
-                    expected_clean,
-                    received_hex
-                ));
-            }
-            log::debug!("Server public key verified: {}", received_hex);
-            Ok(())
-        }
-        None => trust_on_first_use(server_id, &received_hex, allow_unpinned),
-    }
+fn verify_pinned_key(received: &[u8], expected: &str) -> anyhow::Result<()> {
+    let received_hex: String = received.iter().map(|b| format!("{b:02x}")).collect();
+    let expected_clean = expected.replace([':', '-', ' '], "").to_lowercase();
+    anyhow::ensure!(received_hex == expected_clean,
+        "SERVER KEY MISMATCH — possible MITM attack!\n  Expected: {expected_clean}\n  Received: {received_hex}");
+    log::debug!("Server public key verified: {received_hex}");
+    Ok(())
 }
 
 /// Path of the TOFU trust store (SSH-`known_hosts`-style). Override with
@@ -12193,20 +12240,6 @@ fn verify_server_key(
 #[cfg(target_os = "linux")]
 fn known_hosts_path() -> String {
     std::env::var("QELI_KNOWN_HOSTS").unwrap_or_else(|_| "/var/lib/qeli/known_hosts".to_string())
-}
-
-#[cfg(target_os = "linux")]
-fn trust_on_first_use(
-    server_id: &str,
-    received_hex: &str,
-    allow_unpinned: bool,
-) -> anyhow::Result<()> {
-    identity_files::trust_on_first_use_at(
-        &known_hosts_path(),
-        server_id,
-        received_hex,
-        allow_unpinned,
-    )
 }
 
 #[cfg(all(test, target_os = "linux"))]

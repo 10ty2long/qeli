@@ -2529,3 +2529,11 @@ the specific record after verifying its key instead of deleting the whole trust 
 indicates write failure. This run uses one temporary ID, which may not survive restart.
 Check file type, permissions and lock ownership; do not delete a live process's lock.
 [Details](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+
+### 6.95. Linux: TOFU timeout and late persistence failure
+
+`server identity verification timed out` means the handshake stopped waiting. The client
+still awaits admitted file work before reconnect/exit; this is not a total shutdown
+deadline. `unobserved identity verification failure` reports an error arriving after
+handshake cancellation: the run fails even on SIGTERM. Inspect storage and the I/O cause;
+do not remove a live process's lock. [Details](../reports/AUDIT-Q25-IDENTITY-WORKER.md).

@@ -63,6 +63,11 @@ mod client_network_task;
 #[path = "client/identity_files.rs"]
 mod client_identity_files;
 
+// TOFU request ownership is portable; host tests use injected verification.
+#[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
+#[path = "client/identity_worker.rs"]
+mod client_identity_worker;
+
 // Diagnostics queue ownership is portable; tests do not mutate host networking.
 #[cfg(all(test, not(all(target_os = "linux", feature = "client"))))]
 #[path = "client/status_writer.rs"]
