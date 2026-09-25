@@ -240,3 +240,5 @@
 - [Q25-F116: TUN/NAT setup серверного профиля вне executor](reports/AUDIT-Q25-SERVER-SETUP-WORKER.md)
 
 - [Q25-F117: DNS firewall серверного профиля вне executor](reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md)
+
+- [Q25-F118: привязка NDP proxy вне executor](reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md)

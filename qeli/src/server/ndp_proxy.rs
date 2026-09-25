@@ -38,13 +38,47 @@ pub(crate) struct NdpProxy {
     mac: [u8; 6],
 }
 
+/// A socket created in the worker's network namespace, before Tokio registration.
+/// If startup is cancelled before adoption, its fd closes on that worker.
+struct BoundNdpProxy {
+    fd: OwnedFd,
+    interface: String,
+    ifindex: i32,
+    mac: [u8; 6],
+}
+
 /// Keep the responder's startup requirement independent from firewall ownership.
-pub(crate) fn start(
+pub(crate) async fn start(
     profile: &str,
     mode: crate::config::server::Ipv6NdpProxyMode,
     interface: Option<&str>,
 ) -> anyhow::Result<Option<NdpProxy>> {
-    start_with(profile, mode, interface, NdpProxy::bind)
+    use crate::config::server::Ipv6NdpProxyMode;
+    if mode == Ipv6NdpProxyMode::Off {
+        return Ok(None);
+    }
+    let worker_profile = profile.to_owned();
+    let worker_interface = interface.map(str::to_owned);
+    let bound = crate::profile_teardown::blocking("qeli-profile-ndp-bind", move || {
+        start_with(
+            &worker_profile,
+            mode,
+            worker_interface.as_deref(),
+            BoundNdpProxy::bind,
+        )
+    })
+    .await??;
+    match bound {
+        None => Ok(None),
+        Some(bound) => match NdpProxy::register(bound) {
+            Ok(proxy) => Ok(Some(proxy)),
+            Err(error) if mode == Ipv6NdpProxyMode::Auto => {
+                log::warn!("Profile '{profile}': IPv6 NDP proxy auto mode is unavailable: {error} — continuing without it");
+                Ok(None)
+            }
+            Err(error) => anyhow::bail!("profile '{profile}': routing.ipv6.ndp_proxy = required but the responder could not start: {error}"),
+        },
+    }
 }
 
 fn start_with<T>(
@@ -75,8 +109,8 @@ fn start_with<T>(
     }
 }
 
-impl NdpProxy {
-    pub(crate) fn bind(interface: &str) -> anyhow::Result<Self> {
+impl BoundNdpProxy {
+    fn bind(interface: &str) -> anyhow::Result<Self> {
         let interface = interface.trim();
         if interface.is_empty()
             || interface.len() > 15
@@ -168,13 +202,24 @@ impl NdpProxy {
                 std::mem::size_of_val(&one) as libc::socklen_t,
             );
         }
-        let fd = AsyncFd::new(owned)
-            .map_err(|error| anyhow::anyhow!("cannot register NDP socket: {error}"))?;
         Ok(Self {
-            fd,
+            fd: owned,
             interface: interface.to_string(),
             ifindex: ifindex as i32,
             mac,
+        })
+    }
+}
+
+impl NdpProxy {
+    fn register(bound: BoundNdpProxy) -> anyhow::Result<Self> {
+        let fd = AsyncFd::new(bound.fd)
+            .map_err(|error| anyhow::anyhow!("cannot register NDP socket: {error}"))?;
+        Ok(Self {
+            fd,
+            interface: bound.interface,
+            ifindex: bound.ifindex,
+            mac: bound.mac,
         })
     }
 
@@ -719,8 +764,13 @@ mod native_network_view_tests {
             let runtime = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()?;
-            let _entered = runtime.enter();
-            let proxy = NdpProxy::bind(name)?;
+            let proxy = runtime
+                .block_on(start(
+                    "native-view",
+                    crate::config::server::Ipv6NdpProxyMode::Required,
+                    Some(name),
+                ))?
+                .expect("required NDP responder");
             anyhow::ensure!(proxy.ifindex > 0 && proxy.mac == [2, 0x12, 0x34, 0x56, 0x78, 0x9c]);
             anyhow::ensure!(!std::path::Path::new(&format!("/sys/class/net/{name}")).exists());
             drop(proxy);

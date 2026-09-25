@@ -5081,7 +5081,7 @@ async fn run_profile_generation(
             &wan_ipv6,
             &pcfg.routing.ipv6.interface,
         );
-        ndp_proxy::start(&name, pcfg.routing.ipv6.ndp_proxy, interface.as_deref())?
+        ndp_proxy::start(&name, pcfg.routing.ipv6.ndp_proxy, interface.as_deref()).await?
     };
 
     let hook_env = ProfileHookEnv::new(&pcfg, wan_ipv4, wan_ipv6);

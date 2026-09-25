@@ -240,3 +240,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F116: server profile TUN/NAT setup off the executor](reports/AUDIT-Q25-SERVER-SETUP-WORKER.md)
 
 - [Q25-F117: server profile DNS firewall setup off the executor](reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md)
+
+- [Q25-F118: NDP proxy bind off the executor](reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md)

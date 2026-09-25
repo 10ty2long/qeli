@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v24 -->
+<!-- normative-sync: audit-debt-v25 -->
 
 Reconciled on 25 September 2026. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -20,7 +20,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 | D02 | 14/25 | DONE | Internal sysctl boundaries | Lock/I/O/context, trusted directory, namespace fd pins, original per-interface fd/witness and v4 network_cookie verified. 1995 Linux + 32 privileged + 8 lifecycle and SIGKILL/mismatch worker E2E PASS. Lost interface witness stays for manual recovery; general persistent firewall/DNS/routes remains D04. [Report](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Standalone kill switch | Pinned namespace, retained exact-family owner, fail-closed reconnect and safe address rotation. 11 portable + 2 native regressions; actual IPv4/IPv6 filter counters and 2 baseline failures. [Report](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Crash recovery | Persistent server firewall, DNS v2, kill-switch and physical routes verified; legacy global DNS, persistent TUN and lost sysctl witnesses have explicit safe manual boundaries. [Client mixed matrix](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 cells, 136 crash/recovery; [server](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks rerun PASS. Arbitrary zones/policies and multiprofile remain D10; state accumulation remains D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; hook/backup file preparation is closed by the continuation below; ordinary server startup/final cleanup and profile teardown now use joined workers; profile TUN/NAT and DNS firewall setup now also use joined workers; NDP bind, forced Drop and a composed whole-operation deadline remain. [Server setup](../reports/AUDIT-Q25-SERVER-SETUP-WORKER.md), [DNS firewall](../reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md). Arbitrary kernel/fs I/O and forced joins are not preempted. [Server cleanup](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Whole-operation deadlines and blocking | Panel preflight/health/backup, DNS/NSS, resolver files, startup INI/identity, TOFU/status writers and network workers checked. Batch A below closes command composition: 15 seconds for NetworkPlan and separate shared 15 seconds for cleanup through Drop and terminal firewall. Linux early-Drop/internal waits reconciled; hook/backup file preparation is closed by the continuation below; ordinary server startup/final cleanup and profile teardown now use joined workers; profile TUN/NAT and DNS firewall setup now also use joined workers; NDP bind now also runs on a worker, with AsyncFd registration in the original runtime; forced Drop and a composed whole-operation deadline remain. [Server setup](../reports/AUDIT-Q25-SERVER-SETUP-WORKER.md), [DNS firewall](../reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md), [NDP bind](../reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md). Arbitrary kernel/fs I/O and forced joins are not preempted. [Server cleanup](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | External network-resource context | Verify WAN identity, resolved/bus context, sysfs/procfs and attach/name contracts; process-global DNS/carrier state and dynamic IPv6. Document supported combinations. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) closes multi-IP wildcard UDP: the local endpoint survives receive/reply/roaming/PMTU; other D06 criteria remain open. |
 | D07 | 01/05/09/11 | TODO | Server configuration at runtime | Trace field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start preserving active state on failure. |
 | D08 | 02/24/27 | IN_PROGRESS | Shared client configuration | Verify the complete 81+3 field contract, INI/import/URI/QR/form/store/reconnect through real adapters; fuzz/budget and concurrent edits. |
@@ -279,6 +279,19 @@ namespace before the outer guard drops. An adopted lease moves into
 DNS cases in private namespaces on `.11` PASS. Logs and manifest:
 `audit-debt-20260925/server-dns-setup-phase/`. D05 stays IN_PROGRESS:
 NDP bind, emergency Drop and whole-setup deadline remain. Register: **4/15 DONE**.
+
+### Q25-F118 — NDP bind off the executor
+
+`AF_PACKET` bind and socket-local multicast membership run on a joined
+worker; the adopted `OwnedFd` is registered as `AsyncFd` on the original
+Tokio runtime. Cancellation closes an unadopted fd before the outer guard
+is destroyed. [Report](../reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md).
+
+On `.11`: 5 NDP unit, 1 privileged namespace, 8 lifecycle and 22 recovery
+checks PASS; Linux Clippy for library/binary and rustfmt PASS. Source and logs:
+`audit-debt-20260925/server-ndp-bind-phase/`. D05 stays IN_PROGRESS:
+whole deadline, forced Drop and arbitrary kernel/fs I/O. Register:
+**4/15 DONE**.
 
 ## Sources
 
