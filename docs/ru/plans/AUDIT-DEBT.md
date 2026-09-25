@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v25 -->
+<!-- normative-sync: audit-debt-v26 -->
 
 Дата сверки: 25 сентября 2026. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -20,7 +20,7 @@
 | D02 | 14/25 | DONE | Внутренние границы sysctl | Lock/I/O/context, trusted directory, namespace fd pins, исходный per-interface fd/witness и network_cookie v4 проверены. 1995 Linux + 32 privileged + 8 lifecycle и SIGKILL/mismatch worker E2E PASS. Потерянный interface witness сохраняется для ручного recovery; общий persistent firewall/DNS/routes остаётся D04. [Отчёт](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md). |
 | D03 | 22/25 | DONE | Самостоятельный kill-switch | Закреплённый namespace, сохранённый владелец точных семейств, fail-closed reconnect и безопасная смена адреса. 11 portable + 2 native регрессии, реальные счётчики IPv4/IPv6 и 2 отказа baseline. [Отчёт](../reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md). |
 | D04 | 14/19/22/25 | DONE | Восстановление после crash | Persistent server firewall, DNS v2, kill-switch и physical routes проверены; legacy global DNS, persistent TUN и потерянный sysctl witness имеют явные безопасные ручные границы. [Клиентская mixed матрица](../reports/AUDIT-Q25-CLIENT-MIXED-FIREWALL.md): 152/152 ячейки, 136 crash/recovery; [серверная](../reports/AUDIT-Q14-MIXED-FIREWALL.md): 16/16, 476 checks повторно PASS. Произвольные zones/policies и multiprofile остаются D10; накопление состояния — D13. |
-| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; штатные server startup/final cleanup и profile teardown вынесены в присоединяемые потоки; TUN/NAT и DNS firewall setup профиля теперь также в присоединяемых потоках; NDP bind теперь также выполняется в worker с регистрацией AsyncFd в исходном runtime; остаются forced Drop и общий срок всей операции. [Серверная установка](../reports/AUDIT-Q25-SERVER-SETUP-WORKER.md), [DNS firewall](../reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md), [NDP bind](../reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md). Произвольные kernel/fs I/O и forced join не прерываются. [Серверная очистка](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
+| D05 | 05/14/25 | IN_PROGRESS | Срок всей операции и блокировки | Panel preflight/health/backup, DNS/NSS, resolver-файлы, startup INI/identity, TOFU/status writers и сетевые workers проверены. В пакете A ниже закрыта композиция команд: 15 секунд NetworkPlan и отдельные общие 15 секунд cleanup через Drop и terminal firewall. Сверены Linux early-Drop/внутренние waits; файловая подготовка hooks/backup закрыта продолжением ниже; штатные server startup/final cleanup и profile teardown вынесены в присоединяемые потоки; TUN/NAT и DNS firewall setup профиля теперь также в присоединяемых потоках; NDP bind теперь также выполняется в worker с регистрацией AsyncFd в исходном runtime; установка до готовности всех listeners получила общий бюджет 120 секунд; остаются forced Drop и общий срок shutdown. [Серверная установка](../reports/AUDIT-Q25-SERVER-SETUP-WORKER.md), [DNS firewall](../reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md), [NDP bind](../reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md), [готовность и бюджет](../reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md). Произвольные kernel/fs I/O и forced join не прерываются. [Серверная очистка](../reports/AUDIT-Q25-SERVER-CLEANUP-WORKER.md). [Worker ownership](../reports/AUDIT-Q25-IDENTITY-WORKER.md). |
 | D06 | 15/21/22/23/25 | IN_PROGRESS | Контекст внешних сетевых ресурсов | Проверить WAN identity, resolved/bus context, sysfs/procfs и attach/name-контракт; process-global DNS/carrier state, dynamic IPv6. Зафиксировать поддерживаемые комбинации. [Q15-F002](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md) закрывает multi-IP wildcard UDP: локальный endpoint сохранён в receive/reply/roaming/PMTU; прочие критерии D06 открыты. |
 | D07 | 01/05/09/11 | TODO | Серверный конфиг в runtime | Таблица field → parse/validate/runtime/serialize; malformed/oversized input; check-config/startup/SIGHUP/HTTP save/Quick Start с сохранением действующего состояния при отказе. |
 | D08 | 02/24/27 | IN_PROGRESS | Общие клиентские конфиги | Проверить весь контракт 81+3 полей, INI/import/URI/QR/form/store/reconnect через реальные адаптеры; fuzz/budget и конкурентное редактирование. |
@@ -292,6 +292,21 @@ Tokio runtime. Отмена закрывает непринятый fd до ун
 PASS; Linux Clippy для library/binary и rustfmt PASS. Исходник и логи:
 `audit-debt-20260925/server-ndp-bind-phase/`. D05 остаётся IN_PROGRESS:
 общий срок, принудительный Drop и непредсказуемые kernel/fs I/O.
+Реестр: **4/15 DONE**.
+
+### Q25-F119 — общий срок server setup и готовность всех listeners
+
+120-секундный бюджет действует от начала поколения до подтверждения bind
+основного и всех дополнительных listeners; после готовности профиль служит
+без этого таймера. UDP сообщает готовность после всей группы SO_REUSEPORT.
+Ошибки bind передаются только установке, не маскируются под ошибку cleanup.
+[Отчёт](../reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md).
+
+На `.11`: 2 новых + 11 worker-тестов, 8 lifecycle, 4 occupied-bind
+rollback/retry/stop и 22 recovery checks PASS; Linux Clippy library/binary,
+rustfmt и docs checks PASS. Первый отказ и исправленный прогон сохранены в
+`audit-debt-20260925/server-setup-budget-phase/`. D05 остаётся IN_PROGRESS:
+forced Drop, общий срок shutdown и непрерываемый kernel/fs I/O.
 Реестр: **4/15 DONE**.
 
 ## Источники

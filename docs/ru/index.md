@@ -242,3 +242,5 @@
 - [Q25-F117: DNS firewall серверного профиля вне executor](reports/AUDIT-Q25-SERVER-DNS-SETUP-WORKER.md)
 
 - [Q25-F118: привязка NDP proxy вне executor](reports/AUDIT-Q25-SERVER-NDP-BIND-WORKER.md)
+
+- [Q25-F119: общий бюджет установки профиля и готовность listeners](reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md)

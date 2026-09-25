@@ -2537,3 +2537,15 @@ still awaits admitted file work before reconnect/exit; this is not a total shutd
 deadline. `unobserved identity verification failure` reports an error arriving after
 handshake cancellation: the run fails even on SIGTERM. Inspect storage and the I/O cause;
 do not remove a live process's lock. [Details](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
+
+### 6.96. Server: profile setup exceeded 120 seconds
+
+`setup exceeded its 120 second budget before all listeners bound` means the
+generation did not become ready on time. Inspect earlier TUN/NAT/NDP,
+`post_up`, DNS and each `listen` bind message. `listener bind failed` identifies
+a specific port failure; free the address/port and let rollback finish before
+retry. `post_up` alone does not prove that the listeners are bound.
+
+This budget covers setup only. Cancellation may still await admitted worker
+work or cleanup beyond 120 seconds; do not start a second generation with the
+same TUN/network rules in parallel. [Validation](../reports/AUDIT-Q25-SERVER-SETUP-BUDGET.md).

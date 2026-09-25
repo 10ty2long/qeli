@@ -2484,8 +2484,10 @@ listen = 203.0.113.5:443
 Each `listen` is a bare `addr:port` on the SAME transport as the profile (`bind.transport`). A
 profile is ONE transport — use a separate profile for the other (a per-listener transport is not
 supported; a `addr:port udp` suffix is ignored as malformed). Panel: profile → "Extra listeners". A
-malformed spec is ignored (logged); a busy port logs "address already in use" and the others keep
-running.
+malformed spec is logged. A profile is ready only after **every** listener binds,
+including every UDP `SO_REUSEPORT` socket. An occupied primary or extra port stops that
+generation; after successful rollback the server retries, while other profiles continue.
+Setup until readiness has one 120-second budget; that timer does not limit a ready profile.
 
 For a newly created Quick Start profile, the backend adds the V6ONLY `[::]:port` outer listener
 only when its host snapshot reports an IPv6 interface/default route. This keeps IPv4 Quick Start

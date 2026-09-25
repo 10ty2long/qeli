@@ -43,6 +43,9 @@ use tokio::net::TcpListener;
 use tokio::sync::{mpsc, Mutex, RwLock};
 
 const TAP_GATEWAY_MAC: [u8; 6] = [0x02, 0x00, 0x00, 0x00, 0x00, 0x01];
+/// Covers setup through successful bind of every profile listener. Once ready,
+/// the serving generation is deliberately allowed to live indefinitely.
+const PROFILE_SETUP_BUDGET: Duration = Duration::from_secs(120);
 
 /// Re-export: the implementation moved to `crate::util` so the CLIENT can use it too.
 ///
@@ -4733,6 +4736,30 @@ async fn bind_tcp_listener(address: &str) -> std::io::Result<TcpListener> {
     TcpListener::from_std(socket.into())
 }
 
+/// Apply one deadline to setup, then let the established generation serve.
+/// Cancelling setup drops its future; ProfileTeardown and joined host workers
+/// complete rollback before the profile can be restarted.
+async fn await_profile_ready<F>(
+    name: &str,
+    deadline: tokio::time::Instant,
+    ready: tokio::sync::oneshot::Receiver<()>,
+    generation: F,
+) -> anyhow::Result<()>
+where
+    F: std::future::Future<Output = anyhow::Result<()>>,
+{
+    tokio::pin!(generation);
+    tokio::select! {
+        biased;
+        result = &mut generation => result,
+        result = tokio::time::timeout_at(deadline, ready) => match result {
+            Ok(Ok(())) => generation.await,
+            Ok(Err(_)) => anyhow::bail!("profile '{name}': listener readiness was lost during setup"),
+            Err(_) => anyhow::bail!("profile '{name}': setup exceeded its {} second budget before all listeners bound", PROFILE_SETUP_BUDGET.as_secs()),
+        }
+    }
+}
+
 async fn run_profile(
     state: Arc<ServerState>,
     pcfg: ProfileConfig,
@@ -4764,13 +4791,21 @@ async fn run_profile(
     };
 
     let mut services = ProfileServices::default();
-    let result = run_profile_generation(
-        state,
-        pcfg,
-        &mut teardown,
-        tasks.clone(),
-        &mut shutdown,
-        &mut services,
+    let setup_deadline = tokio::time::Instant::now() + PROFILE_SETUP_BUDGET;
+    let (ready_tx, ready_rx) = tokio::sync::oneshot::channel();
+    let result = await_profile_ready(
+        &name,
+        setup_deadline,
+        ready_rx,
+        run_profile_generation(
+            state,
+            pcfg,
+            &mut teardown,
+            tasks.clone(),
+            &mut shutdown,
+            &mut services,
+            ready_tx,
+        ),
     )
     .await;
     let service_cleanup = services.shutdown(&tasks).await;
@@ -5040,6 +5075,7 @@ async fn run_profile_generation(
     tasks: ProfileTasks,
     shutdown: &mut tokio::sync::watch::Receiver<bool>,
     services: &mut ProfileServices,
+    startup_ready: tokio::sync::oneshot::Sender<()>,
 ) -> anyhow::Result<()> {
     let name = pcfg.name.clone();
     let ProfileServices {
@@ -6317,6 +6353,9 @@ async fn run_profile_generation(
             .into_iter()
             .map(Some)
             .collect::<Vec<_>>();
+    let listener_count = listeners.len();
+    let (listener_ready_tx, mut listener_ready_rx) =
+        mpsc::channel::<Result<(), String>>(listener_count.max(1));
     for (listener_index, (bind_addr, transport)) in listeners.into_iter().enumerate() {
         // SO_REUSEPORT worker ids are profile-wide, not merely unique inside one bind.listen.
         // The CID registry uses this identity to return a migrated datagram to its immutable
@@ -6358,10 +6397,21 @@ async fn run_profile_generation(
         let pcfg = pcfg.clone();
         let name = name.clone();
         let profile_tasks = tasks.clone();
+        let listener_ready_tx = listener_ready_tx.clone();
         listener_set.spawn(async move {
             match transport {
                 TransportProtocol::Tcp => {
-                    let listener = bind_tcp_listener(&bind_addr).await?;
+                    let listener = match bind_tcp_listener(&bind_addr).await {
+                        Ok(listener) => listener,
+                        Err(error) => {
+                            // Setup owns this error. Returning it again from the task
+                            // would make shutdown report a false cleanup failure and bar retry.
+                            let _ = listener_ready_tx.try_send(Err(error.to_string()));
+                            return Ok(());
+                        }
+                    };
+                    let _ = listener_ready_tx.try_send(Ok(()));
+                    drop(listener_ready_tx);
                     log::info!("Profile '{}' listening on {} (TCP)", name, bind_addr);
                     loop {
                         let (stream, addr) = match listener.accept().await {
@@ -6548,21 +6598,27 @@ async fn run_profile_generation(
                     // flow-hashes datagrams across them (a client sticks to one worker), so
                     // UDP decrypt spreads across cores. Each worker drains into one TUN queue.
                     let workers = nq;
-                    log::info!(
-                        "Profile '{}' listening on {} (UDP, {} worker(s))",
-                        name,
-                        bind_addr,
-                        workers
-                    );
-                    let mut worker_set = tokio::task::JoinSet::new();
-                    let mut roaming_workers = listener_roaming_workers.into_iter();
-                    for wid in 0..workers {
-                        let (socket, udp_buffer) = udp_handler::bind_reuseport(
+                    // Bind the entire SO_REUSEPORT group before advertising readiness.
+                    // A failure in a later worker must close every earlier socket.
+                    let mut bound_sockets = Vec::with_capacity(workers);
+                    for _ in 0..workers {
+                        match udp_handler::bind_reuseport(
                             &bind_addr,
                             &profile.config.performance.udp,
                             profile.udp_buffer_counters.clone(),
                             state.udp_buffer_budget,
-                        )?;
+                        ) {
+                            Ok(socket) => bound_sockets.push(socket),
+                            Err(error) => {
+                                // Setup owns the bind error; partial sockets close here.
+                                let _ = listener_ready_tx.try_send(Err(error.to_string()));
+                                return Ok(());
+                            }
+                        }
+                    }
+                    let mut worker_set = tokio::task::JoinSet::new();
+                    let mut roaming_workers = listener_roaming_workers.into_iter();
+                    for (wid, (socket, udp_buffer)) in bound_sockets.into_iter().enumerate() {
                         let udp_state = state.clone();
                         let udp_profile = profile.clone();
                         let tun_tx_udp = TunIngress {
@@ -6591,6 +6647,14 @@ async fn run_profile_generation(
                             .await
                         });
                     }
+                    let _ = listener_ready_tx.try_send(Ok(()));
+                    drop(listener_ready_tx);
+                    log::info!(
+                        "Profile '{}' listening on {} (UDP, {} worker(s))",
+                        name,
+                        bind_addr,
+                        workers
+                    );
                     let why = match worker_set.join_next().await {
                         Some(Ok(Err(error))) => format!("UDP worker failed: {error}"),
                         Some(Ok(Ok(()))) => "UDP worker stopped unexpectedly".to_string(),
@@ -6604,6 +6668,15 @@ async fn run_profile_generation(
             }
         });
     }
+    drop(listener_ready_tx);
+    for _ in 0..listener_count {
+        match listener_ready_rx.recv().await {
+            Some(Ok(())) => {}
+            Some(Err(error)) => anyhow::bail!("profile '{name}': listener bind failed: {error}"),
+            None => anyhow::bail!("profile '{name}': listener ended before reporting readiness"),
+        }
+    }
+    let _ = startup_ready.send(());
     // Await the listeners CONCURRENTLY.
     //
     // They used to be awaited IN ORDER, and an accept loop only returns when it breaks — so
@@ -6662,6 +6735,51 @@ async fn run_profile_generation(
 mod tests {
     use super::*;
     use std::time::{Duration, Instant};
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn setup_deadline_ends_before_healthy_serving() {
+        let (_never_ready, missing) = tokio::sync::oneshot::channel();
+        let error = await_profile_ready(
+            "slow",
+            tokio::time::Instant::now() + Duration::from_millis(20),
+            missing,
+            std::future::pending::<anyhow::Result<()>>(),
+        )
+        .await
+        .unwrap_err();
+        assert!(error.to_string().contains("setup exceeded"));
+
+        let (ready, receiver) = tokio::sync::oneshot::channel();
+        let result = await_profile_ready(
+            "serving",
+            tokio::time::Instant::now() + Duration::from_secs(1),
+            receiver,
+            async move {
+                ready.send(()).unwrap();
+                tokio::time::sleep(Duration::from_millis(1100)).await;
+                Ok(())
+            },
+        )
+        .await;
+        assert!(
+            result.is_ok(),
+            "a ready profile must outlive the setup budget"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn setup_failure_precedes_deadline() {
+        let (_ready, receiver) = tokio::sync::oneshot::channel();
+        let error = await_profile_ready(
+            "bad-bind",
+            tokio::time::Instant::now() + Duration::from_secs(1),
+            receiver,
+            async { anyhow::bail!("fixture listener bind refused") },
+        )
+        .await
+        .unwrap_err();
+        assert!(error.to_string().contains("fixture listener bind refused"));
+    }
 
     #[cfg(unix)]
     #[test]
