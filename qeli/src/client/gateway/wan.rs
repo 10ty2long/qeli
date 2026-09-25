@@ -25,10 +25,7 @@ fn detect_wan_with(
     };
     if let Ok(out) = run(show) {
         if out.status.success() {
-            if let Some(device) = String::from_utf8_lossy(&out.stdout)
-                .lines()
-                .find_map(dev_token)
-            {
+            if let Some(device) = preferred_default_device(&String::from_utf8_lossy(&out.stdout)) {
                 return Some(device);
             }
         }
@@ -38,6 +35,27 @@ fn detect_wan_with(
         return None;
     }
     dev_token(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// Pick the preferred main-table default when several uplinks coexist.
+/// `ip route show default` is not a priority-ordered API.
+fn preferred_default_device(output: &str) -> Option<String> {
+    output
+        .lines()
+        .filter_map(|line| {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if fields.first().copied() != Some("default") {
+                return None;
+            }
+            let device = dev_token(line)?;
+            let metric = match fields.iter().position(|field| *field == "metric") {
+                Some(index) => fields.get(index + 1)?.parse::<u32>().ok()?,
+                None => 0,
+            };
+            Some((metric, device))
+        })
+        .min_by_key(|(metric, _)| *metric)
+        .map(|(_, device)| device)
 }
 
 fn dev_token(line: &str) -> Option<String> {

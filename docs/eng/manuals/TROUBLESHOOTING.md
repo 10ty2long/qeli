@@ -1968,6 +1968,12 @@ profile and verify `qeli-exit-node` cleanup before restarting: a new device
 with the old name can inherit admission from the old rules.
 [Evidence and boundary](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
 
+If a separate exit WAN changes while the VPN-server path stays the same,
+new rules may not appear until a VPN path COMMIT. The guard blocks traffic;
+restart the exit profile after confirmed cleanup to restore service. With
+multiple default routes Qeli selects the lowest metric; an individual policy
+route can select another WAN. [Evidence and limits](../reports/AUDIT-Q25-WAN-METRIC.md).
+
 For a shared WAN, inspect the exact `qeli-exit-node:<tun>` NAT comments in each family.
 The unsuffixed legacy MASQUERADE is preserved during cleanup; do not delete it while
 an older exit process may still rely on it. No remembered WAN means no automatic

@@ -256,3 +256,5 @@
 - [Q25-F124: защита exit-node от утечки через другой WAN](reports/AUDIT-Q25-EXIT-POLICY-ROUTING.md)
 
 - [Q25-A125: повторное использование имени физического WAN](reports/AUDIT-Q25-WAN-NAME-REUSE.md)
+
+- [Q25-F126: выбор WAN по метрике default route](reports/AUDIT-Q25-WAN-METRIC.md)

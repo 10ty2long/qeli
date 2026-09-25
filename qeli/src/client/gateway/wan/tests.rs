@@ -35,7 +35,7 @@ fn default_route_wins_without_route_get_for_each_family() {
                 "unreachable default\ndefault via 192.0.2.1 dev eth0 metric 100\ndefault dev eth1",
             )
         });
-        assert_eq!(wan.as_deref(), Some("eth0"));
+        assert_eq!(wan.as_deref(), Some("eth1"));
         assert_eq!(calls, 1);
     }
 }
@@ -135,5 +135,35 @@ fn unusable_route_get_output_does_not_invent_a_wan() {
             assert_eq!(wan, None);
             assert_eq!(calls, 2);
         }
+    }
+}
+
+#[test]
+fn default_route_uses_lowest_metric_instead_of_output_order() {
+    for ipv6 in [false, true] {
+        let mut calls = 0;
+        let wan = detect_wan_with(ipv6, |args| {
+            assert_eq!(args, expected_queries(ipv6)[0]);
+            calls += 1;
+            output(
+                true,
+                "default via 192.0.2.1 dev slow metric 600\ndefault via 198.51.100.1 dev fast metric 50",
+            )
+        });
+        assert_eq!(wan.as_deref(), Some("fast"));
+        assert_eq!(calls, 1);
+    }
+}
+
+#[test]
+fn malformed_default_metric_cannot_take_priority_over_valid_route() {
+    for ipv6 in [false, true] {
+        let wan = detect_wan_with(ipv6, |_| {
+            output(
+                true,
+                "default dev invalid metric nonsense\ndefault dev valid metric 10",
+            )
+        });
+        assert_eq!(wan.as_deref(), Some("valid"));
     }
 }

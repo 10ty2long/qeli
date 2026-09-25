@@ -256,3 +256,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F124: guard exit-node against off-WAN source leaks](reports/AUDIT-Q25-EXIT-POLICY-ROUTING.md)
 
 - [Q25-A125: physical WAN name reuse](reports/AUDIT-Q25-WAN-NAME-REUSE.md)
+
+- [Q25-F126: select the default WAN by route metric](reports/AUDIT-Q25-WAN-METRIC.md)
