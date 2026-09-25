@@ -266,3 +266,5 @@
 - [Q25-F129: неоднозначный ECMP default WAN](reports/AUDIT-Q25-WAN-ECMP.md)
 
 - [D09: итоговая проверка Linux lifecycle и системных отказов](reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md)
+
+- [Q25-F130: удержание server worker lease после принудительной отмены](reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md)

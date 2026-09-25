@@ -266,3 +266,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F129: ambiguous ECMP default WAN](reports/AUDIT-Q25-WAN-ECMP.md)
 
 - [D09: Linux lifecycle and system-failure closure](reports/AUDIT-Q25-LINUX-LIFECYCLE-CLOSURE.md)
+
+- [Q25-F130: retain server worker lease after forced cancellation](reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md)

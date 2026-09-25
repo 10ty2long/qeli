@@ -116,3 +116,44 @@ fn native_worker_reservations_are_independent_across_network_namespaces() {
     .unwrap();
     assert_eq!(bind(&name).unwrap_err().kind(), io::ErrorKind::AddrInUse);
 }
+
+#[test]
+fn setup_failure_before_network_mutation_releases_reservation() {
+    let name = name();
+    let lease = reserve(&name).unwrap();
+    assert_eq!(bind(&name).unwrap_err().kind(), io::ErrorKind::AddrInUse);
+    drop(lease);
+    let _replacement = bind(&name).unwrap();
+}
+
+#[test]
+fn completed_worker_releases_reservation_after_scope_exit() {
+    let name = name();
+    let mut lease = reserve(&name).unwrap();
+    lease.arm();
+    lease.mark_complete();
+    assert_eq!(bind(&name).unwrap_err().kind(), io::ErrorKind::AddrInUse);
+    drop(lease);
+    let _replacement = bind(&name).unwrap();
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cancelled_worker_keeps_network_reservation_until_process_exit() {
+    let name = name();
+    let worker_name = name.clone();
+    let (ready, entered) = tokio::sync::oneshot::channel();
+    let worker = tokio::spawn(async move {
+        let mut lease = reserve(&worker_name).unwrap();
+        let fd = lease.socket.as_ref().unwrap().as_raw_fd();
+        lease.arm();
+        ready.send(fd).unwrap();
+        std::future::pending::<()>().await;
+    });
+    let fd = entered.await.unwrap();
+    worker.abort();
+    assert!(worker.await.unwrap_err().is_cancelled());
+    assert_eq!(bind(&name).unwrap_err().kind(), io::ErrorKind::AddrInUse);
+    // A test process must close the intentionally retained descriptor itself.
+    assert_eq!(unsafe { libc::close(fd) }, 0);
+    let _replacement = bind(&name).unwrap();
+}

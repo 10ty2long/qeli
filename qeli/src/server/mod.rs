@@ -3412,7 +3412,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // QELI_CONTROL_SOCKET paths. Hold this kernel network-namespace reservation
     // before accounting state, crash recovery, hooks or firewall mutations, until
     // every worker resource has completed shutdown.
-    let _network_lease = network_lease::acquire()?;
+    let mut network_lease = network_lease::acquire()?;
     // Defence in depth for every worker entry path, including a hand-started `_worker` and a
     // config changed on disk behind the panel.  The API performs the same check before it
     // stops the current worker, but the worker must not trust that it was its only caller.
@@ -3502,6 +3502,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     // Control socket (shared across profiles) — the supervisor's panel reaches
     // live client data (list/kick/bandwidth) through this.
     // Fail before spawning services; the socket lease rolls back on startup errors.
+    // From this point, cancellation may leave network mutations and async
+    // descendants behind. An unfinished worker must retain admission until exit.
+    network_lease.arm();
     crate::profile_teardown::blocking("qeli-start-cleanup", nat::cleanup_all).await??;
     let control_listener = control_socket
         .listener
@@ -3713,6 +3716,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         usage_flush,
     );
     notifications.shutdown().await;
+    if result.is_ok() {
+        network_lease.mark_complete();
+    }
     match &result {
         Ok(()) => log::info!("Server shutdown complete"),
         Err(error) => log::error!("{error}"),
