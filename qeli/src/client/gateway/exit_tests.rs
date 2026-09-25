@@ -372,3 +372,33 @@ fn partial_refresh_still_exposes_selected_wan_for_retry() {
         stop("ex_a").unwrap();
     });
 }
+
+#[test]
+fn exit_rejects_its_own_tun_as_wan_before_mutating() {
+    for ipv6 in [false, true] {
+        run(|k| {
+            let family = usize::from(ipv6);
+            k.borrow_mut().wans[family] = Some("ex_a".into());
+            let error = if ipv6 {
+                engage_exit_ipv6("ex_a")
+            } else {
+                engage_exit("ex_a")
+            }
+            .unwrap_err();
+            assert!(error.to_string().contains("cannot be its own WAN"));
+            assert_eq!(k.borrow().mutations(), 0);
+            assert!(retained_tun("ex_a", ipv6).is_empty());
+
+            start(&k, "ex_a", "wan0", ipv6);
+            let before = k.borrow().mutations();
+            k.borrow_mut().wans[family] = Some("ex_a".into());
+            assert!(refresh_exit_paths_if_active("ex_a")
+                .unwrap_err()
+                .to_string()
+                .contains("cannot be its own WAN"));
+            assert_eq!(k.borrow().mutations(), before);
+            assert_eq!(retained_tun("ex_a", ipv6), ["wan0"]);
+            stop("ex_a").unwrap();
+        });
+    }
+}

@@ -558,6 +558,9 @@ fn engage_exit_on(ctx: &Context, tun_if: &str, wan: &str) -> anyhow::Result<()> 
     if !valid_ifname(tun_if) {
         anyhow::bail!("exit-node: invalid TUN interface name {tun_if:?}");
     }
+    if wan == tun_if {
+        anyhow::bail!("exit-node: the exit TUN {tun_if} cannot be its own WAN");
+    }
     if !valid_ifname(wan) {
         anyhow::bail!("exit-node: detected WAN interface name {wan:?} is invalid");
     }
@@ -674,6 +677,9 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
         anyhow::bail!("exit-node IPv6: invalid TUN interface name {tun_if:?}");
     }
     let wan = requested_wan.to_string();
+    if wan == tun_if {
+        anyhow::bail!("exit-node IPv6: the exit TUN {tun_if} cannot be its own WAN");
+    }
     if !valid_ifname(&wan) {
         anyhow::bail!("exit-node IPv6: detected WAN interface name {wan:?} is invalid");
     }
@@ -728,6 +734,9 @@ fn engage_exit_ipv6_on(ctx: &Context, tun_if: &str, requested_wan: &str) -> anyh
         anyhow::bail!(
             "exit-node IPv6: authenticated candidate WAN {requested_wan} is no longer the active IPv6 default ({wan})"
         );
+    }
+    if wan == tun_if {
+        anyhow::bail!("exit-node IPv6: the exit TUN {tun_if} cannot be its own WAN");
     }
     if !valid_ifname(&wan) {
         anyhow::bail!("exit-node IPv6: post-forwarding WAN name {wan:?} is invalid");

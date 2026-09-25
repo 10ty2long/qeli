@@ -2291,6 +2291,8 @@ sends it to a WAN Qeli has not selected, the client's original address cannot
 egress. After a confirmed roaming update or the next default-route check
 (every 5 seconds), Qeli adds rules for the new WAN; packets remain blocked
 until installation succeeds.
+If the default route points back to the exit TUN, the exit node rejects setup
+or refresh of that path: it needs a separate external WAN.
 [Monitor verification](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` cannot be combined
 with `gateway_nat = true` or `forward = true` on the same TUN: those modes
 require different handling of unmarked traffic arriving from the tunnel.
