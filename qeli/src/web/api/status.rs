@@ -626,7 +626,7 @@ pub async fn set_blocked_settings(
             "refusing to save without a rollback snapshot: {error}"
         ))));
     }
-    if let Err(e) = crate::util::write_atomic(&canon, raw.as_bytes()) {
+    if let Err(e) = super::config::write_server_config(&canon, &raw) {
         return Ok(Json(super::err_json(format!("write error: {}", e))));
     }
 

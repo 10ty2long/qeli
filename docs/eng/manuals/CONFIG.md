@@ -28,6 +28,8 @@ JSON in the internal HTTP API carries form data and status, not a configuration 
 The server INI is limited to **16 MiB**: `check-config`, startup, SIGHUP and panel
 reads refuse a larger file before parsing. The form, INI editor, Quick Start and
 snapshot restore cannot write a config above this limit.
+A panel save writes the server INI with mode `0600`, even when the previous
+file had more permissive access.
 A failed load blocks saving; edits made during a pending save remain marked unsaved.
 Panel address/port/TLS/base_path changes require a full process restart, not just a worker restart.
 Saving changed panel-login thresholds through the form or INI editor applies them immediately;

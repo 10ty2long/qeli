@@ -169,6 +169,12 @@ pub(super) fn snapshot_before_changed_write(
     }
 }
 
+/// Server INI carries admin password hashes and inline user credentials.
+/// Every panel save creates a private inode even if an old config was 0644.
+pub(super) fn write_server_config(path: &FsPath, raw: &str) -> anyhow::Result<()> {
+    crate::util::write_atomic_private(path, raw.as_bytes())
+}
+
 pub(super) fn needs_full_restart(
     current: &crate::config::server::WebConfig,
     next: &crate::config::server::WebConfig,
@@ -1177,7 +1183,7 @@ pub async fn apply_quickstart_profile(
             ))))
         }
     };
-    if let Err(error) = crate::util::write_atomic(&canon, next_raw.as_bytes()) {
+    if let Err(error) = write_server_config(&canon, &next_raw) {
         return Ok(Json(super::err_json(format!(
             "Quick Start write failed: {error}"
         ))));
@@ -1589,7 +1595,7 @@ pub async fn put_config(
                 ))))
             }
         };
-    if let Err(e) = crate::util::write_atomic(&canon, config_str.as_bytes()) {
+    if let Err(e) = write_server_config(&canon, &config_str) {
         return Ok(Json(json!({
             "ok": false,
             "error": format!("write error: {}", e),
@@ -2050,7 +2056,7 @@ pub async fn put_config_raw(
             ))))
         }
     };
-    if let Err(e) = crate::util::write_atomic(&canon, raw.as_bytes()) {
+    if let Err(e) = write_server_config(&canon, &raw) {
         return Ok(Json(super::err_json(format!("write error: {}", e))));
     }
 
@@ -2266,7 +2272,7 @@ pub async fn restore_config_history(
             ))))
         }
     };
-    if let Err(error) = crate::util::write_atomic(&canon, raw.as_bytes()) {
+    if let Err(error) = write_server_config(&canon, &raw) {
         return Ok(Json(super::err_json(format!(
             "rollback write failed: {error}"
         ))));
@@ -2343,6 +2349,32 @@ mod raw_secret_tests {
         let error = snapshot_before_changed_write(&path, "[web]\n", &large).unwrap_err();
         assert!(error.contains("maximum is 16777216"));
         assert!(!dir.join(CONFIG_HISTORY_DIR).exists());
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn panel_save_makes_existing_server_ini_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-config-private-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("server.conf");
+        std::fs::write(&path, b"[web]\npassword_hash = old\n").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        write_server_config(&path, "[web]\npassword_hash = new\n").unwrap();
+        assert_eq!(
+            std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(
+            read_config_text(&path).unwrap(),
+            "[web]\npassword_hash = new\n"
+        );
         std::fs::remove_file(path).unwrap();
         std::fs::remove_dir(dir).unwrap();
     }
