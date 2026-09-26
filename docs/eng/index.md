@@ -281,3 +281,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q25-F138: one 16 MiB limit for server INI](reports/AUDIT-Q25-SERVER-INI-SIZE.md)
 - [Q25-F139: panel live state after saving INI](reports/AUDIT-Q25-SERVER-WEB-LIVE.md)
 - [Q25-F140: private panel writes for server INI](reports/AUDIT-Q25-SERVER-INI-PERMISSIONS.md)
+- [Q25-F141: consistent CLI, panel and runtime admission](reports/AUDIT-Q25-SERVER-CHECK-CONFIG-PARITY.md)

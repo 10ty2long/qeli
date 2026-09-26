@@ -543,13 +543,12 @@ async fn main() -> anyhow::Result<()> {
                 #[cfg(target_os = "linux")]
                 server::validate_profiles(&cfg)?;
                 // The supervisor also parses the external users database before it starts
-                // the worker. `check-config` used to stop at the main INI, so a malformed or
-                // missing users.conf produced "OK" here and then refused the real start.
-                // Use the same loader and the same strict outcome as run_supervisor: a missing
-                // file is accepted only when inline users/groups make that valid inside the
-                // loader itself.
+                // the worker. `check-config` must apply the same admission rule.
+                // Use the same runtime loader as supervisor and worker: a genuinely
+                // missing file with no inline entries is a valid first-run empty DB;
+                // unreadable or malformed files still fail.
                 #[cfg(target_os = "linux")]
-                server::load_users_db(&cfg).map_err(|e| {
+                server::load_users_db_for_runtime(&cfg).map_err(|e| {
                     anyhow::anyhow!("{}: users database '{}': {}", path, cfg.auth.users_file, e)
                 })?;
                 // Pre-flight the addressing against THIS host, so `check-config` on the

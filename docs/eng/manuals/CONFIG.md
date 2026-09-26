@@ -2928,6 +2928,8 @@ Beyond pinning / H-1 (above), the `[auth]` section carries:
 | `brute_force.window_secs` | `300` | window for counting failures (seconds); allowed `1..=86400` (24h) |
 | `brute_force.lockout_secs` | `900` | lockout duration after the threshold is exceeded (seconds); allowed `1..=2592000` (30d) |
 
+If the external `users_file` is genuinely absent and the server INI has no inline users or groups, first startup and `qeli check-config` use an empty database. A malformed or unreadable existing file remains an error. If inline entries exist, they are used without the external file.
+
 > **Removed from here: `password_hash` and `token_ttl_secs`.** Both are listed in `RETIRED_KEYS`
 > (`config/mod.rs`) and are not honoured; `qeli check-config` names them as stale (rather than
 > as typos), and an ordinary server start simply ignores them. The hashing
@@ -3287,7 +3289,7 @@ Server-side routing for the profile (client-side routing keys are in the "Client
 
 | Key | Default | Purpose |
 |---|---|---|
-| `enabled` | `true` | whether this profile is active. `true` = bound and served; `false` = kept in the config but **skipped at startup** (turn an interface off without deleting it). Omitting the key keeps the profile enabled |
+| `enabled` | `true` | whether this profile is active. `true` = bound and served; `false` = kept in the config but **skipped at startup** (turn an interface off without deleting it). Omitting the key keeps the profile enabled. At least one profile must remain enabled; `check-config`, server startup and panel saves reject an INI with every profile disabled |
 | `routing.client_to_client` | `false` | allow client↔client traffic within the tunnel subnet. **Enforced** server-side: when `false` (the default) a packet whose source IP is one client and whose destination is another client is dropped — clients are isolated. Internet traffic (external source) is unaffected |
 | `routing.forward_private` | `true` | with NAT44 disabled, enable source-preserving IPv4 transit through the server; with `routing.nat.enabled = true`, this key adds no separate LAN permits; inactive in IPv6-only mode |
 | `routing.nat.enabled` | `false` | IPv4 NAT44/MASQUERADE for client Internet traffic; rejected in IPv6-only mode. TUN traffic to destinations outside RFC1918 through any interface other than the selected WAN is dropped even with `FORWARD ACCEPT`; RFC1918 destinations (`10/8`, `172.16/12`, `192.168/16`) retain the administrator firewall policy and can leave another interface without NAT. For LANs using other address ranges, use source-preserving routing without NAT or the selected WAN |

@@ -281,3 +281,4 @@
 - [Q25-F138: единый предел 16 МиБ для серверного INI](reports/AUDIT-Q25-SERVER-INI-SIZE.md)
 - [Q25-F139: живое состояние панели после сохранения INI](reports/AUDIT-Q25-SERVER-WEB-LIVE.md)
 - [Q25-F140: приватная запись серверного INI панелью](reports/AUDIT-Q25-SERVER-INI-PERMISSIONS.md)
+- [Q25-F141: согласованный допуск CLI, панели и runtime](reports/AUDIT-Q25-SERVER-CHECK-CONFIG-PARITY.md)

@@ -1533,6 +1533,11 @@ fn validate_configured_interface(profile: &str, key: &str, value: &str) -> anyho
 }
 
 pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
+    // The worker refuses an all-disabled server. Use the same gate for
+    // check-config, panel saves and supervisor startup before any panel appears.
+    if !config.profiles.is_empty() && !config.profiles.iter().any(|profile| profile.enabled) {
+        anyhow::bail!("all profiles are disabled (enabled = false) — enable at least one");
+    }
     config.web.validate_active().map_err(anyhow::Error::msg)?;
     // Both brute-force policies, before anything profile-specific. This function is the
     // one gate every write path shares — `check-config`, worker startup, `PUT /api/config`
@@ -3452,10 +3457,6 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     if config.profiles.is_empty() {
         anyhow::bail!("no profiles defined in server config");
     }
-    if !config.profiles.iter().any(|p| p.enabled) {
-        anyhow::bail!("all profiles are disabled (enabled = false) — enable at least one");
-    }
-
     validate_profiles(&config)?;
     // Filesystem control sockets do not coordinate different mount namespaces or
     // QELI_CONTROL_SOCKET paths. Hold this kernel network-namespace reservation
@@ -4087,6 +4088,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     if config.profiles.is_empty() {
         anyhow::bail!("no profiles defined in server config");
     }
+    validate_profiles(&config)?;
 
     // Pre-flight: refuse to start a config that would cut this box off the network
     // (e.g. a tunnel whose address IS the host's default gateway). Deliberately here,
@@ -8489,6 +8491,16 @@ pool.cidr = 10.{net}.0.0/24
         let db = load_users_db(&config).unwrap();
         assert_eq!(db.users.len(), 1);
         assert_eq!(db.users[0].username, "solo");
+    }
+
+    #[test]
+    fn all_disabled_profiles_fail_shared_validation() {
+        let mut config = ServerConfig::default();
+        let mut profile = ProfileConfig::baseline();
+        profile.enabled = false;
+        config.profiles.push(profile);
+        let error = validate_profiles(&config).unwrap_err().to_string();
+        assert!(error.contains("all profiles are disabled"), "{error}");
     }
 
     #[tokio::test]
