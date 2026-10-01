@@ -1,539 +1,1196 @@
 {
   "meta": {
-    "date": "2026-08-26T11:58:19Z",
-    "sha256_16": "2f69b48f10257151",
-    "version": "qeli 0.8.0",
-    "recordizer_policy": "prefer",
-    "server": "6.12.88+deb13-amd64",
-    "iperf3": "iperf 3.18 (cJSON 1.7.15)",
-    "scope": "combined 12-mode current-binary result",
-    "full_binary_sha256": "2f69b48f102571518e2582de64a51d48442baf22b80b8f1586ba369d164d0b49",
-    "source_runs": {
-      "tcp_8_modes": "benchmark_v0.8.0_2026-08-26_run4.json",
-      "udp_4_modes": "benchmark_v0.8.0_2026-08-26_run3.json"
+    "date": "2026-10-01T18:59:10.447477+00:00",
+    "binary_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+    "source_commit": "60ee158d7441383caf1146ffe40837631a5de1f7",
+    "native_source_digest": "d39a334335d8a0110a59683bbdf354dfbfb4bd8e5919bdc5981a4b08278f43a5",
+    "harness_sha256": "415a9059b1ea63c2d83e25c4d960c8e78d2c481acf8ff6c74e27c4cdf0fabe1c",
+    "tracked_dirty": false,
+    "seconds": 8,
+    "tcp_parallel": 1,
+    "recordizer": "off",
+    "throughput": "receiver bits_per_second; UDP offered rates 100/500 Mbps",
+    "topology": "two VM, isolated IPvlan network and private mount namespaces, local TLS target",
+    "server": {
+      "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+      "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+      "iperf": "iperf 3.18 (cJSON 1.7.15)",
+      "version": "qeli 0.8.2"
     },
-    "validation": {
-      "mode_count": 12,
-      "tcp_modes": 8,
-      "udp_modes": 4,
-      "all_recordizer_active": true,
-      "lab_fully_rebooted_before_each_transport_sweep": true
-    }
-  },
-  "baselines": {
-    "tcp_sweep_reboot": {
-      "tcp": {
-        "mbps": 19114.7,
-        "retransmits": 0,
-        "cpu_client": 59.2,
-        "cpu_server": 96.9
-      },
-      "udp_sweep": {
-        "500M": {
-          "mbps": 500.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 260683,
-          "kernel_rcvbuf_drops": 0
-        },
-        "1000M": {
-          "mbps": 997.7,
-          "loss_pct": 0.11,
-          "lost_packets": 562,
-          "packets": 520097,
-          "kernel_rcvbuf_drops": 0
-        }
-      }
+    "client": {
+      "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+      "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+      "iperf": "iperf 3.18 (cJSON 1.7.15)",
+      "version": "qeli 0.8.2"
     },
-    "udp_sweep_reboot": {
-      "tcp": {
-        "mbps": 18413.5,
-        "retransmits": 0,
-        "cpu_client": 57.4,
-        "cpu_server": 96.3
-      },
-      "udp_sweep": {
-        "500M": {
-          "mbps": 500.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 260676,
-          "kernel_rcvbuf_drops": 0
-        },
-        "1000M": {
-          "mbps": 1000.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 521361,
-          "kernel_rcvbuf_drops": 0
-        }
-      }
-    }
+    "version": "qeli 0.8.2",
+    "scope": "12-mode isolated single-pass measurement, recordizer off; one QUIC repeat",
+    "full_binary_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+    "qeli_src_sha256": "f3626d47535f5cb73286adcd2e50de7ab88f466158b291fbfc22947045cda124",
+    "evidence_root": "audit-debt-20260924/d14-benchmark-20261001",
+    "limitations": [
+      "COMPLETED means measurements collected, not performance acceptance.",
+      "TCP P=1, 8 seconds per direction; UDP 100/500 Mbps, 5 seconds, upload only.",
+      "Qeli CPU sampling lasts test seconds plus one; includes workload edges. RSS peak is sampled.",
+      "Recordizer is off; historical 0.8.0 used prefer with recordizer active. No equivalent A/B was run.",
+      "Reality uses a local TLS target, with handrolled=true for real TLS.",
+      "Existing host services remain running; baseline is not a stability or canary gate.",
+      "QUIC 500 Mbps loss varied; receiver counters do not localize all losses.",
+      "No IPv6, per-app, failover or physical certification is earned by this benchmark."
+    ]
   },
   "modes": {
     "tcp-plain-raw": {
-      "client_mode": "plain",
-      "server_mode": "plain",
-      "ping_rtt": "rtt min/avg/max/mdev = 7.630/12.920/18.177/2.971 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=0.905 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=0.807 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.939 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.798 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=1.08 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=0.926 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=1.06 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=1.06 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=0.789 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=1.09 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1818ms\nrtt min/avg/max/mdev = 0.789/0.945/1.087/0.114 ms",
+      "pids": {
+        "server": 109599,
+        "client": 168237
+      },
       "tcp_up": {
-        "mbps": 936.9,
-        "retransmits": 45869,
-        "cpu_client": 2.1,
-        "cpu_server": 18.1,
-        "qeli_cpu_avg_pct": 36.3,
-        "qeli_cpu_max_pct": 60.8,
-        "qeli_rss_mb": 84.8
+        "mbps": 468.8408961831458,
+        "retransmits": 2087,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 109599,
+          "cpu_avg_pct": 118.43819859286663,
+          "rss_peak_kib": 78804,
+          "elapsed": 9.000474616001156,
+          "host_steal_pct": 0.056753688989784334
+        },
+        "client": {
+          "pid": 168237,
+          "cpu_avg_pct": 128.88341616964624,
+          "rss_peak_kib": 50592,
+          "elapsed": 9.000382163001632,
+          "host_steal_pct": 0.05685048322910745
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 1139.9,
-        "retransmits": 799,
-        "cpu_client": 50.8,
-        "cpu_server": 3.3
+        "mbps": 548.0447238826773,
+        "retransmits": 1851,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 109599,
+          "cpu_avg_pct": 127.54951296824899,
+          "rss_peak_kib": 105736,
+          "elapsed": 9.000426369999332,
+          "host_steal_pct": 0.11554015020219527
+        },
+        "client": {
+          "pid": 168237,
+          "cpu_avg_pct": 140.65926909874696,
+          "rss_peak_kib": 51076,
+          "elapsed": 9.00047332900067,
+          "host_steal_pct": 0.11179429849077697
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-faketls": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 7.178/11.838/15.296/2.680 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=1.00 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=1.14 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=1.15 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=1.10 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=0.817 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=1.06 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=1.01 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=0.829 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=1.11 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=1.06 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1809ms\nrtt min/avg/max/mdev = 0.817/1.026/1.149/0.112 ms",
+      "pids": {
+        "server": 109917,
+        "client": 168560
+      },
       "tcp_up": {
-        "mbps": 713.2,
-        "retransmits": 45453,
-        "cpu_client": 2.0,
-        "cpu_server": 15.4,
-        "qeli_cpu_avg_pct": 30.3,
-        "qeli_cpu_max_pct": 53.3,
-        "qeli_rss_mb": 79.0
+        "mbps": 454.1561778047261,
+        "retransmits": 2926,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 109917,
+          "cpu_avg_pct": 111.54940639450923,
+          "rss_peak_kib": 83172,
+          "elapsed": 9.000496125001519,
+          "host_steal_pct": 0.1137009664582149
+        },
+        "client": {
+          "pid": 168560,
+          "cpu_avg_pct": 122.77135687674509,
+          "rss_peak_kib": 53108,
+          "elapsed": 9.0004706969994,
+          "host_steal_pct": 0.05701254275940707
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 905.2,
-        "retransmits": 295,
-        "cpu_client": 51.9,
-        "cpu_server": 2.8
+        "mbps": 528.1592026078047,
+        "retransmits": 330,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 109917,
+          "cpu_avg_pct": 124.43797523208238,
+          "rss_peak_kib": 106012,
+          "elapsed": 9.000467887002742,
+          "host_steal_pct": 0.11409013120365089
+        },
+        "client": {
+          "pid": 168560,
+          "cpu_avg_pct": 137.659393157295,
+          "rss_peak_kib": 53504,
+          "elapsed": 9.000475533001008,
+          "host_steal_pct": 0.05580357142857143
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-padding": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 10.526/13.778/19.034/2.413 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=1.02 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=0.979 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.902 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.957 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=1.09 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=1.03 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=1.01 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=0.855 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=0.870 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=1.01 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1811ms\nrtt min/avg/max/mdev = 0.855/0.972/1.086/0.071 ms",
+      "pids": {
+        "server": 110236,
+        "client": 168882
+      },
       "tcp_up": {
-        "mbps": 1182.0,
-        "retransmits": 111,
-        "cpu_client": 2.1,
-        "cpu_server": 21.6,
-        "qeli_cpu_avg_pct": 40.6,
-        "qeli_cpu_max_pct": 70.4,
-        "qeli_rss_mb": 92.4
+        "mbps": 458.3102987041945,
+        "retransmits": 1561,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110236,
+          "cpu_avg_pct": 114.32821409698715,
+          "rss_peak_kib": 78560,
+          "elapsed": 9.000402990001021,
+          "host_steal_pct": 0.11217049915872125
+        },
+        "client": {
+          "pid": 168882,
+          "cpu_avg_pct": 122.66097568800568,
+          "rss_peak_kib": 49340,
+          "elapsed": 9.000417564002419,
+          "host_steal_pct": 0.11344299489506524
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 1330.0,
-        "retransmits": 373,
-        "cpu_client": 47.4,
-        "cpu_server": 3.5
+        "mbps": 531.1219391822018,
+        "retransmits": 1100,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110236,
+          "cpu_avg_pct": 122.65882053624182,
+          "rss_peak_kib": 105492,
+          "elapsed": 9.000575704001676,
+          "host_steal_pct": 0.17064846416382254
+        },
+        "client": {
+          "pid": 168882,
+          "cpu_avg_pct": 138.54826323705856,
+          "rss_peak_kib": 49732,
+          "elapsed": 9.000473703999887,
+          "host_steal_pct": 0.05636978579481398
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-frag": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 7.160/13.055/18.141/2.860 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=0.767 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=0.798 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.720 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.747 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=0.908 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=0.962 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=0.762 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=0.860 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=0.850 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=0.890 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1834ms\nrtt min/avg/max/mdev = 0.720/0.826/0.962/0.075 ms",
+      "pids": {
+        "server": 110554,
+        "client": 169204
+      },
       "tcp_up": {
-        "mbps": 1099.8,
-        "retransmits": 11826,
-        "cpu_client": 2.2,
-        "cpu_server": 21.3,
-        "qeli_cpu_avg_pct": 39.5,
-        "qeli_cpu_max_pct": 67.9,
-        "qeli_rss_mb": 91.0
+        "mbps": 458.8729706974796,
+        "retransmits": 905,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110554,
+          "cpu_avg_pct": 117.99429948563406,
+          "rss_peak_kib": 78712,
+          "elapsed": 9.000434805999248,
+          "host_steal_pct": 0.228310502283105
+        },
+        "client": {
+          "pid": 169204,
+          "cpu_avg_pct": 130.9944792376457,
+          "rss_peak_kib": 49600,
+          "elapsed": 9.000379305001843,
+          "host_steal_pct": 0.1718213058419244
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 1193.0,
-        "retransmits": 189,
-        "cpu_client": 48.7,
-        "cpu_server": 3.3
+        "mbps": 536.68076828253,
+        "retransmits": 972,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110554,
+          "cpu_avg_pct": 120.54878481249281,
+          "rss_peak_kib": 103508,
+          "elapsed": 9.000505494001118,
+          "host_steal_pct": 0.7959067652075043
+        },
+        "client": {
+          "pid": 169204,
+          "cpu_avg_pct": 136.88255726454554,
+          "rss_peak_kib": 49756,
+          "elapsed": 9.000416302998929,
+          "host_steal_pct": 0.3337041156840934
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-obfs": {
-      "client_mode": "obfs",
-      "server_mode": "obfs",
-      "ping_rtt": "rtt min/avg/max/mdev = 8.120/13.178/18.491/3.131 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=0.590 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=0.976 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.759 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.734 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=0.878 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=0.911 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=0.941 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=0.692 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=0.645 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=0.862 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1823ms\nrtt min/avg/max/mdev = 0.590/0.798/0.976/0.126 ms",
+      "pids": {
+        "server": 110872,
+        "client": 169526
+      },
       "tcp_up": {
-        "mbps": 788.2,
-        "retransmits": 2677,
-        "cpu_client": 1.7,
-        "cpu_server": 20.2,
-        "qeli_cpu_avg_pct": 44.3,
-        "qeli_cpu_max_pct": 74.4,
-        "qeli_rss_mb": 65.8
+        "mbps": 378.078434397252,
+        "retransmits": 174,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110872,
+          "cpu_avg_pct": 120.1059009972043,
+          "rss_peak_kib": 72608,
+          "elapsed": 9.000390413999412,
+          "host_steal_pct": 0.6114508060033352
+        },
+        "client": {
+          "pid": 169526,
+          "cpu_avg_pct": 137.54964582673233,
+          "rss_peak_kib": 49272,
+          "elapsed": 9.000386678999348,
+          "host_steal_pct": 0.4608294930875576
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 958.9,
-        "retransmits": 488,
-        "cpu_client": 46.1,
-        "cpu_server": 2.7
+        "mbps": 512.531145735314,
+        "retransmits": 1325,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 110872,
+          "cpu_avg_pct": 119.43921891227392,
+          "rss_peak_kib": 94008,
+          "elapsed": 9.000393754999095,
+          "host_steal_pct": 0.3416856492027335
+        },
+        "client": {
+          "pid": 169526,
+          "cpu_avg_pct": 135.21409644093353,
+          "rss_peak_kib": 49468,
+          "elapsed": 9.000540861001355,
+          "host_steal_pct": 0.2849002849002849
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-reality": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 8.153/12.553/17.844/2.814 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=0.949 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=1.19 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.922 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.897 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=1.01 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=0.820 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=0.930 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=0.966 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=0.939 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=0.921 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1818ms\nrtt min/avg/max/mdev = 0.820/0.954/1.187/0.090 ms",
+      "pids": {
+        "server": 111198,
+        "client": 169848
+      },
       "tcp_up": {
-        "mbps": 1071.8,
-        "retransmits": 19344,
-        "cpu_client": 2.3,
-        "cpu_server": 20.2,
-        "qeli_cpu_avg_pct": 38.6,
-        "qeli_cpu_max_pct": 67.5,
-        "qeli_rss_mb": 88.5
+        "mbps": 460.44839916607543,
+        "retransmits": 4413,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111198,
+          "cpu_avg_pct": 110.88426604990241,
+          "rss_peak_kib": 85124,
+          "elapsed": 9.000375216000975,
+          "host_steal_pct": 0.6214689265536724
+        },
+        "client": {
+          "pid": 169848,
+          "cpu_avg_pct": 122.55034696153804,
+          "rss_peak_kib": 49820,
+          "elapsed": 9.000382515001547,
+          "host_steal_pct": 0.45172219085262566
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 1155.1,
-        "retransmits": 36,
-        "cpu_client": 48.0,
-        "cpu_server": 3.3
+        "mbps": 525.8978499438942,
+        "retransmits": 1091,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111198,
+          "cpu_avg_pct": 123.21667307721174,
+          "rss_peak_kib": 108020,
+          "elapsed": 9.000405320999562,
+          "host_steal_pct": 0.8522727272727273
+        },
+        "client": {
+          "pid": 169848,
+          "cpu_avg_pct": 138.10480639653764,
+          "rss_peak_kib": 49964,
+          "elapsed": 9.00041086499914,
+          "host_steal_pct": 0.6145251396648045
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "tcp-reality-tls": {
-      "client_mode": "reality-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 18.462/24.756/31.768/3.575 ms",
-      "ping_loss": "0% packet loss",
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=18.4 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=8.15 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=17.1 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=14.2 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=9.15 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=12.1 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=11.2 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=11.2 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=15.3 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=15.2 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1804ms\nrtt min/avg/max/mdev = 8.148/13.197/18.380/3.202 ms",
+      "pids": {
+        "server": 111536,
+        "client": 170181
+      },
       "tcp_up": {
-        "mbps": 827.9,
-        "retransmits": 227,
-        "cpu_client": 1.6,
-        "cpu_server": 18.5,
-        "qeli_cpu_avg_pct": 41.1,
-        "qeli_cpu_max_pct": 72.5,
-        "qeli_rss_mb": 90.3
+        "mbps": 896.5154245001726,
+        "retransmits": 30119,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111536,
+          "cpu_avg_pct": 111.21667431434808,
+          "rss_peak_kib": 102776,
+          "elapsed": 9.000448954000603,
+          "host_steal_pct": 0.555247084952804
+        },
+        "client": {
+          "pid": 170181,
+          "cpu_avg_pct": 132.88153060366724,
+          "rss_peak_kib": 54368,
+          "elapsed": 9.000498372999573,
+          "host_steal_pct": 0.449438202247191
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
       "tcp_down": {
-        "mbps": 647.8,
-        "retransmits": 52,
-        "cpu_client": 30.5,
-        "cpu_server": 1.8
+        "mbps": 936.235471197338,
+        "retransmits": 157,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111536,
+          "cpu_avg_pct": 110.77105937764695,
+          "rss_peak_kib": 111476,
+          "elapsed": 9.00054586099941,
+          "host_steal_pct": 0.055865921787709494
+        },
+        "client": {
+          "pid": 170181,
+          "cpu_avg_pct": 114.7710817650803,
+          "rss_peak_kib": 56120,
+          "elapsed": 9.000525080999068,
+          "host_steal_pct": 0.05672149744753262
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
       },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
-    },
-    "tcp-obfs-awg": {
-      "client_mode": "obfs",
-      "server_mode": "obfs",
-      "ping_rtt": "rtt min/avg/max/mdev = 9.212/13.774/19.135/2.672 ms",
-      "ping_loss": "0% packet loss",
-      "tcp_up": {
-        "mbps": 826.3,
-        "retransmits": 827,
-        "cpu_client": 1.6,
-        "cpu_server": 21.3,
-        "qeli_cpu_avg_pct": 44.0,
-        "qeli_cpu_max_pct": 76.2,
-        "qeli_rss_mb": 68.2
-      },
-      "tcp_down": {
-        "mbps": 990.5,
-        "retransmits": 821,
-        "cpu_client": 49.5,
-        "cpu_server": 2.8
-      },
-      "server_drops": {
-        "after_up": 0,
-        "during_down": 0,
-        "total": 0
-      },
-      "recordizer_active": true
+      "status": "COMPLETED"
     },
     "udp-faketls": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 8.988/12.785/19.149/2.936 ms",
-      "ping_loss": "0% packet loss",
-      "udp_sweep": {
-        "100M": {
-          "mbps": 100.0,
-          "loss_pct": 0.01,
-          "lost_packets": 7,
-          "packets": 52117,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "200M": {
-          "mbps": 199.9,
-          "loss_pct": 0.3,
-          "lost_packets": 315,
-          "packets": 104326,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "300M": {
-          "mbps": 300.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 156407,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "400M": {
-          "mbps": 400.0,
-          "loss_pct": 0.01,
-          "lost_packets": 21,
-          "packets": 208404,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "500M": {
-          "mbps": 499.9,
-          "loss_pct": 19.69,
-          "lost_packets": 51318,
-          "packets": 260679,
-          "kernel_rcvbuf_drops": 40662,
-          "server_session_drops": 0
-        },
-        "600M": {
-          "mbps": 599.9,
-          "loss_pct": 29.77,
-          "lost_packets": 93087,
-          "packets": 312642,
-          "kernel_rcvbuf_drops": 6281,
-          "server_session_drops": 0
-        }
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.10.0.1 (10.10.0.1) 56(84) bytes of data.\n64 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=0.675 ms\n64 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=0.929 ms\n64 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=1.15 ms\n64 bytes from 10.10.0.1: icmp_seq=4 ttl=64 time=1.04 ms\n64 bytes from 10.10.0.1: icmp_seq=5 ttl=64 time=1.00 ms\n64 bytes from 10.10.0.1: icmp_seq=6 ttl=64 time=0.882 ms\n64 bytes from 10.10.0.1: icmp_seq=7 ttl=64 time=0.939 ms\n64 bytes from 10.10.0.1: icmp_seq=8 ttl=64 time=0.771 ms\n64 bytes from 10.10.0.1: icmp_seq=9 ttl=64 time=0.863 ms\n64 bytes from 10.10.0.1: icmp_seq=10 ttl=64 time=0.926 ms\n\n--- 10.10.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1827ms\nrtt min/avg/max/mdev = 0.675/0.918/1.152/0.127 ms",
+      "pids": {
+        "server": 111855,
+        "client": 170503
       },
-      "recordizer_active": true,
-      "recordizer_pmtu_log_probe": {
-        "client_dynamic_widen_logged": false,
-        "server_stdout_widen_logged": false,
-        "note": "The client normally certifies PMTU before constructing recordizer; the server writes its widening event to /var/log/qeli/server.log, not stdout."
-      }
+      "tcp_up": {
+        "mbps": 524.3508933110924,
+        "retransmits": 12109,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111855,
+          "cpu_avg_pct": 122.88364474739592,
+          "rss_peak_kib": 95124,
+          "elapsed": 9.000384081002267,
+          "host_steal_pct": 0.7945516458569807
+        },
+        "client": {
+          "pid": 170503,
+          "cpu_avg_pct": 135.7708505830371,
+          "rss_peak_kib": 58196,
+          "elapsed": 9.000459191000118,
+          "host_steal_pct": 0.6384213580963436
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "tcp_down": {
+        "mbps": 873.5220719746017,
+        "retransmits": 917,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 111855,
+          "cpu_avg_pct": 119.66048844942904,
+          "rss_peak_kib": 115536,
+          "elapsed": 9.000464680997538,
+          "host_steal_pct": 0.5190311418685121
+        },
+        "client": {
+          "pid": 170503,
+          "cpu_avg_pct": 133.77144595909527,
+          "rss_peak_kib": 58176,
+          "elapsed": 9.000425997997809,
+          "host_steal_pct": 0.22611644997173544
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_100": {
+        "mbps": 99.98289332951764,
+        "retransmits": null,
+        "lost_percent": 0,
+        "jitter_ms": 0.005097242894238644,
+        "server": {
+          "pid": 111855,
+          "cpu_avg_pct": 35.83048427834217,
+          "rss_peak_kib": 115488,
+          "elapsed": 6.000477089000924,
+          "host_steal_pct": 0.9482758620689655
+        },
+        "client": {
+          "pid": 170503,
+          "cpu_avg_pct": 38.49628763617125,
+          "rss_peak_kib": 57416,
+          "elapsed": 6.000578605999181,
+          "host_steal_pct": 1.2573344509639564
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_500": {
+        "mbps": 472.4547785647009,
+        "retransmits": null,
+        "lost_percent": 5.48598184644317,
+        "jitter_ms": 0.02407676583667113,
+        "server": {
+          "pid": 111855,
+          "cpu_avg_pct": 97.49250679092629,
+          "rss_peak_kib": 115488,
+          "elapsed": 6.000461155999801,
+          "host_steal_pct": 0.08741258741258741
+        },
+        "client": {
+          "pid": 170503,
+          "cpu_avg_pct": 110.49031471364566,
+          "rss_peak_kib": 58088,
+          "elapsed": 6.000525944000401,
+          "host_steal_pct": 0.0
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "status": "COMPLETED"
     },
     "udp-padding": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 7.975/12.922/19.424/3.122 ms",
-      "ping_loss": "0% packet loss",
-      "udp_sweep": {
-        "100M": {
-          "mbps": 100.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 52103,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "200M": {
-          "mbps": 199.9,
-          "loss_pct": 1.84,
-          "lost_packets": 1913,
-          "packets": 104240,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "300M": {
-          "mbps": 300.0,
-          "loss_pct": 11.81,
-          "lost_packets": 18459,
-          "packets": 156338,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "400M": {
-          "mbps": 400.0,
-          "loss_pct": 0.28,
-          "lost_packets": 580,
-          "packets": 208456,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "500M": {
-          "mbps": 500.0,
-          "loss_pct": 13.78,
-          "lost_packets": 35901,
-          "packets": 260563,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "600M": {
-          "mbps": 599.9,
-          "loss_pct": 33.21,
-          "lost_packets": 103861,
-          "packets": 312696,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        }
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.10.0.1 (10.10.0.1) 56(84) bytes of data.\n64 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=0.834 ms\n64 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=1.10 ms\n64 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=0.947 ms\n64 bytes from 10.10.0.1: icmp_seq=4 ttl=64 time=0.847 ms\n64 bytes from 10.10.0.1: icmp_seq=5 ttl=64 time=1.26 ms\n64 bytes from 10.10.0.1: icmp_seq=6 ttl=64 time=1.07 ms\n64 bytes from 10.10.0.1: icmp_seq=7 ttl=64 time=0.676 ms\n64 bytes from 10.10.0.1: icmp_seq=8 ttl=64 time=0.844 ms\n64 bytes from 10.10.0.1: icmp_seq=9 ttl=64 time=0.948 ms\n64 bytes from 10.10.0.1: icmp_seq=10 ttl=64 time=0.788 ms\n\n--- 10.10.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1815ms\nrtt min/avg/max/mdev = 0.676/0.931/1.263/0.163 ms",
+      "pids": {
+        "server": 112244,
+        "client": 170793
       },
-      "recordizer_active": true,
-      "recordizer_pmtu_log_probe": {
-        "client_dynamic_widen_logged": false,
-        "server_stdout_widen_logged": false,
-        "note": "The client normally certifies PMTU before constructing recordizer; the server writes its widening event to /var/log/qeli/server.log, not stdout."
-      }
+      "tcp_up": {
+        "mbps": 536.4614063192882,
+        "retransmits": 12054,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 112244,
+          "cpu_avg_pct": 105.77165921634534,
+          "rss_peak_kib": 98080,
+          "elapsed": 9.000520622001204,
+          "host_steal_pct": 13.129689174705252
+        },
+        "client": {
+          "pid": 170793,
+          "cpu_avg_pct": 128.7705499440272,
+          "rss_peak_kib": 56076,
+          "elapsed": 9.000505166000949,
+          "host_steal_pct": 10.393258426966293
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "tcp_down": {
+        "mbps": 731.4001933412803,
+        "retransmits": 445,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 112244,
+          "cpu_avg_pct": 114.21552543600914,
+          "rss_peak_kib": 120124,
+          "elapsed": 9.000527696000063,
+          "host_steal_pct": 9.891304347826088
+        },
+        "client": {
+          "pid": 170793,
+          "cpu_avg_pct": 122.54871311624224,
+          "rss_peak_kib": 56060,
+          "elapsed": 9.000502509999933,
+          "host_steal_pct": 9.267480577136515
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_100": {
+        "mbps": 99.98229594073497,
+        "retransmits": null,
+        "lost_percent": 0,
+        "jitter_ms": 0.012913785190873066,
+        "server": {
+          "pid": 112244,
+          "cpu_avg_pct": 41.33050487335013,
+          "rss_peak_kib": 119976,
+          "elapsed": 6.000410610999097,
+          "host_steal_pct": 3.9297658862876252
+        },
+        "client": {
+          "pid": 170793,
+          "cpu_avg_pct": 43.49617869396486,
+          "rss_peak_kib": 56028,
+          "elapsed": 6.000527123000211,
+          "host_steal_pct": 3.2497678737233056
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_500": {
+        "mbps": 410.97855572765303,
+        "retransmits": null,
+        "lost_percent": 14.377585241007774,
+        "jitter_ms": 0.030356593921559982,
+        "server": {
+          "pid": 112244,
+          "cpu_avg_pct": 91.9934710547041,
+          "rss_peak_kib": 119992,
+          "elapsed": 6.00042583100003,
+          "host_steal_pct": 2.2108843537414966
+        },
+        "client": {
+          "pid": 170793,
+          "cpu_avg_pct": 102.15884165692663,
+          "rss_peak_kib": 56028,
+          "elapsed": 6.000459579001472,
+          "host_steal_pct": 1.1333914559721012
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "status": "COMPLETED"
     },
     "udp-quic": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 6.216/13.092/18.115/3.013 ms",
-      "ping_loss": "0% packet loss",
-      "udp_sweep": {
-        "100M": {
-          "mbps": 100.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 52136,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "200M": {
-          "mbps": 200.0,
-          "loss_pct": 1.3,
-          "lost_packets": 1357,
-          "packets": 104271,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "300M": {
-          "mbps": 300.0,
-          "loss_pct": 2.45,
-          "lost_packets": 3833,
-          "packets": 156357,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "400M": {
-          "mbps": 400.0,
-          "loss_pct": 3.12,
-          "lost_packets": 6500,
-          "packets": 208503,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "500M": {
-          "mbps": 500.0,
-          "loss_pct": 5.97,
-          "lost_packets": 15543,
-          "packets": 260519,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "600M": {
-          "mbps": 599.9,
-          "loss_pct": 31.02,
-          "lost_packets": 97019,
-          "packets": 312746,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        }
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.10.0.1 (10.10.0.1) 56(84) bytes of data.\n64 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=0.636 ms\n64 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=0.594 ms\n64 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=0.686 ms\n64 bytes from 10.10.0.1: icmp_seq=4 ttl=64 time=0.736 ms\n64 bytes from 10.10.0.1: icmp_seq=5 ttl=64 time=0.621 ms\n64 bytes from 10.10.0.1: icmp_seq=6 ttl=64 time=0.619 ms\n64 bytes from 10.10.0.1: icmp_seq=7 ttl=64 time=0.569 ms\n64 bytes from 10.10.0.1: icmp_seq=8 ttl=64 time=0.566 ms\n64 bytes from 10.10.0.1: icmp_seq=9 ttl=64 time=0.568 ms\n64 bytes from 10.10.0.1: icmp_seq=10 ttl=64 time=0.608 ms\n\n--- 10.10.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1835ms\nrtt min/avg/max/mdev = 0.566/0.620/0.736/0.052 ms",
+      "pids": {
+        "server": 112617,
+        "client": 171068
       },
-      "recordizer_active": true,
-      "recordizer_pmtu_log_probe": {
-        "client_dynamic_widen_logged": false,
-        "server_stdout_widen_logged": false,
-        "note": "The client normally certifies PMTU before constructing recordizer; the server writes its widening event to /var/log/qeli/server.log, not stdout."
-      }
+      "tcp_up": {
+        "mbps": 497.574005091024,
+        "retransmits": 9444,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 112617,
+          "cpu_avg_pct": 115.99407207141361,
+          "rss_peak_kib": 98488,
+          "elapsed": 9.000459948998468,
+          "host_steal_pct": 1.1784511784511784
+        },
+        "client": {
+          "pid": 171068,
+          "cpu_avg_pct": 131.10403561569876,
+          "rss_peak_kib": 56104,
+          "elapsed": 9.00048571699881,
+          "host_steal_pct": 0.7033997655334114
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "tcp_down": {
+        "mbps": 794.6875900270987,
+        "retransmits": 674,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 112617,
+          "cpu_avg_pct": 117.32637405426753,
+          "rss_peak_kib": 118880,
+          "elapsed": 9.000533840000571,
+          "host_steal_pct": 8.555555555555555
+        },
+        "client": {
+          "pid": 171068,
+          "cpu_avg_pct": 118.32717248450847,
+          "rss_peak_kib": 56056,
+          "elapsed": 9.000468595997518,
+          "host_steal_pct": 6.633499170812604
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_100": {
+        "mbps": 99.95516565929256,
+        "retransmits": null,
+        "lost_percent": 0,
+        "jitter_ms": 0.0542132092767375,
+        "server": {
+          "pid": 112617,
+          "cpu_avg_pct": 51.16256511730878,
+          "rss_peak_kib": 118672,
+          "elapsed": 6.000481002000015,
+          "host_steal_pct": 14.112903225806452
+        },
+        "client": {
+          "pid": 171068,
+          "cpu_avg_pct": 50.996167145050116,
+          "rss_peak_kib": 55256,
+          "elapsed": 6.000450958003057,
+          "host_steal_pct": 9.831709477413641
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_500": {
+        "mbps": 399.78521134267413,
+        "retransmits": null,
+        "lost_percent": 19.797390636991558,
+        "jitter_ms": 0.019610454210500727,
+        "server": {
+          "pid": 112617,
+          "cpu_avg_pct": 80.49335359671805,
+          "rss_peak_kib": 118628,
+          "elapsed": 6.000495424999826,
+          "host_steal_pct": 7.125103562551781
+        },
+        "client": {
+          "pid": 171068,
+          "cpu_avg_pct": 101.49235405656687,
+          "rss_peak_kib": 55880,
+          "elapsed": 6.000452011001471,
+          "host_steal_pct": 5.797101449275362
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "status": "COMPLETED"
+    },
+    "tcp-obfs-awg": {
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.9.0.1 (10.9.0.1) 56(84) bytes of data.\n64 bytes from 10.9.0.1: icmp_seq=1 ttl=64 time=0.795 ms\n64 bytes from 10.9.0.1: icmp_seq=2 ttl=64 time=0.857 ms\n64 bytes from 10.9.0.1: icmp_seq=3 ttl=64 time=0.717 ms\n64 bytes from 10.9.0.1: icmp_seq=4 ttl=64 time=0.738 ms\n64 bytes from 10.9.0.1: icmp_seq=5 ttl=64 time=0.781 ms\n64 bytes from 10.9.0.1: icmp_seq=6 ttl=64 time=0.825 ms\n64 bytes from 10.9.0.1: icmp_seq=7 ttl=64 time=0.856 ms\n64 bytes from 10.9.0.1: icmp_seq=8 ttl=64 time=1.11 ms\n64 bytes from 10.9.0.1: icmp_seq=9 ttl=64 time=1.04 ms\n64 bytes from 10.9.0.1: icmp_seq=10 ttl=64 time=0.970 ms\n\n--- 10.9.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1834ms\nrtt min/avg/max/mdev = 0.717/0.868/1.105/0.122 ms",
+      "pids": {
+        "server": 113001,
+        "client": 171352
+      },
+      "tcp_up": {
+        "mbps": 408.5678144596026,
+        "retransmits": 420,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 113001,
+          "cpu_avg_pct": 117.10530691665956,
+          "rss_peak_kib": 74432,
+          "elapsed": 9.000446075002401,
+          "host_steal_pct": 0.11402508551881414
+        },
+        "client": {
+          "pid": 171352,
+          "cpu_avg_pct": 132.7715370139292,
+          "rss_peak_kib": 49264,
+          "elapsed": 9.00042303400187,
+          "host_steal_pct": 0.11383039271485487
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "tcp_down": {
+        "mbps": 551.592620653411,
+        "retransmits": 910,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 113001,
+          "cpu_avg_pct": 118.55051675023485,
+          "rss_peak_kib": 96156,
+          "elapsed": 9.000382531001378,
+          "host_steal_pct": 1.0783200908059023
+        },
+        "client": {
+          "pid": 171352,
+          "cpu_avg_pct": 136.2160915748515,
+          "rss_peak_kib": 49824,
+          "elapsed": 9.000405061000492,
+          "host_steal_pct": 0.640279394644936
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "status": "COMPLETED"
     },
     "udp-faketls-awg": {
-      "client_mode": "fake-tls",
-      "server_mode": "fake-tls",
-      "ping_rtt": "rtt min/avg/max/mdev = 8.126/13.486/19.281/3.227 ms",
-      "ping_loss": "0% packet loss",
-      "udp_sweep": {
-        "100M": {
-          "mbps": 100.0,
-          "loss_pct": 0,
-          "lost_packets": 0,
-          "packets": 52128,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "200M": {
-          "mbps": 200.0,
-          "loss_pct": 0.49,
-          "lost_packets": 507,
-          "packets": 104214,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "300M": {
-          "mbps": 300.0,
-          "loss_pct": 2.09,
-          "lost_packets": 3276,
-          "packets": 156427,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "400M": {
-          "mbps": 400.0,
-          "loss_pct": 5.05,
-          "lost_packets": 10523,
-          "packets": 208381,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "500M": {
-          "mbps": 499.9,
-          "loss_pct": 8.59,
-          "lost_packets": 22384,
-          "packets": 260628,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        },
-        "600M": {
-          "mbps": 600.0,
-          "loss_pct": 27.88,
-          "lost_packets": 87209,
-          "packets": 312761,
-          "kernel_rcvbuf_drops": 0,
-          "server_session_drops": 0
-        }
+      "qeli-bench-s_rmem_max": 16777216,
+      "qeli-bench-c_rmem_max": 16777216,
+      "ping": "PING 10.10.0.1 (10.10.0.1) 56(84) bytes of data.\n64 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=0.828 ms\n64 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=1.16 ms\n64 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=0.899 ms\n64 bytes from 10.10.0.1: icmp_seq=4 ttl=64 time=1.05 ms\n64 bytes from 10.10.0.1: icmp_seq=5 ttl=64 time=1.08 ms\n64 bytes from 10.10.0.1: icmp_seq=6 ttl=64 time=1.04 ms\n64 bytes from 10.10.0.1: icmp_seq=7 ttl=64 time=0.984 ms\n64 bytes from 10.10.0.1: icmp_seq=8 ttl=64 time=1.02 ms\n64 bytes from 10.10.0.1: icmp_seq=9 ttl=64 time=0.929 ms\n64 bytes from 10.10.0.1: icmp_seq=10 ttl=64 time=0.874 ms\n\n--- 10.10.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1807ms\nrtt min/avg/max/mdev = 0.828/0.985/1.157/0.097 ms",
+      "pids": {
+        "server": 113320,
+        "client": 171674
       },
-      "recordizer_active": true,
-      "recordizer_pmtu_log_probe": {
-        "client_dynamic_widen_logged": false,
-        "server_stdout_widen_logged": false,
-        "note": "The client normally certifies PMTU before constructing recordizer; the server writes its widening event to /var/log/qeli/server.log, not stdout."
-      }
+      "tcp_up": {
+        "mbps": 487.96890958279437,
+        "retransmits": 12278,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 113320,
+          "cpu_avg_pct": 119.4375545829697,
+          "rss_peak_kib": 94976,
+          "elapsed": 9.000519172997883,
+          "host_steal_pct": 0.05704506560182544
+        },
+        "client": {
+          "pid": 171674,
+          "cpu_avg_pct": 130.32639096232734,
+          "rss_peak_kib": 56004,
+          "elapsed": 9.000479422000353,
+          "host_steal_pct": 0.05858230814294083
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "tcp_down": {
+        "mbps": 958.6148796272017,
+        "retransmits": 876,
+        "lost_percent": null,
+        "jitter_ms": null,
+        "server": {
+          "pid": 113320,
+          "cpu_avg_pct": 125.32618805569795,
+          "rss_peak_kib": 111992,
+          "elapsed": 9.000513120998221,
+          "host_steal_pct": 0.058788947677836566
+        },
+        "client": {
+          "pid": 171674,
+          "cpu_avg_pct": 130.88105311296178,
+          "rss_peak_kib": 56068,
+          "elapsed": 9.00053882499924,
+          "host_steal_pct": 0.0
+        },
+        "kernel_rcvbuf_drops": 287,
+        "server_session_drops": 0
+      },
+      "udp_100": {
+        "mbps": 99.98770874891252,
+        "retransmits": null,
+        "lost_percent": 0,
+        "jitter_ms": 0.02156386860402283,
+        "server": {
+          "pid": 113320,
+          "cpu_avg_pct": 31.164193014027063,
+          "rss_peak_kib": 111784,
+          "elapsed": 6.000476249002531,
+          "host_steal_pct": 0.0
+        },
+        "client": {
+          "pid": 171674,
+          "cpu_avg_pct": 32.16395958164988,
+          "rss_peak_kib": 55980,
+          "elapsed": 6.000504990999616,
+          "host_steal_pct": 0.09149130832570906
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "udp_500": {
+        "mbps": 441.6844179565694,
+        "retransmits": null,
+        "lost_percent": 11.390588731799959,
+        "jitter_ms": 0.031531537487076225,
+        "server": {
+          "pid": 113320,
+          "cpu_avg_pct": 97.32611408776741,
+          "rss_peak_kib": 121860,
+          "elapsed": 6.000445054996817,
+          "host_steal_pct": 0.08650519031141868
+        },
+        "client": {
+          "pid": 171674,
+          "cpu_avg_pct": 107.99157795283436,
+          "rss_peak_kib": 55796,
+          "elapsed": 6.000467927999125,
+          "host_steal_pct": 0.08920606601248884
+        },
+        "kernel_rcvbuf_drops": 0,
+        "server_session_drops": 0
+      },
+      "status": "COMPLETED"
     }
+  },
+  "host_before": [
+    {
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))"
+    },
+    {
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.11/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.11 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.11 dev ens18 table local proto kernel scope host src 10.66.116.11 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.11 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=845,fd=11))"
+    }
+  ],
+  "baseline": {
+    "tcp_up": {
+      "mbps": 25142.988599220982,
+      "lost_percent": null,
+      "retransmits": 0
+    },
+    "tcp_down": {
+      "mbps": 24578.078726690386,
+      "lost_percent": null,
+      "retransmits": 0
+    },
+    "udp_500": {
+      "mbps": 499.96121914223136,
+      "lost_percent": 0,
+      "retransmits": null
+    }
+  },
+  "host_after": [
+    {
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))"
+    },
+    {
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.11/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.11 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.11 dev ens18 table local proto kernel scope host src 10.66.116.11 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.11 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=845,fd=11))"
+    }
+  ],
+  "host_restored": true,
+  "schema_version": 2,
+  "repeat_quic": {
+    "meta": {
+      "date": "2026-10-01T19:09:04.943540+00:00",
+      "binary_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+      "source_commit": "60ee158d7441383caf1146ffe40837631a5de1f7",
+      "native_source_digest": "d39a334335d8a0110a59683bbdf354dfbfb4bd8e5919bdc5981a4b08278f43a5",
+      "harness_sha256": "415a9059b1ea63c2d83e25c4d960c8e78d2c481acf8ff6c74e27c4cdf0fabe1c",
+      "tracked_dirty": false,
+      "seconds": 8,
+      "tcp_parallel": 1,
+      "recordizer": "off",
+      "throughput": "receiver bits_per_second; UDP offered rates 100/500 Mbps",
+      "topology": "two VM, isolated IPvlan network and private mount namespaces, local TLS target",
+      "server": {
+        "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+        "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+        "iperf": "iperf 3.18 (cJSON 1.7.15)",
+        "version": "qeli 0.8.2"
+      },
+      "client": {
+        "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+        "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+        "iperf": "iperf 3.18 (cJSON 1.7.15)",
+        "version": "qeli 0.8.2"
+      }
+    },
+    "modes": {
+      "udp-quic": {
+        "qeli-bench-s_rmem_max": 16777216,
+        "qeli-bench-c_rmem_max": 16777216,
+        "ping": "PING 10.10.0.1 (10.10.0.1) 56(84) bytes of data.\n64 bytes from 10.10.0.1: icmp_seq=1 ttl=64 time=0.672 ms\n64 bytes from 10.10.0.1: icmp_seq=2 ttl=64 time=1.02 ms\n64 bytes from 10.10.0.1: icmp_seq=3 ttl=64 time=1.04 ms\n64 bytes from 10.10.0.1: icmp_seq=4 ttl=64 time=0.945 ms\n64 bytes from 10.10.0.1: icmp_seq=5 ttl=64 time=1.30 ms\n64 bytes from 10.10.0.1: icmp_seq=6 ttl=64 time=0.958 ms\n64 bytes from 10.10.0.1: icmp_seq=7 ttl=64 time=1.17 ms\n64 bytes from 10.10.0.1: icmp_seq=8 ttl=64 time=0.702 ms\n64 bytes from 10.10.0.1: icmp_seq=9 ttl=64 time=1.08 ms\n64 bytes from 10.10.0.1: icmp_seq=10 ttl=64 time=0.897 ms\n\n--- 10.10.0.1 ping statistics ---\n10 packets transmitted, 10 received, 0% packet loss, time 1810ms\nrtt min/avg/max/mdev = 0.672/0.978/1.298/0.182 ms",
+        "pids": {
+          "server": 114131,
+          "client": 172364
+        },
+        "tcp_up": {
+          "mbps": 504.97889877803,
+          "retransmits": 16529,
+          "lost_percent": null,
+          "jitter_ms": null,
+          "server": {
+            "pid": 114131,
+            "cpu_avg_pct": 121.77143033373619,
+            "rss_peak_kib": 87760,
+            "elapsed": 9.00046913299957,
+            "host_steal_pct": 0.056818181818181816
+          },
+          "client": {
+            "pid": 172364,
+            "cpu_avg_pct": 132.21471158924788,
+            "rss_peak_kib": 54700,
+            "elapsed": 9.000511256999744,
+            "host_steal_pct": 0.057736720554272515
+          },
+          "kernel_rcvbuf_drops": 0,
+          "server_session_drops": 0
+        },
+        "tcp_down": {
+          "mbps": 907.628951171409,
+          "retransmits": 1129,
+          "lost_percent": null,
+          "jitter_ms": null,
+          "server": {
+            "pid": 114131,
+            "cpu_avg_pct": 118.66022279691721,
+            "rss_peak_kib": 112428,
+            "elapsed": 9.000488746998599,
+            "host_steal_pct": 0.058004640371229696
+          },
+          "client": {
+            "pid": 172364,
+            "cpu_avg_pct": 134.3262159393871,
+            "rss_peak_kib": 56172,
+            "elapsed": 9.00047687299957,
+            "host_steal_pct": 0.05652911249293386
+          },
+          "kernel_rcvbuf_drops": 0,
+          "server_session_drops": 0
+        },
+        "udp_100": {
+          "mbps": 99.98480600466695,
+          "retransmits": null,
+          "lost_percent": 0,
+          "jitter_ms": 0.004546104397766353,
+          "server": {
+            "pid": 114131,
+            "cpu_avg_pct": 31.162590101292235,
+            "rss_peak_kib": 112388,
+            "elapsed": 6.00078489599764,
+            "host_steal_pct": 0.0
+          },
+          "client": {
+            "pid": 172364,
+            "cpu_avg_pct": 31.99750834868344,
+            "rss_peak_kib": 56276,
+            "elapsed": 6.0004672210016,
+            "host_steal_pct": 0.09174311926605505
+          },
+          "kernel_rcvbuf_drops": 0,
+          "server_session_drops": 0
+        },
+        "udp_500": {
+          "mbps": 452.8046450578988,
+          "retransmits": null,
+          "lost_percent": 9.217684204065034,
+          "jitter_ms": 0.029704739084020347,
+          "server": {
+            "pid": 114131,
+            "cpu_avg_pct": 95.32590989162269,
+            "rss_peak_kib": 116156,
+            "elapsed": 6.00046724600179,
+            "host_steal_pct": 0.08741258741258741
+          },
+          "client": {
+            "pid": 172364,
+            "cpu_avg_pct": 109.49160007816808,
+            "rss_peak_kib": 56276,
+            "elapsed": 6.000460305000161,
+            "host_steal_pct": 0.0
+          },
+          "kernel_rcvbuf_drops": 0,
+          "server_session_drops": 0
+        },
+        "status": "COMPLETED"
+      }
+    },
+    "host_before": [
+      {
+        "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+        "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+        "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))"
+      },
+      {
+        "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.11/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+        "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.11 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.11 dev ens18 table local proto kernel scope host src 10.66.116.11 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.11 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+        "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=845,fd=11))"
+      }
+    ],
+    "baseline": {
+      "tcp_up": {
+        "mbps": 24360.83009467065,
+        "lost_percent": null,
+        "retransmits": 0
+      },
+      "tcp_down": {
+        "mbps": 24388.49475772832,
+        "lost_percent": null,
+        "retransmits": 0
+      },
+      "udp_500": {
+        "mbps": 499.95847482448767,
+        "lost_percent": 0,
+        "retransmits": null
+      }
+    },
+    "host_after": [
+      {
+        "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+        "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+        "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))"
+      },
+      {
+        "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.11/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+        "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.11 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.11 dev ens18 table local proto kernel scope host src 10.66.116.11 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.11 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+        "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=845,fd=11))"
+      }
+    ],
+    "host_restored": true
+  },
+  "raw_evidence_sha256": {
+    "full-12modes-01/direct/tcp_down-iperf.json": "2f8ee4cf1fc5e2623cac978c896fdb2e29061ce70db9bd9a9c2f3ac2c6e75e79",
+    "full-12modes-01/direct/tcp_up-iperf.json": "aabb2efd3876257e4e9929b7dc99a4628136f2b62e3ef5e68ca0556750c7e855",
+    "full-12modes-01/direct/udp_500-iperf.json": "af0ae99742387f8ec9f3b79fdd624616097c76f0969d7bfa2429ee3036bc0287",
+    "full-12modes-01/results.json": "c3c643c052b942c859d018fad31408986cb1e3f8f0de34a90902e8c9dcb91263",
+    "full-12modes-01/tcp-faketls/client.log": "21ff7fa4eaed0be76d64cd40d5691de23e575a17f29e8a32f885fd507eeb2c56",
+    "full-12modes-01/tcp-faketls/server.log": "a85e759955a78f113edd6de2784eada5c84b77e875c89b18a10fbeea360bf944",
+    "full-12modes-01/tcp-faketls/tcp_down-iperf.json": "a82c2178074b056dc7ce166dee7639898939755ef510d79812596f169eb888f7",
+    "full-12modes-01/tcp-faketls/tcp_down-processes.json": "28ea65ecefe7a86ecd0afa4f3c7247bffbe19fefc66e40bf36b068e8bb6e3bb8",
+    "full-12modes-01/tcp-faketls/tcp_up-iperf.json": "4f4673685ed1f11681c3ac2b9157f35a11d401dcca548e659eb65786132bfcf4",
+    "full-12modes-01/tcp-faketls/tcp_up-processes.json": "c635e28682c778301f79560e3d4d42e463d723c122d0f6242880453d57edf6d7",
+    "full-12modes-01/tcp-frag/client.log": "49e8fef7d552d4e0e6d999aa46758c77ce99c0581a577c7dc860f6c1b22515dd",
+    "full-12modes-01/tcp-frag/server.log": "03078bed49b18d12a7effa8823653dc856f95157c8b484f3b449a218d212c7ab",
+    "full-12modes-01/tcp-frag/tcp_down-iperf.json": "4728a395fc33a739d9ddfc024a8b88916b17736e5290ec7ae736a57d9103ce64",
+    "full-12modes-01/tcp-frag/tcp_down-processes.json": "ed720706b48fffea597851f9a9f755870512a8d417f39e39dcb225f99ef3fdb2",
+    "full-12modes-01/tcp-frag/tcp_up-iperf.json": "f55428cfbff175e4d6a5e1dea6c73158b5918e7cb75eac74763e3e903c2801f4",
+    "full-12modes-01/tcp-frag/tcp_up-processes.json": "cd6db7b59f784d22fd533735680b88f8f77668f418740358092d2091ac19bc2a",
+    "full-12modes-01/tcp-obfs/client.log": "092e4682d7ed39f0cd0c9e63d9c2da6941b13efb704eb2b9f69429d26a444619",
+    "full-12modes-01/tcp-obfs/server.log": "b9b53babbc97b3e1c80eaf346ffd9a01c7feedb76b003506925abf1479fc1db6",
+    "full-12modes-01/tcp-obfs/tcp_down-iperf.json": "8d4f3c6d7bb69d826406e2f87aa9b9f428cbb76299993097a91d63012a0008ff",
+    "full-12modes-01/tcp-obfs/tcp_down-processes.json": "be77039f51d61d94999d64e010d89e6fe5d80c6d40102008efde6dde5841283f",
+    "full-12modes-01/tcp-obfs/tcp_up-iperf.json": "12ee9434f9bdaae441ed5e692b60f860c18fd1971febeff32f98cc0795905ffb",
+    "full-12modes-01/tcp-obfs/tcp_up-processes.json": "a9d6328c12ef19b6d59a30d01a3f97a39785d8e4f05f2cd3a8853bf2959543d6",
+    "full-12modes-01/tcp-obfs-awg/client.log": "7a95fe00ef56e1128a514eaae9cbf01dce3d75cd6480bd773cb89fc4f3d29c08",
+    "full-12modes-01/tcp-obfs-awg/server.log": "53a48d326a3cd8c88e5a1a4b6a3e99b4b8c05b3232908ce8c8f1acaf32318694",
+    "full-12modes-01/tcp-obfs-awg/tcp_down-iperf.json": "888b55d662d1e71b031eb5225a246c9e49f11fe292faff960e7f763cf8679693",
+    "full-12modes-01/tcp-obfs-awg/tcp_down-processes.json": "907366f6ddafd07e51e23ef9f5ef8fd9bb3afb47d6bda98a1eeb4c632a1b89e8",
+    "full-12modes-01/tcp-obfs-awg/tcp_up-iperf.json": "206e82cbcc1cdd6d91496682672331feca36e99feabdfc43f43694a465d1a775",
+    "full-12modes-01/tcp-obfs-awg/tcp_up-processes.json": "ba40bfa8496367014db01b1ca07452ba5a7af0c2d25790f987baca40def0fecc",
+    "full-12modes-01/tcp-padding/client.log": "ee5e357fbc47e2cf94be807c36cbd721c93ba514f385f5fefe9cf7fa1542a6f2",
+    "full-12modes-01/tcp-padding/server.log": "5ee28c98d1a466a8001fc66ac832c6dbbdeccc40a1c6e72564acd4aee2b5608a",
+    "full-12modes-01/tcp-padding/tcp_down-iperf.json": "1cbf71634f5045b3de1fa7d55626839e1583f2d7772b5a830ac6b0611d2b2f74",
+    "full-12modes-01/tcp-padding/tcp_down-processes.json": "cfb4ff856c17a0deef328618dd874e135b4412b3146342896f2dadc88be77b4a",
+    "full-12modes-01/tcp-padding/tcp_up-iperf.json": "4eff438632eb743b0ed1ee6d25e8f51532e16e9ef9e1a5a4f576fc33297c907c",
+    "full-12modes-01/tcp-padding/tcp_up-processes.json": "ac99cbeaf91bfd0fb2e4f261a0734b95962aafc63cd0c1a1ccc10a93b3cf3a1e",
+    "full-12modes-01/tcp-plain-raw/client.log": "ee54547a90a874fc6f96fd809796a0ac42f5b6ede766a1596b460858c2b1d1ff",
+    "full-12modes-01/tcp-plain-raw/server.log": "6b931a7d9fe0153eaa43b38c34248175298a5397f8105cfb764a4dc5ff741536",
+    "full-12modes-01/tcp-plain-raw/tcp_down-iperf.json": "adec02984b5c53164365efa20d883b4aec599ab8897bdfe3fd13b89fb9efc521",
+    "full-12modes-01/tcp-plain-raw/tcp_down-processes.json": "7ef8d6307dcb9b69bad0d401d403c7d098e7acf05a8e828b89363f9bcf9feafa",
+    "full-12modes-01/tcp-plain-raw/tcp_up-iperf.json": "f0decee3c6fa879454792733fe3db506d85c1e246edcf0c617a9852a698e81df",
+    "full-12modes-01/tcp-plain-raw/tcp_up-processes.json": "610ec1a6ecfd5ca4f4fab8142b4399b1475f496828c868c6a23f016d4ef9bcba",
+    "full-12modes-01/tcp-reality/client.log": "8fa94e6ffbbd26808df57c1c577e37c0403dac2a7c6c5d2c6b300fcea07241b8",
+    "full-12modes-01/tcp-reality/server.log": "b51ecb2c0bfa4469725bb5c2de20206abafd1bbc6a25353ec2a01730a6049118",
+    "full-12modes-01/tcp-reality/tcp_down-iperf.json": "d48617af50f53aa8801de7bda867c407bafce8db4440587b14b58342488ee791",
+    "full-12modes-01/tcp-reality/tcp_down-processes.json": "e515c8eeb07ee0f54fe5bb87495d342f96d4cc6e137852d18012f7af3061a9a7",
+    "full-12modes-01/tcp-reality/tcp_up-iperf.json": "c7e2528a93553cd953b145c11a1abfdbaec7e8737412429550ad33d303ceaec4",
+    "full-12modes-01/tcp-reality/tcp_up-processes.json": "a0d25cabc5f6a82215d4ce208e08b729eefd1b522ff61fb54411378f047bd72c",
+    "full-12modes-01/tcp-reality-tls/client.log": "f3f38b827ef3c080904aac50ea2a1def9a903a5c5ab9a78afef98dd8681e5a54",
+    "full-12modes-01/tcp-reality-tls/server.log": "144f3312dd2e6556e8dc22c6ee83834d8b5d23ee4afc69ccfd78bf1edd9f7877",
+    "full-12modes-01/tcp-reality-tls/tcp_down-iperf.json": "60e918f6a3d4763f4b3a52de465dcc16bbffe99dd263d90a643951940df8a6cf",
+    "full-12modes-01/tcp-reality-tls/tcp_down-processes.json": "748d9959d0e9e4b740c806ca6f0642f6797042dd0174a42aa4a61af01d74ceab",
+    "full-12modes-01/tcp-reality-tls/tcp_up-iperf.json": "61dca223ced8afb93885469caa6c4abc7536f5edafeb49261e58515150e5e1f3",
+    "full-12modes-01/tcp-reality-tls/tcp_up-processes.json": "50ea0cf10df954dbd7ba1b84bad274321555bfbcf396bd07470dc2f075a3d7bc",
+    "full-12modes-01/udp-faketls/client.log": "4e60ae53037df37ee4efa3661903eb9284b3b30c0ea573b9680e9a09f8372a54",
+    "full-12modes-01/udp-faketls/server.log": "215511c42f7df226491da607f80f65f6bb2fc2bdb5216080cbf0f4be0a954b19",
+    "full-12modes-01/udp-faketls/tcp_down-iperf.json": "1517b5d56d6c9fdec23fce5500ac73fcb77ad85b287bc81b909d63f2029173f9",
+    "full-12modes-01/udp-faketls/tcp_down-processes.json": "7255ee9e9192dc8ccc0a007e795bebae28f7d0577a50b5ebd53e0095dc70c2b3",
+    "full-12modes-01/udp-faketls/tcp_up-iperf.json": "9bd12a0156c735c4c1bb5d14a8b3ddfc8caaa821b3c3f62bd34d86bcf925cac2",
+    "full-12modes-01/udp-faketls/tcp_up-processes.json": "60d284e10850e1add82ab5d92f129db8184c6c051e4b3d59b05d3e3f4ce68214",
+    "full-12modes-01/udp-faketls/udp_100-iperf.json": "81f39d40dfe698c2b160189d114e684b5754543ea4503819ca3c52bf05a1e7fb",
+    "full-12modes-01/udp-faketls/udp_100-processes.json": "6331d44d9ca2d4a10cf5a288cd51a9759933d19e38d553e2c4dd8ee2e4b2899f",
+    "full-12modes-01/udp-faketls/udp_500-iperf.json": "73621f87aedd564b5138ef183cf194022865008d5ab1609dc4516c9e8e347cb4",
+    "full-12modes-01/udp-faketls/udp_500-processes.json": "75997322c29452e3de81c611379194fd6074e71ce3474ebae94b70f5a756f0a9",
+    "full-12modes-01/udp-faketls-awg/client.log": "00815824ccd3d0f579f4db5cca5e24a4cdd67809e076ea5aed9d1dd50b3b3a51",
+    "full-12modes-01/udp-faketls-awg/server.log": "e763dcc3c7b60ca7cb64625f1ef244243476302db1072183efdda9f1a99733a2",
+    "full-12modes-01/udp-faketls-awg/tcp_down-iperf.json": "5c10c5403ba1a567c1acd3cddde2bcd495c843bef10f4bcba64cd452fcf7ca40",
+    "full-12modes-01/udp-faketls-awg/tcp_down-processes.json": "29e687f73d999d252700de692488a206d022a74b1317acd86e21f625b656f61e",
+    "full-12modes-01/udp-faketls-awg/tcp_up-iperf.json": "669c96c6485d8adde41a22dedde1eb084ae9a22d607dae88414e54797763543e",
+    "full-12modes-01/udp-faketls-awg/tcp_up-processes.json": "464ab8271539e60056c3a310e79d81f8a73961f11253911f4dd3f20dea12e689",
+    "full-12modes-01/udp-faketls-awg/udp_100-iperf.json": "4d887944accff56b9ba64374253bfccc00236c8348d102f47e761c0d2a950647",
+    "full-12modes-01/udp-faketls-awg/udp_100-processes.json": "b7b21d4ce53342e959f34e2cb68bcbf66b37c4d46e832382fd04ea7a2f13814f",
+    "full-12modes-01/udp-faketls-awg/udp_500-iperf.json": "646de8189db441e9066f56fff23d44f174404a1b28bcaa2657b67fb71f1b7fa0",
+    "full-12modes-01/udp-faketls-awg/udp_500-processes.json": "bc9d6dfdcb1940be78e0a408b27be49bacdc801bbf547ea90a37940a85400b98",
+    "full-12modes-01/udp-padding/client.log": "ee3fec247386596fd1f59aeb85518ebde6d2f1d7113515ec9475f657cd718ab0",
+    "full-12modes-01/udp-padding/server.log": "6be266574ea042cfe10e92df9b62289123ef1fa862cd78f0da87aafd0b16f2f9",
+    "full-12modes-01/udp-padding/tcp_down-iperf.json": "24e4d4b609cf18e0dd861901e81e1f001a50979a13700e5492bff5545ba8d6a8",
+    "full-12modes-01/udp-padding/tcp_down-processes.json": "e757cb4c2121f3d22477cdf9c3726eeada19a9e0b64571cee89417728c2e490c",
+    "full-12modes-01/udp-padding/tcp_up-iperf.json": "4171abf6bdd077a71cf301cdb617d8a08b5cbef96a34fb7a4b4be794915d64b2",
+    "full-12modes-01/udp-padding/tcp_up-processes.json": "c2ee4ce9ed0945345cf2d2aa9156fd74f8fd07e7b4a987ab47c9ad019b82efde",
+    "full-12modes-01/udp-padding/udp_100-iperf.json": "a122b0f771f9539bc58eec56ebde55b3d1cb8d0447cbfe751b1e1f1bd45952c7",
+    "full-12modes-01/udp-padding/udp_100-processes.json": "d23955f3aa87962b324dd776be0ebb3d7e0a7a07fc981aa598c3e4be269ed23f",
+    "full-12modes-01/udp-padding/udp_500-iperf.json": "6cf1876b5bd4ee4ef345fc330f92e1accd25876034f7734e14c56906e80f9956",
+    "full-12modes-01/udp-padding/udp_500-processes.json": "3b2bd2b4b44be8826d6e710e123719fd1d12cc7e5229ba4f200bc7ec9542ec41",
+    "full-12modes-01/udp-quic/client.log": "8e60bd64d7372bf28010cb29a5585b02a9e10a6855dd316a93d03afd38e143f1",
+    "full-12modes-01/udp-quic/server.log": "1fe74449be3bed677f54ebea293f2c8b32c6edd455363e74d959356885118439",
+    "full-12modes-01/udp-quic/tcp_down-iperf.json": "1a4cc24f7e2b2dafa9ff82dc0c3f30925ccab9f478f7c6d5fcde40e177790abd",
+    "full-12modes-01/udp-quic/tcp_down-processes.json": "9523857c9c53313458d83fbb4b8e9e885b102c6f279094536e01e21fc3c7c513",
+    "full-12modes-01/udp-quic/tcp_up-iperf.json": "bbccfdcad1a8c71555b400cb3f9bac1666298107842e99d8fae263d1220a7faa",
+    "full-12modes-01/udp-quic/tcp_up-processes.json": "36aec34ad9a2e959715893251ba972962bad6318613beda7807f1d30fe318800",
+    "full-12modes-01/udp-quic/udp_100-iperf.json": "634054b27c27231c380165f0bcc9fc7e5a904fee2d7782bb0b3d778767679415",
+    "full-12modes-01/udp-quic/udp_100-processes.json": "d3bb0eede08bbc00dacd8dea56978399569ee908b19e216c8b2850b7b91657b1",
+    "full-12modes-01/udp-quic/udp_500-iperf.json": "b3bd6e3b9b0f82da71f19170ee53aace8bf2a0d544abcb96aabbcecbae0138c9",
+    "full-12modes-01/udp-quic/udp_500-processes.json": "8c4352c693d847a97c220bfed9a80fa650a7254ab93131e95e6c988af466e2be",
+    "quic-repeat-02/direct/tcp_down-iperf.json": "355fdf67de05f0f0fe7031d06b06a4c4d3848a83a8d208af2f98811bb81faf65",
+    "quic-repeat-02/direct/tcp_up-iperf.json": "9ee6cdcfda5d26593d57ebff0f96b0d2a3e4c6d1e6ee4f350bd6ba39e93cf71b",
+    "quic-repeat-02/direct/udp_500-iperf.json": "00ca1704c2dcad596e4233fbac3e58594445653baa580facc3e85ab6aaf5b319",
+    "quic-repeat-02/results.json": "f8ab06abe07e1f6ccd446454397aa9adbc150d1fd50e08654efc30795bb96b5e",
+    "quic-repeat-02/udp-quic/client.log": "834a884846e5b1bcd9eb46011bfde7b6919235eab8cf964d1a811ca6850d0bad",
+    "quic-repeat-02/udp-quic/server.log": "96bc50807f595e3aabbd2354e95badb67f0de540dcec23a124b1cccf9f69dd38",
+    "quic-repeat-02/udp-quic/tcp_down-iperf.json": "7628c9c6ca89fa7f6272180f3ab60bea7643177cfc799f6eb5a02b5136a7cf65",
+    "quic-repeat-02/udp-quic/tcp_down-processes.json": "aaa7a0287c97b1f5dca656cc52c4160a8eece4541c17b82d73ff7e604ed0cd1d",
+    "quic-repeat-02/udp-quic/tcp_up-iperf.json": "0430e0ac4f9bfeba0dd7bdccb19178e091fd09a3aa06b45f381f6eb2ddfdd1fc",
+    "quic-repeat-02/udp-quic/tcp_up-processes.json": "f8bae1f550761f3a11e9cf0eb068b969339d9027698912e78630c613cab5b82b",
+    "quic-repeat-02/udp-quic/udp_100-iperf.json": "abd444c10b26d3b51ae4b1f7ab8ca90887d77ad2451f6fe1bd17fbb7b03be5ea",
+    "quic-repeat-02/udp-quic/udp_100-processes.json": "4a0a3cad016efe130aac8237a6067dbb392c97c748aba7a7aa1582a3a3500bc8",
+    "quic-repeat-02/udp-quic/udp_500-iperf.json": "e3fbf6f65d2fe8234fefc9fc6ef9f2e3e295dc546d32a613aa087d2b3d7feb77",
+    "quic-repeat-02/udp-quic/udp_500-processes.json": "2673938535055571a2d47b108b492dade77d6a5646be265d1c52beb15318ebcb"
+  },
+  "validation": {
+    "mode_count": 12,
+    "measurement_phases": 32,
+    "all_completed": true,
+    "host_restored_both_runs": true,
+    "all_kernel_rcvbuf_drops_zero": false,
+    "all_server_session_drops_zero": true
   }
 }
