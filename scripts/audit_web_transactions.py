@@ -324,11 +324,14 @@ obf.mode = fake-tls
     ('bandwidth','/api/users/uncertain/bandwidth','POST',{'limit_mbps':7,'burst_mbps':9}),
     ('group-upsert','/api/groups/uncertain-template','PUT',{'max_sessions':2}),
     ('group-delete','/api/groups/uncertain-template','DELETE',None),
+    ('share-reset','/api/share','POST',{'profile':'fixture','host':'vpn.fixture.invalid','user':'uncertain','allow_reset':'true'}),
     ('delete','/api/users/uncertain','DELETE',None),
    ]:
     old=users_path.read_bytes();action.write_text('dir-fsync');r=api(path,method,body)
     probe(label+' API reports published durability failure truthfully',r.get('ok') is False and users_path.read_bytes()!=old and 'persistence is uncertain' in r.get('error','') and 'NOT applied' not in r.get('error','') and r.get('published') is True and r.get('reload_requested') is True,r)
     if label=='create':wait(lambda:control('show-routes','uncertain').get('ok') is True,'published create did not reload worker');check('published failed create is accepted by worker readback',True)
+    if label=='share-reset':
+     again=api('/api/share','POST',{'profile':'fixture','host':'vpn.fixture.invalid','user':'uncertain'});check('published failed reset reissues persisted credentials without another reset',again.get('ok') is True and again.get('reset') is False and again.get('new_password') is None,again.get('ok'))
     if label=='delete':wait(lambda:control('show-routes','uncertain').get('ok') is False,'published delete did not reload worker');check('published failed delete revokes worker auth record',True)
    for cmd in ('disable-user','enable-user','set-limit','set-bandwidth'):
     old=users_path.read_bytes();action.write_text('dir-fsync');r=control(cmd,'parallel-0',mbps=8,data_limit_gb=11)
