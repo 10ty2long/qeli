@@ -549,7 +549,7 @@ obf.mode = fake-tls
     device_ns=ns+'-'+str(i);srv='q6srv'+str(i);cli='q6cli'+str(i);subnet='198.18.'+str(i+1)
     for cmd in (['ip','netns','add',device_ns],['ip','link','add',srv,'type','veth','peer','name',cli],['ip','link','set',cli,'netns',device_ns],['ip','addr','add',subnet+'.1/30','dev',srv],['ip','link','set',srv,'up'],['ip','netns','exec',device_ns,'ip','link','set','lo','up'],['ip','netns','exec',device_ns,'ip','addr','add',subnet+'.2/30','dev',cli],['ip','netns','exec',device_ns,'ip','link','set',cli,'up'],['ip','netns','exec',device_ns,'ip','route','add','default','via',subnet+'.1']):run(cmd)
     run(['iptables','-A','INPUT','-i',srv,'-d','10.77.0.1','-j','DROP'])
-   original=cfg.read_text().replace('[auth]','[auth]\nrequire_client_key_proof = false\nbind_static_to_session = false').replace('bind.address = 127.0.0.1','bind.address = 198.18.0.1')
+   original=cfg.read_text().replace('[auth]','[auth]\nrequire_client_key_proof = false\nbind_static_to_session = false').replace('bind.address = 127.0.0.1','bind.address = 198.18.0.1')+'\nperf.connection.new_session_rate_max = 200\n'
    usage=Path('/etc/qeli/usage.json');usage.write_text(json.dumps({'live-'+t+'-quota':dict(used_down=1000000000,used_up=0,used_bytes=1000000000,last_seen=1,sessions=0) for t in ('tcp','udp')}));usage.chmod(0o600)
    for transport in ('tcp','udp'):
     cfg.write_text(original.replace('bind.transport = tcp','bind.transport = '+transport));cfg.chmod(0o600);start()
