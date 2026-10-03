@@ -577,6 +577,18 @@ obf.mode = fake-tls
      check(name+' no orphan session after both clients stop',not present(name))
      check(name+' user teardown',api('/api/users/'+name,'DELETE').get('ok') is True)
     stop()
+   # A device cap belongs to each profile, even when the account is shared.
+   second='\n[profile:fixture2]\nbind.address = 198.18.0.1\nbind.port = 24844\nbind.transport = tcp\ntun.name = qauth2\ntun.address = 10.78.0.1\npool.cidr = 10.78.0.0/24\nrouting.nat.enabled = false\nrouting.ipv6.mode = off\ndns.enabled = false\nobf.mode = fake-tls\n'
+   cfg.write_text(original+second);cfg.chmod(0o600);start();name='admit-profile-scope'
+   check(name+' scoped user seed',api('/api/users','POST',{'username':name,'password':'fixture-client-password','max_sessions':1,'profiles':['fixture','fixture2']}).get('ok') is True);wait(lambda:loaded(name),'profile seed reload')
+   for i in range(2):
+    key=name+'-'+str(i);device_ns=ns+'-'+str(i);config=root/(key+'.conf');config.write_text('[qeli]\nserver = 198.18.0.1:'+str(24843+i)+'\nproto = tcp\nuser = '+name+'\npass = fixture-client-password\nmode = fake-tls\nbind_static = false\nquic = false\ndev = q06d'+str(i)+'\ngateway = false\ndns = off\nkill_switch = false\ntimeout = 8\n[logging]\nlevel = info\n');config.chmod(0o600)
+    log=(root/(key+'.log')).open('w');streams.append(log);client_env=dict(env,QELI_KNOWN_HOSTS=str(root/(key+'-known-hosts')),QELI_DEVICE_ID_FILE=str(root/(key+'-device-id')));clients.append(subprocess.Popen(['ip','netns','exec',device_ns,str(binary),'client','-c',str(config)],env=client_env,stdout=log,stderr=subprocess.STDOUT))
+    wait(lambda:len([x for x in api('/api/clients')['clients'] if x['username']==name])==i+1,'profile device admission');wait(lambda:subprocess.run(['ip','netns','exec',device_ns,'ip','link','show','q06d'+str(i)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0,'profile device setup');run(['ip','netns','exec',device_ns,'ping','-I','q06d'+str(i),'-c','1','-W','2','10.'+str(77+i)+'.0.1'])
+   rows=[x for x in api('/api/clients')['clients'] if x['username']==name];check(name+' one device remains active on each profile',sorted(x['profile'] for x in rows)==['fixture','fixture2'])
+   check(name+' narrow profile allowlist saved',api('/api/users/'+name,'PUT',{'profiles':['fixture2']}).get('ok') is True);wait(lambda:[x['profile'] for x in api('/api/clients')['clients'] if x['username']==name]==['fixture2'],'profile selective revoke')
+   kept=subprocess.run(['ip','netns','exec',ns+'-1','ping','-I','q06d1','-c','1','-W','2','10.78.0.1'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=5);check(name+' allowed profile retains tunnel traffic',kept.returncode==0,kept.stdout)
+   check(name+' deleting account accepted',api('/api/users/'+name,'DELETE').get('ok') is True);wait(lambda:not present(name),'profile delete revoke');check(name+' deletion removes all profile sessions',not present(name));client_stop();stop()
    complete=all(x['status']=='PASS' for x in checks)
   finally:
    client_stop();stop()

@@ -35,6 +35,13 @@ async function main() {
     assert(html.includes(':value="form.bandwidth_burst" disabled'));
     assert(!html.includes('x-model.number="form.bandwidth_burst"'));
   });
+  await check('editing a user preserves stored legacy burst in the API request', async () => {
+    let sent;
+    const {model} = component('users.html','usersPage', {apiFetch: async (url,options) => {sent=JSON.parse(options.body);return {ok:true};}});
+    model.openEdit({username:'legacy',bandwidth:{limit_mbps:0,burst_mbps:99}});
+    model.form.bandwidth_limit=2;model.load=async () => {};
+    await model.save();assert.deepEqual(sent.bandwidth,{limit_mbps:2,burst_mbps:99});
+  });
   await check('configuration exposes Form and INI only', async () => {
     const { model, html } = component('config.html', 'configPage');
     assert(!html.includes("switchView('json')"));
