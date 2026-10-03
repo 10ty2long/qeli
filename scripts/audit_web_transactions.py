@@ -158,9 +158,9 @@ obf.mode = fake-tls
      try:
       def outcome():
        text=logpath.read_text(errors='replace')
-       return ('Auth OK' in text) if expect_success else ('failed' in text.lower() or 'error' in text.lower())
+       return ('Auth OK' in text) if expect_success else any(marker in text.lower() for marker in ('decryption failed','server auth proof verification failed','server key mismatch'))
       wait(outcome,'rotation client admission did not finish: '+label)
-      text=logpath.read_text(errors='replace');record(label,('Auth OK' in text)==expect_success)
+      text=logpath.read_text(errors='replace');record(label,('Auth OK' in text) if expect_success else 'Auth OK' not in text and any(marker in text.lower() for marker in ('decryption failed','server auth proof verification failed','server key mismatch')))
      finally:
       if proc.poll() is None:proc.terminate();proc.wait(timeout=25)
       log.close()
