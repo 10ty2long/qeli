@@ -7,6 +7,7 @@ use crate::crypto::{
     derive_session_material_hybrid_bound,
 };
 use crate::protocol::obfs::SplitStream;
+use crate::protocol::stream_io::WriteAllFlush;
 use crate::protocol::{
     read_record, read_record_into, read_tls_record, FakeTlsHandshake, Framing, Obfuscator,
     PacketCodec,
@@ -14,7 +15,6 @@ use crate::protocol::{
 use crate::server::{
     lock_or_recover, ExitAccess, ProfileRuntime, ServerState, ServerTunPacket, TunIngress,
 };
-use crate::protocol::stream_io::WriteAllFlush;
 #[cfg(feature = "experimental-roaming")]
 use crate::transport_core::buffer_pool::{BufferPool, PooledBuffer};
 #[cfg(feature = "experimental-roaming")]
