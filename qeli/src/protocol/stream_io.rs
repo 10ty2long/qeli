@@ -10,4 +10,3 @@ pub(crate) trait WriteAllFlush: AsyncWrite + Unpin {
     }
 }
 impl<W: AsyncWrite + Unpin + ?Sized> WriteAllFlush for W {}
-
