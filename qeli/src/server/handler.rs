@@ -1149,7 +1149,6 @@ where
                     .collect();
                 for ip in stale {
                     if let Some(old) = sessions.remove(ip) {
-                        old.kick_all();
                         // Strip the old session's inbound iroutes from the map — a dead
                         // ClientRoute would otherwise win route_lookup or stack a duplicate
                         // on this same-device reconnect. Kernel deletion is deferred until
@@ -1194,7 +1193,6 @@ where
                         .get_by_address(address)
                         .map(|holder| holder.client_ip);
                     if let Some(old) = holder_primary.and_then(|primary| sessions.remove(primary)) {
-                        old.kick_all();
                         // Strip the evicted holder's iroutes (map only — see the supersede
                         // note above; the admitted session re-programs the kernel).
                         evicted_client_routes.extend(sessions.take_client_routes(old.client_ip));
@@ -1222,7 +1220,6 @@ where
                         let oldest_ip = user_sessions[0].0;
                         match sessions.remove(oldest_ip) {
                             Some(old) => {
-                                old.kick_all();
                                 // Strip the evicted device's iroutes (map only).
                                 evicted_client_routes
                                     .extend(sessions.take_client_routes(oldest_ip));
@@ -1256,7 +1253,13 @@ where
             // IP. The orphan keeps injecting packets with that source while all return
             // traffic — including replies to its own connections — is routed to the other
             // client. (Audit 2026-08-04.)
-            for s in superseded.iter().chain(&cap_evicted) {
+            let evicted = superseded
+                .iter()
+                .chain(&cap_evicted)
+                .cloned()
+                .collect::<Vec<_>>();
+            supersede_sessions(&evicted).await;
+            for s in &evicted {
                 crate::server::notify::fire_disconnect(&s.username, &profile.name, s.peer);
             }
 
@@ -1476,7 +1479,6 @@ where
                 // competing authenticator. Handle an inconsistent pre-existing owner
                 // defensively instead of silently dropping its routes and lease.
                 if let Some(old) = sessions.insert(session.clone()) {
-                    old.kick_all();
                     replaced_routes.extend(sessions.take_client_routes(old.client_ip));
                     replaced_session = Some(old);
                 }
@@ -1502,6 +1504,7 @@ where
                 let _ = program_client_subnet_route(false, cidr, &pcfg.tun.name).await;
             }
             if let Some(old) = &replaced_session {
+                supersede_sessions(std::slice::from_ref(old)).await;
                 if old.device_key != dkey {
                     profile.pool.lock().await.release(&old.device_key);
                 }
@@ -2132,6 +2135,37 @@ fn handle_server_control(
     }
     None
 }
+/// Tell supported clients that replacement is terminal before closing their carriers.
+/// One deadline covers the entire eviction batch; an unresponsive/legacy peer cannot
+/// multiply admission latency. Leases remain owned until this bounded delivery ends.
+async fn supersede_sessions(sessions: &[Arc<SessionShared>]) {
+    #[cfg(feature = "experimental-roaming")]
+    {
+        let mut deliveries = tokio::task::JoinSet::new();
+        for session in sessions {
+            let session = session.clone();
+            deliveries.spawn(async move {
+                let event = crate::protocol::control_v2::ManagementEvent::Kick(
+                    crate::protocol::control_v2::Kick {
+                        reason: crate::protocol::control_v2::KickReason::SessionSuperseded,
+                        message: "Session replaced by a newer connection".to_string(),
+                        reconnect_allowed: false,
+                    },
+                );
+                let _ = session.send_management(&event).await;
+            });
+        }
+        let _ = tokio::time::timeout(Duration::from_secs(4), async {
+            while deliveries.join_next().await.is_some() {}
+        })
+        .await;
+        // Dropping JoinSet aborts any remaining delivery before leases are reassigned.
+    }
+    for session in sessions {
+        session.kick_all();
+    }
+}
+
 async fn forward_server_uplink_packet(
     packet: ServerTunPacket,
     profile: &Arc<ProfileRuntime>,

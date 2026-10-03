@@ -25,6 +25,16 @@ function component(file, factory, overrides = {}) {
 }
 async function check(name, fn) { await fn(); passed++; console.log('PASS ' + name); }
 async function main() {
+  await check('user bandwidth displays the effective group cap and ignores legacy burst', async () => {
+    const {model, html} = component('users.html', 'usersPage');
+    model.groups = [{name:'limited', bandwidth_limit_mbps:3}];
+    assert.equal(model.effectiveBandwidth({group:'limited', bandwidth:{limit_mbps:0,burst_mbps:50}}),3);
+    assert.equal(model.effectiveBandwidth({group:'limited', bandwidth:{limit_mbps:1,burst_mbps:50}}),1);
+    assert.equal(model.effectiveBandwidth({bandwidth:{limit_mbps:0,burst_mbps:50}}),0);
+    assert.equal(model.effectiveBandwidth({group:'removed'}),0);
+    assert(html.includes(':value="form.bandwidth_burst" disabled'));
+    assert(!html.includes('x-model.number="form.bandwidth_burst"'));
+  });
   await check('configuration exposes Form and INI only', async () => {
     const { model, html } = component('config.html', 'configPage');
     assert(!html.includes("switchView('json')"));
