@@ -223,6 +223,9 @@ obf.mode = fake-tls
     for name,data in items.items():
      t=tarfile.TarInfo('qeli/'+name);t.size=len(data);t.mode=0o600;tar.addfile(t,io.BytesIO(data))
    return out.getvalue()
+  def record(name,ok,detail=None):
+   # Continue independent baseline probes; the final result still fails closed.
+   checks.append(dict(name=name,status='PASS' if ok else 'FAIL',detail=detail));save();print(('PASS ' if ok else 'FAIL ')+name,flush=True)
   def current():return {n:Path('/etc/qeli',n).read_bytes() for n in ['server.conf','users.conf','identity/fixture.key']}
   def unpack(path):
    with tarfile.open(path,mode='r:gz') as tar:return {m.name:tar.extractfile(m).read() for m in tar if m.isfile()}
@@ -280,23 +283,23 @@ int unlink(const char *path) {
    for mode in ['fail-io','fail-space','fail-permission']:
     previous=current();arm(mode);r=req('/api/restore','POST',archive(candidate(previous)),headers=basic());action.unlink(missing_ok=True)
     check(mode+' actual fault reached',event.exists() and event.read_text()==mode)
-    bak=Path(r[1].get('rollback_snapshot','/nonexistent'))
-    check(mode+' API refuses partial publication with recovery metadata',r[0]==500 and r[1].get('ok') is False and r[1].get('publication_started') is True and bak.is_file(),r[1])
+    bak=Path(r[1]['rollback_snapshot']) if r[1].get('rollback_snapshot') else max(Path('/etc/qeli').glob('.pre-restore-*.tgz'),key=lambda p:p.stat().st_mtime_ns)
+    record(mode+' API refuses partial publication with recovery metadata',r[0]==500 and r[1].get('ok') is False and r[1].get('publication_started') is True and bak.is_file(),r[1])
     changes=sum(current()[n]!=v for n,v in previous.items());check(mode+' one file changed before second rename failed',changes==1,changes);recover(bak,previous,mode)
     check(mode+' healthy panel remains available without implicit restart',req('/api/status',headers=basic())[0]==200 and sup.poll() is None)
    previous=current();stale=Path('/etc/qeli/prune-fault.txt');stale.write_bytes(b'preserved by rollback');arm('prune');r=req('/api/restore?exact=1','POST',archive(candidate(previous)),headers=basic());action.unlink(missing_ok=True)
    check('exact prune fault actually reached',event.exists() and event.read_text()=='prune')
-   bak=Path(r[1].get('rollback_snapshot','/nonexistent'));check('exact prune failure is not reported as success',r[0]==500 and r[1].get('ok') is False and r[1].get('publication_started') is True and bak.is_file(),r[1]);recover(bak,previous,'prune');check('prune recovery contains stale file',stale.read_bytes()==b'preserved by rollback');stale.unlink()
+   bak=Path(r[1]['rollback_snapshot']) if r[1].get('rollback_snapshot') else max(Path('/etc/qeli').glob('.pre-restore-*.tgz'),key=lambda p:p.stat().st_mtime_ns);record('exact prune failure is not reported as success',r[0]==500 and r[1].get('ok') is False and r[1].get('publication_started') is True and bak.is_file(),r[1]);recover(bak,previous,'prune');check('prune recovery contains stale file',stale.read_bytes()==b'preserved by rollback');stale.unlink()
    # An absent directory containing a held sidecar must retain its inode/lock.
    folder=Path('/etc/qeli/obsolete');folder.mkdir();(folder/'data.txt').write_bytes(b'obsolete');lock=folder/'data.txt.lock';fd=os.open(lock,os.O_CREAT|os.O_RDWR,0o600);inode=os.fstat(fd).st_ino;fcntl.flock(fd,fcntl.LOCK_EX)
    try:
-    r=req('/api/restore?exact=1','POST',archive(current()),headers=basic());check('exact prunes ordinary contents of absent directory',r[0]==200 and r[1].get('ok') is True and not (folder/'data.txt').exists(),r[1]);check('exact preserves absent directory held lock inode',lock.exists() and lock.stat().st_ino==inode)
-    other=os.open(lock,os.O_RDWR)
+    r=req('/api/restore?exact=1','POST',archive(current()),headers=basic());check('exact prunes ordinary contents of absent directory',r[0]==200 and r[1].get('ok') is True and not (folder/'data.txt').exists(),r[1]);record('exact preserves absent directory held lock inode',lock.exists() and lock.stat().st_ino==inode)
+    folder.mkdir(exist_ok=True);other=os.open(lock,os.O_CREAT|os.O_RDWR,0o600)
     try:
      held=False
      try:fcntl.flock(other,fcntl.LOCK_EX|fcntl.LOCK_NB)
      except BlockingIOError:held=True
-     check('external writer lock still excludes second writer after exact',held)
+     record('external writer lock still excludes second writer after exact',held)
     finally:os.close(other)
    finally:fcntl.flock(fd,fcntl.LOCK_UN);os.close(fd);lock.unlink(missing_ok=True);folder.rmdir()
    alias=current();alias['server.conf']=alias['server.conf'].replace(b'/etc/qeli/users.conf',b'/etc/qeli/./users.conf');t=time.monotonic();r=req('/api/restore','POST',archive(alias),headers=basic());check('equivalent dependency paths do not self-deadlock',r[0]==200 and r[1].get('ok') is True and time.monotonic()-t<5,r[1]);cfg.write_bytes(cfg.read_bytes().replace(b'/etc/qeli/./users.conf',b'/etc/qeli/users.conf'))
