@@ -382,6 +382,7 @@ int unlink(const char *path) {
    for name in ['inline-only','external-only']:authenticate(name)
    # New-host simulation: config archive is unchanged, machine-local key is absent.
    stop();key.unlink();legacy.unlink(missing_ok=True);start();before_users=users.read_bytes();r=share();check('new host without old key requires explicit reset',r.get('ok') is False and r.get('needs_reset') is True and users.read_bytes()==before_users and cfg.read_bytes()==saved[cfg]);check('missing machine-local key never prevents restored worker loading users',all(loaded(n)==u['enabled'] for n,u in original_users.items()))
+   authenticate('external-only')
    stop();key.write_bytes(original_key);key.chmod(0o600);start();r=share();check('manual state-key recovery restores exact reissue without password change',r.get('ok') is True and r.get('reset') is False and r.get('uri')==initial['uri'] and users.read_bytes()==before_users)
    # Legacy installations can migrate their existing key after config restoration.
    stop();key.unlink();legacy.write_bytes(original_key);legacy.chmod(0o600);start();r=share();check('legacy key migrates and reissues old credential',r.get('ok') is True and r.get('reset') is False and r.get('uri')==initial['uri'] and key.read_bytes()==original_key and key.stat().st_mode&0o777==0o600)
