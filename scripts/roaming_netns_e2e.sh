@@ -406,8 +406,13 @@ if [ "$CASE" = multinode ]; then
     "ip netns exec $RTR_NS iptables -t nat -C PREROUTING -i qrm-br -p tcp -d 10.40.3.2 --dport 4443 -j DNAT --to-destination 10.40.3.2:4444"
 fi
 if [ "$REALITY_TARGET" = true ]; then
+  if [ "$WIRE_MODE" = reality ]; then
+    check "legacy REALITY keeps fake-TLS instead of real TLS termination" \
+      "! grep -q 'real-TLS termination enabled' $WORK/server.log"
+  else
   check "REALITY server borrowed the target TLS shape and certificate" \
     "grep -q 'borrowed TLS shape.*real cert chain: captured' $WORK/server.log"
+  fi
   ip netns exec "$CLI_NS" timeout 10 openssl s_client -connect 10.40.3.2:4443 \
     -servername www.microsoft.com -showcerts </dev/null >"$WORK/decoy.log" 2>&1 || true
   check "non-Qeli TLS probe was bridged to the REALITY target" \
