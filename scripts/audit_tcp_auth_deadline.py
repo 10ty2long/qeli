@@ -59,7 +59,7 @@ bind_static_to_session = false
 [web]
 enabled = false
 [logging]
-level = info
+level = debug
 [profile:deadline]
 identity_key = {root}/identity.key
 bind.address = 127.0.0.1
@@ -118,6 +118,7 @@ enabled = true
                         assert admitted==expected, (label,admitted,expected,(root/'server.log').read_text()[initial:])
                         rows.append(dict(name=label+' actual TCP AUTH '+('admitted' if expected else 'deadline rejected'),status='PASS',auth_forwarded_seconds=sent,elapsed_seconds=time.monotonic()-started,admitted=admitted))
                         if label=='late' and not expect_late:
+                            time.sleep(.05)
                             assert 'handshake authentication deadline exceeded' in (root/'server.log').read_text()[initial:]
                             rows.append(dict(name='original deadline reported',status='PASS'))
                 stop(client);client=None
@@ -175,6 +176,9 @@ def main():
         for label,binary,expected in [('baseline',a.baseline,True),('fixed',a.fixed,False)]:
             rows=case(binary,root/label,hashed,expected);r['cases'].append(dict(name=label,checks=rows))
         r['checks_passed']=sum(len(c['checks']) for c in r['cases']);r['status']='PASS'
+    except BaseException:
+        r['status']='FAIL'
+        raise
     finally:(root/'result.json').write_text(json.dumps(r,indent=2)+'\n',encoding='utf8')
     print(json.dumps(r,indent=2))
 
