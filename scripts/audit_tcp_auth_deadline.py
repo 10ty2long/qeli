@@ -129,10 +129,13 @@ enabled = true
                 initial = (root/'server.log').stat().st_size
                 started = time.monotonic()
                 try:
-                    for _ in range(280):
+                    for index in range(280):
                         sock = socket.create_connection(('127.0.0.1',24943),timeout=2)
                         sock.setblocking(False)
                         sockets.append(sock)
+                        # Avoid filling the kernel SYN backlog before the listener wakes.
+                        if index % 8 == 7: time.sleep(.005)
+                    assert time.monotonic() - started < .8, "fixture opens must precede the one-second expiry"
                     until = started + .8
                     while time.monotonic() < until and 'pre-auth gate full' not in (root/'server.log').read_text()[initial:]:
                         time.sleep(.01)
