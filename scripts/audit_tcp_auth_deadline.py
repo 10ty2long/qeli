@@ -123,6 +123,40 @@ enabled = true
                 stop(client);client=None
                 # The cancelled blocking password job retains its Argon2 permit until done.
                 time.sleep(1)
+            if not expect_late:
+                sockets = []
+                initial = (root/'server.log').stat().st_size
+                started = time.monotonic()
+                try:
+                    for _ in range(280):
+                        sock = socket.create_connection(('127.0.0.1',24943),timeout=2)
+                        sock.setblocking(False)
+                        sockets.append(sock)
+                    until = started + .8
+                    while time.monotonic() < until and 'pre-auth gate full' not in (root/'server.log').read_text()[initial:]:
+                        time.sleep(.01)
+                    text = (root/'server.log').read_text()[initial:]
+                    assert 'pre-auth gate full' in text, text
+                    assert text.count('New TCP connection') <= 256, text
+                    rows.append(dict(name='280 idle sockets exhaust bounded 256 pre-auth slots before spawn',status='PASS'))
+                    until = started + 3
+                    alive = set(sockets)
+                    while alive and time.monotonic() < until:
+                        ready,_,_ = select.select(list(alive),[],[],.05)
+                        for sock in ready:
+                            try: data = sock.recv(65536)
+                            except ConnectionResetError: data = b''
+                            if not data: alive.remove(sock)
+                    assert not alive, len(alive)
+                    rows.append(dict(name='all idle and refused sockets close within handshake deadline',status='PASS'))
+                    with socket.create_connection(('127.0.0.1',24943),timeout=2) as probe:
+                        probe.settimeout(.1)
+                        try: probe.recv(1)
+                        except socket.timeout: pass
+                        else: raise AssertionError('pre-auth slot was not recovered')
+                    rows.append(dict(name='listener accepts a fresh handshake after saturated gate recovers',status='PASS'))
+                finally:
+                    for sock in sockets: sock.close()
         finally:stop(client);stop(server)
     return rows
 
