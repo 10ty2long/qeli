@@ -14,7 +14,7 @@ use crate::crypto::{
     derive_session_material_hybrid_bound,
 };
 use crate::protocol::{read_record, read_tls_record, FakeTlsHandshake, Framing, PacketCodec};
-use crate::transport::tcp::WriteAllFlush;
+use crate::protocol::stream_io::WriteAllFlush;
 use std::future::Future;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 

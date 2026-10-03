@@ -14,7 +14,7 @@ use crate::protocol::{
 use crate::server::{
     lock_or_recover, ExitAccess, ProfileRuntime, ServerState, ServerTunPacket, TunIngress,
 };
-use crate::transport::tcp::WriteAllFlush;
+use crate::protocol::stream_io::WriteAllFlush;
 #[cfg(feature = "experimental-roaming")]
 use crate::transport_core::buffer_pool::{BufferPool, PooledBuffer};
 #[cfg(feature = "experimental-roaming")]

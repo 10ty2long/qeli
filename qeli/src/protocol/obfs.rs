@@ -2242,7 +2242,7 @@ mod tests {
     }
     #[tokio::test]
     async fn q12_ws_record_roundtrip_under_backpressure() {
-        use crate::transport::tcp::WriteAllFlush;
+        use crate::protocol::stream_io::WriteAllFlush;
         tokio::time::timeout(std::time::Duration::from_secs(5), async {
             let (a, b) = tokio::io::duplex(7);
             let key = derive_obfs_key("q12-backpressure");
