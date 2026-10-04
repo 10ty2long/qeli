@@ -130,9 +130,12 @@ obf.mode = fake-tls
             return replies[0] if replies else None
         def addr(code, address): return bytes([code, 4]) + ipaddress.IPv4Address(address).packed
         macs = [bytes([2, 0x54, 0, 0x12, 0, suffix]) for suffix in range(1, 9)]
+        malformed = [(b'\x35\x02\x01\0\xff', None), (bytes([53,1,1,50,3,10,91,0,255]), None), (bytes([53,1,1,53,1,3,255]), None), (bytes([53,1,1,200,10,1]), None), (bytes([53,1,1,255]), [(2,16)]), (bytes([53,1,1,255]), [(1,2)])]
+        for index, (raw, header) in enumerate(malformed): request(1, macs[5], raw=raw, header=header, label=f'malformed request {index} is silent')
+        request(1, macs[5], raw=bytes([53,1,1])+b'\0'*1600+bytes([200,10,1]), label='malformed tail beyond old 1500-byte receive buffer is rejected')
         offer = request(1, macs[0], expected=2, label='DISCOVER broadcast from 0.0.0.0 receives OFFER')
         chosen = offer['ip']; check('OFFER contains DNS, mask, gateway, domain and timers', offer['options']['6'] == '0a5b00030a5b0004' and offer['options']['15'] == b'qeli.test'.hex() and all(str(c) in offer['options'] for c in (1, 3, 51, 58, 59, 54)))
-        request(1, macs[0], expected=2, label='repeated MAC retains offered address')
+        repeat = request(1, macs[0], expected=2, label='repeated MAC receives OFFER'); check('repeated MAC retains exact offered address', repeat['ip'] == chosen)
         ack = request(3, macs[0], addr(50, chosen)+addr(54, '10.91.0.1'), expected=5, label='REQUEST selecting our server receives ACK')
         check('ACK commits exact offered address', ack['ip'] == chosen)
         request(3, macs[0], ciaddr=chosen, expected=5, label='ciaddr renewal receives ACK')
@@ -152,9 +155,6 @@ obf.mode = fake-tls
         request(1, macs[4], label='exhausted pool is silent')
         time.sleep(9)
         request(1, macs[4], expected=2, label='expired committed lease frees a pool slot')
-        malformed = [(b'\x35\x02\x01\0\xff', None), (bytes([53,1,1,50,3,10,91,0,255]), None), (bytes([53,1,1,53,1,3,255]), None), (bytes([53,1,1,200,10,1]), None), (bytes([53,1,1,255]), [(2,16)]), (bytes([53,1,1,255]), [(1,2)])]
-        for index, (raw, header) in enumerate(malformed): request(1, macs[5], raw=raw, header=header, label=f'malformed request {index} is silent')
-        request(1, macs[5], raw=bytes([53,1,1])+b'\0'*1600+bytes([200,10,1]), label='malformed tail beyond old 1500-byte receive buffer is rejected')
         # Reuse a quarantined exact request to check overloaded option 50 parsing.
         request(3, macs[6], extra=bytes([52,1,1]), overload=addr(50, chosen)+b'\xff', expected=6, label='option 50 in overloaded file field is parsed')
         capture.close();capture=None;os.close(tap);tap=None
