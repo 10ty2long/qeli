@@ -153,23 +153,18 @@ impl TunIngress {
             // conflicting iroute can be skipped during admission, and a broader prefix
             // or exit default must not impersonate an exact lease or narrower iroute.
             // Recheck here after pacing/queueing, on every TCP/UDP ingress path.
-            if !sessions.source_owned_by(source_session_id, meta.source) {
+            if profile.tun_addresses.contains(&meta.source)
+                || !sessions.source_owned_by(source_session_id, meta.source)
+            {
                 return Ok(());
             }
             profile.config.routing.client_to_client
-                && sessions
-                    .get_by_address(meta.destination)
-                    .map(|session| (session, false))
-                    .or_else(|| {
-                        sessions
-                            .route_match(meta.destination)
-                            .map(|route| (&route.session, route.prefix == 0))
-                    })
-                    .is_some_and(|(destination, is_default)| {
-                        destination.session_id != source_session_id
-                            && !destination.is_revoked()
-                            && (!is_default || exit_access.allows(meta.destination))
-                    })
+                && sessions.direct_client_destination(
+                    source_session_id,
+                    exit_access,
+                    meta.destination,
+                    &profile.tun_addresses,
+                )
         };
         if use_direct_path {
             self.forwarder.send(packet).await
@@ -489,6 +484,31 @@ impl SessionMap {
             .map(|route| &route.session)
     }
 
+    /// Local TUN services must keep precedence over delegated/exit iroutes. In
+    /// particular /0 is an internal next hop, not ownership of the server gateway.
+    fn direct_client_destination(
+        &self,
+        source_session_id: u64,
+        exit_access: ExitAccess,
+        destination: std::net::IpAddr,
+        server_addresses: &[std::net::IpAddr],
+    ) -> bool {
+        if server_addresses.contains(&destination) {
+            return false;
+        }
+        self.get_by_address(destination)
+            .map(|session| (session, false))
+            .or_else(|| {
+                self.route_match(destination)
+                    .map(|route| (&route.session, route.prefix == 0))
+            })
+            .is_some_and(|(owner, is_default)| {
+                owner.session_id != source_session_id
+                    && !owner.is_revoked()
+                    && (!is_default || exit_access.allows(destination))
+            })
+    }
+
     /// Authoritative source ownership after the configured SrcGuard has passed.
     /// Exact leases take precedence over longest-prefix iroutes, including /0. A default
     /// permits an exit node's external reply sources, but never another client's address.
@@ -741,6 +761,37 @@ mod client_route_tests {
     }
 
     #[test]
+    fn exit_default_never_captures_local_tun_endpoints() {
+        for (lease, gateway, default, external) in [
+            ("10.76.0.6", "10.76.0.1", "0.0.0.0/0", "198.18.99.9"),
+            ("fd76::6", "fd76::1", "::/0", "fd76:99::9"),
+        ] {
+            let exit = session(1, lease.parse().unwrap());
+            let local = [gateway.parse().unwrap()];
+            let mut map = empty_map();
+            map.insert(exit.clone());
+            map.client_routes
+                .push(ClientRoute::parse(default, exit.client_ip, exit.clone()).unwrap());
+            let granted = super::ExitAccess {
+                ipv4: true,
+                ipv6: true,
+            };
+            assert!(!map.direct_client_destination(2, granted, local[0], &local));
+            assert!(map.direct_client_destination(2, granted, external.parse().unwrap(), &local));
+            assert!(!map.direct_client_destination(
+                2,
+                super::ExitAccess::default(),
+                external.parse().unwrap(),
+                &local
+            ));
+            assert!(
+                !map.direct_client_destination(1, granted, external.parse().unwrap(), &local),
+                "an exit's own egress must not bounce to itself"
+            );
+        }
+    }
+
+    #[test]
     fn source_exit_default_allows_replies_but_not_another_owner() {
         for (lease, other, default, external) in [
             ("10.76.0.6", "10.76.0.2", "0.0.0.0/0", "198.18.99.9"),
@@ -791,6 +842,9 @@ mod client_route_tests {
 pub struct ProfileRuntime {
     pub name: String,
     pub config: ProfileConfig,
+    /// Parsed once per generation: never route the server's TUN endpoints into a
+    /// client's exit default, or let a client claim these reserved source addresses.
+    tun_addresses: Vec<std::net::IpAddr>,
     /// Generation-scoped owner used by nested session tasks as well as top-level services.
     pub(crate) tasks: ProfileTasks,
     pub pool: Arc<Mutex<pool::IpPool>>,
@@ -6115,6 +6169,7 @@ async fn run_profile_generation(
     let profile = Arc::new(ProfileRuntime {
         name: name.clone(),
         config: pcfg.clone(),
+        tun_addresses: handler::configured_tun_addresses(pcfg),
         tasks: tasks.clone(),
         pool: Arc::new(Mutex::new(pool)),
         sessions: Arc::new(RwLock::new(SessionMap {
