@@ -382,9 +382,8 @@ async fn main() -> anyhow::Result<()> {
     // Configure logging from the config's `logging` section (level + optional
     // file) so server/client logs land where the operator expects.
     let (level, log_file, time_format) = match &cli.command {
-        Commands::Server { config } | Commands::Worker { config } | Commands::Client { config } => {
-            peek_logging(config)
-        }
+        Commands::Server { config } | Commands::Worker { config } => peek_logging(config),
+        Commands::Client { config } => qeli::client::peek_logging(config),
         _ => ("info".to_string(), None, "datetime".to_string()),
     };
     init_logging(&level, log_file.as_deref(), &time_format);
@@ -532,8 +531,8 @@ async fn main() -> anyhow::Result<()> {
                 )
             };
             let text = match &server_source {
-                Some(source) => source.text().to_owned(),
-                None => std::fs::read_to_string(&config)
+                Some(source) => zeroize::Zeroizing::new(source.text().to_owned()),
+                None => qeli::client::read_config_text(&config)
                     .map_err(|e| anyhow::anyhow!("cannot read {}: {}", path, e))?,
             };
 

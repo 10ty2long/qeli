@@ -1,4 +1,9 @@
 #[cfg(target_os = "linux")]
+mod logging_bootstrap;
+#[cfg(target_os = "linux")]
+pub use logging_bootstrap::{peek_logging, read_config_text};
+
+#[cfg(target_os = "linux")]
 pub mod dns;
 #[cfg(target_os = "linux")]
 pub mod gateway;
