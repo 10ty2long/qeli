@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "IN_PROGRESS_Q24_FIX_QUALIFICATION",
+  "updated_at": "2026-10-04T13:21:05.029781+00:00",
+  "core_commit": "1d9f20a8019b116aa1655cb4adc256c66cf115fc",
+  "fixes": [
+    "Q24-F001 P2: stalled carrier retains shared packet pool; fixed shared uplink snapshots and queue shares on both peers"
+  ],
+  "baseline": {
+    "artifact_sha256": "bfbb16cb8ca4145b9b8c5f8a838d272546431e9f79246a78817cbf376607386b",
+    "executed_at": "2026-10-04T12:55:27.088382+00:00",
+    "result": [
+      {
+        "id": "q24.fixed.starvation",
+        "status": "failed",
+        "exit_code": 1,
+        "duration_seconds": 23.668,
+        "checks_passed": 14,
+        "checks_failed": 1,
+        "command": "timeout --signal=TERM --kill-after=10 210 unshare --net --mount --pid --fork --kill-child=KILL --mount-proc bash /var/tmp/qeli-release-matrix-20261004T125527088382Z/isolated.sh /var/tmp/qeli-release-matrix-20261004T125527088382Z/q24.fixed.starvation 'net:[4026531840]' 'mnt:[4026531841]' 'pid:[4026531836]' /var/tmp/qeli-release-matrix-20261004T125527088382Z/scripts/roaming_netns_e2e.sh /var/tmp/qeli-q23-linux10-release-20261004/qeli starvation fake-tls",
+        "log": "q24.fixed.starvation.log"
+      }
+    ],
+    "echo_before": 480,
+    "echo_after": 11,
+    "last_half_received": 0
+  },
+  "plan": {
+    "done": 23,
+    "total": 37,
+    "q24": "IN_PROGRESS"
+  },
+  "raw_root": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q24-bonding-20261004",
+  "scope": "No PASS claim for changed production code until final unit/runtime/native qualification."
+}

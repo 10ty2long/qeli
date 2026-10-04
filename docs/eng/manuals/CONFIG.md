@@ -916,13 +916,17 @@ negotiated peers; DATA_FRAG is record-layer splitting and is not counted as kern
 
 ## Stream bonding — multipath (`obf.multipath.*`)
 
-A single TCP connection (reality-tls/fake-tls/obfs) on a mobile network hits the
-"TCP over TCP" ceiling (~6 Mbps in production, while UDP/WireGuard does tens).
-Multipath opens **several parallel connections to the same :443 port**, and the
-server aggregates them into **ONE tunnel** (one tun-IP); a stable inner-flow hash pins each
-flow to one logical stream, so healthy flows are not remapped when another carrier disappears
-or returns. DPI-clean — a browser also opens 6+ parallel TLS to an HTTPS
-host; a single long-lived TCP with a continuous flow is actually more suspicious.
+Multipath opens several TCP connections to one server address and port; they
+serve one session and one tunnel address. A hash pins each inner flow to one
+connection instead of striping it across all connections. A single large download
+therefore need not become faster; the result depends on the number of inner
+flows and network conditions. Bonding alone does not guarantee DPI evasion.
+
+With negotiated authenticated TCP resume, healthy logical slots remain stable
+when another carrier disappears or returns. Legacy bearer-JOIN preserves
+`hash % live stream count`: membership changes may remap other flows. Losing
+the selected carrier can require inner TCP retransmission. A full pinned queue
+drops the packet without spilling it onto another carrier or blocking other flows.
 
 **Settings — per-profile** (like `tun.mtu`/`padding`), the server pushes them to
 the client:
@@ -933,21 +937,32 @@ the client:
 obf.multipath.enabled = true
 # HARD ceiling of streams per session (the server enforces it)
 obf.multipath.max_streams = 4
-# false = open EXACTLY max_streams; true = auto-tune
+# false = target max_streams; true = auto-tune
 obf.multipath.adaptive = false
 ```
 
 - **`enabled`** (default `false`) — turn bonding on/off for the profile.
-- **`max_streams`** (default `4`) — a **hard ceiling** of parallel connections per
-  session; the server rejects extras. `max_clients × max_streams` = the server's
-  connection budget. Clients clamp the pushed value to **16** (since 0.7.12), so a
-  larger setting has no further effect on them.
+- **`max_streams`** (default `4`) — valid values are **1–16** when bonding is
+  enabled; the server rejects values outside that range. This caps ordinary
+  streams of one session. A prepared authenticated resume permits one temporary
+  carrier above the cap; commit drains the replaced carrier, abort frees the candidate.
+  `max_clients × max_streams` describes ordinary streams. Capacity planning must
+  also include temporary candidates, handshakes and each connection's TCP/TLS buffers.
 - **`adaptive`** (default `false`):
-  - `false` — the client opens **exactly `max_streams`** connections (fixed);
-  - `true` — the client **auto-tunes** the count from 1 to `max_streams` by the
-    measured speed (starts at 1, adds a stream under load while throughput grows,
-    stops at a plateau). In this mode `max_streams` works only as a **ceiling**, not
-    a target.
+  - `false` — `max_streams` is the target. A failed secondary JOIN leaves fewer
+    streams; the background maintainer retries without another AUTH.
+  - `true` — starts at one stream and samples combined upload + download every
+    3 seconds. Under load above 250,000 B/s it adds streams while throughput
+    improves by more than 10%; after one extra observation window it stops at
+    a plateau or the ceiling. There is no automatic downscaling; the maintainer
+    restores the learned width after a carrier fails.
+
+All session streams share the bandwidth limit **independently in each direction**:
+8 Mbps permits up to 8 Mbps upload and 8 Mbps download, rather than 8 per stream.
+The cover/stealth budget is shared too. Download quota uses aggregate session
+counters; a secondary JOIN creates no new quota or session accounting entry.
+Shared packet pools are bounded independently of stream count; per-carrier crypto
+state, descriptor queues and socket/TLS buffers still consume additional memory.
 
 The client may open **fewer** than the ceiling, but **there is no client `[qeli]`
 INI key** for this — the stream count is server-controlled: the client uses the
