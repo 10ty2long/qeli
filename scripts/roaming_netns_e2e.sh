@@ -59,7 +59,7 @@ TARGET_JOB_PID=
 LOAD_JOB_PID=
 
 usage() {
-  echo "usage: $0 [qeli-binary] [success|resume|grace-expiry|soak|perf|multinode] [fake-tls|reality|reality-tls|plain|obfs-ws|obfs-none|obfs-awg|obfs-awg-none]" >&2
+  echo "usage: $0 [qeli-binary] [success|resume|grace-expiry|soak|perf|multinode|bonding] [fake-tls|reality|reality-tls|plain|obfs-ws|obfs-none|obfs-awg|obfs-awg-none]" >&2
 }
 
 if [ "$#" -gt 3 ]; then
@@ -67,7 +67,7 @@ if [ "$#" -gt 3 ]; then
   exit 2
 fi
 case "$CASE" in
-  success|resume|grace-expiry|soak|perf|multinode) ;;
+  success|resume|grace-expiry|soak|perf|multinode|bonding) ;;
   *)
     usage
     exit 2
@@ -519,6 +519,9 @@ elif [ "$CASE" = perf ]; then
 elif [ "$CASE" = resume ] || [ "$CASE" = grace-expiry ]; then
   # shellcheck source=roaming_tcp_resume_netns_case.sh
   run_case_helper "$SCRIPT_DIR/roaming_tcp_resume_netns_case.sh" run_tcp_resume_case || exit $?
+elif [ "$CASE" = bonding ]; then
+  # shellcheck source=roaming_tcp_bonding_netns_case.sh
+  run_case_helper "$SCRIPT_DIR/roaming_tcp_bonding_netns_case.sh" run_tcp_bonding_case || exit $?
 elif [ "$CASE" = multinode ]; then
   # shellcheck source=roaming_tcp_multinode_netns_case.sh
   run_case_helper "$SCRIPT_DIR/roaming_tcp_multinode_netns_case.sh" run_tcp_multinode_case || exit $?
