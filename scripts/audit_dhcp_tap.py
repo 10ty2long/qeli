@@ -98,9 +98,9 @@ obf.mode = fake-tls
         fcntl.ioctl(tap, 0x400454ca, struct.pack('16sH22x', b'qdhcp0', 0x0002 | 0x1000 | 0x0100))
         capture = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003)); capture.bind(('qdhcp0', 0))
         xid = 0x71200000
-        def request(kind, mac, extra=b'', ciaddr='0.0.0.0', raw=None, header=None, overload=None, expected=None, label='', wait=.15):
+        def request(kind, mac, extra=b'', ciaddr='0.0.0.0', raw=None, header=None, overload=None, expected=None, label='', wait=.15, keep_xid=False):
             nonlocal xid
-            xid += 1
+            if not keep_xid: xid += 1
             payload = bytearray(240); payload[:3] = bytes([1, 1, 6]); payload[4:8] = xid.to_bytes(4, 'big')
             payload[10:12] = b'\x80\0'; payload[12:16] = ipaddress.IPv4Address(ciaddr).packed; payload[28:34] = mac
             payload[236:240] = bytes([99, 130, 83, 99])
@@ -135,7 +135,7 @@ obf.mode = fake-tls
         request(1, macs[5], raw=bytes([53,1,1])+b'\0'*1600+bytes([200,10,1]), label='malformed tail beyond old 1500-byte receive buffer is rejected')
         offer = request(1, macs[0], expected=2, label='DISCOVER broadcast from 0.0.0.0 receives OFFER')
         chosen = offer['ip']; check('OFFER contains DNS, mask, gateway, domain and timers', offer['options']['6'] == '0a5b00030a5b0004' and offer['options']['15'] == b'qeli.test'.hex() and all(str(c) in offer['options'] for c in (1, 3, 51, 58, 59, 54)))
-        repeat = request(1, macs[0], expected=2, label='repeated MAC receives OFFER'); check('repeated MAC retains exact offered address', repeat['ip'] == chosen)
+        repeat = request(1, macs[0], expected=2, label='duplicate xid and MAC receives OFFER', keep_xid=True); check('repeated MAC retains exact offered address', repeat['ip'] == chosen)
         ack = request(3, macs[0], addr(50, chosen)+addr(54, '10.91.0.1'), expected=5, label='REQUEST selecting our server receives ACK')
         check('ACK commits exact offered address', ack['ip'] == chosen)
         request(3, macs[0], ciaddr=chosen, expected=5, label='ciaddr renewal receives ACK')
