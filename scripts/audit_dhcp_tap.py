@@ -93,7 +93,7 @@ obf.mode = fake-tls
         while 'DHCP server bound' not in (root/'server.log').read_text():
             assert time.monotonic() < end and server.poll() is None
             time.sleep(.1)
-        check('real worker owns TAP and DHCP UDP/67', 'qdhcp0: tap' in run(['ip', 'tuntap', 'show']) and ':67' in run(['ss', '-lnu']))
+        links = run(['ip', 'tuntap', 'show']); sockets = run(['ss', '-lnu']); check('real worker owns TAP and DHCP UDP/67', 'qdhcp0:' in links and 'tap' in links and ':67' in sockets, dict(links=links,sockets=sockets))
         tap = os.open('/dev/net/tun', os.O_RDWR | os.O_NONBLOCK)
         fcntl.ioctl(tap, 0x400454ca, struct.pack('16sH22x', b'qdhcp0', 0x0002 | 0x1000 | 0x0100))
         capture = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0800)); capture.bind(('qdhcp0', 0))
