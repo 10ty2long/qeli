@@ -144,28 +144,32 @@ impl TunIngress {
         exit_access: ExitAccess,
         packet: ServerTunPacket,
     ) -> Result<(), mpsc::error::SendError<ServerTunPacket>> {
-        let use_direct_path = if profile.config.routing.client_to_client {
-            match crate::protocol::ip::parse_ip_packet(&packet) {
-                Ok(meta) => {
-                    let sessions = profile.sessions.read().await;
-                    let destination = sessions
-                        .get_by_address(meta.destination)
-                        .map(|session| (session, false))
-                        .or_else(|| {
-                            sessions
-                                .route_match(meta.destination)
-                                .map(|route| (&route.session, route.prefix == 0))
-                        });
-                    destination.is_some_and(|(destination, is_default)| {
+        let Ok(meta) = crate::protocol::ip::parse_ip_packet(&packet) else {
+            return Ok(());
+        };
+        let use_direct_path = {
+            let sessions = profile.sessions.read().await;
+            // SrcGuard describes configured permissions, not live route ownership. A
+            // conflicting iroute can be skipped during admission, and a broader prefix
+            // or exit default must not impersonate an exact lease or narrower iroute.
+            // Recheck here after pacing/queueing, on every TCP/UDP ingress path.
+            if !sessions.source_owned_by(source_session_id, meta.source) {
+                return Ok(());
+            }
+            profile.config.routing.client_to_client
+                && sessions
+                    .get_by_address(meta.destination)
+                    .map(|session| (session, false))
+                    .or_else(|| {
+                        sessions
+                            .route_match(meta.destination)
+                            .map(|route| (&route.session, route.prefix == 0))
+                    })
+                    .is_some_and(|(destination, is_default)| {
                         destination.session_id != source_session_id
                             && !destination.is_revoked()
                             && (!is_default || exit_access.allows(meta.destination))
                     })
-                }
-                Err(_) => false,
-            }
-        } else {
-            false
         };
         if use_direct_path {
             self.forwarder.send(packet).await
@@ -485,6 +489,27 @@ impl SessionMap {
             .map(|route| &route.session)
     }
 
+    /// Authoritative source ownership after the configured SrcGuard has passed.
+    /// Exact leases take precedence over longest-prefix iroutes, including /0. A default
+    /// permits an exit node's external reply sources, but never another client's address.
+    /// A refused/unregistered iroute does not grant source ownership, and a removed,
+    /// superseded or closing session cannot inject a paced/queued tail through an old Arc.
+    fn source_owned_by(&self, session_id: u64, source: std::net::IpAddr) -> bool {
+        use std::sync::atomic::Ordering;
+
+        self.get_by_address(source)
+            .or_else(|| self.route_lookup(source))
+            .is_some_and(|owner| {
+                owner.session_id == session_id
+                    && !owner.is_revoked()
+                    && !owner.closing.load(Ordering::Acquire)
+                    && self
+                        .by_ip
+                        .get(&owner.client_ip)
+                        .is_some_and(|current| current.session_id == session_id)
+            })
+    }
+
     /// Whether an active session owns an IPv6 address for upstream NDP proxying.
     ///
     /// Exact tunnel leases win absolutely: a stale/revoked exact owner must not fall through
@@ -635,6 +660,104 @@ mod client_route_tests {
             vec!["2001:db8:50::/64"]
         );
         assert!(sessions.client_routes.is_empty());
+    }
+
+    #[test]
+    fn source_ownership_uses_exact_leases_then_longest_prefix_in_both_families() {
+        for (lease, broad, narrow, inside, outside) in [
+            (
+                "10.76.0.2",
+                "198.18.16.0/24",
+                "198.18.16.128/25",
+                "198.18.16.130",
+                "198.18.16.9",
+            ),
+            (
+                "fd76::2",
+                "fd76:16::/64",
+                "fd76:16::8000/113",
+                "fd76:16::8009",
+                "fd76:16::9",
+            ),
+        ] {
+            let broad_owner = session(1, lease.parse().unwrap());
+            let exact_address = inside.parse().unwrap();
+            let narrow_owner = session(2, exact_address);
+            let mut map = empty_map();
+            map.insert(broad_owner.clone());
+            map.insert(narrow_owner.clone());
+            map.client_routes.push(
+                ClientRoute::parse(broad, broad_owner.client_ip, broad_owner.clone()).unwrap(),
+            );
+            map.client_routes.push(
+                ClientRoute::parse(narrow, narrow_owner.client_ip, narrow_owner.clone()).unwrap(),
+            );
+            assert!(map.source_owned_by(1, outside.parse().unwrap()));
+            assert!(!map.source_owned_by(2, outside.parse().unwrap()));
+            assert!(!map.source_owned_by(1, exact_address));
+            assert!(map.source_owned_by(2, exact_address));
+            // Even an exact lease inside a delegated prefix wins over that iroute.
+            map.client_routes
+                .retain(|route| route.session.session_id != 2);
+            assert!(!map.source_owned_by(1, exact_address));
+            map.remove(exact_address);
+            assert!(map.source_owned_by(1, exact_address));
+        }
+    }
+
+    #[test]
+    fn source_ownership_never_grants_a_refused_route_or_stale_session() {
+        use std::sync::atomic::Ordering;
+        let first = session(1, "10.76.0.2".parse().unwrap());
+        let second = session(2, "10.76.0.3".parse().unwrap());
+        let source = "198.18.16.9".parse().unwrap();
+        let mut map = empty_map();
+        map.insert(first.clone());
+        map.insert(second.clone());
+        map.client_routes
+            .push(ClientRoute::parse("198.18.16.0/24", first.client_ip, first.clone()).unwrap());
+        assert!(map.source_owned_by(1, source));
+        assert!(!map.source_owned_by(2, source));
+        first.closing.store(true, Ordering::Release);
+        assert!(!map.source_owned_by(1, source));
+        first.closing.store(false, Ordering::Release);
+        first.revoked.store(true, Ordering::Release);
+        assert!(!map.source_owned_by(1, source));
+        first.revoked.store(false, Ordering::Release);
+        map.remove(first.client_ip);
+        assert!(
+            !map.source_owned_by(1, source),
+            "an orphan route Arc is not authoritative"
+        );
+        map.take_client_routes(first.client_ip);
+        assert!(
+            !map.source_owned_by(2, source),
+            "a skipped route must be claimed by a fresh admission"
+        );
+        let replacement = session(3, second.client_ip);
+        map.insert(replacement);
+        assert!(!map.source_owned_by(2, second.client_ip));
+        assert!(map.source_owned_by(3, second.client_ip));
+    }
+
+    #[test]
+    fn source_exit_default_allows_replies_but_not_another_owner() {
+        for (lease, other, default, external) in [
+            ("10.76.0.6", "10.76.0.2", "0.0.0.0/0", "198.18.99.9"),
+            ("fd76::6", "fd76::2", "::/0", "fd76:99::9"),
+        ] {
+            let exit = session(1, lease.parse().unwrap());
+            let client = session(2, other.parse().unwrap());
+            let mut map = empty_map();
+            map.insert(exit.clone());
+            map.insert(client.clone());
+            map.client_routes
+                .push(ClientRoute::parse(default, exit.client_ip, exit.clone()).unwrap());
+            assert!(map.source_owned_by(1, external.parse().unwrap()));
+            assert!(!map.source_owned_by(2, external.parse().unwrap()));
+            assert!(!map.source_owned_by(1, client.client_ip));
+            assert!(map.source_owned_by(2, client.client_ip));
+        }
     }
 
     #[test]
