@@ -283,10 +283,12 @@ obf.mode = fake-tls
                         text=base+profile(0,mode).replace('tun.ip_mode = dual','tun.ip_mode = '+family).replace('dns.enabled = true','dns.enabled = false')
                         old_ndp='required' if mode in ('manual','route') else 'off'
                         text=text.replace('routing.ipv6.ndp_proxy = '+old_ndp,'routing.ipv6.ndp_proxy = '+ndp)
+                        if family=='ipv6':text=text.replace('routing.nat.enabled = true','routing.nat.enabled = false')
+                        (root/f'config-{family}-{mode}-{ndp}.ini').write_text(text)
                         cfg.write_text(text);cfg.chmod(0o600)
                         accepted=(family!='ipv4' and (ndp=='off' or mode in ('manual','route'))) or (family=='ipv4' and mode=='off' and ndp=='off')
                         result=run([str(binary),'check-config','-c',str(cfg)],check=False)
-                        record(f'configuration {family}/{mode}/{ndp}',(result.returncode==0)==accepted)
+                        record(f'configuration {family}/{mode}/{ndp}',(result.returncode==0)==accepted,result.stdout+result.stderr if (result.returncode==0)!=accepted else None)
             for previous_mode in modes:
                 for next_mode in modes:
                     # Routing changes require restart, not live SIGHUP. Keep one
