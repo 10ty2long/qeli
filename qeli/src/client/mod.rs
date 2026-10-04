@@ -10300,34 +10300,6 @@ pub(crate) async fn run_udp_tunnel(
         mtu: tun_mtu,
         fallback_dns_servers: &fallback_dns_servers,
     };
-    // Stream-bonding plan. `max_streams` is the server's hard ceiling.
-    let target = if max_streams > 1 {
-        max_streams as usize
-    } else {
-        1
-    };
-    // TCP_RESUME_V2 gives both peers the same stable logical-slot namespace. Keep that fixed
-    // width for flow placement even while the live carrier set temporarily shrinks or grows.
-    let stable_stream_width = tcp_resume
-        .as_ref()
-        .map(|_| u32::try_from(target).unwrap_or(u32::MAX).max(1));
-    let token_bytes = hex_to_bytes(&session_token);
-    let bonding = target > 1 && !token_bytes.is_empty();
-    // Snapshot bonded packets into one fixed pool before queuing them. Queues must
-    // release TUN buffers (and FIFO Wintun ring reservations) even when one writer
-    // is blocked. One 4 MiB budget serves all streams; there is no fallback allocation.
-    let bonded_uplink_pool = if bonding {
-        Some(crate::transport_core::buffer_pool::BufferPool::new(
-            CLIENT_BONDED_UPLINK_BUFFER_BYTES / CLIENT_BONDED_UPLINK_SLOT_BYTES,
-            CLIENT_BONDED_UPLINK_SLOT_BYTES,
-        )?)
-    } else {
-        None
-    };
-    let uplink_queue_capacity = bonded_uplink_pool.as_ref().map_or(4096, |pool| {
-        crate::transport_core::buffer_pool::bonded_queue_capacity(pool.buffer_count(), max_streams)
-    });
-
     let mut plan = build_network_plan(config, core.next_generation(), &network)?;
     #[cfg(target_os = "linux")]
     {
