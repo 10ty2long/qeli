@@ -1,6 +1,6 @@
 # Q24: multipath, bonding и общий бюджет
 
-<!-- normative-sync: audit-q24-bonding-v1 -->
+<!-- normative-sync: audit-q24-bonding-v2 -->
 
 **IN_PROGRESS. Общий итог: 23/37 (62,2%).** 4 октября 2026.
 [Evidence](../../../release/certification/evidence/q24-bonding-20261004.json).
@@ -38,21 +38,29 @@ production-кода в этом проходе не найдено.
 согласованного authenticated resume; старый modulo scheduler меняет назначение
 при изменении состава. Один внутренний поток не распределяется между carriers.
 
-## Проверки и оставшаяся работа
+## Квалификация и оставшаяся работа
 
-До изменения production-кода прошли fixed/adaptive handover и resume, grace
-expiry, shared 8 Mbps cap/one-carrier reset/revocation в fake-tls и plain.
-Исправлена fixture, ошибочно ожидавшая строку 1/1 вместо реальной bonded width.
-В REALITY-TLS постоянная 15% loss задержала финальный обмен iperf до timeout;
-новая fixture ограничивает длительность loss и сохраняет отдельные phase logs.
-Этот результат не объявлен подтверждённой production-регрессией.
+Production-фикс проверен: 2407 full-feature Linux units PASS/60 ignored,
+строгий Clippy и release PASS. 12 свежих изолированных Linux-сценариев текущего
+бинарника прошли283 проверки. На старом baseline последние пять секунд дают
+ноль echo в обе стороны, с исправлением450 в каждом направлении. Общий cap
+8Мбит/с даёт6,466312–7,777372Мбит/с. Это не замер пиковой скорости.
 
-Исправление Q24-F001 закоммичено в audit worktree. Финальные Linux units/Clippy/release,
-повтор baseline/fixed в обоих направлениях, пакет runtime-сценариев и native A/B/ABI
-ещё проходят квалификацию. Старые 2405 units и native bytes нельзя считать новой
-проверкой изменённого ядра. Q24 остаётся открытым до завершения этих gates.
+Четыре свежие независимые native A/B пары PASS, canonical/consumer совпадают;
+22 настоящие Windows ABI/runner и C11/C++11 header проверки PASS. Настоящие
+Android JNI-вызовы новой x86_64 библиотеки прошли23/23. Первый boot private AVD
+создал два базовых userdata-файла, сохранив исходный seed точно. Raw общий rc1
+и userdata_preserved=false сохранены. Повторный cold boot инициализированного
+AVD завершился timeout240/480секунд до JNI. Он не считается PASS; Q24 остаётся
+открытым, общий итог23/37(62,2%).
 
-Лаба .11 принимает TCP/22, но не выдаёт SSH banner; новых auth-попыток нет.
-Доступный стенд .10 используется последовательно, одним compiler job. Работающий
-service/binary .10 сохранён. Mac/iOS/router/Windows VM исключены пользователем;
-INI остаётся единственным форматом профилей, служебный JSON API сохраняется.
+Fallback .10 имеет2ГиБ RAM/2ГиБ swap. Эмулятор37.2.12 навязывает guest RAM2560МиБ
+и userdata6ГиБ. Недостающие библиотеки распакованы внутри SDK; неиспользуемые
+кеши компиляции очищены с сохранением всех загруженных файлов и рабочего exe.
+SDK архивирован/восстановлен для места под сборки. .11 не выдаёт SSH banner;
+итоговое состояние не подтверждено. Сетевой runtime Mac/iOS/router/Windows VM
+исключён пользователем. Installed-app/physical E2E, deployment и push не выполнялись.
+
+Исправлены ожидание ширины в fixture, ограниченные18секунд потерь и отдельные
+логи фаз. Допускается отличие только трёх принятых ambient legacy rules;
+raw host_restored сохранён. Конфиги только INI; служебный JSON API сохранён.

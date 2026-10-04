@@ -1,6 +1,6 @@
 # Q24: multipath, bonding and shared budgets
 
-<!-- normative-sync: audit-q24-bonding-v1 -->
+<!-- normative-sync: audit-q24-bonding-v2 -->
 
 **IN_PROGRESS. Overall plan: 23/37 (62.2%).** 4 October 2026.
 [Evidence](../../../release/certification/evidence/q24-bonding-20261004.json).
@@ -38,19 +38,27 @@ modulo scheduling, and the fact that one inner flow is not striped across carrie
 
 ## Qualification and remaining work
 
-Before the production fix, fixed/adaptive handover and resume, grace expiry,
-and shared 8 Mbps cap/one-carrier reset/revocation passed in fake-tls and plain.
-A fixture incorrectly expecting 1/1 instead of the bonded width was corrected.
-Persistent 15% loss in REALITY-TLS delayed iperf's final control exchange until
-timeout; the new fixture bounds loss duration and keeps separate phase logs.
-This outcome is not classified as a confirmed production regression.
+The production fix is qualified: 2407 full-feature Linux units PASS/60 ignored,
+strict Clippy and release PASS. Twelve fresh isolated current-binary Linux
+scenarios pass 283 checks. The old baseline has zero last-half echo replies in
+both directions; fixed receives450 each. Shared8Mbps cap yields6.466312–7.777372Mbps.
+This is not a peak-throughput benchmark.
 
-Q24-F001 is committed in the audit worktree. Final Linux units/Clippy/release,
-bidirectional baseline/fixed, runtime scenarios and native A/B/ABI are still being
-qualified. Previous 2405 units and native bytes are not fresh validation of the
-changed core. Q24 stays open until these gates finish.
+Four fresh independent native A/B pairs PASS, canonical/consumer copies match;
+22 actual Windows ABI/runner and C11/C++11 header checks PASS. Actual Android
+JNI calls on the new x86_64 library pass23/23. First private AVD initialization
+adds two base userdata files while preserving the original seed exactly; raw
+whole-fixture rc1/userdata_preserved=false is retained. Repeated cold boot on
+the initialized AVD times out at240/480seconds before JNI. It is not counted PASS;
+Q24 remains open, overall23/37(62.2%).
 
-Lab .11 accepts TCP/22 without an SSH banner; no new authentication attempts.
-The available .10 host runs sequentially with one compiler job; its working service
-and executable are preserved. Mac/iOS/router/Windows VM are user exclusions.
-Profiles remain INI-only; service/API JSON remains permitted.
+The .10 fallback has2GiB RAM/2GiB swap. Emulator37.2.12 forces2560MiB guest RAM
+and6GiB userdata. Missing libraries were extracted privately; inactive compiler
+caches cleared with all mapped files and working executable preserved. The
+private SDK was archived/restored for build capacity. .11 provides no SSH banner;
+its final host state is unverified. Mac/iOS/router/Windows VM network runtime
+remain user exclusions. No installed-app/physical E2E, deployment or push.
+
+The width fixture and bounded18-second impairment/phase logs were corrected.
+Only exact three accepted ambient legacy rules may differ; raw host_restored
+values remain. Profiles are INI-only; service/API JSON remains allowed.

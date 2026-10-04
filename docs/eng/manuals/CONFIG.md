@@ -935,7 +935,7 @@ the client:
 [profile:reality-tls]
 # enable bonding on this profile
 obf.multipath.enabled = true
-# HARD ceiling of streams per session (the server enforces it)
+# server-enforced ceiling of ordinary active streams per session
 obf.multipath.max_streams = 4
 # false = target max_streams; true = auto-tune
 obf.multipath.adaptive = false
@@ -964,6 +964,12 @@ counters; a secondary JOIN creates no new quota or session accounting entry.
 Shared packet pools are bounded independently of stream count; per-carrier crypto
 state, descriptor queues and socket/TLS buffers still consume additional memory.
 
+Bonded uplink uses one additional snapshot pool of at most 4 MiB per session:
+the native TUN/ring packet is released before its snapshot is queued. Each queue
+receives a limited share so one blocked carrier cannot consume the whole pool.
+Exhaustion drops the packet instead of allocating extra memory.
+
+
 The client may open **fewer** than the ceiling, but **there is no client `[qeli]`
 INI key** for this — the stream count is server-controlled: the client uses the
 server-pushed `max_streams` (and in `adaptive` mode auto-tunes the count itself).
@@ -983,22 +989,24 @@ server-pushed `max_streams` (and in `adaptive` mode auto-tunes the count itself)
 > connection does its own key exchange → independent crypto per stream (no
 > nonce-reuse).
 
-**Measured (lab, `tc netem`, download, 8 parallel flows).** On a clean link bonding
-is at parity (the TUN pump is the ceiling); on a lossy/latent link it scales:
+**Historical measurements before Q24** (lab, `tc netem`, download, 8 parallel
+flows). These numbers have no recorded execution date or artifact SHA here and
+were not rerun for Q24; they do not qualify the current build's peak throughput:
 
-| link | 1 stream | 4 streams | gain |
+| link | 1 stream, Mbps | 4 streams, Mbps | gain |
 |---|---:|---:|---:|
 | clean | ~725–846 | ~805–815 | parity |
 | RTT 40 ms, 0.05% loss | ~225–420 | ~692–704 | ~1.6–3× |
 | RTT 80 ms, 0.1% loss | ~50–65 | ~260–305 | **~5×** |
 
-Distribution is **per-flow** in the shared Rust transport core used by the CLI, desktop,
-Android and iOS clients. Each inner flow is pinned to one carrier by a flow hash
-(`flow_hash % streams`) to avoid reordering. The common core clamps the pushed
-`max_streams` to 16 on every platform; the effective count also cannot exceed the server
-profile's `max_streams`. Consequently traffic with **several concurrent connections**
-(such as a browser's 6+ TLS connections) can benefit, while one lone flow stays on one
-carrier and does not become faster merely because bonding is enabled.
+Distribution is **per-flow** in the shared Rust core used by the CLI, desktop,
+Android and iOS clients. With negotiated authenticated resume, the flow hash selects
+one stable logical slot; otherwise legacy scheduling uses `flow_hash % live_streams`,
+so a membership change can remap flows. One inner flow is never striped across
+carriers. The core clamps the pushed ordinary stream limit to 16; the server also
+enforces its profile limit. An authenticated prepared resume may temporarily add
+one candidate socket. Traffic with several concurrent connections can benefit;
+one lone flow stays on one carrier and does not automatically become faster.
 
 ## Flow shaping — cover traffic (`obf.traffic_shaping.*`)
 
