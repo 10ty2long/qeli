@@ -80,8 +80,6 @@ level = debug
        if p.exists() and b'_worker' in p.read_bytes().split(b'\0'):return int(value)
     except FileNotFoundError:pass
     return None
-   try:return api('/api/status').get('worker_online') is True
-    except (OSError,ValueError):return False
    try:
     # Control reply and healthy ingress are the readiness authority; panel status
     # spelling is kept as raw evidence rather than inferred from a log alone.
