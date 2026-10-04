@@ -3153,9 +3153,12 @@ fn abort_tcp_resume(
         .as_ref()
         .and_then(|roaming| roaming.abort_resume(reservation))
     {
-        // The original one-shot reaper may have yielded while JOIN was prepared. Preserve
-        // its generation and deadline; an overdue ticket runs immediately, without new grace.
-        schedule_tcp_orphan_reaper(profile.clone(), session.clone(), ticket, addr);
+        // Before the deadline the original timer still owns cleanup. Rearm only an overdue
+        // ticket, because its one-shot reaper may have yielded while JOIN was prepared.
+        // Keep the exact generation/deadline; never create another future grace timer.
+        if ticket.deadline() <= Instant::now() {
+            schedule_tcp_orphan_reaper(profile.clone(), session.clone(), ticket, addr);
+        }
     }
 }
 
