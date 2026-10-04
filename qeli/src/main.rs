@@ -355,14 +355,7 @@ fn init_logging(level: &str, file: Option<&str>, time_format: &str) {
         }
     });
     if let Some(path) = file {
-        if let Some(parent) = std::path::Path::new(path).parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        match std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-        {
+        match qeli::client::open_log_file(std::path::Path::new(path)) {
             Ok(f) => {
                 builder.target(env_logger::Target::Pipe(Box::new(f)));
             }

@@ -32,6 +32,8 @@ the profile. An invalid profile sends diagnostics to stderr. To use
 or the process user, with no group/other write permission; use
 `chmod 600 client.ini`. An untrusted config cannot open a log file; its other
 valid logging settings remain effective.
+A file sink must be a regular file: FIFOs, devices and directories are rejected,
+and messages fall back to stderr. Leave `file` empty for journald/logread.
 
 The panel provides a **form and an INI editor**; there is no configuration JSON editor.
 JSON in the internal HTTP API carries form data and status, not a configuration file format.

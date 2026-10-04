@@ -1,9 +1,4 @@
 #[cfg(target_os = "linux")]
-mod logging_bootstrap;
-#[cfg(target_os = "linux")]
-pub use logging_bootstrap::{peek_logging, read_config_text};
-
-#[cfg(target_os = "linux")]
 pub mod dns;
 #[cfg(target_os = "linux")]
 pub mod gateway;
@@ -13730,3 +13725,9 @@ mod q13_stealth_writer_tests {
         );
     }
 }
+
+// Keep Linux-only CLI wiring after shared code to preserve other targets' source locations.
+#[cfg(target_os = "linux")]
+mod logging_bootstrap;
+#[cfg(target_os = "linux")]
+pub use logging_bootstrap::{open_log_file, peek_logging, read_config_text};

@@ -20,7 +20,7 @@ SENTINEL = b'owned-fixture-sentinel\n'
 def run(command):
     started = time.monotonic()
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               start_new_session=True)
+                               start_new_session=True, env={**os.environ, 'RUST_LOG': 'debug'})
     timed_out = False
     try:
         output, _ = process.communicate(timeout=4)
@@ -78,23 +78,28 @@ def main():
         result['checks'] = {'bounded_completion': not result['timed_out']}
         if sink is not None:
             result['sink_exists'] = sink.exists()
-            if sink.exists():
+            if sink.exists() and sink.is_file():
                 result['sink_sha256'] = hashlib.sha256(sink.read_bytes()).hexdigest()
             result['checks']['sink_policy'] = (
+                sink.exists() and not sink.is_file() if sink_rule == 'fifo' else
                 sink.exists() if sink_rule == 'created' else
                 sink.exists() and sink.read_bytes() == SENTINEL if sink_rule == 'unchanged' else
                 not sink.exists())
         if 'check' in name:
             result['checks']['validation_exit'] = (result['exit_code'] == 0) == valid
+        else:
+            result['checks']['startup_exit'] = result['exit_code'] > 0
         result['pass'] = all(result['checks'].values())
         (root/(name+'.log')).write_text(result['output'], encoding='utf8')
         results.append(result)
     for flavor, command in [('standalone', [args.client]), ('daemon', [args.daemon, 'client'])]:
-        for kind in ('trusted', 'mixed-case', 'untrusted', 'symlink', 'malformed', 'oversized', 'exact-limit'):
+        for kind in ('trusted', 'mixed-case', 'untrusted', 'symlink', 'malformed', 'oversized', 'exact-limit', 'fifo-sink'):
             case = root/(flavor+'-'+kind)
             case.mkdir(mode=0o700)
             config, sink = case/'client.ini', case/'sink.log'
             text = profile(sink)
+            if kind == 'fifo-sink':
+                os.mkfifo(sink, 0o600)
             if kind == 'mixed-case':
                 text = '\n'.join(line.upper() if line.startswith('[') else
                                  line.split('=', 1)[0].upper()+'='+line.split('=', 1)[1]
@@ -113,7 +118,7 @@ def main():
                 linked = case/'linked.ini'
                 linked.symlink_to(config)
                 config = linked
-            rule = ('created' if kind in ('trusted', 'mixed-case', 'exact-limit') else
+            rule = ('fifo' if kind == 'fifo-sink' else 'created' if kind in ('trusted', 'mixed-case', 'exact-limit') else
                     'unchanged' if kind in ('untrusted', 'symlink') else 'absent')
             invoke(flavor+'-'+kind, command, config, sink, rule)
         fifo = root/(flavor+'-fifo.ini')
@@ -136,7 +141,8 @@ def main():
     failed = {r['name'] for r in results if not r['pass']}
     reproduced = {'standalone-fifo', 'check-fifo', 'standalone-untrusted',
                   'standalone-symlink', 'standalone-oversized', 'daemon-oversized',
-                  'standalone-malformed', 'daemon-malformed', 'standalone-mixed-case', 'daemon-mixed-case'}
+                  'standalone-malformed', 'daemon-malformed', 'standalone-mixed-case', 'daemon-mixed-case',
+                  'standalone-fifo-sink', 'daemon-fifo-sink'}
     accepted = not failed if args.expect == 'fixed' else reproduced <= failed
     data = dict(schema_version=1, kind='qeli-linux-cli-bootstrap', expectation=args.expect,
                 isolation=isolation, artifact_sha256={str(p): hashlib.sha256(p.read_bytes()).hexdigest()
