@@ -280,7 +280,7 @@ obf.mode = fake-tls
             for family in ('ipv4','dual','ipv6'):
                 for mode in modes:
                     for ndp in ('off','auto','required'):
-                        text=base+profile(0,mode).replace('tun.ip_mode = dual','tun.ip_mode = '+family)
+                        text=base+profile(0,mode).replace('tun.ip_mode = dual','tun.ip_mode = '+family).replace('dns.enabled = true','dns.enabled = false')
                         old_ndp='required' if mode in ('manual','route') else 'off'
                         text=text.replace('routing.ipv6.ndp_proxy = '+old_ndp,'routing.ipv6.ndp_proxy = '+ndp)
                         cfg.write_text(text);cfg.chmod(0o600)
