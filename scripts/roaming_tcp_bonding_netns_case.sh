@@ -3,9 +3,10 @@
 # Loaded only by roaming_netns_e2e.sh; no host sockets, routes or services are touched.
 
 bonding_rate_probe() {
-  local direction=$1 reverse= result="$WORK/bonding-$1.log"
+  local direction=$1 phase=${2:-baseline} reverse= result
+  result="$WORK/bonding-$direction-$phase.log"
   if [ "$direction" = download ]; then reverse=-R; fi
-  ip netns exec "$SRV_NS" iperf3 -s -1 -B 10.88.0.1 -p 5201 >"$WORK/bonding-$direction-server.log" 2>&1 &
+  ip netns exec "$SRV_NS" iperf3 -s -1 -B 10.88.0.1 -p 5201 >"$WORK/bonding-$direction-$phase-server.log" 2>&1 &
   LOAD_JOB_PID=$!
   sleep 1
   if ! ip netns exec "$CLI_NS" timeout 35 iperf3 -c 10.88.0.1 -p 5201 -P 8 -t 12 -O 2 -J $reverse >"$result" 2>&1; then
@@ -16,7 +17,7 @@ bonding_rate_probe() {
   LOAD_JOB_PID=
   # Receiver goodput permits 25% timing/burst overhead, but rejects a 3x cap.
   # A floor also rejects a stalled tunnel that would trivially pass the upper bound.
-  if python3 - "$result" >"$WORK/bonding-$direction-rate.log" <<'PY'
+  if python3 - "$result" >"$WORK/bonding-$direction-$phase-rate.log" <<'PY'
 import json, math, sys
 from pathlib import Path
 v = json.loads(Path(sys.argv[1]).read_text())
@@ -81,10 +82,19 @@ run_tcp_bonding_case() {
       bad "reverse-link asymmetric delay could not be installed"
       return 1
     fi
-    bonding_rate_probe download || return 1
+    # Bound the impairment itself: iperf control can be pinned to this lossy
+    # carrier too, so restore it before expecting its final result exchange.
+    (
+      sleep 18
+      ip netns exec "$RTR_NS" iptables -D FORWARD -i qrm-ar -o qrm-sr -p tcp --sport "$port" --dport 4443 \
+        -m statistic --mode random --probability 0.15 -j DROP
+    ) &
+    FAULT_JOB_PID=$!
+    bonding_rate_probe download impaired || return 1
+    wait "$FAULT_JOB_PID" || return 1
+    FAULT_JOB_PID=
     ip netns exec "$RTR_NS" tc qdisc del dev qrm-ar root || return 1
-    ip netns exec "$RTR_NS" iptables -D FORWARD -i qrm-ar -o qrm-sr -p tcp --sport "$port" --dport 4443 \
-      -m statistic --mode random --probability 0.15 -j DROP || return 1
+
   fi
   check "all probes retained the original process and TUN" \
     "test -n '$CLIENT_PID' && ip netns pids $CLI_NS | grep -qx '$CLIENT_PID' && test \"\$(ip netns exec $CLI_NS cat /sys/class/net/qrm0/ifindex)\" = '$TUN_IFINDEX'"
