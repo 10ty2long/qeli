@@ -155,6 +155,12 @@ obf.mode = fake-tls
         request(1, macs[4], label='exhausted pool is silent')
         time.sleep(9)
         request(1, macs[4], expected=2, label='expired committed lease frees a pool slot')
+        # Sixty silent requests for another server consume this MAC's bucket without
+        # changing the pool. The 61st request is dropped; a different full MAC must work.
+        for index in range(60):
+            request(3, macs[7], addr(54, '10.91.0.99'), label=f'rate primer {index}', wait=0)
+        time.sleep(.1)
+        request(3, macs[7], addr(50, chosen), label='61st request from limited MAC is silent')
         # Reuse a quarantined exact request to check overloaded option 50 parsing.
         request(3, macs[6], extra=bytes([52,1,1]), overload=addr(50, chosen)+b'\xff', expected=6, label='option 50 in overloaded file field is parsed')
         capture.close();capture=None;os.close(tap);tap=None
