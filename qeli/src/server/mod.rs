@@ -6169,7 +6169,7 @@ async fn run_profile_generation(
     let profile = Arc::new(ProfileRuntime {
         name: name.clone(),
         config: pcfg.clone(),
-        tun_addresses: handler::configured_tun_addresses(pcfg),
+        tun_addresses: handler::configured_tun_addresses(&pcfg),
         tasks: tasks.clone(),
         pool: Arc::new(Mutex::new(pool)),
         sessions: Arc::new(RwLock::new(SessionMap {
