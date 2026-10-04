@@ -96,7 +96,7 @@ obf.mode = fake-tls
         links = json.loads(run(['ip', '-d', '-j', 'link', 'show', 'dev', 'qdhcp0'])); sockets = run(['ss', '-lnu']); check('real worker owns TAP and DHCP UDP/67', links[0]['linkinfo']['info_data']['type'] == 'tap' and ':67' in sockets, dict(links=links,sockets=sockets))
         tap = os.open('/dev/net/tun', os.O_RDWR | os.O_NONBLOCK)
         fcntl.ioctl(tap, 0x400454ca, struct.pack('16sH22x', b'qdhcp0', 0x0002 | 0x1000 | 0x0100))
-        capture = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0800)); capture.bind(('qdhcp0', 0))
+        capture = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003)); capture.bind(('qdhcp0', 0))
         xid = 0x71200000
         def request(kind, mac, extra=b'', ciaddr='0.0.0.0', raw=None, header=None, overload=None, expected=None, label='', wait=.15):
             nonlocal xid
@@ -118,7 +118,7 @@ obf.mode = fake-tls
                 capture.settimeout(max(.001, deadline-time.monotonic()))
                 try: reply = capture.recv(65535)
                 except socket.timeout: break
-                if len(reply) < 14+20+8+240 or reply[23] != 17: continue
+                if len(reply) < 14+20+8+240 or reply[12:14] != b'\x08\x00' or reply[23] != 17: continue
                 ihl = (reply[14] & 15) * 4; offset = 14+ihl
                 if reply[offset:offset+4] != struct.pack('!HH', 67, 68): continue
                 bootp = reply[offset+8:]
