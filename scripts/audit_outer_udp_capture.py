@@ -12,7 +12,8 @@ def main():
     peers = {ipaddress.IPv4Address(x).packed for x in ("10.46.1.2", "10.46.2.2")}
     counts = {"packets": 0, "fragmented": 0, "over_1280": 0, "uplink": 0, "downlink": 0, "max_ip_length": 0}
     ready, stop = Path(str(args.output)+".ready"), Path(str(args.output)+".stop")
-    with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3)) as sock:
+    with Path(str(args.output)+".pcap").open("wb") as pcap, socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(3)) as sock:
+        pcap.write(struct.pack("<IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1))
         sock.bind((args.interface, 0)); sock.settimeout(0.1)
         ready.touch()
         deadline = time.monotonic()+120
@@ -27,6 +28,9 @@ def main():
             packet = frame[14:]
             if packet[0] >> 4 != 4 or packet[9] != 17 or {packet[12:16], packet[16:20]} != peers: continue
             length, flags = struct.unpack_from("!H", packet, 2)[0], struct.unpack_from("!H", packet, 6)[0]
+            stamp = time.time_ns()
+            pcap.write(struct.pack("<IIII", stamp//1_000_000_000, stamp%1_000_000_000//1000, len(frame), len(frame)))
+            pcap.write(frame)
             counts["packets"] += 1
             counts["fragmented"] += bool(flags & 0x3fff)
             counts["over_1280"] += length > 1280

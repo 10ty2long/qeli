@@ -74,7 +74,7 @@ def pull_logs(sftp, remote, local):
         if stat.S_ISDIR(item.st_mode):
             dst.mkdir(exist_ok=True)
             pull_logs(sftp, src, dst)
-        elif stat.S_ISREG(item.st_mode) and item.filename.endswith('.log'):
+        elif stat.S_ISREG(item.st_mode) and item.filename.endswith(('.log', '.pcap')):
             sftp.get(src, str(dst))
 
 
