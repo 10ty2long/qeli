@@ -1,8 +1,8 @@
 # Q25-F216/F217: shared Linux CLI INI bootstrap
 
-4 October 2026. Q25 remains **IN_PROGRESS**; this verifies the startup boundary rather than closing the entire section.
+4 October 2026. Startup boundary verified; final section status is [DONE/PASS](AUDIT-Q25-LINUX-CLI-FINAL.md).
 
-<!-- normative-sync: audit-q25-cli-bootstrap-v2 -->
+<!-- normative-sync: audit-q25-cli-bootstrap-v3 -->
 
 The standalone `qeli-client` read INI using unbounded `read_to_string` before the shared loader: a FIFO without a writer blocked startup, and an untrusted config could select a log file. `check-config --client` also bypassed bounded reading. The full `qeli client` used the server bootstrap's 16 MiB bound and a separate partial logging parser: oversized/invalid client profiles could open a file, and the case of valid keys changed behavior.
 

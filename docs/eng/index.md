@@ -383,3 +383,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q24: multipath and shared budgets — DONE/PASS](reports/AUDIT-Q24-BONDING.md)
 
 - [Q25: shared Linux CLI INI bootstrap — verified](reports/AUDIT-Q25-CLI-BOOTSTRAP.md)
+
+- [Q25: Linux CLI and network recovery — DONE/PASS](reports/AUDIT-Q25-LINUX-CLI-FINAL.md)

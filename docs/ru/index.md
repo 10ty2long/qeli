@@ -383,3 +383,5 @@
 - [Q24: multipath и общий бюджет — DONE/PASS](reports/AUDIT-Q24-BONDING.md)
 
 - [Q25: единый INI bootstrap Linux CLI — проверено](reports/AUDIT-Q25-CLI-BOOTSTRAP.md)
+
+- [Q25: Linux CLI и восстановление сети — DONE/PASS](reports/AUDIT-Q25-LINUX-CLI-FINAL.md)
