@@ -17,7 +17,8 @@ from native_repro import source_digest
 from run_ipv6_release_matrix import MATRIX_CASES, SPECIAL_CASES
 
 FILES = ('ipv6_netns_case.sh', 'ipv6_dns_pair.sh', 'ipv6_mtu_pair.sh',
-         'ipv6_legacy_pair.sh', 'dns_test_server.py', 'tap_ipv6_control_probe.py')
+         'ipv6_legacy_pair.sh', 'dns_test_server.py', 'tap_ipv6_control_probe.py',
+         'audit_outer_udp_capture.py')
 CASES = {name: ('ipv6_netns_case.sh', parameters, 180)
          for name, parameters in MATRIX_CASES + SPECIAL_CASES}
 CASES.update({'linux.dns.ipv4-ipv6': ('ipv6_dns_pair.sh', (), 360),
