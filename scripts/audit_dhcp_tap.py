@@ -87,6 +87,17 @@ dhcp.lease_time_secs = 8
 dhcp.domain_name = qeli.test
 obf.mode = fake-tls
 '''); cfg.chmod(0o600)
+        # Exercise the actual INI/check-config boundary as well as the wire encoder.
+        for count, enabled, expected in [(63, True, 0), (64, True, 1), (64, False, 0)]:
+            admission = root/f'admission-{count}-{enabled}.conf'
+            text = cfg.read_text().replace('dns.push_servers = 10.91.0.3, 10.91.0.4',
+                                          'dns.push_servers = '+', '.join(f'10.91.0.{n}' for n in range(1,count+1)))
+            if not enabled: text = text.replace('dhcp.enabled = true', 'dhcp.enabled = false')
+            admission.write_text(text); admission.chmod(0o600)
+            result = subprocess.run([str(binary),'check-config','-c',str(admission)],capture_output=True,text=True,timeout=30)
+            (root/(admission.stem+'.log')).write_text(result.stdout+result.stderr)
+            check(f'INI admission DNS count={count} DHCP={enabled}',
+                  (result.returncode == 0 if expected == 0 else result.returncode != 0 and 'at most 63' in result.stdout+result.stderr))
         with (root/'server.log').open('w') as log:
             server = subprocess.Popen([str(binary), 'server', '-c', str(cfg)], stdout=log, stderr=subprocess.STDOUT)
         end = time.monotonic() + 30
