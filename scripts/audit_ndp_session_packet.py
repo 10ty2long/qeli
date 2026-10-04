@@ -232,6 +232,7 @@ tun.mtu = 1400
 tun.queues = 1
 pool.ipv6.cidr = fd86::/64
 routing.nat.enabled = false
+routing.client_to_client = {'true' if args.extended else 'false'}
 routing.ipv6.mode = {args.mode}
 routing.ipv6.interface = wan0
 routing.ipv6.ndp_proxy = required
@@ -245,7 +246,7 @@ obf.heartbeat.jitter_ms = 0
 perf.connection.idle_timeout_secs = 3
 ''');cfg.chmod(0o600)
         run([str(binary),'add-client','ndp-user','--password-stdin','--profiles','ndp','--static-ipv6','fd86::2','-c',str(cfg)],input='ndp-fixture-pass\n')
-        with users.open('a') as f:f.write('\nclient_subnet = fd87::/64\n')
+        with users.open('a') as f:f.write('\nclient_subnet = fd87::/64'+(', ::/0' if args.extended else '')+'\n')
         run([str(binary),'check-config','-c',str(cfg)])
         state=root/'state';state.mkdir(mode=0o700)
         worker=spawn('qns',['env','STATE_DIRECTORY='+str(state),'QELI_CONTROL_SOCKET='+str(root/'control.sock'),str(binary),'_worker','-c',str(cfg)],'server')
@@ -343,6 +344,23 @@ level = info
         record('worker restores foreign firewall routes links and sysctl',after==before)
         record('worker retires socket and sysctl journal',not (root/'control.sock').exists() and not (state/'sysctls.state').exists())
         packet('stopped responder has no lease NA','fd86::2','no')
+        if args.extended and not args.baseline:
+            worker=spawn('qns',['env','STATE_DIRECTORY='+str(state),'QELI_CONTROL_SOCKET='+str(root/'control.sock'),str(binary),'_worker','-c',str(cfg)],'server-crash')
+            until(lambda:'session-aware IPv6 NDP proxy active' in (root/'server-crash.log').read_text())
+            client=connect('client-crash')
+            packet('proxy responds before worker SIGKILL','fd86::2','yes')
+            client.send_signal(signal.SIGSTOP)
+            worker.kill();worker.wait(timeout=5);children.remove(worker)
+            client.kill();client.wait(timeout=5);children.remove(client)
+            packet('SIGKILL closes proxy lease responder','fd86::2','no')
+            packet('SIGKILL closes proxy delegated responder','fd87::42','no')
+            old_wan=next(x for x in json.loads(before['links']) if x['ifname']=='wan0')
+            new_wan=json.loads(ns('qns',['ip','-j','link','show','wan0']).stdout)[0]
+            record('SIGKILL releases socket multicast membership',old_wan['flags']==new_wan['flags'])
+            (root/'network-crash.json').write_text(json.dumps(network(),indent=2))
+            # SIGKILL firewall/sysctl recovery has separate evidence and explicit
+            # lost-witness manual boundaries. Do not label this as clean restore.
+
         completed=True
     finally:
         for child in children:
