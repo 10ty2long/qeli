@@ -1185,6 +1185,96 @@ impl ObfsUdp {
         }
     }
 
+    /// Batched counterpart of [`Self::recv_buf`] / [`Self::recv_buf_from`].
+    ///
+    /// Waits for readiness once, then takes every datagram already queued in a single
+    /// `recvmmsg` (one `recv_from` per datagram on platforms without it). It never waits for
+    /// the batch to fill, so this removes syscalls without adding latency.
+    ///
+    /// `slots` must be empty and hold spare capacity. On return the first `n` carry opened
+    /// plaintext; a slot left empty is a malformed obfs frame the caller must skip, exactly as
+    /// `n == 0` means today on the single-datagram path.
+    pub(crate) async fn recv_batch(
+        &self,
+        slots: &mut [BytesMut],
+        mut addrs: Option<&mut [std::net::SocketAddr]>,
+        scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    ) -> io::Result<usize> {
+        let received = self
+            .sock
+            .async_io(tokio::io::Interest::READABLE, || {
+                crate::transport_core::udp_batch::recv_batch(
+                    &self.sock,
+                    &mut *slots,
+                    addrs.as_deref_mut(),
+                    scratch,
+                )
+            })
+            .await?;
+        if let Some(key) = &self.key {
+            for slot in slots.iter_mut().take(received) {
+                match obfs_datagram_open_in_place(key, &mut slot[..]) {
+                    Some(plain_len) => slot.truncate(plain_len),
+                    None => slot.clear(),
+                }
+            }
+        }
+        Ok(received)
+    }
+
+    /// Batched counterpart of [`Self::send`] for a connected socket.
+    ///
+    /// Returns how many datagrams the kernel accepted; a short count is normal under pressure
+    /// and the caller must retry the remainder. Sealing still happens per datagram, so keyed
+    /// `obfs` behaves exactly as on the single-datagram path.
+    pub(crate) async fn send_batch(
+        &self,
+        datagrams: &[&[u8]],
+        scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    ) -> io::Result<usize> {
+        let sealed: Option<Vec<Vec<u8>>> = self.key.as_ref().map(|key| {
+            datagrams
+                .iter()
+                .map(|d| obfs_datagram_seal(key, d))
+                .collect()
+        });
+        let wire: Vec<&[u8]> = match &sealed {
+            Some(sealed) => sealed.iter().map(|d| d.as_slice()).collect(),
+            None => datagrams.to_vec(),
+        };
+        self.sock
+            .async_io(tokio::io::Interest::WRITABLE, || {
+                crate::transport_core::udp_batch::send_batch(&self.sock, &wire, scratch)
+            })
+            .await
+    }
+
+    /// Batched send for an unconnected server socket. All datagrams target one immutable
+    /// egress snapshot, so a concurrent roaming commit applies to the next batch only.
+    #[allow(dead_code)] // server-only in client/FFI feature builds
+    pub(crate) async fn send_batch_to(
+        &self,
+        datagrams: &[&[u8]],
+        peer: std::net::SocketAddr,
+        scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    ) -> io::Result<usize> {
+        let sealed: Option<Vec<Vec<u8>>> = self.key.as_ref().map(|key| {
+            datagrams
+                .iter()
+                .map(|datagram| obfs_datagram_seal(key, datagram))
+                .collect()
+        });
+        let wire: Vec<&[u8]> = match &sealed {
+            Some(sealed) => sealed.iter().map(|datagram| datagram.as_slice()).collect(),
+            None => datagrams.to_vec(),
+        };
+        self.sock
+            .async_io(tokio::io::Interest::WRITABLE, || {
+                crate::transport_core::udp_batch::send_batch_to(&self.sock, &wire, peer, scratch)
+            })
+            .await
+    }
+
     /// Raw fd of the underlying UDP socket — used by the client to toggle
     /// `IP_MTU_DISCOVER` (DF) around active path-MTU probing.
     #[cfg(unix)]
@@ -1926,6 +2016,99 @@ mod tests {
         );
         // too-short frame rejected
         assert!(obfs_datagram_open(&key, &[0u8; 4]).is_none());
+    }
+
+    #[tokio::test]
+    async fn keyed_udp_batch_roundtrips_different_sizes() {
+        let a = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let b = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        a.connect(b.local_addr().unwrap()).await.unwrap();
+        b.connect(a.local_addr().unwrap()).await.unwrap();
+        let key = derive_obfs_key("keyed-udp-batch");
+        let sender = ObfsUdp::new(a, Some(key));
+        let receiver = ObfsUdp::new(b, Some(key));
+        let payloads: Vec<Vec<u8>> = (1..=8).map(|i| vec![i as u8; i * 137]).collect();
+
+        let mut send_scratch = crate::transport_core::udp_batch::BatchScratch::new(
+            crate::transport_core::udp_batch::MAX_BATCH,
+        );
+        let mut offset = 0;
+        while offset < payloads.len() {
+            let remaining: Vec<&[u8]> = payloads[offset..]
+                .iter()
+                .map(|payload| payload.as_slice())
+                .collect();
+            let sent = sender
+                .send_batch(&remaining, &mut send_scratch)
+                .await
+                .unwrap();
+            assert!(sent > 0, "a writable UDP socket must make progress");
+            offset += sent;
+        }
+
+        let mut received = Vec::new();
+        let mut receive_scratch = crate::transport_core::udp_batch::BatchScratch::new(
+            crate::transport_core::udp_batch::MAX_BATCH,
+        );
+        while received.len() < payloads.len() {
+            let mut slots: Vec<BytesMut> = (0..crate::transport_core::udp_batch::MAX_BATCH)
+                .map(|_| BytesMut::with_capacity(4096))
+                .collect();
+            let count = receiver
+                .recv_batch(&mut slots, None, &mut receive_scratch)
+                .await
+                .unwrap();
+            received.extend(slots.into_iter().take(count));
+        }
+        for (actual, expected) in received.iter().zip(payloads.iter()) {
+            assert_eq!(actual.as_ref(), expected.as_slice());
+        }
+    }
+
+    #[tokio::test]
+    async fn keyed_unconnected_udp_batch_roundtrips_different_sizes() {
+        let raw_sender = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let raw_receiver = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let peer = raw_receiver.local_addr().unwrap();
+        let key = derive_obfs_key("keyed-unconnected-udp-batch");
+        let sender = ObfsUdp::new(raw_sender, Some(key));
+        let receiver = ObfsUdp::new(raw_receiver, Some(key));
+        let payloads: Vec<Vec<u8>> = (1..=8).map(|i| vec![i as u8; i * 127]).collect();
+
+        let mut send_scratch = crate::transport_core::udp_batch::BatchScratch::new(
+            crate::transport_core::udp_batch::MAX_BATCH,
+        );
+        let mut offset = 0;
+        while offset < payloads.len() {
+            let remaining: Vec<&[u8]> = payloads[offset..]
+                .iter()
+                .map(|payload| payload.as_slice())
+                .collect();
+            let sent = sender
+                .send_batch_to(&remaining, peer, &mut send_scratch)
+                .await
+                .unwrap();
+            assert!(sent > 0, "a writable UDP socket must make progress");
+            offset += sent;
+        }
+
+        let mut received = Vec::new();
+        let mut receive_scratch = crate::transport_core::udp_batch::BatchScratch::new(
+            crate::transport_core::udp_batch::MAX_BATCH,
+        );
+        while received.len() < payloads.len() {
+            let mut slots: Vec<BytesMut> = (0..crate::transport_core::udp_batch::MAX_BATCH)
+                .map(|_| BytesMut::with_capacity(4096))
+                .collect();
+            let count = receiver
+                .recv_batch(&mut slots, None, &mut receive_scratch)
+                .await
+                .unwrap();
+            received.extend(slots.into_iter().take(count));
+        }
+        for (actual, expected) in received.iter().zip(payloads.iter()) {
+            assert_eq!(actual.as_ref(), expected.as_slice());
+        }
     }
 
     #[test]

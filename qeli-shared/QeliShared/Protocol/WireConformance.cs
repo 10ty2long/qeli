@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Qeli.Shared.Crypto;
+using Qeli.Shared.Vpn;
 
 namespace Qeli.Shared.Protocol;
 
@@ -32,10 +33,85 @@ public static class WireConformance
         ok &= RunUdpFrag(check);
         ok &= RunCtrlFrame(check);
         ok &= RunMtuLadder(check);
+        ok &= RunRouteFileScale(check);
         ok &= RunIniBounds(check);
         ok &= RunEditorPresetSelection(check);
         NetworkPolicyConformance.Run(check);
         return ok;
+    }
+
+    /// <summary>Regression coverage for the 14,113-route files attached to issue #69.
+    /// The real files contain the same ordered networks in CIDR and OpenVPN-netmask forms;
+    /// generate the equivalent shape here so CI does not depend on mutable GitHub attachments.</summary>
+    private static bool RunRouteFileScale(Action<string, bool> check)
+    {
+        const int routeCount = 14_113;
+        var cidrLines = new string[routeCount];
+        var openVpnLines = new string[routeCount];
+        for (int i = 0; i < routeCount; i++)
+        {
+            string network = $"100.{i / 256}.{i % 256}.0";
+            cidrLines[i] = $"{network}/24";
+            openVpnLines[i] = $"route {network} 255.255.255.0";
+        }
+
+        IReadOnlyList<string> cidrRoutes = RouteFileParser.ParseLines(cidrLines, "all-cidrs");
+        IReadOnlyList<string> openVpnRoutes =
+            RouteFileParser.ParseLines(openVpnLines, "all-openvpn-routes");
+        bool equivalent = cidrRoutes.Count == routeCount
+            && openVpnRoutes.SequenceEqual(cidrRoutes)
+            && cidrRoutes.All(route => !route.EndsWith("/32", StringComparison.Ordinal));
+        check("route_file: issue #69 14,113-line CIDR/OpenVPN lists stay equivalent without invented /32 routes",
+            equivalent);
+
+        string tempDir = Path.Combine(Path.GetTempPath(), $"qeli-route-file-{Guid.NewGuid():N}");
+        bool multipleFilesDeduplicated = false;
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            string cidrPath = Path.Combine(tempDir, "All CIDRs.txt");
+            string openVpnPath = Path.Combine(tempDir, "All OpenVPN routes.txt");
+            File.WriteAllLines(cidrPath, cidrLines);
+            File.WriteAllLines(openVpnPath, openVpnLines);
+            var logs = new List<string>();
+            IReadOnlyList<string> loaded = RouteFileParser.Load(
+                new[] { cidrPath, openVpnPath }, CancellationToken.None, logs.Add);
+            multipleFilesDeduplicated = loaded.Count == routeCount
+                && loaded.SequenceEqual(cidrRoutes)
+                && logs.Any(line => line.Contains(
+                    $"Loaded {routeCount} unique route(s) from 2 route_file source(s)",
+                    StringComparison.Ordinal));
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { }
+        }
+        check("route_file: two issue-sized files merge and deduplicate across sources",
+            multipleFilesDeduplicated);
+
+        using var cancellation = new CancellationTokenSource();
+        IEnumerable<string> CancelDuringEnumeration()
+        {
+            for (int i = 0; i < routeCount; i++)
+            {
+                if (i == 128) cancellation.Cancel();
+                yield return cidrLines[i];
+            }
+        }
+        bool cancelledMidFile = false;
+        try
+        {
+            RouteFileParser.ParseLines(
+                CancelDuringEnumeration(), "cancelled-route-file", cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            cancelledMidFile = true;
+        }
+        check("route_file: cancellation interrupts an issue-sized file during parsing",
+            cancelledMidFile);
+
+        return equivalent && multipleFilesDeduplicated && cancelledMidFile;
     }
 
     /// <summary>Manual INI values that do not match a visual preset must remain exact.
@@ -261,6 +337,39 @@ public static class WireConformance
         check("ini-dups: recorded once, last value still wins", dupOnce);
         check("ini-dups: a clean config records nothing", cleanQuiet);
 
+        // route_file is deliberately repeatable: each occurrence contributes one desktop
+        // source and a save/load round-trip must preserve their declaration order.
+        var routeSources = Ini(
+            @"route_file = C:\qeli\cidrs.txt",
+            @"route_file = C:\qeli\openvpn.txt");
+        bool routeSourcesAccepted = routeSources.RouteFilePaths.SequenceEqual(new[]
+            { @"C:\qeli\cidrs.txt", @"C:\qeli\openvpn.txt" })
+            && !routeSources.DuplicateKeys.Contains("route_file");
+        var routeSourcesRoundTrip = Model.VpnConfig.FromIni(routeSources.ToIni());
+        check("route_file: repeated keys are additive and ordered", routeSourcesAccepted);
+        check("route_file: repeated keys survive INI round-trip",
+            routeSourcesRoundTrip.RouteFilePaths.SequenceEqual(routeSources.RouteFilePaths));
+
+        IReadOnlyList<string> parsedRoutes = RouteFileParser.ParseLines(new[]
+        {
+            "10.20.1.9/16 # canonicalized CIDR",
+            "route 172.16.9.7 255.255.0.0 vpn_gateway 10",
+            "route-ipv6 2001:db8:42:ffff::1/48",
+            "route 192.0.2.7",
+        }, "route-fixture");
+        check("route_file: CIDR and OpenVPN formats parse and canonicalize",
+            parsedRoutes.SequenceEqual(new[]
+            {
+                "10.20.0.0/16", "172.16.0.0/16", "2001:db8:42::/48", "192.0.2.7/32"
+            }));
+        bool malformedRouteRefused = false;
+        try { RouteFileParser.ParseLines(new[] { "route 10.0.0.0 255.0.255.0" }, "bad-routes"); }
+        catch (InvalidDataException e)
+        {
+            malformedRouteRefused = e.Message.Contains("bad-routes:1");
+        }
+        check("route_file: malformed netmask fails closed with source line", malformedRouteRefused);
+
         // A number nobody could parse must not become a default in silence. `server =
         // host:notnum` became `host:443` — a DIFFERENT server — with nothing reported, the same
         // failure mode the boolean handling already fixed. (Audit 2026-08-01, §P2.)
@@ -305,6 +414,10 @@ public static class WireConformance
         var outOfRange = Ini("lport = 99999", "heartbeat_interval = -5");
         bool rangedRecorded = outOfRange.UnparsedNumericKeys.Contains("lport")
             && outOfRange.UnparsedNumericKeys.Contains("heartbeat_interval");
+        var automaticLocalPort = Ini("lport = 0");
+        check("ini-nums: explicit lport zero means automatic/ephemeral",
+            automaticLocalPort.LocalPort == 0
+            && !automaticLocalPort.UnparsedNumericKeys.Contains("lport"));
         bool rangeRefused = false;
         try { outOfRange.Validate(); }
         catch (ArgumentException e) { rangeRefused = e.Message.Contains("lport"); }

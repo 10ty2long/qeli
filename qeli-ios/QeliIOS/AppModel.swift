@@ -48,6 +48,7 @@ final class AppModel: ObservableObject {
     private var updateChecksSuspendedForTunnelTeardown = false
     private var queuedProbes: [Profile] = []
     private var queuedOrActiveProbeIDs = Set<UUID>()
+    private var startupSigningInvalid = false
     private var activeProbeCount = 0
     private static let maximumConcurrentProbes = 4
 
@@ -65,12 +66,24 @@ final class AppModel: ObservableObject {
         self.tunnelManager = TunnelManager(sharedStore: sharedTunnelStore)
         self.tunnelSnapshot = sharedTunnelStore.snapshot()
         self.logLines = sharedTunnelStore.logLines()
-        do {
-            self.archive = try profileStore.load()
-        } catch {
+        let missingSigningRequirements = IOSSigningDiagnostics.missingRequirements()
+        if !missingSigningRequirements.isEmpty {
             self.archive = .initial
-            self.alert = AppAlert(title: "Profile store error", message: error.localizedDescription,
-                                  isLiteralMessage: true)
+            self.startupSigningInvalid = true
+            self.alert = Self.invalidSigningAlert
+        } else {
+            do {
+                self.archive = try profileStore.load()
+            } catch {
+                self.archive = .initial
+                if (error as? KeychainError)?.isMissingEntitlement == true {
+                    self.startupSigningInvalid = true
+                    self.alert = Self.invalidSigningAlert
+                } else {
+                    self.alert = AppAlert(title: "Profile store error", message: error.localizedDescription,
+                                          isLiteralMessage: true)
+                }
+            }
         }
         profiles = archive.profiles
         if managedConfiguration.hasActiveProfilePolicy {
@@ -119,6 +132,7 @@ final class AppModel: ObservableObject {
 
         Task { [weak self] in
             guard let self else { return }
+            guard !startupSigningInvalid else { return }
             do {
                 try await tunnelManager.prepare()
                 tunnelSnapshot = tunnelManager.snapshot
@@ -137,6 +151,13 @@ final class AppModel: ObservableObject {
                 present(error, title: "VPN configuration")
             }
         }
+    }
+
+    private static var invalidSigningAlert: AppAlert {
+        AppAlert(
+            title: "Invalid iOS signing",
+            message: "This copy of Qeli is missing the Apple VPN, App Group or Keychain entitlements. Install a correctly signed build from TestFlight, the App Store, or an authorized Apple Developer team."
+        )
     }
 
     var activeProfile: Profile? {
@@ -213,8 +234,9 @@ final class AppModel: ObservableObject {
             }
             return
         }
+        let previous = archive
         archive.activeProfileID = id
-        persistArchive()
+        persistArchive(rollbackTo: previous)
     }
 
     func saveProfile(id: UUID?, name: String, configText: String) throws {
@@ -286,14 +308,26 @@ final class AppModel: ObservableObject {
             alert = AppAlert(title: "Tunnel active", message: "Disconnect before deleting the active profile.")
             return
         }
+        let previous = archive
         archive.profiles.remove(at: index)
         archive.normalize()
-        persistArchive()
+        persistArchive(rollbackTo: previous)
     }
 
     func move(fromOffsets: IndexSet, toOffset: Int) {
+        let previous = archive
         archive.profiles.move(fromOffsets: fromOffsets, toOffset: toOffset)
-        persistArchive()
+        persistArchive(rollbackTo: previous)
+    }
+
+    func move(_ id: UUID, by offset: Int) {
+        guard abs(offset) == 1,
+              let source = archive.profiles.firstIndex(where: { $0.id == id }) else { return }
+        let destination = source + offset
+        guard archive.profiles.indices.contains(destination) else { return }
+        let previous = archive
+        archive.profiles.swapAt(source, destination)
+        persistArchive(rollbackTo: previous)
     }
 
     func updateSettings(_ update: (inout AppSettings) -> Void) {
@@ -518,9 +552,11 @@ final class AppModel: ObservableObject {
             alert = AppAlert(title: "Tunnel active", message: "Disconnect before restoring profiles.")
             return
         }
+        let previous = self.archive
         self.archive = archive
-        persistArchive()
-        reachability.removeAll()
+        if persistArchive(rollbackTo: previous) {
+            reachability.removeAll()
+        }
     }
 
     /// Resolve a localization key in the *selected* UI language.
@@ -684,16 +720,20 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func persistArchive() {
+    @discardableResult
+    private func persistArchive(rollbackTo previous: ProfileArchive) -> Bool {
         do {
             try commitArchive()
+            return true
         } catch {
-            if let stored = try? profileStore.load() {
-                archive = stored
-                profiles = stored.profiles
-                synchronizeActiveProfile()
-            }
+            // Roll back from the in-memory snapshot first. Reloading the store can fail for the
+            // same reason as the save; relying on that second I/O operation left `archive`
+            // mutated while the published profile list still described the old state.
+            archive = (try? profileStore.load()) ?? previous
+            profiles = archive.profiles
+            synchronizeActiveProfile()
             present(error, title: "Could not save profiles")
+            return false
         }
     }
 

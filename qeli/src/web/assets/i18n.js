@@ -344,6 +344,9 @@
       'IPv6 forwarding / NAT66': 'Маршрутизация IPv6 / NAT66',
       'route preserves client source addresses; nat66 masquerades them on the selected IPv6 uplink':
         'route сохраняет исходные адреса клиентов; nat66 маскарадует их на выбранном IPv6-интерфейсе',
+      'Upstream IPv6 NDP proxy': 'Внешний IPv6 NDP proxy',
+      'Answer only for active client IPv6 addresses and client_subnet prefixes; needed when the provider treats the delegated prefix as on-link':
+        'Отвечает только за IPv6-адреса активных клиентов и префиксы client_subnet; нужен, когда провайдер считает делегированный префикс on-link',
       'IPv6 listen address': 'IPv6-адрес прослушивания',
       'Should match the IPv6 VPN gateway': 'Должен совпадать с IPv6-шлюзом VPN',
       'Tunnel addresses': 'Адреса туннеля',
@@ -539,6 +542,10 @@
       'Web UI': 'Веб-интерфейс',
       'Logging': 'Логирование',
       'Server identity keys': 'Ключи идентичности сервера',
+      'Listen endpoint': 'Адрес прослушивания',
+      'Public key': 'Публичный ключ',
+      'Copy address': 'Копировать адрес',
+      'Copy key': 'Копировать ключ',
       'Transport, Bind & Identity': 'Транспорт, привязка и идентичность',
       'TUN/TAP Interface': 'Интерфейс TUN/TAP',
       'IP Address Pool': 'Пул IP-адресов',
@@ -760,7 +767,7 @@
       'Enable DHCP server': 'Включить DHCP-сервер',
       'Automatically assign IPs via DHCP (mainly useful for TAP mode)': 'Автоматически выдавать IP по DHCP (в основном для режима TAP)',
       'DHCP listen address': 'Адрес прослушивания DHCP',
-      'Usually 0.0.0.0:67': 'Обычно 0.0.0.0:67',
+      'Leave empty for this profile interface on UDP/67': 'Оставьте пустым для интерфейса этого профиля на UDP/67',
       'Pool start IP': 'Начальный IP пула',
       'First IP to hand out via DHCP': 'Первый IP для выдачи по DHCP',
       'Pool end IP': 'Конечный IP пула',
@@ -1076,6 +1083,9 @@
       'Webhook notifications': 'Уведомления webhook',
       'Notify on': 'Уведомлять о',
       'Save changes': 'Сохранить изменения',
+      'Reload this page before saving.': 'Перезагрузите страницу перед сохранением.',
+      'Notification settings were not loaded:': 'Настройки уведомлений не загружены:',
+      'Notification settings were not loaded: ': 'Настройки уведомлений не загружены: ',
       'Test sent — see the result': 'Тест отправлен — см. результат',
       'Bot token': 'Токен бота',
       'Create a bot with @BotFather and paste its token. Write-only — leave blank to keep the current one.':
@@ -1302,10 +1312,10 @@
       "Effective: no per-user override → this user gets the profile's advertised routes.":
         'Действует: индивидуальных переопределений нет → пользователь получает маршруты, анонсируемые профилем.',
       'Client subnets': 'Подсети клиента',
-      "(iroute — subnets/addresses BEHIND this client; the server routes INBOUND traffic to them into this client's tunnel)":
-        '(iroute — подсети/адреса ЗА этим клиентом; сервер направляет ВХОДЯЩИЙ трафик к ним в туннель этого клиента)',
+      '(iroute — subnets/addresses BEHIND this client; with profile NDP proxy they also become live upstream IPv6 ownership)':
+        '(iroute — подсети/адреса ЗА этим клиентом; с NDP proxy профиля они также становятся активной IPv6-зоной ответственности на uplink)',
       '+ Add subnet': '+ Добавить подсеть',
-      '192.168.50.0/24 or 10.20.0.7': '192.168.50.0/24 или 10.20.0.7',
+      '192.168.50.0/24 or 2001:db8:50::/64': '192.168.50.0/24 или 2001:db8:50::/64',
       'My VPN': 'Мой VPN',
 
       // ── browser-tab titles (rendered server-side into <title>) ──

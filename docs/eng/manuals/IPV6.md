@@ -137,11 +137,195 @@ routing.ipv6.interface =
 interface is valid for a LAN-only route deployment: qeli follows kernel routes and does not
 require a public default uplink.
 
+#### On-link prefix and NDP proxy (0.8.1)
+
+The normal and preferred design has the provider route the client prefix through the server's
+WAN address. Keep `routing.ipv6.ndp_proxy = off` in that case: the upstream does not perform
+NDP for every VPN address.
+
+Some VPS providers instead treat the delegated prefix as directly connected to the L2 segment
+and issue a Neighbor Solicitation for every address. Enable the built-in responder for that
+topology:
+
+```ini
+routing.ipv6.mode = route
+routing.ipv6.interface = ens3
+routing.ipv6.ndp_proxy = required
+routing.ipv6.ndp_proxy_interface = ens3
+```
+
+| Mode | Behaviour |
+|---|---|
+| `off` | responder disabled; the default and the correct choice for a normal routed prefix |
+| `auto` | try to open the responder; warn and continue without it when the interface, Ethernet, or `CAP_NET_RAW` is unavailable |
+| `required` | refuse profile startup until the responder is attached to the selected interface |
+
+An empty `routing.ipv6.ndp_proxy_interface` reuses the effective uplink from
+`routing.ipv6.interface`/the IPv6 default route. The link must be Ethernet-compatible and the
+Linux server normally already runs as root. NDP proxy is valid only with source-preserving
+`route`, never with `off` or NAT66. While active, the responder joins `PACKET_MR_ALLMULTI` on
+its packet socket so that the NIC accepts solicited-node multicast for client `/128`s which are
+not assigned to the WAN interface. This does not set persistent `IFF_ALLMULTI` on the interface
+or relay multicast into the VPN.
+
+This responder is not a broad multicast relay. It validates each NS and advertises the server's
+MAC only when the target currently belongs to a live session:
+
+- an exact IPv6 lease from `pool.ipv6.cidr`, including `static_ipv6`;
+- an address inside a non-default IPv6 `client_subnet` registered by a connected router or
+  site-to-site client.
+
+The answer stops immediately on revoke/disconnect. `/0`, link-local, multicast, invalid
+checksum/hop-limit, and unrelated targets are ignored. To expose a network behind one client:
+
+```ini
+[user:branch-router]
+static_ipv6 = 2001:db8:1200:10::10
+client_subnet = 2001:db8:1200:20::/64
+```
+
+The `client_subnet` may be a separate delegated network; its Linux route exists only while the
+session is active. Do not assign `pool.ipv6.cidr` to the server WAN or add a competing connected
+route there: the profile TUN must remain the only owner of that route, while only the upstream
+side performs NDP.
+
+##### Complete scenario: a public on-link `/64` for clients
+
+Assume the provider gave the server a normal WAN address and a separate client prefix, but
+treats the second prefix as on-link:
+
+```text
+qeli WAN interface:                ens3
+qeli WAN address:                  2001:db8:100::10/64
+Separate on-link client prefix:    2001:db8:1200:10::/64
+Profile TUN:                       vpn-public
+In-VPN IPv6 gateway:               2001:db8:1200:10::1
+Pinned alice address:              2001:db8:1200:10::100
+```
+
+`2001:db8::/32` is documentation space throughout this example. Substitute the addresses
+assigned by the provider.
+
+1. **Confirm the topology before enabling the responder.** Stop the profile or server and
+   inspect host addressing and routes:
+
+   ```bash
+   sudo systemctl stop qeli-server
+   ip -6 addr show dev ens3
+   ip -6 route show table all
+   ```
+
+   `2001:db8:1200:10::/64` must not be assigned to `ens3` and must not have a connected route
+   through `ens3`. Otherwise the WAN and TUN become competing owners of one prefix, and qeli
+   correctly rejects the configuration.
+
+   Capture traffic on the server while an independent external IPv6 host tries the future
+   client address:
+
+   ```bash
+   sudo tcpdump -ni ens3 'icmp6 && ip6[40] == 135'
+   # On the external host:
+   ping -6 2001:db8:1200:10::100
+   ```
+
+   An incoming `Neighbor Solicitation, who has 2001:db8:1200:10::100` proves that the
+   upstream resolves the address through NDP and that this placement needs a proxy. When the
+   provider sends the prefix over a normal L3 route through the server WAN address, no NS for
+   the client address arrives and `ndp_proxy = off` remains correct. No observed NS does not
+   by itself prove a routed setup: first exclude an incorrect prefix, provider filtering, and
+   capture on the wrong interface.
+
+2. **Add the IPv6 settings to the existing profile.** Transport, bind, authentication, and
+   obfuscation stay unchanged; this is only the IPv6-related fragment:
+
+   ```ini
+   [profile:public-v6-onlink]
+   tun.ip_mode = ipv6
+   tun.name = vpn-public
+   tun.ipv6_address = 2001:db8:1200:10::1
+   tun.mtu = 1280
+   pool.ipv6.cidr = 2001:db8:1200:10::/64
+
+   # Preserve the public client source address; no IPv6 MASQUERADE is created.
+   routing.ipv6.mode = route
+   routing.ipv6.interface = ens3
+
+   # Use required in production: the profile cannot look healthy without its responder.
+   routing.ipv6.ndp_proxy = required
+   routing.ipv6.ndp_proxy_interface = ens3
+   ```
+
+   For dual stack, use `tun.ip_mode = dual` and retain the existing IPv4 `tun.address`,
+   `pool.cidr`, and `routing.nat.*`. The NDP proxy affects IPv6 only and does not replace IPv4
+   NAT.
+
+   Pin an address to an existing user in `users.conf` for a stable inbound test:
+
+   ```ini
+   [user:alice]
+   # Keep the existing password_hash, enabled flag, limits, and groups.
+   static_ipv6 = 2001:db8:1200:10::100
+   ```
+
+   The panel exposes the same fields under **Configuration → profile → Routing**: select IPv6
+   mode `route`, NDP proxy `required`, and interface `ens3`. Set Static IPv6 on the user card.
+   `auto` is useful for trial deployment, but in production it may continue after a warning
+   without a working responder; `required` prevents that false-positive status.
+
+3. **Validate the configuration and start the server.**
+
+   ```bash
+   sudo qeli check-config --config /etc/qeli/server.conf
+   sudo systemctl restart qeli-server
+   sudo journalctl -u qeli-server -n 100 --no-pager | grep -F 'IPv6 NDP proxy'
+   ip -6 route show 2001:db8:1200:10::/64
+   ```
+
+   With `required`, the journal must contain
+   `session-aware IPv6 NDP proxy active on 'ens3'`. The client `/64` route must point to
+   `vpn-public`, not `ens3`. Failure to open the raw packet socket, missing `CAP_NET_RAW`, or
+   a nonexistent/non-Ethernet interface prevents this profile from starting instead of
+   silently running without NDP.
+
+4. **Verify the complete lifecycle.** Keep an NS/NA capture running on the WAN:
+
+   ```bash
+   sudo tcpdump -ni ens3 'icmp6 && (ip6[40] == 135 || ip6[40] == 136)'
+   ```
+
+   - While `alice` is disconnected, a fresh NS for `2001:db8:1200:10::100` must receive no NA.
+   - After successful authentication, the server registers alice's `/128`, replies with an NA
+     carrying its own MAC, and an external `ping -6 2001:db8:1200:10::100` must reach the
+     client. If the client OS blocks inbound ICMPv6, allow Echo Request or test a TCP/UDP
+     service which is already listening.
+   - Disconnect, revoke, or session replacement removes ownership immediately. Flush the entry
+     on an accessible upstream router or wait for its neighbor cache to expire, then retry: a
+     new NS receives no proxy NA and traffic without a live session is dropped. A stale upstream
+     entry may continue to show the server MAC for a while; that is upstream caching, not
+     continuing qeli ownership.
+   - Reconnecting registers ownership and restores NDP responses.
+
+   With `client_subnet = 2001:db8:1200:20::/64`, the lifecycle is identical but the connected
+   site-to-site client owns the complete prefix: the responder answers for any target inside it
+   while that session is active. The client router must forward IPv6 to its LAN, route replies
+   through qeli, and permit the required traffic in its firewall. `/0` never becomes NDP
+   ownership.
+
+| Symptom | Check |
+|---|---|
+| A profile with `required` does not start | uplink name, Ethernet link type, root or `CAP_NET_RAW`, and the journal message |
+| `tcpdump` shows no NS | correct WAN interface/address, provider route/security group; the prefix may already be routed and need no proxy |
+| NS arrives but no NA while the client is online | actual `static_ipv6`, profile name, session state, and whether the target is in `pool.ipv6.cidr` or an active `client_subnet` |
+| NA is visible but packets do not arrive | `/64` must route to the TUN; inspect `ip6tables`/cloud firewall, forwarding, and the client firewall |
+| The upstream still shows the server MAC after disconnect | flush or wait for neighbor cache; new NS must receive no NA and data without a session is dropped |
+| `auto` starts but NDP does not work | find `NDP proxy auto mode is unavailable`, fix the cause, and switch to `required` |
+
 #### Public client IPv6 addresses without NAT66
 
 `route` can assign a real global unicast IPv6 address (GUA) to every client, preserve that
 address on egress, and accept connections initiated from the Internet. The provider must
-route a **separate prefix** to the qeli server's WAN address. A typical layout is:
+either route a **separate prefix** to the qeli server's WAN address or treat it as on-link and
+use the built-in NDP proxy described above. A typical routed layout is:
 
 ```text
 qeli server WAN:                  2001:db8:100::10/64
@@ -215,11 +399,11 @@ external IPv6 host. A capture such as
 `tcpdump -ni ens3 'ip6 and host 2001:db8:1200:10::100'` must show the unchanged client
 source address.
 
-A normal WAN `/64` directly connected to `ens3` cannot also be used as `pool.ipv6.cidr`:
-that provider setup expects NDP for every address, while qeli does not implement an upstream
-NDP proxy on the WAN. Preflight also rejects a pool that overlaps an existing host address or
-route. Request a routed `/64` (or `/56`/`/48`), configure an explicit provider route through
-the server, or use `nat66`.
+A normal WAN `/64` directly connected to `ens3` cannot also be used as `pool.ipv6.cidr`: the
+TUN and WAN would acquire competing connected routes, so preflight rejects a pool that overlaps
+an existing host address or route. Request a separate routed `/64` (or `/56`/`/48`), or a
+separate on-link client prefix which is not assigned to the WAN interface; enable the built-in
+NDP proxy for the latter. If the provider cannot supply a separate prefix, use `nat66`.
 
 A routed GUA makes the client directly addressable from the Internet. qeli permits
 bidirectional forwarding in `route` mode, so the cloud security group, server firewall, and

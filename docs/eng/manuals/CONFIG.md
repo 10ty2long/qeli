@@ -1,7 +1,7 @@
 # qeli configuration
 
-> **Documentation status:** current development tree **0.8.0**; planned full-IPv6 release **0.8.1**;
-> latest published release **0.8.0**. There will be no public 0.7.17 release.
+> **Documentation status:** current development tree **0.8.1**; planned full-IPv6 release **0.8.2**;
+> latest published release **0.8.1**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
 
 ## Format: flat-INI (the only one; TOML/JSON have been dropped)
@@ -135,6 +135,7 @@ desktop-only; carrier source binding also applies to the Linux CLI):**
 - `lport = <port>` — bind the primary carrier socket to a fixed local source port (for firewall
   rules). Bonded TCP members keep `local`, but use ephemeral ports because simultaneous streams
   to the same server cannot share one TCP four-tuple.
+  An omitted value or explicit `lport = 0` selects the normal OS-assigned ephemeral port.
 - `dev_node = <name>` — name the Wintun adapter manually (Windows; otherwise auto `Qeli-<hash>`).
 - `metric = <n>` — TUN interface routing metric (Windows; lower = higher priority). Applied to
   **both IPv4 and IPv6** via the WinAPI `SetIpInterfaceEntry` (no `netsh`; falls back to `netsh` on failure).
@@ -142,6 +143,12 @@ desktop-only; carrier source binding also applies to the Linux CLI):**
   and silently ignores it): extra split-tunnel routes from a file of CIDRs (one per line,
   `#`/`;` comments), in addition to the profile's routes. On the Rust CLI use `include`/
   `exclude` directly in the config for the same effect.
+  The key may be repeated; all files are loaded in declaration order and duplicate networks are
+  removed. A source may contain either plain CIDRs or OpenVPN `route <network> <netmask>` /
+  `route-ipv6 <CIDR>` lines. Invalid or unreadable input aborts the connection instead of
+  silently omitting requested routes. On Windows, only the authenticated tunnel-pool prefix is
+  on-link; imported networks use the authenticated tunnel gateway, so they do not create a
+  broadcast `/32` for every imported subnet.
 The next two keys are **not** C#-only: the Rust CLI parses them too (there's a round-trip
 test), unlike the rest of this block.
 - `keepalive = <secs>` (default `60`) — TCP keepalive probe interval (seconds) on the carrier
@@ -191,18 +198,81 @@ local = 192.168.1.50
 metric = 10
 # Wintun adapter name (Windows)
 dev_node = QeliWork
-# extra CIDR routes from a file
+# extra routes from any number of files
 route_file = C:\qeli\routes.txt
+route_file = C:\qeli\openvpn-routes.txt
 # these subnets bypass the tunnel (go direct)
 exclude = 192.168.50.0/24, 10.20.0.0/16
 ```
 
-`route_file` format — one CIDR per line (blank lines and `#`/`;` comments are ignored):
+#### How to attach and populate `route_file`
 
+`route_file` sends the listed networks **into the tunnel**. It is not a bypass list; use
+`exclude` for destinations that must stay outside. The normal setup is Windows/macOS in
+split-tunnel mode:
+
+1. Open the profile's manual INI editor.
+2. Set `gateway = false`.
+3. Add one `route_file = <path>` line per file. The key is repeatable; files are read in
+   declaration order and duplicate networks are installed once.
+4. Save and connect. An unreadable file or invalid line aborts the connection fail-closed so
+   traffic cannot escape merely because a requested route was omitted.
+
+Use an absolute path where possible. Windows backslashes are literal and the whole value after
+`=` is the path, so even a path containing spaces is written **without quotes**:
+
+```ini
+[qeli]
+gateway = false
+route_file = C:\Users\Alice\Qeli routes\corp-cidrs.txt
+route_file = C:\Users\Alice\Qeli routes\openvpn-routes.txt
 ```
+
+Each route file accepts these forms:
+
+| Form | Example | Result |
+|---|---|---|
+| IPv4/IPv6 CIDR | `10.20.0.0/16` | network is sent into the tunnel |
+| OpenVPN IPv4 + netmask | `route 172.16.9.7 255.255.0.0` | canonicalized to `172.16.0.0/16` |
+| OpenVPN CIDR | `route 192.0.2.0/24` | `192.0.2.0/24` |
+| OpenVPN host route | `route 192.0.2.7` | `192.0.2.7/32` |
+| OpenVPN IPv6 | `route-ipv6 2001:db8:42::/48` | `2001:db8:42::/48` |
+
+Exported OpenVPN `[gateway] [metric]` fields may follow an IPv4 netmask, for example
+`route 172.16.0.0 255.255.0.0 vpn_gateway 10`. They are accepted for compatibility but do not
+select the next hop: the client always uses the authenticated tunnel gateway.
+
+Blank lines and full-line or inline `#`/`;` comments are ignored:
+
+```text
+# Office networks
 10.20.0.0/16      # office LAN
-192.0.2.0/24
+192.0.2.0/24      ; test segment
+route 172.16.0.0 255.255.0.0 vpn_gateway
+route-ipv6 2001:db8:42::/48
 ```
+
+Addresses with host bits are canonicalized and duplicates across all files are removed. IPv4
+netmasks must be contiguous; arbitrary text, a bare IP without `route`, a malformed mask, or
+more than 250,000 total routes is an error. Reading and installation can be interrupted with
+Disconnect. In full-tunnel mode `route_file` is unnecessary and is not applied (except desktop
+per-app mode).
+
+#### Distinguishing service routes from `route_file`
+
+An L3 TUN deliberately assigns the client address as a host prefix (`/32` for IPv4 and `/128`
+for IPv6), while the pool from `on_link_prefix_len` is installed as a separate connected route.
+For a `10.8.0.2` client, `10.8.0.1` gateway/DNS and `10.8.0.0/24` pool, Windows may therefore show:
+
+- `10.8.0.2/32` — the local client address;
+- `10.8.0.0/24` — the VPN pool's only on-link network;
+- a system pool host/broadcast route such as `10.8.0.255/32`, which Windows may synthesize;
+- `10.8.0.1/32` — a protected NetworkPlan DNS route, not a `route_file` result.
+
+An imported `1.0.0.0/24` line must produce exactly `1.0.0.0/24` through the authenticated
+tunnel gateway. An extra `1.0.0.255/32` or another network/broadcast host route for that imported
+network is a bug. When inspecting the table, keep VPN-pool service routes, protected DNS routes,
+and file-imported routes separate.
 
 Keepalive, graceful FIN on disconnect, the amber connecting indicator, ISO-8601 log timestamps and
 the per-profile Wintun adapter name work **automatically** — no configuration needed.
@@ -737,8 +807,9 @@ negotiated peers; DATA_FRAG is record-layer splitting and is not counted as kern
 A single TCP connection (reality-tls/fake-tls/obfs) on a mobile network hits the
 "TCP over TCP" ceiling (~6 Mbps in production, while UDP/WireGuard does tens).
 Multipath opens **several parallel connections to the same :443 port**, and the
-server aggregates them into **ONE tunnel** (one tun-IP); outgoing IP packets are
-spread round-robin. DPI-clean — a browser also opens 6+ parallel TLS to an HTTPS
+server aggregates them into **ONE tunnel** (one tun-IP); a stable inner-flow hash pins each
+flow to one logical stream, so healthy flows are not remapped when another carrier disappears
+or returns. DPI-clean — a browser also opens 6+ parallel TLS to an HTTPS
 host; a single long-lived TCP with a continuous flow is actually more suspicious.
 
 **Settings — per-profile** (like `tun.mtu`/`padding`), the server pushes them to
@@ -2154,7 +2225,7 @@ Beyond pinning / H-1 (above), the `[auth]` section carries:
 
 | Key | Default | Purpose |
 |---|---|---|
-| `users_file` | `/etc/qeli/users.conf` | path to the standalone user database (when there are no inline `[user:*]`) |
+| `users_file` | `/etc/qeli/users.conf` | standalone user database; merged with inline `[user:*]` and wins duplicate names |
 | `brute_force.enabled` | `true` | master switch for **VPN-auth** rate-limiting; `false` = off entirely |
 | `brute_force.max_attempts` | `5` | failed-attempt threshold before lockout (per source IP); allowed `1..=10000` |
 | `brute_force.window_secs` | `300` | window for counting failures (seconds); allowed `1..=86400` (24h) |
@@ -2347,6 +2418,12 @@ routes (WAN, server LAN, its pool and authenticated dynamic IPv6 `client_subnet`
 empty `routing.ipv6.interface` enables forwarding without `accept_ra`; when an uplink is found
 or explicitly configured, qeli also leases `accept_ra=2` so enabling forwarding preserves SLAAC.
 `nat66` always requires a detected or explicit uplink.
+For an on-link prefix that the upstream resolves through Neighbor Discovery, `route` can enable
+the session-aware NDP proxy. It answers only for exact live-session IPv6 leases and their
+non-default IPv6 `client_subnet` ownership, without relaying multicast to clients. `auto`
+allows startup without the responder after a warning, while `required` fails closed. See
+[IPV6.md](IPV6.md#on-link-prefix-and-ndp-proxy-081) for the topology, link requirements, and
+configuration example.
 
 ## Built-in DNS resolver (`dns.*`)
 
@@ -2378,14 +2455,21 @@ unreadable chain fails profile startup.
 An optional DHCP server on the profile's interface (for TAP/L2 setups; most
 deployments don't need it — IPs are handed out in AUTH). Disabled by default.
 Per-profile.
+On Linux the socket receives standard broadcast `DISCOVER`/`REQUEST` traffic on
+`0.0.0.0:67`, but is restricted to the profile's **actual TUN/TAP interface** with
+`SO_BINDTODEVICE`; the unauthenticated service is not exposed on WAN.
 
 | Key | Default | Purpose |
 |---|---|---|
 | `dhcp.enabled` | `false` | enable the DHCP server |
-| `dhcp.listen` | `0.0.0.0:67` | listen address:port |
+| `dhcp.listen` | empty (`tun.address:67`) | logical DHCP address and port; empty is recommended. Explicit `0.0.0.0` is rejected as unsafe |
 | `dhcp.pool_start` / `pool_end` | (none) | lease range (optional; else from `pool.cidr`) |
 | `dhcp.lease_time_secs` | `86400` | lease time |
 | `dhcp.domain_name` | `vpn` | domain name advertised to clients |
+
+With the built-in DNS proxy enabled, DHCP advertises the profile address. With the
+proxy disabled, it advertises IPv4 addresses from `dns.push_servers`; an empty list
+omits the DNS option. There is no hidden fallback to public `1.1.1.1`/`8.8.8.8`.
 
 > **`pool.cidr` is the subnet source of truth (since 0.7.15).** Its prefix configures the
 > server TUN, is pushed to every client, and defines the DHCP subnet (`/16` means
@@ -2435,6 +2519,8 @@ Server-side routing for the profile (client-side routing keys are in the "Client
 | `routing.nat.interface` | `eth0` | NAT egress interface (auto-detected when left at default) |
 | `routing.ipv6.mode` | `off` | IPv6 egress: fail-closed isolated `off`, bidirectional source-preserving `route`, or stateful `nat66`; every IPv6 profile requires `ip6tables`, including `off` |
 | `routing.ipv6.interface` | — | IPv6 uplink; empty = detect it from the IPv6 default route when present. Required by `nat66`, optional for LAN-only `route` |
+| `routing.ipv6.ndp_proxy` | `off` | upstream NDP responder: `off`, best-effort `auto`, or fail-closed `required`; valid only with `routing.ipv6.mode = route` |
+| `routing.ipv6.ndp_proxy_interface` | — | Ethernet uplink for NDP; empty = reuse the effective IPv6 interface |
 | `route` | — | repeatable: a route advertised to clients, `<cidr> [gateway=<ip>] [metric=<n>]`; maximum 256 |
 | `routing.post_up` | — | command run after this profile's TUN+NAT are up (Linux, root). **File-only** (panel/API never write it — RCE guard). Env includes `QELI_PROFILE`, `QELI_TUN`, explicit `QELI_POOL_IPV4`/`QELI_POOL_IPV6`, actual `QELI_WAN_IPV4`/`QELI_WAN_IPV6`, `QELI_BIND_PORT`; legacy `QELI_POOL`/`QELI_WAN` select the profile's primary family |
 | `routing.post_down` | — | command run on a clean profile/server stop (mirrors `routing.post_up`; a crash doesn't run it) |

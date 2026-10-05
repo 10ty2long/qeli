@@ -32,8 +32,8 @@ every other client, not because a build of it was released.
 - Android-compatible encrypted backups (`QELI-ENC-1`, PBKDF2-SHA256, AES-256-GCM).
 - Opt-in release checks that run only with a fail-closed full-tunnel route.
 - `NETunnelProviderManager` lifecycle, VPN On Demand and status/statistics bridge.
-- `NEPacketTunnelProvider` target over the compatible ABI 1.11 base plus optional ABI
-  1.12/1.13 path transactions. Swift applies
+- `NEPacketTunnelProvider` target over the current ABI 1.15 core, with a compatible ABI 1.11
+  base, optional ABI 1.12-1.14 path transactions and ABI 1.15 management events. Swift applies
   authenticated `NetworkPlan` values, persists Keychain identity/trust and moves bounded
   packet batches between `NEPacketTunnelFlow` and Rust.
 - The common Rust whole-client core owns each plain/fake-TLS/obfs/REALITY TCP/UDP/QUIC
@@ -54,8 +54,9 @@ every other client, not because a build of it was released.
   precedence and an App-Group policy gate for managed WidgetKit controls.
 
 The production Packet Tunnel uses the same versioned Rust transport ABI as Linux, Android,
-Windows and macOS: ABI 1.11 remains the compatible base, while ABI 1.12-1.14 activates the
-optional path-command and path-refresh contracts. Ordinary TCP and every UDP camouflage mode
+Windows and macOS. The current core is ABI 1.15; ABI 1.11 remains the compatible base,
+ABI 1.12-1.14 activates the optional path-command/path-refresh contracts, and ABI 1.15 adds
+NOTICE/KICK management events. Ordinary TCP and every UDP camouflage mode
 use that one Rust roaming policy. Explicit `local`/non-zero `lport`, a default or older core,
 and an unsupported peer retain the previous full-reconnect fallback. Swift applies
 `NetworkPlan`, persists trust/device identity, executes Apple path operations and copies bounded
@@ -99,6 +100,32 @@ table is the entitlement files (`Config/*.entitlements`), not a recommendation:
 
 The shared identifiers are `group.ru.qeli.app` (App Group) and
 `$(AppIdentifierPrefix)ru.qeli.app.shared` (Keychain Group).
+
+### Installation and unsigned IPA files
+
+An unsigned IPA is a build intermediate, **not an installable Qeli VPN release**. A generic
+SideStore/AltStore re-sign with a free Apple Account can make the container UI launch while
+dropping or changing the capabilities required by the app and its extensions. The usual result
+is a Keychain “missing required entitlement” error followed by Network Extension “permission
+denied”; the Packet Tunnel Provider cannot work in that state.
+
+Use one of these installation paths:
+
+- TestFlight or App Store distribution signed by the Qeli Apple Developer team;
+- Development/Ad Hoc distribution whose three explicit App IDs and provisioning profiles carry
+  exactly the capabilities in the table above;
+- an Xcode device build made by an authorized Apple Developer team after updating
+  `Config/Signing.xcconfig` and registering the matching App Group and Keychain Group.
+
+Before distributing an IPA, verify it on macOS from the repository root:
+
+```sh
+python3 scripts/verify_ios_ipa.py /path/to/Qeli.ipa
+```
+
+The verifier rejects missing component signatures/provisioning profiles, inconsistent bundle or
+shared-group identifiers, and effective signatures without Packet Tunnel, App Group or Keychain
+entitlements. `--structural-only` is diagnostic and is not release evidence.
 
 The widget deliberately has **no** Keychain access: it renders status and requests a
 desired state, and must never be able to read profile secrets. Granting it Keychain

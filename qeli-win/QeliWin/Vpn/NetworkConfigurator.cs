@@ -585,18 +585,18 @@ public sealed class NetworkConfigurator : IDisposable
 
     /// <summary>Override the default route via the tunnel using two /1 routes (WireGuard-style),
     /// which beat the existing 0.0.0.0/0 without deleting it.</summary>
-    public void SetFullTunnelRoutes(string clientIp, uint tunIndex)
+    public void SetFullTunnelRoutes(string tunnelGateway, uint tunIndex)
     {
-        if (!IPAddress.TryParse(clientIp, out var gateway) ||
+        if (!IPAddress.TryParse(tunnelGateway, out var gateway) ||
             gateway.AddressFamily != AddressFamily.InterNetwork)
-            throw new InvalidOperationException($"invalid IPv4 tunnel gateway {clientIp}");
+            throw new InvalidOperationException($"invalid IPv4 tunnel gateway {tunnelGateway}");
         foreach (string cidr in new[] { "0.0.0.0/1", "128.0.0.0/1" })
         {
             var (literal, prefix) = ParseCidr(cidr);
             var network = IPAddress.Parse(literal!);
             string mask = PrefixToMask(prefix);
             var result = InstallOwnedRoute(
-                network, prefix, tunIndex, null, $"full-tunnel route {cidr}",
+                network, prefix, tunIndex, gateway, $"full-tunnel route {cidr}",
                 $"add {network} mask {mask} {gateway} metric 1 if {tunIndex}",
                 $"delete {network} mask {mask} {gateway} if {tunIndex}");
             if (result == RouteApiResult.Failed)
@@ -690,7 +690,29 @@ public sealed class NetworkConfigurator : IDisposable
         return false;
     }
 
-    public bool AddRoute(string cidr, string clientIp, uint tunIndex)
+    /// <summary>Add the one connected tunnel-pool prefix as on-link. Windows may create its
+    /// normal local subnet/broadcast rows for this prefix; arbitrary split routes must use
+    /// <see cref="AddRoute"/> with the authenticated tunnel gateway instead.</summary>
+    public bool AddOnLinkRoute(string cidr, string fallbackGateway, uint tunIndex) =>
+        AddRouteCore(cidr, null, fallbackGateway, tunIndex, logSuccess: true);
+
+    public bool AddRoute(string cidr, string tunnelGateway, uint tunIndex,
+        bool logSuccess = true)
+    {
+        var (literal, _) = ParseCidr(cidr);
+        if (literal == null || !IPAddress.TryParse(literal, out var destination)
+            || !IPAddress.TryParse(tunnelGateway, out var gateway)
+            || gateway.AddressFamily != destination.AddressFamily
+            || gateway.Equals(IPAddress.Any) || gateway.Equals(IPAddress.IPv6Any))
+        {
+            _log($"bad route {cidr} or tunnel gateway {tunnelGateway}");
+            return false;
+        }
+        return AddRouteCore(cidr, gateway, tunnelGateway, tunIndex, logSuccess);
+    }
+
+    private bool AddRouteCore(string cidr, IPAddress? nextHop, string fallbackGateway,
+        uint tunIndex, bool logSuccess)
     {
         var (addr, prefix) = ParseCidr(cidr);
         if (addr == null) { _log($"bad route {cidr}"); return false; }
@@ -701,14 +723,17 @@ public sealed class NetworkConfigurator : IDisposable
         // prefixes) otherwise costs one CreateProcess+wait per prefix — minutes of
         // startup. Each qeli tunnel is its own adapter/index, so there is none of the
         // OpenVPN-3 single-tunnel limitation. Falls back to route.exe on any API error.
-        IPAddress? nextHop = null; // Wintun route is on-link; clientIp is only route.exe fallback syntax
         string mask = v6 ? "" : PrefixToMask(prefix);
         string add = v6
-            ? $"-6 add {network}/{prefix} metric 1 if {tunIndex}"
-            : $"add {network} mask {mask} {clientIp} metric 1 if {tunIndex}";
+            ? nextHop == null
+                ? $"-6 add {network}/{prefix} metric 1 if {tunIndex}"
+                : $"-6 add {network}/{prefix} {nextHop} metric 1 if {tunIndex}"
+            : $"add {network} mask {mask} {fallbackGateway} metric 1 if {tunIndex}";
         string delete = v6
-            ? $"-6 delete {network}/{prefix} if {tunIndex}"
-            : $"delete {network} mask {mask} {clientIp} if {tunIndex}";
+            ? nextHop == null
+                ? $"-6 delete {network}/{prefix} if {tunIndex}"
+                : $"-6 delete {network}/{prefix} {nextHop} if {tunIndex}"
+            : $"delete {network} mask {mask} {fallbackGateway} if {tunIndex}";
         var result = InstallOwnedRoute(
             network, prefix, tunIndex, nextHop, $"tunnel route {cidr}", add, delete);
         if (result == RouteApiResult.Failed)
@@ -716,9 +741,9 @@ public sealed class NetworkConfigurator : IDisposable
             Degrade($"route {cidr} NOT programmed — traffic to it stays outside the tunnel");
             return false;
         }
-        if (result == RouteApiResult.AlreadyExists)
+        if (logSuccess && result == RouteApiResult.AlreadyExists)
             _log($"route {cidr} already exists on this tunnel interface; preserving it");
-        _log($"route {cidr} via tunnel");
+        if (logSuccess) _log($"route {cidr} via tunnel");
         return true;
     }
 
@@ -1281,6 +1306,20 @@ public sealed class NetworkConfigurator : IDisposable
         }
         finally { Marshal.FreeHGlobal(native); }
 
+        row = BuildRouteRow(IPAddress.Parse("203.0.113.255"), 24, 9,
+            IPAddress.Parse("10.9.0.1"));
+        native = Marshal.AllocHGlobal(Row2Size);
+        try
+        {
+            Marshal.Copy(row, 0, native, row.Length);
+            var destination = ReadSockaddr(native, OffDstFamily);
+            var nextHop = ReadSockaddr(native, OffNextHopFamily);
+            check("Windows split route uses tunnel gateway instead of on-link semantics",
+                destination?.ToString() == "203.0.113.0"
+                && nextHop?.ToString() == "10.9.0.1");
+        }
+        finally { Marshal.FreeHGlobal(native); }
+
         int oldSameDeletes = 0;
         int oldStaleDeletes = 0;
         int oldStaleRestores = 0;
@@ -1347,6 +1386,42 @@ public sealed class NetworkConfigurator : IDisposable
         catch (InvalidOperationException) { commitRejected = true; }
         check("roaming routes: failed COMMIT restores already removed old routes",
             commitRejected && restored == 1 && rollbackOne.Active && rollbackFailure.Active);
+
+        const int issueRouteCount = 14_113;
+        int bulkDeletes = 0;
+        var bulkOwner = new NetworkConfigurator(_ => { });
+        for (int i = 0; i < issueRouteCount; i++)
+        {
+            var network = IPAddress.Parse($"100.{i / 256}.{i % 256}.0");
+            bulkOwner._ownedRoutes.Add(MakeOwnedRoute(network, 24, 9,
+                IPAddress.Parse("10.9.0.1"), false, $"route_file route {network}/24",
+                () => { bulkDeletes++; return true; }, () => true));
+        }
+        bulkOwner.Dispose();
+        check("route_file: disconnect cleanup releases all 14,113 owned Windows routes",
+            bulkDeletes == issueRouteCount && bulkOwner._ownedRoutes.Count == 0);
+
+        int cleanupAttempts = 0;
+        var retryOwner = new NetworkConfigurator(_ => { });
+        retryOwner._ownedRoutes.Add(MakeOwnedRoute(IPAddress.Parse("203.0.113.0"), 24, 9,
+            IPAddress.Parse("10.9.0.1"), false, "route_file retry fixture",
+            () => ++cleanupAttempts >= 2, () => true));
+        bool cleanupFailureReported = false;
+        try
+        {
+            retryOwner.Dispose();
+        }
+        catch (InvalidOperationException error)
+        {
+            cleanupFailureReported =
+                error.Message.Contains("platform cleanup will be retried", StringComparison.Ordinal)
+                && retryOwner._ownedRoutes.Count == 1
+                && retryOwner._ownedRoutes[0].Active;
+        }
+        retryOwner.Dispose();
+        check("route_file: failed route cleanup remains owned and succeeds on retry",
+            cleanupFailureReported && cleanupAttempts == 2
+            && retryOwner._ownedRoutes.Count == 0);
     }
 
     /// <summary>Collect an already-exited child's pipe text without ever blocking

@@ -158,9 +158,9 @@ impl ServerConfig {
             })
             .collect();
         if !users.is_empty() {
-            // Inline users win over an explicitly-set users_file — warn so it isn't a
-            // silent surprise (users_file has a non-empty default, so only flag an
-            // *explicit* key, not the default). (audit 1.9)
+            // Both sources are intentional: the worker merges them and the external file wins
+            // duplicate users/groups. Only flag an explicit path so operators can see the
+            // precedence rule without warning on the ordinary default.
             let explicit_users_file = doc
                 .section("auth")
                 .and_then(|s| s.get("users_file"))
@@ -168,7 +168,7 @@ impl ServerConfig {
             if explicit_users_file {
                 log::warn!(
                     "config: both inline [user:*] blocks and an explicit auth.users_file \
-                     are set — inline users take precedence; users_file is ignored"
+                     are set — both are loaded; users_file takes precedence on duplicates"
                 );
             }
             cfg.auth.users = users;
@@ -218,16 +218,10 @@ impl ServerConfig {
 
 fn auth_to(a: &AuthConfig) -> Section {
     let mut s = Section::new("auth", None);
-    // Emit `users_file` XOR inline `[user:*]`, never both. The separate users file is the
-    // default; the web panel manages users through it (users_db → users.save(users_file)),
-    // so a file-mode config carries no inline users (`a.users` is empty) and we write the
-    // path. Only a config that was hand-written with inline `[user:*]` has `a.users`
-    // populated — there `users_file` is dead weight (inline wins) and, if emitted, would
-    // trip the both-sources warning on reload; so we omit it and keep the inline blocks
-    // (written by `to_ini_string`). This keeps every serialized config single-source.
-    if a.users.is_empty() {
-        put_str(&mut s, "users_file", &a.users_file);
-    }
+    // Runtime loads both sources and merges them, with the external file authoritative on
+    // duplicate users/groups. Always preserve the configured path when serializing; dropping it
+    // from a mixed config silently changes the access-control list after a panel save/restart.
+    put_str(&mut s, "users_file", &a.users_file);
     put(
         &mut s,
         "require_client_key_proof",
@@ -461,6 +455,14 @@ fn profile_to(p: &ProfileConfig) -> Section {
     put(&mut s, "routing.ipv6.mode", p.routing.ipv6.mode);
     if !p.routing.ipv6.interface.is_empty() {
         put_str(&mut s, "routing.ipv6.interface", &p.routing.ipv6.interface);
+    }
+    put(&mut s, "routing.ipv6.ndp_proxy", p.routing.ipv6.ndp_proxy);
+    if !p.routing.ipv6.ndp_proxy_interface.is_empty() {
+        put_str(
+            &mut s,
+            "routing.ipv6.ndp_proxy_interface",
+            &p.routing.ipv6.ndp_proxy_interface,
+        );
     }
     if !p.routing.post_up.is_empty() {
         put_str(&mut s, "routing.post_up", &p.routing.post_up);
@@ -875,6 +877,13 @@ fn profile_from(s: &Section) -> ProfileConfig {
     p.routing.ipv6.mode = s.parse_or("routing.ipv6.mode", base.routing.ipv6.mode);
     p.routing.ipv6.interface = s
         .str_or("routing.ipv6.interface", &base.routing.ipv6.interface)
+        .to_string();
+    p.routing.ipv6.ndp_proxy = s.parse_or("routing.ipv6.ndp_proxy", base.routing.ipv6.ndp_proxy);
+    p.routing.ipv6.ndp_proxy_interface = s
+        .str_or(
+            "routing.ipv6.ndp_proxy_interface",
+            &base.routing.ipv6.ndp_proxy_interface,
+        )
         .to_string();
     p.routing.post_up = s
         .str_or("routing.post_up", &base.routing.post_up)
@@ -1464,6 +1473,8 @@ pool.ipv6.exclude = fd71:e1:1234:1::10
 pool.ipv6.reservation.alice = fd71:e1:1234:1::50
 routing.ipv6.mode = nat66
 routing.ipv6.interface = eth0
+routing.ipv6.ndp_proxy = off
+routing.ipv6.ndp_proxy_interface = eth1
 dns.listen_ipv6 = fd71:e1:1234:1::1
 dns.push_servers = 10.9.0.1, fd71:e1:1234:1::1
 dns.upstream = 1.1.1.1, 2606:4700:4700::1111
@@ -1485,6 +1496,8 @@ route = 2001:db8:400::/48 gateway=fd71:e1:1234:1::1 metric=20
             Some("fd71:e1:1234:1::1")
         );
         assert_eq!(profile.routing.ipv6.mode, Ipv6RoutingMode::Nat66);
+        assert_eq!(profile.routing.ipv6.ndp_proxy, Ipv6NdpProxyMode::Off);
+        assert_eq!(profile.routing.ipv6.ndp_proxy_interface, "eth1");
         assert_eq!(profile.routing.advertised_routes.len(), 1);
         assert_eq!(
             original.auth.users[0].static_ipv6.as_deref(),
@@ -1495,6 +1508,35 @@ route = 2001:db8:400::/48 gateway=fd71:e1:1234:1::1 metric=20
         assert!(serialized.contains("tun.ip_mode = dual"));
         assert!(serialized.contains("pool.ipv6.cidr = fd71:e1:1234:1::/64"));
         assert!(serialized.contains("static_ipv6 = fd71:e1:1234:1::50"));
+        let reparsed = crate::config::parse_server_config(&serialized).unwrap();
+        assert_eq!(
+            serde_json::to_value(&original).unwrap(),
+            serde_json::to_value(&reparsed).unwrap()
+        );
+    }
+
+    #[test]
+    fn required_ndp_proxy_ini_is_valid_and_round_trips() {
+        let source = r#"
+[profile:on-link-v6]
+tun.ip_mode = ipv6
+tun.ipv6_address = 2001:db8:1200:10::1
+tun.mtu = 1280
+pool.ipv6.cidr = 2001:db8:1200:10::/64
+routing.ipv6.mode = route
+routing.ipv6.interface = ens3
+routing.ipv6.ndp_proxy = required
+routing.ipv6.ndp_proxy_interface = ens3
+"#;
+        let original = crate::config::parse_server_config(source).unwrap();
+        let profile = &original.profiles[0];
+        assert_eq!(profile.routing.ipv6.ndp_proxy, Ipv6NdpProxyMode::Required);
+        assert_eq!(profile.routing.ipv6.ndp_proxy_interface, "ens3");
+        crate::config::server::validate_ipv6_profile(profile).unwrap();
+
+        let serialized = original.to_ini_string();
+        assert!(serialized.contains("routing.ipv6.ndp_proxy = required"));
+        assert!(serialized.contains("routing.ipv6.ndp_proxy_interface = ens3"));
         let reparsed = crate::config::parse_server_config(&serialized).unwrap();
         assert_eq!(
             serde_json::to_value(&original).unwrap(),
@@ -1778,7 +1820,7 @@ max_sessions = 5
     }
 
     #[test]
-    fn serializes_users_file_xor_inline_users() {
+    fn serializes_users_file_together_with_inline_users() {
         // File mode (the default): no inline users → `users_file` is written, no [user:*].
         let file_mode =
             "[auth]\nusers_file = /etc/qeli/custom-users.conf\n\n[profile:tcp]\nbind.port = 443\n";
@@ -1790,15 +1832,15 @@ max_sessions = 5
             "file-mode config must not gain inline users"
         );
 
-        // Inline mode: inline users present → [user:*] written, NO `users_file` (it would be
-        // dead weight — inline wins — and would trip the both-sources warning on reload).
+        // Mixed mode: inline users and the configured users file are both preserved; runtime
+        // loads their union and lets the external file win duplicate names.
         let inline_mode = "[auth]\nusers_file = /etc/qeli/custom-users.conf\n\n[profile:tcp]\nbind.port = 443\n\n[user:alice]\npassword_hash = $argon2id$v=19$m=16384,t=2,p=1$abc$def\n";
         let cfg2 = ServerConfig::from_ini(&IniDoc::parse(inline_mode).unwrap()).unwrap();
         let out2 = cfg2.to_ini_string();
         assert!(out2.contains("[user:alice]"));
         assert!(
-            !out2.contains("users_file"),
-            "inline-mode config must not also emit users_file (single-source)"
+            out2.contains("users_file = /etc/qeli/custom-users.conf"),
+            "mixed config must preserve the authoritative users file"
         );
     }
 

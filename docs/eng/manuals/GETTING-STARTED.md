@@ -1,7 +1,7 @@
 # Qeli — installation & getting started (step by step)
 
-> **Documentation status:** current development tree **0.8.0**; planned full-IPv6 release **0.8.1**;
-> latest published release **0.8.0**. There will be no public 0.7.17 release.
+> **Documentation status:** current development tree **0.8.1**; planned full-IPv6 release **0.8.2**;
+> latest published release **0.8.1**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
 
 A complete from-scratch guide: from standing up the server to creating users with
@@ -153,14 +153,14 @@ home directory:
 
 ```bash
 cd /tmp
-curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.0/qeli_0.8.0_amd64.deb
-# or copy it from your workstation:  scp qeli_0.8.0_amd64.deb root@server:/tmp/
+curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.1/qeli_0.8.1_amd64.deb
+# or copy it from your workstation:  scp qeli_0.8.1_amd64.deb root@server:/tmp/
 ```
 
 > **Why `/tmp`.** `apt` downloads and unpacks as the unprivileged `_apt` user, which cannot
 > read `/root` or home directories. Installing from `/root` still works, but prints:
 > ```
-> N: Download is performed unsandboxed as root as file '/root/qeli_0.8.0_amd64.deb'
+> N: Download is performed unsandboxed as root as file '/root/qeli_0.8.1_amd64.deb'
 >    couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
 > ```
 > It is only a warning (apt falls back to running as root), but from `/tmp` it never appears.
@@ -168,14 +168,14 @@ curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.0/qeli_0.8.0
 #### A.2. Install
 
 ```bash
-sudo apt install /tmp/qeli_0.8.0_amd64.deb     # installs and pulls dependencies
+sudo apt install /tmp/qeli_0.8.1_amd64.deb     # installs and pulls dependencies
 ```
 
 Give a **full path** (or `./name.deb`) — without a slash apt looks for a repository package
 of that name instead. If apt is unavailable:
 
 ```bash
-sudo dpkg -i /tmp/qeli_0.8.0_amd64.deb
+sudo dpkg -i /tmp/qeli_0.8.1_amd64.deb
 sudo apt-get -f install -y          # pull the dependencies (iproute2, iptables, libcap2-bin)
 ```
 
@@ -196,7 +196,7 @@ What the package does:
   `qeli set-service-user`. Answer non-interactively (automation / preseed) with:
   ```bash
   echo "qeli qeli/run-as select root" | sudo debconf-set-selections
-  sudo apt install /tmp/qeli_0.8.0_amd64.deb
+  sudo apt install /tmp/qeli_0.8.1_amd64.deb
   ```
   Changeable at any time afterwards — `sudo qeli set-service-user root|qeli` (§10.4),
   where the trade-offs of `root` are spelled out.
@@ -424,10 +424,10 @@ By default users live in a **separate file** — `auth.users_file` (default
 `/etc/qeli/users.conf`). The example configs ship **without** inline users; add users
 with `qeli add-client` (step 6), which appends them to that file. Nothing else to do.
 
-> You *can* instead define users inline in `server.conf` as `[user:*]` sections, but
-> then `auth.users_file` is **ignored entirely** (inline takes precedence) — so don't
-> set both, or the server warns and the file is silently dropped. The separate file is
-> the recommended default; keep `[user:*]` out of `server.conf`.
+> You can instead define users inline in `server.conf` as `[user:*]` sections. If both
+> sources are configured, the server loads their **union**, and `auth.users_file` wins
+> duplicate names. Panel edits preserve the configured file path. Prefer the separate
+> file for dynamically managed users.
 
 ---
 
@@ -1107,8 +1107,8 @@ A detailed comparison, REALITY setup (short_ids, handrolled), multipath bonding 
   Fix with `sudo chown -R qeli:qeli /etc/qeli` + restart — full symptom list and modes in
   §2, "A.3. Fix ownership of `/etc/qeli`".
 - **Client passes "identity verified" but drops immediately / `AUTH FAIL … not found`.**
-  The user isn't where the server looks: `server.conf` has inline `[user:*]`, so
-  `users_file` is ignored (see §3.3). Keep users in one place.
+  Check the merged inline `[user:*]` plus `auth.users_file` view (see §3.3): a
+  same-named entry from the file takes precedence and can shadow the inline user.
 - **Connects, but no internet (full-tunnel).** Check that the profile has
   `routing.nat.enabled = true` and that **`iptables`** is installed on the server (`apt
   install iptables`) — without it the server can't add MASQUERADE (log: `NAT requested

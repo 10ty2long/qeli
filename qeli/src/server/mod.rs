@@ -6,6 +6,7 @@ pub mod dns;
 pub mod handler;
 pub mod metrics;
 pub mod nat;
+pub mod ndp_proxy;
 pub mod notify;
 pub mod pool;
 pub mod preflight;
@@ -477,6 +478,33 @@ impl SessionMap {
             .map(|route| &route.session)
     }
 
+    /// Whether an active session owns an IPv6 address for upstream NDP proxying.
+    ///
+    /// Exact tunnel leases win absolutely: a stale/revoked exact owner must not fall through
+    /// to a broader client route owned by somebody else. Delegated prefixes reuse the existing
+    /// `client_subnet`/iroute registry, skip `/0` exit routes, and use the same longest-prefix
+    /// ownership rule as the data plane.
+    pub(crate) fn owns_ipv6_neighbor_target(&self, target: std::net::Ipv6Addr) -> bool {
+        use std::sync::atomic::Ordering;
+
+        let active = |session: &SessionShared| {
+            !session.revoked.load(Ordering::Acquire) && !session.closing.load(Ordering::Acquire)
+        };
+        let address = std::net::IpAddr::V6(target);
+        if let Some(session) = self.by_address.get(&address) {
+            return active(session);
+        }
+        self.client_routes
+            .iter()
+            .filter(|route| {
+                route.prefix > 0
+                    && matches!(route.net, RouteNetwork::V6(_))
+                    && route.contains(address)
+            })
+            .max_by_key(|route| route.prefix)
+            .is_some_and(|route| active(&route.session))
+    }
+
     /// Remove and return the CIDRs of a client's kernel-programmed inbound iroutes (#13)
     /// when its
     /// session leaves `by_ip`. EVERY eviction path must call this — then tear down the
@@ -600,6 +628,32 @@ mod client_route_tests {
             vec!["2001:db8:50::/64"]
         );
         assert!(sessions.client_routes.is_empty());
+    }
+
+    #[test]
+    fn ndp_ownership_tracks_exact_leases_delegated_prefixes_and_session_state() {
+        use std::sync::atomic::Ordering;
+
+        let exact = session(1, "2001:db8:10::2".parse().unwrap());
+        let delegated = session(2, "2001:db8:10::3".parse().unwrap());
+        let mut sessions = empty_map();
+        sessions.insert(exact.clone());
+        sessions.client_routes.push(
+            ClientRoute::parse("2001:db8:200::/56", delegated.client_ip, delegated.clone())
+                .unwrap(),
+        );
+        sessions
+            .client_routes
+            .push(ClientRoute::parse("::/0", delegated.client_ip, delegated.clone()).unwrap());
+
+        assert!(sessions.owns_ipv6_neighbor_target("2001:db8:10::2".parse().unwrap()));
+        assert!(sessions.owns_ipv6_neighbor_target("2001:db8:200:ab::9".parse().unwrap()));
+        assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:ffff::9".parse().unwrap()));
+
+        exact.revoked.store(true, Ordering::Release);
+        assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:10::2".parse().unwrap()));
+        delegated.closing.store(true, Ordering::Release);
+        assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:200:ab::9".parse().unwrap()));
     }
 }
 
@@ -947,6 +1001,10 @@ pub enum WorkerCmd {
 pub struct ServerState {
     pub config: ServerConfig,
     pub users_db: Arc<RwLock<UsersDb>>,
+    /// Valid representative Argon2 hashes for unknown-user verification. Rebuilt only when
+    /// the users database changes, so hostile unknown logins cannot scan and parse every PHC
+    /// entry while holding the live users read-lock.
+    pub dummy_password_hashes: Arc<RwLock<Vec<String>>>,
     pub config_path: Mutex<Option<String>>,
     /// Serializes every panel read-modify-write of the server config. Atomic rename keeps
     /// each individual write crash-safe, but without a process-level lock two panel tabs
@@ -1274,17 +1332,64 @@ fn bind_hosts_overlap(left: &str, right: &str) -> bool {
 /// to `0.0.0.0:67`, publishing an unauthenticated service on every interface for anyone who
 /// merely set `dhcp.enabled = true`. One helper so the preflight collision check and
 /// `run_profile` cannot drift apart on what the value means. (Audit 2026-08-04.)
-fn dhcp_bind_spec(p: &crate::config::server::ProfileConfig) -> String {
-    let host = if p.dhcp.listen.trim().is_empty() {
+fn dhcp_bind_addr(
+    p: &crate::config::server::ProfileConfig,
+) -> anyhow::Result<std::net::SocketAddrV4> {
+    let configured = p.dhcp.listen.trim();
+    let raw = if configured.is_empty() {
         p.tun.address.trim()
     } else {
-        p.dhcp.listen.trim()
+        configured
     };
-    if host.contains(':') {
-        host.to_string()
+    let shown = if configured.is_empty() {
+        format!("<default:{}>", p.tun.address.trim())
     } else {
-        format!("{host}:67")
+        configured.to_string()
+    };
+
+    let address = if let Ok(ip) = raw.parse::<std::net::Ipv4Addr>() {
+        std::net::SocketAddrV4::new(ip, 67)
+    } else {
+        match raw.parse::<std::net::SocketAddr>() {
+            Ok(std::net::SocketAddr::V4(address)) => address,
+            Ok(std::net::SocketAddr::V6(_)) => anyhow::bail!(
+                "profile '{}': dhcp.listen = '{}' must be an IPv4 address with optional port",
+                p.name,
+                shown
+            ),
+            Err(error) => anyhow::bail!(
+                "profile '{}': invalid dhcp.listen = '{}': {error}; expected IPv4 or IPv4:port",
+                p.name,
+                shown
+            ),
+        }
+    };
+    if address.port() == 0 {
+        anyhow::bail!(
+            "profile '{}': dhcp.listen = '{}' uses invalid port 0",
+            p.name,
+            shown
+        );
     }
+    if address.ip().is_unspecified() {
+        anyhow::bail!(
+            "profile '{}': dhcp.listen = '{}' publishes an unauthenticated DHCP server on every interface",
+            p.name,
+            shown
+        );
+    }
+    if address.ip().is_multicast() || address.ip().is_broadcast() {
+        anyhow::bail!(
+            "profile '{}': dhcp.listen = '{}' is not a bindable unicast IPv4 address",
+            p.name,
+            shown
+        );
+    }
+    Ok(address)
+}
+
+fn dhcp_bind_spec(p: &crate::config::server::ProfileConfig) -> anyhow::Result<String> {
+    Ok(dhcp_bind_addr(p)?.to_string())
 }
 
 /// Split an already-form-validated `addr:port` spec into a comparable (host, port).
@@ -1520,6 +1625,13 @@ pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
                 &p.routing.ipv6.interface,
             )?;
         }
+        if p.routing.ipv6.ndp_proxy != crate::config::server::Ipv6NdpProxyMode::Off {
+            validate_configured_interface(
+                &p.name,
+                "routing.ipv6.ndp_proxy_interface",
+                &p.routing.ipv6.ndp_proxy_interface,
+            )?;
+        }
 
         // `perf.tun.read_buffer_size` is the exact size of the buffer each queue reads a TUN
         // frame into, and it was parsed as a bare `usize` with no bounds at all — the only
@@ -1718,7 +1830,7 @@ pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
             // map exists to catch — two profiles on the DHCP default — slipped through
             // whenever the operator wrote the address without a port.
             // (Audit 2026-08-01, §2.)
-            let spec = dhcp_bind_spec(p);
+            let spec = dhcp_bind_spec(p)?;
             if let Some((host, port)) = split_listen_spec(&spec) {
                 profile_endpoints.push((host, port, "udp".to_string(), format!("dhcp {spec}")));
             }
@@ -2682,25 +2794,7 @@ pub fn validate_profiles(config: &ServerConfig) -> anyhow::Result<()> {
         // the profile's pool, its mask, gateway and DNS servers. Same class of exposure,
         // same treatment. (Audit 2026-08-04.)
         if p.dhcp.enabled {
-            let host = p
-                .dhcp
-                .listen
-                .rsplit_once(':')
-                .map_or(p.dhcp.listen.as_str(), |(h, _)| h);
-            match host.trim().parse::<std::net::IpAddr>() {
-                Ok(ip) if ip.is_unspecified() => anyhow::bail!(
-                    "profile '{}': dhcp.listen = {} publishes an UNAUTHENTICATED DHCP server on every interface, including any public one. Bind it to the profile's tun address ({}), or to the TAP bridge address if this profile bridges.",
-                    p.name,
-                    p.dhcp.listen,
-                    p.tun.address
-                ),
-                Ok(ip) if ip.is_multicast() => anyhow::bail!(
-                    "profile '{}': dhcp.listen = {} is not a bindable address",
-                    p.name,
-                    p.dhcp.listen
-                ),
-                Ok(_) | Err(_) => {}
-            }
+            let _ = dhcp_bind_addr(p)?;
         }
     }
     // This depends on the complete enabled-profile/listener/queue set, so it cannot be
@@ -3288,6 +3382,9 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
             udp_buffer_budget.auto_max_recv_bytes / 1024
         );
     }
+    let dummy_password_hashes = Arc::new(RwLock::new(handler::dummy_password_hash_candidates(
+        &users_db,
+    )));
     let users_db = Arc::new(RwLock::new(users_db));
 
     // Identity keys are per-profile now (loaded in run_profile), so there is no
@@ -3305,6 +3402,7 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
     let state = Arc::new(ServerState {
         config,
         users_db,
+        dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
         config_write_lock: Mutex::new(()),
         profiles: Arc::new(RwLock::new(HashMap::new())),
@@ -3338,6 +3436,17 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
         let usage_state = state.clone();
         tokio::spawn(async move {
             usage_sweep(usage_state).await;
+        });
+    }
+
+    // UDP loss report. The per-reason counters were already maintained by the datagram
+    // handler but nothing ever read the snapshot, so the server side of a loss was
+    // invisible: only the client published a breakdown, and half of a UDP path is not
+    // enough to tell an exhausted pool from a queue that cannot drain.
+    {
+        let drops_state = state.clone();
+        tokio::spawn(async move {
+            udp_drop_report(drops_state).await;
         });
     }
 
@@ -3519,6 +3628,43 @@ pub async fn run_worker(cfg_path: &str) -> anyhow::Result<()> {
 /// and disconnect any user over their data cap or past expiry. Runs off the data
 /// path (O(sessions) per tick, reusing counters the data plane already maintains)
 /// so it adds zero per-packet cost — tunnel throughput is unaffected.
+/// Periodic per-profile UDP loss breakdown. Off the data path entirely: one snapshot of
+/// counters the handler already maintains, once per interval, per profile. Silent while
+/// nothing is lost, so a healthy server does not gain a log line.
+async fn udp_drop_report(state: Arc<ServerState>) {
+    use crate::transport_core::udp_buffer::UdpBufferSnapshot;
+
+    let mut tick = tokio::time::interval(Duration::from_secs(10));
+    tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+    let mut previous: HashMap<String, UdpBufferSnapshot> = HashMap::new();
+    loop {
+        tick.tick().await;
+        let profiles = state.profiles.read().await;
+        for (name, profile) in profiles.iter() {
+            let now = profile.udp_buffer_counters.snapshot();
+            let was = previous.insert(name.clone(), now).unwrap_or_default();
+            let internal = now.internal_drops.saturating_sub(was.internal_drops);
+            let kernel = now.kernel_drops.saturating_sub(was.kernel_drops);
+            if internal == 0 && kernel == 0 {
+                continue;
+            }
+            log::warn!(
+                "UDP loss on profile '{}': kernel +{}, internal +{} (pool_exhausted +{}, queue_full +{}, oversize +{}, unsupported +{}, tun_write +{}), buffer={} KiB, grows={}",
+                name,
+                kernel,
+                internal,
+                now.pool_exhausted_drops.saturating_sub(was.pool_exhausted_drops),
+                now.queue_full_drops.saturating_sub(was.queue_full_drops),
+                now.oversize_drops.saturating_sub(was.oversize_drops),
+                now.unsupported_drops.saturating_sub(was.unsupported_drops),
+                now.tun_write_drops.saturating_sub(was.tun_write_drops),
+                now.granted_recv_bytes / 1024,
+                now.grow_events
+            );
+        }
+    }
+}
+
 async fn usage_sweep(state: Arc<ServerState>) {
     let mut tick = tokio::time::interval(Duration::from_secs(10));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -3798,7 +3944,11 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     // list in the panel and let them "fix" it by re-creating accounts — writing a fresh file
     // over the one that failed to load. The supervisor must fail the same way the worker
     // does. (Audit 2026-08-02, §5.)
-    let users_db = Arc::new(RwLock::new(load_users_db_for_runtime(&config)?));
+    let loaded_users = load_users_db_for_runtime(&config)?;
+    let dummy_password_hashes = Arc::new(RwLock::new(handler::dummy_password_hash_candidates(
+        &loaded_users,
+    )));
+    let users_db = Arc::new(RwLock::new(loaded_users));
 
     // Supervisor (web panel) — governs admin-login brute-force: `[web] brute_force`,
     // a policy independent of the VPN-auth one the worker enforces above.
@@ -3817,6 +3967,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
     let state = Arc::new(ServerState {
         config,
         users_db,
+        dummy_password_hashes,
         config_path: Mutex::new(Some(cfg_path.to_string())),
         config_write_lock: Mutex::new(()),
         profiles: Arc::new(RwLock::new(HashMap::new())),
@@ -4097,7 +4248,9 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
     match load_users_db_for_runtime(&new_config) {
         Ok(db) => {
             let count = db.users.len();
+            let dummy_password_hashes = handler::dummy_password_hash_candidates(&db);
             *state.users_db.write().await = db;
+            *state.dummy_password_hashes.write().await = dummy_password_hashes;
             log::info!("SIGHUP: reloaded users database ({} users)", count);
         }
         Err(e) => {
@@ -4944,6 +5097,42 @@ async fn run_profile_generation(
             wan_ipv6 = wan;
         }
     }
+    let ndp_proxy = if pcfg.routing.ipv6.ndp_proxy == crate::config::server::Ipv6NdpProxyMode::Off {
+        None
+    } else {
+        let configured = pcfg.routing.ipv6.ndp_proxy_interface.trim();
+        let interface = if configured.is_empty() {
+            wan_ipv6.trim()
+        } else {
+            configured
+        };
+        let result = if interface.is_empty() {
+            Err(anyhow::anyhow!(
+                "no IPv6 uplink was detected; set routing.ipv6.ndp_proxy_interface explicitly"
+            ))
+        } else {
+            ndp_proxy::NdpProxy::bind(interface)
+        };
+        match result {
+            Ok(proxy) => Some(proxy),
+            Err(error)
+                if pcfg.routing.ipv6.ndp_proxy
+                    == crate::config::server::Ipv6NdpProxyMode::Auto =>
+            {
+                log::warn!(
+                    "Profile '{}': IPv6 NDP proxy auto mode is unavailable: {} — continuing without it",
+                    name,
+                    error
+                );
+                None
+            }
+            Err(error) => anyhow::bail!(
+                "profile '{}': routing.ipv6.ndp_proxy = required but the responder could not start: {}",
+                name,
+                error
+            ),
+        }
+    };
 
     let hook_env = ProfileHookEnv::new(&pcfg, wan_ipv4, wan_ipv6);
     state
@@ -5275,6 +5464,17 @@ async fn run_profile_generation(
         .await
         .insert(name.clone(), profile.clone());
     teardown.registered_profile = Some(profile.clone());
+
+    if let Some(proxy) = ndp_proxy {
+        let ndp_profile = profile.clone();
+        let label = format!("profile '{}' IPv6 NDP proxy", name);
+        service_set.spawn(async move {
+            proxy
+                .run(ndp_profile)
+                .await
+                .map_err(|error| anyhow::anyhow!("{label} failed: {error}"))
+        });
+    }
 
     let is_tap = dev_type == DeviceType::Tap;
     let gateway_mac: [u8; 6] = if is_tap { TAP_GATEWAY_MAC } else { [0u8; 6] };
@@ -6075,12 +6275,15 @@ async fn run_profile_generation(
         let dhcp_dns: Vec<std::net::Ipv4Addr> = if pcfg.dns.enabled {
             vec![server_ip]
         } else {
-            vec![
-                std::net::Ipv4Addr::new(1, 1, 1, 1),
-                std::net::Ipv4Addr::new(8, 8, 8, 8),
-            ]
+            // DHCP must follow this profile's configured resolver policy. Hard-coding public
+            // resolvers here leaked client DNS away from private/split-horizon deployments.
+            pcfg.dns
+                .push_servers
+                .iter()
+                .filter_map(|value| value.parse::<std::net::Ipv4Addr>().ok())
+                .collect()
         };
-        let dhcp_listen = dhcp_bind_spec(&pcfg);
+        let dhcp_listen = dhcp_bind_spec(&pcfg)?;
 
         let dhcp_server = Arc::new(dhcp::DhcpServer::new(
             server_ip,
@@ -6098,7 +6301,7 @@ async fn run_profile_generation(
         // refused `set_broadcast` left the profile "running" while every client connected and
         // never got a lease — the cause a single ERROR line in the journal. Same treatment as
         // the DNS proxy. (Audit 2026-08-01, §2.)
-        let dhcp_socket = match dhcp::DhcpServer::bind(&dhcp_listen).await {
+        let dhcp_socket = match dhcp::DhcpServer::bind(&dhcp_listen, &ifname).await {
             Ok(s) => s,
             Err(e) => anyhow::bail!(
                 "profile '{}': {e}. Clients of this profile would get no lease at all. Free the \
@@ -6107,9 +6310,10 @@ async fn run_profile_generation(
             ),
         };
         log::info!(
-            "DHCP server for profile '{}' starting on {}",
+            "DHCP server for profile '{}' starting on {} (interface '{}'; Linux receives broadcast on device-scoped UDP/67)",
             name,
-            dhcp_listen
+            dhcp_listen,
+            ifname
         );
         let label = format!("profile '{name}' DHCP server on {dhcp_listen}");
         service_set.spawn(async move {
@@ -7121,6 +7325,37 @@ pool.cidr = 10.{net}.0.0/24
         }
     }
 
+    #[test]
+    fn dhcp_listen_is_validated_before_worker_start() {
+        let mut profile = crate::config::server::ProfileConfig {
+            name: "dhcp".into(),
+            tun: crate::config::server::TunConfig {
+                address: "10.9.0.1".into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        profile.dhcp.listen.clear();
+        assert_eq!(dhcp_bind_spec(&profile).unwrap(), "10.9.0.1:67");
+        profile.dhcp.listen = "10.9.0.2:1067".into();
+        assert_eq!(dhcp_bind_spec(&profile).unwrap(), "10.9.0.2:1067");
+
+        for value in [
+            "not-an-address",
+            "[::1]:67",
+            "10.9.0.1:0",
+            "0.0.0.0:67",
+            "224.0.0.1:67",
+            "255.255.255.255:67",
+        ] {
+            profile.dhcp.listen = value.into();
+            let error = dhcp_bind_spec(&profile)
+                .expect_err("invalid DHCP bind must fail check-config")
+                .to_string();
+            assert!(error.contains("dhcp.listen"), "{value}: {error}");
+        }
+    }
     /// A device name the kernel would truncate, or one two profiles share.
     ///
     /// TUNSETIFF copies at most 15 bytes, so a longer name created a device under a DIFFERENT

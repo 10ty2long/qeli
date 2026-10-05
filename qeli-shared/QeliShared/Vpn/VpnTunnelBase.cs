@@ -11,7 +11,8 @@ namespace Qeli.Shared.Vpn;
 
 
 /// <summary>
-/// Shared Windows/macOS lifecycle and platform adapter for the ABI 1.11 Rust transport.
+/// Shared Windows/macOS lifecycle and platform adapter for the ABI 1.15 Rust transport,
+/// using the stable ABI 1.11 compatibility floor.
 /// Rust owns carrier sockets, handshake, crypto and packet loops; this class applies the
 /// authenticated NetworkPlan, creates the platform Wintun interface or transfers a Unix TUN
 /// descriptor, and raises events for the UI.
@@ -1434,7 +1435,7 @@ public abstract class VpnTunnelBase
                                 // the same contents even if the file is edited concurrently.
                                 IReadOnlyList<string> routeFileRoutes =
                                     config.UsesAppFilter || !config.IsFullTunnel
-                                        ? LoadRouteFile(config)
+                                        ? LoadRouteFile(config, ct)
                                         : Array.Empty<string>();
                                 var session = new Session(plan.TunnelAddress, plan.PrefixLength, plan.Mtu,
                                     PlannedDns: dns, PlanIncludesClientRoutes: true,
@@ -1444,7 +1445,7 @@ public abstract class VpnTunnelBase
                                     PlanFingerprint: FingerprintNativePlan(plan,
                                         carrierCandidates.Select(address => address.ToString())),
                                     RouteFileRoutes: routeFileRoutes);
-                                SetupTun(config, session, carrier, carrierCandidates);
+                                SetupTun(config, session, carrier, carrierCandidates, ct);
                                 EnforceDnsPolicy(config);
                                 _persistedClientIp = plan.TunnelAddress;
                                 _persistedTunnelAddresses = string.Join(", ",
@@ -1524,7 +1525,8 @@ public abstract class VpnTunnelBase
                             ConnectedSince = DateTime.Now;
                             string tunnelAddresses = _persistedTunnelAddresses ?? _persistedClientIp ?? "";
                             Status(VpnStatus.Connected, DescribeConnected(tunnelAddresses));
-                            Log("TUN ready; Rust owns the complete transport data plane (ABI >= 1.11)");
+                            Log($"TUN ready; Rust owns the complete transport data plane " +
+                                $"({NativeTransportCore.LoadedAbiDescription()})");
                             break;
 
                         case NativeTransportCore.EventNotice:
@@ -1879,26 +1881,11 @@ public abstract class VpnTunnelBase
     protected virtual void BeforeTunDispose() { }
 
     // ── platform plan helpers ───────────────────────────────────────────────────
-    /// <summary>OpenVPN route-include-from-file: read split-tunnel CIDRs (one per line;
-    /// '#'/';' comments and blank lines skipped; a trailing comment/field after the CIDR
-    /// is dropped) from config.RouteFile. Empty when unset or unreadable.</summary>
-    protected List<string> LoadRouteFile(VpnConfig config)
-    {
-        var routes = new List<string>();
-        if (string.IsNullOrWhiteSpace(config.RouteFile)) return routes;
-        try
-        {
-            foreach (var raw in System.IO.File.ReadAllLines(config.RouteFile))
-            {
-                var line = raw.Trim();
-                if (line.Length == 0 || line[0] == '#' || line[0] == ';') continue;
-                routes.Add(line.Split(' ', '\t')[0]);
-            }
-            Log($"Loaded {routes.Count} route(s) from {config.RouteFile}");
-        }
-        catch (Exception e) { Log($"WARN: cannot read route_file '{config.RouteFile}': {e.Message}"); }
-        return routes;
-    }
+    /// <summary>Snapshot every declared CIDR/OpenVPN route file. Invalid or unreadable input
+    /// aborts setup: silently connecting without the requested split routes would leak traffic.</summary>
+    protected IReadOnlyList<string> LoadRouteFile(VpnConfig config,
+        CancellationToken cancellationToken) =>
+        RouteFileParser.Load(config.RouteFilePaths, cancellationToken, Log);
 
     protected sealed record AssignedAddress(string Family, string Address, int PrefixLength,
         int OnLinkPrefixLength, string? Gateway);
@@ -2168,7 +2155,8 @@ public abstract class VpnTunnelBase
     /// <summary>Open the platform TUN device, assign addressing/routes/DNS for this session
     /// and pin the server route, then store the opened device in <c>_tun</c>.</summary>
     protected abstract void SetupTun(VpnConfig config, Session session, IPAddress serverIp,
-        IReadOnlyList<IPAddress> carrierCandidates);
+        IReadOnlyList<IPAddress> carrierCandidates,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// True when the platform TUN is a transferable Unix descriptor. The base then advertises

@@ -154,8 +154,9 @@ enum Commands {
         username: String,
         /// Password (plaintext). VISIBLE TO EVERY LOCAL USER in /proc/<pid>/cmdline and in
         /// the shell history — prefer --password-stdin, or omit it entirely and let a
-        /// strong random one be generated and printed once (it cannot be recovered later;
-        /// only the hash is stored).
+        /// strong random one be generated and printed once. The users database stores its
+        /// Argon2 hash and may also store a reversibly encrypted `password_enc` for panel
+        /// link/QR re-issue; protect `/var/lib/qeli/panel-secret.key` accordingly.
         #[arg(short, long)]
         password: Option<String>,
         /// Read the password from stdin (first line), so it never appears in the process
@@ -1125,14 +1126,8 @@ fn add_client(
     };
 
     // Argon2id hash with a fresh random salt (same scheme as the web API).
-    let password_hash = {
-        use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
-        let salt = SaltString::generate(&mut OsRng);
-        qeli::crypto::password_hasher()
-            .hash_password(plaintext.as_bytes(), &salt)
-            .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?
-            .to_string()
-    };
+    let password_hash = qeli::crypto::hash_password(plaintext.as_bytes())
+        .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?;
 
     let profile_list: Vec<String> = profiles
         .as_deref()
@@ -1209,7 +1204,7 @@ fn add_client(
     println!("Added client '{}' to {}", username, users_file);
     if generated {
         println!(
-            "Generated password (store it now — only the hash is kept):\n  {}",
+            "Generated password (store it securely; an Argon2 hash and a panel-encrypted recovery value are kept):\n  {}",
             plaintext
         );
     }
@@ -1277,14 +1272,8 @@ fn set_web_password(
     };
 
     // Argon2id with a fresh random salt (same scheme as the web API / add-client).
-    let password_hash = {
-        use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
-        let salt = SaltString::generate(&mut OsRng);
-        qeli::crypto::password_hasher()
-            .hash_password(plaintext.as_bytes(), &salt)
-            .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?
-            .to_string()
-    };
+    let password_hash = qeli::crypto::hash_password(plaintext.as_bytes())
+        .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?;
 
     let mut updates: Vec<(&str, String)> = vec![
         ("username", username.clone()),
@@ -1402,14 +1391,8 @@ fn share_link(
         ),
         None => {
             let new_pw = generate_password(20);
-            let hash = {
-                use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
-                let salt = SaltString::generate(&mut OsRng);
-                qeli::crypto::password_hasher()
-                    .hash_password(new_pw.as_bytes(), &salt)
-                    .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?
-                    .to_string()
-            };
+            let hash = qeli::crypto::hash_password(new_pw.as_bytes())
+                .map_err(|e| anyhow::anyhow!("hashing failed: {}", e))?;
             let enc2 = qeli::crypto::secret::encrypt_password(&new_pw).ok();
             // Re-read under the cross-process lock and edit THERE: a running worker holds
             // its own copy and rewrites the file on any control-socket change, so writing

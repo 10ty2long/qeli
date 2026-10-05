@@ -2,7 +2,12 @@
 
 ## Implemented foundation
 
-- Connection / Profiles / Log navigation and Qeli visual language.
+- Connection / Profiles / Log navigation and Qeli visual language. Qeli-owned iOS screens use
+  the same explicit light/dark palette, header dimensions, segmented pill navigation, card
+  outlines and status colours as Android instead of UIKit's grouped-list palette. The Profiles
+  action bar adapts to compact widths and Dynamic Type without truncating Russian labels; profile
+  rows use the Android card/menu model, including explicit Move up/down actions. Apple permission
+  prompts, share sheets, pickers and other operating-system surfaces deliberately remain native.
 - Profile CRUD, active-profile locking while connected (refused with an alert, and the
   rows that cannot be picked are dimmed), reorder and reachability — TCP by a connect
   probe, UDP through ABI 1.8 `qeli_client_udp_probe`, which invokes the same Rust
@@ -28,9 +33,10 @@
 - Theme, launch auto-connect, VPN On Demand, full-tunnel-only LAN bypass and log timestamp settings.
 - Opt-in, privacy-gated release check matching Android's public release metadata flow.
 - Network Extension manager/provider lifecycle and shared status/log channel.
-- The production Packet Tunnel uses the compatible ABI 1.11 base and optional ABI 1.12-1.14
-  path contracts over the common Rust whole-client core used by Linux, Android, Windows and
-  macOS. Rust owns DNS/connect, plain and
+- The production Packet Tunnel uses the current ABI 1.15 core with the compatible ABI 1.11
+  base, optional ABI 1.12-1.14 path contracts and ABI 1.15 NOTICE/KICK management events over
+  the common Rust whole-client core used by Linux, Android, Windows and macOS. Rust owns
+  DNS/connect, plain and
   hybrid-PQ authentication, TCP/UDP/QUIC/obfs/REALITY, packet crypto, heartbeat/shaping,
   MTU discovery, fixed/adaptive bonding and the common TCP/UDP roaming policy. Swift owns
   the Apple path observer, path-scoped DNS/NAT64 probe, socket binding and excluded-route
@@ -70,7 +76,7 @@
 
 ## Remaining verification milestones
 
-1. Build the feature-enabled ABI 1.13 Rust XCFramework and generated project on macOS/Xcode
+1. Build the feature-enabled ABI 1.15 Rust XCFramework and generated project on macOS/Xcode
    16+, then compile both the app and Packet Tunnel targets; the strict
    `aarch64-apple-ios` Rust cross-target Clippy passes on the Linux lab, but cannot substitute
    for Swift/NetworkExtension compilation.
@@ -81,7 +87,9 @@
    device. Buffer/queue tuning is intentionally a separate performance pass after the
    architecture migration.
 4. Complete App Store signing/provisioning and Apple Network Extension entitlement
-   approval for the final bundle identifiers.
+   approval for the final bundle identifiers. A runtime capability check now turns an incorrectly
+   re-signed build into one actionable signing alert instead of consecutive Keychain/Network
+   Extension errors, and `scripts/verify_ios_ipa.py` rejects such an IPA before distribution.
 
 ## iOS restrictions (not implementable as a normal consumer app)
 
