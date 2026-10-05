@@ -1,12 +1,8 @@
-using System.IO;
-using System.Text;
-using System.Text.Json;
 using Qeli.Shared.Model;
 
 namespace QeliWin.Service;
 
-// One process coordinates settings/profile writes and service lifecycle off the dispatcher.
-// OS adapters stay injectable so failures are tested without controlling installed SCM.
+// Only OS adapters live here; transition decisions are shared by both desktop clients.
 internal sealed class ServiceProfileTransition(
     Func<bool> installed, Func<bool> desiredConnected, Func<VpnConfig?> readProfile,
     Action stop, Action<byte[]> publish, Action install, Action start, Action uninstall,
@@ -16,49 +12,10 @@ internal sealed class ServiceProfileTransition(
         ServiceManager.IsInstalled, ServiceState.DesiredConnected, ServiceState.LoadProfile,
         ServiceManager.Stop, ServiceState.PublishProfile, ServiceManager.Install,
         ServiceManager.Start, ServiceManager.Uninstall, ServiceManager.EnsureRegistration);
-    private readonly object _gate = new();
-
-    internal void Apply(VpnConfig? profile, bool connectRequested)
-    {
-        lock (_gate)
-        {
-            bool exists = installed();
-            if (profile is null)
-            {
-                if (exists) uninstall();
-                return;
-            }
-            if (exists) validateRegistration?.Invoke();
-            // Validate/encode before stopping any existing tunnel or publishing its replacement.
-            byte[] encrypted = ServiceState.EncodeProfile(profile);
-            bool resume = !exists || connectRequested || desiredConnected();
-            VpnConfig? previous = null;
-            if (exists)
-            {
-                try { previous = readProfile(); }
-                catch (Exception error) when (error is InvalidDataException or JsonException or DecoderFallbackException)
-                {
-                    // A trusted GUI may replace a malformed payload. ACL/I/O failures still refuse.
-                }
-            }
-            bool changed = previous is null || JsonSerializer.Serialize(previous) != JsonSerializer.Serialize(profile);
-            if (exists && changed) stop(); // must complete before the worker can load a new generation
-            if (changed) publish(encrypted);
-            if (!exists) install();
-            if (resume) start();
-            // An unchanged profile with intent=false stays disconnected on ordinary Settings Save.
-        }
-    }
-
-    internal bool UsesProfile(string id)
-    {
-        lock (_gate) return installed() && readProfile()?.Id == id;
-    }
-
-    internal static VpnConfig Snapshot(VpnConfig profile, string logLevel)
-    {
-        var copy = JsonSerializer.Deserialize<VpnConfig>(JsonSerializer.Serialize(profile))!;
-        copy.LoggingLevel = logLevel;
-        return copy; // Keep stable Id; do not mutate the GUI's persisted profile instance.
-    }
+    private readonly DesktopServiceProfileTransition Transition = new(
+        installed, desiredConnected, readProfile, stop, publish, install, start, uninstall,
+        ServiceState.EncodeProfile, validateRegistration);
+    internal void Apply(VpnConfig? profile, bool connectRequested) => Transition.Apply(profile, connectRequested);
+    internal bool UsesProfile(string id) => Transition.UsesProfile(id);
+    internal static VpnConfig Snapshot(VpnConfig profile, string logLevel) => DesktopServiceProfileTransition.Snapshot(profile, logLevel);
 }
