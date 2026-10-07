@@ -352,7 +352,7 @@ mod tests {
         let dir = Fixture::new();
         let path = dir.0.join("server.ini");
         let config = crate::config::server::ServerConfig::default();
-        fs::write(&path, "[logging]\n").unwrap();
+        fs::write(&path, "[logging]\n[profile:fixture]\n").unwrap();
         let state = crate::server::test_api_state(config, &path);
         let app = Router::new()
             .route("/logs", get(get_logs))
@@ -383,11 +383,11 @@ mod tests {
             .unwrap();
         let value: Value =
             serde_json::from_slice(&to_bytes(response.into_body(), 4096).await.unwrap()).unwrap();
-        assert_eq!(value["ok"], true);
+        assert_eq!(value["ok"], true, "{value}");
         assert_eq!(value["count"], 2);
         let outside = dir.0.join("outside-log");
         fs::write(&outside, "private-marker").unwrap();
-        fs::write(&path, format!("[logging]\nfile = {}\n", outside.display())).unwrap();
+        fs::write(&path, format!("[logging]\nfile = {}\n[profile:fixture]\n", outside.display())).unwrap();
         let response = app.oneshot(request("/logs".into())).await.unwrap();
         let body = to_bytes(response.into_body(), 4096).await.unwrap();
         let value: Value = serde_json::from_slice(&body).unwrap();
