@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v27 -->
+<!-- normative-sync: q31-openwrt-controls-v28 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1049,7 +1049,7 @@ default toolchains и работающие сервисы не изменяли�
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
 | Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; SDK packaging retained binary и offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
-| Keenetic preflight→launch INI; core plan generation/ABA | F355: одна приватная INI-копия scoped PASS; core plan/ABA и admin path replacement OPEN |
+| Keenetic preflight→launch INI; core plan generation/ABA | F355: private INI scoped PASS; F361: generation/ABA внутри одного адаптера scoped PASS; writer/lock, counter reset и admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
 | Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; полная hermetic policy и Qeli A/B OPEN |
@@ -1639,3 +1639,44 @@ rootfs повторно сверены, собственная template-копи
 и runtime-каталогов испытаний не осталось. 37 recipe checks, 14 LuCI fixtures,
 9 проверок документации, bindings и diff PASS. Исторические 41 case/acceptance
 записи сохраняются; добавляется scoped supplement. .10 не использовался.
+
+## F361: поколение runtime-файла сетевого плана (7 октября)
+
+Ядро публиковало только адреса и MTU. Повторная аутентификация с теми же адресами
+давала идентичные bytes: Keenetic мог принять прежний APPLIED receipt за текущий.
+Переход A→B→A во время ndm apply/save также оставался невидимым сравнению файла.
+Теперь Linux writer добавляет `generation=<NetworkPlan.generation>` после MTU,
+сохраняя первую строку адреса и прежние именованные поля. Используется существующее
+аутентифицированное поколение ядра; новых INI-параметров или JSON-конфигов нет.
+Имеющиеся проверки полного файла в hook и APPLIED автоматически учитывают поле.
+
+Это закрывает различение одинаковых адресов и ABA внутри монотонных поколений
+одного адаптера. Счётчик не глобален: сброс адаптера/процесса, координация writer
+с shell lock, смена после последней проверки, атомарность всей настройки ndm,
+удаление прежних семей адресов и root/admin replacement остаются OPEN.
+Старые runtime-файлы без generation продолжают читаться с прежними гарантиями.
+
+На .10 Rust1.97 в приватных Cargo home/target с одним job и offline/locked:
+derived baseline (те же formatter seam/tests, без единственной строки generation)
+воспроизвёл 2 assertion FAIL и 1 PASS; fixed — 11 lifecycle unit tests PASS,
+client-bin GNU check, production lib/bin Clippy `-D warnings` и fmt PASS.
+Три новых unit methods покрывают legacy/IPv4, same-address reauth/ABA/u64 max
+и dual-stack/IPv6-only. Baseline не выдаётся за неизменённый исходный файл.
+376 Git/current compile inputs проверены до и после, приватная rlib-проекция
+manifest восстановлена. Это не свежая FFI/SDK1.89/cross или published binary сборка.
+
+На .11 — 194 Keenetic methods без skips на каждом dash/BusyBox ash (192 прежних
+и 2 новых). Новые methods проверяют повторное применение тех же адресов с новым
+generation и A→B→A при apply/save: отказ stale receipt, сохранение pending,
+успешный retry нового поколения. ndmc моделируется; retained native helper и
+metadata inspector используются только в прежних scoped ролях, inspected region
+текущего ядра совпадает с источником retained binary. Это не firmware/VPN тест.
+37 recipes,14 LuCI fixtures,9 docs checks,bindings и diff checks PASS.
+Первоначально отсутствовавшие conformance inputs и запуск форматирования с
+неверной edition сохранены как ошибки подготовки; final gate использует edition2021.
+Собственные compile/cache каталоги .10 очищены после сохранения результатов.
+
+Raw: `audit-debt-20260924/q31-plan-generation-20261007/`; seal, input SHA,
+команды, времена и результаты включены в evidence. 41 historic cases/acceptance
+сохранены. Q31 IN_PROGRESS; Q29 SIGKILL FAIL/auto-null ENONET, Q30 callback drain
+OPEN/Apple exclusions и D06 ACCEPTED неизменны. Всего 28/37 (75.7%),9 осталось.

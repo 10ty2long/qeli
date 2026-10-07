@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v27 -->
+<!-- normative-sync: q31-openwrt-controls-v28 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1048,7 +1048,7 @@ Current Q31 remainder:
 | Actual standalone four-target cross builds/ELF | DONE in the stated scope |
 | UCI/INI, shell lifecycle/rollback and LuCI | Scoped suites PASS; model boundaries retained |
 | Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; retained-binary SDK packaging/offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
-| Keenetic preflight→launch INI; core plan generation/ABA | F355: one private INI copy scoped PASS; core plan/ABA and admin path replacement OPEN |
+| Keenetic preflight→launch INI; core plan generation/ABA | F355: private INI scoped PASS; F361: within-adapter generation/ABA scoped PASS; writer/lock, counter reset and admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
 | Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; full hermetic policy and Qeli A/B OPEN |
@@ -1630,3 +1630,44 @@ links rechecked and owned template removed. No residual owned processes, mounts
 or runtime case directories. 37 recipe checks, 14 LuCI fixtures, documentation
 9 checks, bindings and diff PASS. Historical 41 case/acceptance records preserved;
 scoped supplement added. .10 unused.
+
+## F361: runtime NetworkPlan file generation (7 October)
+
+The core published addresses and MTU only. Reauthentication with identical addresses
+produced identical bytes, allowing Keenetic to treat the previous APPLIED receipt
+as current. A→B→A during ndm apply/save was also invisible to file comparison.
+The Linux writer now appends `generation=<NetworkPlan.generation>` after MTU,
+preserving the first address line and existing named fields. It uses the core's
+existing authenticated generation; no new INI parameter or JSON configuration.
+Existing whole-file hook checks and APPLIED receipts automatically include it.
+
+This distinguishes identical addresses and ABA within one adapter's monotonic
+plan generations. The counter is not global: adapter/process reset, writer/shell
+lock coordination, changes after the final check, atomic ndm configuration,
+removal of old address families and root/admin replacement remain OPEN.
+Legacy runtime files without generation remain readable with their old guarantees.
+
+On .10, Rust1.97 with private Cargo home/target, one job and offline/locked:
+a derived baseline (same formatter seam/tests, only the generation line omitted)
+reproduced 2 assertion FAIL and 1 PASS; fixed passed 11 lifecycle unit tests,
+client-bin GNU check, production lib/bin Clippy `-D warnings` and fmt.
+Three new unit methods cover legacy/IPv4, same-address reauth/ABA/u64 max
+and dual-stack/IPv6-only. The baseline is not an unchanged original source file.
+376 Git/current compile inputs were verified before/after; the private rlib
+manifest projection was restored. No fresh FFI/SDK1.89/cross or published binary build.
+
+On .11,194 Keenetic methods without skips passed on each dash/BusyBox ash
+(192 previous plus 2 new). New methods cover reapplying identical addresses with
+a new generation and A→B→A during apply/save: stale receipt refusal, pending
+retention and successful retry of the new generation. ndmc is modelled; retained
+native helper and metadata inspector retain their scoped roles, and the inspected
+current core region matches the retained binary's source. No firmware/VPN claim.
+37 recipes,14 LuCI fixtures,9 docs checks,bindings and diff checks passed.
+Initially missing conformance inputs and a wrong-edition formatter invocation
+are retained as preparation errors; the final gate uses edition2021.
+Owned .10 compiler/cache directories were cleaned after preserving results.
+
+Raw: `audit-debt-20260924/q31-plan-generation-20261007/`; seal, input SHA,
+commands, times and results are recorded in evidence. 41 historic cases/acceptance
+are retained. Q31 IN_PROGRESS; Q29 SIGKILL FAIL/auto-null ENONET, Q30 callback drain
+OPEN/Apple exclusions and D06 ACCEPTED remain unchanged. Total28/37(75.7%),9 remain.

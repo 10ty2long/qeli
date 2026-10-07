@@ -1908,6 +1908,15 @@ Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
 | `dns` | client DNS mode. On Linux, `tunnel` applies per-interface DNS through `systemd-resolved`; it does not overwrite `/etc/resolv.conf`. Installing a requested resolver fails if resolved is not the active system resolver. Deleting the tunnel interface removes its DNS; clean shutdown also explicitly reverts it. `off` / `system` leaves DNS to the platform. File-only; emitted to INI only when `!= tunnel` |
 | `autostart` | auto-connect this profile when the supervisor/panel starts (accepts `true`/`1`/`yes`/`on`). Read by the **panel client-manager**; ignored by the client runtime itself. Emitted to INI only when `true` |
 
+On Linux, the nonempty `QELI_TUNIP_FILE` environment variable selects the committed
+NetworkPlan state file. Atomic rename publishes it: the first line is the tunnel
+address for legacy scripts, followed by `ipv4=<CIDR>` and `ipv6=<CIDR>` for present
+families, `mtu=<number>` and `generation=<number>` (development0.8.2).
+Generation comes from the authenticated core plan and distinguishes repeated
+application of identical addresses within one adapter; resetting the adapter may
+restart the counter. This is a runtime file, not an INI parameter or a new
+configuration format. Atomic rename does not make external route/ndm setup atomic.
+
 On Linux, `dev_attach=false` only waits approximately six seconds for an occupied
 name to be released; Qeli does not delete a device based on its observed PID holders.
 Query errors and changed ifindex stop setup. TUN/TAP creation and the first multiqueue
