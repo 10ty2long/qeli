@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v24 -->
+<!-- normative-sync: q31-openwrt-controls-v25 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1048,7 +1048,7 @@ default toolchains и работающие сервисы не изменяли�
 |---|---|
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
-| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; полный Qeli SDK build/install OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
+| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; SDK packaging retained binary и offline opkg Q31-V003 scoped PASS; полный SDK Rust build OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
 | Keenetic preflight→launch INI; core plan generation/ABA | F355: одна приватная INI-копия scoped PASS; core plan/ABA и admin path replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
@@ -1482,3 +1482,57 @@ OPEN/Apple exclusions и D06 ACCEPTED сохранены. Без push/deploy.
 Справочник: [Cargo configuration](https://doc.rust-lang.org/cargo/reference/config.html).
 Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-cargo-20261007.
 Evidence: release/certification/evidence/q31-router-cargo-20261007.json.
+
+## Q31-V003: настоящая offline установка, обновление и удаление IPK (7 октября)
+
+В официальном OpenWrt24.10.4 x86/64 rootfs на .11 выполнены7 интеграционных
+сценариев настоящим opkg2024.10.16~38eccbb1-r1, все PASS без skips. Установка Qeli
+и SDK LuCI IPK разрешает виртуальные iptables/ip6tables с реальными nft и legacy
+провайдерами. Проверены точные payload bytes, root ownership, executable modes,
+UCI0600 и запуск qeli-client --version. Нет force-depends или подставных installed
+records: исходное состояние из официального rootfs,22 недостающих пакета скачаны
+из соответствующих release core/base/kernel feeds. Все3 подписи индексов проверены
+настоящим usign с release keys rootfs; каждый IPK SHA совпал с подписанным индексом.
+
+Upgrade использует только audit fixture0.8.2-r2 с изменённым default comment,
+упакованный настоящим SDK ipkg-build. Версия продукта не повышена. Изменённый UCI
+сохраняется, новый default появляется в qeli-opkg; оба0600. Нетронутый default
+заменяется. Удаление Qeli при установленном LuCI запрещено; после удаления LuCI
+удаляются binary/init/defaults/RPC/ACL, изменённый UCI остаётся0600. Отказ без
+зависимостей и truncated archive не меняют installed status/client payload.
+Это ранние admission отказы, не доказательство атомарности при power loss.
+
+SDK действительно выполняет Package/qeli/install и BuildPackage/ipkg packaging.
+Audit overlay отключает source download/prepare/configure/Rust compile и подаёт
+прежний SHA-проверенный standalone musl binary от6октября. Точные оригинальный
+рецепт, overlay, артефакты и логи сохранены; исходный SDK рецепт восстановлен.
+Новой сборки Qeli Rust внутри SDK нет; pin/mirror release-cut и SDK Rust1.89
+compatibility остаются OPEN. Published artifacts, Rust/core/native/ABI неизменны.
+
+Initial ошибки harness сохранены: незаполненный Download/default в packaging
+overlay, повтор copytree поверх symlinks, пропущенный kmods feed, неверный lists_dir
+и отсутствующий lock directory. Первый suite дал5PASS/1FAIL/1ERROR: несовпадение
+текста ошибки и offline-root / нарушающий conffile lookup. Correct /target внутри
+private chroot устранил ошибки; финальный suite7PASS. Первый r2 packager выдал
+locale timestamp warning; fixture переупакован с LC_ALL=C и фиксированным epoch,
+затем все7 tests повторены. Нового product bug не выявлено.
+
+Все операции внутри собственных rootfs и mount/network/PID namespaces, без
+подключения host proc/dev, загрузки модулей, запуска VPN или host служб. Offline
+opkg не квалифицирует postinst/fw4/procd на живой firmware. WAN/reboot/DNS/firewall/
+performance на физическом роутере USER_EXCLUDED. Полный SDK Rust build, core plan
+generation/ABA/admin replacement и full hermetic clean Qeli A/B остаются OPEN.
+Q31 IN_PROGRESS,28/37(75.7%),9remain; Q29 SIGKILL FAIL/auto-null ENONET,
+Q30 callback-drain OPEN/Apple exclusions и D06 ACCEPTED сохранены.
+
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-opkg-20261007.
+Evidence: release/certification/evidence/q31-openwrt-opkg-20261007.json.
+Upstream reference: [opkg conffile removal](https://lxr.openwrt.org/source/opkg-lede/libopkg/opkg_remove.c).
+
+Сверены959 official rootfs files/215 links и6 transferred source inputs. Все317
+входов прежней fixed musl сборки совпадают с текущим Git; обычная router derivation
+crate-type=rlib сохраняет прежний scope. SDK strip меняет SHA binary: исходный
+ec567377e46cd8a2ed629bccfb83318fba4e19bf26905df3f49ca77c254a5925, packaged
+915b113abcb47ce37f40c79be70927b8d330217cb075ae161fc36ae9fffeac24. Оба сохранены.
+37recipes/14LuCI/docs9/bindings PASS. Final owned processes/case/smoke/mount roots
+отсутствуют; host services/network/firewall и .10 не затронуты. Без push/deploy.
