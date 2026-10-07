@@ -5,7 +5,9 @@ Gates that a 64-bit-only lab build misses (this is exactly how the 0.7.12
 mipsel/armv7 router regression reached asset-packaging: CI was red on dev for four
 commits, but the local jemalloc gate stayed green and nobody looked at CI):
 
-  1. CI green  — the latest CI run on the branch must be `success`. Since the
+  1. CI green  — the latest CI run must cover this exact local commit and be
+                 `success`; missing Git/CI identity or failed queries refuse release.
+                 Since the
                  keenetic-cross matrix builds every shipped router arch
                  (aarch64 + armv7 + mipsel), a green CI already guarantees the
                  32-bit clients compile. Needs `gh` authenticated.
@@ -15,12 +17,13 @@ commits, but the local jemalloc gate stayed green and nobody looked at CI):
                  Builds a private immutable Git snapshot with the common pinned
                  router recipe, then verifies artifact SHA256 and static target ELF.
                  Dirty source/recipe inputs fail before SSH; no artifacts are published.
-  3. OpenWrt   — the feed Makefile's PKG_SOURCE_VERSION must pin the commit being
-                 released and PKG_MIRROR_HASH must be a real sha256, not the
+  3. OpenWrt   — the feed Makefile's PKG_SOURCE_VERSION must carry the qeli/ tree
+                 being released and PKG_MIRROR_HASH must be a real sha256, not the
                  unmatchable placeholder (which makes the router package unbuildable).
                  Local-only; no network or lab needed.
-  4. Evidence  — every mandatory IPv6/roaming automated and physical case must be
-                 recorded against this source tree and an exact artifact SHA-256.
+  4. Evidence  — every mandatory automated IPv6/roaming case must be recorded
+                 against this source tree and an exact artifact SHA-256. Physical
+                 checks are advisory when unavailable; a recorded failure blocks.
 
 Exit non-zero if any gate fails, so it can front a release script.
 
@@ -33,7 +36,6 @@ Environment:
   QELI_LAB_TRUST_NEW_HOST=1
                           accept a host key that is not in known_hosts (off by default)
 """
-import json
 import os
 import subprocess
 import sys
@@ -43,59 +45,19 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 BRANCH = sys.argv[1] if len(sys.argv) > 1 else subprocess.run(
-    ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True
+    ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=30
 ).stdout.strip()
 
 from native_lab import connect_lab
 from router_release_gate import verify_router_release
+from release_ci_gate import check_release_ci
 
 
 failures = []
 
 # ── Gate 1: CI green on the branch ───────────────────────────────────────────
 print(f"=== Gate 1: latest CI run on '{BRANCH}' ===")
-try:
-    out = subprocess.run(
-        ["gh", "run", "list", "--branch", BRANCH, "--workflow", "CI", "--limit", "1",
-         "--json", "conclusion,status,headSha,databaseId"],
-        capture_output=True, text=True, check=True,
-    ).stdout
-    runs = json.loads(out)
-    if not runs:
-        failures.append("no CI run found for the branch")
-        print("  ! no CI run found")
-    else:
-        r = runs[0]
-        print(f"  {r['headSha'][:8]}  status={r['status']}  conclusion={r['conclusion']}")
-        # WHICH COMMIT was green matters as much as whether it was green. The run's headSha
-        # was printed and then ignored, so a run from an earlier push on the same branch
-        # satisfied this gate for a commit CI had never seen — exactly the case a release
-        # gate exists to catch, and invisible because the output looked identical either way.
-        # (Audit 2026-07-29, #3.)
-        local_head = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT
-        ).stdout.strip()
-        if local_head and r.get("headSha") and r["headSha"] != local_head:
-            failures.append(
-                f"CI ran on {r['headSha'][:8]}, not on the commit being released "
-                f"({local_head[:8]}) — push and let CI finish first"
-            )
-            print(f"  ! CI covered {r['headSha'][:8]}, HEAD is {local_head[:8]}")
-        if r["status"] != "completed":
-            failures.append(f"CI still running ({r['status']})")
-        elif r["conclusion"] != "success":
-            failures.append(f"CI conclusion={r['conclusion']}")
-            # name the failed jobs so the operator knows what to fix
-            jobs = subprocess.run(
-                ["gh", "run", "view", str(r["databaseId"]), "--json", "jobs"],
-                capture_output=True, text=True,
-            ).stdout
-            for j in json.loads(jobs or "{}").get("jobs", []):
-                if j.get("conclusion") not in ("success", "skipped", None):
-                    print(f"    FAILED: {j['name']} = {j['conclusion']}")
-except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
-    failures.append(f"gh query failed: {e}")
-    print(f"  ! {e}")
+failures.extend(check_release_ci(ROOT, BRANCH))
 
 # ── Gate 2: 32-bit router cross-build on the lab (optional) ──────────────────
 lab_pass = os.environ.get("QELI_LAB_PASS", "")
@@ -189,7 +151,7 @@ try:
             failures.append(
                 "qeli-openwrt/Makefile: PKG_MIRROR_HASH is still the placeholder — the router "
                 "package cannot build. Produce it from an OpenWrt buildroot with "
-                "`make package/qeli/download V=s && sha256sum dl/qeli-<ver>.tar.xz` "
+                "`make package/qeli/download V=s` and hash the Source archive from package metadata "
                 "(or `make package/qeli/check FIXUP=1`). Never set it to `skip`."
             )
         elif pkg_hash.lower() == "skip":

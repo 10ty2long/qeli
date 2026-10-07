@@ -87,6 +87,7 @@ jobs:
       - name: Test router release and diagnostic gates
         run: |
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'
+          python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
           python3 -m unittest discover -s scripts -p 'test_keenetic_probe.py'
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
