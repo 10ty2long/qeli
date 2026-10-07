@@ -32,9 +32,13 @@ class LocalClient:
             rc, output, error = result.returncode, result.stdout, result.stderr
         out = io.BytesIO(output)
         class Channel:
+            def set_combine_stderr(self, value):
+                assert value
+                out.seek(0); out.write(output + error); out.seek(0)
             def recv_exit_status(self): return rc
+            def close(self): pass
         out.channel = Channel()
-        return None, out, io.BytesIO(error)
+        return io.BytesIO(), out, io.BytesIO(error)
     def open_sftp(self):
         if self.open_fail: raise IOError('injected open failure')
         return self.sftp

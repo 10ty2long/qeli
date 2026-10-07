@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from native_repro import atomic_write_bytes, sha256_bytes, sha256_file
+from ssh_command import run_ssh_command
 
 
 class LabConnection:
@@ -20,10 +21,8 @@ class LabConnection:
         self.client = client
 
     def run(self, command: str, timeout: int = 2400) -> tuple[str, int]:
-        _stdin, stdout, stderr = self.client.exec_command(command, timeout=timeout)
-        output = stdout.read().decode("utf-8", "replace")
-        output += stderr.read().decode("utf-8", "replace")
-        return output.strip(), stdout.channel.recv_exit_status()
+        output, status = run_ssh_command(self.client, command, timeout)
+        return output.strip(), status
 
     def checked(self, command: str, label: str, timeout: int = 2400) -> str:
         output, return_code = self.run(command, timeout)
@@ -40,6 +39,7 @@ class LabConnection:
 
 def connect_lab(host: str, user: str, password: str) -> LabConnection:
     """Connect with the repository's strict host-key policy and no ambient credentials."""
+    client = None
     try:
         import paramiko
 
@@ -56,6 +56,11 @@ def connect_lab(host: str, user: str, password: str) -> LabConnection:
             allow_agent=False,
         )
     except Exception as error:
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass  # Preserve the original connection failure.
         raise RuntimeError(f"cannot connect to native build lab {host}: {error}") from error
     return LabConnection(client)
 

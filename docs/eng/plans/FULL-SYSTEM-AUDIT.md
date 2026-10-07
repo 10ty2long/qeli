@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v128 -->
+<!-- normative-sync: full-system-audit-v129 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1965,7 +1965,7 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **Existing harness/fixtures:** `scripts/keenetic_verify.py`.
 
-- [ ] Review and dead code.
+- [x] Review and dead code.
 - [ ] Positive, boundary and negative scenarios.
 - [ ] Failures and concurrency.
 - [ ] Integration and target platform.
@@ -2004,8 +2004,7 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **7 October, Q31-V006/F366–F367:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): six fresh full AArch64/ARMv7/MIPS builds yield three byte-identical pairs. Together with SHA-matched sealed F365 x86_64 evidence, all four standalone A/B targets qualify. 72 actual QEMU INI cases/12 CLI calls;15 new release-gate/72 related Linux methods PASS without skips. Gate 2 now uses a private exact committed Git archive and common pins/locked recipe/SHA/ELF admission, rejects dirty inputs, fails configured errors and closes SSH; CI adds its tests. Full live preflight/CI dispatch, SDK bootstrap/source release-cut, full hermetic policy and remaining Q31 source review OPEN; firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained. No push/deploy.
 
-
-
+**7 October, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):28-file source review reconciled;first criterion complete. Shared SSH helper fixes stderr receive-window timeout reproduced in four callers;connection/probe failure close and installed-pin diagnostics fixed.16actual SSH checks,8actual probe commands,125Linux methods without skips,78local native contract/docs/bindings PASS. Native provenance was already STALE and remains release-blocking Q34;digest/artifacts not substituted. SDK/pipeline/concurrency limits retained. Q31 IN_PROGRESS,28/37(75.7%),9remain;Q29/Q30/D06 retained.
 
 ### 32. Metrics, usage, logs and notifications
 

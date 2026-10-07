@@ -25,6 +25,7 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 from router_artifact import pull_router_artifact
+from ssh_command import run_ssh_command
 from router_toolchain import ARCH_TARGETS, ensure_router_toolchain, router_build_command
 from router_source import (sync_router_source, require_router_source_ready,
                            create_router_checkout, restrict_router_crate_types as restrict_crate_types)
@@ -41,10 +42,8 @@ BIN = "qeli-client"
 def run(c, cmd, t=120):
     """Выполнить команду; вернуть (rc, combined_out). lab_common.run отдаёт только
     строку — а здесь нужен реальный exit-код, чтобы судить об успехе сборки."""
-    _i, o, e = c.exec_command(cmd, timeout=t)
-    out = o.read().decode("utf-8", "replace") + e.read().decode("utf-8", "replace")
-    rc = o.channel.recv_exit_status()
-    return rc, out.strip()
+    output, status = run_ssh_command(c, cmd, t)
+    return status, output.strip()
 
 
 def tail(s, n=25):
