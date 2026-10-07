@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v33 -->
+<!-- normative-sync: q31-openwrt-controls-v34 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1949,3 +1949,46 @@ hermetic policy, writer/lock/atomic ndm остаются OPEN; firmware USER_EXC
 Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 сохранены. Без push/deploy.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-ssh-20261007.
 Evidence: release/certification/evidence/q31-router-ssh-20261007.json.
+
+
+## F370–F371: безопасный native preflight перед обновлением provenance
+
+7 октября обновление native A/B заблокировано фактической ёмкостью лабы: на .10
+около 2.3 GiB свободно, на .11 около 450 MiB при обязательных 8 GiB. Установленные
+Rust1.97.0/targets, desktop Zig0.13.0/cargo-zigbuild0.23.0/GNUld2.44/rcodesign0.29.0
+и Android NDK26.3.11579264/cargo-ndk4.1.2 прошли фактический inventory без установки.
+
+F370: старый reset helper удалял pass A/B до проверки свободного места. Точная
+baseline-функция на .10 удалила два маленьких контрольных файла, затем отказала
+по диску. Исправленная функция на том же стенде отказала и сохранила оба файла.
+Проверка ёмкости теперь выполняется на build root, если он существует, иначе на
+существующем родителе `/var/tmp` до любых mkdir/rm; некорректный inventory также не допускает очистку. Это preflight,
+не резервирование места и не гарантия против параллельного заполнения диска.
+
+F371: source sync desktop/Android перенесён из общих `/opt/qeli-src` и
+`/root/qeli-src` в отдельные `desktop-source`/`android-source` внутри собственных
+native build roots. Все три Cargo-команды Windows/macOS/Android имеют `--jobs 1`
+для серверов с 2 GiB памяти; OOM или предел RSS этим прогоном не доказывались.
+Одновременные запуски одной группы пока не поддерживаются; общей hermetic policy
+или нового global lock нет. Сервисы и глобальные инструменты не менялись.
+
+36 native Linux methods PASS без skips; 80 локальных native methods PASS,
+включая фактический capture трёх build-команд и отказ до очистки при bad inventory.
+764 точных model inputs сверены до/после. Первоначальный Linux discover80 получил
+20 ошибок отсутствующих нерелевантных входов расширенного GUI/recipe набора:
+этот неполный model-прогон сохранён отдельно; Linux-квалификация ограничена
+четырьмя полными native helper suites, полный80 проверен локально.
+
+Старые собственные данные лабы сохранены в двух локальных архивах: 18 231 запись
+на .10 и 138 114 записей на .11, плюс метаданные 918 неактивных socket-файлов.
+Все обычные файлы/ссылки/FIFO сверены, remote contents до/после совпали;
+распакованные потоки проверены на пароль без совпадений. Перед возможной очисткой
+автоматическая проверка отклонила широкое удаление без отдельного одобрения точных
+путей. Удаление не выполнялось. Архивирование и его результат отражены в raw packet;
+неактивные Unix socket файлы учитываются метаданными, FIFO поддерживается tar.
+До освобождения места и настоящих свежих A/B native provenance остаётся STALE,
+release-блокер Q34 открыт. PROVENANCE/evidence/binaries не переписаны. Новая native
+компиляция, экспортный gate, подпись или emulator runtime не заявляются.
+Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 и platform exclusions сохранены.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/native-refresh-20261007.
+Evidence: release/certification/evidence/native-preflight-20261007.json.

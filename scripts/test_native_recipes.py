@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import build_android_so_11 as android
 import build_native_libs_p4 as desktop
 import build_mac_universal as macpack
 
@@ -74,6 +75,31 @@ class NativeRecipeTests(unittest.TestCase):
         self.assertNotIn("-no_uuid", flags)
         self.assertNotIn("desktop-a", flags)
         self.assertNotIn("desktop-b", flags)
+
+    def test_native_builds_use_private_sources_and_one_job(self):
+        class RecordingClient:
+            def __init__(self):
+                self.commands = []
+
+            def checked(self, command, _label):
+                self.commands.append(command)
+                return ""
+
+            def run(self, command):
+                self.commands.append(command)
+                return "CodeSignatureFlags(ADHOC)\n" * 2, 0
+
+        client = RecordingClient()
+        desktop.build_pass(client, "a", "1.97.0", 1)
+        android.build_pass(client, "a", "1.97.0", 1)
+        builds = [command for command in client.commands if "cargo +1.97.0" in command]
+        self.assertEqual(len(builds), 3)
+        for command in builds:
+            self.assertIn("--jobs 1", command)
+            self.assertNotIn("/opt/qeli-src", command)
+            self.assertNotIn("/root/qeli-src", command)
+            self.assertIn("/var/tmp/qeli-native-repro/", command)
+        self.assertNotEqual(desktop.REMOTE_SOURCE, android.REMOTE_SOURCE)
 
     def test_independent_artifacts_still_have_distinct_storage(self):
         first = desktop.artifact_path("a", desktop.MAC_TARGET, "libqeli.dylib")

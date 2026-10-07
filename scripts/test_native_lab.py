@@ -166,17 +166,26 @@ class NativeLabTests(unittest.TestCase):
         connection = FakeConnection("/dev/sda1 49152000 40000000 9152000 82% /var/tmp")
         result = native_lab.reset_repro_group(connection, "desktop")
         self.assertIn("MiB free on /var/tmp/qeli-native-repro", result)
-        command = connection.commands[0][0]
+        command = connection.commands[1][0]
         self.assertIn("/var/tmp/qeli-native-repro/desktop-a", command)
         self.assertIn("/var/tmp/qeli-native-repro/desktop-b", command)
         self.assertNotIn("/opt/qeli-src/target", command)
-        self.assertIn("df -Pk /var/tmp/qeli-native-repro", connection.commands[1][0])
+        self.assertIn("df -Pk /var/tmp", connection.commands[0][0])
 
     def test_repro_cleanup_rejects_low_space_before_sync_or_build(self):
         connection = FakeConnection("/dev/sda1 49152000 48000000 472000 99% /var/tmp")
         with self.assertRaisesRegex(RuntimeError, "needs at least 8 GiB"):
             native_lab.reset_repro_group(connection, "android")
-        self.assertEqual(len(connection.commands), 2)
+        self.assertEqual(len(connection.commands), 1)
+        self.assertNotIn("rm", connection.commands[0][0])
+        self.assertNotIn("mkdir", connection.commands[0][0])
+
+    def test_repro_cleanup_bad_inventory_preserves_passes(self):
+        connection = FakeConnection("invalid disk inventory")
+        with self.assertRaisesRegex(RuntimeError, "invalid build filesystem inventory"):
+            native_lab.reset_repro_group(connection, "desktop")
+        self.assertEqual(len(connection.commands), 1)
+        self.assertNotIn("rm", connection.commands[0][0])
 
     def test_repro_cleanup_rejects_path_syntax(self):
         with self.assertRaisesRegex(ValueError, "invalid reproducibility group"):
