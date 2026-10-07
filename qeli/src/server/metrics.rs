@@ -1,7 +1,7 @@
 //! Lightweight host + tunnel metrics for the web-panel dashboard (Tier-1
 //! observability).
 //!
-//! A background sampler РІР‚вЂќ spawned once by the supervisor РІР‚вЂќ reads cheap `/proc`
+//! A background sampler — spawned once by the supervisor — reads cheap `/proc`
 //! counters and the data-plane worker's aggregate byte totals (over the control
 //! socket) once a second, derives the quantities that need deltas (throughput,
 //! CPU%), and keeps a short in-memory ring buffer. The panel polls
@@ -20,7 +20,7 @@ use tokio::sync::Mutex;
 const SAMPLE_INTERVAL: Duration = Duration::from_secs(1);
 const HISTORY_LEN: usize = 300;
 
-/// One point in the throughput / CPU / mem history (kept compact РІР‚вЂќ the chart
+/// One point in the throughput / CPU / mem history (kept compact — the chart
 /// transfers many of these on every poll).
 #[derive(Clone, Serialize)]
 pub struct Point {
@@ -190,7 +190,7 @@ async fn sample_with_socket(m: &MetricsState, tun_names: &[String], socket_path:
     *m.latest.lock().await = snap;
 }
 
-// РІвЂќР‚РІвЂќР‚ /proc + syscall readers (all best-effort; None on any parse failure) РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
+//  /proc + syscall readers (all best-effort; None on any parse failure)
 
 fn read_first_line(path: &str) -> Option<String> {
     std::fs::read_to_string(path)
@@ -289,7 +289,7 @@ fn cpu_cores() -> usize {
         .unwrap_or(1)
 }
 
-/// (used_bytes, total_bytes) from /proc/meminfo (used = total РІв‚¬вЂ™ available).
+/// (used_bytes, total_bytes) from /proc/meminfo (used = total − available).
 fn mem_info() -> Option<(u64, u64)> {
     let s = std::fs::read_to_string("/proc/meminfo").ok()?;
     let mut total = 0u64;
@@ -341,14 +341,14 @@ fn disk_pct(path: &str) -> Option<f64> {
     Some(((total - avail) / total * 100.0).clamp(0.0, 100.0))
 }
 
-/// Sum (rx, tx) bytes of physical-ish interfaces from /proc/net/dev РІР‚вЂќ skips
+/// Sum (rx, tx) bytes of physical-ish interfaces from /proc/net/dev — skips
 /// loopback and the VPN's own tun interfaces (we want the WAN load, not the
 /// tunnel doubled).
 ///
 /// Exclusion is by CONFIGURED name (`tun_names`, from each profile's `tun.name`), with
 /// the historical `vpn*`/`tun*`/`qtest*` prefixes kept as a fallback for interfaces this
 /// process did not create. `tun.name` is a config key, so a profile named `qeli0` matched
-/// none of those prefixes and its entire tunnel volume was counted as WAN РІР‚вЂќ the dashboard
+/// none of those prefixes and its entire tunnel volume was counted as WAN — the dashboard
 /// then showed roughly double the real load, on every graph an operator uses to judge
 /// capacity. (Audit 2026-07-27, S4.)
 fn net_bytes(tun_names: &[String]) -> Option<(u64, u64)> {
@@ -385,7 +385,7 @@ fn proc_stat(pid: i32) -> Option<ProcSample> {
         return None;
     }
     let stat = std::fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
-    // The comm field (2nd) may contain spaces/parens РІР‚вЂќ split after the LAST ')'.
+    // The comm field (2nd) may contain spaces/parens — split after the LAST ')'.
     let rest = &stat[stat.rfind(')')? + 1..];
     let f: Vec<&str> = rest.split_whitespace().collect();
     // After comm: state(0) ppid(1) pgrp(2) session(3) tty(4) tpgid(5) flags(6)
