@@ -146,7 +146,7 @@ t_us,dir,site,size,seq
 479384,tx,client.tcp,40,0
 ```
 
-- `t_us` — microseconds since process start, `dir` — `tx` (TUN → tunnel) / `rx`
+- `t_us` — microseconds since tracing was armed, `dir` — `tx` (TUN → tunnel) / `rx`
   (tunnel → TUN), `site` — the capture point, `size` — bytes, `seq` — stream index.
 - Only packet **shapes** are written: no payloads, no addresses — a trace can be attached
   to an issue without exposing anyone's traffic.
@@ -155,6 +155,29 @@ t_us,dir,site,size,seq
   contention: a trace is **never silently partial**.
 - Both ends write their own file. There is no shared packet id, so correlate client and
   server by time and size.
+
+<!-- normative-sync: q32-log-trace-io-v1 -->
+
+Dump files are published by atomic replacement with Unix mode `0600`. A symlink
+or FIFO at the destination is replaced; its target is not written. The parent
+directory must exist. Failed publication preserves the previous dump; an error
+syncing the directory after rename means publication occurred with uncertain
+durability. Dump I/O runs outside Tokio workers, with one admitted dump per process.
+A stalled filesystem syscall can retain that slot even after the watcher stops.
+`SIGUSR1` is required: shutdown does not dump automatically. Separate processes
+should use separate destinations; a shared destination retains the last publication.
+Current capture sites cover Rust client TCP/UDP and server TCP. Server UDP,
+core-owned transport paths and standalone `qeli-client` tracing are not qualified
+by this mechanism. Missing records do not prove packet loss.
+
+The panel Logs page polls `/api/logs`; it does not use SSE. Authentication applies.
+Reading is limited to the recent 4 MiB, at most 2000 lines and four concurrent
+blocking readers per process. A busy reader returns `ok=false`; retry the request.
+An API `filter` is limited to 1024 UTF-8 bytes and searches only that recent window.
+Only regular files inside `/var/log/qeli` are accepted. A path swapped to a
+symlink or FIFO after validation is rejected; rotation cannot redirect an already
+opened descriptor. The no-file response explains journald instead of streaming it.
+These limits bound read jobs, not all outstanding HTTP responses or disk latency.
 
 With tracing off the cost is one atomic load per packet, so the variable can safely be left
 unset in production.

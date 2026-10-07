@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v138 -->
+<!-- normative-sync: full-system-audit-v139 -->
 
-**Текущий итог, 7 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 8 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -2053,6 +2053,8 @@ autostart supervisor, доверие конфигу и Linux E2E ещё откр
 **8 октября, F380–F383:** [метрики Q32](../reports/AUDIT-Q32-METRICS.md): missing-RPC baseline, guest/CPU reset и PID/starttime исправлены; три старых ошибки метрик и PID42 collision воспроизведены;8metrics/36namespace при PID42 и2424library PASS (60ignored),Clippy/daemon PASS. Native/ABI в evidence отчёта. Usage/logs/notify остаются открыты; Q32 IN_PROGRESS,28/37 overall.
 
 **8 октября, F384:** [usage Q32](../reports/AUDIT-Q32-USAGE.md): ошибка fsync после rename воспроизведена; память больше не откатывает опубликованный сброс, тип ошибки сохранён, control API сообщает о неподтверждённой сохранности. 16 harness/2426 Linux tests PASS (60ignored), strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; evidence отчёта. Store, registration/quota/shutdown reviewed; logs/trace/roaming/notify остаются открыты. Q32 IN_PROGRESS,28/37 overall.
+
+**8 октября, F385–F388:** [Q32: логи и trace](../reports/AUDIT-Q32-LOGS-TRACE.md): чтение через закреплённые fd отклоняет подменённые симлинки/FIFO, четыре I/O-слота удерживаются после отмены HTTP, tail сохраняет полные граничные строки, trace атомарно публикуется с0600 вне потоков Tokio с одним допуском. Три baseline-ошибки воспроизведены; harness11/UID65534, два настоящих SIGUSR1 с65536 упорядоченными строками,2434 library-теста (60ignored), строгийClippy/daemon и118 групп Node VM PASS. Четыре актуальных nativeA/B, WindowsABI22/AndroidJNI23 и финальные пороги — в evidence отчёта. Неудачная подготовка/прежний legacy firewall drift сохранены; неизменность всего host первоначального .10 baseline не заявляется. Ограничения покрытия/HTTP/диска/платформ сохранены. Q32IN_PROGRESS; roaming, доверие/маскирование секретов уведомлений и полная интеграция открыты. Общий план28/37(75,7%), остаётся девять.
 
 ### 33. Установка, обновление, файловые права и hooks
 
