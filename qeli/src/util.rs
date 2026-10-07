@@ -598,6 +598,14 @@ pub fn write_atomic(path: impl AsRef<Path>, bytes: &[u8]) -> anyhow::Result<()> 
     write_atomic_inner(path, bytes, false)
 }
 
+/// Exercise the real publication path, failing only its final directory-sync step.
+#[cfg(all(test, target_os = "linux", feature = "server"))]
+pub(crate) fn write_atomic_test_sync_failure(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
+    write_atomic_with_sync(path, bytes, false, |_| {
+        Err(std::io::Error::other("injected directory I/O failure"))
+    })
+}
+
 /// Like [`write_atomic`], but the result is always `0600` — for files that must never be
 /// world-readable regardless of whether they already existed: the users file (password
 /// hashes), identity and panel keys, the notification token, the server config (it holds

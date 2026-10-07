@@ -237,9 +237,18 @@ impl UsageStore {
     /// Zero a user's counters and persist the change as one transaction.
     ///
     /// Keep the mutex across serialization and atomic replacement so the usage sweep cannot
-    /// fold a delta between the mutation and a failed write. On any persistence error the
-    /// previous counters are restored; an API error must not be committed by the next sweep.
+    /// fold a delta between mutation and publication. Failures before rename restore the
+    /// previous counters. If rename succeeded but directory sync failed, retain the published
+    /// reset and report uncertain durability; restoring memory would disagree with the file.
     pub fn reset_and_flush(&self, user: &str) -> anyhow::Result<()> {
+        self.reset_with_writer(user, |path, bytes| crate::util::write_atomic(path, bytes))
+    }
+
+    fn reset_with_writer(
+        &self,
+        user: &str,
+        write: impl FnOnce(&str, &[u8]) -> anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
         if self.read_only {
             anyhow::bail!("cannot reset usage through a read-only store");
         }
@@ -255,10 +264,15 @@ impl UsageStore {
         let result = serde_json::to_vec_pretty(&inner.usage)
             .map_err(|error| anyhow::anyhow!("failed to encode {}: {error}", self.path))
             .and_then(|json| {
-                crate::util::write_atomic(&self.path, &json)
-                    .map_err(|error| anyhow::anyhow!("failed to persist {}: {error}", self.path))
+                write(&self.path, &json)
+                    .map_err(|error| error.context(format!("failed to persist {}", self.path)))
             });
         if let Err(error) = result {
+            // Publication is irreversible here. Preserve the typed cause through context,
+            // so the control API can distinguish uncertainty from an unchanged store.
+            if crate::util::atomic_write_was_published(&error) {
+                return Err(error);
+            }
             match previous {
                 Some(usage) => {
                     inner.usage.insert(user.to_string(), usage);
@@ -647,5 +661,51 @@ mod tests {
         store.flush().unwrap();
         assert_eq!(store.used_down("alice"), 100);
         assert_eq!(store.snapshot()["alice"].sessions, 1);
+    }
+
+    #[test]
+    fn published_reset_sync_error_keeps_memory_and_file_consistent() {
+        let path = empty_store_path("reset-published");
+        let store = UsageStore::load(&path).unwrap();
+        let (down, up) = counters(&store, 7);
+        down.store(700, Ordering::Relaxed);
+        up.store(30, Ordering::Relaxed);
+        store.fold(8, "bob", 90, 10);
+        store.flush().unwrap();
+
+        let error = store
+            .reset_with_writer("alice", |path, bytes| {
+                crate::util::write_atomic_test_sync_failure(std::path::Path::new(path), bytes)
+            })
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("persistence is uncertain"));
+        let published = UsageStore::load_read_only(&path);
+        assert_eq!(
+            published.used_down("alice"),
+            0,
+            "rename really published reset"
+        );
+        assert_eq!(
+            store.used_down("alice"),
+            0,
+            "cannot fabricate rollback after rename"
+        );
+        assert!(crate::util::atomic_write_was_published(&error));
+        assert_eq!(store.used_bytes("bob"), 100);
+        assert_eq!(published.used_bytes("bob"), 100);
+
+        // A subsequent sweep must count only new traffic and never undo the reset.
+        down.fetch_add(20, Ordering::Relaxed);
+        up.fetch_add(5, Ordering::Relaxed);
+        drop((down, up));
+        store.flush().unwrap();
+        store.flush().unwrap();
+        let persisted = UsageStore::load_read_only(&path);
+        assert_eq!(store.used_down("alice"), 20);
+        assert_eq!(persisted.used_bytes("alice"), 25);
+        assert_eq!(persisted.snapshot()["alice"].sessions, 1);
+        assert!(store.lock().tracked.is_empty());
+        drop(store);
+        std::fs::remove_file(&path).unwrap();
     }
 }
