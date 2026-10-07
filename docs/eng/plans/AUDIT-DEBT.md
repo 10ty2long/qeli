@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v72 -->
+<!-- normative-sync: audit-debt-v73 -->
 
 Current reconciliation:7 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1164,3 +1164,5 @@ PID unchanged. Soak bounds fd/socket counts and sampled RSS within 32 MiB over
 module evidence is reused by SHA within original limits. No repeated common
 campaign without relevant changes. Full release preflight/publication and
 physical exclusions are not PASS.
+
+**8 October, F384:** [Q32 usage](../reports/AUDIT-Q32-USAGE.md) distinguishes pre-publication failure from uncertain durability after rename. Baseline memory700/file0 reproduced; patched harness16/uid65534,2426library (60ignored),strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; details in evidence. Initial host firewall drift and failed preparations retained. Aggregate remains14/15 DONE plusD06 ACCEPTED_LIMITATION.
