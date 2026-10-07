@@ -12,8 +12,9 @@ commits, but the local jemalloc gate stayed green and nobody looked at CI):
   2. 32-bit    — optional belt-and-suspenders: cross-build the mipsel + armv7
                  router client on the lab, independent of CI. Runs only when
                  QELI_LAB_PASS is set; host from QELI_LAB_SERVER (default .10).
-                 The lab checkout must be AT the commit being released — the gate
-                 prints the SHA it actually built and fails on any divergence.
+                 Builds a private immutable Git snapshot with the common pinned
+                 router recipe, then verifies artifact SHA256 and static target ELF.
+                 Dirty source/recipe inputs fail before SSH; no artifacts are published.
   3. OpenWrt   — the feed Makefile's PKG_SOURCE_VERSION must pin the commit being
                  released and PKG_MIRROR_HASH must be a real sha256, not the
                  unmatchable placeholder (which makes the router package unbuildable).
@@ -28,16 +29,14 @@ Exit non-zero if any gate fails, so it can front a release script.
 Environment:
   QELI_LAB_PASS           enables gate 2 (SSH password for root on the lab host)
   QELI_LAB_SERVER         lab host (default 10.66.116.10)
-  QELI_LAB_SRC            checkout on the lab host (default /opt/qeli-src)
+  QELI_LAB_SRC            obsolete; private committed-source checkout is always used
   QELI_LAB_TRUST_NEW_HOST=1
                           accept a host key that is not in known_hosts (off by default)
 """
-import hashlib
 import json
 import os
 import subprocess
 import sys
-import ssh_hostkey
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -47,57 +46,8 @@ BRANCH = sys.argv[1] if len(sys.argv) > 1 else subprocess.run(
     ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True
 ).stdout.strip()
 
-# Identity of the sources a qeli binary is built from. Deliberately the same recipe on
-# both sides so the two are comparable: `sha256sum` every file under the crate's src/ plus
-# Cargo.toml and Cargo.lock, sort those lines, hash the result. See gate 2. (O8)
-#
-# Paths are relative TO THE CRATE, not to the repository root, and that is load-bearing. The
-# digest hashes "<sha>  <path>" lines, so the two sides only agree if they name the files the
-# same way — and QELI_LAB_SRC points at the crate directory (/opt/qeli-src holds Cargo.toml),
-# because that is what gate 2 then cd's into to run cargo. The remote half used to look for
-# `qeli/src` inside it, which does not exist there: `find` matched nothing, the digest was a
-# constant, and it never equalled the local one. The mismatch reads as "the lab is out of
-# date", and its handler SKIPS the cross-builds — so the gate could not fail and could not
-# pass, it simply never ran. Silence like that is worse than a red gate.
-# CR bytes are stripped before hashing, on both sides. `.gitattributes` says `* text=auto
-# eol=lf`, so git normalises line endings itself and a CRLF-only difference cannot exist
-# between two commits — but it routinely exists between a WORKING TREE and a checkout, which
-# is what these two digests actually compare. Two web templates carry CRLF in this Windows
-# checkout and LF in the lab's clone, and without this the gate reported "the lab tree is not
-# the tree being released" over a line ending. Nothing is lost: a difference git cannot record
-# is not a difference the release can ship.
-FP_FILES = ("Cargo.toml", "Cargo.lock")
-FP_TREE = "src"
-LOCAL_CRATE = "qeli"          # where the crate lives inside this repository
-REMOTE_FINGERPRINT = (
-    "{ find " + FP_TREE + " -type f -print; "
-    "for f in " + " ".join(FP_FILES) + "; do [ -f \"$f\" ] && printf '%s\\n' \"$f\"; done; } "
-    "| while IFS= read -r f; do "
-    "printf '%s  %s\\n' \"$(tr -d '\\r' < \"$f\" | sha256sum | cut -d' ' -f1)\" \"$f\"; done "
-    "| LC_ALL=C sort | sha256sum"
-    # The per-file lines are sorted, so the order the files are visited in does not
-    # matter; only the set of (digest, path) pairs does.
-)
-
-
-def source_fingerprint(base: str) -> str:
-    """Local half of REMOTE_FINGERPRINT — byte-for-byte the same digest.
-
-    `base` is the repository root; paths are emitted crate-relative so they match the remote
-    half, which runs inside the crate directory.
-    """
-    crate = os.path.join(base, LOCAL_CRATE)
-    rels = []
-    for root, dirs, files in os.walk(os.path.join(crate, FP_TREE)):
-        for name in files:
-            rels.append(os.path.relpath(os.path.join(root, name), crate).replace(os.sep, "/"))
-    rels += [r for r in FP_FILES if os.path.isfile(os.path.join(crate, r))]
-    lines = []
-    for rel in rels:
-        with open(os.path.join(crate, rel), "rb") as fh:
-            data = fh.read().replace(b"\r", b"")   # same rule as `tr -d '\r'` remotely
-        lines.append(f"{hashlib.sha256(data).hexdigest()}  {rel}\n")
-    return hashlib.sha256("".join(sorted(lines)).encode()).hexdigest()
+from native_lab import connect_lab
+from router_release_gate import verify_router_release
 
 
 failures = []
@@ -153,85 +103,36 @@ if not lab_pass:
     print("\n=== Gate 2: 32-bit lab build — SKIPPED (QELI_LAB_PASS unset) ===")
 else:
     print("\n=== Gate 2: 32-bit router cross-build on the lab ===")
+    connection = None
     try:
-        import paramiko
-    except ImportError:
-        print("  ! paramiko not installed — skipping"); paramiko = None
-    if paramiko is not None:
+        # Reject dirty source/recipes before connecting or preparing lab tools.
+        from router_release_gate import committed_crate_archive
+        snapshot = committed_crate_archive(ROOT)
         host = os.environ.get("QELI_LAB_SERVER", "10.66.116.10")
-        src = os.environ.get("QELI_LAB_SRC", "/opt/qeli-src")
-        c = paramiko.SSHClient()
-        ssh_hostkey.harden(c, host)
-        try:
-            c.connect(host, username="root", password=lab_pass, timeout=25,
-                      look_for_keys=False, allow_agent=False)
-            connected = True
-        except Exception as e:                      # noqa: BLE001 — any failure is a gate failure
-            connected = False
-            failures.append(f"lab connect failed: {e}")
-            print(f"  ! cannot reach {host}: {e}")
-            print("    (unknown host key? add it to ~/.ssh/known_hosts, or set QELI_LAB_TRUST_NEW_HOST=1)")
-
-    if paramiko is not None and connected:
-        def sh(cmd, t=2400):
-            i, o, e = c.exec_command(cmd, timeout=t)
-            return o.channel.recv_exit_status(), (o.read() + e.read()).decode("utf-8", "replace")
-
-        # WHICH tree is being built? This gate compiles on ANOTHER machine and never
-        # checked that the checkout there is the code being released — a lab tree days
-        # behind the branch produced a green gate certifying source that is not in the
-        # release. The identity actually built is printed and a divergence is fatal.
-        #
-        # The lab tree is fed by SFTP push, not by git, so a commit SHA is often absent
-        # there; the decidable identity is a fingerprint over the sources that go into
-        # the binary (qeli/src + Cargo.toml + Cargo.lock), computed the same way on both
-        # sides. The commit SHA is printed too whenever either side has one.
-        # (Audit 2026-07-27, O8)
-        local_sha = subprocess.run(
-            ["git", "rev-parse", BRANCH], capture_output=True, text=True,
-        ).stdout.strip()
-        local_dirty = subprocess.run(
-            ["git", "status", "--porcelain", "--", "qeli/src", "qeli/Cargo.toml", "qeli/Cargo.lock"],
-            capture_output=True, text=True,
-        ).stdout.strip()
-        _, lab_sha = sh(f"git -C {src} rev-parse HEAD 2>/dev/null || true", t=60)
-        lab_sha = lab_sha.strip()
-        local_fp = source_fingerprint(ROOT)
-        _, lab_fp_out = sh(f"cd {src} && " + REMOTE_FINGERPRINT, t=120)
-        lab_fp = lab_fp_out.strip().split()[0] if lab_fp_out.strip() else ""
-
-        print(f"  releasing  : {local_sha or '<unknown>'}  ({BRANCH})"
-              f"{'  [LOCAL TREE DIRTY]' if local_dirty else ''}")
-        print(f"  lab {src} : {lab_sha or '<not a git checkout>'}")
-        print(f"  source fingerprint  local={local_fp[:16] or '<none>'}  lab={lab_fp[:16] or '<none>'}")
-        if local_dirty:
-            print("  ! the local qeli sources differ from the last commit — what gets released")
-            print("    is the COMMIT, so commit before relying on this gate.")
-
-        if not local_fp or not lab_fp or local_fp != lab_fp:
-            failures.append(
-                f"lab tree does not match the tree being released "
-                f"(local {local_fp[:16] or '<none>'} vs lab {lab_fp[:16] or '<none>'})"
-            )
-            print("  ! SKIPPING the cross-builds: building a different tree proves nothing.")
-            print(f"    Push the release sources to {host}:{src} first (or point QELI_LAB_SRC")
-            print(f"    at a checkout of {local_sha or BRANCH}), then re-run.")
-        else:
-            env = "export PATH=/root/.cargo/bin:$PATH; "
-            common = "--release --bin qeli-client --no-default-features --features client-bin"
-            builds = {
-                "armv7": f"{env} cd {src} && cargo zigbuild {common} --target armv7-unknown-linux-musleabihf",
-                "mipsel": f"{env} cd {src} && RUSTFLAGS='-C link-arg=-msoft-float' cargo +nightly zigbuild "
-                          f"-Z build-std=std,panic_abort {common} --target mipsel-unknown-linux-musl",
-            }
-            for arch, cmd in builds.items():
-                rc, out = sh(cmd)
-                ok = rc == 0   # a build error makes cargo exit non-zero
-                print(f"  {arch}: {'OK' if ok else 'FAIL'}  (from {local_sha[:8]})")
-                if not ok:
-                    failures.append(f"32-bit {arch} build failed")
-                    print("\n".join(l for l in out.splitlines() if l.startswith("error"))[:600])
-        c.close()
+        connection = connect_lab(host, "root", lab_pass)
+        if os.environ.get("QELI_LAB_SRC"):
+            print("  QELI_LAB_SRC is obsolete: using a private committed-source checkout")
+        report = verify_router_release(connection, ROOT, snapshot=snapshot)
+        print(f"  source commit: {report['source_commit']}")
+        print(f"  private checkout: {report['remote_root']}")
+        print(f"  archive SHA256: {report['archive_sha256']}")
+        for result in report["results"]:
+            print(f"  {result['arch']}: {result['status']}")
+            if result["status"] != "PASS":
+                failures.append(f"32-bit {result['arch']} build/admission failed")
+                print("  ! " + result["error"])
+            else:
+                print("  artifact SHA256: " + result["artifact_sha256"])
+    except Exception as error:
+        failures.append(f"32-bit router gate failed: {error}")
+        print(f"  ! {error}")
+    finally:
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception as error:
+                failures.append(f"lab close failed: {error}")
+                print(f"  ! {error}")
 
 # ── Gate 3: OpenWrt package pin ──────────────────────────────────────────────
 # The feed Makefile pins the source by SHA and verifies the generated tarball by

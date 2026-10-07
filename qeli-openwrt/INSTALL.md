@@ -394,3 +394,22 @@ Qeli builds with fresh target/Zig caches and identical offline registry copies:
 byte-identical ELF, help/version and INI metadata PASS. This supersedes the earlier
 A/B NOT_RUN statement only for this target/recipe; other targets, SDK/CI path policy
 and arbitrary build environments remain separate. See the Q31 audit report.
+
+### Audit update: standalone A/B and release preflight (7 October 2026)
+
+Q31-V006 completes independent full A/B for aarch64, armv7 and mipsel; each pair
+is byte-identical. Combined with the sealed, input-matched F365 x86_64 pair,
+all four standalone targets have scoped A/B evidence. The six new ELF files also
+pass static target admission and QEMU help/version/INI metadata checks. This
+supersedes earlier other-target A/B NOT_RUN wording. QEMU parser checks do not
+qualify firmware, router networking or the full SDK build/release pipeline.
+
+For maintainers, `python scripts/release_preflight.py <branch>` runs optional
+32-bit lab gate 2 when `QELI_LAB_PASS` is set. It rejects dirty source/participating
+recipe inputs before SSH, freezes exact bytes from one committed `qeli/` Git
+archive and builds a private checkout through the common pinned, locked one-job
+router recipe. It checks fetched SHA256 and static target ELF and closes SSH on
+success/error. `QELI_LAB_SRC` is obsolete. No artifacts are published; the private
+checkout remains for inspection. Missing named tools may be installed by the
+existing toolchain helper. Full live preflight/CI dispatch and SDK bootstrap/
+source-pin/mirror release-cut remain separate release checks.
