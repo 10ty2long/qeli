@@ -212,6 +212,53 @@ class KeeneticBaseProcessTests(ProcessCases,KeeneticFixture):
 @unittest.skipUnless(NATIVE.is_file(),'requires explicitly built Linux native process fixture')
 class KeeneticOpkgTunProcessTests(ProcessCases,KeeneticFixture):
     TEMPLATE='release/keenetic/opkgtun/S99qeli'
+    def test_fresh_launch_invalidates_receipt_but_repeated_start_preserves_it(self):
+        receipt = self.marker.with_name(self.marker.name+'.applied')
+        pending = self.marker.with_name(self.marker.name+'.apply-pending')
+        plan = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=1\n'
+        old = 'opkgtun0\n'+plan
+        receipt.write_text(old)
+        pid = self.start()
+        cleared = not receipt.exists()
+        self.assertFalse(pending.exists())
+        # The native helper owns process admission; this write models the new
+        # authenticated plan, including a reset generation, rather than its C stub.
+        self.plan.write_text(plan)
+        hook = self.copy_template(ROOT/'release/keenetic/opkgtun/010-qeli.sh', self.root/'hook.sh')
+        self.assertEqual(self.run_script(hook, QELI_CONNECTED='yes').returncode, 0)
+        self.assertIn('system configuration save', self.calls('ndmc-calls'))
+        self.assertTrue(cleared, 'new process inherited the exited process receipt')
+        self.assertEqual(receipt.read_text(), old)
+        self.assertFalse(pending.exists())
+        self.assertEqual(self.service('start').returncode, 0)
+        self.assertEqual(self.helper_pids(), {pid})
+        self.assertEqual(receipt.read_text(), old)
+        (self.root/'ndmc-calls').unlink()
+        self.assertEqual(self.run_script(hook, QELI_CONNECTED='yes').returncode, 0)
+        self.assertEqual(self.calls('ndmc-calls'), ['show interface OpkgTun0'])
+        self.assertEqual(self.service('stop').returncode, 0)
+
+    def test_receipt_invalidation_failure_refuses_launch_and_keeps_recovery(self):
+        receipt = self.marker.with_name(self.marker.name+'.applied')
+        receipt.mkdir()
+        (receipt/'canary').write_text('retained')
+        self.plan.write_text('retained plan')
+        self.assertNotEqual(self.service('start').returncode, 0)
+        self.assertEqual(self.helper_pids(), set())
+        self.assertEqual((receipt/'canary').read_text(), 'retained')
+        self.assertEqual(self.plan.read_text(), 'retained plan')
+        self.assertFalse(self.pidfile.exists())
+
+    def test_preflight_failure_keeps_old_receipt_and_pending(self):
+        receipt = self.marker.with_name(self.marker.name+'.applied')
+        pending = self.marker.with_name(self.marker.name+'.apply-pending')
+        receipt.write_text('retained receipt')
+        pending.write_text('retained pending')
+        self.assertNotEqual(self.service('start', QELI_TEST_GATEWAY_EXIT='17').returncode, 0)
+        self.assertEqual(self.helper_pids(), set())
+        self.assertEqual(receipt.read_text(), 'retained receipt')
+        self.assertEqual(pending.read_text(), 'retained pending')
+
     def test_marker_publication_error_joins_before_failure(self):
         self.marker.mkdir();self.assertNotEqual(self.service('start').returncode,0)
         pid=next(iter(self.helper_pids()));self.assertFalse(running(pid));self.assertTrue(self.pidfile.exists())

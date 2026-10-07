@@ -179,6 +179,67 @@ fi
                 self.assertIn('generation=43', (folder/'qeli.opkgtun.applied').read_text())
                 self.assertFalse((folder/'qeli.opkgtun.apply-pending').exists())
 
+    def plan_rotation(self, folder, change):
+        if change == 'plan':
+            payload = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=42\n'
+            target = folder/'qeli.tunip'
+        else:
+            payload = 'opkgtun1\n'
+            target = folder/'qeli.opkgtun'
+        return ('printf '+shlex.quote(payload)+' > '+shlex.quote(str(folder/'rotation-next'))+'\n'
+                'mv '+shlex.quote(str(folder/'rotation-next'))+' '+shlex.quote(str(target))+'\n'
+                'touch "$QELI_FIXTURE_ROOT/rotated"\n')
+
+    def test_cached_noop_rechecks_plan_and_marker_after_show(self):
+        plan = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=41\n'
+        for change in ['plan', 'marker']:
+            with self.subTest(change=change):
+                original = (self.bin/'ndmc').read_text().split('\n', 1)[1].split('# late-rotation-fixture', 1)[0]
+                self.write_command('ndmc', original)
+                folder = self.hook_setup(plan=plan)
+                (self.root/'rotated').unlink(missing_ok=True)
+                (folder/'qeli.opkgtun.apply-pending').unlink(missing_ok=True)
+                self.assertEqual(self.run_script(self.hook).returncode, 0)
+                body = '# late-rotation-fixture\n'
+                body += 'if [ "$2" = "show interface OpkgTun0" ] && [ ! -e "$QELI_FIXTURE_ROOT/rotated" ]; then\n'
+                body += self.plan_rotation(folder, change)+'fi\n'
+                self.write_command('ndmc', original+body)
+                (self.root/'ndmc-calls').unlink()
+                self.assertNotEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
+                self.assertEqual(self.calls('ndmc-calls'), ['show interface OpkgTun0'])
+                self.assertTrue((folder/'qeli.opkgtun.apply-pending').exists())
+                self.assertEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
+                self.assertFalse((folder/'qeli.opkgtun.apply-pending').exists())
+                self.write_command('ndmc', original)
+
+    def test_receipt_move_and_pending_removal_recheck_plan_and_marker(self):
+        plan = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=41\n'
+        for command in ['mv', 'rm']:
+            for change in ['plan', 'marker']:
+                with self.subTest(command=command, change=change):
+                    for name in ['mv', 'rm']:
+                        self.write_command(name, 'exec '+shlex.quote(templates.shutil.which(name))+' "$@"')
+                    folder = self.hook_setup(plan=plan)
+                    (self.opt/'var/log/qeli-client.log').unlink(missing_ok=True)
+                    (self.root/'rotated').unlink(missing_ok=True)
+                    (folder/'qeli.opkgtun.applied').unlink(missing_ok=True)
+                    (folder/'qeli.opkgtun.apply-pending').unlink(missing_ok=True)
+                    real = shlex.quote(templates.shutil.which(command))
+                    target = folder/('qeli.opkgtun.applied' if command=='mv' else 'qeli.opkgtun.apply-pending')
+                    body = real+' "$@" || exit $?\n'
+                    body += 'for argument do\n  if [ "$argument" = '+shlex.quote(str(target))+' ] && [ ! -e "$QELI_FIXTURE_ROOT/rotated" ]; then\n'
+                    body += self.plan_rotation(folder, change)+'  fi\ndone\n'
+                    self.write_command(command, body)
+                    self.assertNotEqual(self.run_script(self.hook).returncode, 0)
+                    self.assertTrue((folder/'qeli.opkgtun.apply-pending').exists())
+                    self.assertNotIn(' up (', self.hook_log())
+                    self.assertEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
+                    self.assertFalse((folder/'qeli.opkgtun.apply-pending').exists())
+                    expected = (folder/'qeli.opkgtun').read_text().rstrip()+'\n'+(folder/'qeli.tunip').read_text()
+                    self.assertEqual((folder/'qeli.opkgtun.applied').read_text(), expected)
+                    # Restore real command before the next subcase's fixture setup.
+                    self.write_command(command, 'exec '+real+' "$@"')
+
     def test_restart_and_start_stop_admission_share_one_lock_for_both_templates(self):
         if not processes.NATIVE.is_file():
             self.skipTest('requires owned native process fixture')

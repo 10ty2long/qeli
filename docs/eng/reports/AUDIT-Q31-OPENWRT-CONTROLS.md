@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v28 -->
+<!-- normative-sync: q31-openwrt-controls-v29 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1048,7 +1048,7 @@ Current Q31 remainder:
 | Actual standalone four-target cross builds/ELF | DONE in the stated scope |
 | UCI/INI, shell lifecycle/rollback and LuCI | Scoped suites PASS; model boundaries retained |
 | Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; retained-binary SDK packaging/offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
-| Keenetic preflight→launch INI; core plan generation/ABA | F355: private INI scoped PASS; F361: within-adapter generation/ABA scoped PASS; writer/lock, counter reset and admin replacement OPEN |
+| Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt and counter reset on fresh OpkgTun init launch scoped PASS; writer/lock, direct launch and admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
 | Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; full hermetic policy and Qeli A/B OPEN |
@@ -1671,3 +1671,46 @@ Raw: `audit-debt-20260924/q31-plan-generation-20261007/`; seal, input SHA,
 commands, times and results are recorded in evidence. 41 historic cases/acceptance
 are retained. Q31 IN_PROGRESS; Q29 SIGKILL FAIL/auto-null ENONET, Q30 callback drain
 OPEN/Apple exclusions and D06 ACCEPTED remain unchanged. Total28/37(75.7%),9 remain.
+
+## F362–F363: late stale receipts and a new process generation (7 October)
+
+F362: cached no-op used a plan snapshot preceding `ndmc show` without rechecking
+it afterwards. After the last pre-receipt check, `mv APPLIED` and `rm PENDING`
+could also overlap independent plan/marker publication. The hook returned success
+for stale state. A shared check now rereads marker/plan before no-op, after receipt
+publication and after pending removal. Observed replacement returns failure and
+preserves/recreates pending for the next event. An old receipt file may remain
+after `mv`; pending prevents it qualifying no-op. This does not undo ndm commands
+already executed or queue events.
+
+F363: fresh start after the old client exited removed the plan but retained APPLIED.
+The new adapter's local counter starts at1, allowing identical plan/address bytes
+to reuse the previous process receipt. OpkgTun init now removes APPLIED before
+fresh launch, after successful INI/owner inspection and before PID/process creation.
+Removal failure refuses launch. Start of an already verified live client preserves
+the receipt; failed preflight preserves recovery state. This step does not remove
+incomplete pending. Base init and Rust writer are unchanged.
+
+On .11, the same5 new methods reproduced baseline8 assertion failures in4 methods
+on each dash/BusyBox ash: show×plan/marker(2), mv/rm×plan/marker(4), inheriting the
+exited process receipt(1), ignoring invalidation failure(1). Preflight preservation
+already passed baseline. Fixed199 methods per interpreter without skips passed
+(194 previous +5 new). Coverage includes successful retry, no false success log,
+repeated start without restarting the live native helper and directory-receipt
+launch refusal preserving canary/old plan. Processes and /proc identity are real;
+ndmc/network are models. Generation=1 after launch is fixture publication: the
+C-helper qualifies process admission, not a new Rust handshake. Retained metadata
+inspector stays in its previously qualified role.382 Git/current inputs and SHA2
+retained artifacts verified before/after; no owned process/mount/temp roots remain.
+37 recipes,14 LuCI,docs9,bindings/diff passed. No fresh Rust/FFI/cross/SDK build or
+firmware/VPN qualification.
+
+Counter reset is closed within the updated OpkgTun init's fresh-launch protocol.
+Direct binary launch/adapter replacement outside it, writer/shell lock coordination,
+replacement after the final check, atomic ndm and old address families remain OPEN.
+The core writer cannot simply acquire the shell lock: init holds it during start,
+and its legacy branch can wait for plan publication, creating a wait cycle without
+protocol changes. Generation and bounded checks do not promise synchronization.
+Raw: `audit-debt-20260924/q31-keenetic-receipt-20261007/`; source SHA, commands,
+times, baseline/fixed and seal in evidence.41 historic cases/acceptance and34 previous
+supplements preserved. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained.

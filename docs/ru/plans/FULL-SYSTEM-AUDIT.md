@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v124 -->
+<!-- normative-sync: full-system-audit-v125 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2006,6 +2006,9 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **7 октября, F359–F360:** настоящий procd воспроизвёл stale repeated start и остановку работающего клиента при отказе подготовки. File comparison INI/password и отказ пустого set/add исправлены; baseline 5 failures в 3 методах, fixed 11 native methods и 55 shell methods на ash/dash без skips PASS. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Inert adapter, без VPN/fw/firmware; core generation/ABA/rollback OPEN. 28/37 (75.7%) без изменений.
 
 **7 октября, F361:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): runtime NetworkPlan содержит существующее authenticated generation; одинаковые адреса нового поколения и ABA внутри адаптера различаются. Derived baseline 2 assertion FAIL/1 PASS; fixed11 Rust units/GNU check/production Clippy/fmt PASS;194 Keenetic methods на каждом ash/dash без skips (2 новых),37 recipes/14 LuCI/docs9/bindings PASS. Writer/lock, counter reset и атомарность ndm OPEN; свежие SDK/FFI/cross/firmware не заявлены. Q31 IN_PROGRESS,28/37(75.7%),9 осталось; Q29/Q30/D06 сохранены.
+
+**7 октября, F362–F363:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): повторная проверка plan/marker после show, mv receipt и rm pending; fresh OpkgTun init launch очищает receipt прежнего процесса, repeated live start сохраняет его. Baseline8 failures в4 из5 новых methods на каждом ash/dash; fixed199 methods/interpreter без skips,37 recipes/14 LuCI/docs9/bindings PASS. Process настоящий, ndmc/plan publication models; Rust/FFI/SDK/cross unchanged. Writer/lock/after-final-check/atomic ndm/direct launch OPEN. Q31 IN_PROGRESS,28/37(75.7%); Q29/Q30/D06 сохранены.
+
 
 
 ### 32. Метрики, usage, логи и уведомления
