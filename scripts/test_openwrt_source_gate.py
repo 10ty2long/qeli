@@ -125,7 +125,7 @@ class SourceTests(unittest.TestCase):
         self.cargo.write_text(original)
 
     def test_dirty_tracked_and_untracked_inputs_are_fatal(self):
-        for name in ("qeli/src/lib.rs", "qeli/untracked.rs", "qeli-openwrt/Makefile",
+        for name in ("qeli/src/lib.rs", "qeli/untracked.rs", "qeli-openwrt/Makefile", "qeli-openwrt/verify-source.sh",
                      "scripts/openwrt_source_gate.py", "scripts/release_preflight.py"):
             with self.subTest(name=name):
                 path=self.root/name;path.parent.mkdir(exist_ok=True)

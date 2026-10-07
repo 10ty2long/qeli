@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v133 -->
+<!-- normative-sync: full-system-audit-v134 -->
 
 **Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2011,6 +2011,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **7 October,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): retire saved/partial OpkgTun addresses, preserve ownership across stop/start and stale-plan failure, check current local IPv4 for cached no-op/clearing.218methods per dash/ash without skips;14nonroot CI methods and old hook/init baseline regressions. Cooperative failure/concurrency criterion complete;3/5criteria,Q31IN_PROGRESS,28/37overall. Remaining cross-component/SDK/release integration and exclusions retained; no push/deploy.
 **7 October,F376–F378:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): immutable/unique source metadata, committed TOML version and actual SDK mirror checksum admission.25 unprivileged Linux source methods,18CI/15router gates PASS; exact old4fail-open cases reproduced. CI24+1explicit baseline skip. No SDK bootstrap/release-cut/Actions claim; Q31 remains3/5criteria IN_PROGRESS,28/37overall.
+
+**7 October,F379/Q31-V008:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual SDK source archive/check-FIXUP/prepare integration passes on exact candidate crate; old bad mirror download/prepare0 reproduced. Shared prepare/compile verifier stops bad hash before unpack/Cargo,9dash/9ash+25source methods uid65534 PASS;7integration stages with inert Cargo boundary. Full SDK Rust/bootstrap/release-cut/CI separate;3/5criteria IN_PROGRESS,28/37overall.
 
 ### 32. Metrics, usage, logs and notifications
 

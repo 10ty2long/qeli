@@ -75,7 +75,7 @@ and its pinned feeds (see the SDK verification scope below):
 
 # 2. Drop the package into the tree (symlink or copy this dir).
 mkdir -p package/qeli
-cp /path/to/qeli-openwrt/Makefile package/qeli/
+cp /path/to/qeli-openwrt/Makefile /path/to/qeli-openwrt/verify-source.sh package/qeli/
 cp -r /path/to/qeli-openwrt/files package/qeli/files
 cp -r /path/to/qeli-openwrt/luci-app-qeli package/luci-app-qeli
 
@@ -92,7 +92,7 @@ opkg install ./qeli_<ver>-r1_<arch>.ipk ./luci-app-qeli_<ver>-r1_all.ipk
 > **Where's the Rust crate / Cargo.toml?** You don't place it — the package fetches it.
 > `package/qeli/Makefile` clones the whole repo (`PKG_SOURCE_PROTO:=git`) and the Cargo
 > project lives in the repo's `qeli/` subdir (`qeli/Cargo.toml`); the build cd's into it
-> automatically. So `package/qeli/` only needs the `Makefile` + `files/` — the crate comes
+> automatically. So `package/qeli/` only needs the `Makefile`, build-time `verify-source.sh` and `files/` — the crate comes
 > from the git source, not from your local copy. (To build a LOCAL/modified crate instead,
 > point `PKG_SOURCE_URL`/`PKG_SOURCE_VERSION` at your fork, or use `PKG_SOURCE_PROTO` with a
 > local mirror.)
@@ -445,3 +445,31 @@ command runs 24 methods and explicitly skips only the opt-in historical-baseline
 method; the baseline-enabled lab run executes all 25. Related18 CI and15 router
 release methods pass. These checksum fixtures are not newly SDK-generated release
 archives, and no actual release or GitHub Actions run is claimed.
+
+## SDK archive checks before prepare and compile (development 0.8.2)
+
+The actual 24.10.4 SDK Git fallback can return0 and unpack source despite an
+incorrect PKG_MIRROR_HASH. Normal download need not even emit the CHECK warning.
+Qeli now calls its build-only verify-source.sh in Hooks/Prepare/Pre and again at
+Build/Compile entry, before any Cargo call or manifest projection. Copy this file
+alongside the package Makefile as shown above; it is never installed on a router.
+Missing/empty/nonregular/linked archive, malformed/nonmatching hash and hash-tool
+failure refuse the build. Explicit SDK developer source overlays still work and
+are not mirror-qualified release builds. A privileged change after the check or
+arbitrary Make overrides is outside this protection.
+
+For a release, pin the desired immutable source, run download, run the SDK check
+with FIXUP=1, then independently verify the Source archive/hash and use
+QELI_OPENWRT_SOURCE_ARCHIVE for release preflight. The direct package equivalent
+used in the audit is `make -C package/qeli TOPDIR=/absolute/sdk download CHECK=1
+FIXUP=1 -j1`; it exercises the SDK check/fixup machinery without a host build.
+Development source pin/hash remain unchanged until an actual release cut.
+
+The actual SDK generated the same archive twice from a private fixture commit
+whose qeli/ tree matches the current candidate exactly. Prepare rejects a bad hash
+before unpacking; valid prepare preserves that tree. GNU make exports the real
+Compile macro, and an inert Cargo seam proves zero calls on bad hash and two on
+valid hash. Actual SDK-generated archive passes the source gate.9 shell methods
+pass on both dash/ash without root;25 source methods pass. This closes source
+archive/prepare admission within scope, not full Rust bootstrap, new client
+compilation/package installation, GitHub Actions or firmware qualification.

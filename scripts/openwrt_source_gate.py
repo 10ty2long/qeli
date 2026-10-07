@@ -13,7 +13,7 @@ class SourceGateError(RuntimeError):
 
 
 VARIABLES = ("PKG_VERSION", "PKG_SOURCE_VERSION", "PKG_MIRROR_HASH")
-INPUTS = ("qeli", "qeli-openwrt/Makefile", "scripts/release_preflight.py",
+INPUTS = ("qeli", "qeli-openwrt/Makefile", "qeli-openwrt/verify-source.sh", "scripts/release_preflight.py",
           "scripts/openwrt_source_gate.py")
 OID = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})")
 
