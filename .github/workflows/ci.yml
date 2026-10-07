@@ -89,6 +89,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
           python3 -m unittest discover -s scripts -p 'test_keenetic_probe.py'
+          python3 -m unittest discover -s scripts -p 'test_keenetic_address_retirement.py'
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
       # verify.sh proves copy/manifest parity. provenance.py additionally requires the exact

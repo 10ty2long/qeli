@@ -64,7 +64,7 @@ fi
         self.assertTrue((folder/'qeli.opkgtun.applied').exists())
         self.assertEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
 
-    def test_stop_refuses_busy_hook_then_removes_its_state_after_join(self):
+    def test_stop_refuses_busy_hook_then_retains_address_ownership_after_join(self):
         folder = self.hook_setup()
         first = self.pause_hook()
         baseline = os.environ.get('QELI_LIFECYCLE_BASELINE')
@@ -80,8 +80,9 @@ fi
         stopped = subprocess.run(templates.SHELL+[str(init), 'stop'], env=self.env,
                                  capture_output=True, text=True, timeout=8)
         self.assertEqual(stopped.returncode, 0, stopped.stderr)
-        for name in ('qeli.opkgtun', 'qeli.tunip', 'qeli.opkgtun.applied', 'qeli.opkgtun.apply-pending'):
+        for name in ('qeli.opkgtun', 'qeli.tunip', 'qeli.opkgtun.apply-pending'):
             self.assertFalse((folder/name).exists(), name)
+        self.assertTrue((folder/'qeli.opkgtun.applied').exists())
         before = self.calls('ndmc-calls')
         self.assertEqual(self.run_script(self.hook).returncode, 0)
         self.assertEqual(self.calls('ndmc-calls'), before)

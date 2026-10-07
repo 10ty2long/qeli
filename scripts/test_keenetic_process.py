@@ -28,7 +28,10 @@ class ProcessCases:
         self.plan=self.opt/('var/run/qeli.tunip' if 'opkgtun' in self.TEMPLATE else 'var/run/qeli.network-plan')
         self.marker=self.opt/'var/run/qeli.opkgtun';self.events=self.root/'events';self.children=[]
         self.env.update(QELI_HELPER_EVENTS=str(self.events),QELI_HELPER_PIDFILE=str(self.pidfile),QELI_HELPER_MODE='normal')
-        self.script=self.root/'service.sh';self.copy_template(ROOT/self.TEMPLATE,self.script)
+        self.script=self.root/'service.sh'
+        baseline=os.environ.get('QELI_OPKGTUN_INIT_BASELINE')
+        source=Path(baseline)/'S99qeli' if baseline and 'opkgtun' in self.TEMPLATE else ROOT/self.TEMPLATE
+        self.copy_template(source,self.script)
         text=self.script.read_text().replace('[ "$waited" -lt 15 ]','[ "$waited" -lt 3 ]').replace('[ $i -lt 60 ]','[ $i -lt 2 ]')
         head,dispatch=text.rsplit('case "$1" in',1)
         self.body=head+r"""
@@ -89,7 +92,7 @@ kill() { [ "$QELI_FAIL" != signal ] || return 17; command kill "$@"; }
         receipt=self.marker.with_name(self.marker.name+'.applied')
         if 'opkgtun' in self.TEMPLATE:receipt.write_text('fixture receipt')
         self.assertEqual(self.service('stop').returncode,0);self.assert_joined(pid)
-        self.assertFalse(receipt.exists())
+        self.assertEqual(receipt.exists(), 'opkgtun' in self.TEMPLATE)
         self.assertFalse(self.pidfile.exists());self.assertFalse(self.plan.exists());self.assertFalse(self.marker.exists())
     def test_term_timeout_and_restart_retain_state(self):
         pid=self.start(QELI_HELPER_MODE='ignore');before=self.pidfile.read_text();plan=self.plan.read_text()
@@ -212,22 +215,22 @@ class KeeneticBaseProcessTests(ProcessCases,KeeneticFixture):
 @unittest.skipUnless(NATIVE.is_file(),'requires explicitly built Linux native process fixture')
 class KeeneticOpkgTunProcessTests(ProcessCases,KeeneticFixture):
     TEMPLATE='release/keenetic/opkgtun/S99qeli'
-    def test_fresh_launch_invalidates_receipt_but_repeated_start_preserves_it(self):
+    def test_fresh_launch_invalidates_cache_without_erasing_address_ownership(self):
         receipt = self.marker.with_name(self.marker.name+'.applied')
         pending = self.marker.with_name(self.marker.name+'.apply-pending')
         plan = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=1\n'
         old = 'opkgtun0\n'+plan
         receipt.write_text(old)
         pid = self.start()
-        cleared = not receipt.exists()
-        self.assertFalse(pending.exists())
+        self.assertEqual(receipt.read_text(), old)
+        self.assertTrue(pending.exists())
         # The native helper owns process admission; this write models the new
         # authenticated plan, including a reset generation, rather than its C stub.
         self.plan.write_text(plan)
         hook = self.copy_template(ROOT/'release/keenetic/opkgtun/010-qeli.sh', self.root/'hook.sh')
         self.assertEqual(self.run_script(hook, QELI_CONNECTED='yes').returncode, 0)
         self.assertIn('system configuration save', self.calls('ndmc-calls'))
-        self.assertTrue(cleared, 'new process inherited the exited process receipt')
+        self.assertEqual(receipt.read_text(), old)
         self.assertEqual(receipt.read_text(), old)
         self.assertFalse(pending.exists())
         self.assertEqual(self.service('start').returncode, 0)
@@ -258,6 +261,35 @@ class KeeneticOpkgTunProcessTests(ProcessCases,KeeneticFixture):
         self.assertEqual(self.helper_pids(), set())
         self.assertEqual(receipt.read_text(), 'retained receipt')
         self.assertEqual(pending.read_text(), 'retained pending')
+
+    def test_stop_and_fresh_start_retain_partial_and_saved_address_ownership(self):
+        receipt = self.marker.with_name(self.marker.name+'.applied')
+        pending = self.marker.with_name(self.marker.name+'.apply-pending')
+        self.start()
+        saved = 'opkgtun0\n10.8.0.2\nipv4=10.8.0.2/32\nipv6=fd00::2/128\n'
+        partial = 'opkgtun0\n10.8.0.2\nipv4=10.8.0.2/32\nipv6=fd00::9/128\n'
+        receipt.write_text(saved);pending.write_text(partial)
+        self.assertEqual(self.service('stop').returncode, 0)
+        self.assertEqual(receipt.read_text(), saved);self.assertEqual(pending.read_text(), partial)
+        self.assertFalse(self.marker.exists())
+        self.start()
+        self.assertEqual(receipt.read_text(), saved);self.assertEqual(pending.read_text(), partial)
+        self.assertEqual(self.service('stop').returncode, 0)
+
+    def test_linked_or_directory_pending_refuses_launch_without_touching_foreign_file(self):
+        pending = self.marker.with_name(self.marker.name+'.apply-pending')
+        foreign = self.root/'foreign';foreign.write_text('foreign data')
+        for kind in ['directory', 'link']:
+            with self.subTest(kind=kind):
+                if kind=='directory':pending.mkdir()
+                else:pending.symlink_to(foreign)
+                self.plan.write_text('retained plan')
+                self.assertNotEqual(self.service('start').returncode, 0)
+                self.assertEqual(self.helper_pids(), set())
+                self.assertEqual(self.plan.read_text(), 'retained plan')
+                self.assertEqual(foreign.read_text(), 'foreign data')
+                if kind=='directory':pending.rmdir()
+                else:pending.unlink()
 
     def test_marker_publication_error_joins_before_failure(self):
         self.marker.mkdir();self.assertNotEqual(self.service('start').returncode,0)

@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v35 -->
+<!-- normative-sync: q31-openwrt-controls-v36 -->
 
-**Current checkpoint, 7 October:** Q31 has2/5criteria complete (review/dead code and positive/boundary/negative scenarios);F372 and95Linux methods below. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F373–F375 and218methods per shell below. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2048,3 +2048,64 @@ remain unchanged. Current debt14/15 DONE+D06 ACCEPTED; native/D11/D15 stays clos
 
 Raw packet: `audit-debt-20260924/q31-release-admission-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-release-admission-20261007.json`.
+
+
+## F373–F375: retire OpkgTun addresses and retain ownership (7 October)
+
+F373: the hook only added addresses from the next plan. IPv6 setters support
+multiple addresses, so IPv6 readdressing or dual-stack→IPv4 kept the old Qeli IPv6
+in ndm even after a new successful receipt. An absent IPv4 family likewise left
+the old static IPv4. F374: empty pending files could not identify a partly applied
+plan; stale-plan handling overwrote their payload, while new launch and stop erased
+saved ownership even though ndm kept L3. F375: generic token matching could qualify
+a cached IPv4 plan when its address appeared only as a gateway/peer and the local
+address had changed.
+
+Before adding a new address, the hook now retires obsolete addresses recorded by
+the last complete APPLIED and the previous partial PENDING. It publishes the new
+pending IF+plan snapshot atomically before any new L3 mutation. Cleanup/publication
+failure or an observed replacement preserves retry intent and the old payload.
+Successful save still precedes APPLIED and pending removal. IPv6 removal names the
+recorded address/prefix; IPv4 absent-family clearing requires its exact current
+local `address:` field. A different IPv4 and unrelated IPv6 are retained; a peer
+mention cannot authorize clearing or a cached no-op. An interface change retires
+only recorded addresses on the previous validated OpkgTun, without deleting the
+interface or ndm policy. A failed query of a previous interface retains recovery
+rather than assuming it absent. CLI syntax was checked against the official
+[Keenetic command reference](https://docs.help.keenetic.com/cli/3.1/en/cli_manual_kn-1910_tr.pdf),
+interface ip address and interface ipv6 address; this is not a KeeneticOS5 test.
+
+Fresh launch preserves saved and partial ownership and forces fresh apply by
+creating/preserving pending. A repeated start of an admitted live process keeps
+the state. Stop joins first and removes the marker/current plan, retaining address
+records because ndm retains L3; without the marker wan.d remains inactive. Linked
+or nonregular records refuse fresh launch. Empty legacy pending files remain
+compatible, but lost records cannot prove ownership and require manual review.
+Both operational Keenetic READMEs describe the new recovery procedure.
+
+Final **218 Keenetic methods PASS on each dash and BusyBox ash, zero skips**:
+real owned POSIX files/locks/processes and current unchanged common-core inspector,
+with ndmc/firewall/sysctl represented by models.14 new stateful address scenarios
+plus two native stop/start/pending-path scenarios were added. The exact old hook
+fails the meaningful regression set; the exact old init fails both ownership
+scenarios on the same native helper. Original214/217-method intermediate PASS
+runs and baseline failures are retained. The exact14-method CI command also passes
+as uid/gid65534, without root-only assumptions; it is wired into CI, not dispatched.
+The previously used native C fixture was rebuilt with -Wall/-Wextra/-Werror;
+no VPN/TUN/route/firewall was applied on the host. Service remains active/PID777;
+.10, current Rust/native/router artifacts and installed toolchains unchanged.
+No fresh full Rust/cross/native build; current A/B provenance remains PASS.
+
+The **failure and cooperative lifecycle concurrency criterion is complete**:
+this consolidates the existing init/hook/installer exclusion, process join,
+partial apply and retry evidence. Q31 has **3/5 criteria** complete and remains
+IN_PROGRESS; whole audit28/37(75.7%),9 remain. Remaining integration does not claim
+writer participation in the shell lock, mutation after the final check, atomic
+multi-command ndm configuration, firmware address formatting or router networking.
+Full SDK source bootstrap/source-pin/mirror release-cut and configured live
+Gate2/Actions end-to-end checks remain open. Firmware stays USER_EXCLUDED;
+Q29 SIGKILL/auto-null ENONET, Q30 callback-drain/Apple exclusions and D06 accepted
+remain unchanged. Debt14/15 DONE+D06 ACCEPTED; no new unchecked fix is left here.
+
+Raw packet: `audit-debt-20260924/q31-opkgtun-address-retirement-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-opkgtun-address-retirement-20261007.json`.

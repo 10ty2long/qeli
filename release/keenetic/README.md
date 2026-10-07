@@ -207,11 +207,13 @@ apply/save; A→B→A во время apply/save внутри одного ад�
 координацию writer с lifecycle lock или root/admin replacement. Новые сборки
 бинарника содержат поле; ранее опубликованные бинарники автоматически не обновляются.
 
-При новом launch через обновлённый OpkgTun init receipt APPLIED прежнего процесса
-удаляется до запуска клиента: сброс локального generation не позволяет повторно
-использовать прежнюю отметку. Start уже работающего проверенного клиента сохраняет
-receipt. Отказ проверки INI не очищает recovery state; ошибка удаления receipt
-запрещает launch. Незавершённый pending сохраняется до успешного hook apply/save.
+При новом launch обновлённый OpkgTun init сохраняет APPLIED как сведения о ранее
+настроенных адресах и создаёт/сохраняет pending перед запуском: даже сброс
+локального generation требует свежего hook apply/save. Start уже работающего
+проверенного клиента сохраняет обе записи без принудительного apply. Stop после
+join удаляет marker и текущий plan, но оставляет APPLIED и непустой pending,
+поскольку L3 остаётся у ndm. Отказ проверки INI не очищает recovery state;
+symlink/nonregular pending или receipt запрещает свежий launch.
 
 Hook повторно проверяет план/marker после show перед cached no-op, после публикации
 receipt и после удаления pending. Обнаруженная смена возвращает ошибку и оставляет
@@ -260,3 +262,27 @@ SDK build/release pipeline.
 сохраняется для инспекции. Действующий toolchain helper может установить недостающие
 закреплённые tools. Полный live preflight/CI dispatch, SDK bootstrap и source-pin/
 mirror release-cut остаются отдельными release-проверками.
+
+
+## Смена адресов OpkgTun (development0.8.2)
+
+Pending теперь содержит snapshot интерфейса и плана, который мог быть частично
+применён. Перед новыми L3-командами hook очищает устаревшие адреса из завершённого
+APPLIED и предыдущего pending; только затем атомарно записывает новое намерение.
+Ошибка cleanup/publication/смена плана сохраняет сведения для повторной попытки.
+IPv6 удаляется конкретной `no ipv6 address <старый адрес/prefix>`;
+`no ip address` для исчезнувшего IPv4 допускается только при совпадении прежнего
+адреса с текущим локальным полем `address:`. Упоминание адреса в gateway/peer не
+разрешает сброс. Смена IPv4 выполняется обычным setter, поскольку IPv4 статический
+адрес один; IPv6 допускает несколько адресов. Другие IPv6 и заменённый администратором
+IPv4 сохраняются. При смене OpkgTun hook проверяет записи прежнего интерфейса и
+удаляет только его прежние адреса Qeli, а не интерфейс/политики ndm.
+
+Пустые старые pending совместимы, но не содержат ownership. Если прежний шаблон уже
+удалил записи или после reboot они потеряны, hook не угадывает прежние адреса:
+проверь их вручную. Не удаляй APPLIED/pending без сверки с ndm. Это cooperative
+init/hook protocol; root/admin replacement, смена после последней проверки и
+атомарность всех ndm-команд не обещаются. На физическом KeeneticOS5 не запускалось:
+проверены native process lifecycle и stateful ndmc-модель на dash/BusyBox.
+Синтаксис сверён с [официальным справочником CLI](https://docs.help.keenetic.com/cli/3.1/en/cli_manual_kn-1910_tr.pdf),
+команды interface ip address и interface ipv6 address; это не firmware qualification.
