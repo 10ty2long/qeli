@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v70 -->
+<!-- normative-sync: audit-debt-v71 -->
 
 Current reconciliation:7 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -28,6 +28,9 @@ were removed after rechecking backups/identity/guards; both local archives
 remain. Q29 SIGKILL/ENONET, Q30 callback drain/Apple and Q31 SDK/release pipeline
 remain incomplete full-audit work, not PASS. Full plan:28/37, nine sections
 remain. Future source/recipe changes can invalidate native evidence again.
+The [Q32 metrics packet](../reports/AUDIT-Q32-METRICS.md) separately refreshes native
+evidence after the server edit; its qualification and limits are recorded in the
+report, without closing remaining Q29/Q30/Q31 scopes.
 Historical OPEN below does not require repeating closed unchanged checks.
 
 | ID | Sections | Status | Debt | Closure criteria / current evidence |
