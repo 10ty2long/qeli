@@ -152,6 +152,65 @@ class ProcdIntegrationTests(unittest.TestCase):
         (self.run/'password').write_text('fixture-secret')
         (self.jail/'usr/bin/qeli-client').unlink()
         self.assertNotEqual(self.invoke('start').returncode, 0);self.assertIsNone(self.pid())
+    def wait_for_replacement(self, old):
+        self.wait_for(lambda: self.pid() is not None and self.pid() != old, timeout=5)
+        new = self.pid()
+        self.wait_for(lambda: not self.owned_pid(old))
+        self.wait_for(lambda: (self.fixture/('config-'+str(new))).exists() and
+                      (self.fixture/('password-'+str(new))).exists())
+        return new
+
+    def test_repeated_start_with_identical_bytes_preserves_process(self):
+        pid = self.start()
+        before = (self.run/'client.conf').read_bytes()
+        self.assertEqual(self.invoke('start').returncode, 0)
+        self.assertEqual((self.run/'client.conf').read_bytes(), before)
+        time.sleep(0.25)
+        self.assertEqual(self.pid(), pid)
+        self.assertTrue(self.owned_pid(pid))
+
+    def test_repeated_start_with_changed_ini_replaces_process(self):
+        old = self.start()
+        self.uci('set', 'qeli.main.server=changed.example:443')
+        self.uci('commit', 'qeli')
+        self.assertEqual(self.invoke('start').returncode, 0)
+        new = self.wait_for_replacement(old)
+        self.assertIn('server = "changed.example:443"',
+                      (self.fixture/('config-'+str(new))).read_text())
+        self.assertIn('server = "vpn.example:443"',
+                      (self.fixture/('config-'+str(old))).read_text())
+
+    def test_repeated_start_with_changed_password_replaces_process(self):
+        old = self.start()
+        before = (self.run/'client.conf').read_bytes()
+        result = self.command('/bin/sh', '-c',
+                              "printf '%s\n' next-fixture-secret | /etc/init.d/qeli set_secret pass")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.pid(), old)  # secret write alone is not a restart
+        self.assertEqual(self.invoke('start').returncode, 0)
+        self.assertEqual((self.run/'client.conf').read_bytes(), before)
+        new = self.wait_for_replacement(old)
+        self.assertEqual((self.fixture/('password-'+str(new))).read_text(), 'next-fixture-secret')
+        self.assertEqual((self.fixture/('password-'+str(old))).read_text(), 'fixture-secret')
+
+    def test_failed_render_preserves_live_process_and_previous_ini(self):
+        for field, invalid, original in [('mtu', 'broken', '0'),
+                                         ('dev', 'wan0', 'qeli0'),
+                                         ('server', '', 'vpn.example:443')]:
+            with self.subTest(field=field):
+                pid = self.start()
+                before = (self.run/'client.conf').read_bytes()
+                self.uci('set', 'qeli.main.'+field+'='+invalid)
+                self.uci('commit', 'qeli')
+                try:
+                    self.assertNotEqual(self.invoke('start').returncode, 0)
+                    self.assertEqual((self.run/'client.conf').read_bytes(), before)
+                    self.assertEqual(self.pid(), pid)
+                    self.assertTrue(self.owned_pid(pid))
+                finally:
+                    self.uci('set', 'qeli.main.'+field+'='+original)
+                    self.uci('commit', 'qeli')
+
     def test_missing_bus_is_not_reported_as_success(self):
         self.procd.terminate();self.procd.wait(timeout=3)
         self.bus.terminate();self.bus.wait(timeout=3)
@@ -169,6 +228,7 @@ class ProcdIntegrationTests(unittest.TestCase):
 CLIENT = r"""#!/bin/sh
 printf '%s\n' "$@" "$QELI_DEVICE_ID_FILE" "$QELI_KNOWN_HOSTS" > /fixture/started-$$
 cp /var/run/qeli/client.conf /fixture/config-$$ || exit 17
+cp /var/run/qeli/password /fixture/password-$$ || exit 17
 exec /bin/sleep 600
 """
 

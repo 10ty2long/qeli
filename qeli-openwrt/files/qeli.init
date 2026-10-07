@@ -385,6 +385,18 @@ qeli_track_procd_result() {
 	QELI_PROCD_RESULT=0
 	ubus() {
 		local result
+		# rc.common closes/submits the service even when start_service failed.
+		# Refuse that empty/partial replacement so the admitted instance survives.
+		if [ "$1" = call ] && [ "$2" = service ]; then
+			case "$3" in
+				set|add)
+					if [ "${QELI_START_RESULT:-0}" != 0 ]; then
+						QELI_PROCD_RESULT="$QELI_START_RESULT"
+						return "$QELI_PROCD_RESULT"
+					fi
+					;;
+			esac
+		fi
 		command ubus "$@"
 		result=$?
 		if [ "$1" = call ] && [ "$2" = service ]; then
@@ -432,6 +444,9 @@ qeli_start_service() {
 
 	procd_open_instance qeli
 	procd_set_param command "$BIN" --config "$CONF"
+	# Re-submitting the same command/path must still apply changed INI/password
+	# bytes. procd compares file contents; identical renders keep the process.
+	procd_set_param file "$CONF" "$PASS_FILE"
 	# Persistent identity/pinning across reboots (/etc and overlay survive; /var is tmpfs).
 	procd_set_param env QELI_DEVICE_ID_FILE="$STATEDIR/device-id" QELI_KNOWN_HOSTS="$STATEDIR/known_hosts"
 	procd_set_param respawn 3600 5 0      # respawn: threshold 3600s, 5s delay, unlimited
