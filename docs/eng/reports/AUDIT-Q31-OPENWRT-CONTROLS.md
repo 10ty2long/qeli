@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v36 -->
+<!-- normative-sync: q31-openwrt-controls-v37 -->
 
-**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F373–F375 and218methods per shell below. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F376–F378 source admission below; prior218methods per shell retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2109,3 +2109,53 @@ remain unchanged. Debt14/15 DONE+D06 ACCEPTED; no new unchecked fix is left here
 
 Raw packet: `audit-debt-20260924/q31-opkgtun-address-retirement-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-opkgtun-address-retirement-20261007.json`.
+
+
+## F376–F378: immutable OpenWrt release source and actual archive integrity (7 October)
+
+F376: old Gate3 accepted HEAD/branches/tags and the first metadata assignment
+could hide a later Make value. F377: absent Cargo version skipped comparison;
+version used line matching rather than [package], with unbounded Git queries and
+no object-type admission. F378: a formatted SHA256 passed without actual archive
+bytes. The exact old Gate3 accepts four reproduced cases: HEAD, duplicate source
+assignment, changed archive bytes and missing package version.
+
+Shared scripts/openwrt_source_gate.py replaces the embedded block. It refuses
+participating dirty inputs, ambiguous/nonliteral metadata, mutable/abbreviated refs,
+annotated tag objects, unknown/different qeli/ trees and invalid/missing/inherited
+Cargo package version. Direct repeated assignments in eval/define/undefine are
+refused. Git reads one frozen HEAD, requires object types and has30s query bounds.
+An older commit with identical crate tree stays valid; exact HEAD equality would
+make pin publication unsatisfiable. Cargo/recipe come from that committed snapshot.
+
+QELI_OPENWRT_SOURCE_ARCHIVE now supplies the mandatory local SDK-generated Source
+archive named by actual package metadata. Gate3 hashes the opened regular file and
+compares PKG_MIRROR_HASH; missing/empty/linked/nonregular/mismatched or observed
+changing files refuse. POSIX O_NONBLOCK/O_NOFOLLOW/fstat refuse FIFO/device/link
+before hashing without a reader hang. No download/extract/publication. Integrity
+is qualified, not SDK archive reconstruction/content compilation or arbitrary
+Make/environment evaluation. Privileged replacement after final observation remains
+outside the gate. Python3.11+ TOML requirement and recovery are documented.
+
+**25 source methods PASS zero skips on Linux uid/gid65534**, actual temporary
+Git repos/files and controlled Git failures; four exact old fail-open cases qualify
+regressions. Final eval/undefine change reruns only25 source methods. Normal exact
+CI command runs24 and explicitly skips1 opt-in historical-baseline method; the
+baseline-enabled lab run executes all25.18 CI admission and15 router release
+methods PASS zero skips.20 transferred SHA inputs verified before/after. Tiny
+binary checksum fixtures are not new SDK-generated release archives. Initial
+Windows24 had1symlink privilege error/1FIFOskip; split fixture/finalLinux covers
+both. Final Windows23PASS/2explicit POSIX skips. Development actual source pin
+remains stale, expected refusal; pin/hash
+unchanged. CI/manual updated, no dispatch, configured live Gate2/full SDK build
+or new Rust/native/cross/artifact qualification. Native provenance PASS unchanged.
+.11 qeli.service active/PID777 preserved; .10 unused, no host network/firewall/tools
+mutations. Source admission scoped closure; SDKbootstrap/source-pin/mirror release
+cut, live Gate2/Actions, writer lock/atomic ndm/firmware remain separate.
+
+Q31 **3/5 criteria IN_PROGRESS**, full audit28/37(75.7%),9remain; current debt14/15
+DONE+D06ACCEPTED. Firmware/Apple/WindowsVM exclusions, Q29SIGKILL/ENONET,
+Q30callback-drain and acceptedD06 unchanged. No push/deploy/release.
+
+Raw packet: `audit-debt-20260924/q31-openwrt-source-gate-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-openwrt-source-gate-20261007.json`.

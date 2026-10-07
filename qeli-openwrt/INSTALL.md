@@ -413,3 +413,35 @@ success/error. `QELI_LAB_SRC` is obsolete. No artifacts are published; the priva
 checkout remains for inspection. Missing named tools may be installed by the
 existing toolchain helper. Full live preflight/CI dispatch and SDK bootstrap/
 source-pin/mirror release-cut remain separate release checks.
+
+
+## OpenWrt release source admission (development 0.8.2)
+
+Gate 3 in `scripts/release_preflight.py` now requires committed participating
+inputs, one literal `:=` declaration per source/version/hash variable, a full
+immutable commit SHA and the same committed `qeli/` tree as the candidate.
+Branches, tags, abbreviated IDs, repeated/qualified/eval/define/undefine metadata,
+missing or invalid Cargo `[package].version`, dirty inputs and Git errors refuse
+release. Git commands use the repository root and a 30-second timeout.
+An older commit with the same crate tree remains valid; matching HEAD exactly
+is not required because writing the pin creates another commit.
+
+Set `QELI_OPENWRT_SOURCE_ARCHIVE` to the local **SDK-generated Source archive**
+before running preflight. Obtain its actual filename from package metadata,
+produce/check it through the SDK download/check steps in the recipe, and commit
+the matching source pin/hash. Gate 3 hashes the file and compares its SHA256 to
+`PKG_MIRROR_HASH`; absent, empty, nonregular, linked, mismatched or observably
+changing files refuse admission. No downloads, extraction or release publication
+are performed. A syntactically valid hash alone no longer passes.
+The gate checks mirror integrity; it does not reconstruct SDK archive generation,
+compile the SDK Rust bootstrap, evaluate arbitrary Make/environment policy or
+protect against privileged concurrent replacement after its final observation.
+The development source pin/hash are unchanged; source/release-cut qualification
+remains separate. Python 3.11 or newer is required for the TOML parser.
+
+25 actual temporary-Git/local-file methods pass on Linux as uid/gid65534,
+including four old fail-open reproductions and FIFO/link refusal. The normal CI
+command runs 24 methods and explicitly skips only the opt-in historical-baseline
+method; the baseline-enabled lab run executes all 25. Related18 CI and15 router
+release methods pass. These checksum fixtures are not newly SDK-generated release
+archives, and no actual release or GitHub Actions run is claimed.
