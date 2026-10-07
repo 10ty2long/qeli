@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v30 -->
+<!-- normative-sync: q31-openwrt-controls-v31 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1051,7 +1051,7 @@ Current Q31 remainder:
 | Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt and counter reset on fresh OpkgTun init launch scoped PASS; writer/lock, direct launch and admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
-| Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory and F364 five standalone release fields scoped PASS; full hermetic policy and Qeli A/B OPEN |
+| Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory and F364 five standalone release fields scoped PASS; F365 clean x86_64 Qeli A/B scoped PASS; full hermetic policy and other-ISA A/B OPEN |
 
 This current table supersedes historical cross-build NOT_RUN statements without
 rewriting original evidence. Packet:
@@ -1758,3 +1758,39 @@ Raw: `audit-debt-20260924/q31-router-release-profile-20261007/`; seal/scoped evi
 41 historic cases/acceptance and35 previous supplements preserved. Q31 IN_PROGRESS,
 28/37(75.7%),9 remain;Q29 SIGKILL FAIL/auto-null ENONET,Q30 callback-drain OPEN/
 Apple exclusions,D06 ACCEPTED retained. Published binaries were not replaced.
+
+## F365 / Q31-V005: independent builds depended on temporary source paths
+
+Two full Qeli x86_64-musl builds used the exact shared standalone recipe, Rust
+1.97.0, cargo-zigbuild0.23.0 and Zig0.13.0. Each started with a fresh target and
+Zig/XDG cache, private HOME/Cargo home and an identical offline copy of the existing
+registry. Compilation was sequential with one job. All364 crate inputs were
+identical and remained unchanged; this was a full client build, not a mini-probe.
+
+Both baseline builds succeeded and produced5582856-byte static ELF executables,
+but96458 bytes differed. Each embedded227 occurrences of its random mktemp source
+root. Merely substituting strings did not make them equal; the failure was retained.
+The shared router/host helper now passes `--remap-path-prefix=<owned root>=/usr/src/qeli`.
+This changes compiled source locations, including `file!()` and panic diagnostics;
+it does not create that directory or change configuration paths. MIPS soft-float
+flags are preserved. Canonical manifests, Rust/core/FFI and SDK/CI recipes are unchanged.
+See the [rustc option](https://doc.rust-lang.org/rustc/command-line-arguments.html#--remap-path-prefix-remap-source-names-in-output).
+
+The same new actual-Cargo method reproduced three baseline failures, one per
+Keenetic/OpenWrt/host caller; all9 fixed actual-Cargo methods and72 Linux helper/gate
+methods PASS without skips. Two fresh full fixed builds are byte-identical:
+5577864 bytes, SHA256 `5132852d8b56ec588a503d52b4cc6cc4aa959d2c537e6ed47a2daa4518c2427b`.
+Neither ELF contains its private build root. Actual ELF admission, help/version
+and24 INI metadata cases per pair PASS (48 across baseline/fixed), without connecting.
+Five canonical release flags, no unused FFI outputs and fresh compilation were checked.
+Dependency warnings and the deprecated linker-optimization warning are retained,
+not suppressed. Global registry/tool contents stayed unchanged; owned roots were
+removed and no owned process/mount remained. Published binaries were not replaced.
+
+This qualifies clean independent x86_64 standalone A/B using a verified existing
+registry seed. Other-ISA A/B, arbitrary Cargo/config/linker/PATH/cache hermeticity,
+SDK bootstrap/source release-cut and firmware runtime are not qualified here.
+Firmware remains USER_EXCLUDED. Q31 remains IN_PROGRESS,28/37(75.7%); Q29 SIGKILL
+FAIL/auto-null ENONET, Q30 callback-drain OPEN/Apple exclusions and D06 ACCEPTED remain.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-clean-ab-20261007.
+Evidence: release/certification/evidence/q31-router-clean-ab-20261007.json.

@@ -194,6 +194,15 @@ class CargoRuntimeTests(unittest.TestCase):
                                  '-C panic=abort', '-C strip=symbols']:
                         self.assertIn(flag, compiler)
 
+    def test_owned_absolute_source_location_is_remapped(self):
+        for kind in ['keenetic', 'openwrt', 'host']:
+            with self.subTest(kind=kind), self.fixture(kind) as (root, home, env, _):
+                (root/'src/location.rs').write_text('file!()\n')
+                (root/'src/main.rs').write_text('fn main() { println!("{}", '
+                    'include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/location.rs"))); }\n')
+                self.assertEqual(self.build(root, env, self.command(root, kind)),
+                                 '/usr/src/qeli/src/location.rs')
+
     def test_failed_compiler_resolution_stops_before_cargo_or_build(self):
         for kind in ['keenetic', 'openwrt', 'host']:
             with self.subTest(kind=kind), self.fixture(kind) as (root, home, env, _):

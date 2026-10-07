@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v126 -->
+<!-- normative-sync: full-system-audit-v127 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1999,6 +1999,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **7 October,F362–F363:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): recheck plan/marker after show, receipt mv and pending rm; fresh OpkgTun init launch invalidates the old process receipt, repeated live start preserves it. Baseline8 failures in4 of5 new methods on each ash/dash; fixed199 methods/interpreter without skips,37 recipes/14 LuCI/docs9/bindings PASS. Real process, modelled ndmc/plan publication;Rust/FFI/SDK/cross unchanged. Writer/lock/after-final-check/atomic ndm/direct launch OPEN. Q31 IN_PROGRESS,28/37(75.7%);Q29/Q30/D06 retained.
 
 **7 October,F364:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): shared router/host/CI exporter pins five Cargo.toml release fields against ambient FFI/environment/home/ancestor overrides. Real-Cargo baseline9assertion FAIL in12cells;fixed8methods/12cells and72Linux helper/gate methods without skips PASS. Actual pinned Zig/cargo-zigbuild x86_64-musl mini baseline unwind|0/fixed abort|3;staticELF validator/execution PASS.37recipes/14LuCI/docs9/bindings PASS. Not current Qeli/clean A-B/4targets/SDK/FFI/CI run;full hermetic/pipeline OPEN. Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 retained.
+
+**7 October,F365/Q31-V005:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): full independent x86_64-musl baseline A/B differed; shared helper remaps owned source paths. Two fresh fixed full Qeli builds byte-identical;9actual-Cargo/72Linux model methods and48INI metadata cases PASS without skips. Verified existing offline registry seed, no network/VPN or published-binary replacement. Other-ISA A/B/full hermetic/SDK pipeline OPEN;Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 unchanged.
 
 
 

@@ -318,3 +318,11 @@ FFI libraries retain their separate unwind policy; SDK feed profiles are unchang
 Actual GNU Cargo mini-crates and a pinned Zig x86_64-musl mini-probe were tested,
 not a new whole Qeli/cross/firmware build. Other profile keys, forced child env,
 source/linker/PATH/caches and clean Qeli A/B are not fully isolated yet.
+
+The shared standalone/host helper also remaps its private source root to
+`/usr/src/qeli` in compiled source locations (`file!()`/panic diagnostics); actual
+configuration paths stay unchanged. F365 verified two independent full x86_64-musl
+Qeli builds with fresh target/Zig caches and identical offline registry copies:
+byte-identical ELF, help/version and INI metadata PASS. This supersedes the earlier
+A/B NOT_RUN statement only for this target/recipe; other targets, SDK/CI path policy
+and arbitrary build environments remain separate. See the Q31 audit report.

@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v30 -->
+<!-- normative-sync: q31-openwrt-controls-v31 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1052,7 +1052,7 @@ default toolchains и работающие сервисы не изменяли�
 | Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt и counter reset при fresh OpkgTun init launch scoped PASS; writer/lock, direct launch и admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
-| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory и F364 пять standalone release fields scoped PASS; полная hermetic policy и Qeli A/B OPEN |
+| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory и F364 пять standalone release fields scoped PASS; F365 clean x86_64 Qeli A/B scoped PASS; полная hermetic policy и другие ISA A/B OPEN |
 
 Эта таблица актуализирует исторические cross-build NOT_RUN в предыдущих разделах;
 их исходные evidence не переписаны. Пакет:
@@ -1767,3 +1767,38 @@ Raw: `audit-debt-20260924/q31-router-release-profile-20261007/`; seal и scoped 
 41 historic cases/acceptance и35 прежних supplements сохранены. Q31 IN_PROGRESS,
 28/37(75.7%),9 осталось; Q29 SIGKILL FAIL/auto-null ENONET,Q30 callback-drain OPEN/
 Apple exclusions,D06 ACCEPTED неизменны. Published binaries не заменены.
+
+## F365 / Q31-V005: независимые сборки зависели от временного пути исходников
+
+Две полные сборки Qeli x86_64-musl выполняли точный общий standalone-рецепт с Rust
+1.97.0, cargo-zigbuild0.23.0 и Zig0.13.0. У каждой были пустые target и Zig/XDG cache,
+отдельные HOME/Cargo home и одинаковая offline-копия существующего registry.
+Сборки шли последовательно, одним потоком. Все364 входа крейта совпадали и остались
+неизменными; это сборка полного клиента, а не маленькой тестовой программы.
+
+Обе baseline-сборки завершились успешно: статические ELF по5582856 байт, но96458
+байт различались. В каждом были227 вхождений случайного mktemp-пути. Простая замена
+строк не сделала файлы одинаковыми; исходный FAIL сохранён. Общий router/host helper
+теперь передаёт `--remap-path-prefix=<owned root>=/usr/src/qeli`. Меняются записанные
+в binary пути исходников, включая `file!()` и panic diagnostics; каталог не создаётся,
+пути конфигов не меняются. MIPS soft-float сохранён. Канонические manifests,
+Rust/core/FFI и SDK/CI recipes неизменны. Описание — в [rustc](https://doc.rust-lang.org/rustc/command-line-arguments.html#--remap-path-prefix-remap-source-names-in-output).
+
+Один новый actual-Cargo метод воспроизвёл три baseline FAIL: Keenetic/OpenWrt/host.
+Все9 исправленных actual-Cargo методов и72 Linux helper/gate методов PASS без skips.
+Две новые полные исправленные сборки побайтно идентичны:5577864 байт, SHA256
+`5132852d8b56ec588a503d52b4cc6cc4aa959d2c537e6ed47a2daa4518c2427b`.
+Своих временных путей в ELF нет. Проверки ELF, help/version и24 INI metadata cases
+на каждую пару PASS (48 baseline/fixed), без подключения. Проверены пять release
+flags, отсутствие лишних FFI outputs и компиляция без готовых target-артефактов.
+Предупреждения dependencies и deprecated linker optimization сохранены без подавления.
+Глобальные registry/tools неизменны; временные каталоги удалены, своих процессов
+и mounts не осталось. Опубликованные binaries не заменялись.
+
+Подтверждён clean independent x86_64 standalone A/B с проверенной существующей
+registry-копией. Другие ISA A/B, произвольная Cargo/config/linker/PATH/cache hermeticity,
+SDK bootstrap/source release-cut и firmware runtime этим прогоном не подтверждены.
+Firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%); Q29 SIGKILL FAIL/auto-null ENONET,
+Q30 callback-drain OPEN/Apple exclusions и D06 ACCEPTED сохранены.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-clean-ab-20261007.
+Evidence: release/certification/evidence/q31-router-clean-ab-20261007.json.
