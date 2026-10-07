@@ -152,7 +152,7 @@ exec '''+real+' "$@"')
             self.assertNotEqual(self.service('start').returncode,0);moved.rename(path)
         self.assertEqual(self.helper_pids(),set());self.assertFalse(self.pidfile.exists())
     def fail_publication(self):
-        self.write_command('mv','[ "$QELI_FAIL" != publish ] && [ "$QELI_FAIL" != publish-signal ] || exit 17\nexec '+shlex.quote(shutil.which('mv'))+' "$@"')
+        self.write_command('mv','case "$QELI_FAIL:$*" in publish:*/qeli-client.pid|publish-signal:*/qeli-client.pid) exit 17 ;; esac\nexec '+shlex.quote(shutil.which('mv'))+' "$@"')
         self.script.write_text(self.script.read_text().replace('[ "$QELI_FAIL" != signal ]','[ "$QELI_FAIL" != signal ] && [ "$QELI_FAIL" != publish-signal ]'))
     def test_publication_error_joins_child_and_removes_staging(self):
         self.fail_publication();self.assertNotEqual(self.service('start',QELI_FAIL='publish').returncode,0)

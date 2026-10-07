@@ -30,7 +30,7 @@ load_gateway_owner() {
   GATEWAY_OWNER=""
   EXPECT_ROUTER_ATTACH=false
   [ -z "$OPKGTUN" ] || EXPECT_ROUTER_ATTACH=true
-  GATEWAY_OWNER="$("$BIN" --config "$CONF" --print-gateway-owner \
+  GATEWAY_OWNER="$("$BIN" --config "${QELI_LAUNCH_CONF:-$CONF}" --print-gateway-owner \
     --expect-router-device "$TUN" --expect-router-attach "$EXPECT_ROUTER_ATTACH")" || {
     echo "qeli-client: cannot admit router interface/gateway ownership; check INI and upgrade binary/template together"; return 1;
   }
@@ -338,15 +338,16 @@ start() {
   [ -x "$BIN" ] && [ -s "$CONF" ] && command -v readlink >/dev/null 2>&1 || {
     echo "qeli-client: executable/config/readlink missing"; return 1;
   }
-  load_gateway_owner || return 1
   [ -e /dev/net/tun ] || { echo "нет /dev/net/tun — включи компонент VPN в KeeneticOS"; return 1; }
-  mkdir -p /opt/var/run /opt/var/log /opt/etc/qeli || return 1
+  mkdir -p /opt/var/run /opt/var/log || return 1
+  qeli_prepare_launch_config "$CONF" || return 1
+  load_gateway_owner || return 1
   if [ -f "$SYSCTL_STATE" ]; then nat_down || return 1; fi
   rm -f "$PIDFILE" "$PLAN_STATE" || return 1
   PID_TMP="$(mktemp "$PIDFILE.XXXXXX")" || return 1
   chmod 600 "$PID_TMP" || { rm -f "$PID_TMP"; return 1; }
   echo "qeli-client: старт"
-  "$BIN" --config "$CONF" >> "$LOG" 2>&1 &
+  "$BIN" --config "$QELI_LAUNCH_CONF" >> "$LOG" 2>&1 &
   PROC_PID=$!
   if ! read_proc_stat; then
     if [ -d "/proc/$PROC_PID" ]; then
@@ -386,6 +387,7 @@ stop() {
   # The client must finish its own NetworkPlan teardown before wrapper recovery.
   stop_process || return 1
   nat_down || return 1
+  qeli_clear_launch_config || return 1
   rm -f "$PLAN_STATE" || return 1
   # Kernel/core/ndm own TUN lifetime; never delete a possibly foreign/persistent link.
   rm -f "$PIDFILE"
