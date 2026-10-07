@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v20 -->
+<!-- normative-sync: q31-openwrt-controls-v21 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1048,7 +1048,7 @@ default toolchains и работающие сервисы не изменяли�
 |---|---|
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
-| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; package SDK остаётся OPEN, procd non-PID1 lifecycle проверен |
+| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; полный Qeli SDK build/install OPEN, procd non-PID1 lifecycle проверен |
 | Preflight→launch config snapshot, core plan generation/ABA | OPEN; текущий exclusion lock не устраняет эти гонки |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
@@ -1262,3 +1262,71 @@ Actual procd supervision API проверен в указанном scope; SDK/p
 HTTP, config preflight/core generation/ABA, clean A/B остаются OPEN; firmware
 USER_EXCLUDED. Q31 IN_PROGRESS;28/37(75.7%),9 осталось. Q29 SIGKILL FAIL/auto-null
 ENONET, Q30 Apple exclusions/callback-drain OPEN и D06 ACCEPTED сохранены.
+
+## F353–F354: проверка настоящего SDK и пакета LuCI (7 октября)
+
+F353: безусловная `+ip6tables` в рецепте Qeli создаёт recursive dependency
+в настоящем SDK24.10.4 с его pinned feeds и альтернативными virtual providers.
+Ошибки появляются для qeli и luci-app-qeli; `make defconfig` при этом может
+вернуть0. Зависимость теперь `+IPV6:ip6tables`; virtual backend choice сохранён,
+IPv6 provider требуется только при IPV6. Прямой `scripts/config/conf` и проверка
+stderr обязательны: один exit code make не подтверждает корректный Kconfig.
+Baseline с прежним рецептом воспроизводит цикл; conditional recipe его устраняет.
+
+F354: luci.mk читает LUCI_MAINTAINER и LUCI_URL, а прежний PKG_MAINTAINER
+не попадал в IPK. Старый реально собранный пакет указывал OpenWrt LuCI community
+и URL общего LuCI. Исправлены обе переменные; новый control содержит Alexandr
+и https://github.com/litvinovtd/qeli. Старый IPK сохранён; тот же контрольный тест
+на нём FAIL, на новом PASS. Инструкция source hash больше не предполагает tar.xz:
+этот SDK генерирует tar.zst; release-cut SHA/mirror hash остаётся обязательством.
+
+Официальный x86/64 SDK24.10.4 скачан и сверён с release SHA256
+229e871f734a2cee5ce3ad6a3e98d3836b0899bfdeaea4d9c2c5cc7b1fce1407.
+Pinned LuCI75e41cba5160281b2d1dca922719efef29f7ffd8, packages Rust
+f1470815f41fe199bfdafe9a91ad115bc2e91203 и base v24.10.4 сохранены с hashes.
+Использован только нужный Rust feed recipe, без полного packages feed.
+GNU awk установлен распаковкой скачанных deb в owned directory; host packages
+не устанавливались. luCI host jsmin/po2lmo собраны штатным host-compile, затем
+реальный LuCI compile -j1 создаёт IPK с минифицированным JS. Прямой package goal
+не квалифицирует полный resolver, Rust bootstrap или сборку самого Qeli.
+
+`scripts/test_openwrt_sdk.py`:3 SDK метода PASS без skips (реальная metadata,
+stock IPV6=y, private Kconfig IPV6=n),3 IPK метода PASS без skips; packaged
+minified JS проходит14 прежних LuCI сценариев. SDK скрывает IPV6 с default y,
+поэтому первоначальный запрос n фактически давал y и не квалифицирует IPv4-only.
+Последний n-test временно меняет только owned Config-build.in default, отключает
+ALL/ALL_KMODS/ALL_NONSHARED, проверяет фактические символы и восстанавливает файлы.
+Это private Kconfig branch coverage, не реальный IPv4-only firmware runtime.
+IPK имеет четыре ожидаемых файла0644; RPC/ACL/menu bytes равны Git, JS меньше
+исходника.37 native recipe/14 source LuCI/docs/bindings/diff checks PASS.
+
+Попытка opkg install в пустой owned offline-root НЕ PASS: после исправления
+fixture lock directory отсутствуют пять dependency packages; opkg отклоняет
+candidate даже с force-depends/nodeps/add-arch. Начальные и последние logs
+сохранены, temporary roots удалены. Fake installed dependency records не добавлялись.
+Установка с настоящим resolver/зависимостями остаётся OPEN. Первые missing awk,
+wrong feeds env, missing jsmin и неправильное ожидание IPV6=n сохранены как harness
+FAIL, не product defects и не положительные результаты.
+
+Прежний compiler cache только собственного завершённого Q31 Keenetic run на .11
+сжат в target-cache.tar.zst; zstd/tar compare PASS, прежний qeli-client сохранён
+отдельно с прежним SHA. Только после проверки удалён восстановимый target cache.
+SDK, source feeds, IPK, inputs и logs сохранены. Нет процессов/temporary install
+roots; host services/network/firewall и .10 не затронуты. Rust/core/native код,
+ABI и опубликованные бинарники не менялись; новая Rust/FFI/cross сборка не заявлена.
+
+Cargo.toml не объявляет rust-version. Rust1.89.0 в pinned SDK feed нельзя считать
+несовместимым только потому, что предыдущая standalone recipe тестировалась
+с1.97.0; первоначальная гипотеза о минимуме1.96 была неверной. Реальная совместимость
+SDK Rust с Qeli, source pin/mirror release-cut и clean A/B остаются OPEN.
+HTTP, preflight/core generation/ABA и administrator replacement races также OPEN;
+firmware USER_EXCLUDED. Исторические41 certification cases и acceptance сохранены;
+новое scoped supplement не заменяет их artifact/date/status.
+Q31 IN_PROGRESS;28/37(75.7%),9 осталось. Q29 SIGKILL FAIL/auto-null ENONET,
+Q30 Apple exclusions/callback-drain OPEN и D06 ACCEPTED сохранены.
+
+Источники: [официальный SDK/hash](https://downloads.openwrt.org/releases/24.10.4/targets/x86/64/),
+[pinned LuCI package mapping](https://github.com/openwrt/luci/blob/75e41cba5160281b2d1dca922719efef29f7ffd8/luci.mk),
+[pinned Rust recipe](https://github.com/openwrt/packages/blob/f1470815f41fe199bfdafe9a91ad115bc2e91203/lang/rust/Makefile).
+Пакет: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-sdk-20261007.
+Evidence: release/certification/evidence/q31-openwrt-sdk-20261007.json.

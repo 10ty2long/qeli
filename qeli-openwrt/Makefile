@@ -36,8 +36,10 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 #
 # Produce the hash from the OpenWrt buildroot after adding this package:
 #     make package/qeli/download V=s
-#     sha256sum dl/$(PKG_NAME)-$(PKG_VERSION).tar.xz
-# (or `make package/qeli/check FIXUP=1`, which rewrites the line in place). The
+#     make package/qeli/check FIXUP=1
+# Use the actual Source filename from package metadata: the SDK chooses the
+# archive extension (24.10.4 uses .tar.zst), not a hardcoded .tar.xz path.
+# FIXUP=1 rewrites the hash in this recipe. The
 # placeholder is deliberately a value that CANNOT match, so the build fails loudly
 # rather than proceeding unverified — do NOT replace it with `skip`.
 PKG_MIRROR_HASH:=00036a1c982be4f565108a8b50cf7dbfe9f0892c075ae97464855b37ab150775
@@ -66,7 +68,9 @@ define Package/qeli
   SUBMENU:=VPN
   TITLE:=qeli VPN client (REALITY / anti-DPI, post-quantum)
   URL:=https://github.com/litvinovtd/qeli
-  DEPENDS:=$(RUST_ARCH_DEPENDS) +kmod-tun +ip-full +iptables +ip6tables +ca-bundle
+  # ip6tables providers require IPv6; an unconditional virtual dependency
+  # generates a recursive Kconfig expression in the 24.10 SDK.
+  DEPENDS:=$(RUST_ARCH_DEPENDS) +kmod-tun +ip-full +iptables +IPV6:ip6tables +ca-bundle
 endef
 
 define Package/qeli/description
