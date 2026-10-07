@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v135 -->
+<!-- normative-sync: full-system-audit-v137 -->
 
 **Текущий итог, 7 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2049,6 +2049,8 @@ Counters/quota/session accounting при reconnect/reap/crash, corrupt store, bo
 до 10 секунд после завершения производителей. Detached-обёртки уведомлений удалены.
 864 host Rust tests PASS; Linux только all-targets cross-check. Владение panel/metrics/
 autostart supervisor, доверие конфигу и Linux E2E ещё открыты.
+
+**8 октября, F380–F383:** [метрики Q32](../reports/AUDIT-Q32-METRICS.md): missing-RPC baseline, guest/CPU reset и PID/starttime исправлены; три старых ошибки метрик и PID42 collision воспроизведены;8metrics/36namespace при PID42 и2424library PASS (60ignored),Clippy/daemon PASS. Native/ABI в evidence отчёта. Usage/logs/notify остаются открыты; Q32 IN_PROGRESS,28/37 overall.
 
 ### 33. Установка, обновление, файловые права и hooks
 

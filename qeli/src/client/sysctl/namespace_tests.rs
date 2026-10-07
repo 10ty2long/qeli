@@ -155,7 +155,7 @@ fn seed_owned(f: &Fixture) {
                 target: None,
                 original: "0".into(),
                 managed: "1".into(),
-                owners: BTreeSet::from(["42:100:edge".into()]),
+                owners: BTreeSet::from([format!("{}:100:edge", i32::MAX)]),
             },
         );
         tx.persist()

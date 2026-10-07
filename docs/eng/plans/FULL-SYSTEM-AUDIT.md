@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v135 -->
+<!-- normative-sync: full-system-audit-v137 -->
 
 **Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2038,6 +2038,8 @@ Counters/quota/session accounting across reconnect/reap/crash, corrupt stores an
 10-second drain after producers stop. No detached notification wrappers remain.
 864 host Rust tests PASS; Linux all-targets cross-check only. Supervisor panel/metrics/
 autostart ownership, config trust and Linux runtime E2E remain open.
+
+**October8,F380–F383:** [Q32 metrics](../reports/AUDIT-Q32-METRICS.md): missing-RPC baseline,guest/CPU resets and PID/starttime fixed;three old metric failures and PID42 collision reproduced;8metrics/36namespace at PID42 and2424library PASS(60ignored),Clippy/daemon PASS.Native/ABI in report evidence.Usage/logs/notify remain open;Q32 IN_PROGRESS,28/37 overall.
 
 ### 33. Installation, updates, file permissions and hooks
 

@@ -462,3 +462,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q30: iOS source / memory reconciliation](reports/AUDIT-Q30-IOS-SOURCE-MEMORY.md)
 
 - [Q31: OpenWrt / LuCI control](reports/AUDIT-Q31-OPENWRT-CONTROLS.md)
+
+- [Q32: metrics across missing samples and worker changes](reports/AUDIT-Q32-METRICS.md)
