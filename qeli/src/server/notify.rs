@@ -394,7 +394,7 @@ pub fn fire(event: Event, detail: &str) {
                 };
                 let _ = queue.try_spawn(async move {
                     match delivery.send().await {
-                        Ok(code) if code >= 400 => {
+                        Ok(code) if !(200..300).contains(&code) => {
                             log::warn!("notify {channel}: delivery rejected with HTTP {code}")
                         }
                         Err(error) => log::warn!("notify {channel}: delivery failed: {error}"),
@@ -439,7 +439,7 @@ async fn test_delivery(delivery: Result<Delivery, String>) -> serde_json::Value 
     }
     .await;
     match result {
-        Ok(code) => serde_json::json!({ "ok": code < 400, "status": code }),
+        Ok(code) => serde_json::json!({ "ok": (200..300).contains(&code), "status": code }),
         Err(error) => serde_json::json!({ "ok": false, "error": error }),
     }
 }
@@ -529,6 +529,12 @@ fn ip_is_forbidden(ip: &std::net::IpAddr) -> bool {
                 || v4.is_multicast()
                 || o[0] == 0 // 0.0.0.0/8
                 || (o[0] == 100 && (o[1] & 0xC0) == 64) // CGNAT 100.64.0.0/10
+                || o[0] >= 240 // reserved 240.0.0.0/4
+                || (o[0] == 192 && o[1] == 0 && matches!(o[2], 0 | 2))
+                || (o[0] == 192 && o[1] == 88 && o[2] == 99) // deprecated relay
+                || (o[0] == 198 && matches!(o[1], 18 | 19)) // benchmark networks
+                || (o[0] == 198 && o[1] == 51 && o[2] == 100)
+                || (o[0] == 203 && o[1] == 0 && o[2] == 113)
         }
         IpAddr::V6(v6) => {
             if let Some(m) = v6.to_ipv4_mapped() {
@@ -540,6 +546,12 @@ fn ip_is_forbidden(ip: &std::net::IpAddr) -> bool {
                 || v6.is_multicast()
                 || (s[0] & 0xfe00) == 0xfc00 // ULA fc00::/7
                 || (s[0] & 0xffc0) == 0xfe80 // link-local fe80::/10
+                || (s[0] & 0xffc0) == 0xfec0 // deprecated site-local fec0::/10
+                || (s[0] & 0xe000) != 0x2000 // global-unicast allocation only
+                || (s[0] == 0x2001 && s[1] < 0x0200) // special-use, including Teredo
+                || (s[0] == 0x2001 && s[1] == 0x0db8) // documentation
+                || s[0] == 0x2002 // deprecated 6to4 can embed private IPv4
+                || (s[0] == 0x3fff && (s[1] & 0xf000) == 0) // documentation /20
         }
     }
 }
@@ -606,36 +618,53 @@ fn build_request(authority: &str, path: &str, content_type: &str, body: &[u8]) -
 async fn read_status<S: tokio::io::AsyncRead + Unpin>(s: &mut S) -> Result<u16, String> {
     let mut out: Vec<u8> = Vec::with_capacity(512);
     let mut tmp = [0u8; 512];
-    for _ in 0..8 {
-        let n = s.read(&mut tmp).await.map_err(|e| format!("read: {e}"))?;
+    while out.len() < 4096 {
+        let remaining = tmp.len().min(4096 - out.len());
+        let n = s
+            .read(&mut tmp[..remaining])
+            .await
+            .map_err(|e| format!("read: {e}"))?;
         if n == 0 {
             break;
         }
         out.extend_from_slice(&tmp[..n]);
-        if out.windows(2).any(|w| w == b"\r\n") || out.len() > 4096 {
+        if out.windows(2).any(|w| w == b"\r\n") {
             break;
         }
     }
-    let line = String::from_utf8_lossy(&out);
-    let first = line.lines().next().unwrap_or("");
-    first
-        .split_whitespace()
-        .nth(1)
-        .and_then(|c| c.parse::<u16>().ok())
-        .ok_or_else(|| {
-            format!(
-                "bad response: {}",
-                first.chars().take(80).collect::<String>()
-            )
-        })
+    // Never reflect remote bytes: an endpoint can echo the URL token or body
+    // into a malformed status line, which is then shown by the panel or logged.
+    let line_end = out
+        .windows(2)
+        .position(|w| w == b"\r\n")
+        .ok_or_else(|| "invalid HTTP response status".to_string())?;
+    let line = std::str::from_utf8(&out[..line_end])
+        .map_err(|_| "invalid HTTP response status".to_string())?;
+    let mut fields = line.splitn(3, ' ');
+    let version = fields.next().unwrap_or("");
+    let code = fields.next().unwrap_or("");
+    if !matches!(version, "HTTP/1.0" | "HTTP/1.1")
+        || code.len() != 3
+        || !code.bytes().all(|c| c.is_ascii_digit())
+        || fields.next().is_none()
+    {
+        return Err("invalid HTTP response status".into());
+    }
+    let code = code
+        .parse::<u16>()
+        .map_err(|_| "invalid HTTP response status".to_string())?;
+    if !(200..600).contains(&code) {
+        return Err("unsupported HTTP response status".into());
+    }
+    Ok(code)
 }
 
 /// Split `scheme://host[:port][/path]` → (https?, host, port, path).
 pub(crate) fn parse_url(url: &str) -> Result<(bool, String, u16, String), String> {
     // Reject control characters (incl. CR/LF/DEL) to prevent header injection
     // when the host/path are spliced into the raw HTTP request in build_request.
-    if url.bytes().any(|b| b < 0x20 || b == 0x7f) {
-        return Err("URL contains control characters".into());
+    if url.bytes().any(|b| b <= 0x20 || b == 0x7f) {
+        return Err("URL contains whitespace or control characters".into());
     }
     let (https, rest) = if let Some(r) = url.strip_prefix("https://") {
         (true, r)
@@ -644,7 +673,9 @@ pub(crate) fn parse_url(url: &str) -> Result<(bool, String, u16, String), String
     } else {
         return Err("URL must start with http:// or https://".into());
     };
-    let (authority, path) = match rest.find('/') {
+    // Fragments are local URL metadata; queries without a slash still target '/'.
+    let rest = rest.split('#').next().unwrap_or(rest);
+    let (authority, path) = match rest.find(['/', '?']) {
         Some(i) => (&rest[..i], &rest[i..]),
         None => (rest, "/"),
     };
@@ -687,10 +718,10 @@ pub(crate) fn parse_url(url: &str) -> Result<(bool, String, u16, String), String
     if host.is_empty() || port == 0 {
         return Err("invalid host or port".into());
     }
-    let path = if path.is_empty() {
-        "/".into()
+    let path = if path.starts_with('?') {
+        format!("/{path}")
     } else {
-        path.into()
+        path.to_string()
     };
     Ok((https, host, port, path))
 }
@@ -741,6 +772,83 @@ mod tests {
         assert!(parse_url("https://host/\x7f").is_err());
         // A clean URL with the same shape still parses.
         assert!(parse_url("https://host/a").is_ok());
+    }
+
+    #[tokio::test]
+    async fn response_status_is_complete_valid_and_never_reflects_secrets() {
+        for response in [
+            b"malformed echoed-bot-secret\r\n".as_slice(),
+            b"anything 200 echoed-bot-secret\r\n",
+            b"HTTP/1.1 200 OK",
+            b"HTTP/1.1 20 OK\r\n",
+            b"HTTP/1.1 999 echoed-bot-secret\r\n",
+            b"HTTP/1.1 100 Continue\r\n",
+            b"HTTP/1.1 200\r\n",
+        ] {
+            let error = read_status(&mut &response[..]).await.unwrap_err();
+            assert!(!error.contains("echoed-bot-secret"), "{error}");
+        }
+        for (response, expected) in [
+            ("HTTP/1.1 204 \r\n", 204),
+            ("HTTP/1.0 503 Unavailable\r\n", 503),
+            ("HTTP/1.1 302 Found\r\n", 302),
+        ] {
+            assert_eq!(
+                read_status(&mut response.as_bytes()).await.unwrap(),
+                expected
+            );
+        }
+        let (mut tx, mut rx) = tokio::io::duplex(32);
+        let writer = tokio::spawn(async move {
+            for byte in b"HTTP/1.1 201 Created\r\n" {
+                tx.write_all(&[*byte]).await.unwrap();
+                tokio::task::yield_now().await;
+            }
+        });
+        assert_eq!(read_status(&mut rx).await.unwrap(), 201);
+        writer.await.unwrap();
+    }
+
+    #[test]
+    fn url_query_fragment_and_spaces_cannot_corrupt_request_target() {
+        assert_eq!(
+            parse_url("https://hooks.example?token=fixture#local").unwrap(),
+            (true, "hooks.example".into(), 443, "/?token=fixture".into())
+        );
+        assert_eq!(
+            parse_url("https://hooks.example/path?q=x#local").unwrap().3,
+            "/path?q=x"
+        );
+        for url in [
+            "https://hooks.example/a b",
+            "https://hooks. example/path",
+            "https://hooks.example?query=bad value",
+        ] {
+            assert!(parse_url(url).is_err());
+        }
+    }
+
+    #[test]
+    fn special_use_destinations_cannot_bypass_public_address_guard() {
+        for address in [
+            "198.18.0.1",
+            "192.88.99.2",
+            "3fff::1",
+            "198.19.0.1",
+            "192.0.0.1",
+            "192.0.2.1",
+            "198.51.100.1",
+            "203.0.113.1",
+            "240.0.0.1",
+            "fec0::1",
+            "64:ff9b::a00:1",
+            "2001:2::1",
+            "2001:db8::1",
+            "2002:a00:1::1",
+            "::ffff:198.18.0.1",
+        ] {
+            assert!(ip_is_forbidden(&address.parse().unwrap()), "{address}");
+        }
     }
 
     #[test]
