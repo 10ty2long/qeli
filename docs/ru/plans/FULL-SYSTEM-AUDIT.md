@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v120 -->
+<!-- normative-sync: full-system-audit-v121 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -1998,6 +1998,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **Продолжение F322–F323, 6 октября:** [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): проверяемые атомарные forwarding snapshots, checkpoints семейств/интерфейсов, tagged legacy firewall ownership и failure/retry gates в обоих шаблонах Keenetic.64 shell model tests на BusyBox/dash (44 новых),37 recipes/docs/bindings PASS. Воспроизведены старый плохой снимок, забытое восстановление, удаление совпадающих admin rules, скрытые firewall failures, смена режима и restart gating. Старые нетегированные checkpoints требуют ручной сверки; настоящие router/kernel/comment capability/cross-build NOT_RUN,router USER_EXCLUDED. PID/join/launch/INI parity/OpkgTun concurrency/широкий review OPEN; Q31 IN_PROGRESS,28/37 без изменений.
 
 **Продолжение F324–F325, 6 октября:** [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): проверка PID/start ticks/executable, атомарный приватный process record, ожидание TERM до wrapper cleanup, сохранение timeout/error state и проверка startup/upgrade admission.108 BusyBox/dash cases (43 настоящих native helper process checks,44 state models,21 installer/hook) и37 recipes/docs/bindings PASS. Безопасное old/new сравнение воспроизводит foreign/group PID, раннюю очистку, игнорируемый TERM и ложный успех запуска. Atomic pidfd/interprocess и настоящий router/core network не квалифицированы; сокращённый polling/сверка old PID при обновлении описаны. INI parity/OpkgTun generations/concurrency/packaging/широкий source/build review OPEN; Q31 IN_PROGRESS,28/37 без изменений.
+
+**7 октября, Q31-V003:** настоящая SDK упаковка retained musl binary и offline opkg:7PASS без skips; подписанные release feeds, nft/legacy resolver, install/upgrade/remove и conffile0600. Полный SDK Rust compile/source release-cut OPEN; живой router USER_EXCLUDED. [Отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) без изменений.
 
 ### 32. Метрики, usage, логи и уведомления
 
