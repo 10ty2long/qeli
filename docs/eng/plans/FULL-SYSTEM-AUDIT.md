@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v125 -->
+<!-- normative-sync: full-system-audit-v126 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1997,6 +1997,9 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **7 October,F361:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): runtime NetworkPlan records the existing authenticated generation, distinguishing same-address new generations and within-adapter ABA. Derived baseline2 assertion FAIL/1 PASS; fixed11 Rust units/GNU check/production Clippy/fmt PASS;194 Keenetic methods on each ash/dash without skips(2 new),37 recipes/14 LuCI/docs9/bindings PASS. Writer/lock,counter reset and atomic ndm remain OPEN; no fresh SDK/FFI/cross/firmware claim. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained.
 
 **7 October,F362–F363:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): recheck plan/marker after show, receipt mv and pending rm; fresh OpkgTun init launch invalidates the old process receipt, repeated live start preserves it. Baseline8 failures in4 of5 new methods on each ash/dash; fixed199 methods/interpreter without skips,37 recipes/14 LuCI/docs9/bindings PASS. Real process, modelled ndmc/plan publication;Rust/FFI/SDK/cross unchanged. Writer/lock/after-final-check/atomic ndm/direct launch OPEN. Q31 IN_PROGRESS,28/37(75.7%);Q29/Q30/D06 retained.
+
+**7 October,F364:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): shared router/host/CI exporter pins five Cargo.toml release fields against ambient FFI/environment/home/ancestor overrides. Real-Cargo baseline9assertion FAIL in12cells;fixed8methods/12cells and72Linux helper/gate methods without skips PASS. Actual pinned Zig/cargo-zigbuild x86_64-musl mini baseline unwind|0/fixed abort|3;staticELF validator/execution PASS.37recipes/14LuCI/docs9/bindings PASS. Not current Qeli/clean A-B/4targets/SDK/FFI/CI run;full hermetic/pipeline OPEN. Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 retained.
+
 
 
 

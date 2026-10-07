@@ -99,6 +99,7 @@ class CargoRuntimeTests(unittest.TestCase):
                     'binary_sha256':hashlib.sha256(binary.read_bytes()).hexdigest() if binary.is_file() else None,
                     'configured_compiler_called':(root/'compiler-calls').exists(),
                     'ambient_intermediates_created':(root/'ambient-intermediates').exists()})+'\n')
+        self.last_build_result = result
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
         self.assertTrue(binary.is_file())
         return output
@@ -150,6 +151,48 @@ class CargoRuntimeTests(unittest.TestCase):
                 self.assertFalse((root/'compiler-calls').exists())
                 if entry == 'unit_tests':self.assertIn('1 passed',result.stdout)
                 if entry == 'client dependency graph':gate.client_graph_without_ring(result.stdout)
+
+    def test_release_profile_resists_environment_home_and_ancestor_overrides(self):
+        profile = ('[profile.release]\nlto="fat"\ncodegen-units=1\nopt-level=3\n'
+                   'strip=true\npanic="abort"\n')
+        adverse = ('[profile.release]\nlto=false\ncodegen-units=16\nopt-level=0\n'
+                   'strip=false\npanic="unwind"\n')
+        values = {'LTO':'false', 'CODEGEN_UNITS':'16', 'OPT_LEVEL':'0',
+                  'STRIP':'false', 'PANIC':'unwind'}
+        for kind in ['keenetic', 'openwrt', 'host']:
+            for source in ['environment', 'cargo-home', 'ancestor', 'forced-child-env']:
+                with self.subTest(kind=kind, source=source), self.fixture(kind) as (root, home, env, _):
+                    manifest = root/'Cargo.toml'
+                    manifest.write_text(manifest.read_text()+profile)
+                    (root/'build.rs').write_text('fn main() { println!("cargo:rustc-env=QELI_PROFILE_OPT={}", '
+                        'std::env::var("OPT_LEVEL").unwrap()); }\n')
+                    (root/'src/main.rs').write_text('fn main() { println!("{}|{}", '
+                        'if cfg!(panic="abort") { "abort" } else { "unwind" }, '
+                        'env!("QELI_PROFILE_OPT")); }\n')
+                    command = self.command(root, kind)+' -vv'
+                    if source == 'environment':
+                        env.update({'CARGO_PROFILE_RELEASE_'+key:value for key,value in values.items()})
+                    elif source == 'cargo-home':
+                        (home/'config.toml').write_text(adverse)
+                    elif source == 'ancestor':
+                        # All ancestor configuration stays inside this owned root.
+                        crate = root/'nested-crate';crate.mkdir()
+                        for name in ['Cargo.toml','Cargo.lock','build.rs','src']:
+                            (root/name).rename(crate/name)
+                        config = root/'.cargo';config.mkdir()
+                        (config/'config.toml').write_text(adverse)
+                        command = command.replace('cd '+shlex.quote(str(root))+' && ',
+                                                  'cd '+shlex.quote(str(crate))+' && ', 1)
+                    else:
+                        (home/'config.toml').write_text(''.join(
+                            '[env.CARGO_PROFILE_RELEASE_'+key+']\nvalue="'+value+'"\nforce=true\n'
+                            for key,value in values.items()))
+                    self.assertEqual(self.build(root, env, command), 'abort|3')
+                    compiler = next(line for line in self.last_build_result.stderr.splitlines()
+                                    if '--crate-name qeli_client' in line)
+                    for flag in ['-C opt-level=3', '-C lto=fat', '-C codegen-units=1',
+                                 '-C panic=abort', '-C strip=symbols']:
+                        self.assertIn(flag, compiler)
 
     def test_failed_compiler_resolution_stops_before_cargo_or_build(self):
         for kind in ['keenetic', 'openwrt', 'host']:

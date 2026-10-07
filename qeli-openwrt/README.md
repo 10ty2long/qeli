@@ -304,3 +304,17 @@ Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See 
 The subsequent F361 runtime generation change has fresh GNU Rust1.97 unit/check/
 production Clippy/fmt coverage. The preceding SDK1.89/musl qualification covers
 the F358 source snapshot, not this subsequent source change. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+## Standalone helper release profile (development0.8.2)
+
+Shared `scripts/router_toolchain.py` supplies child Cargo with the five explicit
+canonical Cargo.toml release fields: lto=fat,codegen-units=1,opt-level=3,
+strip=true,panic=abort. OpenWrt/Keenetic standalone helpers and the Linux host gate
+override ambient profile values for these fields (including FFI panic=unwind),
+Cargo home and ancestor config. Router CI gets the same set by running
+`python3 scripts/router_toolchain.py --print-release-profile` from repository root.
+FFI libraries retain their separate unwind policy; SDK feed profiles are unchanged.
+
+Actual GNU Cargo mini-crates and a pinned Zig x86_64-musl mini-probe were tested,
+not a new whole Qeli/cross/firmware build. Other profile keys, forced child env,
+source/linker/PATH/caches and clean Qeli A/B are not fully isolated yet.

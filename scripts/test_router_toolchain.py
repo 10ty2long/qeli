@@ -95,6 +95,26 @@ class RouterToolchainTests(unittest.TestCase):
         c=Connection({"cargo-zigbuild --version":"cargo-zigbuild 0.22.0"})
         with self.assertRaisesRegex(RuntimeError,"executable mismatch"):self.invoke(c)
 
+    def test_release_environment_matches_manifest_and_ci_uses_common_export(self):
+        from pathlib import Path
+        import subprocess
+        import sys
+        import tomllib
+        root = Path(__file__).resolve().parents[1]
+        profile = tomllib.loads((root/'qeli/Cargo.toml').read_text())['profile']['release']
+        keys = {'LTO':'lto','CODEGEN_UNITS':'codegen-units','OPT_LEVEL':'opt-level',
+                'STRIP':'strip','PANIC':'panic'}
+        expected = {'CARGO_PROFILE_RELEASE_'+key:str(profile[field]).lower()
+                    for key,field in keys.items()}
+        self.assertEqual(policy.router_release_environment(), expected)
+        output = subprocess.check_output([sys.executable, str(root/'scripts/router_toolchain.py'),
+                                          '--print-release-profile'], text=True)
+        self.assertEqual(dict(line.split('=',1) for line in output.splitlines()), expected)
+        workflow = (root/'.github/workflows/ci.yml').read_text().split('  keenetic-cross:',1)[1]
+        self.assertIn('Canonical standalone router release profile\n        working-directory: .\n        run: python3 scripts/router_toolchain.py --print-release-profile >> "$GITHUB_ENV"', workflow)
+        for key,value in expected.items():
+            self.assertIn(key+'='+value, policy.router_build_command(ROOT,'x86_64-unknown-linux-musl'))
+
     def test_build_environment_pins_flags_and_rejects_unsafe_root_target_binary(self):
         for target,nightly in policy.TARGETS.items():
             command=policy.router_build_command(ROOT,target)
