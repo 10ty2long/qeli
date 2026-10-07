@@ -331,3 +331,20 @@ run scripts/test_openwrt_http.py only in an owned lab. No authentication bypass.
 Service verbs use an inert adapter; no live VPN, browser login/DOM, TLS or whole-LuCI
 cookie/CORS/CSRF policy is qualified by these API checks. Firmware remains excluded.
 See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+## Compiler and intermediate build directory (development0.8.2)
+
+The shared router build helper now resolves the selected pin's rustc with
+`rustup which --toolchain ... rustc`, verifies the executable and passes it explicitly
+to Cargo. Both `CARGO_TARGET_DIR` and `CARGO_BUILD_BUILD_DIR` point into the owned
+run's target directory, so ordinary Cargo build.rustc/build.build-dir settings or
+ambient build-dir cannot silently redirect these two inputs. Router CI follows
+the same policy. The Linux `keenetic_verify.py` gate now uses Rust1.97.0 with its
+installed Clippy component instead of the host default; missing compiler resolution
+fails before Cargo. Wrapper/encoded Rust flags follow the shared policy.
+
+This is scoped environment isolation, not a fully hermetic build. Cargo home/ancestor
+configuration, forced environment, profile/source/linker overrides, PATH/shared
+registry/tool caches and clean independent Qeli A/B still require qualification.
+7 real-Cargo methods use dependency-free Linux fixtures; they do not certify a fresh
+Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

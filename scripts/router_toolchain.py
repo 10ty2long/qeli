@@ -75,6 +75,28 @@ def ensure_router_toolchain(client, targets):
     identities["cargo-zigbuild"] = executable
     return identities
 
+def _pinned_cargo_environment(remote_root, pin, flags):
+    # +pin selects Cargo, but Cargo may still select build.rustc from config.
+    # Resolve the same pin explicitly; a failed/invalid resolution stops first.
+    return (f'QELI_ROUTER_RUSTC="$(rustup which --toolchain {pin} rustc)" && '
+            'test -x "$QELI_ROUTER_RUSTC" && '
+            "env -u CARGO_ENCODED_RUSTFLAGS -u RUSTC -u CARGO_BUILD_RUSTC "
+            "-u CARGO_BUILD_RUSTFLAGS "
+            'RUSTC="$QELI_ROUTER_RUSTC" '
+            "RUSTC_WRAPPER='' RUSTC_WORKSPACE_WRAPPER='' "
+            f"RUSTFLAGS={shlex.quote(flags)} "
+            f"CARGO_TARGET_DIR={shlex.quote(remote_root + '/target')} "
+            f"CARGO_BUILD_BUILD_DIR={shlex.quote(remote_root + '/target')} "
+            f"CARGO_INCREMENTAL=0 cargo +{pin}")
+
+
+def router_host_cargo_prefix(remote_root):
+    """Use the same compiler/output policy for the owned Linux verification gate."""
+    if re.fullmatch(r"/var/tmp/qeli-keenetic-verify\.[A-Za-z0-9]{6,}", remote_root) is None:
+        raise ValueError("unsafe router verification root")
+    return _pinned_cargo_environment(remote_root, ROUTER_RUST, "")
+
+
 def router_cargo_prefix(remote_root, target):
     """Select a pin and compiler flags without encoded/ambient RUSTFLAGS shadowing."""
     if target not in TARGETS:
@@ -83,12 +105,8 @@ def router_cargo_prefix(remote_root, target):
         raise ValueError("unsafe router build root")
     pin = ROUTER_NIGHTLY if TARGETS[target] else ROUTER_RUST
     flags = "-C link-arg=-msoft-float" if TARGETS[target] else ""
-    return ("env -u CARGO_ENCODED_RUSTFLAGS -u RUSTC -u CARGO_BUILD_RUSTC "
-            "-u CARGO_BUILD_RUSTFLAGS "
-            "RUSTC_WRAPPER='' RUSTC_WORKSPACE_WRAPPER='' "
-            f"RUSTFLAGS={shlex.quote(flags)} "
-            f"CARGO_TARGET_DIR={shlex.quote(remote_root + '/target')} "
-            f"CARGO_INCREMENTAL=0 cargo +{pin}")
+    return _pinned_cargo_environment(remote_root, pin, flags)
+
 
 def router_build_command(remote_root, target, binary="qeli-client"):
     if binary != "qeli-client":
