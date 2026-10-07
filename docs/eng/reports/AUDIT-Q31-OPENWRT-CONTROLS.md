@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v26 -->
+<!-- normative-sync: q31-openwrt-controls-v27 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1586,3 +1586,47 @@ processes, mounts or compile-case dirs. Global Rust toolchain inventory unchange
 Free disk after cleanup:.10=2588MiB,.11=467MiB.37 recipe methods,14 LuCI fixtures,
 documentation9 checks, bindings and diff checks PASS. No host services/network/
 firewall changes.41 historic certification cases preserved; scoped supplement only.
+
+## F359–F360: repeated start and rejected OpenWrt preparation (7 October)
+
+F359: init atomically rewrote client.conf but submitted the same command/path to
+procd. Repeated start with a changed server or password returned success while
+retaining the process with old data. The instance now declares INI and password
+paths through procd's file parameter. Native content comparison replaces the
+instance when data changes; rendering identical bytes preserves its PID. Writing
+a secret alone does not restart the VPN; subsequent start/restart/reload applies it.
+
+F360: rc.common closes and submits the service description even when start_service
+fails. An empty set removed the running instance after malformed MTU, invalid dev
+or missing server. The ubus wrapper now refuses set/add following unsuccessful
+preparation and returns its error. Intentional disabling and stop/delete retain
+their normal behavior.
+
+Actual procd 2024.12.22~42d39376, ubus, UCI and rc.common from official OpenWrt
+24.10.4: baseline yields five expected failures across three methods; fixed suite
+passes all 11 methods without skips. Four new methods cover changed INI/password,
+idempotent start and preservation of process/INI after three render refusals. Seven
+existing methods cover stop/reload/respawn/autostart/transport failures. Related
+55 shell/renderer/dispatcher/ucode methods pass on dash and BusyBox ash. Retained
+INI inspector and ucode identities are SHA-verified; shared parser source matches
+current Git. Rust/FFI rebuild and published binary replacement are unnecessary.
+
+Owned mount/network/PID namespaces use their own procfs for correct PID checks;
+no host proc/dev mounts enter the chroot. Client is an inert receipt/sleep adapter,
+TUN is an existence marker. No firewall or real VPN starts; procd is non-PID1. Initial
+CRLF, mismatched procfs/PID namespace and import-path diagnostics are retained as
+preparation errors, not product failures. This is not an atomic UCI/firewall/INI/core
+plan transaction: rollback after successful render, core generation/ABA and admin
+replacement remain OPEN.
+
+Mechanism checked against [the exact procd source version](https://github.com/openwrt/procd/blob/42d39376/service/instance.c).
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-config-generation-20261007.
+Evidence: release/certification/evidence/q31-openwrt-config-generation-20261007.json.
+Q31 IN_PROGRESS; 28/37 (75.7%), 9 remain. Q29 SIGKILL FAIL/auto-null ENONET,
+Q30 callback-drain OPEN/Apple exclusions and D06 ACCEPTED preserved. No push/deploy.
+
+Final: 10 source inputs and 4 retained artifacts SHA-verified; rootfs 959 files/215
+links rechecked and owned template removed. No residual owned processes, mounts
+or runtime case directories. 37 recipe checks, 14 LuCI fixtures, documentation
+9 checks, bindings and diff PASS. Historical 41 case/acceptance records preserved;
+scoped supplement added. .10 unused.

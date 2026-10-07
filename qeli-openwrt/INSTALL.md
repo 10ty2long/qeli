@@ -253,6 +253,13 @@ the next start within that restart/reload call. An unavailable procd/service soc
 is a command failure; fix the supervisor and retry. Successful submission still
 does not confirm client initialization, completed cleanup or VPN connectivity.
 
+Repeated `start` now compares the rendered INI and volatile password contents
+through procd. Changed data replaces the process; identical data keeps its PID.
+A secret write alone does not apply it. Failed start preparation refuses the
+service replacement instead of removing a running instance; a render failure
+keeps the previous INI. This does not roll back firewall/UCI changes or confirm
+VPN readiness. Use `restart`/`reload` to request an explicit restart.
+
 The development init renderer quotes string values and escapes double quotes
 according to the shared INI parser. Literal quotes, backslashes and significant
 edge whitespace in usernames or volatile obfs keys survive rendering. Enter raw
