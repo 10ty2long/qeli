@@ -94,6 +94,8 @@ def ensure_router_toolchain(client, targets):
 def _pinned_cargo_environment(remote_root, pin, flags):
     # +pin selects Cargo, but Cargo may still select build.rustc from config.
     # Resolve the same pin explicitly; a failed/invalid resolution stops first.
+    # Owned mktemp source paths otherwise enter file!()/panic locations and LLVM output.
+    flags = (flags + " " if flags else "") + f"--remap-path-prefix={remote_root}=/usr/src/qeli"
     profile_env = " ".join(key + "=" + shlex.quote(value)
                            for key, value in router_release_environment().items())
     return (f'QELI_ROUTER_RUSTC="$(rustup which --toolchain {pin} rustc)" && '

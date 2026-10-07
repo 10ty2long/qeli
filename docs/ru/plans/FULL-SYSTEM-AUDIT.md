@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v126 -->
+<!-- normative-sync: full-system-audit-v127 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2010,6 +2010,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **7 октября, F362–F363:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): повторная проверка plan/marker после show, mv receipt и rm pending; fresh OpkgTun init launch очищает receipt прежнего процесса, repeated live start сохраняет его. Baseline8 failures в4 из5 новых methods на каждом ash/dash; fixed199 methods/interpreter без skips,37 recipes/14 LuCI/docs9/bindings PASS. Process настоящий, ndmc/plan publication models; Rust/FFI/SDK/cross unchanged. Writer/lock/after-final-check/atomic ndm/direct launch OPEN. Q31 IN_PROGRESS,28/37(75.7%); Q29/Q30/D06 сохранены.
 
 **7 октября,F364:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): общий router/host/CI exporter закрепляет пять release fields из Cargo.toml против ambient FFI/environment/home/ancestor overrides. Real-Cargo baseline9assertion FAIL в12cells;fixed8methods/12cells и72Linux helper/gate methods без skips PASS. Настоящий pinned Zig/cargo-zigbuild x86_64-musl mini baseline unwind|0/fixed abort|3;staticELF validator/execution PASS.37recipes/14LuCI/docs9/bindings PASS. Не current Qeli/clean A-B/4targets/SDK/FFI/CI run; full hermetic/pipeline OPEN. Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 сохранены.
+
+**7 октября,F365/Q31-V005:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): полный independent x86_64-musl baseline A/B различался; общий helper remaps временные пути исходников. Две новые полные исправленные сборки Qeli побайтно идентичны;9actual-Cargo/72Linux model методов и48INI metadata cases PASS без skips. Проверенная offline registry-копия, без сети/VPN и замены опубликованных binaries. Другие ISA A/B/full hermetic/SDK pipeline OPEN;Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 сохранены.
 
 
 

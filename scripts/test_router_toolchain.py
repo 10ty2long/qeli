@@ -121,7 +121,8 @@ class RouterToolchainTests(unittest.TestCase):
             self.assertIn("+nightly-2026-06-10 " if nightly else "+1.97.0 ",command)
             self.assertIn("env -u CARGO_ENCODED_RUSTFLAGS",command)
             self.assertIn("RUSTC_WRAPPER='' RUSTC_WORKSPACE_WRAPPER=''",command)
-            self.assertIn("RUSTFLAGS='-C link-arg=-msoft-float'" if nightly else "RUSTFLAGS=''",command)
+            flags = ("-C link-arg=-msoft-float " if nightly else "") + "--remap-path-prefix="+ROOT+"=/usr/src/qeli"
+            self.assertIn("RUSTFLAGS="+__import__("shlex").quote(flags),command)
             self.assertIn("-Z build-std=std,panic_abort " if nightly else "zigbuild --locked",command)
             self.assertIn("--jobs 1",command)
             self.assertIn('rustup which --toolchain '+(policy.ROUTER_NIGHTLY if nightly else policy.ROUTER_RUST)+' rustc',command)
