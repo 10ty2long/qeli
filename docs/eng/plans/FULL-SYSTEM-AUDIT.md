@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v138 -->
+<!-- normative-sync: full-system-audit-v139 -->
 
-**Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 8 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -2042,6 +2042,8 @@ autostart ownership, config trust and Linux runtime E2E remain open.
 **October8,F380–F383:** [Q32 metrics](../reports/AUDIT-Q32-METRICS.md): missing-RPC baseline,guest/CPU resets and PID/starttime fixed;three old metric failures and PID42 collision reproduced;8metrics/36namespace at PID42 and2424library PASS(60ignored),Clippy/daemon PASS.Native/ABI in report evidence.Usage/logs/notify remain open;Q32 IN_PROGRESS,28/37 overall.
 
 **8 October, F384:** [Q32 usage](../reports/AUDIT-Q32-USAGE.md): post-rename fsync failure reproduced; memory retains the published reset, typed cause is preserved and control reports uncertain durability. 16 harness/2426 Linux tests PASS (60ignored), strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; report evidence. Store and registration/quota/shutdown reviewed; logs/trace/roaming/notify remain open. Q32 IN_PROGRESS,28/37 overall.
+
+**8 October, F385–F388:** [Q32 logs and trace](../reports/AUDIT-Q32-LOGS-TRACE.md): descriptor-pinned log reads reject raced symlinks/FIFOs, four I/O slots survive caller cancellation, tail preserves complete boundary lines and trace uses atomic0600 publication outside Tokio workers with one admitted dump. Three baseline failures reproduced; extracted harness11/UID65534, real SIGUSR1 twice with65536 ordered rows,2434 library tests (60ignored), strictClippy/daemon and118 Node VM groups PASS. Four current native A/B, WindowsABI22/AndroidJNI23 and final gates in report evidence. Failed preparations/known legacy firewall drift retained; no wholehost claim for initial .10 baseline. Capture/HTTP/disk/physical scope limits retained. Q32 remains IN_PROGRESS; roaming, notification trust/secret-redaction and full integration remain open. Overall28/37(75.7%), nine remain.
 
 ### 33. Installation, updates, file permissions and hooks
 

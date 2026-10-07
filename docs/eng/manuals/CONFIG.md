@@ -3678,6 +3678,8 @@ For diagnostics, `level: "info"` with a set `file` is the minimum sufficient.
 > packet sizes and timings (never payload) into a ring buffer; it dumps on `SIGUSR1`. Use
 > it when DPI is cutting the tunnel and you need to see what actually goes on the wire. A
 > walkthrough is in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+> Dumps use atomic replacement and mode `0600`; shutdown does not dump automatically.
+> Parent directories must already exist. The guide lists capture coverage and panel log limits.
 
 ## Shared client profile processing (ABI 1.16)
 
