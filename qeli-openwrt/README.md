@@ -129,7 +129,8 @@ Maintainer cross-build helpers reject target typos and setup/transfer failures;
 Every run uploads this checkout into a fresh private directory. SHA256/ELF-checked
 atomic artifact transfer does not qualify full ABI or real router runtime. Development tests execute pinned OpenWrt24.10/25.12 ucode/fs on a Linux host;
 The native24.10 rpcd/ubus/UCI/session ACL path is tested in a private Linux chroot;
-procd, SDK installation, HTTP serving and firmware runtime remain unqualified.
+The actual non-PID1 procd API is qualified below. Full SDK installation, HTTP
+serving and firmware runtime remain unqualified; SDK LuCI packaging is scoped below.
 
 
 The first-install firewall defaults use named package-owned sections. An existing
@@ -219,3 +220,28 @@ value before the Qeli handler receives it. Use valid text without control bytes.
 LuCI session staging remains separate from init-visible configuration until
 commit; administrative global CLI UCI staging is a different context and can be
 init-visible before commit. Save & Apply the form before service controls.
+
+### SDK package verification
+
+Use the SDK matching your firmware version and target, with its pinned feeds.
+The 7 October audit used official x86/64 SDK24.10.4: actual Qeli package metadata,
+IPv6 Kconfig and LuCI IPK compilation/minification passed. A private default-n
+Kconfig fixture covered the IPv4-only dependency branch; stock SDK fixes IPV6=y.
+The package keeps virtual iptables providers and requests ip6tables only with IPV6.
+LuCI IPK owner/URL use LUCI_MAINTAINER/LUCI_URL as required by luci.mk.
+
+This does not confirm a full Qeli Rust SDK build or router installation. The
+pinned SDK Rust feed uses1.89.0; Cargo.toml declares no rust-version. Standalone
+maintainer builds use1.97.0, which does not prove or disprove SDK1.89 compatibility.
+Source tag/commit, PKG_SOURCE_DATE and source/mirror hashes must be verified at
+release-cut. Use the Source filename from actual package metadata; do not assume
+.tar.xz (SDK24.10.4 generates .tar.zst). See package/qeli/check FIXUP=1 guidance
+in the recipe. Reject recursive-dependency diagnostics even if make returns0.
+
+Three SDK checks and three actual IPK checks live in scripts/test_openwrt_sdk.py.
+Run SdkTests only in a prepared owned SDK with .qeli-audit-sdk marker; it temporarily
+changes/restores .config and Config-build.in. QELI_OPENWRT_LUCI_IPK selects the built
+IPK for IpkTests, including the14 existing LuCI fixtures on its minified JS.
+No installed router package is read. Offline opkg into an empty root was rejected
+for unresolved runtime dependencies; full dependency resolution/install remains
+unqualified. See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

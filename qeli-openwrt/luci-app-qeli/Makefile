@@ -7,7 +7,8 @@ LUCI_DEPENDS:=+luci-base +qeli +rpcd-mod-ucode +ucode-mod-fs
 LUCI_PKGARCH:=all
 PKG_VERSION:=0.8.2
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Alexandr
+LUCI_MAINTAINER:=Alexandr
+LUCI_URL:=https://github.com/litvinovtd/qeli
 PKG_LICENSE:=AGPL-3.0-only
 
 include $(TOPDIR)/feeds/luci/luci.mk
