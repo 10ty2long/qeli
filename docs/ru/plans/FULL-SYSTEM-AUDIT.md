@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v121 -->
+<!-- normative-sync: full-system-audit-v122 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2000,6 +2000,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **Продолжение F324–F325, 6 октября:** [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): проверка PID/start ticks/executable, атомарный приватный process record, ожидание TERM до wrapper cleanup, сохранение timeout/error state и проверка startup/upgrade admission.108 BusyBox/dash cases (43 настоящих native helper process checks,44 state models,21 installer/hook) и37 recipes/docs/bindings PASS. Безопасное old/new сравнение воспроизводит foreign/group PID, раннюю очистку, игнорируемый TERM и ложный успех запуска. Atomic pidfd/interprocess и настоящий router/core network не квалифицированы; сокращённый polling/сверка old PID при обновлении описаны. INI parity/OpkgTun generations/concurrency/packaging/широкий source/build review OPEN; Q31 IN_PROGRESS,28/37 без изменений.
 
 **7 октября, Q31-V003:** настоящая SDK упаковка retained musl binary и offline opkg:7PASS без skips; подписанные release feeds, nft/legacy resolver, install/upgrade/remove и conffile0600. Полный SDK Rust compile/source release-cut OPEN; живой router USER_EXCLUDED. [Отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) без изменений.
+
+**7 октября, F358/Q31-V004:** Rust1.89 client-bin GNU check и полный musl compile/link actual SDK macro + GCC13.3 PASS. Убраны неиспользуемые SDK FFI outputs; baseline1FAIL/fixed5real-Cargo methods PASS, SDK3 и18 executable smoke cases PASS. Prebuilt Rust/std, без полного SDK bootstrap/release pipeline/router. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) без изменений.
 
 ### 32. Метрики, usage, логи и уведомления
 

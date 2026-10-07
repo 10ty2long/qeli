@@ -298,9 +298,18 @@ Kconfig fixture covered the IPv4-only dependency branch; stock SDK fixes IPV6=y.
 The package keeps virtual iptables providers and requests ip6tables only with IPV6.
 LuCI IPK owner/URL use LUCI_MAINTAINER/LUCI_URL as required by luci.mk.
 
-This does not confirm a full Qeli Rust SDK build or router installation. The
-pinned SDK Rust feed uses1.89.0; Cargo.toml declares no rust-version. Standalone
-maintainer builds use1.97.0, which does not prove or disprove SDK1.89 compatibility.
+The pinned SDK Rust feed uses1.89.0; Cargo.toml declares no global rust-version.
+Current client-bin passed a GNU check and musl compile/link using stock Rust1.89.0,
+SDK GCC13.3 and the exported SDK Build/Compile macro/profile. The fresh ELF passed
+CLI/INI inspection in the official24.10.4 rootfs. This uses upstream prebuilt Rust
+standard libraries; it does not certify SDK Rust bootstrap, the source-download/
+release-cut pipeline, other SDK targets, VPN connectivity or router firmware.
+Standalone maintainer builds retain Rust1.97.0 and their separate qualification.
+
+The recipe projects only its private SDK Cargo.toml to rlib before metadata/install.
+The canonical three-type declaration and an existing rlib declaration are accepted;
+unknown declarations stop before Cargo. Unused cdylib/staticlib outputs are not
+built or installed; the repository manifest/native ABI declarations remain unchanged.
 Source tag/commit, PKG_SOURCE_DATE and source/mirror hashes must be verified at
 release-cut. Use the Source filename from actual package metadata; do not assume
 .tar.xz (SDK24.10.4 generates .tar.zst). See package/qeli/check FIXUP=1 guidance
@@ -310,9 +319,13 @@ Three SDK checks and three actual IPK checks live in scripts/test_openwrt_sdk.py
 Run SdkTests only in a prepared owned SDK with .qeli-audit-sdk marker; it temporarily
 changes/restores .config and Config-build.in. QELI_OPENWRT_LUCI_IPK selects the built
 IPK for IpkTests, including the14 existing LuCI fixtures on its minified JS.
-No installed router package is read. Offline opkg into an empty root was rejected
-for unresolved runtime dependencies; full dependency resolution/install remains
-unqualified. See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+No installed router package is read. Offline opkg was subsequently qualified with
+actual signed release dependencies in an official rootfs: nft/legacy providers,
+install/upgrade/remove, modified UCI retention and0600 modes, and early refusals.
+The initial empty-root failure is retained; live postinst/fw4/procd is unqualified.
+Use a proper offline /target inside an owned chroot rather than offline-root /.
+Five real-Cargo SDK macro tests live in scripts/test_openwrt_compile.py and require
+explicit owned compiler/template fixtures. These do not run against a router. See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ### HTTP/session audit scope
 

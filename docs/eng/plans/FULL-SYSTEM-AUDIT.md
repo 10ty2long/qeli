@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v121 -->
+<!-- normative-sync: full-system-audit-v122 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1989,6 +1989,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **F324–F325 continuation, 6 October:** [Q31 report](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): verified PID/start ticks/executable, atomic private process record, joined TERM before wrapper cleanup, retained timeout/error state and checked startup/upgrade admission.108 BusyBox/dash cases (43 actual native helper process checks,44 state models,21 installer/hook) and37 recipes/docs/bindings PASS. Safe old/new comparisons reproduce foreign/group PID, early cleanup, ignored TERM and false launch success. No atomic pidfd/interprocess or actual router/core network qualification; shortened polling, old PID upgrade review documented. INI parity/OpkgTun generations/concurrency/packaging/broader source/build review OPEN; Q31 IN_PROGRESS,28/37 unchanged.
 
 **October7, Q31-V003:** actual SDK packaging of a retained musl binary and offline opkg:7PASS without skips; signed release feeds, nft/legacy resolver, install/upgrade/remove and conffile0600. Full SDK Rust compile/source release-cut OPEN; live router USER_EXCLUDED. [Q31 report](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) unchanged.
+
+**October7, F358/Q31-V004:** Rust1.89 client-bin GNU check/full musl compile/link actual SDK macro + GCC13.3 PASS. Unused SDK FFI outputs removed; baseline1FAIL/fixed5real-Cargo methods PASS, SDK3 and18 executable smoke cases PASS. Prebuilt Rust/std, no full SDK bootstrap/release pipeline/router. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) unchanged.
 
 ### 32. Metrics, usage, logs and notifications
 

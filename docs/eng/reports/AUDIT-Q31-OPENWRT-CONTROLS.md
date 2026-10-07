@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v25 -->
+<!-- normative-sync: q31-openwrt-controls-v26 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1047,7 +1047,7 @@ Current Q31 remainder:
 |---|---|
 | Actual standalone four-target cross builds/ELF | DONE in the stated scope |
 | UCI/INI, shell lifecycle/rollback and LuCI | Scoped suites PASS; model boundaries retained |
-| Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; retained-binary SDK packaging/offline opkg Q31-V003 scoped PASS; full SDK Rust build OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
+| Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; retained-binary SDK packaging/offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
 | Keenetic preflight→launch INI; core plan generation/ABA | F355: one private INI copy scoped PASS; core plan/ABA and admin path replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
@@ -1530,3 +1530,59 @@ input ec567377e46cd8a2ed629bccfb83318fba4e19bf26905df3f49ca77c254a5925, packaged
 915b113abcb47ce37f40c79be70927b8d330217cb075ae161fc36ae9fffeac24; both retained.
 37recipes/14LuCI/docs9/bindings PASS. No final owned processes/case/smoke/mount
 roots; host services/network/firewall and .10 untouched. No push/deployment.
+
+## F358 / Q31-V004: SDK compiled unused FFI libraries (October7)
+
+Current client-bin was freshly tested using actual Rust1.89.0, the pinned SDK feed
+version. GNU cargo check --locked --offline --release PASS. Full musl cargo install
+with official SDK24.10.4 GCC13.3.0 and actually expanded SDK flags/profile PASS.
+These are prebuilt upstream rustc/std, not source-built SDK Rust bootstrap.
+Compiler/linker/locked dependencies/source inputs are recorded. Owned .10
+RUSTUP_HOME/CARGO_HOME/target and jobs1; global defaults/cache unchanged. SDK GCC
+and its bundled host loader/libs use private paths; both archives SHA/tar compared.
+
+F358: baseline actual cargo install built rlib, cdylib and staticlib although only
+the CLI is installed. Both unused outputs are confirmed in compiler argv/artifacts.
+Build/Compile now checks lock and projects only private SDK Cargo.toml to rlib;
+unknown declaration/missing inputs refuse Cargo. Repository manifest/Rust/core/
+schema/native ABI unchanged. Make $$ preserves sed's regex anchor. Both production
+macros are expanded by actual SDK; exact output and explicit private compiler/path
+substitutions retained. Tiny actual Cargo/musl baseline1expected FAIL due to .a/.so;
+fixed5methods PASS without skips, including existing rlib, unknown declaration and
+missing lock/manifest. Current full client then compiled again using fixed macro,
+without replacing Compile with a copy. Only rlib/rmeta, no unused FFI outputs;
+source manifest restored afterwards. Dependency cache reused, not independent
+clean A/B. SDK3 Kconfig/metadata methods PASS with fixed recipe.
+
+Baseline/fixed ELF each pass9 executable cases in official24.10.4 rootfs: --version,
+legacy/core ownership, BOM/quotes, attached TUN, wrong device/attach, TAP and malformed
+INI refusals.18 executions, not18 unit methods. Verified ELF64/x86-64 PIE, interpreter
+/lib/ld-musl-x86_64.so.1, libc.so/libgcc_s.so.1, BIND_NOW/RELRO and NX stack. Owned
+mount/network/PID namespaces, no host proc/dev mounts. No VPN/TUN/firewall startup;
+physical firmware USER_EXCLUDED. ELF/projection/inputs/logs retained; published
+binaries unchanged. No global all-feature/platform MSRV or SDK Rust bootstrap/
+source-download/target-matrix qualification is claimed.
+
+Cargo warns about locked der0.8.0; primary RustCrypto changelog explains the yank
+as a minimal-versions CI correction. Lock stays unchanged; dependency stack review
+belongs to Q34. This is not an established vulnerability or compiler failure.
+Initial standalone GCC lacked its bundled SDK host libs; correct runtime was
+transferred before compilation and diagnostics retained. Rust1.89 compatibility
+is confirmed for the tested client-bin/x86 path. Helper1.97/MIPS nightly results
+retain their original dates/scope.
+
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-compiler-20261007.
+Evidence: release/certification/evidence/q31-openwrt-compiler-20261007.json.
+Primary yank source: [RustCrypto der changelog](https://github.com/RustCrypto/formats/blob/master/der/CHANGELOG.md).
+Q31 IN_PROGRESS28/37(75.7%),9remain. Full SDK bootstrap/release pipeline, core plan
+ABA/admin replacement and full hermetic Qeli A/B OPEN; Q29 SIGKILL FAIL/ENONET,
+Q30 callback-drain OPEN/Apple exclusions and D06 ACCEPTED preserved. No push/deploy.
+
+Final provenance/cleanup:364 Git crate inputs verified before/after the full build;
+3228 compiler/SDK tool files and links inventoried. Both SDK recipe copies match
+current source. Official rootfs959regular/215links verified against its archive.
+Private toolchain/cache/build dirs and runtime rootfs removed; no remaining owned
+processes, mounts or compile-case dirs. Global Rust toolchain inventory unchanged.
+Free disk after cleanup:.10=2588MiB,.11=467MiB.37 recipe methods,14 LuCI fixtures,
+documentation9 checks, bindings and diff checks PASS. No host services/network/
+firewall changes.41 historic certification cases preserved; scoped supplement only.

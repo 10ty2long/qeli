@@ -87,10 +87,15 @@ endef
 # Client-only build: no default features (drops the server, web panel and `ring`).
 # The client-only bin is `qeli-client` (src/client_main.rs); the default `qeli`
 # bin requires the server+client features and is not built here.
+# Project only this private SDK checkout to rlib, as the router helpers do;
+# unused cdylib/staticlib outputs waste build resources and are never installed.
+# Refuse an unknown declaration rather than silently building extra FFI targets.
 CARGO_INSTALL:=0
 define Build/Compile
 	+cd $(PKG_BUILD_DIR)/qeli && \
 	test -f Cargo.lock && \
+	sed -i 's/^crate-type = \["rlib", "cdylib", "staticlib"\]$$/crate-type = ["rlib"]/' Cargo.toml && \
+	grep -qx 'crate-type = \["rlib"\]' Cargo.toml && \
 	$(CARGO_PKG_VARS) cargo metadata --locked --format-version 1 \
 		--no-default-features --features client-bin > /dev/null && \
 	$(CARGO_PKG_VARS) \
