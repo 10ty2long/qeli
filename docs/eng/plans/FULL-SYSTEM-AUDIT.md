@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v131 -->
+<!-- normative-sync: full-system-audit-v132 -->
 
 **Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1967,7 +1967,7 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 - [x] Review and dead code.
 - [x] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
+- [x] Failures and concurrency.
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
@@ -2008,6 +2008,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 
 **7 October, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission fails closed for missing Git/CI identity, bad queries and stale workflows.77router+18CI Linux methods without skips; actual read-only preflight aggregate refusal verified. Positive/boundary/negative criterion complete,2/5criteria; Q31 IN_PROGRESS28/37(75.7%),9remain. Native current/debt14/15+D06 accepted unchanged; SDK/release-cut/ndm boundaries and firmware exclusions retained. No push/release.
+
+**7 October,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): retire saved/partial OpkgTun addresses, preserve ownership across stop/start and stale-plan failure, check current local IPv4 for cached no-op/clearing.218methods per dash/ash without skips;14nonroot CI methods and old hook/init baseline regressions. Cooperative failure/concurrency criterion complete;3/5criteria,Q31IN_PROGRESS,28/37overall. Remaining cross-component/SDK/release integration and exclusions retained; no push/deploy.
 ### 32. Metrics, usage, logs and notifications
 
 **Source:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.

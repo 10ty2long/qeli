@@ -355,11 +355,13 @@ start() {
   qeli_prepare_launch_config "$CONF" || return 1
   load_gateway_owner || return 1
   if [ -f "$SYSCTL_STATE" ]; then nat_down || return 1; fi
-  # A new client process may restart its plan counter. Its first plan must not
-  # reuse a complete receipt from the exited process, even with identical bytes.
-  # Preserve any incomplete apply intent until the hook finishes a fresh apply.
+  # A fresh process must apply even if its plan counter resets. Keep the saved
+  # receipt and any pending payload as address ownership, but force a fresh apply.
   if [ -n "$OPKGTUN" ]; then
-    rm -f "$OPKGTUN_STATE.applied" || return 1
+    for record_path in "$OPKGTUN_STATE.applied" "$OPKGTUN_STATE.apply-pending"; do
+      [ ! -L "$record_path" ] && { [ ! -e "$record_path" ] || [ -f "$record_path" ]; } || return 1
+    done
+    (umask 077; : >> "$OPKGTUN_STATE.apply-pending") || return 1
   fi
   rm -f "$PIDFILE" "$PLAN_STATE" || return 1
   PID_TMP="$(mktemp "$PIDFILE.XXXXXX")" || return 1
@@ -411,7 +413,9 @@ stop() {
   nat_down || return 1
   qeli_clear_launch_config || return 1
   rm -f "$PLAN_STATE" || return 1
-  rm -f "$OPKGTUN_STATE" "$OPKGTUN_TUNIP" "$OPKGTUN_STATE.apply-pending" "$OPKGTUN_STATE.applied" || return 1
+  rm -f "$OPKGTUN_STATE" "$OPKGTUN_TUNIP" || return 1
+  # ndm keeps L3 when the process exits. Retain saved/pending address ownership
+  # for the next hook; the absent marker prevents applying anything while stopped.
   # ndm owns the OpkgTun interface; removal remains an administrator operation.
   # Kernel/core/ndm own TUN lifetime; never delete a possibly foreign/persistent link.
   rm -f "$PIDFILE"

@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v35 -->
+<!-- normative-sync: q31-openwrt-controls-v36 -->
 
-**Текущий checkpoint, 7 октября:** в Q31 закрыты2/5критериев (review/мёртвый код и штатные/граничные/негативные сценарии);F372 и95Linux methods ниже. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F373–F375 и218methods на shell ниже. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2055,3 +2055,63 @@ Q29 SIGKILL/auto-null ENONET, Q30 callback-drain/Apple exclusions и приня�
 
 Raw packet: `audit-debt-20260924/q31-release-admission-20261007` (вне Git).
 Машинная запись: `release/certification/evidence/q31-release-admission-20261007.json`.
+
+
+## F373–F375: очистка адресов OpkgTun и сохранение ownership (7 октября)
+
+F373: hook только добавлял адреса следующего плана. IPv6 допускает несколько
+адресов, поэтому readdress или dual-stack→IPv4 сохраняли старый Qeli IPv6 в ndm
+даже после нового успешного receipt. При исчезновении IPv4 сохранялся прежний
+статический IPv4. F374: пустой pending не описывал частично применённый план;
+обработка смены плана стирала payload, а новый launch и stop удаляли сохранённое
+ownership, хотя ndm сохранял L3. F375: поиск токена мог разрешить cached IPv4 no-op,
+если адрес встречался лишь в gateway/peer, а локальный адрес уже изменился.
+
+До добавления нового адреса hook очищает устаревшие адреса из последнего
+завершённого APPLIED и предыдущего частичного PENDING. Новый pending IF+plan
+публикуется атомарно до новых L3-изменений. Ошибка cleanup/publication или
+обнаруженная замена сохраняет retry intent и старый payload. Успешный save
+по-прежнему предшествует APPLIED и удалению pending. IPv6 удаляется конкретной
+командой с записанным адресом/prefix; отсутствие IPv4 разрешает сброс только при
+совпадении с текущим локальным `address:`. Заменённый IPv4 и другие IPv6
+сохраняются; peer не разрешает ни очистку, ни cached no-op. При смене интерфейса
+удаляются лишь записанные адреса прежнего проверенного OpkgTun, без удаления
+интерфейса/политик ndm. Ошибка show прежнего интерфейса сохраняет recovery,
+а не трактуется как его отсутствие. Синтаксис сверён с официальным
+[справочником Keenetic](https://docs.help.keenetic.com/cli/3.1/en/cli_manual_kn-1910_tr.pdf),
+interface ip address и interface ipv6 address; это не проверка KeeneticOS5.
+
+Новый launch сохраняет saved/partial ownership и принуждает к свежему apply через
+создание/сохранение pending. Повторный start проверенного работающего процесса
+сохраняет состояние. Stop сначала выполняет join, удаляет marker/current plan,
+но оставляет адресные записи, поскольку ndm оставляет L3. Без marker wan.d
+не применяет настройки. Linked/nonregular records запрещают свежий launch.
+Старые пустые pending совместимы; потерянные записи не доказывают ownership и
+требуют ручной сверки. Обе operational инструкции Keenetic обновлены.
+
+Итог: **218 Keenetic methods PASS на каждом dash и BusyBox ash, без пропусков**:
+настоящие собственные POSIX файлы/locks/processes и текущий неизменённый common-core
+inspector; ndmc/firewall/sysctl моделируются. Добавлены14 stateful address
+сценариев и два native stop/start/pending-path сценария. Точный старый hook
+провалил регрессионный набор; точный старый init провалил обе ownership-проверки
+на том же native helper. Первые214/217-method PASS и baseline failures сохранены.
+Точная новая CI-команда на14 методов также прошла с uid/gid65534 без root-only
+предположений; подключена к CI, Actions не запускались. Прежний C process fixture
+пересобран с -Wall/-Wextra/-Werror; VPN/TUN/routes/firewall на host не применялись.
+Служба осталась active/PID777; .10, текущие Rust/native/router artifacts и
+установленные toolchains без изменений. Новых полных Rust/cross/native сборок
+нет; current A/B provenance остаётся PASS.
+
+**Критерий отказов и cooperative lifecycle concurrency закрыт:** он объединяет
+прежнюю evidence init/hook/installer exclusion, process join, partial apply и retry.
+В Q31 закрыты **3/5 критериев**, раздел IN_PROGRESS; весь аудит28/37(75.7%),
+9 разделов остаются. В оставшейся интеграции не заявляются участие writer в
+shell lock, смена после последней проверки, атомарность нескольких ndm-команд,
+формат адресов firmware или роутерная сеть. Full SDK source bootstrap/source-pin/
+mirror release-cut и configured live Gate2/Actions end-to-end ещё открыты.
+Firmware остаётся USER_EXCLUDED; Q29 SIGKILL/auto-null ENONET, Q30 callback-drain/
+Apple exclusions и принятый D06 без изменений. Долг14/15 DONE+D06 ACCEPTED;
+непроверенного исправления в этом пакете не остаётся.
+
+Raw packet: `audit-debt-20260924/q31-opkgtun-address-retirement-20261007` (вне Git).
+Машинная запись: `release/certification/evidence/q31-opkgtun-address-retirement-20261007.json`.

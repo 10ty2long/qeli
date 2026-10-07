@@ -65,6 +65,14 @@ address_present() {
     { for (i=1; i<=NF; i++) { split($i, token, "/"); if (token[1]==want) found=1 } }
     END { exit !found }'
 }
+
+ipv4_address_is_current() {
+  # A gateway/peer mentioning the old IP cannot authorize the broad IPv4 reset.
+  printf '%s\n' "$CUR" | awk -v want="$1" '
+    $1=="address:" { split($2, token, "/"); if (token[1]==want) found=1 }
+    END { exit !found }'
+}
+
 plan_is_current() {
   [ "$(cat "$STATE" 2>/dev/null)" = "$IF" ] &&
     [ "$(cat "$TUNIP" 2>/dev/null)" = "$PLAN" ]
@@ -73,7 +81,7 @@ plan_is_current() {
 # success boundary must leave retry intent, including after PENDING removal.
 require_current_plan() {
   plan_is_current || {
-    (umask 077; : > "$PENDING") || return 1
+    (umask 077; : >> "$PENDING") || return 1
     echo "wan.d/010-qeli: plan/marker changed for $NDM_IF; retry required" >> "$LOG"
     return 1
   }
@@ -85,7 +93,7 @@ if [ "$SHOW_RC" -eq 0 ] && [ ! -e "$PENDING" ] \
    && { [ -n "$WANT_IP" ] || [ -n "$WANT_IP6" ]; } \
    && [ "$(cat "$APPLIED" 2>/dev/null)" = "$EXPECTED" ] \
    && printf '%s\n' "$CUR" | awk '$1=="connected:" && $2=="yes" && NF==2 {found=1} END {exit !found}' \
-   && { [ -z "$WANT_IP" ] || address_present "$WANT_IP"; } \
+   && { [ -z "$WANT_IP" ] || ipv4_address_is_current "$WANT_IP"; } \
    && { [ -z "$WANT_IP6" ] || address_present "$WANT_IP6"; }; then
   require_current_plan || exit 1
   exit 0
@@ -136,8 +144,57 @@ ndm_apply() {
     return 1
   }
 }
-# Persist retry intent before the first mutation; normal failure leaves it intact.
-(umask 077; : > "$PENDING") || exit 1
+# Keep both the last saved plan and a possibly partially applied plan until
+# their old addresses have been retired. Empty pending files from older bundles
+# remain readable; they carry retry intent but cannot prove address ownership.
+retire_addresses() {
+  local record="$1" previous_if previous_ndm previous_suffix previous4 previous6 previous6_ip
+  [ -n "$record" ] || return 0
+  previous_if="$(printf '%s\n' "$record" | head -n1)"
+  case "$previous_if" in opkgtun*) ;; *) return 1 ;; esac
+  previous_suffix="${previous_if#opkgtun}"
+  case "$previous_suffix" in ''|*[!0-9]*) return 1 ;; esac
+  [ "${#previous_if}" -le 15 ] || return 1
+  previous_ndm="OpkgTun$previous_suffix"
+  previous4="$(printf '%s\n' "$record" | sed -n 's/^ipv4=\([^/]*\)\/.*/\1/p' | head -n1)"
+  [ -n "$previous4" ] || previous4="$(printf '%s\n' "$record" | sed -n '2p' | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')"
+  previous6="$(printf '%s\n' "$record" | sed -n 's/^ipv6=//p' | head -n1)"
+  case "$previous4" in *[!0-9.]*) return 1 ;; esac
+  case "$previous6" in *[!0-9A-Fa-f:/]*) return 1 ;; esac
+  previous6_ip="${previous6%/*}"
+  # IPv4 setters replace the single static address. Clearing an absent family
+  # has no address argument, so first prove the current address is the old one.
+  if { [ -n "$previous4" ] && { [ -z "$IP" ] || [ "$previous_if" != "$IF" ]; }; } ||
+     { [ -n "$previous6" ] && { [ "$previous6" != "$IP6_CIDR" ] || [ "$previous_if" != "$IF" ]; }; }; then
+    require_current_plan || return 1
+    CUR="$(ndmc -c "show interface $previous_ndm" 2>/dev/null)" || return 1
+    if [ -n "$previous4" ] && { [ -z "$IP" ] || [ "$previous_if" != "$IF" ]; } && ipv4_address_is_current "$previous4"; then
+      ndm_apply "interface $previous_ndm no ip address" || return 1
+    fi
+    if [ -n "$previous6" ] && { [ "$previous6" != "$IP6_CIDR" ] || [ "$previous_if" != "$IF" ]; } && address_present "$previous6_ip"; then
+      ndm_apply "interface $previous_ndm no ipv6 address $previous6" || return 1
+    fi
+  fi
+}
+
+[ ! -L "$PENDING" ] && { [ ! -e "$PENDING" ] || [ -f "$PENDING" ]; } || exit 1
+(umask 077; : >> "$PENDING") || exit 1
+[ ! -L "$APPLIED" ] && { [ ! -e "$APPLIED" ] || [ -f "$APPLIED" ]; } || exit 1
+OLD_APPLIED=""; OLD_PENDING=""
+[ ! -e "$APPLIED" ] || OLD_APPLIED="$(cat "$APPLIED")" || exit 1
+[ ! -e "$PENDING" ] || OLD_PENDING="$(cat "$PENDING")" || exit 1
+# Preserve the previous pending payload while retiring it. A failed deletion or
+# independently published plan must not forget an address from partial apply.
+(umask 077; : >> "$PENDING") || exit 1
+retire_addresses "$OLD_APPLIED" || exit 1
+retire_addresses "$OLD_PENDING" || exit 1
+require_current_plan || exit 1
+PENDING_TMP="$(umask 077; mktemp "$PENDING.XXXXXX")" || exit 1
+if ! chmod 600 "$PENDING_TMP" || ! printf '%s\n%s\n' "$IF" "$PLAN" > "$PENDING_TMP" ||
+   ! mv -f "$PENDING_TMP" "$PENDING"; then
+  rm -f "$PENDING_TMP"
+  exit 1
+fi
 ndm_apply "interface $NDM_IF description qeli-VPN" || exit 1
 ndm_apply "interface $NDM_IF ip global auto" || exit 1
 [ -z "$IP" ] || ndm_apply "interface $NDM_IF ip address $IP 255.255.255.255" || exit 1
