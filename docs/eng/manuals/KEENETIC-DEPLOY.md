@@ -339,8 +339,8 @@ core parser; invalid configs or unsupported/invalid replies fail startup. With
 Update standalone binary and template together; an old binary without the command
 cannot start the compatibility gateway path. Core ownership suppresses wrapper
 LAN NAT, including exit-node operation. Legacy ownership preserves the fallback
-when core flags are absent/false. This snapshot does not lock the config: keep it
-stable during start and use stop/update/start to change ownership. Actual router
+when core flags are absent/false. The init templates now inspect and launch from
+one private copy described below. Use restart to admit edited INI. Actual router
 firmware and concurrent generation handling remain unqualified. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Serialized lifecycle and upgrade (development0.8.2)
@@ -396,5 +396,31 @@ ndm owns L3/gateway. GATEWAY=no does not bypass this check.
 A mismatch rejects launch before process creation or old state changes. Align
 INI and template, then retry start. Upgrade binary and template together: an older
 binary does not understand --expect-router-device/--expect-router-attach and will
-reject inspection. Do not edit INI during start/restart: inspection reads one
-snapshot, but the later file open is not bound to it.
+reject inspection. Inspection and launch now use the same private INI copy
+described below.
+
+## INI admitted before launch (development0.8.2)
+
+Both init templates create `/opt/var/run/qeli-launch/client.conf` before inspection
+and pass that same path to the core check and client. The original
+`/opt/etc/qeli/client.conf` stays editable; replacing it after inspection cannot
+change this launch. A repeated start of a running client retains its copy;
+restart reads the updated original after successful stop. The hook variable
+`QELI_CONFIG_PATH` points to the runtime copy. Edit the original file.
+
+`stat -c`, `cp -p` and `mktemp` are required. The original INI must be a nonempty
+regular file without a symlink, in a root-owned0700 directory. The installer checks
+an existing directory's owner before package updates, then restricts its mode0700;
+it does not transfer an unowned directory to root. The runtime directory must
+also be root-owned0700; links, nonregular targets and unsafe modes reject startup.
+File owner/mode survive copying, so the copy does not promote core command trust.
+A bounded copy precedes the INI parser; the exact256KiB limit and grammar remain
+owned by the core.
+
+Successful stop removes the copy after verified client exit and network cleanup.
+Failed join/cleanup retains it with recovery state. A prelaunch validation failure
+may leave a private copy; the next admitted start replaces it. After SIGKILL/power
+loss, review lifecycle ownership and temporary copies manually. Do not remove a
+runtime copy while client ownership is active or uncertain. Direct binary launch
+outside the templates does not use this protocol. Root/admin replacement of
+private paths, core plan generation/ABA and real firmware remain unqualified.

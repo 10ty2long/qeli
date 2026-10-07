@@ -28,3 +28,46 @@ qeli_install_ready() {
     return 1
   }
 }
+
+# Keep preflight and the asynchronous client on one private INI inode. Metadata
+# is preserved so copying cannot authorize commands from an untrusted source.
+# Original config stays editable; a running client keeps this snapshot until stop.
+QELI_LAUNCH_DIR=/opt/var/run/qeli-launch
+QELI_LAUNCH_CONF=""
+qeli_launch_dir_valid() {
+  [ ! -L "$QELI_LAUNCH_DIR" ] && [ -d "$QELI_LAUNCH_DIR" ] &&
+    [ "$(stat -c '%u:%a' "$QELI_LAUNCH_DIR")" = 0:700 ]
+}
+qeli_prepare_launch_config() {
+  local source="$1" parent tmp
+  parent="${source%/*}"
+  # The installer already creates this private root-owned config directory.
+  # Refuse links/unsafe parents instead of upgrading their trust while copying.
+  [ ! -L "$source" ] && [ -f "$source" ] && [ -s "$source" ] &&
+    [ ! -L "$parent" ] && [ -d "$parent" ] &&
+    [ "$(stat -c '%u:%a' "$parent")" = 0:700 ] || {
+      echo "qeli-client: regular INI in root-owned 0700 config directory required" >&2
+      return 1
+    }
+  if [ ! -e "$QELI_LAUNCH_DIR" ] && [ ! -L "$QELI_LAUNCH_DIR" ]; then
+    (umask 077; mkdir "$QELI_LAUNCH_DIR") || return 1
+  fi
+  qeli_launch_dir_valid || return 1
+  QELI_LAUNCH_CONF="$QELI_LAUNCH_DIR/client.conf"
+  [ ! -L "$QELI_LAUNCH_CONF" ] &&
+    { [ ! -e "$QELI_LAUNCH_CONF" ] || [ -f "$QELI_LAUNCH_CONF" ]; } || return 1
+  tmp="$(mktemp "$QELI_LAUNCH_DIR/.client.conf.XXXXXX")" || return 1
+  # POSIX shells count file-size blocks differently. Either bound exceeds the
+  # core's 256 KiB INI limit; the core still owns syntax/size admission.
+  (ulimit -f 2048 && cp -p "$source" "$tmp") && mv -f "$tmp" "$QELI_LAUNCH_CONF" || {
+    rm -f "$tmp"
+    return 1
+  }
+}
+qeli_clear_launch_config() {
+  [ -e "$QELI_LAUNCH_DIR" ] || [ -L "$QELI_LAUNCH_DIR" ] || return 0
+  qeli_launch_dir_valid || return 1
+  local path="$QELI_LAUNCH_DIR/client.conf"
+  [ ! -L "$path" ] && { [ ! -e "$path" ] || [ -f "$path" ]; } || return 1
+  rm -f "$path"
+}

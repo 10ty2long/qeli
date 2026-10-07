@@ -82,7 +82,12 @@ fi
 . "$PKGDIR/lifecycle.sh" || exit 1
 qeli_lock_acquire || exit 1
 qeli_install_ready || exit 1
-[ ! -L /opt/etc/qeli ] || { echo "qeli-client: config directory is a symlink"; exit 1; }
+for tool in stat cp mktemp; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "qeli-client: required command missing ($tool)"; exit 1; }
+done
+[ ! -L /opt/etc/qeli ] && { [ ! -e /opt/etc/qeli ] || {
+  [ -d /opt/etc/qeli ] && [ "$(stat -c '%u' /opt/etc/qeli)" = 0 ];
+}; } || { echo "qeli-client: root-owned config directory required"; exit 1; }
 
 # Publication targets must be regular files or absent; never chmod a linked config.
 for target in /opt/bin/qeli-client /opt/etc/init.d/S99qeli /opt/etc/qeli/client.conf /opt/etc/qeli/lifecycle.sh; do

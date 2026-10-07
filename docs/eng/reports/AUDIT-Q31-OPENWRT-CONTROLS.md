@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v22 -->
+<!-- normative-sync: q31-openwrt-controls-v23 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1048,7 +1048,7 @@ Current Q31 remainder:
 | Actual standalone four-target cross builds/ELF | DONE in the stated scope |
 | UCI/INI, shell lifecycle/rollback and LuCI | Scoped suites PASS; model boundaries retained |
 | Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; full Qeli SDK build/install OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
-| Preflight→launch config snapshot/core plan generation/ABA | OPEN; exclusion lock does not eliminate these races |
+| Keenetic preflight→launch INI; core plan generation/ABA | F355: one private INI copy scoped PASS; core plan/ABA and admin path replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
 | Hermetic shared caches/config/PATH/clean A/B | OPEN; named pins do not imply reproducibility |
@@ -1378,3 +1378,52 @@ Sources: [release uhttpd recipe](https://github.com/openwrt/openwrt/blob/v24.10.
 [pinned HTTP/session bridge](https://github.com/openwrt/uhttpd/blob/7e64e8bad2415cec0a6d9770ec379db54273c7a7/ubus.c).
 Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-http-20261007.
 Evidence: release/certification/evidence/q31-openwrt-http-20261007.json.
+
+## F355: Keenetic preflight and launch opened different INI revisions (7 October)
+
+Both templates inspected the editable original INI and later reopened it in an
+asynchronous process. The actual retained core inspector plus an owned native
+process reproduced atomic replacement immediately after inspection: both baseline
+variants checked A and launched B (two subtest failures). Interface/gateway
+admission therefore did not describe the launched configuration.
+
+The common lifecycle helper now publishes one bounded private runtime copy before
+inspection; both inspection and launch use /opt/var/run/qeli-launch/client.conf.
+Original owner/mode are preserved, avoiding command-trust promotion. Original and
+runtime paths reject links/nonregular targets; directories must be root-owned0700.
+The installer checks tools and an existing config directory's owner before package
+updates. Repeated active start retains the copy; restart recaptures the original.
+Stop clears it only after verified join and network cleanup. Hook QELI_CONFIG_PATH
+points to the copy; manuals now explain editing, recovery and changed path semantics.
+No shell INI parser, configuration format/schema or native ABI was added.
+
+8 new methods exercise both templates with actual core preflight and native process
+identity: rotation, metadata, path admission, bounded copy, publication failures,
+failed join, repeated start/restart and installer failures. Full192 Keenetic methods
+PASS without skips in dash and BusyBox ash on .11. The first full run had four
+fixture failures per shell: existing PID-publication tests failed every mv and hit
+the new earlier config publication. Fault injection now targets the PID destination;
+separate new tests cover copy publication failure. Initial full baseline7 methods
+produced14failures/12errors for absent new contracts; these are not26 product bugs.
+All initial/final logs are retained.37recipes/14LuCI/docs9/bindings/diff PASS.
+
+The core inspector is the previous SHA-bound host binary:315/317 compile inputs
+match current Git exactly. Two later portability edits (MIPS atomic fallback and
+procfs integer cast) are outside unchanged CLI/parser/inspection; exact diffs verified.
+No fresh current-core build is claimed. Only the tiny owned C receipt helper was
+built freshly with GCC -Werror.
+Filesystem/network command models remain models; no live router, VPN or hook command
+execution is claimed. Product Rust/core/native/ABI/artifacts are unchanged; previous
+cross results retain their original dates and scopes. Owned fixture cleanup verified;
+only private .11 files/processes, no host service/network/firewall or .10 mutation. An older6October model-only fixture was separately archived/compared and removed by exact path; an initial self-matching verifier guard stopped without mutation.
+
+This closes editable-original replacement between Keenetic preflight and launch.
+Root/admin replacement of private runtime paths, core plan generation/ABA, OpenWrt
+config generation, SIGKILL/power-loss transactions, SDK full build/install/compiler
+compatibility/source release-cut and clean A/B remain OPEN. Physical firmware remains
+USER_EXCLUDED.41 historic cases/acceptance preserved; scoped supplement only.
+Q31 IN_PROGRESS28/37(75.7%),9remain; Q29 SIGKILL FAIL/auto-null ENONET, Q30 Apple
+exclusions/callback-drain OPEN and D06 ACCEPTED retained. No push/deploy.
+
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-keenetic-launch-config-20261007.
+Evidence: release/certification/evidence/q31-keenetic-launch-config-20261007.json.

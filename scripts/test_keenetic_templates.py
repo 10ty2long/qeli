@@ -22,7 +22,7 @@ class KeeneticFixture(unittest.TestCase):
         self.env=dict(os.environ,PATH=str(self.bin),QELI_FIXTURE_ROOT=str(self.root),QELI_FIXTURE_BIN=str(self.bin),
             QELI_ARCH='aarch64-3.10',QELI_FAIL='',QELI_SHOW_FAIL='0',QELI_CONNECTED='no',
             QELI_CUR4='10.8.0.2',QELI_CUR6='fd00::2')
-        for name in ('awk','grep','head','uname','mkdir','chmod','mktemp','mv','rm','dirname','cp','touch','cat','sed','rmdir'):
+        for name in ('awk','grep','head','uname','mkdir','chmod','mktemp','mv','rm','dirname','cp','touch','cat','sed','rmdir','stat'):
             command=shutil.which(name);self.assertIsNotNone(command)
             (self.bin/name).symlink_to(command)
         self.write_command('ip','exit 0')
@@ -68,7 +68,7 @@ esac
 
     def copy_template(self,source,target):
         if Path(source).name in ('S99qeli','010-qeli.sh'):
-            helper=self.opt/'etc/qeli/lifecycle.sh';helper.parent.mkdir(parents=True,exist_ok=True)
+            helper=self.opt/'etc/qeli/lifecycle.sh';helper.parent.mkdir(parents=True,exist_ok=True);helper.parent.chmod(0o700)
             helper.write_text((self.bundle/'lifecycle.sh').read_text())
         text=Path(source).read_text()
         text=text.replace('export PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin',
