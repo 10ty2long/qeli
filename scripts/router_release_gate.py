@@ -20,7 +20,8 @@ TARGETS = {arch: ARCH_TARGETS[arch] for arch in ("armv7", "mipsel")}
 RECIPE_INPUTS = ("qeli", "scripts/release_preflight.py", "scripts/router_release_gate.py",
                  "scripts/router_toolchain.py",
                  "scripts/router_source.py", "scripts/router_artifact.py",
-                 "scripts/native_lab.py", "scripts/native_repro.py", "scripts/ssh_hostkey.py")
+                 "scripts/native_lab.py", "scripts/native_repro.py", "scripts/ssh_hostkey.py",
+                 "scripts/ssh_command.py")
 
 
 def committed_crate_archive(root):

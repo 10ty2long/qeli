@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v32 -->
+<!-- normative-sync: q31-openwrt-controls-v33 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1878,3 +1878,67 @@ OPEN. Physical firmware stays USER_EXCLUDED. Q31 remains IN_PROGRESS; overall
 OPEN/Apple exclusions and D06 ACCEPTED remain unchanged. No push/deploy.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-cross-ab-20261007.
 Evidence: release/certification/evidence/q31-router-cross-ab-20261007.json.
+
+## F368–F369 / Q31-V007: SSH receive-window and diagnostic connection ownership
+
+Four exact baseline implementations (native_lab, lab_common, Keenetic/OpenWrt
+build helpers) read stdout to EOF before stderr. A real SSH command on .10 wrote
+3 MiB stderr before 64 KiB stdout and reproduced timeout in all four callers.
+The fixture had an external timeout; the test harness closed failed baseline
+channels. No services, firewall or network settings changed.
+
+F368: shared `ssh_command.run_ssh_command` combines stderr into stdout through
+Paramiko, sends EOF to unused stdin, drains output before exit status and closes
+only the command channel in `finally`. Four separate sequential-drain implementations
+were removed. Whitespace/tuple/exit-code contracts are retained. Output is combined
+in arrival order; stdout-then-stderr ordering is no longer promised.
+[Paramiko contract](https://docs.paramiko.org/en/stable/api/channel.html#paramiko.channel.Channel.set_combine_stderr).
+Timeout remains a Paramiko operation timeout. Channel closure does not prove
+remote-process termination and does not add a total wall-clock deadline.
+
+F369: connect_lab closes an allocated client after connection failure and preserves
+the original error even if close fails. The diagnostic probe closes SSH in finally
+and checks only installed named pins. Rolling nightly/default Rust/Cargo proxies
+were replaced with guarded inventory/pinned-executable queries. Exact old AST
+models reproduce missing close on connect/probe error; no rolling-nightly download
+or deliberately failed lab authentication was attempted.
+
+Fixed code passes 16 actual SSH checks across four callers: all pressure bytes,
+stdin EOF, nonzero exit, timeout and closed command channels. The same connection
+remained usable after four timeouts. All eight actual probe commands pass; installed
+toolchain/package inventories and tool hashes match before/after. Linux:35 native
+plus90 router methods PASS without skips, including seven new transport and three
+probe methods. All764 model inputs verified before/after. Local native contract78
+(including37 recipes), release-gate15, docs9 and bindings PASS. The Windows probe
+suite has one expected POSIX skip; qualification uses Linux without skips. CI
+includes transport through native tests and an explicit probe command; no new
+GitHub Actions run was dispatched.
+
+## Q31 source review reconciliation
+
+28 router-slice files reviewed:21 production/declaration files,three configuration
+examples and four manuals. Coverage includes UCI/INI publication, volatile secrets/
+ACL/LuCI, procd lifecycle, Keenetic PID/join/legacy recovery, OpkgTun plan/receipt,
+SDK package declarations, standalone source/tool/build/artifact helpers and
+maintainer gates. Shared transport/connect/recipe-identity changes are reviewed
+separately. External rc.common/procd callbacks, rpcd methods, LuCI entry points and
+Make macros remain; a single text reference was not treated as dead-code proof.
+Thin compatibility wrappers are used by entry points/tests. No further confirmed
+unused production implementation was found; separate SSH implementations now use
+one helper. Source inventory/hash/classification retained. The Review/dead-code
+criterion is complete in this scope. The other four Q31 criteria retain their
+runtime/pipeline limits; this is not full Q31 PASS.
+
+The new SSH helper is included in native recipe inputs and release-gate dirty
+admission. Native provenance was already STALE at the base commit and remains
+STALE: sources/recipes do not match published cores. PROVENANCE, A/B evidence and
+binaries were not rewritten; full native A/B/provenance refresh remains mandatory
+Q34 release work. Core/Rust/ABI, router compiler flags and artifacts unchanged;
+no new Rust/cross build claimed. Certification retains41 historical cases/acceptance
+and38 prior supplements; scoped evidence does not imply green CI. No owned pressure/
+model processes or test temporary roots remain; own fixture/source packet retained.
+SDK bootstrap/source release-cut, arbitrary hermetic policy and writer/lock/atomic
+ndm remain OPEN; firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%),9remain;
+Q29/Q30/D06 retained. No push/deploy.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-ssh-20261007.
+Evidence: release/certification/evidence/q31-router-ssh-20261007.json.

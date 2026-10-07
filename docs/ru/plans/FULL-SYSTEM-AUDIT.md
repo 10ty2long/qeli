@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v128 -->
+<!-- normative-sync: full-system-audit-v129 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -1976,7 +1976,7 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **Имеющаяся обвязка/fixtures:** `scripts/keenetic_verify.py`.
 
-- [ ] Review и мёртвый код.
+- [x] Review и мёртвый код.
 - [ ] Штатные, граничные и негативные сценарии.
 - [ ] Отказы и конкуренция.
 - [ ] Интеграция и целевая платформа.
@@ -2015,8 +2015,7 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **7 октября, Q31-V006/F366–F367:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): шесть новых полных AArch64/ARMv7/MIPS сборок дали три побайтно идентичные пары. С SHA-сверенным sealed F365 x86_64 evidence подтверждены все четыре standalone A/B цели. 72 настоящих QEMU INI cases/12 CLI-вызовов;15 новых release-gate/72 связанных Linux методов PASS без skips. Gate 2 использует приватный точный committed Git-архив и общие pins/locked recipe/SHA/ELF admission, запрещает dirty inputs, проваливает configured errors и закрывает SSH; tests добавлены в CI. Полный live preflight/CI dispatch,SDK bootstrap/source release-cut,full hermetic policy и оставшийся Q31 source review OPEN;firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 сохранены. Без push/deploy.
 
-
-
+**7 октября, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): завершён source review28файлов; первый критерий закрыт. Общий SSH helper устраняет воспроизведённый четырьмя callers stderr receive-window timeout; connection/probe failure close и installed-pin diagnostics исправлены.16настоящих SSH checks,8actual probe commands,125Linux methods без skips,78local native contract/docs/bindings PASS. Native provenance был STALE до изменений и остаётся release-blocking Q34; digest/artifacts не подменялись. SDK/pipeline/concurrency ограничения сохранены. Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 сохранены.
 
 ### 32. Метрики, usage, логи и уведомления
 

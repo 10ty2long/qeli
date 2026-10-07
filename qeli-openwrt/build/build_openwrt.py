@@ -32,6 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 # Reuse the lab connection helpers from scripts/.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
 from router_artifact import pull_router_artifact
+from ssh_command import run_ssh_command
 from router_toolchain import ARCH_TARGETS, ensure_router_toolchain, router_build_command
 from router_source import (sync_router_source, require_router_source_ready,
                            create_router_checkout, restrict_router_crate_types as restrict_crate_types)
@@ -50,9 +51,8 @@ TARGETS = dict(ARCH_TARGETS)
 
 
 def run(c, cmd, t=1800):
-    _i, o, e = c.exec_command(cmd, timeout=t)
-    out = o.read().decode("utf-8", "replace") + e.read().decode("utf-8", "replace")
-    return o.channel.recv_exit_status(), out.strip()
+    output, status = run_ssh_command(c, cmd, t)
+    return status, output.strip()
 
 
 def tail(s, n=25):

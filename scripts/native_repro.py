@@ -46,6 +46,7 @@ BUILD_INPUTS = (
     "scripts/build_native_libs_p4.py",
     "scripts/build_android_so_11.py",
     "scripts/native_lab.py",
+    "scripts/ssh_command.py",
     "scripts/native_repro.py",
     "scripts/macho_repro.py",
 )
