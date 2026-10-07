@@ -1,8 +1,8 @@
 # Q32: корректность метрик после пропусков и смены worker
 
-<!-- normative-sync: q32-metrics-v1 -->
+<!-- normative-sync: q32-metrics-v2 -->
 
-7 октября 2026. F380–F382 исправляют показания панели в `qeli/src/server/metrics.rs`.
+7–8 октября 2026. F380–F383 исправляют показания панели в `qeli/src/server/metrics.rs`.
 Q32 остаётся IN_PROGRESS: этот пакет проверяет метрики, а не все usage/logs/notify.
 
 ## F380 / Q32-F002: ложный пик после сбоя control socket
@@ -42,6 +42,29 @@ Q32 остаётся IN_PROGRESS: этот пакет проверяет мет�
 где один полностью занятый core равен 100%, сохранена. RSS остаётся best-effort;
 сложение ticks и умножение страниц теперь проверяют переполнение.
 
+
+## F383: sysctl fixture не должна совпадать с PID теста
+
+Полный Linux-прогон прошёл 2421 метод и выявил три отказа в старом namespace
+fixture. Мок считал PID42 мёртвым, но для собственного PID возвращал живой
+starttime100. Контролируемый запуск старого binary при настоящем PID42
+воспроизводит эти три отказа (33/36 PASS); при PID43 все36 PASS. Fixture теперь
+использует допустимый `i32::MAX`, который не совпадает с PID тестового процесса.
+Исправлен только cfg(test) fixture, код восстановления sysctl не менялся.
+Начальная ошибка количества fork (фактический PID44) сохранена как невалидная
+подготовка, не как отрицательная проверка. Повтор при PID42 после исправления
+и полный набор отражены в evidence.
+
+Первый full-crate compile обнаружил неверный namespace импорта control_io в новом
+тесте. Fixture исправлена: wire-запрос принимает обычный BufReader, ответ пишет
+Tokio; проверяемый sampler использует настоящий production control client.
+Ошибки подготовки и промежуточные native snapshots сохранены. Проверка финального
+source digest выполняется настоящими A/B командами; старые записи не переименованы
+в подтверждение новых исходников. PassA desktop может использовать собственный
+partial cache после прерванного прогона; PassB имеет отдельный target/cache.
+Native-функции и профили сохранены; cold/hermetic builds этим не заявляются.
+Mac cross-build предупреждения о недоступном xcrun/SDK сохранены.
+
 ## Проверки и предел
 
 Старый исходник проверен в маленьком Linux harness: три воспроизведения отказали
@@ -56,6 +79,17 @@ PID/starttime/counter reset, настоящий `/proc` текущего про�
 Повтор от UID/GID65534 также прошёл 8/8 без privileged операций.
 Первый after-прогон переиспользовал stale harness binary через общий target и
 не считается квалификацией; итоговый прогон использовал отдельный target.
+
+Итог:2424 library PASS,60 прежних ignored; строгий Clippy all-targets с
+transport-core-ffi/client-bin и debug daemon PASS.36namespace при PID42 PASS.
+Все четыре native артефакта имеют независимый A/B и полный набор exports;
+macOS обе подписи ADHOC/load commands PASS. Windows ABI22 и Android ART JNI23
+проверены на совпадающих финальных байтах, original AVD userdata/host сохранены.
+14 SHA строк и current native provenance PASS. Во время проверки исправленного
+snapshot использовались две точечные передачи,315 прочих файлов сверены до,
+все317 после передачи и после сборок. Семь созданных корней и отдельный каталог target удалены
+после сохранения Git archives/8A-B binaries/daemon/test binaries/DEX/logs и
+process/mount guards. Работающие сервисы и сетевые политики лабы сохранены.
 
 Полная Linux квалификация и независимые native A/B записываются в
 [машинное evidence](../../../release/certification/evidence/q32-metrics-20261007.json).
