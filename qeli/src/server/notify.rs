@@ -315,7 +315,10 @@ pub fn save_if_unchanged(cfg: &NotifyConfig, checked_raw: &str) -> anyhow::Resul
         checked_raw,
     )?;
     if matches!(outcome, ConditionalSave::Saved(_)) {
-        *cached = Some((file_stamp(), cfg.clone()));
+        // A manual editor may replace the published file before a pathname stat.
+        // Pairing that newer stamp with cfg would cache stale settings indefinitely.
+        // Reload a stable current snapshot on the next event instead.
+        *cached = None;
     }
     Ok(outcome)
 }
