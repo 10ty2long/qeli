@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v21 -->
+<!-- normative-sync: q31-openwrt-controls-v22 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1048,7 +1048,7 @@ default toolchains и работающие сервисы не изменяли�
 |---|---|
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
-| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; полный Qeli SDK build/install OPEN, procd non-PID1 lifecycle проверен |
+| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; полный Qeli SDK build/install OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
 | Preflight→launch config snapshot, core plan generation/ABA | OPEN; текущий exclusion lock не устраняет эти гонки |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
@@ -1330,3 +1330,56 @@ Q30 Apple exclusions/callback-drain OPEN и D06 ACCEPTED сохранены.
 [pinned Rust recipe](https://github.com/openwrt/packages/blob/f1470815f41fe199bfdafe9a91ad115bc2e91203/lang/rust/Makefile).
 Пакет: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-sdk-20261007.
 Evidence: release/certification/evidence/q31-openwrt-sdk-20261007.json.
+
+## Q31-V002: настоящий HTTP/session bridge (7 октября)
+
+Закрыта прежняя HTTP API NOT_RUN граница в ограниченном scope: официальный
+musl uhttpd2025.07.06~7e64e8ba-r4 и uhttpd_ubus.so из rootfs24.10.4 обращаются
+к прежнему native GNU rpcd/ucode/fs/UCI runtime через private Unix socket.
+Каждый тест выполняется внутри новых mount/net namespaces .11, HTTP слушает
+только loopback этого namespace. Два owned chroot разделяют только socket directory
+через private bind mount. Flag -a (authentication bypass) не используется.
+Host /etc, services, network/firewall и .10 не менялись.
+
+6 методов `scripts/test_openwrt_http.py` PASS без skips: anonymous/поддельная
+сессия/неверный пароль; reader читает qeli и service status, но не secrets,
+service mutations либо чужую UCI; writer передаёт пять закрытых service verbs
+и literal Unicode/metacharacter secret через stdin, получает только boolean
+secret status и очищает секрет; настоящие session UCI set→apply→confirm и
+init-visible committed enabled; попытка вложить чужой ubus_rpc_session отвергается;
+отзыв локальным session API и idle expiration запрещают дальнейший HTTP RPC;
+HTTP выдаёт точные minified JS bytes предыдущего SDK IPK и восстанавливается
+после malformed request. UCI firewall/rpcd write остаётся запрещённой.
+
+Используются реальные packaged Qeli RPC/ACL/menu/JS из IPK предыдущего F353–F354,
+а также настоящий неизменённый luci-base ACL. UCI transport methods поступают
+из обязательного LuCI framework ACL; granular qeli config scope — из ACL Qeli.
+Restricted login нуждается в read/write luci-base соответственно своей роли;
+один luci-app-qeli не предоставляет framework UCI methods. API apply/confirm
+соответствует LuCI; HTTP commit не подменяет его. Qeli ACL не расширен.
+Начальный FAIL стенда без base ACL, polling продлевавший idle session,
+неверное ожидание parse error и существующий receipt разрешённого чтения сохранены
+и исправлены. Ошибка cleanup inventory принимала сохранённый runtime-template
+за temporary root; он исключён по точному пути, не удалён. Нового дефекта продукта
+не найдено; ложного baseline/product-regression утверждения нет.
+
+Сверены все959 regular files/215 links official rootfs с прежним SHA-проверенным
+архивом,28 regular/19 links GNU rpcd template и7 transferred Git inputs.
+Нет owned процессов, mount/runtime roots после final run; все временные namespaces
+завершены. uhttpd/plugin/ACL/status hashes и предыдущий IPK сохранены в пакете.
+14 source LuCI/37 recipes/docs9/bindings/diff PASS. Rust/core/native/ABI/build
+inputs и артефакты не менялись; прежние SDK/cross результаты сохраняют дату/scope.
+
+Service verbs здесь идут в inert init adapter, не в работающий VPN/procd.
+HTML login/DOM браузера, TLS/cookies/CORS/CSRF политика всего LuCI, OpenWrt PID1,
+firmware и реальная VPN-сеть не квалифицированы этим HTTP API тестом.
+Full SDK Rust build/resolver/install, source release-cut/compiler compatibility,
+preflight/config/core generation/ABA и clean A/B остаются OPEN.
+41 historic certification cases/acceptance сохранены; добавлено scoped supplement.
+Q31 IN_PROGRESS;28/37(75.7%),9 осталось. Q29 SIGKILL FAIL/auto-null ENONET,
+Q30 Apple exclusions/callback-drain OPEN и D06 ACCEPTED сохранены.
+
+Источники: [release uhttpd recipe](https://github.com/openwrt/openwrt/blob/v24.10.4/package/network/services/uhttpd/Makefile),
+[pinned HTTP/session bridge](https://github.com/openwrt/uhttpd/blob/7e64e8bad2415cec0a6d9770ec379db54273c7a7/ubus.c).
+Пакет: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-http-20261007.
+Evidence: release/certification/evidence/q31-openwrt-http-20261007.json.

@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v21 -->
+<!-- normative-sync: q31-openwrt-controls-v22 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1047,7 +1047,7 @@ Current Q31 remainder:
 |---|---|
 | Actual standalone four-target cross builds/ELF | DONE in the stated scope |
 | UCI/INI, shell lifecycle/rollback and LuCI | Scoped suites PASS; model boundaries retained |
-| Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; full Qeli SDK build/install OPEN; actual non-PID1 procd scope is qualified in F352 |
+| Actual ucode/fs, rpcd/ubus/UCI and session ACL | Scoped native PASS F347–F351 below; SDK Kconfig/LuCI packaging scoped PASS F353–F354; full Qeli SDK build/install OPEN; actual non-PID1 procd scope F352 and HTTP/session API Q31-V002 qualified |
 | Preflight→launch config snapshot/core plan generation/ABA | OPEN; exclusion lock does not eliminate these races |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
@@ -1327,3 +1327,54 @@ Sources: [official SDK/hash](https://downloads.openwrt.org/releases/24.10.4/targ
 [pinned Rust recipe](https://github.com/openwrt/packages/blob/f1470815f41fe199bfdafe9a91ad115bc2e91203/lang/rust/Makefile).
 Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-sdk-20261007.
 Evidence: release/certification/evidence/q31-openwrt-sdk-20261007.json.
+
+## Q31-V002: actual HTTP/session bridge (7 October)
+
+The prior HTTP API NOT_RUN boundary is now qualified in a limited scope.
+Official musl uhttpd2025.07.06~7e64e8ba-r4 and uhttpd_ubus.so from rootfs24.10.4
+connect to the previously built native GNU rpcd/ucode/fs/UCI runtime over a private
+Unix socket. Each test runs inside fresh .11 mount/net namespaces; HTTP listens
+only on namespace loopback. Two owned chroots share only the socket directory
+through a private bind mount. No -a authentication bypass. Host /etc, services,
+network/firewall and .10 are unchanged.
+
+6 scripts/test_openwrt_http.py methods PASS without skips: anonymous/invalid
+session/wrong password denials; reader can read qeli/service status but cannot
+access secrets, service mutations or other UCI configs; writer forwards five closed
+service verbs and literal Unicode/metacharacter secret over stdin, receives boolean
+secret status and clears it; actual session UCI set→apply→confirm changes the
+init-visible committed enabled state; embedded ubus_rpc_session impersonation is
+rejected; local session revocation and idle expiration deny further HTTP RPC;
+HTTP serves exact minified JS bytes from the previous SDK IPK and recovers after
+malformed requests. Writes to firewall/rpcd remain denied.
+
+Real packaged Qeli RPC/ACL/menu/JS from the F353–F354 IPK and genuine unmodified
+luci-base ACL are used. Mandatory LuCI framework ACL supplies UCI transport methods;
+Qeli ACL supplies granular config/object scope. Restricted logins need corresponding
+read/write luci-base permissions; luci-app-qeli alone does not grant framework UCI
+methods. apply/confirm follows LuCI, rather than substituting HTTP commit. No Qeli
+ACL expansion. Initial missing-base-ACL failures, expiry polling that refreshed
+sessions, incorrect parse-error expectation and the authorized read receipt were
+retained and corrected. Cleanup inventory initially classified saved runtime-template
+as temporary; it is excluded by exact path and preserved. No new product defect or
+claimed baseline product regression.
+
+All959 official-rootfs regular files/215 links match the prior SHA-verified archive;
+28 GNU rpcd template files/19 links and7 transferred Git inputs match. No owned
+processes or temporary mount/runtime roots after final run; namespaces exited.
+uhttpd/plugin/ACL/status hashes and previous IPK retained.14 source LuCI/37recipes/
+docs9/bindings/diff PASS. Rust/core/native/ABI/build inputs and artifacts unchanged;
+prior SDK/cross results retain execution dates and scopes.
+
+Service verbs target an inert init adapter, not live VPN/procd. Browser HTML login/
+DOM, whole-LuCI TLS/cookies/CORS/CSRF policy, OpenWrt PID1, firmware and real VPN
+networking are not qualified by this HTTP API run. Full SDK Rust build/resolver/
+install, source release-cut/compiler compatibility, preflight/config/core generation/
+ABA and clean A/B remain OPEN.41 historic certification cases/acceptance preserved;
+scoped supplement only. Q31 IN_PROGRESS;28/37(75.7%),9 remain. Q29 SIGKILL FAIL/
+auto-null ENONET, Q30 Apple exclusions/callback-drain OPEN and D06 ACCEPTED retained.
+
+Sources: [release uhttpd recipe](https://github.com/openwrt/openwrt/blob/v24.10.4/package/network/services/uhttpd/Makefile),
+[pinned HTTP/session bridge](https://github.com/openwrt/uhttpd/blob/7e64e8bad2415cec0a6d9770ec379db54273c7a7/ubus.c).
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-http-20261007.
+Evidence: release/certification/evidence/q31-openwrt-http-20261007.json.
