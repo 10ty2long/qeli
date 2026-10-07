@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v25 -->
+<!-- normative-sync: q31-openwrt-controls-v26 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1048,7 +1048,7 @@ default toolchains и работающие сервисы не изменяли�
 |---|---|
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
-| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; SDK packaging retained binary и offline opkg Q31-V003 scoped PASS; полный SDK Rust build OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
+| Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; SDK packaging retained binary и offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
 | Keenetic preflight→launch INI; core plan generation/ABA | F355: одна приватная INI-копия scoped PASS; core plan/ABA и admin path replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
@@ -1536,3 +1536,62 @@ ec567377e46cd8a2ed629bccfb83318fba4e19bf26905df3f49ca77c254a5925, packaged
 915b113abcb47ce37f40c79be70927b8d330217cb075ae161fc36ae9fffeac24. Оба сохранены.
 37recipes/14LuCI/docs9/bindings PASS. Final owned processes/case/smoke/mount roots
 отсутствуют; host services/network/firewall и .10 не затронуты. Без push/deploy.
+
+## F358 / Q31-V004: SDK компилировал неиспользуемые FFI библиотеки (7 октября)
+
+Выполнена новая проверка текущего client-bin настоящим Rust1.89.0 — версией pinned
+SDK feed. GNU cargo check --locked --offline --release PASS. Полный musl cargo
+install с GCC13.3.0 из официального SDK24.10.4 и фактически раскрытыми SDK flags/
+profile PASS. Это prebuilt upstream rustc/std, не SDK bootstrap Rust из исходников.
+Compiler, linker, locked dependencies и release source inputs зафиксированы.
+На .10 использованы отдельные RUSTUP_HOME/CARGO_HOME/target, jobs1; global defaults
+и cache не менялись. SDK GCC вместе с его bundled host loader/libs перенесён в
+собственный каталог; оба архива проверены SHA/tar compare.
+
+F358: baseline настоящий cargo install собирал rlib, cdylib и staticlib, хотя SDK
+устанавливает только CLI. Оба лишних FFI outputs подтверждены в compiler argv и
+артефактах. Build/Compile теперь проверяет lock и проецирует только private SDK
+Cargo.toml на rlib; неизвестная декларация/отсутствующие inputs запрещают Cargo.
+Исходный manifest проекта, Rust/core/schema/native ABI не менялись. Make $$
+сохраняет regex anchor для sed. Оба production макроса раскрыты настоящим SDK,
+сохранены точный вывод и явно указанные path substitutions для private compiler.
+На маленьком настоящем Cargo/musl crate baseline даёт1 expected FAIL из-за .a/.so;
+fixed5methods PASS без skips, включая existing rlib, unknown declaration и missing
+lock/manifest. Полный текущий клиент затем повторно собран именно fixed macro,
+без замены Compile на copy. Только rlib/rmeta, лишних FFI outputs нет; source
+manifest после probe восстановлен. Кэш зависимостей использован повторно — это
+не независимые clean A/B. SDK3 Kconfig/metadata methods PASS с fixed recipe.
+
+Baseline и fixed ELF по9 actual executable cases PASS в official24.10.4 rootfs:
+--version; legacy/core owner, BOM/quotes, attached TUN, wrong device/attach, TAP и
+malformed INI refusals. Всего18 executions, не18 unit methods. Проверены ELF64/
+x86-64 PIE, /lib/ld-musl-x86_64.so.1, libc.so/libgcc_s.so.1, BIND_NOW/RELRO и NX stack.
+Mount/network/PID namespaces private, host proc/dev не подключались. VPN/TUN/
+firewall не запускались; настоящая router firmware USER_EXCLUDED. ELF/projection/
+inputs/logs сохранены; published binaries не заменялись. Никакой общей MSRV всех
+features/платформ или SDK Rust bootstrap/source-download/target matrix не заявляется.
+
+Cargo предупредил о locked der0.8.0: первичный RustCrypto changelog объясняет yank
+исправлением minimal-versions CI. Lock не разблокирован; обновление dependency
+stack относится к Q34. Это не подтверждение уязвимости и не compiler failure.
+Первый standalone GCC запуск остановился без bundled SDK host libs; правильный
+runtime перенесён перед сборкой, диагностика сохранена. Компилятор1.89 подтвердил
+совместимость именно проверенного client-bin/x86 пути. Более новые helper1.97 и
+MIPS nightly квалификации сохраняют прежние даты/scope.
+
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-openwrt-compiler-20261007.
+Evidence: release/certification/evidence/q31-openwrt-compiler-20261007.json.
+Первичный источник yank: [RustCrypto der changelog](https://github.com/RustCrypto/formats/blob/master/der/CHANGELOG.md).
+Q31 IN_PROGRESS28/37(75.7%),9remain. Full SDK bootstrap/release pipeline, core plan
+ABA/admin replacement и full hermetic Qeli A/B OPEN; Q29 SIGKILL FAIL/ENONET,
+Q30 callback-drain OPEN/Apple exclusions и D06 ACCEPTED сохранены. Без push/deploy.
+
+Итоговая сверка и очистка:364 входных файла crate из Git проверены до и после полной
+сборки; сохранён перечень3228 файлов и ссылок инструментов компилятора/SDK. Оба
+SDK-рецепта совпадают с текущим исходником.959 файлов и215 ссылок официального
+rootfs сверены с архивом. Частные toolchain/cache/build-каталоги и runtime rootfs
+удалены; процессов, mount-точек и compile-case-каталогов испытаний не осталось.
+Глобальный перечень Rust toolchain не изменился. После очистки свободно:
+.10=2588MiB,.11=467MiB.37 проверок рецептов,14 LuCI fixtures,9 проверок документации,
+bindings и diff PASS. Сервисы, сеть и firewall хостов не изменялись.41 исторический
+сертификационный случай сохранён; добавляется только дополнение с указанной областью.
