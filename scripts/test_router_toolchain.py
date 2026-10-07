@@ -104,6 +104,10 @@ class RouterToolchainTests(unittest.TestCase):
             self.assertIn("RUSTFLAGS='-C link-arg=-msoft-float'" if nightly else "RUSTFLAGS=''",command)
             self.assertIn("-Z build-std=std,panic_abort " if nightly else "zigbuild --locked",command)
             self.assertIn("--jobs 1",command)
+            self.assertIn('rustup which --toolchain '+(policy.ROUTER_NIGHTLY if nightly else policy.ROUTER_RUST)+' rustc',command)
+            self.assertIn('test -x "$QELI_ROUTER_RUSTC"',command)
+            self.assertIn('RUSTC="$QELI_ROUTER_RUSTC"',command)
+            self.assertIn('CARGO_BUILD_BUILD_DIR='+ROOT+'/target',command)
         for root,target,binary in [("/opt/qeli-src",next(iter(policy.TARGETS)),"qeli-client"),(ROOT,"unknown","qeli-client"),(ROOT,next(iter(policy.TARGETS)),"qeli")]:
             with self.assertRaises(ValueError):policy.router_build_command(root,target,binary)
 

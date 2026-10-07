@@ -52,7 +52,12 @@ class VerifyTests(unittest.TestCase):
         commands=[c.args[0] for c in self.connection.checked.call_args_list]
         for command in commands:
             for banned in ('systemctl','pkill','kill -','/opt/qeli-src'):self.assertNotIn(banned,command)
-        for command in commands[1:7]:self.assertIn('export CARGO_TARGET_DIR='+ROOT+'/target',command)
+        for command in commands[1:7]:self.assertIn('CARGO_TARGET_DIR='+ROOT+'/target',command)
+        for command in commands[1:7]:
+            self.assertIn('CARGO_BUILD_BUILD_DIR='+ROOT+'/target',command)
+            self.assertIn('rustup which --toolchain 1.97.0 rustc',command)
+            self.assertIn('RUSTC="$QELI_ROUTER_RUSTC"',command)
+            self.assertIn('cargo +1.97.0 ',command)
         for command in commands[2:6]:self.assertIn('--locked',command);self.assertIn('--jobs 1',command)
         self.assertIn('--features jemalloc --bin qeli',commands[2])
         for command in commands[4:7]:self.assertIn('--no-default-features --features client-bin',command)

@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v23 -->
+<!-- normative-sync: q31-openwrt-controls-v24 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1052,7 +1052,7 @@ default toolchains и работающие сервисы не изменяли�
 | Keenetic preflight→launch INI; core plan generation/ABA | F355: одна приватная INI-копия scoped PASS; core plan/ABA и admin path replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
-| Hermetic shared caches/config/PATH и clean A/B | OPEN; named pins не означают воспроизводимость |
+| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; полная hermetic policy и Qeli A/B OPEN |
 
 Эта таблица актуализирует исторические cross-build NOT_RUN в предыдущих разделах;
 их исходные evidence не переписаны. Пакет:
@@ -1431,3 +1431,54 @@ exclusions/callback-drain OPEN и D06 ACCEPTED сохранены. Без push/d
 
 Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-keenetic-launch-config-20261007.
 Evidence: release/certification/evidence/q31-keenetic-launch-config-20261007.json.
+
+## F356–F357: Cargo config обходил pin компилятора и private intermediates (7 октября)
+
+F356: cargo +pin фиксирует Cargo, но unset RUSTC/CARGO_BUILD_RUSTC позволял Cargo
+выбирать другой executable через build.rustc. F357: одного CARGO_TARGET_DIR
+недостаточно — build.build-dir/CARGO_BUILD_BUILD_DIR мог вынести intermediates
+за пределы собственного target. Host gate также использовал default toolchain и
+ambient flags. Оба router-варианта и захваченная настоящая команда client build
+из host gate воспроизводят это реальным Cargo на маленьких private Linux probes:
+compiler adapter из config меняет compiled receipt, config/environment перенаправляют
+intermediates. Тот же финальный harness baseline4methods:9expected subtest FAIL,
+без errors; это два дефекта, не девять независимых product bugs.
+
+Общий router_toolchain находит и проверяет rustc выбранного pin до Cargo, явно
+задаёт RUSTC и оба output directories. Оба maintainer helpers используют его;
+keenetic_verify использует то же окружение и Rust1.97.0 для test/Clippy/graph.
+Шаг router CI для четырёх targets выровнен. Failed/nonexecutable compiler lookup
+останавливает Cargo. Прежние target-specific flags и MIPS nightly сохраняются.
+Мануалы описывают named compiler/Clippy prerequisite и ограничения scope.
+Project Rust/native/schema/ABI/published artifacts неизменны.
+
+59 связанных router methods (7real-Cargo runtime, один новый host-prefix model)
+и19 host-gate model methods PASS без skips на .11. Девять fixed compile/execute
+receipts дают pinned вместо redirected; настоящий tiny test1PASS, Clippy -Dwarnings
+и graph проходят при configured compiler trap. Это проверка выбора команд, не
+собственные unit tests/dependency graph Qeli. Два failure guards покрывают все три
+roots. Real rustc/cargo1.97.0/Clippy identity и SHA rustc сохранены. PyYAML6.0.3
+разобрал настоящий CI;16rendered shell steps четырёх targets проходят bash -n.
+37recipes/14LuCI/docs9/bindings/diff PASS. GitHub Actions, настоящий Zig и fresh
+full Qeli/cross/SDK build не заявляются. На .11 свободно532MiB, RAM2GiB; probes
+не требуют загрузки зависимостей.
+
+Initial preparation остановилась до tests из-за отсутствующего local baseline
+каталога; первый baseline8FAIL/1harnessERROR: tempfile выдал underscore, запрещённый
+production root admission. Owned mktemp naming исправлено, все logs сохранены.
+CRLF/Git mismatch одного test source сохранён, нормализован к canonical bytes;59-method suite повторён. 17transferred Git inputs финально проверены; probe processes/run roots отсутствуют,
+CARGO_HOME только private. Host services/network/firewall/global config и .10
+не затронуты.
+
+Закрыты обычные build.rustc и config/environment intermediate-directory overrides
+в этих командах. Полная hermetic Cargo home/ancestor configuration, forced env,
+profile/source/linker/PATH/cache policy и независимые clean Qeli A/B OPEN.
+Source release-cut/full SDK build/install/compiler compatibility, core plan
+generation/ABA/admin replacement и SIGKILL/power-loss transactions OPEN;
+firmware USER_EXCLUDED.41historic cases/acceptance сохранены; scoped supplement.
+Q31 IN_PROGRESS28/37(75.7%),9remain; Q29 SIGKILL FAIL/ENONET, Q30 callback-drain
+OPEN/Apple exclusions и D06 ACCEPTED сохранены. Без push/deploy.
+
+Справочник: [Cargo configuration](https://doc.rust-lang.org/cargo/reference/config.html).
+Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-cargo-20261007.
+Evidence: release/certification/evidence/q31-router-cargo-20261007.json.

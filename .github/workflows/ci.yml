@@ -685,6 +685,10 @@ jobs:
           set -euo pipefail
           unset CARGO_ENCODED_RUSTFLAGS RUSTC CARGO_BUILD_RUSTC CARGO_BUILD_RUSTFLAGS
           export RUSTC_WRAPPER='' RUSTC_WORKSPACE_WRAPPER='' CARGO_INCREMENTAL=0
+          QELI_ROUTER_RUSTC="$(rustup which --toolchain ${{ matrix.toolchain }} rustc)"
+          test -x "$QELI_ROUTER_RUSTC"
+          export RUSTC="$QELI_ROUTER_RUSTC"
+          export CARGO_TARGET_DIR="$PWD/target" CARGO_BUILD_BUILD_DIR="$PWD/target"
           sed -i 's/^crate-type = \["rlib", "cdylib", "staticlib"\]$/crate-type = ["rlib"]/' Cargo.toml
           grep -qxF 'crate-type = ["rlib"]' Cargo.toml
           if [ "${{ matrix.arch }}" = "mipsel" ]; then

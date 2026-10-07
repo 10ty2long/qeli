@@ -15,6 +15,7 @@ import sys
 
 from native_lab import connect_lab, remote_sha256
 from router_source import sync_router_source, require_router_source_ready
+from router_toolchain import ROUTER_RUST, router_host_cargo_prefix
 
 LOCAL_ROOT = Path(__file__).resolve().parents[1] / "qeli"
 CLIENT_FEATURES = "--no-default-features --features client-bin"
@@ -54,9 +55,10 @@ def verify(connection, local_root=LOCAL_ROOT):
     require_router_source_ready(connection.client, remote_root)
     print("Synced source files:", count)
     prefix = ("export PATH=/root/.cargo/bin:$PATH; "
-              f"export CARGO_TARGET_DIR={shlex.quote(remote_root + '/target')}; "
               f"cd {shlex.quote(remote_root)} && ")
-    print(connection.checked(prefix + "rustc --version && cargo --version", "host toolchain inventory", timeout=30))
+    cargo = router_host_cargo_prefix(remote_root)
+    print(connection.checked(prefix + f"rustc +{ROUTER_RUST} --version && " + cargo + " --version",
+                             "host toolchain inventory", timeout=30))
     commands = (
         ("server_build", "cargo build --locked --release --features jemalloc --bin qeli --jobs 1"),
         ("unit_tests", "cargo test --locked --lib --jobs 1"),
@@ -64,11 +66,11 @@ def verify(connection, local_root=LOCAL_ROOT):
         ("client_clippy", f"cargo clippy --locked --bin qeli-client {CLIENT_FEATURES} --jobs 1 -- -D warnings"),
     )
     for name, command in commands:
-        output = connection.checked(prefix + command, name, timeout=1200)
+        output = connection.checked(prefix + cargo + " " + command.removeprefix("cargo "), name, timeout=1200)
         print("\n".join(output.splitlines()[-20:]))
         print(name + "=OK")
     graph = connection.checked(
-        prefix + f"cargo tree --locked {CLIENT_FEATURES} --edges normal,build --prefix none --format '{{p}}'",
+        prefix + cargo + f" tree --locked {CLIENT_FEATURES} --edges normal,build --prefix none --format '{{p}}'",
         "client dependency graph", timeout=120)
     client_graph_without_ring(graph)
     artifact = remote_root + "/target/release/qeli-client"

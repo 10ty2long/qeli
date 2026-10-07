@@ -436,3 +436,20 @@ restart после успешного stop читает свежий исход�
 Не удаляй runtime-copy у работающего или неопределённого клиента. Прямой запуск
 binary вне шаблона не использует этот протокол. Замена приватных путей root/admin,
 core plan generation/ABA и настоящая firmware этим исправлением не квалифицированы.
+
+## Компилятор и промежуточные build files (development0.8.2)
+
+Общий helper router-сборки теперь находит rustc выбранного pin через
+`rustup which --toolchain ... rustc`, проверяет executable и явно передаёт его
+Cargo. `CARGO_TARGET_DIR` и `CARGO_BUILD_BUILD_DIR` направлены в target собственного
+запуска: обычные Cargo build.rustc/build.build-dir и ambient build-dir не могут
+молча перенаправить эти два входа. Router CI использует ту же политику.
+Linux gate `keenetic_verify.py` теперь требует Rust1.97.0 с установленным Clippy,
+а не default host toolchain; ошибка поиска компилятора останавливает Cargo.
+Wrapper/encoded Rust flags подчиняются общей политике.
+
+Это ограниченная изоляция окружения. Cargo home/ancestor config, forced environment,
+profile/source/linker overrides, PATH/shared registry/tool caches и clean независимые
+Qeli A/B ещё не квалифицированы.7 real-Cargo methods используют маленькие Linux
+fixtures без зависимостей; fresh Qeli cross build, Zig invocation, SDK Rust toolchain
+и router ABI/runtime ими не подтверждаются. См. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
