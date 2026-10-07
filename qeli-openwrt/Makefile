@@ -21,27 +21,11 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/litvinovtd/qeli.git
 PKG_SOURCE_VERSION:=dd0b736276b9ad5b89d117abd1bfe324210f3b26
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-# OpenWrt REQUIRES a hash for a git source: without PKG_MIRROR_HASH the generated
-# tarball is accepted unverified, so the build trusts whatever github.com serves.
-# The value is the sha256 of the tarball OpenWrt itself produces from the checkout
-# above, so it cannot be computed without the SDK.
-#
-# AT TAG TIME, together with PKG_SOURCE_VERSION above: replace the placeholder with the
-# real hash. Both are release-cut steps by nature — the SHA does not exist until the
-# release commit is made, and the hash is of a tarball produced FROM that commit — so a
-# development tree legitimately carries the placeholder and a stale SHA, and
-# `release_preflight.py` failing on this line is the reminder working, not a defect.
-# (This note used to be dated "TODO(release 0.7.13)" while PKG_VERSION already said
-# 0.7.14, which read like a forgotten task rather than a standing procedure.)
-#
-# Produce the hash from the OpenWrt buildroot after adding this package:
-#     make package/qeli/download V=s
-#     make package/qeli/check FIXUP=1
-# Use the actual Source filename from package metadata: the SDK chooses the
-# archive extension (24.10.4 uses .tar.zst), not a hardcoded .tar.xz path.
-# FIXUP=1 rewrites the hash in this recipe. The
-# placeholder is deliberately a value that CANNOT match, so the build fails loudly
-# rather than proceeding unverified — do NOT replace it with `skip`.
+# Hash the SDK-generated source archive. Git fallback may only warn on a
+# mismatch, so prepare AND compile verify it below before unpack/Cargo.
+# At release-cut pin the immutable source commit, run SDK download, then
+# make package/qeli/check FIXUP=1 and verify the actual Source archive filename.
+# The development pin/hash deliberately remains unqualified until that cut.
 PKG_MIRROR_HASH:=00036a1c982be4f565108a8b50cf7dbfe9f0892c075ae97464855b37ab150775
 PKG_MAINTAINER:=Alexandr
 PKG_LICENSE:=AGPL-3.0-only
@@ -90,9 +74,19 @@ endef
 # Project only this private SDK checkout to rlib, as the router helpers do;
 # unused cdylib/staticlib outputs waste build resources and are never installed.
 # Refuse an unknown declaration rather than silently building extra FFI targets.
+# Source overlays are explicit developer SDK modes (USE_SOURCE_DIR/git-src),
+# not mirror-qualified release builds. Default downloaded sources must have a
+# nonempty regular, nonlinked archive matching the declared hash. Do not rely
+# on download.mk warnings: check again even if prepare stamps already exist.
+define Qeli/VerifySourceArchive
+	$(SHELL) $(CURDIR)/verify-source.sh "$(DL_DIR)/$(PKG_SOURCE)" "$(PKG_MIRROR_HASH)" "$(MKHASH)" "$(PKG_SKIP_DOWNLOAD)"
+endef
+Hooks/Prepare/Pre += Qeli/VerifySourceArchive
+
 CARGO_INSTALL:=0
 define Build/Compile
-	+cd $(PKG_BUILD_DIR)/qeli && \
+	+$(Qeli/VerifySourceArchive) && \
+	cd $(PKG_BUILD_DIR)/qeli && \
 	test -f Cargo.lock && \
 	sed -i 's/^crate-type = \["rlib", "cdylib", "staticlib"\]$$/crate-type = ["rlib"]/' Cargo.toml && \
 	grep -qx 'crate-type = \["rlib"\]' Cargo.toml && \

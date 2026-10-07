@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v133 -->
+<!-- normative-sync: full-system-audit-v134 -->
 
 **Текущий итог, 7 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2022,6 +2022,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **7 октября,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): очистка saved/partial адресов OpkgTun, ownership после stop/start и ошибки смены плана, локальный IPv4 для cached no-op/сброса.218methods на dash/ash без пропусков;14nonroot CI methods и baseline-отказы старых hook/init. Критерий cooperative отказов/конкуренции закрыт;3/5критериев,Q31IN_PROGRESS,28/37всего. Межкомпонентная/SDK/release интеграция и exclusions сохранены; без push/deploy.
 **7 октября,F376–F378:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): immutable/однозначные source metadata, версия из committed TOML и сверка фактического SDK mirror SHA256.25 Linux source methods без root,18CI/15router gates PASS;4 точных старых fail-open воспроизведены. CI24+1 явный baseline skip. SDK bootstrap/release-cut/Actions не квалифицированы; Q31 остаётся3/5 criteria IN_PROGRESS,28/37overall.
+
+**7 октября,F379/Q31-V008:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual SDK source archive/check-FIXUP/prepare PASS на exact candidate crate; старый bad mirror download/prepare0 воспроизведён. Shared prepare/compile verifier останавливает bad hash до unpack/Cargo;9dash/9ash+25source methods uid65534 PASS,7integration stages с inert Cargo boundary. Full SDK Rust/bootstrap/release-cut/CI отдельно;3/5criteria IN_PROGRESS,28/37overall.
 
 ### 32. Метрики, usage, логи и уведомления
 

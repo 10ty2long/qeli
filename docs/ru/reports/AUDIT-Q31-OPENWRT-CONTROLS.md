@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v37 -->
+<!-- normative-sync: q31-openwrt-controls-v38 -->
 
-**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F376–F378 source admission ниже; прежние218methods на shell сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F379 actual SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2170,3 +2170,57 @@ Q30callback-drain и D06ACCEPTED не меняются. Debt14/15DONE+D06ACCEPTE
 
 Raw packet: `audit-debt-20260924/q31-openwrt-source-gate-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-openwrt-source-gate-20261007.json`.
+
+
+## F379 / Q31-V008: реальная SDK генерация архива и проверка prepare/compile (7 октября)
+
+Официальный SDK24.10.4 SHA229e871f… распакован в private каталог .11.
+Использованы закреплённые Rust feed files и SHA-bound gawk/libsigsegv debs,
+извлечённые приватно без host installation. Git fixture содержит точный committed
+qeli/ tree26a0402e… и LICENSE. Его local URL/pin относятся к fixture, не к релизу.
+Настоящие SDK rawgit/download/tar/zstd создали qeli-0.8.2.tar.zst,1541480bytes,
+SHA49450a5b4803b8e2b657a49c5b4fdbb5c0373813275904ab9c1e689c52850b58.
+Повторный download побайтно идентичен; tree распакованного qeli/ совпадает.
+Настоящий CHECK=1/FIXUP=1 изменил hash только private recipe. Source gate прошёл
+на committed fixture recipe с реальным SDK-generated архивом.
+
+F379: SDK Git fallback/download и prepare возвращали0 при неверном mirror hash
+и распаковывали исходники. CHECK может предупреждать; обычный download не обязан.
+Прежний комментарий recipe о гарантированном отказе был ошибочным. Build-only
+verify-source.sh теперь проверяет архив в Prepare/Pre и при входе в Compile,
+до Cargo и rlib projection. Требуются regular/nonempty/nonlinked файл, literal
+hash и успешный hash command. Явные SDK developer overlays сохраняются, но не
+считаются mirror-qualified релизом. Инструкция копирования включает новый файл;
+Package/install не переносит его на роутер. Privileged replacement после проверки
+и произвольные Make overrides остаются вне этого ограничения.
+
+Исправленный actual SDK prepare отказал до unpack при bad hash, а при правильном
+сохранил exact source tree. Actual GNU-make-exported Compile macro с inert Cargo
+показал: старый bad hash вызывает metadata/install; новый bad hash делает0calls
+и сохраняет manifest; valid hash делает2calls. Это compile boundary, не новая
+Rust-сборка.7 integration stages PASS;9 shell methods на каждом dash/ash и25source
+methods PASS,все Linux методы uid65534/zero skips.7 final source/test/CI SHA
+совпали до/после. Новый helper включён в dirty admission и CI; Actions не запущен.
+Native provenance current/PASS; production source pin/hash не менялись.
+
+Ошибки подготовки сохранены: отсутствующий SDK tmp для flock; ожидание обязательного
+warning; неправильное имя fixture unpack-directory; CRLF shell upload с Windows.
+Финальный LF helper и корректный source directory квалифицируют отказ/успех.
+Auto-review отклонил расширение SDK0700 до0755 ради nonroot теста, действие не
+выполнено. Использован отдельный новый0700 каталог владельца65534; SDK остался0700.
+Нового запроса одобрения нет. Source archive generation/check/fixup/prepare теперь
+scoped PASS. Full SDK Rust bootstrap, свежая полная compile/package/release cut/CI
+и физическая прошивка ещё не квалифицированы. Нет publication/tag/push.
+
+Q31 остаётся3/5criteria IN_PROGRESS; общий аудит28/37(75.7%),9remain; текущий
+долг14/15DONE+D06ACCEPTED. Q29SIGKILL/ENONET, Q30callbackdrain/Apple exclusions,
+firmware/WindowsVM exclusions и D06ACCEPTED сохранены. .10 только read-only
+inventory; .11 qeli.serviceactivePID777 сохранён. Host network/firewall/default tools
+не изменялись.
+
+Перед очисткой сохранены и SHA-проверены fixture Git bundle, SDK package/config/feed overlay, private dependency packages и оба source archives; исходный официальный SDK archive сохранён в прежнем sealed packet. Удалены только созданные здесь SDK/deps/source/home/prepare/shim каталоги и дубликат официального архива после проверки отсутствия процессов/mounts. Raw logs и отдельный небольшой unit-inputs каталог сохранены; qeli.service active/PID777 не изменился.
+
+Предкоммитная сверка отказала на различии CRLF Windows checkout и Git LF; затем все43 Linux метода повторно прошли на точных staged Git bytes,7 SHA совпали до/после. Исходные43 результатов и причина отказа сохранены.
+
+Raw packet: `audit-debt-20260924/q31-sdk-source-integrity-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-sdk-source-integrity-20261007.json`.

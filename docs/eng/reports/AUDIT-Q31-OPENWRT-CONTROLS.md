@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v37 -->
+<!-- normative-sync: q31-openwrt-controls-v38 -->
 
-**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F376–F378 source admission below; prior218methods per shell retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F379 actual SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2159,3 +2159,57 @@ Q30callback-drain and acceptedD06 unchanged. No push/deploy/release.
 
 Raw packet: `audit-debt-20260924/q31-openwrt-source-gate-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-openwrt-source-gate-20261007.json`.
+
+
+## F379 / Q31-V008: actual SDK source generation and checked prepare/compile (7 October)
+
+Official SDK24.10.4 SHA229e871f… was extracted privately on .11. Pinned Rust feed
+files and private SHA-bound gawk/libsigsegv debs were reused; no host installs.
+A private Git fixture contains the exact committed qeli/ tree26a0402e… and LICENSE;
+its local URL/pin are fixture-specific, not canonical release values. The SDK's
+real rawgit/download/tar/zstd rules produce qeli-0.8.2.tar.zst,1541480bytes,
+SHA49450a5b4803b8e2b657a49c5b4fdbb5c0373813275904ab9c1e689c52850b58.
+A forced repeat download is byte-identical; unpacked qeli/ Git tree matches exactly.
+The SDK's actual CHECK=1/FIXUP=1 updates the private recipe hash; the source gate
+passes that committed fixture recipe with the real SDK-generated archive.
+
+F379: default SDK Git fallback/download and prepare return0 with a wrong mirror
+hash and unpack the source. CHECK may warn; normal download need not do so. The
+previous recipe comment claiming a mismatched placeholder necessarily failed was
+incorrect. Build-only verify-source.sh now checks the archive in Prepare/Pre and
+at Compile entry, before Cargo or rlib projection. Regular/nonempty/nonlinked file,
+literal hash and checked hash-command status are required. Explicit developer SDK
+source overlays skip mirror admission; they are not release qualification.
+The copying manual includes the new file; Package/install never installs it.
+
+Actual fixed SDK bad-hash prepare refuses before unpack. Actual valid prepare
+preserves exact source tree. GNU-make-exported Compile macro runs with an inert
+Cargo seam: old bad hash reaches metadata/install; new bad hash makes0calls and
+preserves manifest; valid hash makes2calls. This is compile boundary qualification,
+not a Rust compiler build.7 integration stages PASS,9 shell methods PASS on each
+dash/ash and25 source methods PASS,all Linux methods uid65534/zero skips.7 final
+source/test/CI input identities matched before/after; new helper participates in
+dirty source admission and its tests are CI-wired. No Actions run/new native build.
+Native provenance remains current/PASS. Actual source pin/hash stay unchanged.
+
+Preparation failures retained: missing SDK tmp for flock; incorrect expectation
+that download must warn; mismatched fixture unpack directory; Windows-created CRLF
+shell upload. Final LF helper and correct package source directory qualify real
+failures/successes. Auto-review rejected widening existing SDK0700 to0755 for the
+nonroot tests; not executed. A separate newly created0700 directory owned by65534
+provided the safe run. SDK directory permissions remained0700. No approval pending.
+
+Source archive generation/check/fixup/prepare integration is now scoped PASS;
+actual SDK Rust bootstrap, fresh full compiler/package/release cut/CI and physical
+firmware remain separate. No production tag/pin/hash/archive publication or push.
+Q31 remains3/5criteria IN_PROGRESS; full audit28/37(75.7%),9remain. Current debt
+14/15DONE+D06ACCEPTED. Q29SIGKILL/ENONET, Q30callbackdrain/Apple exclusions,
+firmware/WindowsVM exclusions and D06ACCEPTED unchanged. .10 read-only inventory
+only; .11 qeli.serviceactivePID777 preserved. No host network/firewall/tool defaults.
+
+Before cleanup, the fixture Git bundle, SDK package/config/feed overlay, private dependency packages and both source archives were saved and SHA-verified; the original official SDK archive remains in the earlier sealed packet. Only this run's SDK/deps/source/home/prepare/shim directories and duplicate official archive were removed after process/mount guards. Raw logs and the separate small unit-inputs directory remain; qeli.service active/PID777 is unchanged.
+
+Precommit reconciliation refused the Windows checkout CRLF versus Git LF identity difference; all43 Linux methods then passed again on exact staged Git bytes, with seven hashes equal before/after. Original43-method results and the refusal reason are retained.
+
+Raw packet: `audit-debt-20260924/q31-sdk-source-integrity-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-sdk-source-integrity-20261007.json`.
