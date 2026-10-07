@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v28 -->
+<!-- normative-sync: q31-openwrt-controls-v29 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1049,7 +1049,7 @@ default toolchains и работающие сервисы не изменяли�
 | Реальная standalone cross-сборка четырёх targets/ELF | DONE в указанном scope |
 | UCI/INI, shell lifecycle/rollback и LuCI | Scoped suites PASS; сохранены модельные границы |
 | Настоящие ucode/fs, rpcd/ubus/UCI и session ACL | Scoped native PASS F347–F352 ниже; SDK Kconfig/LuCI packaging scoped PASS F353–F354; SDK packaging retained binary и offline opkg Q31-V003 scoped PASS; stock Rust1.89/x86 SDK macro compile/link F358 scoped PASS; bootstrap/release pipeline OPEN, procd non-PID1 lifecycle и HTTP/session API Q31-V002 проверены |
-| Keenetic preflight→launch INI; core plan generation/ABA | F355: private INI scoped PASS; F361: generation/ABA внутри одного адаптера scoped PASS; writer/lock, counter reset и admin replacement OPEN |
+| Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt и counter reset при fresh OpkgTun init launch scoped PASS; writer/lock, direct launch и admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
 | Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; полная hermetic policy и Qeli A/B OPEN |
@@ -1680,3 +1680,46 @@ Raw: `audit-debt-20260924/q31-plan-generation-20261007/`; seal, input SHA,
 команды, времена и результаты включены в evidence. 41 historic cases/acceptance
 сохранены. Q31 IN_PROGRESS; Q29 SIGKILL FAIL/auto-null ENONET, Q30 callback drain
 OPEN/Apple exclusions и D06 ACCEPTED неизменны. Всего 28/37 (75.7%),9 осталось.
+
+## F362–F363: поздний stale receipt и новое поколение процесса (7 октября)
+
+F362: cached no-op проверял снимок плана до `ndmc show`, но не после него.
+После последней проверки перед receipt, команды `mv APPLIED` и `rm PENDING`
+тоже могли совпасть с независимой публикацией нового плана/marker. Hook возвращал
+успех для прежнего состояния. Общая проверка теперь повторяет чтение marker/плана
+перед no-op, после публикации receipt и после удаления pending. Наблюдаемая смена
+возвращает отказ и сохраняет/восстанавливает pending для следующего события.
+Файл старого receipt после `mv` может остаться; с pending он не разрешает no-op.
+Это не откат уже выполненных ndm-команд и не очередь событий.
+
+F363: новый start после выхода прежнего клиента удалял план, но сохранял APPLIED.
+Локальный счётчик нового адаптера снова начинается с 1; одинаковые план/адреса
+могли повторно использовать receipt прежнего процесса. OpkgTun init теперь
+удаляет APPLIED перед новым launch, после успешной проверки INI/владельца и до
+создания PID/процесса. Ошибка удаления запрещает launch. Start уже работающего
+проверенного клиента сохраняет receipt; отказ preflight сохраняет recovery state.
+Incomplete pending не удаляется этим шагом. Базовый init и Rust writer неизменны.
+
+На .11 одинаковые 5 новых methods воспроизвели baseline8 assertion failures в
+4 methods на каждом dash/BusyBox ash: show×plan/marker(2), mv/rm×plan/marker(4),
+наследование receipt нового процесса(1), игнорирование ошибки очистки(1).
+Preflight preservation — PASS уже в baseline. Fixed199 methods на каждом
+interpreter без skips PASS (194 прежних +5 новых). Проверены успешный retry,
+отсутствие ложного success log, повторный start без перезапуска живого native
+helper и отказ запуска при directory receipt с сохранением canary/старого плана.
+Процесс и /proc identity настоящие; ndmc/сеть — модели. Generation=1 после launch
+публикуется fixture: C-helper проверяет process admission, не новый Rust handshake.
+Retained metadata inspector использован только в ранее квалифицированной роли.
+382 Git/current inputs и SHA2 retained artifacts сверены до/после; own process,
+mount и temporary roots не остались. 37 recipes,14 LuCI,docs9,bindings/diff PASS.
+Новых Rust/FFI/cross/SDK builds и firmware/VPN квалификации нет.
+
+Counter reset закрыт в scoped протоколе нового launch обновлённого OpkgTun init.
+Прямой запуск binary/замена адаптера вне этого протокола, writer/shell lock,
+смена после самой последней проверки, atomic ndm и старые address families OPEN.
+Общий shell lock нельзя просто брать в core writer: init удерживает его во время
+start, а legacy ветка может ждать публикации плана. Без изменения этого протокола
+получился бы цикл ожидания. Generation + bounded проверки не обещают синхронизации.
+Raw: `audit-debt-20260924/q31-keenetic-receipt-20261007/`; source SHA, команды,
+времена, baseline/fixed и seal в evidence. 41 historic cases/acceptance и34 прошлых
+supplements сохранены. Q31 IN_PROGRESS,28/37(75.7%),9 осталось; Q29/Q30/D06 сохранены.

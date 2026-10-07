@@ -65,6 +65,20 @@ address_present() {
     { for (i=1; i<=NF; i++) { split($i, token, "/"); if (token[1]==want) found=1 } }
     END { exit !found }'
 }
+plan_is_current() {
+  [ "$(cat "$STATE" 2>/dev/null)" = "$IF" ] &&
+    [ "$(cat "$TUNIP" 2>/dev/null)" = "$PLAN" ]
+}
+# Writer publication is independent of the shell lock. Every observed stale
+# success boundary must leave retry intent, including after PENDING removal.
+require_current_plan() {
+  plan_is_current || {
+    (umask 077; : > "$PENDING") || return 1
+    echo "wan.d/010-qeli: plan/marker changed for $NDM_IF; retry required" >> "$LOG"
+    return 1
+  }
+}
+
 EXPECTED="$(printf '%s\n%s\n' "$IF" "$PLAN")"
 CUR="$(ndmc -c "show interface $NDM_IF" 2>/dev/null)"; SHOW_RC=$?
 if [ "$SHOW_RC" -eq 0 ] && [ ! -e "$PENDING" ] \
@@ -73,6 +87,7 @@ if [ "$SHOW_RC" -eq 0 ] && [ ! -e "$PENDING" ] \
    && printf '%s\n' "$CUR" | awk '$1=="connected:" && $2=="yes" && NF==2 {found=1} END {exit !found}' \
    && { [ -z "$WANT_IP" ] || address_present "$WANT_IP"; } \
    && { [ -z "$WANT_IP6" ] || address_present "$WANT_IP6"; }; then
+  require_current_plan || exit 1
   exit 0
 fi
 
@@ -114,15 +129,8 @@ esac
 # Глобальный default здесь не ставим: без отдельного bypass для адреса qeli-сервера
 # он заворачивает несущее соединение в сам туннель. Policy-routing включается в Keenetic UI,
 # где ndm может атомарно учесть приоритеты и исключения.
-plan_is_current() {
-  [ "$(cat "$STATE" 2>/dev/null)" = "$IF" ] &&
-    [ "$(cat "$TUNIP" 2>/dev/null)" = "$PLAN" ]
-}
 ndm_apply() {
-  plan_is_current || {
-    echo "wan.d/010-qeli: plan/marker changed for $NDM_IF; retry required" >> "$LOG"
-    return 1
-  }
+  require_current_plan || return 1
   ndmc -c "$1" || {
     echo "wan.d/010-qeli: ndm rejected configuration for $NDM_IF; retry required" >> "$LOG"
     return 1
@@ -141,7 +149,7 @@ ndm_apply "interface $NDM_IF up" || exit 1
 ndm_apply "system configuration save" || exit 1
 # The core can republish independently of shell lifecycle exclusion.
 # An observed replacement must not publish a complete application receipt.
-plan_is_current || exit 1
+require_current_plan || exit 1
 # The private sibling is published only after every mutation and save succeeded.
 # A publication/removal failure retains PENDING so matching addresses cannot hide it.
 APPLIED_TMP="$(umask 077; mktemp "$APPLIED.XXXXXX")" || exit 1
@@ -151,5 +159,7 @@ if [ -d "$APPLIED" ] || ! chmod 600 "$APPLIED_TMP" \
   rm -f "$APPLIED_TMP"
   exit 1
 fi
+require_current_plan || exit 1
 rm -f "$PENDING" || exit 1
+require_current_plan || exit 1
 echo "wan.d/010-qeli: $NDM_IF up (IPv4=${IP:-none}, IPv6=${IP6:-none}, mtu $MTU) — L3 держит ndm" >> "$LOG"

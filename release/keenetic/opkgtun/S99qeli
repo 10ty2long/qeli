@@ -355,6 +355,12 @@ start() {
   qeli_prepare_launch_config "$CONF" || return 1
   load_gateway_owner || return 1
   if [ -f "$SYSCTL_STATE" ]; then nat_down || return 1; fi
+  # A new client process may restart its plan counter. Its first plan must not
+  # reuse a complete receipt from the exited process, even with identical bytes.
+  # Preserve any incomplete apply intent until the hook finishes a fresh apply.
+  if [ -n "$OPKGTUN" ]; then
+    rm -f "$OPKGTUN_STATE.applied" || return 1
+  fi
   rm -f "$PIDFILE" "$PLAN_STATE" || return 1
   PID_TMP="$(mktemp "$PIDFILE.XXXXXX")" || return 1
   chmod 600 "$PID_TMP" || { rm -f "$PID_TMP"; return 1; }
