@@ -1,6 +1,9 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v34 -->
+<!-- normative-sync: q31-openwrt-controls-v35 -->
+
+**Current checkpoint, 7 October:** Q31 has2/5criteria complete (review/dead code and positive/boundary/negative scenarios);F372 and95Linux methods below. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1987,3 +1990,61 @@ emulator runtime is claimed. Q31 IN_PROGRESS,28/37(75.7%),9remain;Q29/Q30/D06 an
 platform exclusions retained.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/native-refresh-20261007.
 Evidence: release/certification/evidence/native-preflight-20261007.json.
+
+
+## F372: release CI admission and Q31 scenario reconciliation (7 October)
+
+The previous first release gate accepted a successful workflow when the local Git
+query failed and returned no commit, or when the workflow contained an empty
+`headSha`. Both false admissions were reproduced against the exact old gate.
+The `gh` query also inherited the caller's directory rather than the repository.
+
+`release_ci_gate.py` now establishes a valid local commit before querying GitHub,
+requires a valid CI commit and exact equality, and checks workflow completion and
+success. All Git/gh calls use the repository root and bounded command timeouts.
+Missing tools, failed commands, invalid JSON, unavailable identities, stale CI and
+unfinished/failed workflows refuse admission. Failed-job names remain diagnostics;
+a failure while retrieving them cannot hide the workflow failure or stop later gates.
+`release_preflight.py` uses this helper, the dirty-recipe guard includes it, and CI
+runs its tests through a separate valid unittest discovery command. Source archive
+instructions use the SDK metadata filename; the preflight description now correctly
+states subtree equality and advisory unavailable physical certification.
+
+Final verification on `.11`: **77 router methods plus 18 CI-admission methods PASS,
+zero skips**, with 24 SHA-verified input files. The router set includes real POSIX
+source replacement, isolated checkout and small pinned Rust/Cargo execution, as
+well as SSH/build/artifact failure models; it does not rebuild the four full clients.
+After the final diagnostics-only change, only the affected 18 CI methods and 15
+release-gate methods were repeated. Working qeli service remained active with PID777.
+The current native source/recipe digest and A/B evidence still pass provenance;
+Rust, native libraries, INI semantics, router templates and published assets did not change.
+
+A real read-only full-script preflight ran from the parent directory. Gate2 was
+explicitly disabled without lab credentials; it is not a new live cross-build.
+The first observation found old failed CI83c07f5c; the final observation found green
+CIcde130e0. Both refer to a different commit than this worktree and are rejected.
+Gate3 also rejects the existing dd0b7362 OpenWrt pin's different qeli/ tree.
+Gate4 rejects the deliberately uncommitted working tree during this pre-commit run.
+All gates reached the aggregate verdict; no release, tag, CI dispatch or push occurred.
+The changing remote CI observation is retained in both original logs.
+
+Preparation failures are retained: the first baseline harness used a null SHA
+instead of an empty SHA; the first local AST test selected strip() rather than run();
+the first Linux upload omitted lab_common; a local snapshot wrapper used the wrong
+text encoding. Intermediate workflow comment encoding was restored from the exact
+baseline before the final input run. These are separate from reproduced product F372.
+
+The **positive, boundary and negative scenario criterion is complete within the
+available platform scope**. This consolidates the earlier UCI/INI, ACL/HTTP, procd,
+opkg install/upgrade/remove, SDK compile, four-target A/B/QEMU and Keenetic lifecycle
+scenario evidence; it does not replace their dates, artifacts or limits. Q31 now has
+**2/5 criteria complete** and remains IN_PROGRESS; full audit28/37(75.7%),9 remain.
+Still open: full SDK Rust source bootstrap/source-pin and mirror release-cut pipeline,
+configured live Gate2/Actions end-to-end admission, and the documented writer/lock,
+after-final-check/atomic ndm/old address-family boundaries. Untrusted arbitrary
+build environments are not claimed hermetic. Firmware runtime remains USER_EXCLUDED.
+Q29 SIGKILL/auto-null ENONET, Q30 callback-drain/Apple exclusions and accepted D06
+remain unchanged. Current debt14/15 DONE+D06 ACCEPTED; native/D11/D15 stays closed.
+
+Raw packet: `audit-debt-20260924/q31-release-admission-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-release-admission-20261007.json`.

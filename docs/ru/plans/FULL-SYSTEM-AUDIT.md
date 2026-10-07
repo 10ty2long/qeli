@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v130 -->
+<!-- normative-sync: full-system-audit-v131 -->
 
 **Текущий итог, 6 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -1977,7 +1977,7 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **Имеющаяся обвязка/fixtures:** `scripts/keenetic_verify.py`.
 
 - [x] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
+- [x] Штатные, граничные и негативные сценарии.
 - [ ] Отказы и конкуренция.
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
@@ -2017,6 +2017,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **7 октября, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): завершён source review28файлов; первый критерий закрыт. Общий SSH helper устраняет воспроизведённый четырьмя callers stderr receive-window timeout; connection/probe failure close и installed-pin diagnostics исправлены.16настоящих SSH checks,8actual probe commands,125Linux methods без skips,78local native contract/docs/bindings PASS. Native provenance был STALE до изменений и остаётся release-blocking Q34; digest/artifacts не подменялись. SDK/pipeline/concurrency ограничения сохранены. Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 сохранены.
 
+
+**7 октября, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission запрещает допуск при неизвестном Git/CI SHA, ошибке запросов и устаревшем workflow.77router+18CI Linux methods без пропусков; настоящий read-only preflight дошёл до общего отказа. Критерий штатных/граничных/негативных сценариев закрыт,2/5критериев; Q31 IN_PROGRESS28/37(75.7%),9остаются. Native current/долг14/15+D06 принят без изменений; SDK/release-cut/ndm и firmware exclusions сохранены. Без push/release.
 ### 32. Метрики, usage, логи и уведомления
 
 **Код:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.

@@ -1,6 +1,9 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v34 -->
+<!-- normative-sync: q31-openwrt-controls-v35 -->
+
+**Текущий checkpoint, 7 октября:** в Q31 закрыты2/5критериев (review/мёртвый код и штатные/граничные/негативные сценарии);F372 и95Linux methods ниже. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1992,3 +1995,63 @@ release-блокер Q34 открыт. PROVENANCE/evidence/binaries не пер�
 Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 и platform exclusions сохранены.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/native-refresh-20261007.
 Evidence: release/certification/evidence/native-preflight-20261007.json.
+
+
+## F372: допуск релиза по CI и сверка сценариев Q31 (7 октября)
+
+Прежний первый release gate принимал успешный workflow, если локальный Git
+завершался ошибкой и не возвращал коммит либо ответ CI содержал пустой `headSha`.
+Оба ложных допуска воспроизведены на точном старом gate. Запрос `gh` также
+наследовал каталог запуска команды вместо корня репозитория.
+
+`release_ci_gate.py` сначала получает корректный локальный коммит, затем требует
+корректный SHA CI, точное совпадение коммитов и завершённый успешный workflow.
+Все Git/gh-команды выполняются из корня репозитория с ограничением времени.
+Отсутствующие инструменты, ошибки команд, неверный JSON, неизвестный SHA,
+устаревший CI и незавершённый/неуспешный workflow запрещают допуск. Имена failed
+jobs сохраняются в диагностике; ошибка их получения не скрывает отказ и не
+прерывает следующие gates. `release_preflight.py` подключён к общей функции,
+dirty-recipe guard учитывает новый helper, а CI запускает его тесты отдельной
+корректной командой unittest discovery. Инструкция архива использует имя из
+metadata SDK; описание preflight исправлено на сравнение qeli/ subtree и
+advisory-статус недоступных физических проверок.
+
+Итог на `.11`: **77 router methods +18 CI-admission methods PASS, без пропусков**,
+24 входных файла проверены по SHA. Router-набор включает настоящий POSIX source
+replacement, изолированные checkout и небольшие проверки закреплённого
+Rust/Cargo, а также модели отказов SSH/build/artifact; четыре полных клиента
+заново не собирались. После последней правки диагностики повторены только
+затронутые18 CI и15 release-gate methods. Рабочий qeli остался active/PID777.
+Текущие native source/recipe digest и A/B evidence проходят provenance;
+Rust, native-библиотеки, INI, router templates и опубликованные assets не менялись.
+
+Настоящий read-only запуск всего preflight выполнен из родительского каталога.
+Gate2 явно выключен без credentials; новой live cross-build здесь нет. Первый
+запрос увидел старый неуспешный CI83c07f5c, последний — зелёный CIcde130e0.
+Оба относятся к другому коммиту и отклонены. Gate3 также отклонил OpenWrt pin
+dd0b7362 с другим qeli/ tree. Gate4 отклонил намеренно ещё незакоммиченное дерево
+при этом предварительном запуске. Все gates дошли до общего verdict; release,
+tag, dispatch Actions и push не выполнялись. Оба изменившихся наблюдения CI
+сохранены в исходных логах.
+
+Ошибки подготовки сохранены: первый baseline harness использовал null вместо
+пустого SHA; первый локальный AST-тест выбрал strip() вместо run(); первая
+Linux-загрузка пропустила lab_common; локальный snapshot wrapper выбрал неверную
+кодировку. Промежуточная перекодировка комментариев workflow восстановлена из
+точного baseline до итогового прогона входов. Это отдельно от product F372.
+
+**Критерий штатных, граничных и негативных сценариев закрыт в доступном
+платформенном объёме.** Он объединяет прежнюю evidence UCI/INI, ACL/HTTP, procd,
+opkg install/upgrade/remove, SDK compile, четырёх target A/B/QEMU и Keenetic
+lifecycle; даты, артефакты и ограничения этих результатов не переписываются.
+Теперь в Q31 закрыты **2/5 критериев**, весь раздел остаётся IN_PROGRESS;
+полный аудит28/37(75.7%),9 разделов остаются. Открыты full SDK Rust source
+bootstrap/source-pin/mirror release-cut pipeline, configured live Gate2/Actions
+end-to-end admission и описанные границы writer/lock, after-final-check,
+atomic ndm/старых семейств адресов. Герметичность произвольной недоверенной
+build environment не заявляется. Firmware runtime остаётся USER_EXCLUDED.
+Q29 SIGKILL/auto-null ENONET, Q30 callback-drain/Apple exclusions и принятый D06
+без изменений. Текущий долг14/15 DONE+D06 ACCEPTED; native/D11/D15 закрыты.
+
+Raw packet: `audit-debt-20260924/q31-release-admission-20261007` (вне Git).
+Машинная запись: `release/certification/evidence/q31-release-admission-20261007.json`.

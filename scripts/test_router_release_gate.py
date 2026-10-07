@@ -58,7 +58,7 @@ class SnapshotTests(GitFixture, unittest.TestCase):
         self.assertNotEqual(hashlib.sha256(archive).digest(),hashlib.sha256(changed).digest())
 
     def test_dirty_source_config_and_recipe_refuse_snapshot(self):
-        for path in ['qeli/src/lib.rs','qeli/.cargo/config.toml','scripts/router_toolchain.py']:
+        for path in ['qeli/src/lib.rs','qeli/.cargo/config.toml','scripts/router_toolchain.py','scripts/release_ci_gate.py']:
             with self.subTest(path=path):
                 target=self.repo/path;target.parent.mkdir(exist_ok=True)
                 old=target.read_bytes() if target.exists() else None

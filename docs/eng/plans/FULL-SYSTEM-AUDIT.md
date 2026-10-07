@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v130 -->
+<!-- normative-sync: full-system-audit-v131 -->
 
-**Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -1966,7 +1966,7 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **Existing harness/fixtures:** `scripts/keenetic_verify.py`.
 
 - [x] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
+- [x] Positive, boundary and negative scenarios.
 - [ ] Failures and concurrency.
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
@@ -2006,6 +2006,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **7 October, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):28-file source review reconciled;first criterion complete. Shared SSH helper fixes stderr receive-window timeout reproduced in four callers;connection/probe failure close and installed-pin diagnostics fixed.16actual SSH checks,8actual probe commands,125Linux methods without skips,78local native contract/docs/bindings PASS. Native provenance was already STALE and remains release-blocking Q34;digest/artifacts not substituted. SDK/pipeline/concurrency limits retained. Q31 IN_PROGRESS,28/37(75.7%),9remain;Q29/Q30/D06 retained.
 
+
+**7 October, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission fails closed for missing Git/CI identity, bad queries and stale workflows.77router+18CI Linux methods without skips; actual read-only preflight aggregate refusal verified. Positive/boundary/negative criterion complete,2/5criteria; Q31 IN_PROGRESS28/37(75.7%),9remain. Native current/debt14/15+D06 accepted unchanged; SDK/release-cut/ndm boundaries and firmware exclusions retained. No push/release.
 ### 32. Metrics, usage, logs and notifications
 
 **Source:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.
