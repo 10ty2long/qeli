@@ -464,3 +464,4 @@
 - [Q31: OpenWrt / LuCI control](reports/AUDIT-Q31-OPENWRT-CONTROLS.md)
 
 - [Q32: метрики после пропусков и смены worker](reports/AUDIT-Q32-METRICS.md)
+- [Q32: сброс usage после публикации](reports/AUDIT-Q32-USAGE.md)

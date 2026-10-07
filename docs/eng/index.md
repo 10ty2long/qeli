@@ -464,3 +464,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q31: OpenWrt / LuCI control](reports/AUDIT-Q31-OPENWRT-CONTROLS.md)
 
 - [Q32: metrics across missing samples and worker changes](reports/AUDIT-Q32-METRICS.md)
+- [Q32: usage reset after publication](reports/AUDIT-Q32-USAGE.md)

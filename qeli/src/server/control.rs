@@ -49,6 +49,14 @@ fn external_or_inline_user<'a>(
     db.users.iter_mut().find(|user| user.username == username)
 }
 
+fn usage_reset_failure(error: &anyhow::Error) -> String {
+    if crate::util::atomic_write_was_published(error) {
+        format!("usage reset was published, but its durability could not be confirmed: {error:#}")
+    } else {
+        format!("usage counter was not reset because it could not be persisted: {error:#}")
+    }
+}
+
 /// Keep live auth aligned with a published INI even if its directory sync failed.
 fn users_write_failure(
     config: &crate::config::server::ServerConfig,
@@ -717,9 +725,7 @@ async fn dispatch(req: Request, state: &Arc<ServerState>) -> Response {
                 },
                 Err(error) => Response {
                     ok: false,
-                    error: Some(format!(
-                        "usage counter was not reset because it could not be persisted: {error}"
-                    )),
+                    error: Some(usage_reset_failure(&error)),
                     clients: None,
                     message: None,
                 },
@@ -1033,6 +1039,30 @@ mod tests {
     //! parsing an untrusted command off the socket without panicking on malformed /
     //! unknown / wrong-typed input — is unit-testable and is what these lock in.
     use super::*;
+
+    #[test]
+    fn reset_failure_message_distinguishes_publication_from_rollback() {
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-reset-message-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("usage.json");
+        let error = crate::util::write_atomic_test_sync_failure(&path, b"{}")
+            .unwrap_err()
+            .context("usage reset");
+        let message = usage_reset_failure(&error);
+        assert!(message.contains("was published"));
+        assert!(message.contains("durability could not be confirmed"));
+        assert!(message.contains("injected directory I/O failure"));
+        assert!(!message.contains("was not reset"));
+        assert_eq!(std::fs::read(&path).unwrap(), b"{}");
+        let before = usage_reset_failure(&anyhow::anyhow!("preparation failed"));
+        assert!(before.contains("was not reset"));
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
+    }
 
     fn parse(json: &str) -> Result<Request, serde_json::Error> {
         serde_json::from_str::<Request>(json)
