@@ -219,3 +219,17 @@ receipt и после удаления pending. Обнаруженная сме�
 вызов повторяет применение. Старый APPLIED вместе с pending не означает завершение.
 Это scoped протокол init/hook: прямой запуск binary, смена после самой последней
 проверки и полная атомарность ndm остаются за его пределами.
+
+## Release-профиль standalone helpers (development0.8.2)
+
+Общая policy `scripts/router_toolchain.py` передаёт дочернему Cargo пять явных
+release fields канонического Cargo.toml: lto=fat,codegen-units=1,opt-level=3,
+strip=true,panic=abort. OpenWrt/Keenetic standalone helpers и Linux host gate
+не наследуют для них profile overrides из окружения (включая FFI panic=unwind),
+Cargo home или ancestor config. Router CI получает тот же набор через
+`python3 scripts/router_toolchain.py --print-release-profile` из корня репозитория.
+FFI libraries сохраняют отдельную unwind policy; SDK feed profile не изменён.
+
+Проверены реальные GNU Cargo mini-crates и pinned Zig x86_64-musl mini-probe,
+а не новая полная Qeli/cross/firmware сборка. Другие profile keys, forced child env,
+source/linker/PATH/caches и clean Qeli A/B ещё не полностью изолированы.

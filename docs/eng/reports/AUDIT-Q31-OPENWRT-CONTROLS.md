@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v29 -->
+<!-- normative-sync: q31-openwrt-controls-v30 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1051,7 +1051,7 @@ Current Q31 remainder:
 | Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt and counter reset on fresh OpkgTun init launch scoped PASS; writer/lock, direct launch and admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; no full bundle transaction claim |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build is not a device test |
-| Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; full hermetic policy and Qeli A/B OPEN |
+| Hermetic shared caches/config/PATH/clean A/B | F356–F357 compiler/intermediate-directory and F364 five standalone release fields scoped PASS; full hermetic policy and Qeli A/B OPEN |
 
 This current table supersedes historical cross-build NOT_RUN statements without
 rewriting original evidence. Packet:
@@ -1714,3 +1714,47 @@ protocol changes. Generation and bounded checks do not promise synchronization.
 Raw: `audit-debt-20260924/q31-keenetic-receipt-20261007/`; source SHA, commands,
 times, baseline/fixed and seal in evidence.41 historic cases/acceptance and34 previous
 supplements preserved. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained.
+
+## F364: ambient inputs changed the standalone release profile (7 October)
+
+Pinned Cargo/rustc and cleared RUSTFLAGS did not pin profile.release. Ambient
+variables from an adjacent FFI build (such as CARGO_PROFILE_RELEASE_PANIC=unwind),
+Cargo home and ancestor config could override the five explicit qeli/Cargo.toml
+fields: lto=fat,codegen-units=1,opt-level=3,strip=true,panic=abort. Builds succeeded
+with different panic/optimization/size. This is reproduced build contamination,
+not an observed crash or a new performance measurement.
+
+Shared router_toolchain now supplies these five CARGO_PROFILE_RELEASE_* values
+to child Cargo. Both standalone helpers and the Linux host gate use it.
+`--print-release-profile` exports the same set for a separate keenetic-cross CI
+step with working-directory=.; other jobs, FFI unwind and SDK feed profiles stay
+unchanged. A new canonical Cargo.toml comparison checks exporter/helper/CI agreement.
+[Cargo documents environment precedence over config](https://doc.rust-lang.org/cargo/reference/config.html#environment-variables);
+actual lab tool behavior is qualified by the fresh checks below.
+
+On .10 Rust1.97: the same new method exercises12cells (Keenetic/OpenWrt/host ×
+environment/Cargo home/owned ancestor/forced child env). Baseline9 assertion FAIL:
+the program printed unwind|0 instead of abort|3; forced child env3cells already PASS.
+Fixed12cells all passed and five actual rustc flags were checked. The full real-Cargo
+suite8methods without skips passed (7 previous +1 new).72 router/host-gate Linux
+methods without skips passed (53 helper +19 gate, including the new manifest/export/
+CI contract). Initial Windows checks skipped10 POSIX methods; Linux ran those methods.
+
+Actual cargo-zigbuild0.23.0/Zig0.13.0/stock x86_64-musl std1.97 also executed the exact
+router_build_command on two separate dependency-free mini-crates: baseline unwind|0;
+fixed abort|3 and five compiler flags PASS. Both native static ELFs passed the shared
+target validator and were actually executed. These are small probes, not Qeli,
+not clean identical A/B builds or a new four-target/current-Qeli ABI qualification.
+Each has private HOME/Cargo/target/Zig/XDG caches, removed after preserving ELF/logs.
+Pins/global caches/defaults/services/network and .11 were unchanged.372 primary+1
+supplemental Git/current inputs verified; source/tool SHA, commands, results and
+timestamps in raw.37recipes/14LuCI/docs9/bindings/diff passed. CI exporter/placement
+was locally checked; no new GitHub Actions run was dispatched.
+
+Full hermetic policy (other profile keys, forced env, source/linker/PATH, registry/
+tool caches), clean Qeli A/B and SDK bootstrap/source release-cut remain OPEN.
+This qualifies five explicit standalone fields, not full Cargo isolation.
+Raw: `audit-debt-20260924/q31-router-release-profile-20261007/`; seal/scoped evidence.
+41 historic cases/acceptance and35 previous supplements preserved. Q31 IN_PROGRESS,
+28/37(75.7%),9 remain;Q29 SIGKILL FAIL/auto-null ENONET,Q30 callback-drain OPEN/
+Apple exclusions,D06 ACCEPTED retained. Published binaries were not replaced.

@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v29 -->
+<!-- normative-sync: q31-openwrt-controls-v30 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1052,7 +1052,7 @@ default toolchains и работающие сервисы не изменяли�
 | Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt и counter reset при fresh OpkgTun init launch scoped PASS; writer/lock, direct launch и admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
-| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory overrides scoped PASS; полная hermetic policy и Qeli A/B OPEN |
+| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory и F364 пять standalone release fields scoped PASS; полная hermetic policy и Qeli A/B OPEN |
 
 Эта таблица актуализирует исторические cross-build NOT_RUN в предыдущих разделах;
 их исходные evidence не переписаны. Пакет:
@@ -1723,3 +1723,47 @@ start, а legacy ветка может ждать публикации план�
 Raw: `audit-debt-20260924/q31-keenetic-receipt-20261007/`; source SHA, команды,
 времена, baseline/fixed и seal в evidence. 41 historic cases/acceptance и34 прошлых
 supplements сохранены. Q31 IN_PROGRESS,28/37(75.7%),9 осталось; Q29/Q30/D06 сохранены.
+
+## F364: внешнее окружение меняло standalone release-профиль (7 октября)
+
+Pinned Cargo/rustc и очищенный RUSTFLAGS не закрепляли profile.release. Переменные
+из соседней FFI-сборки (например, CARGO_PROFILE_RELEASE_PANIC=unwind), Cargo home
+и ancestor config могли изменить пять явно заданных полей qeli/Cargo.toml:
+lto=fat,codegen-units=1,opt-level=3,strip=true,panic=abort. Получалась успешная
+сборка с другим panic/оптимизацией/размером. Это воспроизведённая зависимость
+сборки от окружения, а не найденный crash или новое измерение производительности.
+
+Общий router_toolchain теперь передаёт эти пять CARGO_PROFILE_RELEASE_* значений
+в дочерний Cargo. Обе standalone helper-сборки и Linux host gate используют его.
+`--print-release-profile` выводит тот же набор для отдельного шага keenetic-cross
+CI с working-directory=.; другие jobs, FFI unwind и SDK feed-профиль не изменены.
+Новое сравнение с каноническим Cargo.toml проверяет совпадение exporter/helper/CI.
+[Cargo документирует приоритет environment над config](https://doc.rust-lang.org/cargo/reference/config.html#environment-variables);
+живые проверки ниже закрепляют результат для фактических инструментов лабы.
+
+На .10 Rust1.97: одинаковый новый method проверяет12cells (Keenetic/OpenWrt/host ×
+environment/Cargo home/owned ancestor/forced child env). Baseline9 assertion FAIL:
+программа напечатала unwind|0 вместо abort|3; forced child env3cells уже PASS.
+Fixed все12cells PASS; проверены пять фактических rustc flags. Вся real-Cargo suite
+8methods без skips PASS (7 прежних +1 новый).72 router/host-gate methods на Linux
+без skips PASS (53 helper +19 gate, включая новый manifest/export/CI contract).
+Windows предварительно пропустил10 POSIX methods; эти же методы выполнены на Linux.
+
+Дополнительно настоящий cargo-zigbuild0.23.0/Zig0.13.0/stock x86_64-musl std1.97
+выполнил точную router_build_command в двух отдельных мини-crates без зависимостей:
+baseline unwind|0; fixed abort|3 и пять compile flags PASS. Оба native static ELF
+прошли общий target validator и реально запущены. Это маленькие probes, не Qeli,
+не clean одинаковая A/B-пара и не новый четырёх-target/current-Qeli ABI build.
+Каждый имеет собственные HOME/Cargo/target/Zig/XDG caches; они удалены после сохранения
+ELF/логов. Pins, глобальные caches/defaults, сервисы, сеть и .11 не изменялись.
+372 основной +1 supplemental Git/current inputs проверены; source/tools SHA и
+command/result/timestamp в raw.37recipes/14LuCI/docs9/bindings/diff PASS.
+CI exporter/placement проверены локально; новый GitHub Actions run не запускался.
+
+Полная hermetic policy (другие profile keys, forced env, source/linker/PATH,
+registry/tool caches), clean Qeli A/B, SDK bootstrap/source release-cut остаются OPEN.
+Этот фикс квалифицирует пять явных standalone полей; он не обещает изоляцию всего Cargo.
+Raw: `audit-debt-20260924/q31-router-release-profile-20261007/`; seal и scoped evidence.
+41 historic cases/acceptance и35 прежних supplements сохранены. Q31 IN_PROGRESS,
+28/37(75.7%),9 осталось; Q29 SIGKILL FAIL/auto-null ENONET,Q30 callback-drain OPEN/
+Apple exclusions,D06 ACCEPTED неизменны. Published binaries не заменены.

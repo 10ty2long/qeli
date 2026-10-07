@@ -680,6 +680,9 @@ jobs:
           workspaces: qeli
       - name: Install cargo-zigbuild
         run: cargo +${{ matrix.toolchain }} install cargo-zigbuild --version 0.23.0 --locked --jobs 1
+      - name: Canonical standalone router release profile
+        working-directory: .
+        run: python3 scripts/router_toolchain.py --print-release-profile >> "$GITHUB_ENV"
       - name: Cross-build qeli-client (${{ matrix.arch }})
         run: |
           set -euo pipefail

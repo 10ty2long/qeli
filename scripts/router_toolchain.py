@@ -10,6 +10,22 @@ ROUTER_RUST = DEFAULT_RUST_TOOLCHAIN
 ROUTER_NIGHTLY = "nightly-2026-06-10"
 ROUTER_ZIG = DEFAULT_ZIG_VERSION
 ROUTER_ZIGBUILD = DEFAULT_CARGO_ZIGBUILD_VERSION
+# Canonical standalone release profile from qeli/Cargo.toml. FFI libraries keep
+# their separate unwind policy; never inherit their ambient profile overrides.
+ROUTER_RELEASE_PROFILE = {
+    "LTO": "fat",
+    "CODEGEN_UNITS": "1",
+    "OPT_LEVEL": "3",
+    "STRIP": "true",
+    "PANIC": "abort",
+}
+
+
+def router_release_environment():
+    return {"CARGO_PROFILE_RELEASE_" + key: value
+            for key, value in ROUTER_RELEASE_PROFILE.items()}
+
+
 ARCH_TARGETS = {
     "aarch64": "aarch64-unknown-linux-musl",
     "x86_64": "x86_64-unknown-linux-musl",
@@ -78,12 +94,15 @@ def ensure_router_toolchain(client, targets):
 def _pinned_cargo_environment(remote_root, pin, flags):
     # +pin selects Cargo, but Cargo may still select build.rustc from config.
     # Resolve the same pin explicitly; a failed/invalid resolution stops first.
+    profile_env = " ".join(key + "=" + shlex.quote(value)
+                           for key, value in router_release_environment().items())
     return (f'QELI_ROUTER_RUSTC="$(rustup which --toolchain {pin} rustc)" && '
             'test -x "$QELI_ROUTER_RUSTC" && '
             "env -u CARGO_ENCODED_RUSTFLAGS -u RUSTC -u CARGO_BUILD_RUSTC "
             "-u CARGO_BUILD_RUSTFLAGS "
             'RUSTC="$QELI_ROUTER_RUSTC" '
             "RUSTC_WRAPPER='' RUSTC_WORKSPACE_WRAPPER='' "
+            f"{profile_env} "
             f"RUSTFLAGS={shlex.quote(flags)} "
             f"CARGO_TARGET_DIR={shlex.quote(remote_root + '/target')} "
             f"CARGO_BUILD_BUILD_DIR={shlex.quote(remote_root + '/target')} "
@@ -116,3 +135,13 @@ def router_build_command(remote_root, target, binary="qeli-client"):
     return (f"cd {shlex.quote(remote_root)} && {prefix} zigbuild {build_std}"
             "--locked --jobs 1 --release --bin qeli-client "
             f"--no-default-features --features client-bin --target {target} 2>&1")
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--print-release-profile", action="store_true", required=True,
+                        help="print the common standalone router release environment")
+    parser.parse_args()
+    for key, value in router_release_environment().items():
+        print(key + "=" + value)
