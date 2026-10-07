@@ -133,18 +133,15 @@ MIN_REPRO_FREE_KIB = 8 * 1024 * 1024
 
 
 def reset_repro_group(connection: LabConnection, group: str) -> str:
-    """Reset only this recipe's roots on disk and reject insufficient build space."""
+    """Check capacity before changing disk; reset only this recipe's pass roots."""
     if not re.fullmatch(r"[a-z0-9-]+", group):
         raise ValueError(f"invalid reproducibility group: {group!r}")
     first = f"{REPRO_BUILD_ROOT}/{group}-a"
     second = f"{REPRO_BUILD_ROOT}/{group}-b"
-    connection.checked(
-        f"rm -rf {shlex.quote(first)} {shlex.quote(second)} "
-        f"&& mkdir -p {shlex.quote(REPRO_BUILD_ROOT)}",
-        f"clean {group} reproducibility roots",
-    )
     free_text = connection.checked(
-        f"LC_ALL=C df -Pk {shlex.quote(REPRO_BUILD_ROOT)} | tail -1",
+        f"if test -e {shlex.quote(REPRO_BUILD_ROOT)}; then "
+        f"LC_ALL=C df -Pk {shlex.quote(REPRO_BUILD_ROOT)}; else "
+        f"LC_ALL=C df -Pk {shlex.quote(posixpath.dirname(REPRO_BUILD_ROOT))}; fi | tail -1",
         "build filesystem free space",
     )
     try:
@@ -156,6 +153,11 @@ def reset_repro_group(connection: LabConnection, group: str) -> str:
             f"{group} reproducible build needs at least 8 GiB free on "
             f"{REPRO_BUILD_ROOT}; found {free_kib // 1024} MiB"
         )
+    connection.checked(
+        f"rm -rf {shlex.quote(first)} {shlex.quote(second)} "
+        f"&& mkdir -p {shlex.quote(REPRO_BUILD_ROOT)}",
+        f"clean {group} reproducibility roots",
+    )
     return f"{free_kib // 1024} MiB free on {REPRO_BUILD_ROOT}"
 
 

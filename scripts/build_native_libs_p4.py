@@ -45,7 +45,7 @@ from native_repro import (
 
 REPO = Path(__file__).resolve().parent.parent
 LOCAL_QELI = REPO / "qeli"
-REMOTE_SOURCE = "/opt/qeli-src"
+REMOTE_SOURCE = f"{REPRO_BUILD_ROOT}/desktop-source"
 REMOTE_BUILD_ROOT = REPRO_BUILD_ROOT
 REMOTE_MACHO_REPRO = f"{REMOTE_BUILD_ROOT}/macho_repro.py"
 RCODESIGN = "/usr/local/bin/rcodesign"
@@ -198,7 +198,7 @@ def build_pass(
     )
     win_command = (
         f"{common}export RUSTFLAGS={shlex.quote(win_flags)}; "
-        f"cd {shlex.quote(REMOTE_SOURCE)} && cargo +{toolchain} build --locked --release "
+        f"cd {shlex.quote(REMOTE_SOURCE)} && cargo +{toolchain} build --locked --release --jobs 1 "
         f"--no-default-features --features transport-core-ffi --lib --target {WIN_TARGET} 2>&1"
     )
     print(f"=== pass {pass_name}: Windows {WIN_TARGET} ===")
@@ -218,7 +218,7 @@ def build_pass(
     mac_flags = macos_rust_flags()
     mac_command = (
         f"{common}export RUSTFLAGS={shlex.quote(mac_flags)}; "
-        f"cd {shlex.quote(REMOTE_SOURCE)} && cargo +{toolchain} zigbuild --locked --release "
+        f"cd {shlex.quote(REMOTE_SOURCE)} && cargo +{toolchain} zigbuild --locked --release --jobs 1 "
         f"--no-default-features --features transport-core-ffi --lib --target {MAC_TARGET} 2>&1"
     )
     print(f"=== pass {pass_name}: macOS {MAC_TARGET} ===")

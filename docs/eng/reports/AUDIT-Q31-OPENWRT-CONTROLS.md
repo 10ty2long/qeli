@@ -1,6 +1,6 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v33 -->
+<!-- normative-sync: q31-openwrt-controls-v34 -->
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
 from TODO to IN_PROGRESS; no full checklist criterion or router runtime is closed.
@@ -1942,3 +1942,48 @@ ndm remain OPEN; firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%),9remain;
 Q29/Q30/D06 retained. No push/deploy.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-ssh-20261007.
 Evidence: release/certification/evidence/q31-router-ssh-20261007.json.
+
+
+## F370–F371: safe native preflight before provenance refresh
+
+October7: real lab capacity blocks fresh native A/B: about2.3GiB free on .10,
+450MiB on .11, versus the required8GiB. Installed Rust1.97.0/targets, desktop
+Zig0.13.0/cargo-zigbuild0.23.0/GNUld2.44/rcodesign0.29.0 and Android
+NDK26.3.11579264/cargo-ndk4.1.2 passed actual inventory without installation.
+
+F370: old reset removed pass A/B before checking free space. The exact baseline
+function on .10 removed two tiny retained fixture files, then refused low disk.
+The fixed function refused on the same host and preserved both files. Capacity
+is now checked on the build root if present, otherwise on the existing `/var/tmp`
+parent, before mkdir/rm; malformed
+inventory also prevents cleanup. This is preflight, not space reservation or
+protection against concurrent disk consumption.
+
+F371: desktop/Android source sync moved from shared `/opt/qeli-src` and
+`/root/qeli-src` into separate `desktop-source`/`android-source` under owned native
+build roots. All three Windows/macOS/Android Cargo commands use `--jobs 1` for
+2GiB hosts; no OOM reproduction or RSS ceiling is claimed. Concurrent runs of
+the same group are unsupported; no new global lock or general hermetic policy.
+Services and global tools were unchanged.
+
+36 native Linux methods PASS without skips;80 local native methods PASS,
+including actual capture of three build commands and malformed-inventory refusal
+before cleanup.764 exact model inputs checked before/after. Initial Linux
+discover80 had20 missing-input errors for the broader GUI/recipe suites in the
+incomplete packet; that preparation result is retained separately. Linux
+qualification uses four complete native helper suites; full80 passed locally.
+
+Owned old lab data is saved in two local archives:18,231 entries from .10 and
+138,114 from .11,plus metadata for918 inactive sockets. All regular-file bytes,
+links and FIFO metadata match; remote inventories before/after match, and
+decompressed secret scans found no password. Before possible cleanup, automatic
+review rejected broad removal without separate approval of exact paths; no
+removal occurred. Archive outcomes are recorded in the raw packet; inactive
+Unix sockets retain metadata separately, while tar supports FIFO metadata.
+Until capacity is recovered and real fresh A/B succeeds, native provenance
+remains STALE and release-blocking Q34 stays open. PROVENANCE/evidence/binaries
+were not rewritten. No fresh native compilation, export/signature gate or
+emulator runtime is claimed. Q31 IN_PROGRESS,28/37(75.7%),9remain;Q29/Q30/D06 and
+platform exclusions retained.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/native-refresh-20261007.
+Evidence: release/certification/evidence/native-preflight-20261007.json.

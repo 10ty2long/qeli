@@ -41,7 +41,7 @@ from native_repro import (
 
 REPO = Path(__file__).resolve().parent.parent
 LOCAL_QELI = REPO / "qeli"
-REMOTE_SOURCE = "/root/qeli-src"
+REMOTE_SOURCE = f"{REPRO_BUILD_ROOT}/android-source"
 REMOTE_BUILD_ROOT = REPRO_BUILD_ROOT
 NDK = f"/root/android-sdk/ndk/{DEFAULT_ANDROID_NDK}"
 HOST = ("10.66.116.11", os.environ.get("QELI_LAB_USER", "root"))
@@ -138,7 +138,7 @@ def build_pass(
     command = (
         f"{environment}cd {shlex.quote(REMOTE_SOURCE)} && cargo +{toolchain} ndk "
         f"-t arm64-v8a -t x86_64 -o {shlex.quote(output_dir(pass_name))} "
-        "build --locked --release --no-default-features --features transport-core-ffi --lib 2>&1"
+        "build --locked --release --jobs 1 --no-default-features --features transport-core-ffi --lib 2>&1"
     )
     print(f"=== pass {pass_name}: Android arm64-v8a + x86_64 ===")
     output, return_code = client.run(command)
