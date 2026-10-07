@@ -191,3 +191,18 @@ profile/source/linker overrides, PATH/shared registry/tool caches и clean не�
 Qeli A/B ещё не квалифицированы.7 real-Cargo methods используют маленькие Linux
 fixtures без зависимостей; fresh Qeli cross build, Zig invocation, SDK Rust toolchain
 и router ABI/runtime ими не подтверждаются. См. [Q31](../../docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+## Поколение сетевого плана (development0.8.2)
+
+Ядро добавляет `generation=<число>` в runtime-файл `$QELI_TUNIP_FILE` после MTU.
+Первая строка адреса и поля ipv4/ipv6/mtu сохраняются. Это существующее поколение
+аутентифицированного NetworkPlan, а не параметр INI. Hook сравнивает весь файл:
+повторная аутентификация с теми же адресами и новым поколением требует нового
+apply/save; A→B→A во время apply/save внутри одного адаптера оставляет pending
+вместо устаревшего APPLIED receipt. Следующее событие может повторить применение.
+Старые файлы без generation читаются, но не дают этого различения.
+
+Счётчик локален адаптеру и может сбрасываться при его пересоздании. Поле не делает
+всю настройку ndm атомарной и не закрывает смену после последней проверки,
+координацию writer с lifecycle lock или root/admin replacement. Новые сборки
+бинарника содержат поле; ранее опубликованные бинарники автоматически не обновляются.

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v123 -->
+<!-- normative-sync: full-system-audit-v124 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -1993,6 +1993,9 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **October7, F358/Q31-V004:** Rust1.89 client-bin GNU check/full musl compile/link actual SDK macro + GCC13.3 PASS. Unused SDK FFI outputs removed; baseline1FAIL/fixed5real-Cargo methods PASS, SDK3 and18 executable smoke cases PASS. Prebuilt Rust/std, no full SDK bootstrap/release pipeline/router. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).28/37(75.7%) unchanged.
 
 **7 October, F359–F360:** actual procd reproduced stale repeated start and removal of the live client after rejected preparation. INI/password file comparison and rejection of empty set/add fix both; baseline 5 failures in 3 methods, fixed 11 native methods and 55 shell methods on ash/dash PASS without skips. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Inert adapter, no VPN/fw/firmware; core generation/ABA/rollback OPEN. 28/37 (75.7%) unchanged.
+
+**7 October,F361:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): runtime NetworkPlan records the existing authenticated generation, distinguishing same-address new generations and within-adapter ABA. Derived baseline2 assertion FAIL/1 PASS; fixed11 Rust units/GNU check/production Clippy/fmt PASS;194 Keenetic methods on each ash/dash without skips(2 new),37 recipes/14 LuCI/docs9/bindings PASS. Writer/lock,counter reset and atomic ndm remain OPEN; no fresh SDK/FFI/cross/firmware claim. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained.
+
 
 ### 32. Metrics, usage, logs and notifications
 

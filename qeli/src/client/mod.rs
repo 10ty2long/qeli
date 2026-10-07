@@ -8403,16 +8403,11 @@ pub fn inspect_gateway_owner_with_router_expectation(
 }
 
 #[cfg(target_os = "linux")]
-fn publish_network_plan_state(plan: &NetworkPlan) -> anyhow::Result<()> {
-    let Ok(path) = std::env::var("QELI_TUNIP_FILE") else {
-        return Ok(());
-    };
-    if path.is_empty() {
-        return Ok(());
-    }
+fn network_plan_state(plan: &NetworkPlan) -> String {
     // First line remains compatible with the original attach-mode contract. Named
     // family lines let interface owners and legacy router wrappers consume the exact
-    // authenticated family set without guessing from `ipv6=auto`.
+    // authenticated family set without guessing from `ipv6=auto`. Generation
+    // also distinguishes reauthentication with the same addresses within an adapter.
     let mut state = format!("{}\n", plan.tunnel_address);
     for address in &plan.addresses {
         let family = match address.family {
@@ -8425,6 +8420,19 @@ fn publish_network_plan_state(plan: &NetworkPlan) -> anyhow::Result<()> {
         ));
     }
     state.push_str(&format!("mtu={}\n", plan.mtu));
+    state.push_str(&format!("generation={}\n", plan.generation));
+    state
+}
+
+#[cfg(target_os = "linux")]
+fn publish_network_plan_state(plan: &NetworkPlan) -> anyhow::Result<()> {
+    let Ok(path) = std::env::var("QELI_TUNIP_FILE") else {
+        return Ok(());
+    };
+    if path.is_empty() {
+        return Ok(());
+    }
+    let state = network_plan_state(plan);
     crate::util::write_atomic(&path, state.as_bytes()).map_err(|error| {
         anyhow::anyhow!(
             "could not publish authenticated network plan to QELI_TUNIP_FILE '{path}': {error}"
@@ -12669,6 +12677,57 @@ mod lifecycle_adapter_tests {
             data_plane: Default::default(),
             connection_log: Vec::new(),
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn network_plan_state_preserves_legacy_address_and_records_generation() {
+        assert_eq!(
+            network_plan_state(&plan(7)),
+            "10.20.0.2\nipv4=10.20.0.2/24\nmtu=1400\ngeneration=7\n"
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn network_plan_state_distinguishes_same_address_reauthentication_and_aba() {
+        let first = plan(7);
+        let mut middle = plan(8);
+        middle.tunnel_address = "10.20.0.9".into();
+        middle.addresses[0].address = "10.20.0.9".into();
+        let last = plan(9);
+        assert_ne!(network_plan_state(&first), network_plan_state(&last));
+        assert_ne!(network_plan_state(&middle), network_plan_state(&last));
+        let mut same_address = first.clone();
+        same_address.generation = u64::MAX;
+        assert!(network_plan_state(&same_address).ends_with("generation=18446744073709551615\n"));
+        assert_ne!(
+            network_plan_state(&first),
+            network_plan_state(&same_address)
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn network_plan_state_preserves_dual_stack_and_ipv6_only_families() {
+        let mut dual = plan(11);
+        dual.addresses.push(crate::transport_core::NetworkAddress {
+            family: crate::transport_core::NetworkAddressFamily::Ipv6,
+            address: "fd00::2".into(),
+            prefix_len: 128,
+            on_link_prefix_len: 64,
+            gateway: Some("fd00::1".into()),
+        });
+        let state = network_plan_state(&dual);
+        assert!(state.starts_with("10.20.0.2\n"));
+        assert!(state.contains("ipv4=10.20.0.2/24\n"));
+        assert!(state.contains("ipv6=fd00::2/128\n"));
+        dual.addresses.remove(0);
+        dual.tunnel_address = "fd00::2".into();
+        let state = network_plan_state(&dual);
+        assert!(state.starts_with("fd00::2\n"));
+        assert!(!state.contains("ipv4="));
+        assert!(state.contains("ipv6=fd00::2/128\n"));
     }
 
     #[test]

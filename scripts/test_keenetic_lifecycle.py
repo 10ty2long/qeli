@@ -138,6 +138,47 @@ fi
         self.assertEqual(self.run_script(self.hook).returncode, 0)
         self.assertEqual((folder/'qeli.opkgtun.applied').read_text(), 'opkgtun0\n10.8.0.9\nipv4=10.8.0.9/32\nmtu=1280\n')
 
+    def test_generation_only_change_reapplies_identical_addresses(self):
+        plan = '10.8.0.2\nipv4=10.8.0.2/32\nipv6=fd00::2/128\nmtu=1400\ngeneration=41\n'
+        folder = self.hook_setup(plan=plan)
+        self.assertEqual(self.run_script(self.hook).returncode, 0)
+        (self.root/'ndmc-calls').unlink()
+        (folder/'qeli.tunip').write_text(plan.replace('generation=41', 'generation=42'))
+        self.assertEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
+        self.assertEqual(self.calls('ndmc-calls')[-1], 'system configuration save')
+        self.assertIn('generation=42', (folder/'qeli.opkgtun.applied').read_text())
+        (self.root/'ndmc-calls').unlink()
+        self.assertEqual(self.run_script(self.hook, QELI_CONNECTED='yes').returncode, 0)
+        self.assertEqual(self.calls('ndmc-calls'), ['show interface OpkgTun0'])
+
+    def test_generation_aba_during_apply_or_save_rejects_stale_receipt(self):
+        plan = '10.8.0.2\nipv4=10.8.0.2/32\nmtu=1400\ngeneration=41\n'
+        for command in ['interface OpkgTun0 ip global auto', 'system configuration save']:
+            with self.subTest(command=command):
+                folder = self.hook_setup(plan=plan)
+                (self.root/'rotated').unlink(missing_ok=True)
+                (folder/'qeli.opkgtun.applied').unlink(missing_ok=True)
+                original = (self.bin/'ndmc').read_text().split('\n', 1)[1]
+                # Atomic publication A(g41) -> B(g42) -> A(g43). Addresses return,
+                # but the authenticated adapter generation never returns to 41.
+                original = original.split('# generation-rotation-fixture', 1)[0]
+                body = '# generation-rotation-fixture\n' + """
+if [ "$2" = """+shlex.quote(command)+""" ] && [ ! -e "$QELI_FIXTURE_ROOT/rotated" ]; then
+  printf '10.8.0.9\\nipv4=10.8.0.9/32\\nmtu=1400\\ngeneration=42\\n' > """+shlex.quote(str(folder/'next-plan'))+"""
+  mv """+shlex.quote(str(folder/'next-plan'))+' '+shlex.quote(str(folder/'qeli.tunip'))+"""
+  printf '10.8.0.2\\nipv4=10.8.0.2/32\\nmtu=1400\\ngeneration=43\\n' > """+shlex.quote(str(folder/'next-plan'))+"""
+  mv """+shlex.quote(str(folder/'next-plan'))+' '+shlex.quote(str(folder/'qeli.tunip'))+"""
+  touch "$QELI_FIXTURE_ROOT/rotated"
+fi
+"""
+                self.write_command('ndmc', original+body)
+                self.assertNotEqual(self.run_script(self.hook).returncode, 0)
+                self.assertFalse((folder/'qeli.opkgtun.applied').exists())
+                self.assertTrue((folder/'qeli.opkgtun.apply-pending').exists())
+                self.assertEqual(self.run_script(self.hook).returncode, 0)
+                self.assertIn('generation=43', (folder/'qeli.opkgtun.applied').read_text())
+                self.assertFalse((folder/'qeli.opkgtun.apply-pending').exists())
+
     def test_restart_and_start_stop_admission_share_one_lock_for_both_templates(self):
         if not processes.NATIVE.is_file():
             self.skipTest('requires owned native process fixture')

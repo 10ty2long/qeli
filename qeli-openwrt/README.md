@@ -238,7 +238,7 @@ The package keeps virtual iptables providers and requests ip6tables only with IP
 LuCI IPK owner/URL use LUCI_MAINTAINER/LUCI_URL as required by luci.mk.
 
 The pinned SDK Rust feed uses1.89.0; Cargo.toml declares no global rust-version.
-Current client-bin passed a GNU check and musl compile/link using stock Rust1.89.0,
+The F358 client-bin source snapshot passed a GNU check and musl compile/link using stock Rust1.89.0,
 SDK GCC13.3 and the exported SDK Build/Compile macro/profile. The fresh ELF passed
 CLI/INI inspection in the official24.10.4 rootfs. This uses upstream prebuilt Rust
 standard libraries; it does not certify SDK Rust bootstrap, the source-download/
@@ -300,3 +300,7 @@ configuration, forced environment, profile/source/linker overrides, PATH/shared
 registry/tool caches and clean independent Qeli A/B still require qualification.
 7 real-Cargo methods use dependency-free Linux fixtures; they do not certify a fresh
 Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+The subsequent F361 runtime generation change has fresh GNU Rust1.97 unit/check/
+production Clippy/fmt coverage. The preceding SDK1.89/musl qualification covers
+the F358 source snapshot, not this subsequent source change. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
