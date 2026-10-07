@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v132 -->
+<!-- normative-sync: full-system-audit-v133 -->
 
 **Текущий итог, 7 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2021,6 +2021,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **7 октября, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission запрещает допуск при неизвестном Git/CI SHA, ошибке запросов и устаревшем workflow.77router+18CI Linux methods без пропусков; настоящий read-only preflight дошёл до общего отказа. Критерий штатных/граничных/негативных сценариев закрыт,2/5критериев; Q31 IN_PROGRESS28/37(75.7%),9остаются. Native current/долг14/15+D06 принят без изменений; SDK/release-cut/ndm и firmware exclusions сохранены. Без push/release.
 
 **7 октября,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): очистка saved/partial адресов OpkgTun, ownership после stop/start и ошибки смены плана, локальный IPv4 для cached no-op/сброса.218methods на dash/ash без пропусков;14nonroot CI methods и baseline-отказы старых hook/init. Критерий cooperative отказов/конкуренции закрыт;3/5критериев,Q31IN_PROGRESS,28/37всего. Межкомпонентная/SDK/release интеграция и exclusions сохранены; без push/deploy.
+**7 октября,F376–F378:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): immutable/однозначные source metadata, версия из committed TOML и сверка фактического SDK mirror SHA256.25 Linux source methods без root,18CI/15router gates PASS;4 точных старых fail-open воспроизведены. CI24+1 явный baseline skip. SDK bootstrap/release-cut/Actions не квалифицированы; Q31 остаётся3/5 criteria IN_PROGRESS,28/37overall.
+
 ### 32. Метрики, usage, логи и уведомления
 
 **Код:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.

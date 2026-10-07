@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v36 -->
+<!-- normative-sync: q31-openwrt-controls-v37 -->
 
-**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F373–F375 и218methods на shell ниже. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F376–F378 source admission ниже; прежние218methods на shell сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2115,3 +2115,58 @@ Apple exclusions и принятый D06 без изменений. Долг14/1
 
 Raw packet: `audit-debt-20260924/q31-opkgtun-address-retirement-20261007` (вне Git).
 Машинная запись: `release/certification/evidence/q31-opkgtun-address-retirement-20261007.json`.
+
+
+## F376–F378: проверка исходников OpenWrt перед релизом (7 октября)
+
+F376: прежний Gate3 принимал `HEAD`, ветку или тег вместо полного commit SHA,
+а первое присваивание metadata могло скрывать последующее значение Makefile.
+F377: отсутствие версии Cargo пропускало сравнение; версия читалась строковым
+поиском вместо `[package]`, запросы Git не имели timeout и проверки типа объекта.
+F378: корректная по форме строка SHA256 считалась достаточной без сверки байтов
+SDK-архива. Точная прежняя реализация допускает четыре воспроизведённых случая:
+HEAD, повторное присваивание, другой архив и отсутствующую версию пакета.
+
+Общий `scripts/openwrt_source_gate.py` заменяет прежний встроенный блок Gate3.
+Проверяются чистые участвующие пути, однозначные literal := metadata, полный SHA
+именно commit-объекта и совпадение закреплённого `qeli/` tree с candidate.
+Ветка/тег/сокращённый ID, define/undefine/eval с прямым повторным присваиванием,
+невалидный Git/TOML и отсутствующая или наследуемая версия закрывают допуск.
+Cargo читается из того же зафиксированного commit; Git queries ограничены30s.
+Старый commit с идентичным crate tree допустим: равенство SHA самому HEAD
+не требуется, иначе commit с новым значением pin был бы невозможен.
+
+`QELI_OPENWRT_SOURCE_ARCHIVE` теперь обязателен для Gate3: путь к локальному
+SDK-generated Source archive из package metadata. Сверяется реальный SHA256,
+без download/extract; отсутствующий, пустой, nonregular, symlink или наблюдаемо
+изменившийся файл, несовпадение и skip/placeholder блокируют релиз. На POSIX
+O_NONBLOCK/O_NOFOLLOW и fstat открытого fd не дают зависнуть на FIFO и читать
+подменённую ссылку; особый файл отвергается до hashing. Оба gate проверяют
+наблюдаемые состояния, а не защищают от привилегированного изменения после
+последней проверки. Произвольный Make/environment не интерпретируется; SDK
+генерация содержимого архива и full Rust bootstrap не объявляются выполненными.
+
+**25 source-gate методов PASS без skips на Linux uid/gid65534**: реальные
+временные Git repositories, version/tree/pin faults, binary CR bytes, file integrity,
+FIFO/link и observed mutation; четыре старых fail-open пути воспроизведены.
+После добавления eval/undefine повторён только изменённый набор25. В точном
+обычном CI запуске24 проверены и1 исторический baseline явно skipped, потому
+что он включается отдельной переменной.18 CI admission и15 router release
+методов PASS без skips.20 transferred input SHA совпадают до/после; реальные
+SDK source archive generation/full compilation/Actions не запускались.
+Первый Windows прогон:24 метода,1 symlink privilege error и1 POSIX skip;
+fixture разделён, окончательный Linux прогон квалифицирует оба POSIX случая.
+Финальный Windows:23 PASS и2 явных POSIX skips.
+В рабочем development tree старый package pin остаётся ожидаемой причиной
+отказа; pin/hash не менялись. Мануал OpenWrt и CI обновлены. Rust/native recipes,
+публикуемые binaries и provenance unchanged/PASS. .11 qeli.service active/PID777
+сохранён, .10 не использован; ни host network/firewall, ни tools не изменялись.
+
+Q31 остаётся **3/5 criteria, IN_PROGRESS**, whole audit28/37(75.7%),9remain.
+Source admission закрыт в проверенном объёме; full SDK bootstrap/release-cut,
+configured Gate2/Actions integration и writer-lock/atomic ndm/firmware границы
+остаются. USER_EXCLUDED firmware/Apple/WindowsVM, Q29SIGKILL/ENONET,
+Q30callback-drain и D06ACCEPTED не меняются. Debt14/15DONE+D06ACCEPTED.
+
+Raw packet: `audit-debt-20260924/q31-openwrt-source-gate-20261007` (outside Git).
+Machine record: `release/certification/evidence/q31-openwrt-source-gate-20261007.json`.
