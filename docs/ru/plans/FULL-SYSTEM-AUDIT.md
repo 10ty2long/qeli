@@ -2396,3 +2396,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **7 октября,F370–F371:** [native preflight](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual low-space baseline удаляет контрольную A/B пару, fixed сохраняет;36Linux/80local PASS. Source roots изолированы, Cargo jobs1, installed pins inventory PASS. Native refresh заблокирован диском; два локальных архива проверены, удаление отклонено auto-review и не выполнялось. Native provenance STALE/Q34 OPEN;28/37(75.7%),9осталось,Q31/Q29/Q30/D06 scopes сохранены.
+
+**7 октября, native/D11/D15:** [сверка текущего пакета](../reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре независимых A/B,14 SHA/provenance,22 Windows ABI/325 platform/549 .NET/201 JVM/23 Android JNI,2417 Linux library и12 CLI tests/Clippy/debug builds PASS. Ошибки подготовки сохранены; peak benchmark/VPN-матрица/soak не повторялись. Долг14/15 DONE+D06 ACCEPTED;полный аудит28/37(75,7%),9 впереди;Q29/Q30/Q31 и exclusions сохранены.

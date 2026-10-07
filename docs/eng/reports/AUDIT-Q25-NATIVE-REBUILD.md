@@ -167,3 +167,24 @@ and raw `audit-debt-20260924/d15-final-20261003/` record commands, hashes and li
 D15 remains IN_PROGRESS pending a fresh Linux release, common runtime matrix,
 soak, benchmark and current certification reconciliation. User platform
 exclusions remain; BPF integration is cancelled and Q25-A125 is not fixed.
+
+## Native and current Linux reconciliation — 7 October 2026
+
+Clean source `2b2c1565`, native source/recipe digest `c2ac10e0f41c826129a7b10918db88e84a77e55109eb4537783b34f99abd2a8b`. Two independent builds reproduce each of the four ABI 1.16 libraries. Complete exports, both Mach-O architectures, UUID/indirect-symbol normalization and two ad-hoc signatures pass; all seven canonical/consumed pairs and 14 SHA entries match. PROVENANCE now passes for the current tree. Builds used pinned installed tools, isolated sources, private offline caches, one Cargo worker and bounded compiler processes. macOS cross-build warnings about the unavailable Xcode SDK are retained; no Apple runtime qualification.
+
+| Target | A/B SHA-256 |
+|---|---|
+| Windows x64 | `a32aff872e5a57bfb24e1d6eca066f0580e86485bd09910eb95407de9b855ed9` |
+| macOS universal2 | `dda6c2b1a1a094af4487133217b74325de30913530deeb3d38d738c7d6097c38` |
+| Android arm64-v8a | `b3b195c4ee3d62a441d6d0d1cfe0a73b85f4d276c3d24c0cac22903aaadc58f9` |
+| Android x86_64 | `49c9eccc21f822c805364edb10adb45208519957554ba89c21696d1edc2c6a04` |
+
+Fresh Windows C ABI: 22 PASS; Windows platform selftest: 325 PASS; shared .NET conformance: 549 PASS. Both Release builds report zero errors/warnings. Android JVM: 201 PASS, zero failures/errors/skips; actual Android 14/API34/x86_64 JNI: 23 PASS. The debug APK contains exact copies of both rebuilt libraries; app and test APK hashes are retained. JNI runs through private app_process without installing an APK or applying a VPN/TUN.
+
+Current exact Git Linux inputs: 383 files including seven release INI fixtures. Fresh library units: 2417 PASS, 60 normally ignored; standalone CLI units: 12 PASS, zero ignored. Strict Rust 1.97.0 all-target Clippy and current debug client/daemon builds pass. Tests run in private network/mount/PID namespaces; service PID and host snapshots are preserved. This is not a fresh common VPN matrix, release daemon, peak benchmark or soak. Earlier results retain their original artifacts/dates and relevant source limits.
+
+Initial JNI wrapper FAIL (emulator Wi-Fi boot transition and nft stderr placement) and first Clippy preparation FAIL (missing include_str release fixtures) remain in raw evidence. The retry waits for WLAN readiness, retains nft stderr separately and compares full rule stdout; source/fixtures are SHA-verified. Unit2417 was not rerun after a fixture-only repair. Original AVD userdata hashes remain unchanged.
+
+The user's explicit continuation authorized the eight listed old roots after verified recoverable backups, file identity and mount/process checks. Both local archives remain. A new 1.37 GB generated Linux compiler cache was removed only after preserving current debug binaries by SHA; source/logs/native A/B artifacts remain. No working services, network policy, global toolchain configuration or releases were changed.
+
+D11/D15 current-package reconciliation is closed: **14/15 DONE plus D06 ACCEPTED_LIMITATION**. Full audit remains **28/37 (75.7%), nine sections pending**. Q29 SIGKILL/auto-null ENONET observations, Q30 callback drain/Apple exclusions and Q31 SDK/release pipeline are not promoted to PASS. No push/deploy. [Machine evidence](../../../release/certification/evidence/native-current-20261007.json); raw `audit-debt-20260924/native-refresh-build-20261007/`.
