@@ -473,3 +473,16 @@ valid hash. Actual SDK-generated archive passes the source gate.9 shell methods
 pass on both dash/ash without root;25 source methods pass. This closes source
 archive/prepare admission within scope, not full Rust bootstrap, new client
 compilation/package installation, GitHub Actions or firmware qualification.
+
+## Maintainer 32-bit preflight helper qualification (development 0.8.2)
+
+The live Gate2 helper now passes actual ARMv7/MIPS release builds from the current
+committed qeli/ tree, with the pinned maintainer Zig/Rust policy, downloaded SHA256
+and static ELF checks.32 actual QEMU CLI/INI inspection executions pass without
+root on cortex-a7/24Kc. This complements the SDK1.89 compiler/package scope above;
+these two builds use the maintainer Zig recipe, not SDK Rust bootstrap.
+
+The entire preflight/Actions workflow and production release-cut pin/hash remain
+separate. QEMU CLI inspection does not qualify router VPN, TUN, firewall or firmware.
+Raw logs/artifacts are retained, temporary lab build/emulation roots cleaned;
+no published artifacts or production source pin/hash were changed.
