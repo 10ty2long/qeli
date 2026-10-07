@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v31 -->
+<!-- normative-sync: q31-openwrt-controls-v32 -->
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
 из TODO в IN_PROGRESS; ни полный критерий, ни роутерный runtime не закрыты.
@@ -1052,7 +1052,7 @@ default toolchains и работающие сервисы не изменяли�
 | Keenetic preflight→launch INI; core plan generation/ABA | F355/F361 scoped PASS; F362–F363: late receipt и counter reset при fresh OpkgTun init launch scoped PASS; writer/lock, direct launch и admin replacement OPEN |
 | SIGKILL/power-loss installer recovery | Manual recovery; полная bundle transaction не подтверждена |
 | Firmware WAN/reboot/DNS/firewall/RSS/throughput | USER_EXCLUDED; cross-build не device test |
-| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory и F364 пять standalone release fields scoped PASS; F365 clean x86_64 Qeli A/B scoped PASS; полная hermetic policy и другие ISA A/B OPEN |
+| Hermetic shared caches/config/PATH и clean A/B | F356–F357 compiler/intermediate-directory и F364 пять standalone release fields scoped PASS; F365/Q31-V006 все четыре standalone Qeli A/B scoped PASS; полная hermetic policy OPEN |
 
 Эта таблица актуализирует исторические cross-build NOT_RUN в предыдущих разделах;
 их исходные evidence не переписаны. Пакет:
@@ -1802,3 +1802,86 @@ Firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%); Q29 SIGKILL FAIL/auto-null
 Q30 callback-drain OPEN/Apple exclusions и D06 ACCEPTED сохранены.
 Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-clean-ab-20261007.
 Evidence: release/certification/evidence/q31-router-clean-ab-20261007.json.
+
+## Q31-V006: независимые полные сборки трёх оставшихся роутерных целей
+
+Выполнены шесть новых полных сборок клиента Qeli: две независимые на каждую цель.
+AArch64/ARMv7 используют Rust 1.97.0; MIPS — nightly-2026-06-10 и настоящий
+`build-std=std,panic_abort`. Общий закреплённый standalone-рецепт, один job,
+последовательный запуск, offline-копии одной проверенной registry. У каждой сборки
+отдельные исходники, HOME/Cargo home, target и Zig/XDG/TMP caches.
+Все 364 входа crate неизменны; временная rlib-проекция восстановлена.
+Verbose logs подтверждают пять release-полей, remap путей, свежую компиляцию,
+отсутствие лишних FFI outputs и приватных путей исходников в ELF.
+
+| Цель | Размер каждого ELF | SHA256 обеих независимых сборок |
+| --- | ---: | --- |
+| aarch64-unknown-linux-musl | 4820920 | `6a0ae5622a9dd4ce58289e2ab0066d0d1600e1b6dec0269cf1199209452ea62a` |
+| armv7-unknown-linux-musleabihf | 4984836 | `2a445c055db3ffc23f26e3adb59c8ecb8e9fe89ae6f74f251c8437530b3fe812` |
+| mipsel-unknown-linux-musl | 6849048 | `591f593741b167832aa2bc7b06f9e3476ea336e8195246920915b0367ef4deb9` |
+
+Все три пары побайтно идентичны и проходят общий static target-ELF admission.
+Предыдущая пара x86_64 F365 используется после проверки всего seal из 74 файлов
+и совпадения всех 380 входов текущего compiled packet с прежним fixed packet.
+Тем самым independent A/B подтверждён для всех четырёх standalone-целей;
+новый запуск x86_64 и полная Cargo hermeticity здесь не заявляются.
+
+Каждый новый ELF выполнил help/version и 12 owner/interface INI metadata cases
+в приватном QEMU user mode: 12 CLI-вызовов и 72 metadata cases PASS, без skips.
+Три исполняемых файла QEMU 10.0.2 извлечены приватно из официального Debian security
+пакета. До извлечения SHA архива размером 71008176 байт совпал с существующей
+apt metadata:
+`ac60ebf92f482731e6a89ff5428c805a74f3e66c062670b89c81d2f7512d6c38`.
+Пакет, binfmt и системный emulator не устанавливались. Первая ссылка из устаревшей
+main-repository metadata вернула 404; ошибка подготовки сохранена.
+[QEMU user mode](https://www.qemu.org/docs/master/user/main.html) выполняет целевой
+userspace через службы host kernel. CLI/parser-проверки не подтверждают роутерное
+ядро, CPU-specific crypto, firmware, TUN, firewall или VPN-соединение.
+
+Все шесть compiler roots удалены; своих работающих runner/process/mount не осталось.
+Содержимое глобальных registry/toolchains/nightly-source неизменно. Собственные
+исходники, ELF и tool evidence сохранены в пакете для инспекции. Build warnings
+сохранены; новый full-cross Clippy и performance benchmark не заявляются.
+Опубликованные binaries, Rust/core/ABI, manifests и lockfiles не менялись.
+
+## F366–F367: release preflight обходил общую политику роутерной сборки
+
+F366: старый source fingerprint удалял каждый CR-байт, в том числе из бинарных
+шрифтов. Два разных реальных fixture-файла получили одинаковый fingerprint.
+Dirty source inputs допускались с одним предупреждением. Оба дефекта воспроизведены
+исполнением точного baseline function/gate AST с реальными binary fixtures и
+явными SSH/subprocess-моделями; live-запуск старого preflight не заявляется.
+
+F367: gate 2 собирал общий checkout через незакреплённые default Rust/rolling
+nightly, без общего locked one-job рецепта, release fields, remap, rlib-проекции
+и строгого ELF admission. Заданная лаба при отсутствии Paramiko могла тихо
+пропускаться; моделируемая ошибка исполнения оставляла SSH незакрытым.
+Baseline-команды, silent skip и отсутствие close сохранены.
+
+Новый `router_release_gate.py` фиксирует один committed Git-архив `qeli/`, сохраняя
+точные бинарные байты, и загружает его в собственный checkout через общие helpers.
+Dirty source и участвующие recipe/helper inputs запрещены до SSH. Gate 2 использует
+общие закреплённые toolchains/build command, rlib-проекцию и strict static target
+ELF admission; SHA скачанного artifact обязан совпасть с удалённым SHA256.
+Ошибка настроенной лабы проваливает preflight; SSH закрывается в `finally`.
+`QELI_LAB_SRC` устарел. Gate 2 остаётся optional при отсутствии `QELI_LAB_PASS`.
+Artifact не публикуется; приватный remote checkout сохраняется для инспекции.
+Проверка tools следует действующему helper и может установить недостающие
+закреплённые версии при запуске maintainer; в аудите этого не выполняли.
+
+Финальные Linux-проверки: 15 уникальных gate methods с настоящими временными Git
+репозиториями, binary CR/NUL, immutable snapshots и явными transport/ELF models;
+72 существующих связанных метода PASS без skips. Все 750 финальных model inputs
+проверены до/после исполнения. CI вызывает новые tests в native job; точная команда
+также проверена локально. Первоначальные ошибки escaping fixture и дублирование
+унаследованных methods исправлены до финального evidence. Шесть полных сборок
+подтверждают общий compiler recipe; новая caller-обвязка проверена моделями,
+а не полным live preflight/GitHub Actions dispatch.
+
+Полный SDK Rust bootstrap, source-pin/mirror release-cut, произвольная env/Cargo/
+linker/PATH/cache isolation и оставшийся source/dead-code review Q31 остаются OPEN.
+Physical firmware USER_EXCLUDED. Q31 IN_PROGRESS; всего 28/37 (75.7%), девять
+осталось. Q29 SIGKILL FAIL/auto-null ENONET, Q30 callback-drain OPEN/Apple exclusions
+и D06 ACCEPTED сохранены. Без push/deploy.
+Packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q31-router-cross-ab-20261007.
+Evidence: release/certification/evidence/q31-router-cross-ab-20261007.json.

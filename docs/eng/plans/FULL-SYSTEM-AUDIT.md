@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v127 -->
+<!-- normative-sync: full-system-audit-v128 -->
 
 **Current result, 6 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2001,6 +2001,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **7 October,F364:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): shared router/host/CI exporter pins five Cargo.toml release fields against ambient FFI/environment/home/ancestor overrides. Real-Cargo baseline9assertion FAIL in12cells;fixed8methods/12cells and72Linux helper/gate methods without skips PASS. Actual pinned Zig/cargo-zigbuild x86_64-musl mini baseline unwind|0/fixed abort|3;staticELF validator/execution PASS.37recipes/14LuCI/docs9/bindings PASS. Not current Qeli/clean A-B/4targets/SDK/FFI/CI run;full hermetic/pipeline OPEN. Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 retained.
 
 **7 October,F365/Q31-V005:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): full independent x86_64-musl baseline A/B differed; shared helper remaps owned source paths. Two fresh fixed full Qeli builds byte-identical;9actual-Cargo/72Linux model methods and48INI metadata cases PASS without skips. Verified existing offline registry seed, no network/VPN or published-binary replacement. Other-ISA A/B/full hermetic/SDK pipeline OPEN;Q31 IN_PROGRESS28/37(75.7%);Q29/Q30/D06 unchanged.
+
+**7 October, Q31-V006/F366–F367:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): six fresh full AArch64/ARMv7/MIPS builds yield three byte-identical pairs. Together with SHA-matched sealed F365 x86_64 evidence, all four standalone A/B targets qualify. 72 actual QEMU INI cases/12 CLI calls;15 new release-gate/72 related Linux methods PASS without skips. Gate 2 now uses a private exact committed Git archive and common pins/locked recipe/SHA/ELF admission, rejects dirty inputs, fails configured errors and closes SSH; CI adds its tests. Full live preflight/CI dispatch, SDK bootstrap/source release-cut, full hermetic policy and remaining Q31 source review OPEN; firmware USER_EXCLUDED. Q31 IN_PROGRESS,28/37(75.7%),9 remain;Q29/Q30/D06 retained. No push/deploy.
 
 
 

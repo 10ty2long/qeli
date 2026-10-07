@@ -241,3 +241,22 @@ source/linker/PATH/caches и clean Qeli A/B ещё не полностью из�
 идентичный ELF, help/version и INI metadata PASS. Прежний A/B NOT_RUN снят только
 для этого target/recipe; другие targets, SDK/CI path policy и произвольное окружение
 проверяются отдельно. Подробности в отчёте Q31.
+
+### Аудит: standalone A/B и release preflight (7 октября 2026)
+
+Q31-V006 завершил независимые полные A/B для aarch64, armv7 и mipsel; каждая пара
+побайтно идентична. Вместе с sealed F365 x86_64 и проверкой совпадения inputs
+подтверждены все четыре standalone-цели. Шесть новых ELF также прошли static target
+admission и QEMU help/version/INI metadata. Это обновляет прежний статус other-target
+A/B NOT_RUN. QEMU parser checks не подтверждают firmware, роутерную сеть или полный
+SDK build/release pipeline.
+
+Для maintainer: `python scripts/release_preflight.py <branch>` выполняет optional
+32-bit lab gate 2 при заданном `QELI_LAB_PASS`. До SSH запрещены dirty source и
+участвующие recipe inputs; точные байты одного committed Git-архива `qeli/`
+собираются в приватном checkout общим закреплённым locked one-job рецептом.
+Проверяются SHA256 скачанного файла и static target ELF; SSH закрывается при успехе
+и ошибке. `QELI_LAB_SRC` устарел. Artifact не публикуется, приватный checkout
+сохраняется для инспекции. Действующий toolchain helper может установить недостающие
+закреплённые tools. Полный live preflight/CI dispatch, SDK bootstrap и source-pin/
+mirror release-cut остаются отдельными release-проверками.
