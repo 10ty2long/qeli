@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v38 -->
+<!-- normative-sync: q31-openwrt-controls-v39 -->
 
-**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F379 actual SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2224,3 +2224,52 @@ inventory; .11 qeli.serviceactivePID777 сохранён. Host network/firewall/
 
 Raw packet: `audit-debt-20260924/q31-sdk-source-integrity-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-sdk-source-integrity-20261007.json`.
+
+## Q31-V009: настоящий 32-битный release gate и запуск CLI под QEMU (7 октября)
+
+Выполнен `verify_router_release` из текущего committed snapshot `0000ead0`,
+через настоящий SSH/SFTP на .10. Это helper Gate2; весь `release_preflight.py`
+и GitHub Actions этим запуском не квалифицируются. Кандидат имеет прежний
+qeli/tree26a0402e; код продукта и рецепты не изменялись.
+
+| Target | Компилятор | Release artifact SHA256 | Результат |
+|---|---|---|---|
+| armv7-unknown-linux-musleabihf | Rust1.97.0, Zig0.13.0/cargo-zigbuild0.23.0 | 373068ebb4c7e9361eeabe573b6c74ba7ee15d95c4248425bd266f2f6cfcef2e | PASS;4982148bytes,ELF32/ARM hard-float/static |
+| mipsel-unknown-linux-musl | nightly-2026-06-10 с rust-src/build-std;тот же Zig | 41ba9a0b324b790c320daac4c65d5a8698d98b7f6c4936f753eda226a3b2bed7 | PASS;6846296bytes,ELF32/MIPS O32/static PIE |
+
+Каждая сборка выполнялась последовательно, с locked dependencies/jobs1 и общим
+release profile. Проверены скачанные байты/SHA/ELF.317 transferred compile inputs
+совпали с Git archive; единственная предусмотренная derivation — private manifest
+rlib projection. Отсутствующие package-only файлы вне sync build contract учтены
+отдельно. Это свежие target directories с повторным использованием общих caches,
+не independent clean A/B и не произвольная hermetic environment. В обеих сборках
+сохранён warning линкера о deprecated optimization setting1.
+
+Сохранённые артефакты реально запущены через QEMU10.0.13, ARM cortex-a7 и MIPS24Kc,
+uid/gid65534:32/32 executions PASS,16 на архитектуру. Version/help, legacy/core
+owner, BOM/quotes, attached router, device/attach/TAP mismatch, malformed/duplicate/
+unknown INI, missing/nonregular config, неполная CLI expectation pair и неисполнение
+post_up при инспекции. Проверен настоящий CLI/common parser в обоих ELF32 binaries;
+VPN/TUN/networking/firewall/throughput через эмуляцию не запускались.
+
+QEMU из [официального Debian package](https://packages.debian.org/trixie/amd64/qemu-user/download),
+SHAca6ede739327a20ae5a3498230c8a3a9a072c586e131bc6bcc1201eb1725e336,
+распакован privately: только два static emulators,без system install/binfmt changes.
+Первый fetch по устаревшему APT index дал404; подготовительная ошибка сохранена,
+новый официальный archive checksum проверен. Это не ошибка продукта.
+
+Named tool inventories/hashes/default settings до/после идентичны; qeli PIDs745/901
+и inactive qeli.service/MainPID0 на .10 сохранены. .11 не использовалась. Source
+archive, оба клиента, emulators/package и logs сохранены локально с SHA; собственные
+compile/emulation roots удалены после process/mount/identity guards. Host network
+policy commands не выполнялись; whole-host firewall invariant без baseline не
+заявляется. Native inputs/artifacts/provenance unchanged/current PASS.
+
+Live Gate2 helper/32-bit CLI scope закрыт. Полный preflight/Actions/release-cut,
+production source pin/hash и full SDK Rust source bootstrap, writer-lock/atomic ndm
+и firmware остаются в прежней очереди. Q31 IN_PROGRESS3/5,28/37overall,9remain;
+D06ACCEPTED,Q29SIGKILL/ENONET,Q30callbackdrain и USER_EXCLUDED платформы сохранены.
+Нет новой непроверенной правки продукта, push/deploy/release не выполнялись.
+
+Raw packet: `audit-debt-20260924/q31-live-release-gate-20261007`.
+Machine record: `release/certification/evidence/q31-live-release-gate-20261007.json`.

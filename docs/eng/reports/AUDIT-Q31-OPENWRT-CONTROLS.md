@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v38 -->
+<!-- normative-sync: q31-openwrt-controls-v39 -->
 
-**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F379 actual SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2213,3 +2213,52 @@ Precommit reconciliation refused the Windows checkout CRLF versus Git LF identit
 
 Raw packet: `audit-debt-20260924/q31-sdk-source-integrity-20261007` (outside Git).
 Machine record: `release/certification/evidence/q31-sdk-source-integrity-20261007.json`.
+
+## Q31-V009: actual 32-bit release gate and CLI execution under QEMU (October7)
+
+Executed `verify_router_release` from current committed snapshot `0000ead0`,
+through real SSH/SFTP on .10. This is the Gate2 helper; this run does not qualify
+all of `release_preflight.py` or GitHub Actions. Candidate qeli/tree26a0402e is
+unchanged; product code and recipes were not modified.
+
+| Target | Compiler | Release artifact SHA256 | Result |
+|---|---|---|---|
+| armv7-unknown-linux-musleabihf | Rust1.97.0, Zig0.13.0/cargo-zigbuild0.23.0 | 373068ebb4c7e9361eeabe573b6c74ba7ee15d95c4248425bd266f2f6cfcef2e | PASS;4982148bytes,ELF32/ARM hard-float/static |
+| mipsel-unknown-linux-musl | nightly-2026-06-10 with rust-src/build-std;same Zig | 41ba9a0b324b790c320daac4c65d5a8698d98b7f6c4936f753eda226a3b2bed7 | PASS;6846296bytes,ELF32/MIPS O32/static PIE |
+
+Builds ran sequentially with locked dependencies/jobs1 and the common release
+profile. Downloaded bytes/SHA/ELF checked.317 transferred compile inputs match
+Git archive; the sole intended derivation is private manifest rlib projection.
+Missing package-only files outside the sync build contract are separately recorded.
+Fresh target directories reuse shared caches, not independent clean A/B or arbitrary
+hermetic environment. Both builds retain the deprecated linker optimization setting1
+warning.
+
+Saved artifacts actually executed through QEMU10.0.13, ARM cortex-a7 and MIPS24Kc,
+uid/gid65534:32/32 executions PASS,16 per architecture. Version/help, legacy/core
+owner, BOM/quotes, attached router, device/attach/TAP mismatches, malformed/duplicate/
+unknown INI, missing/nonregular config, incomplete CLI expectation pair and absence
+of post_up execution during inspection. Actual CLI/common parser checked in both
+ELF32 binaries; no emulated VPN/TUN/networking/firewall/throughput run.
+
+QEMU from the [official Debian package](https://packages.debian.org/trixie/amd64/qemu-user/download),
+SHAca6ede739327a20ae5a3498230c8a3a9a072c586e131bc6bcc1201eb1725e336,
+privately extracted: only two static emulators,no system install/binfmt changes.
+Initial fetch from stale APT index returned404; preparation failure retained,
+current official archive checksum verified. This is not a product failure.
+
+Named tool inventories/hashes/default settings equal before/after; qeli PIDs745/901
+and inactive qeli.service/MainPID0 on .10 preserved. .11 unused. Source archive,
+both clients, emulators/package and logs retained locally with SHA; owned compile/
+emulation roots removed after process/mount/identity guards. No host network policy
+commands; no whole-host firewall invariant claimed without a baseline. Native
+inputs/artifacts/provenance unchanged/current PASS.
+
+Live Gate2 helper/32-bit CLI scope closed. Full preflight/Actions/release-cut,
+production source pin/hash and full SDK Rust source bootstrap, writer-lock/atomic ndm
+and firmware remain queued. Q31 IN_PROGRESS3/5,28/37overall,9remain; D06ACCEPTED,
+Q29SIGKILL/ENONET,Q30callbackdrain and USER_EXCLUDED platforms preserved.
+No new unverified product fix,no push/deploy/release.
+
+Raw packet: `audit-debt-20260924/q31-live-release-gate-20261007`.
+Machine record: `release/certification/evidence/q31-live-release-gate-20261007.json`.

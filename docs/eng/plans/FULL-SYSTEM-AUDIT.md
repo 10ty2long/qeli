@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v134 -->
+<!-- normative-sync: full-system-audit-v135 -->
 
 **Current result, 7 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2013,6 +2013,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **7 October,F376–F378:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): immutable/unique source metadata, committed TOML version and actual SDK mirror checksum admission.25 unprivileged Linux source methods,18CI/15router gates PASS; exact old4fail-open cases reproduced. CI24+1explicit baseline skip. No SDK bootstrap/release-cut/Actions claim; Q31 remains3/5criteria IN_PROGRESS,28/37overall.
 
 **7 October,F379/Q31-V008:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual SDK source archive/check-FIXUP/prepare integration passes on exact candidate crate; old bad mirror download/prepare0 reproduced. Shared prepare/compile verifier stops bad hash before unpack/Cargo,9dash/9ash+25source methods uid65534 PASS;7integration stages with inert Cargo boundary. Full SDK Rust/bootstrap/release-cut/CI separate;3/5criteria IN_PROGRESS,28/37overall.
+
+**October7,Q31-V009:** [live release gate](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): real ARMv7/MIPS release builds through current Gate2 helper,SHA/static ELF PASS;32actual QEMU CLI/INI executions uid65534 PASS,317exact compile inputs. Named tools/defaults and qeli745/901 preserved,own roots cleaned. No new product fix/native refresh/firmware/full preflight/Actions;SDK bootstrap/release-cut/writer-lock/atomic ndm remain. Q31 IN_PROGRESS3/5,28/37overall.
 
 ### 32. Metrics, usage, logs and notifications
 
