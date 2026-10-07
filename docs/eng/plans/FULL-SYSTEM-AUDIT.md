@@ -2383,3 +2383,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **October7,F370–F371:** [native preflight](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): real low-space baseline removes retained A/B fixture;fixed preserves it;36Linux/80local PASS. Isolated source roots,Cargo jobs1,installed pins inventory PASS. Native refresh blocked by disk;two local backups verified,auto-review rejected cleanup and no removal occurred. Native provenance STALE/Q34 OPEN;28/37(75.7%),9remain,Q31/Q29/Q30/D06 scopes retained.
+
+**October7, native/D11/D15:** [current-package reconciliation](../reports/AUDIT-Q25-NATIVE-REBUILD.md): four independent A/B,14 SHA/provenance,22 Windows ABI/325 platform/549 .NET/201 JVM/23 Android JNI,2417 Linux library and12 CLI tests/Clippy/debug builds PASS. Preparation failures retained;peak benchmark/VPN matrix/soak not rerun. Debt14/15 DONE+D06 ACCEPTED;full audit28/37(75.7%),9 remain;Q29/Q30/Q31 and exclusions retained.

@@ -161,3 +161,24 @@ FORWARD/MASQUERADE. Журнал и точные `vpn-nat.sh`/`vpn-nat-stop.sh` 
 D15 остаётся IN_PROGRESS: нужны свежий Linux release, общий runtime-прогон,
 soak, benchmark и согласование текущего certification manifest. Платформенные
 исключения пользователя сохраняются; BPF-внедрение отменено, Q25-A125 не исправлен.
+
+## Native и текущая Linux-сверка — 7 октября 2026
+
+Чистый исходник `2b2c1565`, digest native-исходников/рецептов `c2ac10e0f41c826129a7b10918db88e84a77e55109eb4537783b34f99abd2a8b`. Два независимых прохода воспроизвели каждую из четырёх библиотек ABI 1.16. Проверены все exports, обе Mach-O архитектуры, нормализация UUID/indirect symbols и две ad-hoc подписи; семь canonical/consumed пар и 14 SHA-записей совпадают. PROVENANCE теперь соответствует текущему дереву. Использованы установленные pinned tools, отдельные исходники, private offline caches, один Cargo worker и ограниченное время компиляторов. Предупреждения macOS кросс-сборки об отсутствии Xcode SDK сохранены; Apple runtime не проверялся.
+
+| Target | A/B SHA-256 |
+|---|---|
+| Windows x64 | `a32aff872e5a57bfb24e1d6eca066f0580e86485bd09910eb95407de9b855ed9` |
+| macOS universal2 | `dda6c2b1a1a094af4487133217b74325de30913530deeb3d38d738c7d6097c38` |
+| Android arm64-v8a | `b3b195c4ee3d62a441d6d0d1cfe0a73b85f4d276c3d24c0cac22903aaadc58f9` |
+| Android x86_64 | `49c9eccc21f822c805364edb10adb45208519957554ba89c21696d1edc2c6a04` |
+
+Свежий Windows C ABI: 22 PASS; Windows platform selftest: 325 PASS; общая .NET conformance: 549 PASS. Обе Release-сборки без ошибок/предупреждений. Android JVM: 201 PASS, ноль failures/errors/skips; реальный Android 14/API34/x86_64 JNI: 23 PASS. Debug APK содержит точные копии двух пересобранных библиотек; SHA app/test APK сохранены. JNI запускается через private app_process без установки APK и применения VPN/TUN.
+
+Точные текущие Git-входы Linux: 383 файла, включая семь release INI fixtures. Свежие library units: 2417 PASS, 60 штатно ignored; standalone CLI units: 12 PASS, ноль ignored. Строгий all-target Clippy Rust 1.97.0 и текущие debug-сборки client/daemon PASS. Тесты выполняются в отдельных network/mount/PID namespaces; PID службы и host snapshots сохранены. Это не новая общая VPN-матрица, release daemon, peak benchmark или soak. Старые результаты сохраняют свои артефакты/даты и границы применимости исходников.
+
+Исходные FAIL JNI wrapper (переход Wi-Fi при загрузке эмулятора и размещение nft stderr) и подготовки Clippy (отсутствующие include_str release fixtures) сохранены. Повторный запуск ждёт готовности WLAN, отдельно сохраняет nft stderr и сравнивает полный stdout правил; source/fixtures проверены по SHA. Unit2417 после исправления только fixtures не повторялся. SHA исходных userdata AVD не изменились.
+
+Явный ответ пользователя «продолжай» разрешил удаление восьми перечисленных старых каталогов после проверенных восстанавливаемых backup, неизменности файлов и mount/process guards. Оба локальных архива сохранены. Новый compiler cache Linux размером 1,37 ГБ удалён после сохранения свежих debug binaries по SHA; source/logs/native A/B артефакты сохранены. Рабочие службы, сетевые политики, глобальные настройки toolchain и релизы не менялись.
+
+Текущая сверка пакета D11/D15 закрыта: **14/15 DONE плюс D06 ACCEPTED_LIMITATION**. Полный аудит остаётся **28/37 (75,7%), девять разделов впереди**. Наблюдения Q29 SIGKILL/auto-null ENONET, Q30 callback drain/Apple exclusions и Q31 SDK/release pipeline не переводятся в PASS. Без push/deploy. [Машинное свидетельство](../../../release/certification/evidence/native-current-20261007.json); raw `audit-debt-20260924/native-refresh-build-20261007/`.

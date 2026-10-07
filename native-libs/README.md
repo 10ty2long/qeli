@@ -12,6 +12,8 @@
 > `/var/tmp/qeli-native-repro/android-source` на .11 перед сборкой. Каталоги исходников
 > работающих сервисов не используются.
 
+Последняя [сверка 7 октября 2026](../docs/ru/reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
+
 ## Содержимое
 
 Текущий ABI общего Rust-клиента — **1.16** (`qeli/src/transport_core/mod.rs`).
