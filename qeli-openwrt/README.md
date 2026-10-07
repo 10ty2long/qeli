@@ -129,8 +129,8 @@ Maintainer cross-build helpers reject target typos and setup/transfer failures;
 Every run uploads this checkout into a fresh private directory. SHA256/ELF-checked
 atomic artifact transfer does not qualify full ABI or real router runtime. Development tests execute pinned OpenWrt24.10/25.12 ucode/fs on a Linux host;
 The native24.10 rpcd/ubus/UCI/session ACL path is tested in a private Linux chroot;
-The actual non-PID1 procd API is qualified below. Full SDK installation, HTTP
-serving and firmware runtime remain unqualified; SDK LuCI packaging is scoped below.
+The actual non-PID1 procd API is qualified below. Full SDK installation and firmware
+runtime remain unqualified; SDK packaging and the HTTP API are scoped below.
 
 
 The first-install firewall defaults use named package-owned sections. An existing
@@ -245,3 +245,21 @@ IPK for IpkTests, including the14 existing LuCI fixtures on its minified JS.
 No installed router package is read. Offline opkg into an empty root was rejected
 for unresolved runtime dependencies; full dependency resolution/install remains
 unqualified. See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### HTTP/session audit scope
+
+The actual OpenWrt24.10.4 uhttpd JSON-RPC bridge was tested on private Linux
+namespace loopback against native rpcd/ucode/UCI, using the SDK-built LuCI IPK.
+Six integration methods cover login, reader/writer permissions, unauthorized
+requests, secrets, closed service verbs, session UCI apply/confirm, session-ID
+impersonation rejection, revocation/idle expiry, static JS and malformed requests.
+Restricted rpcd users need the corresponding read/write luci-base ACL in addition
+to luci-app-qeli: the framework supplies UCI RPC methods, Qeli grants only qeli
+config/object scope. Accessing a session refreshes idle expiry. Qeli ACL is unchanged.
+
+Tests require root inside private mount AND network namespaces, loopback up,
+QELI_OPENWRT_ROOTFS_TEMPLATE, QELI_OPENWRT_RPCD_TEMPLATE and QELI_OPENWRT_LUCI_IPK;
+run scripts/test_openwrt_http.py only in an owned lab. No authentication bypass.
+Service verbs use an inert adapter; no live VPN, browser login/DOM, TLS or whole-LuCI
+cookie/CORS/CSRF policy is qualified by these API checks. Firmware remains excluded.
+See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
