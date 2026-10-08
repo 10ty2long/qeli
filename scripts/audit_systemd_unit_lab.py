@@ -13,9 +13,10 @@ ROOT=Path(__file__).resolve().parent.parent
 
 def main():
  ap=argparse.ArgumentParser(description=__doc__)
- ap.add_argument('--host',default='10.66.116.11');ap.add_argument('--binary',type=Path,required=True);ap.add_argument('--sha256',required=True);ap.add_argument('--output',type=Path,required=True)
+ ap.add_argument('--host',default='10.66.116.11');ap.add_argument('--binary',type=Path,required=True);ap.add_argument('--sha256',required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--reuse-remote-binary')
  a=ap.parse_args();binary=a.binary.resolve()
  if not re.fullmatch('[a-f0-9]{64}',a.sha256) or hashlib.sha256(binary.read_bytes()).hexdigest()!=a.sha256:ap.error('explicit binary SHA mismatch')
+ if a.reuse_remote_binary and (not re.fullmatch(r'/var/tmp/qeli-q33-[0-9]+/qeli',a.reuse_remote_binary)):ap.error('reuse binary must be an owned prior q33 root')
  a.output.mkdir(parents=True,exist_ok=False);out=a.output
  name='qeli-q33-'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S%f');unit=name+'.service';remote='/var/tmp/'+name;net='/run/netns/'+name;unitfile='/run/systemd/system/'+unit;dropin='/etc/systemd/system/'+unit+'.d/run-as.conf'
  lab=connect_lab(a.host,'root',sys.stdin.readline().strip());r={'status':'IN_PROGRESS','unit':unit,'remote':remote,'namespace':name,'artifact_sha256':a.sha256,'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'checks':[],'commands':[]};created=False;ns_created=False;unit_created=False
@@ -70,11 +71,17 @@ c=http.client.HTTPConnection('127.0.0.1',24880,timeout=5);c.request('GET','/audi
   code="from pathlib import Path; r=Path("+repr(remote)+"); assert not r.exists(); r.mkdir(mode=0o755); (r/'etc').mkdir(mode=0o700); (r/'etc/users.conf').touch(mode=0o600); (r/'etc/client-links').mkdir(mode=0o700)"
   checked(['python3','-B','-c',code],'create owned root');created=True
   with lab.open_sftp() as sf:
-   sf.put(str(binary),remote+'/qeli');sf.chmod(remote+'/qeli',0o755)
+   if a.reuse_remote_binary:
+    checked(['test','!','-L',a.reuse_remote_binary],'reuse regular binary');check('reused remote binary SHA',checked(['sha256sum',a.reuse_remote_binary],'reuse SHA').split()[0]==a.sha256);checked(['cp','--',a.reuse_remote_binary,remote+'/qeli'],'copy own prior candidate')
+   else:sf.put(str(binary),remote+'/qeli')
+   sf.chmod(remote+'/qeli',0o755)
    for path,data in [('etc/server.conf',config),('etc/client-links/INSTALL-PENDING-fixture','synthetic fixture password\n'),('health.sh','SERVICE='+shlex.quote(unit)+'\n'+health+'\nservice_healthy\n')]:
     with sf.open(remote+'/'+path,'w') as f:f.write(data)
     sf.chmod(remote+'/'+path,0o600)
   check('uploaded current CLI SHA',checked(['sha256sum',remote+'/qeli'],'candidate SHA').split()[0]==a.sha256)
+  checked([remote+'/qeli','set-web-password','--username','admin','--password','synthetic-audit-password','--config',remote+'/etc/server.conf'],'initialize private panel password')
+  with lab.open_sftp() as sf:
+   with sf.open(remote+'/etc/server.conf','r') as f:config=f.read().decode('utf8')
   checked(['chown','-R','qeli:qeli',remote+'/etc'],'owned initial config ownership');checked(['chown','-R','root:root',remote+'/etc/client-links'],'owned private receipt ownership')
   checked(['ip','netns','add',name],'create owned network namespace');ns_created=True
   for args in [['link','set','lo','up'],['link','add','wan0','type','dummy'],['link','set','wan0','up'],['addr','add','192.0.2.1/24','dev','wan0'],['route','add','default','dev','wan0']]:checked(['ip','-n',name,*args],'owned network preparation')
