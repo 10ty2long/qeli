@@ -28,6 +28,15 @@ impl HookFiles {
     }
 
     pub(super) fn add_command(&mut self, command: &str) {
+        // Retain the raw literal scan too: arbitrarily nested interpreter -c
+        // expressions need not fit the shallow quote-aware word inspection below.
+        for fragment in command.split(|c: char| {
+            c.is_whitespace() || matches!(c, '\'' | '"' | ';' | '&' | '|' | '(' | ')' | '<' | '>')
+        }) {
+            for (index, _) in fragment.match_indices('/') {
+                self.add_path(Path::new(&fragment[index..]));
+            }
+        }
         for literal in literal_words(command) {
             // Also inspect an interpreter's quoted -c expression. The intact literal
             // remains a candidate, preserving filenames containing spaces.
@@ -202,6 +211,12 @@ mod tests {
     #[test]
     fn interpreter_inline_command_remains_protected() {
         assert!(collected("sh -c 'sh /etc/qeli/owned.txt; echo ready'").contains("owned.txt"));
+    }
+    #[test]
+    fn nested_inline_expressions_preserve_raw_literal_protection() {
+        assert!(
+            collected("sh -c \"sh -c 'sh /etc/qeli/owned.txt; echo ready'\"").contains("owned.txt")
+        );
     }
     #[test]
     fn dynamic_top_level_and_tree_read_block_all_entries() {
