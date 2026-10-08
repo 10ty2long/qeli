@@ -476,3 +476,5 @@
 - [Q33: подготовка установки из бинарника](reports/AUDIT-Q33-BINARY-INSTALLER.md)
 
 - [Q33: зависимости installer и допуск пакета](reports/AUDIT-Q33-INSTALLER-ADMISSION.md)
+
+- [Q33: публикация секретов и web-конфига installer](reports/AUDIT-Q33-INSTALLER-SECRETS.md)
