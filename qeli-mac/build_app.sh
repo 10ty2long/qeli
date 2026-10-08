@@ -26,6 +26,9 @@ ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 if [[ -L "$ROOT/dist" ]]; then
   echo "refusing symlinked dist directory" >&2; exit 1
 fi
+# SDK selection searches from the current directory, even for an absolute --project.
+# Run within the checkout so global.json and the dependency policy apply.
+cd "$ROOT"
 PROJ="$ROOT/QeliMac/QeliMac.csproj"
 OUT="$ROOT/dist/$RID"
 APP="$ROOT/dist/Qeli.app"
