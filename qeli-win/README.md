@@ -216,8 +216,17 @@ StartPending и StopPending не считаются подтверждением
 
 ## Сборка из исходников
 
+Собирайте из полного checkout: корневые `global.json`, `Directory.Build.props`,
+`Directory.Build.targets` и `NuGet.Config` задают SDK, audit и выбор reviewed lockfile.
+Обычный restore/build/publish работает в locked mode. Изменение пакетов требует
+явного `-p:QeliUpdateDependencyLocks=true --force-evaluate` на restore с теми же
+RID и publish-параметрами; изменённые lockfiles проверяются и коммитятся вместе с
+исходниками. Single-file варианты используют отдельный lock с SDK ILLink package.
+Подробнее: [SDK и dependency locks](../docs/ru/reports/AUDIT-Q34-SDK-LOCKS.md).
+
 ```powershell
-# нужен .NET 10 SDK (winget install Microsoft.DotNet.SDK.10)
+# нужен .NET SDK 10.0.401: точная версия закреплена в ../global.json
+# установка SDK: https://dotnet.microsoft.com/download/dotnet/10.0
 dotnet build QeliWin\QeliWin.csproj -c Debug
 
 # ── вариант A: framework-dependent (~11 МБ, нужен .NET 10 Desktop Runtime) ──

@@ -494,3 +494,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: Rust dependencies, CI policy and TLS PEM](reports/AUDIT-Q34-DEPENDENCY-POLICY.md)
 
 - [Q34: client build dependencies and Windows signatures](reports/AUDIT-Q34-CLIENT-SUPPLY.md)
+
+- [Q34: .NET SDK and dependency locks](reports/AUDIT-Q34-SDK-LOCKS.md)

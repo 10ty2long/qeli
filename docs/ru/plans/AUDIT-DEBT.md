@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v98 -->
+<!-- normative-sync: audit-debt-v99 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1349,3 +1349,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **Q34 dependency packet,8 октября:** [F451–F454](../reports/AUDIT-Q34-DEPENDENCY-POLICY.md) закрыты в пределах Rust dependency policy/PEM migration/formatter gate с реальными negative/positive checks. Старые14DONE и D06accepted сохранены; полный Q34/current Actions и согласованные Q29/Q30/Q31/платформенные ограничения остаются отдельными критериями. Не создаёт нового списка D-пунктов и не закрывает непроверенные release payloads.
 
 **8 October, F455–F459 / Q34-F009–F013:** [Client supply chain](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): two npm advisories fixed with byte-identical CSS; official Gradle checksum qualified by real positive/corrupt-wrapper checks; NuGet all/transitive/low audit errors and explicit advisory source, actual vulnerable/unavailable-source refusals; WinDivert official archive match/signature/hash/notices positive+4negative PASS. Three Release managed builds, required conformance, Windows selftest and local codec benchmark PASS. braces advisory remains OPEN (no published patch); SDK/locks/other graphs/currentCI/release coverage pending. Native inputs/copies14SHA unchanged; no lab changes. Q34 IN_PROGRESS,30/37DONE81.1%,7remain; established Q29/Q30/Q31/D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**8 October,F460–F462/Q34-F014–F016:** [SDK/locks](../reports/AUDIT-Q34-SDK-LOCKS.md): exact official SHA512-qualifiedSDK10.0.401/runtime10.0.12;CIglobal-json-file/build_appcwd corrected;35reviewed perRID/config/tools/Linux/singlefile locks with root/referenced missinglock guard.18Windowsgenerate-lockedpairs/7builds/conformance/adapters/codec and exact2Windows+2MacpublishPASS;realoldSDK/drift/hash/missingrefusalsPASS;Linux12graphs24restore/builds2MacpublishPASS,ownedSHAarchive/proc-mountguardcleanup/service745901preserved. Native/CSS/protectedfiles unchanged;standaloneinvokerselftest only,normalrequireAdministrator740 retained. Android locks/remainingpackages/currentCI/sourcecut and bracesOPEN remain;Q34IN_PROGRESS30-37DONE81.1percent7remain;historical debt/Q29Q30Q31D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

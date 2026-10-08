@@ -54,6 +54,16 @@ qeli-mac/
 
 ## Сборка (в лабе — Linux, либо на Mac)
 
+Нужен полный checkout с корневыми `global.json`, `Directory.Build.props`,
+`Directory.Build.targets` и `NuGet.Config`. `build_app.sh` выбирает SDK из checkout
+даже при запуске из другого каталога. Restore/build/publish проверяют reviewed locks:
+отдельно по Debug/Release, portable/osx-arm64/osx-x64, headless build tools и
+Linux-host Skia assets. Отсутствующий lock не создаётся обычной сборкой.
+Обновлять графы нужно явно через `dotnet restore` с
+`-p:QeliUpdateDependencyLocks=true --force-evaluate` и соответствующими параметрами;
+коммитить lockfiles вместе с изменением зависимостей.
+Подробнее: [SDK и dependency locks](../docs/ru/reports/AUDIT-Q34-SDK-LOCKS.md).
+
 `build_app.sh` — кросс-платформенный: собирает **готовый к запуску архив**
 `dist/Qeli-macos-<arch>.tar.gz` целиком в лабе (Linux/CI), без macOS под рукой.
 
@@ -64,7 +74,7 @@ qeli-mac/
 
 Что нужно на хосте сборки:
 
-- **.NET 10 SDK** — публикует self-contained payload (`dotnet publish -r osx-arm64`).
+- **.NET SDK 10.0.401** — точная версия в корневом `global.json`; публикует self-contained payload (`dotnet publish -r osx-arm64`).
 - **Подписант кода** — на Mac это `codesign` (встроен); в лабе на Linux —
   **`rcodesign`** (`cargo install apple-codesign`). Ad-hoc подпись **обязательна**:
   ядро macOS на Apple Silicon не запускает неподписанный arm64-бинарь.
