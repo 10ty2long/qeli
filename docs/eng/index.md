@@ -515,3 +515,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: immutable Docker frontend and APT inputs](reports/AUDIT-Q34-DOCKER-INPUTS.md)
 
 - [Q34: OpenWrt source Git flags](reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md)
+
+- [Q34: OpenWrt exact local source cut](reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md)
