@@ -100,6 +100,8 @@ jobs:
         run: |
           command -v jq >/dev/null || sudo apt-get install -y --no-install-recommends jq
           sudo unshare --mount --net --pid --fork python3 -B scripts/test_server_updater.py
+      - name: Test Debian package lifecycle in isolated chroots
+        run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_debian_lifecycle.py
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
       # verify.sh proves copy/manifest parity. provenance.py additionally requires the exact
@@ -273,7 +275,7 @@ jobs:
       - name: Install shellcheck
         run: command -v shellcheck >/dev/null || sudo apt-get install -y --no-install-recommends shellcheck
       - name: shellcheck (gate — warning and above)
-        run: shellcheck -S warning install-qeli-server.sh update-qeli-server.sh
+        run: shellcheck -S warning install-qeli-server.sh update-qeli-server.sh qeli/debian/preinst qeli/debian/postinst qeli/debian/prerm
       - name: shellcheck (advisory — every severity)
         run: shellcheck install-qeli-server.sh update-qeli-server.sh || true
 

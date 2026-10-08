@@ -470,3 +470,5 @@
 - [Q33: пути и новые файлы Docker entrypoint](reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md)
 
 - [Q33: транзакции обновления сервера](reports/AUDIT-Q33-SERVER-UPDATER.md)
+
+- [Q33: lifecycle Debian-пакета](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
