@@ -939,11 +939,66 @@ fn install_polkit(unit: String, user: String, dry_run: bool) -> anyhow::Result<(
     Ok(())
 }
 
+/// Repair writable daemon state without transferring administrator credentials/backups.
+#[cfg(target_os = "linux")]
+fn repair_service_state_ownership() -> anyhow::Result<()> {
+    let links = std::path::Path::new("/etc/qeli/client-links");
+    for path in [std::path::Path::new("/etc/qeli"), links] {
+        match std::fs::symlink_metadata(path) {
+            Ok(meta) if meta.file_type().is_dir() => {}
+            Err(error) if path == links && error.kind() == std::io::ErrorKind::NotFound => {}
+            Ok(_) => anyhow::bail!(
+                "refusing linked/non-directory state path: {}",
+                path.display()
+            ),
+            Err(error) => {
+                return Err(anyhow::anyhow!(
+                    "cannot inspect {}: {error}",
+                    path.display()
+                ))
+            }
+        }
+    }
+    run_admin_command(
+        "find",
+        &[
+            "-P",
+            "/etc/qeli",
+            "-path",
+            "/etc/qeli/client-links",
+            "-prune",
+            "-o",
+            "-name",
+            "*.bak-*",
+            "-prune",
+            "-o",
+            "-exec",
+            "chown",
+            "-h",
+            "qeli:qeli",
+            "{}",
+            "+",
+        ],
+        "cannot hand daemon state back to the qeli service account",
+    )?;
+    if links.exists() {
+        run_admin_command(
+            "chown",
+            &["-h", "root:root", "/etc/qeli/client-links"],
+            "cannot protect installer credentials directory",
+        )?;
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(links, std::fs::Permissions::from_mode(0o700))
+            .map_err(|error| anyhow::anyhow!("cannot protect {}: {error}", links.display()))?;
+    }
+    Ok(())
+}
+
 /// Implement `qeli set-service-user`: pick whether the systemd service runs as the
 /// unprivileged `qeli` user (default) or as root, via a drop-in override so the choice
 /// survives package upgrades. Must run as root. For `root` it writes User=root/Group=root;
 /// for `qeli` it removes the override (the packaged unit already runs as qeli) and hands
-/// /etc/qeli ownership back so the unprivileged service can write it.
+/// daemon-state ownership back, preserving administrator receipts and backups.
 #[cfg(target_os = "linux")]
 fn set_service_user(user: String, unit: String, dry_run: bool) -> anyhow::Result<()> {
     validate_service_unit(&unit)?;
@@ -967,7 +1022,7 @@ fn set_service_user(user: String, unit: String, dry_run: bool) -> anyhow::Result
             println!("# would write {dropin}:\n{content}");
         } else {
             println!(
-                "# would run: chown -R qeli:qeli /etc/qeli,\n# then remove {dropin} \
+                "# would repair daemon state ownership (preserving installer credentials/backups),\n# then remove {dropin} \
                  (if present) → revert to the packaged default (User=qeli)"
             );
         }
@@ -999,11 +1054,7 @@ fn set_service_user(user: String, unit: String, dry_run: bool) -> anyhow::Result
         // keeps its last known-working root configuration instead of being switched to an
         // account that cannot read or update its own state.
         if unit == "qeli.service" {
-            run_admin_command(
-                "chown",
-                &["-R", "qeli:qeli", "/etc/qeli"],
-                "cannot hand /etc/qeli back to the qeli service account",
-            )?;
+            repair_service_state_ownership()?;
         }
         match std::fs::remove_file(&dropin) {
             Ok(_) => {

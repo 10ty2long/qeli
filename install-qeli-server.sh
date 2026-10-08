@@ -294,6 +294,17 @@ _conf_web_set(){
 # rule. Used instead of downloading the .deb (build-from-source or air-gapped installs).
 # Point QELI_SRC at a repo checkout to copy the exact artifacts offline; otherwise they
 # come from the SHA256-verified .deb of the matching release (see _ensure_pkg_payload).
+_repair_service_state_ownership(){
+  _check_install_state
+  # Receipts/journals and reserved backups are administrator data, not daemon state.
+  find -P /etc/qeli -path /etc/qeli/client-links -prune -o -name '*.bak-*' -prune \
+    -o -exec chown -h qeli:qeli '{}' + || die "could not repair qeli state ownership."
+  if [ -d /etc/qeli/client-links ]; then
+    chown -h root:root /etc/qeli/client-links
+    chmod 700 /etc/qeli/client-links
+  fi
+}
+
 from_source_install(){
   log "Installing from binary ${QELI_BIN} (reproducing the .deb layout)"
   [ -f "$QELI_BIN" ] && [ -x "$QELI_BIN" ] || die "QELI_BIN=$QELI_BIN is not a regular executable file."
@@ -326,7 +337,8 @@ from_source_install(){
   install -d /lib/systemd/system /etc/polkit-1/rules.d
   install -o root -g root -m644 "$stage/qeli.service" /lib/systemd/system/qeli.service
   install -o root -g root -m644 "$stage/49-qeli.rules" /etc/polkit-1/rules.d/49-qeli.rules
-  chown -h -R -P qeli:qeli /etc/qeli /var/log/qeli /var/lib/qeli
+  _repair_service_state_ownership
+  chown -h -R -P qeli:qeli /var/log/qeli /var/lib/qeli
   chmod 755 /etc/qeli
   systemctl daemon-reload 2>/dev/null || true
   command -v qeli >/dev/null || die "qeli is not on PATH after install."
@@ -1167,10 +1179,8 @@ if ! qeli check-config --config "$CONF"; then
   die "staged configuration validation failed; ${FINAL_CONF} was NOT replaced and qeli was NOT restarted. Users/identity/links/tuning may already have changed; inspect their recovery data before retrying."
 fi
 
-if [ "$QELI_RUN_AS" = root ]; then
-  log "Configuring the service to run as root (QELI_RUN_AS=root — privilege separation off)"
-  qeli set-service-user root
-fi
+log "Configuring the service user: ${QELI_RUN_AS}"
+qeli set-service-user "$QELI_RUN_AS"
 
 _commit_profile_config
 
