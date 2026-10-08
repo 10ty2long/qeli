@@ -466,3 +466,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q32: metrics across missing samples and worker changes](reports/AUDIT-Q32-METRICS.md)
 - [Q32: usage reset after publication](reports/AUDIT-Q32-USAGE.md)
 - [Q32: bounded logs and trace publication](reports/AUDIT-Q32-LOGS-TRACE.md)
+- [AUDIT-Q32-NOTIFICATIONS](reports/AUDIT-Q32-NOTIFICATIONS.md)

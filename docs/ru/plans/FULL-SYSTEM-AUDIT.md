@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v139 -->
+<!-- normative-sync: full-system-audit-v140 -->
 
-**Текущий итог, 8 октября: 28/37 разделов DONE/PASS (75,7%), осталось 9. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -178,7 +178,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | IN_PROGRESS |
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
-| 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | IN_PROGRESS |
+| 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | IN_PROGRESS |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
@@ -2035,13 +2035,13 @@ Counters/quota/session accounting при reconnect/reap/crash, corrupt store, bo
 
 **Имеющаяся обвязка/fixtures:** `scripts/test_roaming_control_stats.py`, `scripts/test_blocked_settings.py`.
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE/PASS в документированной области.**
 
 **Владение уведомлениями, 23 сентября 2026:**
 [Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): до 128 принятых отправок,
@@ -2055,6 +2055,11 @@ autostart supervisor, доверие конфигу и Linux E2E ещё откр
 **8 октября, F384:** [usage Q32](../reports/AUDIT-Q32-USAGE.md): ошибка fsync после rename воспроизведена; память больше не откатывает опубликованный сброс, тип ошибки сохранён, control API сообщает о неподтверждённой сохранности. 16 harness/2426 Linux tests PASS (60ignored), strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; evidence отчёта. Store, registration/quota/shutdown reviewed; logs/trace/roaming/notify остаются открыты. Q32 IN_PROGRESS,28/37 overall.
 
 **8 октября, F385–F388:** [Q32: логи и trace](../reports/AUDIT-Q32-LOGS-TRACE.md): чтение через закреплённые fd отклоняет подменённые симлинки/FIFO, четыре I/O-слота удерживаются после отмены HTTP, tail сохраняет полные граничные строки, trace атомарно публикуется с0600 вне потоков Tokio с одним допуском. Три baseline-ошибки воспроизведены; harness11/UID65534, два настоящих SIGUSR1 с65536 упорядоченными строками,2434 library-теста (60ignored), строгийClippy/daemon и118 групп Node VM PASS. Четыре актуальных nativeA/B, WindowsABI22/AndroidJNI23 и финальные пороги — в evidence отчёта. Неудачная подготовка/прежний legacy firewall drift сохранены; неизменность всего host первоначального .10 baseline не заявляется. Ограничения покрытия/HTTP/диска/платформ сохранены. Q32IN_PROGRESS; roaming, доверие/маскирование секретов уведомлений и полная интеграция открыты. Общий план28/37(75,7%), остаётся девять.
+
+**8 октября, F389–F394:** [INI уведомлений и доставка](../reports/AUDIT-Q32-NOTIFICATIONS.md): доверие перед чтением/сохранением, полная ограниченная HTTP-строка и успех только 2xx, query/fragment, консервативная проверка специальных адресов, сброс кеша после записи и проверка записи симлинка. Воспроизведены три старых helper-ошибки и две ошибки кеша настоящей библиотеки; шесть helper tests, 12 изолированных HTTP-проверок и cache trust/recovery проверяют исправления. Финальные library/native результаты и guards — в machine evidence. Q32 и Q29/Q30/Q31 открыты; всего 28/37, осталось девять; старый долг14 DONE плюс принятое D06.
+
+
+**8 октября, Q32 завершён:** пять критериев сверены для metrics/usage/logs/trace/notifications и неизменных roaming observations; финальные2439 library, strictClippy/daemon, реальные HTTP12/cache, native A/B/ABI22/JNI23 и docs/provenance PASS. Сравнения16 сохраняют область прежнего выполнения; границы physical/TLS/Telegram/browser документированы. План29/37(78,4%),осталось восемь;Q29/Q30/Q31 и D06 сохранены.
 
 ### 33. Установка, обновление, файловые права и hooks
 
