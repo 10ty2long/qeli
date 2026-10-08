@@ -441,6 +441,14 @@ jobs:
       - name: Android release APK builds
         working-directory: qeli-android
         run: ./gradlew --no-daemon assembleRelease
+      - name: Test Android legal asset admission
+        working-directory: .
+        run: python3 -m unittest discover -s scripts -p test_check_android_licenses.py
+      - name: Verify project licenses and Maven notices in both APKs
+        working-directory: .
+        run: |
+          python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/debug/app-debug.apk
+          python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
 
   android-instrumented:
     name: Android runtime gates (API ${{ matrix.api-level }})

@@ -1,3 +1,16 @@
+import org.gradle.api.attributes.AttributeCompatibilityRule
+import org.gradle.api.attributes.CompatibilityCheckDetails
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.tasks.*
 import java.io.FileInputStream
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -151,4 +164,146 @@ tasks.register("printInstrumentationAbiClasspaths") {
             println("Q29_CP $name " + groovy.json.JsonOutput.toJson(paths))
         }
     }
+}
+
+// Each APK keeps its own runtime notices, even when R8 removes Java resources.
+// The reviewed inventory is a maintenance gate, not a guess based on coordinates.
+abstract class GenerateLegalAssets : DefaultTask() {
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val coreLicense: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val clientLicense: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val apacheLicense: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val reviewedInventory: RegularFileProperty
+    @get:InputFiles @get:PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract val runtimeArtifacts: ConfigurableFileCollection
+    @get:Input abstract val artifactCoordinates: MapProperty<String, String>
+    @get:Input abstract val runtimeCoordinates: ListProperty<String>
+    @get:OutputDirectory abstract val outputDirectory: DirectoryProperty
+
+    @TaskAction fun generate() {
+        val inventory = reviewedInventory.get().asFile.readText(Charsets.UTF_8).replace("\r\n", "\n")
+        val lines = inventory.trimEnd().lines()
+        check(lines.first() == "coordinate\tlicense\treview") { "Invalid license inventory header" }
+        val reviewed = lines.drop(1).map { line ->
+            val fields = line.split('\t')
+            check(fields.size == 3 && fields[1] == "Apache-2.0" && fields[2].startsWith("https://")) {
+                "Review the upstream license/notice policy for $line"
+            }
+            check(fields[0].matches(Regex("[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:[A-Za-z0-9_.+-]+")))
+            fields[0]
+        }
+        check(reviewed.size == reviewed.toSet().size) { "Duplicate license coordinates" }
+        val actual = runtimeCoordinates.get().toSet()
+        check(actual == reviewed.toSet()) {
+            "Maven license inventory drift: unreviewed=${actual - reviewed.toSet()}, removed=${reviewed.toSet() - actual}"
+        }
+        val output = outputDirectory.get().asFile
+        check(output.deleteRecursively() || !output.exists()) { "Cannot clear generated legal assets" }
+        val legal = output.resolve("licenses").apply { mkdirs() }
+        val records = mutableListOf<String>()
+        fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
+        fun save(path: String, bytes: ByteArray, origin: String) {
+            check(bytes.isNotEmpty() && '\t' !in origin && '\n' !in origin && '\r' !in origin)
+            val file = legal.resolve(path)
+            check(!file.exists()) { "Duplicate legal asset: $path" }
+            file.parentFile.mkdirs()
+            file.writeBytes(bytes)
+            records += "${sha(bytes)}\t$path\t$origin"
+        }
+        for ((name, source) in listOf("AGPL-3.0.txt" to coreLicense, "MPL-2.0.txt" to clientLicense,
+            "Apache-2.0.txt" to apacheLicense)) {
+            save(name, source.get().asFile.readText(Charsets.UTF_8).replace("\r\n", "\n").toByteArray(Charsets.UTF_8), name)
+        }
+        save("MAVEN.tsv", inventory.toByteArray(Charsets.UTF_8), "reviewed Maven runtime inventory")
+        val noticeName = Regex("(?i)(license|licence|notice|copying|copyright)([._-].*)?")
+        fun notice(name: String) = noticeName.matches(name.substringAfterLast('/'))
+        fun retain(coordinate: String, name: String, bytes: ByteArray) {
+            check(bytes.size <= 4 * 1024 * 1024) { "Oversized legal notice: $name" }
+            // Never extract archive paths: digest-based output preserves colliding names.
+            save("maven/${coordinate.replace(':', '/')}/${sha(name.toByteArray(Charsets.UTF_8))}.txt",
+                bytes, "$coordinate!$name")
+        }
+        val artifactRecords = mutableListOf<String>()
+        for (file in runtimeArtifacts.files.sortedBy { it.name }) {
+            val coordinate = artifactCoordinates.get().getValue(file.name)
+            artifactRecords += "$coordinate\t${file.name}\t${sha(file.readBytes())}"
+            ZipFile(file).use { archive ->
+                check(archive.size() <= 100000) { "Oversized runtime archive" }
+                for (entry in archive.entries().asSequence().filter { !it.isDirectory }.sortedBy { it.name }) {
+                    if (notice(entry.name)) {
+                        val bytes = archive.getInputStream(entry).use { it.readNBytes(4 * 1024 * 1024 + 1) }
+                        retain(coordinate, entry.name, bytes)
+                    } else if (file.extension == "aar" && (entry.name == "classes.jar" ||
+                        entry.name.startsWith("libs/") && entry.name.endsWith(".jar"))) {
+                        val bytes = archive.getInputStream(entry).use { it.readNBytes(64 * 1024 * 1024 + 1) }
+                        check(bytes.size <= 64 * 1024 * 1024) { "Oversized nested jar: ${entry.name}" }
+                        ZipInputStream(bytes.inputStream()).use { nested ->
+                            var count = 0
+                            while (true) {
+                                val item = nested.nextEntry ?: break
+                                check(++count <= 100000) { "Oversized nested runtime archive" }
+                                if (!item.isDirectory && notice(item.name)) {
+                                    retain(coordinate, "${entry.name}!${item.name}", nested.readNBytes(4 * 1024 * 1024 + 1))
+                                }
+                                nested.closeEntry()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        save("ARTIFACTS.tsv", ("coordinate\tartifact\tsha256\n" + artifactRecords.sorted().joinToString("\n", postfix = "\n"))
+            .toByteArray(Charsets.UTF_8), "original Maven runtime archive identities")
+        legal.resolve("INDEX.tsv").writeText("sha256\tpath\torigin\n" + records.sorted().joinToString("\n", postfix = "\n"), Charsets.UTF_8)
+    }
+}
+
+// A dedicated consumer attribute requests either original JAR or original AAR.
+// This compatibility rule applies only to the legal-assets view.
+abstract class LegalArchiveCompatibility : AttributeCompatibilityRule<String> {
+    override fun execute(details: CompatibilityCheckDetails<String>) {
+        if (details.consumerValue == "qeli-legal-original" && details.producerValue in listOf("jar", "aar")) {
+            details.compatible()
+        }
+    }
+}
+
+dependencies.attributesSchema.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE) {
+    compatibilityRules.add(LegalArchiveCompatibility::class.java)
+}
+
+androidComponents.onVariants { variant ->
+    val runtime = configurations.getByName("${variant.name}RuntimeClasspath")
+    // Select original archives without AGP transforms stripping outer AAR notices.
+    val artifacts = runtime.incoming.artifactView {
+        attributes.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, "qeli-legal-original")
+    }.artifacts.resolvedArtifacts
+    val legal = tasks.register<GenerateLegalAssets>("generate${variant.name.replaceFirstChar { it.uppercaseChar() }}LegalAssets") {
+        coreLicense.set(rootProject.layout.projectDirectory.file("../LICENSE"))
+        clientLicense.set(rootProject.layout.projectDirectory.file("LICENSE"))
+        apacheLicense.set(rootProject.layout.projectDirectory.file("gradle/licenses/Apache-2.0.txt"))
+        reviewedInventory.set(rootProject.layout.projectDirectory.file("gradle/licenses/maven-runtime.tsv"))
+        runtimeArtifacts.from(artifacts.map { values -> values.map { it.file } })
+        artifactCoordinates.set(artifacts.map { values ->
+            // A module may be visited through multiple Gradle variants; keep one
+            // record per identical component and original physical archive.
+            val pairs = values.distinctBy { it.id.componentIdentifier to it.file.absolutePath }.map { value ->
+                val id = value.id.componentIdentifier as? ModuleComponentIdentifier
+                    ?: error("Review local runtime dependency licensing: ${value.id}")
+                value.file.name to "${id.group}:${id.module}:${id.version}"
+            }
+            check(pairs.map { it.first }.toSet().size == pairs.size) { "Ambiguous runtime archive identity: ${pairs.groupBy { it.first }.filterValues { it.size > 1 }}" }
+            pairs.toMap()
+        })
+        runtimeCoordinates.set(providers.provider {
+            runtime.incoming.resolutionResult.allComponents.mapNotNull { component ->
+                (component.id as? ModuleComponentIdentifier)?.let { "${it.group}:${it.module}:${it.version}" }
+            }.sorted()
+        })
+    }
+    variant.sources.assets?.addGeneratedSourceDirectory(legal, GenerateLegalAssets::outputDirectory)
 }

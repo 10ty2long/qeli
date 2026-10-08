@@ -395,3 +395,32 @@ Gate опрашивает OSV по всем трём lockfile, включая bu
 checksum entries и независимо проверьте новые файлы. Затем повторите gate и штатные
 сборки без write-флагов. Изменение Kotlin требует JVM/R8/lint/instrumentation проверки.
 [Результаты Q34](../docs/ru/reports/AUDIT-Q34-MAVEN-SECURITY.md).
+
+
+## APK licenses and Maven notices
+
+Debug and release APKs include `assets/licenses/AGPL-3.0.txt` (native Qeli core),
+`MPL-2.0.txt` (Android sources), `Apache-2.0.txt`, `MAVEN.tsv`, `ARTIFACTS.tsv`, and `INDEX.tsv`.
+The per-variant Gradle generator checks the complete resolved Maven runtime graph
+against `gradle/licenses/maven-runtime.tsv`. A new/removed coordinate or version
+requires reviewing upstream licenses/attributions and updating this inventory
+alongside the dependency locks; changing locks alone is insufficient.
+
+The generator retains LICENSE/LICENCE/NOTICE/COPYING/COPYRIGHT resources from original
+JAR/AAR artifacts, including AAR `classes.jar` and `libs/*.jar`. Files with the same
+name remain separate; the index records the original coordinate/path and SHA256.
+Generated assets are variant-specific and survive R8 resource shrinking. No extra
+Python installation is needed to assemble an APK.
+
+After building, run from the repository root:
+
+```bash
+python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/debug/app-debug.apk
+python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+CI runs these checks after assembling both APKs. This gate covers the project
+license texts and reviewed Maven notice packaging. It does not establish native
+third-party notice completeness, matching source publication, signatures or
+release admission. Those remain separate requirements; Maven metadata is not a
+substitute for reviewing upstream source notices.
