@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v42 -->
+<!-- normative-sync: q31-openwrt-controls-v43 -->
 
-**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2391,3 +2391,59 @@ The path backup's initial tar directory-mtime error was retained as a preparatio
 note; only backup was retried. Current native SHA/provenance remain valid; Rust,
 SDK recipes, production pin/hash and client runtime code are unchanged. Q31/full
 plan counts remain unchanged. A fresh successful Actions run is still required.
+
+## F399 / Q31-V010: real SDK source-to-IPK integration (8 October)
+
+The actual package make target, unlike the previously exported Compile macro,
+expands the command through nested GNU make evaluation. The anchored sed expression
+lost its delimiter and failed before Cargo (`unterminated s command`). The real
+SDK baseline failure is retained. Compile now admits an exact supported library
+declaration before editing and uses a substitution without a dollar anchor; the
+final exact rlib guard remains. Unsupported/suffixed declarations and missing
+Cargo.lock refuse before projection/Cargo. Only the private SDK manifest changes.
+
+Official x86/64 SDK24.10.4 generated its Git source archive from a private immutable
+fixture whose qeli tree is exactly bfa0cfc6b25f7c2ddd1a15799bcf75ecf80f38e8 (b68bf907).
+The fixture alone changes source URL/pin/hash; production values remain unchanged.
+Actual download, hash admission, prepare, client-only Cargo metadata/install,
+SDK GCC13.3 musl link, install, dependency check, strip and IPK packing passed.
+The final IPK is 2259448 bytes, SHA256
+`f73c53d42de06b8cc885e7a9829bbf0bbb84c22abfdbcaa4a4169889883382fa`.
+It contains the SDK-built client and three exact production init/UCI/default files.
+
+The direct package entry uses privately installed official prebuilt Rust/std1.89.0
+and an existing registry copied into the private SDK. It does not execute upstream
+Rust compiler bootstrap or establish a cold/hermetic build. One compiler ran on .11.
+The first packaging attempt refused missing libc/libgcc provides: preparing the
+SDK's stock package/toolchain populated actual library tables and packaging passed.
+libc provides libgcc transitively; no Qeli dependency bypass or speculative +libgcc
+change was made. The resulting ELF needs libc.so and libgcc_s.so.1 and uses the
+OpenWrt musl interpreter. This replaces the prior standalone-ELF packaging gap only
+for this target/source/toolchain, not other SDK architectures or release source-cut.
+
+Six real-Cargo Compile tests passed without skips, including unchanged refusal for
+a suffixed declaration. Seven offline opkg methods passed on a SHA-verified official
+OpenWrt24.10.4 rootfs and previously signature-admitted dependencies: nft/legacy
+providers, missing dependency rejection, modified/default UCI upgrades, dependency
+removal guard/config retention and corrupt upgrade refusal. The r2 package is an
+explicit SDK-packed upgrade fixture, not a product release. No fake installed records
+or forced dependencies are used. Nine executions of the fresh SDK client in private
+mount/net/PID namespaces passed version, quoted/BOM INI, legacy/core ownership,
+attached TUN and invalid config/device/attach refusals. No VPN or host firewall started.
+The cached feed signatures retain their original verification date; no fresh signature
+fetch is claimed. Initial rootfs preparation lacked tmp/lock and used an invalid
+lists_dir option; only installation/runtime checks were repeated after repair.
+
+The SDK's normal autoremove discarded prepared sources after packaging; backup
+selection was corrected to retain the original source/archive, recipes, logs, tests,
+IPKs, ELF and tool identity, not claim a post-packaging source comparison. The local
+recoverable backup is SHA-verified. Process/mount/resolved-path guards passed before
+removing the exact owned root; original service PID777/worker845 stayed unchanged.
+Native sources/artifacts are unchanged and14 hashes/provenance passed. No unrelated
+Rust matrix/native rebuild, push, deployment or release was performed.
+
+Evidence: `release/certification/evidence/q31-sdk-build-20261008.json`;
+raw packet: `audit-debt-20260924/q31-sdk-build-20261008` outside the repository.
+SDK upstream Rust bootstrap, production release-cut archive and successful current
+Actions/preflight remain OPEN. Firmware is USER_EXCLUDED. Q31 remains3/5 IN_PROGRESS;
+full audit29/37(78.4%),eight remain. Q29/Q30/D06 dispositions are unchanged.

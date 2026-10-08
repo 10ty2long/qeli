@@ -17,7 +17,8 @@ RUN = os.environ.get('QELI_OPENWRT_COMPILER_ROOT', '')
 class CompileTests(unittest.TestCase):
     def setUp(self):
         self.run = Path(RUN).resolve()
-        self.assertTrue(str(self.run).startswith('/var/tmp/qeli-q31-openwrt-compiler-'))
+        self.assertEqual(self.run.parent, Path("/var/tmp"))
+        self.assertTrue(self.run.name.startswith(("qeli-q31-openwrt-compiler-", "qeli-sdk-build-20261008.")))
         self.assertEqual((self.run/'.qeli-compiler-audit').read_text().strip(), 'qeli-sdk-compiler-fixture-v1')
         self.root = Path(tempfile.mkdtemp(prefix='compile-case-', dir=self.run))
         self.addCleanup(shutil.rmtree, self.root)
@@ -83,6 +84,14 @@ class CompileTests(unittest.TestCase):
     def test_unknown_library_declaration_refuses_before_cargo(self):
         self.manifest.write_text(self.manifest.read_text().replace(
             '["rlib", "cdylib", "staticlib"]', '["rlib", "cdylib"]'))
+        before = self.manifest.read_bytes()
+        self.compile(False)
+        self.no_cargo()
+        self.assertEqual(self.manifest.read_bytes(), before)
+
+    def test_commented_or_suffixed_declaration_refuses_without_projection(self):
+        self.manifest.write_text(self.manifest.read_text().replace(
+            '["rlib", "cdylib", "staticlib"]', '["rlib", "cdylib", "staticlib"] # unsupported declaration'))
         before = self.manifest.read_bytes()
         self.compile(False)
         self.no_cargo()

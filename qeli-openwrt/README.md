@@ -129,8 +129,8 @@ Maintainer cross-build helpers reject target typos and setup/transfer failures;
 Every run uploads this checkout into a fresh private directory. SHA256/ELF-checked
 atomic artifact transfer does not qualify full ABI or real router runtime. Development tests execute pinned OpenWrt24.10/25.12 ucode/fs on a Linux host;
 The native24.10 rpcd/ubus/UCI/session ACL path is tested in a private Linux chroot;
-The actual non-PID1 procd API is qualified below. Full SDK installation and firmware
-runtime remain unqualified; SDK packaging and the HTTP API are scoped below.
+The actual non-PID1 procd API is qualified below. SDK package installation is qualified in isolated OpenWrt userspace below; firmware
+runtime remains unqualified and USER_EXCLUDED.
 
 
 The first-install firewall defaults use named package-owned sections. An existing
@@ -263,7 +263,7 @@ actual signed release dependencies in an official rootfs: nft/legacy providers,
 install/upgrade/remove, modified UCI retention and0600 modes, and early refusals.
 The initial empty-root failure is retained; live postinst/fw4/procd is unqualified.
 Use a proper offline /target inside an owned chroot rather than offline-root /.
-Five real-Cargo SDK macro tests live in scripts/test_openwrt_compile.py and require
+Six real-Cargo SDK macro tests live in scripts/test_openwrt_compile.py and require
 explicit owned compiler/template fixtures. These do not run against a router. See [Q31 audit](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ### HTTP/session audit scope
@@ -358,3 +358,25 @@ Ignored caches and a change reverted entirely inside one gate are outside this
 boundary guard. Preflight does not lock Git or authorize publishing after later
 changes. The lab gate remains optional; this does not replace actual SDK build,
 release source pin/archive generation or a successful CI run for the exact commit.
+
+## Actual SDK client package integration (8 October 2026)
+
+The x86/64 OpenWrt24.10.4 SDK now has scoped source-to-IPK evidence: a private Git
+fixture with the exact current qeli source tree, SDK-generated/admitted source archive,
+prepare, real client-only Cargo build, GCC13.3 musl link, package install/dependency
+check/strip and IPK generation. Nested GNU make exposed a broken sed anchor; Compile
+now checks the exact accepted crate declaration before projection and uses a command
+that survives SDK expansion. Six real-Cargo boundary cases passed.
+
+The fresh IPK passed seven offline opkg install/upgrade/removal/corruption cases
+with genuine OpenWrt rootfs/dependency packages and nine executions of its client
+in isolated OpenWrt userspace. Both nft and legacy dependency providers passed.
+No forced dependencies or invented installed records were used. The r2 artifact is
+an upgrade test fixture. Firmware and VPN connectivity were not exercised.
+
+This run used private official prebuilt Rust/std1.89.0 and a copied registry through
+the direct SDK package entry; upstream Rust bootstrap, cold/hermetic compilation,
+other SDK targets, production release pin/hash cut and a successful current Actions/
+preflight are still unqualified. Production source pin/hash are unchanged. Use the
+full SDK dependency graph for a release build; the audit's toolchain bootstrap shortcut
+is not release certification. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
