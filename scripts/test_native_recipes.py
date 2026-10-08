@@ -218,8 +218,8 @@ class NativeRecipeTests(unittest.TestCase):
         self.assertIn('[ "$MSS_ADDED" = "1" ] || [ "$MSS6_ADDED" = "1" ]', source)
         self.assertIn('[ "$ENABLE_IPV6_LISTENER" = "1" ]', source)
         self.assertIn('--host "${PUBLIC_AUTHORITY_HOST}:${PORT}"', source)
-        self.assertIn("apt-get install -y curl ca-certificates jq iptables iproute2 openssl", source)
-        self.assertIn("Debian/Ubuntu ship both iptables and ip6tables in this one package", source)
+        # Dependency installation is exercised by test_installer_admission.py;
+        # do not require unconditional apt or a particular dependency command string.
         self.assertIn("command -v ip6tables", source)
         self.assertIn("ip6tables -t nat -S", source)
         self.assertIn("ip -6 route get 2606:4700:4700::1111", source)
@@ -517,8 +517,8 @@ class NativeRecipeTests(unittest.TestCase):
         )
         self.assertIn('HOST_DEB_ARCH="$(dpkg --print-architecture)"', source)
         self.assertIn('endswith("_" + $arch + ".deb")', source)
-        self.assertIn('dpkg-deb -f "$TMP_DEB" Architecture', source)
-        self.assertIn('"$HOST_DEB_ARCH"|all', source)
+        # Package name/architecture/status admission is exercised with real dpkg
+        # in test_installer_admission.py rather than matching a helper variable.
 
     def test_release_checksum_is_lf_only_and_installer_handles_crlf_defensively(self):
         root = Path(__file__).resolve().parents[1]

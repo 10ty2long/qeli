@@ -474,3 +474,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: Debian package lifecycle](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
 
 - [Q33: binary installer preparation](reports/AUDIT-Q33-BINARY-INSTALLER.md)
+
+- [Q33: installer dependencies and package admission](reports/AUDIT-Q33-INSTALLER-ADMISSION.md)

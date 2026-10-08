@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v84 -->
+<!-- normative-sync: audit-debt-v85 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1320,3 +1320,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября,F412–F416:** [Q33 Debian lifecycle](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md): исправлены private no-replace users creation, pre-unpack state guards, service-user/debconf failures, отказ удаления при stop failure и adduser dependency.10 baseline methods/12 ожидаемых ошибок;16 итоговых методов/24 настоящих lifecycle dpkg-вызова PASS, точная команда CI/lint PASS. Production make/scripts с инертным бинарником/зависимостями и account/debconf/systemctl seams; полный installer/daemon/Docker OPEN. Собственный каталог SHA-backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось восемь; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
 
 **8 октября,F417–F421:** [Q33 from-binary](../reports/AUDIT-Q33-BINARY-INSTALLER.md): исправлены copy-failure propagation, exclusive source/full staging, state/users, signal exit и remote architecture/metadata/required attestation.14 baseline methods19 ожидаемых ошибок;18 итоговых методов23 запуска(21prefix+2earlywhole) PASS, точная CI-команда/updater21 regressions/lint PASS. HTTP/account/systemctl/qeli/gh seams явные; full installation/VPN/OIDC PASS не заявлен. Полный installer dependencies/publication/tuning/health и Docker OPEN. Собственный каталог backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось8; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
+
+**8 октября,F422–F426:** [Q33 допуск installer](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md): conditional/rechecked зависимости, qeli/arch/version metadata, exact installed state, required gh и удаление мёртвой URL-ветки QELI_DEB.12 baseline methods14 ошибок;18 final methods22 calls(20helpers+2earlywhole) PASS; точная CI/binary18/updater21 regressions/lint PASS. Recipe38/native14 SHA+provenance PASS. Full positive installer/publication/tuning/health/disconnected host/Docker OPEN. Собственный root backed-up/guarded-cleaned;777/845 сохранены. Q33IN_PROGRESS;29/37DONE78.4%,осталось8; Q31 3/5 и все historical open/excluded/accepted пункты сохранены. Без push/deploy/release.

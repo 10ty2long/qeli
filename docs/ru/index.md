@@ -474,3 +474,5 @@
 - [Q33: lifecycle Debian-пакета](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
 
 - [Q33: подготовка установки из бинарника](reports/AUDIT-Q33-BINARY-INSTALLER.md)
+
+- [Q33: зависимости installer и допуск пакета](reports/AUDIT-Q33-INSTALLER-ADMISSION.md)
