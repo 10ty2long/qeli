@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v176 -->
+<!-- normative-sync: full-system-audit-v177 -->
 
 **Current result, 9 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2494,3 +2494,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **9 October,F483/Q34-F037:** [OpenWrt exact local source cut](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): stalepin/actual qelitree baseline refused;exact full local dev f4b80a9 pinned,actualSDK24.10.4 download+prepare and second emptyDL/differentURL samearchiveSHA PASS. All 3131 trackedfiles match originalcommit incllicenses/notices;no syntheticcommit. PublicURL unchanged,actualGitHubHTTP422 means publication prerequisite OPEN. Sourcegate/native14/protected/doc checks and scoped evidence in report;no newcompiler/bootstrap/IPK/router/nativeAB/hostedCI claims. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29SIGKILLFAIL-ENONET/Q30/Q31/F459braces/D06accepted/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F484/Q34-F038:** [Fuzz CI inventory](../reports/AUDIT-Q34-FUZZ-INVENTORY.md): actualCargo15targets butoldsmoke/nightly11 omitcontrol_v2/quic_envelope/realtls_client/websocket_frame. Sharedmanifesthelper drives bothconsumers,earlymetadatafailure blocks instead ofemptysmoke;nightlydynamicneeds/output matrix.69localmethodsPASS+10repeatLinuxunits+10actualCI Bash scenarios with controlledcargo receipts inclbaselinegap,15calls/early23failure/malformed/missing/outputpreservation/new16thtarget/externalsymlink refusal. ActualRust/libFuzzer/hostedActions and pinnedfuzztools remainseparate OPEN;no core/native/tree changes,previousOpenWrtcut retainsqelitree. SHA-backed-up fullownedfixture/procmountguards/service777845 preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q35TODO andhistoricalQ29/Q30/Q31/F459/D06/exclusions retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

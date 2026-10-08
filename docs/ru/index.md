@@ -517,3 +517,5 @@
 - [Q34: OpenWrt source Git flags](reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md)
 
 - [Q34: OpenWrt exact local source cut](reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md)
+
+- [Q34: Fuzz CI inventory](reports/AUDIT-Q34-FUZZ-INVENTORY.md)
