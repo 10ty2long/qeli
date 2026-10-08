@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v93 -->
+<!-- normative-sync: audit-debt-v94 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1209,3 +1209,5 @@ physical exclusions are not PASS.
 **8 October:** release VPN and package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Extracted production release ELF matrix:18 scenarios/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Genuine pinned H-1 client through packaged service:36 PASS, fresh/upgrade/both rollbacks, exact TUN route and clean stop. Original fixture trust FAIL retained; show-identity runs as qeli. Product/native unchanged; host restored, roots SHA-archived/guard-cleaned. Release data-plane and package/service/VPN gates close; full binary/kernel installer and Docker/Actions remain OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,8remain; previous limits retained.
 
 **8 October,F445 / Q33-F048:** [Full installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): reproduced/repaired false sysctl success; private per-run snapshots/prior files/restore instructions, readback and early tuning path guards. Full QELI_BIN+QELI_SRC and production QELI_DEB:24PASS each with actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 and persistent files restoration. Linux136 regressions without skips/lint PASS, tuning CI added. Initial FAIL retained; host777/845/network/kernel unchanged. Full positive installer/partial kernel recovery gate closes, without global ten-key writes/BBR loading/reboot/empty-OS bootstrap claims; Docker/Actions and previous limits remainOPEN. Q33IN_PROGRESS29/37DONE78.4%,8remain; no push/deploy/release.
+
+**8 October,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): fixed branch latest publication, Cargo --locked, removed four destructive/status-ignoring legacy harnesses. Real Docker image/runtime26PASS: pinned H1 VPN fresh/recreation/known-image rollback, root0600/readonly volumes, protected-login readiness, bytes/UID/mode preservation, six exit0 without OOM/SIGKILL. Harness FAIL retained; host snapshots/AppArmor/PID777-845 restored, owned root SHA-backed-up/guard-cleaned. Runtime gate closed; compiler multiarch/registry/currentActions and final Q33 command/hook reconciliation OPEN.29/37DONE78.4%,8remain; historical debt14DONE+D06accepted/exclusions preserved; local dev without push/deploy/release.

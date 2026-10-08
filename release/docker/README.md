@@ -560,3 +560,21 @@ changes to parent paths are outside the cooperative publication boundary.
 [Q33 audit](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md) records34 shell/chroot
 scenarios. These checks use an argv-recording executable and do not qualify Docker
 image builds, daemon networking, health or recreation.
+
+### Publication and recovery policy
+
+`docker-publish` validates release tags before login/build. Manual branch runs
+publish a full `sha-<commit>` tag; stable SemVer release tags also publish `latest`,
+while prereleases never replace it. Cargo builds use `--locked`.
+
+Keep `/etc/qeli` and `/var/lib/qeli` volumes across recreation. Record and retain
+the current image ID and back up configuration/state before upgrading. Check logs,
+client authentication and actual tunnel traffic after recreation; Running is only
+process state. Restore the saved image with the same volumes on failure. Neither
+this image nor the example compose implements automatic rollback or HEALTHCHECK.
+
+On 2026-10-08 the actual amd64 runtime stage was built with a SHA-verified existing
+0.8.2 release ELF supplied via the named `build` context, then passed26 local
+runtime/volume/recreation/fault-recovery checks on Debian13/Docker29.8.2. This did
+not rerun the Rust compiler stage, multiarch publication, Internet NAT or old
+throughput benchmarks. See the [scoped audit report](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md).

@@ -337,6 +337,8 @@ included. Build/run instructions, compose example and caveats:
 
 > 🐳 **[release/docker/README.md](../../../release/docker/README.md)**
 
+For upgrades preserve both volumes: `/etc/qeli` (INI, users and identity) and `/var/lib/qeli` (client state). Before replacement record the running container image ID, retain the previous image and back up data. After recreation check logs, client connection and tunnel traffic; Running alone does not establish VPN readiness. On failure restore the saved image with the same volumes. Current compose provides no automatic rollback/HEALTHCHECK. Manual branch publication uses a SHA tag; `latest` is reserved for stable release tags.
+
 With Docker you can skip the rest of this guide's install/systemd steps; profile and
 user management below (CLI or web panel) still apply inside the container.
 
