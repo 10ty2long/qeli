@@ -84,6 +84,10 @@ class RealCliTests(unittest.TestCase):
         shutil.copy2(BINARY,self.root/'usr/bin/qeli');(self.root/'usr/bin/qeli').chmod(0o755)
 
     def root_override(self):
+        for name, line in [('passwd', 'qeli:x:234:234::/var/lib/qeli:/usr/sbin/nologin'), ('group', 'qeli:x:234:')]:
+            path=self.root/'etc'/name
+            if not any(row.startswith('qeli:') for row in path.read_text().splitlines()):
+                with path.open('a') as stream:stream.write(line+'\n')
         self.copy_binary();p=self.run_cli('set-service-user','root');self.assertEqual(p.returncode,0,p.stderr)
         return self.root/'etc/systemd/system/qeli.service.d/run-as.conf'
 
@@ -117,6 +121,16 @@ class RealCliTests(unittest.TestCase):
 
     def test_forced_installer_default_removes_prior_root_override(self):
         self.install('udp-quic');dropin=self.root/'etc/systemd/system/qeli.service.d/run-as.conf';self.assertTrue(dropin.exists())
-        self.env.update(QELI_RUN_AS='qeli',QELI_FORCE_RECONFIG='1');self.install('udp-quic');self.assertFalse(dropin.exists())
+        links=self.root/'etc/qeli/client-links';before={p.name:(p.read_bytes(),p.stat().st_uid,p.stat().st_mode&0o777) for p in links.iterdir() if p.is_file() and p.name!='CONNECTION-STRINGS.txt'}
+        self.env.update(QELI_RUN_AS='qeli',QELI_FORCE_RECONFIG='1')
+        p=subprocess.run([self.chroot,str(self.root),'/bin/bash','/installer.sh','vpn.example'],env=self.env,capture_output=True,text=True,timeout=60)
+        if RECORDS:
+            record=Path(RECORDS)/self.id().split('.')[-1];(record/'forced-installer.log').write_text(p.stdout+p.stderr)
+        self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertFalse(dropin.exists())
+        self.assertEqual((self.root/'etc/qeli/server.conf').stat().st_uid,234)
+        self.assertEqual(self.run_cli('check-config','--config','/etc/qeli/server.conf').returncode,0)
+        for name,metadata in before.items():
+            file=links/name;self.assertEqual((file.read_bytes(),file.stat().st_uid,file.stat().st_mode&0o777),metadata)
+        self.assertEqual(links.stat().st_uid,0);self.assertEqual(links.stat().st_mode&0o777,0o700)
 
 if __name__=='__main__':unittest.main(verbosity=2)

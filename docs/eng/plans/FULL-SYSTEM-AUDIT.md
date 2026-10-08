@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v153 -->
+<!-- normative-sync: full-system-audit-v154 -->
 
 **Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2098,6 +2098,8 @@ final client task drain and Linux runtime/release checks remain open.
 **8 October,F432–F436:** [Q33 preflight/staged INI](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): explicit host/panel/boolean checks before changes; auto-host before config/identity; exact-one profile header/explicit awk errors; complete private INI stage through CLI/web/final validation, root helper after validation, backup/rename publication. Baseline17methods22expected assertions; fixed21methods28whole(3positive/25refusals), exact CI21/28,78regressions/lint/recipes38/native14/docs9(676Markdown) PASS. Filesystem genuine; CLI/systemctl/kernel seams, actual parser/auth/daemon/VPN/Docker OPEN. Config retained before commit; users/identity/links/tuning/bin/deps/drop-in may change, restart-after-publish not rolled back, prior root override OPEN. Own .11 root backed-up/cleaned;777/845 unchanged. Q33IN_PROGRESS,Q31 3/5,29/37DONE78.4%,8remain,historical OPEN/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.
 
 **8 October,F437–F438:** [Actual CLI/version](../reports/AUDIT-Q33-INSTALLER-CLI.md): --version for old binary compatibility, strict fixture argv and unique stage-lock cleanup. Version baseline2fail→2PASS; realCLI initial4lockfail→5PASS, repeatedCI2+5;99regressions/lint/recipes38/native14/docs9(678Markdown)PASS. Genuine debug artifact85ea/SHA37a6 reused for unchanged CLI/parser/trust paths;4laterclient/notify differences, not fullcurrentRust/releaseABI qualification. Real three-profile keys/Argon2/users/panel/INI/link/custom-dropin flows;systemctl/daemon/kernel/preflight-ip seams,VPN/Docker/default-unit-rootrevertOPEN. Package CI added,not executed Actions. Own root backed-up/cleaned,777/845 unchanged. Raw334files41695825bytesSEALED. Q33IN_PROGRESS,Q31 3/5,29/37DONE78.4%8remain,history/exclusions/D06accepted retained;no push/deploy/release.
+
+**8 October,F439–F441:** [Service user/ownership](../reports/AUDIT-Q33-SERVICE-USER.md): preserve client-links/backups ownership, root0700 receipt directory; validate real state and retain existing override on repair failure; explicitly apply installer default qeli after validation. Baseline ownership2/CLI3 failures;fixed2+10 and117regressions PASS;CI2+10+2,lint3scripts,Rustbin5/Clippy/fmt PASS. Current CLI rebuilt0e01;native A/B evidence refreshed. Real systemd/startup/kernel/VPN/Docker remain OPEN;Q33 IN_PROGRESS,29/37DONE78.4%,8remain. Historical debt/exclusions retained;local dev only.
 
 ### 34. CI, dependencies, native provenance and release
 

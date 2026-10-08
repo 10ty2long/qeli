@@ -186,7 +186,7 @@ What the package does:
   `CAP_NET_ADMIN`/`CAP_NET_RAW`/`CAP_NET_BIND_SERVICE` via `AmbientCapabilities`, and with
   `NoNewPrivileges=true` the kernel ignores file caps anyway);
 - creates the system user **`qeli`** plus `/etc/qeli`, `/var/log/qeli`, `/var/lib/qeli`, then
-  `chown -R qeli:qeli` on them;
+  ownership repair on daemon state, excluding installer receipts/backups;
 - creates an empty `/etc/qeli/users.conf` (the sample file with a KNOWN hash is never seeded);
 - ships **examples** `/etc/qeli/{server,server-multiprofile,server-ipv6,server-maxobf,users,client,client-reality,client-maxobf}.conf.example`
   (you create the real configs yourself — step 3);
@@ -230,7 +230,7 @@ After that the `qeli` service cannot write those files. So **once the config is 
 you have run any root CLI command**, fix the ownership:
 
 ```bash
-sudo chown -R qeli:qeli /etc/qeli
+sudo qeli set-service-user qeli
 sudo chmod 755 /etc/qeli
 sudo chmod 640 /etc/qeli/server.conf /etc/qeli/users.conf   # they hold password hashes and keys
 [ -d /etc/qeli/identity ] && sudo chmod 700 /etc/qeli/identity && sudo chmod 600 /etc/qeli/identity/*.key
@@ -287,9 +287,9 @@ no download. From the repo root:
 sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <public-ip>
 ```
 
-Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and any requested root service helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. A prior root override requires explicit `qeli set-service-user qeli`; the default installer choice does not reset it. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and the selected service-user helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. The installer explicitly applies QELI_RUN_AS, including the default qeli choice, after validation; qeli removes a previous root override while preserving installer receipts/backups. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
 
-Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN/default-unit root override transition remain outside this qualification. [Evidence and limits](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN remained outside that earlier qualification; the default-unit ownership/drop-in transition is covered by the [subsequent service-user audit](../reports/AUDIT-Q33-SERVICE-USER.md). [Evidence and limits](../reports/AUDIT-Q33-INSTALLER-CLI.md).
 
 `QELI_BIN` selects the from-binary branch; `QELI_SRC=.` copies the unit and examples
 straight from this checkout; the OS dependency phase uses apt only for missing prerequisites. See §2's **"Two install branches"**. This also
@@ -1050,7 +1050,7 @@ change would silently vanish. Instead it manages a **systemd drop-in override**:
 | argument | effect |
 |---|---|
 | `root` | writes `/etc/systemd/system/qeli.service.d/run-as.conf` containing `[Service] User=root / Group=root`, which takes precedence over the packaged `User=qeli`. Lives in `/etc`, so it survives package upgrades. |
-| `qeli` | deletes that drop-in (the packaged unit already says `User=qeli`) **and** runs `chown -R qeli:qeli /etc/qeli`, because files written while the service ran as root are root-owned and the unprivileged service could not write them afterwards. |
+| `qeli` | repairs daemon-state ownership under `/etc/qeli` before removing that drop-in (the packaged unit already says `User=qeli`). It preserves `client-links` and `*.bak-*` administrator data, protecting the receipts directory as root0700. A repair failure keeps an existing root override; restart is a separate step. |
 
 Both then run `systemctl daemon-reload`; you restart the service to apply. The command is
 idempotent (safe to re-run), requires root, and rejects anything other than `qeli`/`root`.
@@ -1128,7 +1128,7 @@ A detailed comparison, REALITY setup (short_ids, handrolled), multipath bonding 
   settings don't persist, the service restart-loops.** Almost always ownership: the service
   runs as `User=qeli` and writes into `/etc/qeli` (identity keys, users file, panel saves),
   while the config and any files you created as root **after** the install stayed root-owned.
-  Fix with `sudo chown -R qeli:qeli /etc/qeli` + restart — full symptom list and modes in
+  Fix with `sudo qeli set-service-user qeli` + restart — full symptom list and modes in
   §2, "A.3. Fix ownership of `/etc/qeli`".
 - **Client passes "identity verified" but drops immediately / `AUTH FAIL … not found`.**
   Check the merged inline `[user:*]` plus `auth.users_file` view (see §3.3): a

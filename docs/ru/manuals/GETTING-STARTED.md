@@ -189,7 +189,7 @@ sudo apt-get -f install -y          # доустановить зависимо�
   `CAP_NET_ADMIN`/`CAP_NET_RAW`/`CAP_NET_BIND_SERVICE`, а с `NoNewPrivileges=true` ядро
   file-caps всё равно игнорирует);
 - создаёт системного пользователя **`qeli`** и каталоги `/etc/qeli`, `/var/log/qeli`,
-  `/var/lib/qeli`, затем делает им `chown -R qeli:qeli`;
+  `/var/lib/qeli`, затем восстанавливает владельца daemon-state, исключая installer receipts/backups;
 - создаёт пустой `/etc/qeli/users.conf` (пример с известным хешем НЕ подкладывается);
 - ставит **примеры** `/etc/qeli/{server,server-multiprofile,server-ipv6,server-maxobf,users,client,client-reality,client-maxobf}.conf.example`
   (рабочие конфиги вы создаёте сами — шаг 3);
@@ -233,7 +233,7 @@ sudo qeli show-identity --config /etc/qeli/server.conf                      # с
 конфига и любых CLI-команд под root** приведите права в порядок:
 
 ```bash
-sudo chown -R qeli:qeli /etc/qeli
+sudo qeli set-service-user qeli
 sudo chmod 755 /etc/qeli
 sudo chmod 640 /etc/qeli/server.conf /etc/qeli/users.conf   # в них хеши паролей и ключи
 [ -d /etc/qeli/identity ] && sudo chmod 700 /etc/qeli/identity && sudo chmod 600 /etc/qeli/identity/*.key
@@ -290,9 +290,9 @@ make -C debian deb             # → qeli/debian/qeli_<версия>_amd64.deb
 sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <публичный-IP>
 ```
 
-Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и запрошенного root service helper старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Прежний root override сбрасывайте явно через `qeli set-service-user qeli`: default installer choice его не отменяет. [Аудит и ограничения](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и применения выбранного пользователя службы старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Installer явно применяет QELI_RUN_AS после валидации, включая default qeli: прежний root override удаляется с сохранением installer receipts/backups. [Аудит и ограничения](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
 
-Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN/default-unit root override transition этой проверкой не закрываются. [Доказательства и ограничения](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN той ранней проверкой не закрывались; default-unit ownership/drop-in transition проверен [последующим service-user аудитом](../reports/AUDIT-Q33-SERVICE-USER.md). [Доказательства и ограничения](../reports/AUDIT-Q33-INSTALLER-CLI.md).
 
 `QELI_BIN` выбирает ветку установки из бинаря; `QELI_SRC=.` копирует юнит и примеры прямо из
 этого чекаута; apt запускается при отсутствии системных зависимостей. См. §2 **«Две ветки установки»**. Заодно ставит и polkit-правило,
@@ -1056,7 +1056,7 @@ sudo systemctl restart qeli          # нужен, чтобы изменение
 | аргумент | что делает |
 |---|---|
 | `root` | пишет `/etc/systemd/system/qeli.service.d/run-as.conf` с `[Service] User=root / Group=root` — он приоритетнее поставляемого `User=qeli`. Лежит в `/etc`, поэтому переживает обновления пакета. |
-| `qeli` | удаляет этот drop-in (в поставляемом юните уже `User=qeli`) **и** выполняет `chown -R qeli:qeli /etc/qeli`: файлы, созданные пока служба работала от root, принадлежат root, и непривилегированная служба не смогла бы их писать. |
+| `qeli` | сначала восстанавливает владельца файлов службы в `/etc/qeli`, сохраняя administrator data `client-links` и `*.bak-*`, затем удаляет drop-in (в поставляемом юните уже `User=qeli`). Каталог receipts защищается root0700. Ошибка repair сохраняет существующий root override; restart выполняется отдельно. |
 
 Оба варианта затем выполняют `systemctl daemon-reload`; для применения перезапустите службу.
 Команда идемпотентна (повторный запуск безопасен), требует root и отвергает любые значения,
@@ -1134,7 +1134,7 @@ ss -tulnp | grep qeli                           # слушает ли :443 / :80
   настройки панели не сохраняются, служба в рестарт-петле.** Почти всегда это права:
   служба работает под `User=qeli` и пишет в `/etc/qeli` (identity-ключи, users-файл,
   сохранения панели), а конфиг и файлы, созданные вами под root **после** установки,
-  остались root-овыми. Лечится `sudo chown -R qeli:qeli /etc/qeli` + рестарт — подробно
+  остались root-овыми. Лечится `sudo qeli set-service-user qeli` + рестарт — подробно
   с симптомами и модами в §2, «A.3. Права на `/etc/qeli`».
 - **Клиент проходит «identity verified», но сразу отваливается / `AUTH FAIL … not found`.**
   Проверьте итоговое объединение инлайн `[user:*]` и `auth.users_file` (см. §3.3):
