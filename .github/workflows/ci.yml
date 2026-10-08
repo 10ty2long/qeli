@@ -82,6 +82,10 @@ jobs:
         working-directory: .          # the script expects the repo root, not qeli/
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check and test common managed legal resources
+        run: |
+          python3 scripts/managed_licenses.py
+          python3 -m unittest discover -s scripts -p 'test_managed_licenses.py'
       - name: Check common Cargo legal resources
         run: python3 scripts/native_licenses.py
       - name: Test native reproducibility contract
@@ -541,6 +545,8 @@ jobs:
             }
             python ../scripts/native_licenses.py --repo .. --bundle "$dir/Legal/NativeRust"
             if ($LASTEXITCODE -ne 0) { throw "published Cargo legal bundle check failed: $dir" }
+            python ../scripts/managed_licenses.py --repo .. --bundle "$dir/Legal/DotNet"
+            if ($LASTEXITCODE -ne 0) { throw "published managed legal bundle check failed: $dir" }
             if (-not (Test-Path -LiteralPath "$dir/Legal/MPL-2.0.txt" -PathType Leaf)) { throw "missing client MPL text: $dir" }
           }
       - name: Self-test QeliWin platform adapters
@@ -624,6 +630,17 @@ jobs:
         run: |
           dotnet build QeliMac/QeliMac.csproj -c Release -r osx-arm64
           dotnet build QeliMac/QeliMac.csproj -c Release -r osx-x64
+      - name: Publish both macOS RIDs with required legal resources
+        working-directory: qeli-mac
+        shell: bash
+        run: |
+          set -euo pipefail
+          for rid in osx-arm64 osx-x64; do
+            dotnet publish QeliMac/QeliMac.csproj -c Release -r "$rid" --self-contained true -o "dist/$rid"
+            python3 ../scripts/native_licenses.py --repo .. --bundle "dist/$rid/Legal/NativeRust"
+            python3 ../scripts/managed_licenses.py --repo .. --bundle "dist/$rid/Legal/DotNet"
+            cmp LICENSE "dist/$rid/Legal/MPL-2.0.txt"
+          done
       - name: Install XcodeGen for macOS per-app extension
         run: brew install xcodegen
       - name: Build and test macOS per-app system extension

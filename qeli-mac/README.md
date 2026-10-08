@@ -348,3 +348,15 @@ TCP app EOF передаёт SHUT_WR, сохраняя server response; remote E
 не добавлен. [Итог Q28 и проверки](../docs/ru/reports/AUDIT-Q28-MACOS-INTEGRATION.md):
 1248 managed PASS;8 новых Swift directional cases добавлены, но не исполнены.
 Mac/Xcode/NE runtime USER SKIPPED;managed selftest не подтверждает физический half-close.
+
+
+## .NET legal resources
+
+Publish includes the common reviewed NuGet graphs/runtime-pack notices in
+`Legal/DotNet/`, alongside `Legal/NativeRust/` and the client MPL text.
+Keep the complete `Legal` directory when packaging a distribution. macOS app
+assembly copies it into `Contents/MacOS/Legal/` and validates both bundles before
+assembly (Python 3.11+, select executable with `PYTHON`). Embedded Inter fonts
+have their own SIL OFL 1.1/copyright, separate from Avalonia code MIT.
+Validate and update the bundle as described in [LICENSING](../LICENSING.md).
+This is a full reviewed dependency superset, not a per-executable linkage list.

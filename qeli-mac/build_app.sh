@@ -54,6 +54,12 @@ echo "==> Publishing self-contained ($RID)…"
 dotnet publish "$PROJ" -c Release -r "$RID" --self-contained true \
   -p:PublishSingleFile=false -o "$OUT"
 
+# Legal sidecars must survive publish before an app/archive is assembled.
+PYTHON="${PYTHON:-python3}"
+"$PYTHON" "$ROOT/../scripts/native_licenses.py" --repo "$ROOT/.." --bundle "$OUT/Legal/NativeRust"
+"$PYTHON" "$ROOT/../scripts/managed_licenses.py" --repo "$ROOT/.." --bundle "$OUT/Legal/DotNet"
+cmp "$ROOT/LICENSE" "$OUT/Legal/MPL-2.0.txt"
+
 # 3. Render the .icns in-process (works on any build host — no sips/iconutil).
 echo "==> Rendering app icon (.icns)…"
 dotnet run --project "$PROJ" -c Release -- genicns "$ROOT/dist/Qeli.icns"

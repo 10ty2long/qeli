@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v168 -->
+<!-- normative-sync: full-system-audit-v169 -->
 
 **Текущий итог, 8 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2483,3 +2483,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **8 October, F470/Q34-F024:** [Common Cargo legal resources](../reports/AUDIT-Q34-NATIVE-NOTICES.md): 235 checksum-locked packages,458 upstream resources, six exact-VCS supplements; one common bundle and packaging/CI checks. Actual qualification and limitations in linked report. Rust std/toolchain/.NET/upstream-source notices, source publication, OpenWrt immutable source cut and current Actions remain OPEN. Q34 IN_PROGRESS;30/37 DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/USER_EXCLUDED unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**8 October,F471–F472/Q34-F025–F026:** [Managed notices and Inter font](../reports/AUDIT-Q34-MANAGED-NOTICES.md):67 actual SDK-content-hash/official-catalog checked NuGet/runtime packages,187 shared resources; original upstream bytes and separate SIL OFL1.1/copyright for6 exact embedded fonts.35-lock/globalSDK/runtime binding,offline generator/checker,desktop/CI/app gates.19fixtures/final-source regeneration/four actual publishes/published negative/restored and shell gates PASS; scope and raw qualification in report. Toolchain notices,MicroCom exact source binding/sourcepublication/OpenWrt cut/finalActions/release OPEN. Nativee3fb/14SHA/protected unchanged,labs untouched;no new nativeAB/JVM/device claim. Q34 IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
