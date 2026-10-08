@@ -157,7 +157,7 @@ exec "$1" client -c "$2"
                         'cut','cp','rm','install','stat','dirname','basename','mktemp','sha256sum','flock',
                         'dpkg','dpkg-deb','dpkg-query','tar','diff','ldconfig','start-stop-daemon',
                         'dpkg-split','chown','chmod','mkdir','cat','ln','getent','setcap','sleep',
-                        'apt-get','perl','readlink','test']:
+                        'apt-get','perl','readlink','test','setpriv']:
             executable(shutil.which(program))
         executable('/usr/bin/systemctl', 'systemctl.real')
         output = subprocess.run(['ldd', str(work/'release-binary')], capture_output=True, text=True).stdout
@@ -302,7 +302,7 @@ obf.mode = fake-tls
                 ['ip','-n',client_namespace,'link','set','q33pc','up'],
                 ['ip','-n',client_namespace,'route','add','default','via','10.88.0.1']]:
                 run(argv,'owned peer carrier')
-            _, identity = chroot(['qeli','show-identity','--config','/etc/qeli/server.conf'],'actual packaged server key')
+            _, identity = chroot(['setpriv','--reuid=qeli','--regid=qeli','--init-groups','qeli','show-identity','--config','/etc/qeli/server.conf'],'actual packaged server key')
             keys = re.findall(r'\b[0-9a-f]{64}\b',identity);assert len(keys)==1
             conf = '[qeli]\nserver = 10.88.0.1:443\nproto = tcp\nuser = audit-package-user\npass = synthetic-package-user-password\nkey = '+keys[0]+'\nmode = fake-tls\ndev = q33pcvpn\ngateway = true\ndns = off\nkill_switch = false\n[logging]\nlevel = info\n'
             (work/'client.conf').write_text(conf);(work/'client.conf').chmod(0o600)
