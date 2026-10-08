@@ -111,7 +111,7 @@ def main():
         for name in ['tmp','run/systemd/system','run/qeli-audit-unit','run/qeli-audit-dropin','etc/qeli',
                      'etc/systemd/system','var/lib/dpkg/info','var/lib/dpkg/updates','var/lib/dpkg/triggers',
                      'var/cache/debconf','var/cache/qeli','var/cache/apt/archives/partial','var/log/apt',
-                     'var/lib/apt/lists/partial','etc/apt/sources.list.d','etc/apt/apt.conf.d','usr/local/bin','fixtures','dev','proc']:
+                     'var/lib/apt/lists/partial','etc/apt/sources.list.d','etc/apt/apt.conf.d','etc/apt/preferences.d','usr/local/bin','fixtures','dev','proc']:
             (root/name).mkdir(parents=True, exist_ok=True)
         (root/'bin').mkdir()
         for name in ['sh','bash']:
@@ -130,7 +130,7 @@ def main():
             if filelist.name != 'qeli.list':
                 copy_file(filelist, root/'var/lib/dpkg/info'/filelist.name)
         (root/'etc/apt/sources.list').touch()
-        (root/'etc/apt/apt.conf').write_text('APT::Get::List-Cleanup "false"; Acquire::Retries "0";\n')
+        (root/'etc/apt/apt.conf').write_text('APT::Get::List-Cleanup "false"; Acquire::Retries "0"; Dpkg::Use-Pty "0";\n')
         (root/'var/cache/qeli').chmod(0o700)
         # Bind only the manager socket and this test's exact owned unit/drop-in directories.
         (root/'run/systemd/private').touch()
@@ -173,8 +173,8 @@ esac
 exec /usr/bin/systemctl.real "$@"
 '''.replace('UNITNAME',args.unit).replace('ROOTFS',str(root))
         # Wrapper is a name/path adapter; it runs the genuine manager client and never fabricates health.
-        (root/'usr/local/bin/systemctl').write_text(wrapper)
-        (root/'usr/local/bin/systemctl').chmod(0o755)
+        (root/'usr/bin/systemctl').write_text(wrapper)
+        (root/'usr/bin/systemctl').chmod(0o755)
         executable(shutil.which('mv'))
         copy_file(work/'update-qeli-server.sh',root/'update.sh')
         for revision in [1,2,3,4]:
@@ -234,7 +234,7 @@ obf.mode = fake-tls
             nextpid=ready();check('real service restarted/recovered '+str(revision),nextpid!=pid);pid=nextpid
             check('state bytes/owner/mode preserved '+str(revision),state_snapshot()==baseline)
             if revision!=2:
-                check('failure reported as rollback '+str(revision),'rolled back' in output and 'Done РІР‚вЂќ' not in output)
+                check('failure reported as rollback '+str(revision),'rolled back' in output and '== Done ' not in output)
             check('real installed ELF restored '+str(revision),hashlib.sha256((root/'usr/bin/qeli').read_bytes()).hexdigest()==hashlib.sha256((work/'release-binary').read_bytes()).hexdigest())
         cache=root/'var/cache/qeli/qeli_0.8.2-2_amd64.deb'
         check('rollback cache private and exact package',cache.stat().st_uid==0 and stat.S_IMODE(cache.stat().st_mode)==0o600 and hashlib.sha256(cache.read_bytes()).digest()==hashlib.sha256((root/'fixtures/qeli_0.8.2-2_amd64.deb').read_bytes()).digest())
