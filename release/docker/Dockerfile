@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 # ============================================================================
 # qeli — ONE multi-arch image, BOTH roles (`qeli server` / `qeli client`), with
@@ -53,6 +53,10 @@ FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595
 # just apt-install each time): ping/traceroute/mtr for reachability, tcpdump for
 # the wire, dig+host for DNS, ss (iproute2) + netstat for sockets, ps/top/free for
 # processes, curl for egress/IP checks, and nano/less to read & edit the config.
+# Use only the reviewed Debian snapshot. Clear inherited live sources before
+# copying the policy; Debian archive signatures remain mandatory.
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources
+COPY release/docker/debian.sources /etc/apt/sources.list.d/qeli-snapshot.sources
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       iproute2 iptables ca-certificates \

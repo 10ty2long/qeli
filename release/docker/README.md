@@ -620,3 +620,22 @@ registry publication, hosted signatures and reproducible A/B remain separate.
 The runtime fixture used explicit AppArmor unconfined with default seccomp;
 Docker's automatically loaded default profile was restored after strict ownership
 checks. It does not qualify the default AppArmor confinement on this new image.
+
+
+### Updating immutable build inputs
+
+The Dockerfile frontend is pinned by digest. Runtime APT uses only the reviewed
+Debian and Debian-security snapshot `20261008T000000Z`, defined in
+`release/docker/debian.sources`; inherited live sources are removed first.
+APT verifies Debian archive signatures and package hashes using the base image's
+archive keyring. `Check-Valid-Until: no` is scoped to the historical snapshot.
+HTTP permits bootstrap before the slim image has CA certificates; it does not
+turn off repository authentication.
+
+To receive newer security packages, review and update the snapshot date explicitly,
+together with the Rust/Debian base and frontend pins as needed. Keep the Debian
+and Debian-security dates identical, check signed metadata and package installation,
+then qualify the affected image. Do not add live mirrors as a fallback.
+These pins fix the selected inputs; they do not establish byte-for-byte image
+reproducibility. [Q34 input qualification](../../docs/eng/reports/AUDIT-Q34-DOCKER-INPUTS.md)
+records the exact scope of the frontend and amd64 APT checks.

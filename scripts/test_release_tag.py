@@ -96,6 +96,36 @@ class WorkflowTests(unittest.TestCase):
         self.assertRegex(s,r'FROM debian:bookworm-slim@sha256:[0-9a-f]{64}')
         self.assertIn('COPY LICENSE LICENSING.md /usr/share/doc/qeli/',s)
         self.assertIn('COPY qeli/third-party-notices/rust /usr/share/doc/qeli/licenses/rust',s)
+    def test_docker_frontend_is_digest_pinned(self):
+        recipe=(Path(__file__).resolve().parent.parent/'release/docker/Dockerfile').read_text(encoding='utf-8')
+        self.assertRegex(recipe.splitlines()[0],r'^# syntax=docker/dockerfile:1@sha256:[0-9a-f]{64}$')
+
+    def test_docker_apt_uses_only_one_signed_snapshot_cut(self):
+        root=Path(__file__).resolve().parent.parent
+        recipe=(root/'release/docker/Dockerfile').read_text(encoding='utf-8')
+        policy=(root/'release/docker/debian.sources').read_text(encoding='utf-8')
+        sections=[dict(line.split(': ',1) for line in block.splitlines() if line and not line.startswith('#')) for block in policy.strip().split('\n\n')]
+        self.assertEqual(len(sections),2)
+        import re
+        cuts=[]
+        for section in sections:
+            self.assertEqual(section['Types'],'deb')
+            self.assertEqual(section['Components'],'main')
+            self.assertEqual(section['Signed-By'],'/usr/share/keyrings/debian-archive-keyring.gpg')
+            self.assertEqual(section['Check-Valid-Until'],'no')
+            self.assertNotIn('Trusted',section)
+            cut=re.fullmatch(r'http://snapshot\.debian\.org/archive/(debian|debian-security)/(\d{8}T\d{6}Z)',section['URIs'])
+            self.assertIsNotNone(cut);cuts.append(cut.group(2))
+        self.assertEqual(cuts[0],cuts[1])
+        self.assertEqual(sections[0]['Suites'],'bookworm bookworm-updates')
+        self.assertEqual(sections[1]['Suites'],'bookworm-security')
+        clear='RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources'
+        copy='COPY release/docker/debian.sources /etc/apt/sources.list.d/qeli-snapshot.sources'
+        self.assertLess(recipe.index(clear),recipe.index(copy))
+        self.assertLess(recipe.index(copy),recipe.index('RUN apt-get update'))
+        self.assertNotIn('--allow-unauthenticated',recipe)
+        self.assertNotIn('AllowInsecureRepositories',recipe)
+
     def test_build_attestation_covers_only_the_locally_built_package(self):
         source=(Path(__file__).resolve().parent.parent/'.github/workflows/release-attest.yml').read_text(encoding='utf-8')
         actions=[line.strip() for line in source.splitlines() if 'uses: actions/attest' in line]
