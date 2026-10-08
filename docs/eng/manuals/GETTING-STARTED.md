@@ -107,12 +107,22 @@ A single `qeli` binary plays both roles: `qeli server` and `qeli client`.
 >   ```
 >
 > **What else it changes on the host** (not incidental details — know them up front):
-> - **System-wide network tuning**: writes `/etc/sysctl.d/99-qeli-perf.conf` and switches
+> - **System-wide network tuning**: writes requests to `/etc/sysctl.d/99-qeli-perf.conf` and tries to switch
 >   congestion control to **BBR** — this affects **all** TCP on the host, not just qeli.
 >   The same file raises the default socket buffers (`net.core.rmem_default`/`wmem_default`
 >   to 4 MB) — without it the UDP profiles drop packets, because UDP has no autotuning and
 >   would stay at 208 KB. Those are system-wide values too.
-> - **Loads the `tcp_bbr` module on every boot** via `/etc/modules-load.d/qeli-bbr.conf`.
+> - **Requests loading `tcp_bbr` at boot** via `/etc/modules-load.d/qeli-bbr.conf`.
+>   Kernel/module restrictions can prevent application. The installer reads each value
+>   back and reports verified success or `kernel tuning incomplete`, with effective
+>   value/write-failure counts and a diagnostic log. VPN installation can still succeed.
+>   Before changing tuning it saves readable runtime values and prior persistent files
+>   in a root-only `/etc/qeli/client-links/kernel-tuning-<stamp>-<suffix>/` receipt.
+>   `restore.txt` contains commands to restore prior files (or remove newly created ones),
+>   then apply `runtime.before`. Review the receipt before using it, especially after
+>   later administrator changes. A key without a readable baseline is not changed at
+>   runtime. Forced reconfiguration creates a separate receipt. Deleting a sysctl file
+>   and running `sysctl --system` alone does not restore previous runtime values.
 > - **Adds MSS rules** (TCP profiles only — udp-quic skips them) in `mangle/OUTPUT`:
 >   IPv4 always, and IPv6 when the installer enables its independent V6ONLY listener.
 >   The matching `mangle/PREROUTING` rules clamp the client's incoming SYN too, so both the
@@ -1179,7 +1189,8 @@ sudo apt purge qeli
 sudo rm -f /usr/bin/qeli /usr/local/bin/qeli
 sudo rm -f /etc/systemd/system/qeli.service /lib/systemd/system/qeli.service && sudo systemctl daemon-reload
 
-# 3. Configs, identity keys, users, issued links.
+# 3. First inspect/save kernel-tuning-*/restore.txt and restore the required tuning
+#    BEFORE deleting /etc/qeli. Then remove configs, identity keys, users, issued links.
 #    WARNING: the identity key is gone -> clients that pin it (reality-tls / H-1) will
 #    need REISSUED configs. To keep it: sudo cp -a /etc/qeli /root/qeli-backup
 sudo rm -rf /etc/qeli
@@ -1194,11 +1205,11 @@ sudo deluser --system qeli 2>/dev/null; sudo delgroup qeli 2>/dev/null; true
 Additionally — **if you installed via `install-qeli-server.sh`** (it touches the OS):
 
 ```bash
-# sysctl tuning (BBR / buffers / PMTU)
-sudo rm -f /etc/sysctl.d/99-qeli-perf.conf && sudo sysctl --system >/dev/null
-
-# BBR module: the installer wires it into boot — otherwise tcp_bbr loads forever
-sudo rm -f /etc/modules-load.d/qeli-bbr.conf
+# Before removing /etc/qeli, inspect/save the exact run receipt and follow its
+# restore.txt commands for prior persistent files and runtime.before values.
+# Deleting tuning files alone does not undo runtime changes. If an old installation
+# has no receipt, recover the previous values/files from your own backup or policy.
+# Do not unload a tcp_bbr module that may be used by other host connections.
 
 # iptables: qeli removes ITS OWN NAT/MASQUERADE rules on a clean stop (step 1). The
 # installer additionally adds MSS clamps in BOTH handshake directions. Inspect leftovers first:

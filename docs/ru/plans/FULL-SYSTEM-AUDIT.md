@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v157 -->
+<!-- normative-sync: full-system-audit-v158 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2117,6 +2117,8 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 **8 октября:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): настоящий portable release/jemalloc и production package; реальные apt/dpkg/debconf/CLI/systemd с частной DB и явным unit mapping, финальные 24 PASS. Успешное обновление, package rollback после неисправного unit и повреждённого ELF, exact configured DB, сохранение bytes/UID/mode config/users/identity/receipts/backups, remove/purge. Три fixture FAIL сохранены; audit helpers исправлены, продукт не изменён. Закрыт этот scoped gate; whole binary/kernel installer, release VPN roundtrip, Docker и Actions OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), осталось 8; предыдущие статусы/исключения сохранены.
 
 **8 октября:** release VPN и package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Матрица extracted production release ELF:18 сценариев/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Реальный pinned H-1 client через пакетную службу:36 PASS, fresh/upgrade/оба rollback, exact TUN route и clean stop. Исходный fixture trust FAIL сохранён, show-identity выполняется от qeli. Продукт/native не менялись; стенд восстановлен, roots SHA-archived/guard-cleaned. Release data-plane и package/service/VPN gate закрыты; full binary/kernel installer и Docker/Actions остаются OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,осталось8; прежние ограничения сохранены.
+
+**8 октября,F445 / Q33-F048:** [Полный installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): подтверждён и исправлен ложный sysctl success; private per-run snapshots/prior files/restore instructions, readback и early tuning path guards. Full QELI_BIN+QELI_SRC и production QELI_DEB: по24 PASS с actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 и persistent files restoration. Linux136 regressions без skips/lint PASS, CI tuning добавлен. Первые FAIL сохранены; root777/845/network/kernel не менялись. Full positive installer и partial kernel recovery gate закрыты, глобальная запись10keys/BBR load/reboot/пустой OS bootstrap не заявлены; Docker/Actions и прежние ограничения остаются OPEN. Q33IN_PROGRESS29/37DONE78.4%,осталось8; без push/deploy/release.
 
 ### 34. CI, зависимости, native provenance и релиз
 

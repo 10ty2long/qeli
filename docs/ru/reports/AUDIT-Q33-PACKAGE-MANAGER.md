@@ -1,6 +1,6 @@
 # Q33: настоящий portable DEB, обновление и откат
 
-<!-- normative-sync: q33-package-manager-v2 -->
+<!-- normative-sync: q33-package-manager-v3 -->
 
 8 октября 2026. Закрыт отдельный этап проверки DEB/update/remove с настоящими apt/dpkg, debconf, release CLI и systemd. Q33 остаётся IN_PROGRESS; весь план — 29/37 DONE (78.4%), осталось 8 разделов. Новых ошибок продуктового кода в этом этапе не выявлено.
 
@@ -70,6 +70,6 @@ Docker/podman/nerdctl/ctr на .11 не обнаружены; реальная �
 
 ## Что остаётся
 
-Закрыт пакетный lifecycle/rollback gate с указанной изоляцией. Полный binary installer/kernel transaction/rollback, Docker image/volume runtime, independent release reproducibility и текущий remote Actions остаются открытыми. Нет повторного полного Rust suite, матрицы, soak или бенчмарка. Q31 SDK/bootstrap/source-cut/Actions, Q29 SIGKILL/ENONET и Q30 Apple/callback сохраняют предыдущие статусы. Mac/iOS, роутер и Windows network VM исключены пользователем; D06 принят как ограничение.
+Закрыт пакетный lifecycle/rollback gate с указанной изоляцией. [Позднейший полный installer/kernel gate](AUDIT-Q33-INSTALLER-CONFIG.md) закрывает обе положительные ветки установки, VPN и partial kernel apply/recovery; атомарный откат всех действий установщика не заявлен. Docker image/volume runtime, independent release reproducibility и текущий remote Actions остаются открытыми. Нет повторного полного Rust suite, матрицы, soak или бенчмарка. Q31 SDK/bootstrap/source-cut/Actions, Q29 SIGKILL/ENONET и Q30 Apple/callback сохраняют предыдущие статусы. Mac/iOS, роутер и Windows network VM исключены пользователем; D06 принят как ограничение.
 
 Certification сохраняет 41 cases/acceptance и 66 прежних supplements; добавлен 67-й scoped supplement. 20 required automated и 21 advisory physical rows остаются раздельными; исторические даты, артефакты и результаты не переписаны. Локальный commit dev; без push/deploy/release.

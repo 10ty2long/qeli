@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v92 -->
+<!-- normative-sync: audit-debt-v93 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1207,3 +1207,5 @@ physical exclusions are not PASS.
 **8 October:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): actual portable release/jemalloc and production package; genuine apt/dpkg/debconf/CLI/systemd with private DB and explicit unit mapping, final 24 PASS. Successful update, package rollback after broken unit and corrupt ELF, exact configured DB, preserved bytes/UID/mode of config/users/identity/receipts/backups, remove/purge. Three fixture FAIL runs retained; audit helpers repaired, product unchanged. This scoped gate closes; whole binary/kernel installer, release VPN roundtrip, Docker and Actions remain OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), 8 remain; previous status/exclusions retained.
 
 **8 October:** release VPN and package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Extracted production release ELF matrix:18 scenarios/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Genuine pinned H-1 client through packaged service:36 PASS, fresh/upgrade/both rollbacks, exact TUN route and clean stop. Original fixture trust FAIL retained; show-identity runs as qeli. Product/native unchanged; host restored, roots SHA-archived/guard-cleaned. Release data-plane and package/service/VPN gates close; full binary/kernel installer and Docker/Actions remain OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,8remain; previous limits retained.
+
+**8 October,F445 / Q33-F048:** [Full installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): reproduced/repaired false sysctl success; private per-run snapshots/prior files/restore instructions, readback and early tuning path guards. Full QELI_BIN+QELI_SRC and production QELI_DEB:24PASS each with actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 and persistent files restoration. Linux136 regressions without skips/lint PASS, tuning CI added. Initial FAIL retained; host777/845/network/kernel unchanged. Full positive installer/partial kernel recovery gate closes, without global ten-key writes/BBR loading/reboot/empty-OS bootstrap claims; Docker/Actions and previous limits remainOPEN. Q33IN_PROGRESS29/37DONE78.4%,8remain; no push/deploy/release.
