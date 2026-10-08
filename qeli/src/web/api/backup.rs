@@ -2269,7 +2269,7 @@ mod tests {
         let same = srv("routing.post_up = /opt/site/up.sh\n");
         std::fs::write(staged.join("nested/server.conf"), &same).unwrap();
         std::fs::write(live.join("server.conf"), &same).unwrap();
-        let hooks = std::collections::HashSet::new();
+        let hooks = hook_paths::HookFiles::new(&live);
         assert!(
             vet_staged_dir(&staged, &live, &hooks).is_err(),
             "a top-level config cannot authorize commands in a nested file"
