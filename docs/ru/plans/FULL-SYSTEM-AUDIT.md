@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v149 -->
+<!-- normative-sync: full-system-audit-v150 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2101,6 +2101,8 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 **8 октября,F412–F416:** [Q33 Debian lifecycle](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md): исправлены private no-replace users creation, pre-unpack state guards, service-user/debconf failures, отказ удаления при stop failure и adduser dependency.10 baseline methods/12 ожидаемых ошибок;16 итоговых методов/24 настоящих lifecycle dpkg-вызова PASS, точная команда CI/lint PASS. Production make/scripts с инертным бинарником/зависимостями и account/debconf/systemctl seams; полный installer/daemon/Docker OPEN. Собственный каталог SHA-backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось восемь; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
 
 **8 октября,F417–F421:** [Q33 from-binary](../reports/AUDIT-Q33-BINARY-INSTALLER.md): исправлены copy-failure propagation, exclusive source/full staging, state/users, signal exit и remote architecture/metadata/required attestation.14 baseline methods19 ожидаемых ошибок;18 итоговых методов23 запуска(21prefix+2earlywhole) PASS, точная CI-команда/updater21 regressions/lint PASS. HTTP/account/systemctl/qeli/gh seams явные; full installation/VPN/OIDC PASS не заявлен. Полный installer dependencies/publication/tuning/health и Docker OPEN. Собственный каталог backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось8; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
+
+**8 октября,F422–F426:** [Q33 допуск installer](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md): conditional/rechecked зависимости, qeli/arch/version metadata, exact installed state, required gh и удаление мёртвой URL-ветки QELI_DEB.12 baseline methods14 ошибок;18 final methods22 calls(20helpers+2earlywhole) PASS; точная CI/binary18/updater21 regressions/lint PASS. Recipe38/native14 SHA+provenance PASS. Full positive installer/publication/tuning/health/disconnected host/Docker OPEN. Собственный root backed-up/guarded-cleaned;777/845 сохранены. Q33IN_PROGRESS;29/37DONE78.4%,осталось8; Q31 3/5 и все historical open/excluded/accepted пункты сохранены. Без push/deploy/release.
 
 ### 34. CI, зависимости, native provenance и релиз
 

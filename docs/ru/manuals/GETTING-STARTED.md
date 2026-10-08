@@ -101,7 +101,7 @@
 >   **сам воспроизводит раскладку .deb** (пользователь, каталоги, `*.conf.example`,
 >   `qeli.service`, polkit-правило `49-qeli.rules`). Для **сборки из исходников** или
 >   **air-gapped**. Добавьте `QELI_SRC=<чекаут репо>`, чтобы копировать юнит и примеры
->   прямо из исходников (Qeli payload); этап OS dependencies ещё использует apt.
+>   прямо из исходников (Qeli payload); отсутствующие OS dependencies устанавливаются через apt.
 >   Без QELI_SRC payload загружается с GitHub. Пример:
 >   ```bash
 >   sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <IP>
@@ -291,10 +291,12 @@ sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <пу
 ```
 
 `QELI_BIN` выбирает ветку установки из бинаря; `QELI_SRC=.` копирует юнит и примеры прямо из
-этого чекаута; этап системных зависимостей ещё использует apt. См. §2 **«Две ветки установки»**. Заодно ставит и polkit-правило,
+этого чекаута; apt запускается при отсутствии системных зависимостей. См. §2 **«Две ветки установки»**. Заодно ставит и polkit-правило,
 поэтому кнопка панели `Apply & Restart` работает без отдельного шага ниже.
 
-При QELI_BIN явный QELI_SRC должен содержать все восемь примеров, qeli.service и49-qeli.rules: missing files вызывают отказ без fallback на GitHub. Этот набор допускается в private staging до замены бинарника. Без QELI_SRC release payload выбирается по архитектуре хоста и проверяется; QELI_VERIFY_ATTESTATION=1 также требует успешного gh. Linked/nonregular state paths отклоняются; INT/TERM завершают установку после cleanup. Последующая публикация последовательная: ошибка final install не означает автоматический rollback. Полный скрипт ещё использует apt для OS dependencies; локальный payload не делает всю first install отключённой от сети. [Проверенный объём](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+Этап зависимостей installer запускает apt только при отсутствии prerequisites и затем проверяет команды/CA availability. Для QELI_BIN+полного QELI_SRC либо локального QELI_DEB укажите PUBLIC_HOST и заранее установите OS/package dependencies, чтобы избежать dependency downloads; проверка этапа не квалифицирует всю установку отключённого хоста. QELI_DEB — абсолютный путь к локальному .deb, не URL. До генерации конфига обязательны Package=qeli, host architecture/all и точные installed status/version/architecture. QELI_VERIFY_ATTESTATION=1 требует успешного gh в Debian install path, включая локальный пакет. Failed install/repair завершает скрипт без автоматического package rollback. [Проверенный объём допуска](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md).
+
+При QELI_BIN явный QELI_SRC должен содержать все восемь примеров, qeli.service и49-qeli.rules: missing files вызывают отказ без fallback на GitHub. Этот набор допускается в private staging до замены бинарника. Без QELI_SRC release payload выбирается по архитектуре хоста и проверяется; QELI_VERIFY_ATTESTATION=1 также требует успешного gh. Linked/nonregular state paths отклоняются; INT/TERM завершают установку после cleanup. Последующая публикация последовательная: ошибка final install не означает автоматический rollback. Этап зависимостей теперь пропускает apt при наличии prerequisites; локальный payload сам по себе не квалифицирует всю first install отключённого хоста. [Проверенный объём](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
 
 > ⚠️ **Установка не из .deb + веб-панель:** кнопка панели **`Apply & Restart`** выполняет
 > `systemctl restart` сервиса. **Non-root** сервис `User=qeli` может это делать только с

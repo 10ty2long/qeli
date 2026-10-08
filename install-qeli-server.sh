@@ -329,6 +329,74 @@ from_source_install(){
   echo "  from-binary install complete: binary, user, dirs, examples, unit, polkit rule."
 }
 
+# Install only missing OS prerequisites. Local payload + explicit host needs no
+# curl/jq/CA download setup; an offline run still requires existing package deps.
+_ensure_installer_deps(){
+  local remote=0 cmd pkg missing=() checks=()
+  if { [ -z "${QELI_BIN:-}" ] && [ -z "${QELI_DEB:-}" ]; } \
+     || { [ -n "${QELI_BIN:-}" ] && [ -z "${QELI_SRC:-}" ]; }; then
+    remote=1
+  fi
+  for cmd in iptables ip openssl; do
+    case "$cmd" in iptables) pkg=iptables ;; ip) pkg=iproute2 ;; openssl) pkg=openssl ;; esac
+    checks+=("$cmd")
+    command -v "$cmd" >/dev/null 2>&1 || missing+=("$pkg")
+  done
+  if ! command -v adduser >/dev/null 2>&1 && ! command -v useradd >/dev/null 2>&1; then
+    checks+=(adduser); missing+=(adduser)
+  fi
+  if [ "$remote" = 1 ] || [ -z "${PUBLIC_HOST:-}" ]; then
+    checks+=(curl)
+    command -v curl >/dev/null 2>&1 || missing+=(curl)
+    [ -s /etc/ssl/certs/ca-certificates.crt ] || missing+=(ca-certificates)
+  fi
+  if [ "$remote" = 1 ]; then
+    checks+=(jq)
+    command -v jq >/dev/null 2>&1 || missing+=(jq)
+  fi
+  if [ "${#missing[@]}" -gt 0 ]; then
+    log "Installing missing dependencies: ${missing[*]}"
+    apt-get update -y || die "dependency index refresh failed; qeli was not installed."
+    apt-get install -y --no-install-recommends "${missing[@]}" \
+      || die "dependency installation failed; qeli was not installed."
+  else
+    log "OS dependencies already available; skipping apt dependency setup"
+  fi
+  for cmd in "${checks[@]}"; do
+    command -v "$cmd" >/dev/null 2>&1 || die "required dependency command is unavailable: $cmd"
+  done
+  if { [ "$remote" = 1 ] || [ -z "${PUBLIC_HOST:-}" ]; } \
+     && [ ! -s /etc/ssl/certs/ca-certificates.crt ]; then
+    die "CA certificate bundle is unavailable after dependency setup."
+  fi
+}
+_validate_install_deb(){
+  local package="$1" name
+  name="$(dpkg-deb -f "$package" Package 2>/dev/null)" || die "cannot read Debian package metadata: $package"
+  [ "$name" = qeli ] || die "expected Package=qeli, got ${name}."
+  DEB_ARCH="$(dpkg-deb -f "$package" Architecture)" || die "cannot read package architecture."
+  HOST_DEB_ARCH="$(dpkg --print-architecture)" || die "cannot read host architecture."
+  case "$DEB_ARCH" in "$HOST_DEB_ARCH"|all) ;; *) die "package architecture ${DEB_ARCH} is incompatible with host architecture ${HOST_DEB_ARCH}." ;; esac
+  DEB_VERSION="$(dpkg-deb -f "$package" Version)" || die "cannot read package version."
+  [ -n "$DEB_VERSION" ] || die "package version is empty."
+}
+_install_verified_deb(){
+  local package="$1" installed
+  _validate_install_deb "$package"
+  if [ "${QELI_VERIFY_ATTESTATION:-0}" = 1 ]; then
+    command -v gh >/dev/null 2>&1 || die "QELI_VERIFY_ATTESTATION=1 requires gh; refusing package installation."
+    gh attestation verify "$package" --repo "$REPO" >/dev/null 2>&1 \
+      || die "package attestation verification FAILED; refusing installation."
+  fi
+  if ! { apt-get install -y --no-install-recommends "$package" \
+         || { dpkg -i "$package" || true; apt-get install -y --no-install-recommends -f; }; }; then
+    die "package installation failed; no config was generated."
+  fi
+  installed="$(dpkg-query -W -f='${Status} ${Version} ${Architecture}' qeli 2>/dev/null || true)"
+  [ "$installed" = "install ok installed ${DEB_VERSION} ${DEB_ARCH}" ] \
+    || die "package installation did not configure the requested qeli version/architecture; no config was generated."
+}
+
 # Must run as root. Run it directly as root (no sudo needed), or — if you are a
 # normal user AND sudo is installed — it re-execs itself under sudo. We never
 # install sudo: on a root-only box (no sudo) just run it as root.
@@ -346,6 +414,10 @@ if [ -n "${QELI_BIN:-}" ]; then
 fi
 if [ -n "${QELI_DEB:-}" ] && [ ! -f "$QELI_DEB" ]; then
   die "QELI_DEB does not name a regular package file: $QELI_DEB"
+fi
+# Reject a wrong/corrupt local package before dependency or config changes.
+if [ -n "${QELI_DEB:-}" ] && [ -z "${QELI_BIN:-}" ]; then
+  _validate_install_deb "$QELI_DEB"
 fi
 PUBLIC_HOST="${1:-}"
 # OS user the service will run as (default the unprivileged `qeli`). Validated up front so
@@ -474,13 +546,7 @@ esac
 TRANSPORT_UC="$(printf '%s' "$TRANSPORT" | tr '[:lower:]' '[:upper:]')"
 
 # ── 1. dependencies ─────────────────────────────────────────────────────────
-log "Installing dependencies"
-apt-get update -y
-# Debian/Ubuntu ship both iptables and ip6tables in this one package. ip6tables
-# is checked explicitly below so a broken alternatives/minimal image cannot leave
-# an IPv6 tunnel without the NAT66 firewall tool.
-apt-get install -y curl ca-certificates jq iptables iproute2 openssl
-command -v iptables >/dev/null 2>&1 || die "the iptables package was installed but the iptables command is unavailable."
+_ensure_installer_deps
 if ! command -v ip6tables >/dev/null 2>&1; then
   warn "the iptables package did not provide ip6tables; this install will use IPv4 only."
 fi
@@ -495,19 +561,16 @@ if [ -n "${QELI_BIN:-}" ]; then
   from_source_install
 else
 # By default: newest GitHub release (the releases are pre-releases, so we read
-# /releases, not /releases/latest). Override with QELI_DEB=<local path or URL> for
+# /releases, not /releases/latest). Override with QELI_DEB=<local path> for
 # an offline / air-gapped install or to pin a specific build.
 log "Obtaining the qeli .deb"
 CLEANUP_DEB=0
 HOST_DEB_ARCH="$(dpkg --print-architecture)"
-if [ -n "${QELI_DEB:-}" ] && [ -f "$QELI_DEB" ]; then
+if [ -n "${QELI_DEB:-}" ]; then
   echo "  using local .deb: $QELI_DEB"
   TMP_DEB="$QELI_DEB"
 else
   SHA_URL=""
-  if [ -n "${QELI_DEB:-}" ]; then
-    DEB_URL="$QELI_DEB"
-  else
     RELEASES_JSON=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases")
     DEB_URL=$(printf '%s' "$RELEASES_JSON" | jq -r --arg arch "$HOST_DEB_ARCH" 'map(select(.draft|not)) | .[0].assets[]
                | select(.name|endswith("_" + $arch + ".deb")) | .browser_download_url' | head -n1)
@@ -515,15 +578,14 @@ else
     # SHA256SUMS asset (published since 0.7.6) — used to verify the download below.
     SHA_URL=$(printf '%s' "$RELEASES_JSON" | jq -r 'map(select(.draft|not)) | .[0].assets[]
                | select(.name=="SHA256SUMS") | .browser_download_url' | head -n1)
-  fi
   echo "  downloading: $DEB_URL"
   TMP_DEB="$(mktemp --suffix=.deb)"; CLEANUP_DEB=1
   QELI_TMP_PATHS+=("$TMP_DEB")
   curl -fL --retry 3 -o "$TMP_DEB" "$DEB_URL"
   # Verify the .deb against the release's SHA256SUMS — FAIL CLOSED (S-10). A GitHub
-  # download is trusted only once its SHA256 matches the signed sums file; a missing
+  # download is trusted only once its SHA256 matches the release sums file; a missing
   # sums file or an unlisted .deb aborts unless the operator opts out with
-  # QELI_ALLOW_UNVERIFIED=1. A QELI_DEB the operator supplied (path or URL) is exempt.
+  # QELI_ALLOW_UNVERIFIED=1. A QELI_DEB the operator supplied (local path) is exempt.
   ALLOW_UNVERIFIED="${QELI_ALLOW_UNVERIFIED:-0}"
   if [ -n "$SHA_URL" ]; then
     echo "  verifying SHA256"
@@ -562,19 +624,13 @@ fi
 # Never pass a package for another CPU architecture to apt. Besides producing a
 # confusing dependency failure, choosing the first .deb asset used to install the
 # wrong package whenever a release carried more than one architecture. Explicit
-# QELI_DEB paths/URLs are checked as well because their file names are not trusted.
-DEB_ARCH="$(dpkg-deb -f "$TMP_DEB" Architecture 2>/dev/null)" || die "cannot read Debian package metadata from $TMP_DEB."
-case "$DEB_ARCH" in
-  "$HOST_DEB_ARCH"|all) ;;
-  *) die "package architecture ${DEB_ARCH} is incompatible with host architecture ${HOST_DEB_ARCH}." ;;
-esac
-
+# QELI_DEB paths are checked as well because their file names are not trusted.
 # --no-install-recommends: the package Recommends systemd-resolved (only useful
 # for the CLIENT's resolvectl path). A server doesn't need it, and letting apt
 # pull it in repoints /etc/resolv.conf to the systemd stub mid-install, which can
 # transiently break DNS (e.g. the public-IP lookup below). Skip it on servers.
 log "Installing the package"
-apt-get install -y --no-install-recommends "$TMP_DEB" || { dpkg -i "$TMP_DEB" || true; apt-get install -y --no-install-recommends -f; }
+_install_verified_deb "$TMP_DEB"
 [ "$CLEANUP_DEB" -eq 1 ] && rm -f "$TMP_DEB"
 fi   # end obtain+install (from-binary vs .deb)
 command -v qeli >/dev/null || die "qeli is not on PATH after install."
