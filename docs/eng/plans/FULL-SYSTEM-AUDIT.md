@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v148 -->
+<!-- normative-sync: full-system-audit-v149 -->
 
 **Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2088,6 +2088,8 @@ final client task drain and Linux runtime/release checks remain open.
 **8 October,F404–F411:** [Q33 server updater](../reports/AUDIT-Q33-SERVER-UPDATER.md): invalid local input, package admission, CRLF/cleanup, full transaction lock, exact install/downgrade identity, restart/PID health and unsafe legacy cache fixed.14 old regression scenarios FAIL;21 final methods/24 updater+1 installer invocations PASS with genuine dpkg fixtures. Exact CI command, ShellCheck and guarded cleanup PASS; production maintainer scripts/systemd/VPN/Docker remain OPEN. Q33 IN_PROGRESS;29/37(78.4%),eight remain; old debt14DONE+D06accepted, Q29/Q30/Q31/exclusions retained. No push/deploy/release.
 
 **8 October,F412–F416:** [Q33 Debian lifecycle](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md): private no-replace users creation, pre-unpack state guards, explicit service-user/debconf failure handling, stop-failure removal guard and adduser dependency fixed.10 baseline methods/12 expected failures;16 final methods/24 genuine lifecycle dpkg invocations PASS, exact CI command/lint PASS. Production make/scripts with inert binary/dependencies and account/debconf/systemctl seams; full installer/daemon/Docker OPEN. Own root SHA-backed-up and guarded-cleaned; service777/845 unchanged. Q33IN_PROGRESS,29/37(78.4%),eight remain; old debt14DONE+D06accepted,Q29/Q30/Q31/exclusions retained. No push/deploy/release.
+
+**8 October,F417–F421:** [Q33 binary installer](../reports/AUDIT-Q33-BINARY-INSTALLER.md): copy-failure propagation, exclusive source/full staging, safe state/users, signal exit and remote architecture/metadata/required attestation fixed.14 baseline methods19 expected failures;18 final methods23 invocations(21prefix+2earlywhole) PASS, exact CI and updater21 regressions/lint PASS. Explicit HTTP/account/systemctl/qeli/gh seams; no full installation/VPN/OIDC PASS. Full installer dependency/publication/tuning/health and Docker OPEN. Own root backed-up/guarded-cleaned; service777/845 unchanged. Q33IN_PROGRESS,29/37(78.4%),8remain; old debt14DONE+D06accepted,Q29/Q30/Q31/exclusions retained. No push/deploy/release.
 
 ### 34. CI, dependencies, native provenance and release
 

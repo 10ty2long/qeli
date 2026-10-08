@@ -472,3 +472,5 @@
 - [Q33: транзакции обновления сервера](reports/AUDIT-Q33-SERVER-UPDATER.md)
 
 - [Q33: lifecycle Debian-пакета](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
+
+- [Q33: подготовка установки из бинарника](reports/AUDIT-Q33-BINARY-INSTALLER.md)

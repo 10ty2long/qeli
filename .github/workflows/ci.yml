@@ -102,6 +102,8 @@ jobs:
           sudo unshare --mount --net --pid --fork python3 -B scripts/test_server_updater.py
       - name: Test Debian package lifecycle in isolated chroots
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_debian_lifecycle.py
+      - name: Test binary installer payload and state preparation
+        run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_binary_installer.py
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
       # verify.sh proves copy/manifest parity. provenance.py additionally requires the exact

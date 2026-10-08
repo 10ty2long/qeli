@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v83 -->
+<!-- normative-sync: audit-debt-v84 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1318,3 +1318,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября,F404–F411:** [Q33 updater](../reports/AUDIT-Q33-SERVER-UPDATER.md): исправлены invalid local input, admission пакета, CRLF/cleanup, блокировка транзакции, точная install/downgrade identity, restart/PID health и legacy-кэш.14 старых регрессионных сценариев FAIL;21 итоговый метод/24 запуска updater+1 installer PASS с настоящим dpkg. Точная команда CI, ShellCheck и guarded cleanup PASS; production maintainer scripts/systemd/VPN/Docker OPEN. Q33 IN_PROGRESS;29/37(78.4%),осталось восемь; старый долг14DONE+D06accepted, Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
 
 **8 октября,F412–F416:** [Q33 Debian lifecycle](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md): исправлены private no-replace users creation, pre-unpack state guards, service-user/debconf failures, отказ удаления при stop failure и adduser dependency.10 baseline methods/12 ожидаемых ошибок;16 итоговых методов/24 настоящих lifecycle dpkg-вызова PASS, точная команда CI/lint PASS. Production make/scripts с инертным бинарником/зависимостями и account/debconf/systemctl seams; полный installer/daemon/Docker OPEN. Собственный каталог SHA-backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось восемь; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
+
+**8 октября,F417–F421:** [Q33 from-binary](../reports/AUDIT-Q33-BINARY-INSTALLER.md): исправлены copy-failure propagation, exclusive source/full staging, state/users, signal exit и remote architecture/metadata/required attestation.14 baseline methods19 ожидаемых ошибок;18 итоговых методов23 запуска(21prefix+2earlywhole) PASS, точная CI-команда/updater21 regressions/lint PASS. HTTP/account/systemctl/qeli/gh seams явные; full installation/VPN/OIDC PASS не заявлен. Полный installer dependencies/publication/tuning/health и Docker OPEN. Собственный каталог backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось8; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
