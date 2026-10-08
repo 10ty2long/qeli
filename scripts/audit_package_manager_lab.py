@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--host',default='10.66.116.11')
     parser.add_argument('--reuse-owned-inputs')
+    parser.add_argument('--vpn',action='store_true',help='qualify actual client traffic through owned packaged service')
     args=parser.parse_args()
     for path,sha in [(args.package,args.package_sha256),(args.binary,args.binary_sha256)]:
         if hashlib.sha256(path.read_bytes()).hexdigest()!=sha:
@@ -82,7 +83,7 @@ def main():
                 assert run(['sha256sum',remote+'/'+target],'input SHA '+target)[0].split()[0]==sha
                 inputs[target]=sha
         (out/'inputs.json').write_text(json.dumps(inputs,indent=2))
-        text,rc=run(['timeout','--signal=TERM','--kill-after=20','600','unshare','--mount','--net','python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name],'actual apt/dpkg manager fixture',timeout=650,required=False)
+        text,rc=run(['timeout','--signal=TERM','--kill-after=20','600','unshare','--mount','--net','python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name,*(['--vpn'] if args.vpn else [])],'actual apt/dpkg manager fixture',timeout=650,required=False)
         (out/'driver.log').write_text(text,encoding='utf8')
         print(text[-12000:],flush=True)
         with client.open_sftp() as sftp:

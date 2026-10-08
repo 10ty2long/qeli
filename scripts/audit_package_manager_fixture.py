@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import time
@@ -21,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--unit', required=True)
+    parser.add_argument('--vpn', action='store_true', help='connect a real pinned client across update and rollback')
     args = parser.parse_args()
     work = args.root.resolve()
     assert work == args.root and work.parent == Path('/var/tmp')
@@ -29,6 +31,10 @@ def main():
     root = work / 'root'
     root.mkdir()
     result = {'status': 'IN_PROGRESS', 'checks': [], 'commands': []}
+    client = None
+    client_namespace = args.unit + '-client'
+    client_network_created = False
+    client_log = None
 
     def save():
         (work / 'results.json').write_text(json.dumps(result, indent=2))
@@ -77,6 +83,66 @@ def main():
                     return pid
             time.sleep(.25)
         raise AssertionError('owned packaged service not ready')
+
+    def stop_client(required=True):
+        nonlocal client, client_log
+        if client is None:
+            return
+        try:
+            if client.poll() is None:
+                _, output = run(['ip','netns','pids',client_namespace], 'owned client PID inventory')
+                for pid in output.split():
+                    try:
+                        if (Path('/proc')/pid/'exe').resolve() == work/'release-binary':
+                            os.kill(int(pid), signal.SIGTERM)
+                    except (OSError, ProcessLookupError):
+                        pass
+                client.wait(timeout=20)
+        except subprocess.TimeoutExpired:
+            os.killpg(client.pid, signal.SIGKILL)
+            client.wait(timeout=10)
+            result['forced_client_cleanup'] = True
+            save()
+            if required:
+                raise AssertionError('owned VPN client did not stop cleanly')
+        finally:
+            client = None
+            if client_log is not None:
+                client_log.close();client_log = None
+
+    def vpn_roundtrip(label):
+        nonlocal client, client_log
+        stop_client()
+        script = """set -eu
+mount --make-rprivate /
+mount -t tmpfs tmpfs /run
+mount -t tmpfs tmpfs /var/lib
+mount -t tmpfs tmpfs /var/log
+mkdir -p /var/lib/qeli /var/log/qeli
+exec "$1" client -c "$2"
+"""
+        client_log = (work/('client-'+label+'.log')).open('wb')
+        argv = ['ip','netns','exec',client_namespace,'unshare','--mount','--pid','--fork',
+                '--kill-child=KILL','--mount-proc','bash','-c',script,'q33-client',
+                str(work/'release-binary'),str(work/'client.conf')]
+        client = subprocess.Popen(argv,stdout=client_log,stderr=subprocess.STDOUT,start_new_session=True)
+        deadline = time.monotonic()+30
+        ok = False
+        while time.monotonic()<deadline and client.poll() is None:
+            rc, _ = run(['ip','-n',client_namespace,'link','show','q33pcvpn'], 'actual client TUN '+label, required=False)
+            if rc == 0:
+                rc, output = run(['ip','netns','exec',client_namespace,'ping','-c','3','-W','2','10.77.1.1'],
+                                 'real inner tunnel roundtrip '+label,required=False)
+                if rc == 0:
+                    ok = True
+                    break
+            time.sleep(.25)
+        check('packaged systemd service carries authenticated VPN traffic '+label,ok)
+        _, routes = run(['ip','-n',client_namespace,'route','get','10.77.1.1'],'inner route proof '+label)
+        check('inner destination uses actual client TUN '+label,'dev q33pcvpn' in routes)
+        stop_client()
+        rc, _ = run(['ip','-n',client_namespace,'link','show','q33pcvpn'],'client clean stop '+label,required=False)
+        check('client clean stop removes TUN '+label,rc!=0 and not result.get('forced_client_cleanup'))
 
     def state_snapshot():
         paths = ['server.conf', 'users.conf', 'identity/fixture.key',
@@ -201,7 +267,7 @@ tls = false
 secure_cookie = false
 base_path = /audit
 [profile:fixture]
-bind.address = 127.0.0.1
+bind.address = 0.0.0.0
 bind.port = 443
 bind.transport = tcp
 tun.name = q33pkg
@@ -223,6 +289,25 @@ obf.mode = fake-tls
         chroot(['qeli','set-service-user','qeli'],'real ownership/default run-as')
         chroot(['systemctl','start','qeli'],'real fresh package startup')
         pid=ready();check('fresh package supervisor and worker ready',pid!='0')
+        if args.vpn:
+            run(['ip','netns','add',client_namespace],'create own isolated peer namespace')
+            client_network_created = True
+            for argv in [
+                ['ip','-n',args.unit,'link','add','q33pv','type','veth','peer','name','q33pc'],
+                ['ip','-n',args.unit,'link','set','q33pc','netns',client_namespace],
+                ['ip','-n',args.unit,'addr','add','10.88.0.1/24','dev','q33pv'],
+                ['ip','-n',args.unit,'link','set','q33pv','up'],
+                ['ip','-n',client_namespace,'link','set','lo','up'],
+                ['ip','-n',client_namespace,'addr','add','10.88.0.2/24','dev','q33pc'],
+                ['ip','-n',client_namespace,'link','set','q33pc','up'],
+                ['ip','-n',client_namespace,'route','add','default','via','10.88.0.1']]:
+                run(argv,'owned peer carrier')
+            _, identity = chroot(['qeli','show-identity','--config','/etc/qeli/server.conf'],'actual packaged server key')
+            keys = re.findall(r'\b[0-9a-f]{64}\b',identity);assert len(keys)==1
+            conf = '[qeli]\nserver = 10.88.0.1:443\nproto = tcp\nuser = audit-package-user\npass = synthetic-package-user-password\nkey = '+keys[0]+'\nmode = fake-tls\ndev = q33pcvpn\ngateway = true\ndns = off\nkill_switch = false\n[logging]\nlevel = info\n'
+            (work/'client.conf').write_text(conf);(work/'client.conf').chmod(0o600)
+            (work/'release-binary').chmod(0o755)
+            vpn_roundtrip('fresh')
         baseline=state_snapshot();result['preserved_state']=baseline;save()
         shutil.copy2(root/'fixtures/qeli_0.8.2-1_amd64.deb',root/'var/cache/qeli/qeli_0.8.2-1_amd64.deb')
         (root/'var/cache/qeli/qeli_0.8.2-1_amd64.deb').chmod(0o600)
@@ -236,6 +321,8 @@ obf.mode = fake-tls
             if revision!=2:
                 check('failure reported as rollback '+str(revision),'rolled back' in output and '== Done ' not in output)
             check('real installed ELF restored '+str(revision),hashlib.sha256((root/'usr/bin/qeli').read_bytes()).hexdigest()==hashlib.sha256((work/'release-binary').read_bytes()).hexdigest())
+            if args.vpn:
+                vpn_roundtrip('revision'+str(revision))
         cache=root/'var/cache/qeli/qeli_0.8.2-2_amd64.deb'
         check('rollback cache private and exact package',cache.stat().st_uid==0 and stat.S_IMODE(cache.stat().st_mode)==0o600 and hashlib.sha256(cache.read_bytes()).digest()==hashlib.sha256((root/'fixtures/qeli_0.8.2-2_amd64.deb').read_bytes()).digest())
         chroot(['apt-get','remove','-y','qeli'],'real package remove')
@@ -249,6 +336,9 @@ obf.mode = fake-tls
         import traceback
         result['status']='FAIL';result['error']=traceback.format_exc();save();raise
     finally:
+        stop_client(required=False)
+        if client_network_created:
+            run(['ip','netns','delete',client_namespace],'remove only owned peer namespace')
         run(['systemctl','stop',unit],'stop only owned service',required=False)
         result['owned_main_pid_after_stop']=prop('MainPID')
         save()
