@@ -93,7 +93,7 @@ obf.mode = fake-tls
  create('server',['--sysctl','net.ipv4.ip_forward=1']);create('client');traffic('recreated');check('recreation preserves server identity/config/users',state('server')==baseline)
  for role in ['client','server']:stop(role)
  # Deliberate corrupt image has the same volumes, fails visibly; old image ID is recovery.
- (r/'fault').mkdir();(r/'fault/qeli').write_text('intentional invalid ELF\n');(r/'fault/Dockerfile').write_text('FROM '+image+'\nCOPY qeli /usr/local/bin/qeli\n');run(['build','-t','qeli-q33:fault',str(r/'fault')],'build corrupt runtime image',timeout=90)
+ (r/'fault').mkdir();(r/'fault/qeli').write_text('intentional invalid ELF\n');(r/'fault/qeli').chmod(0o755);check('local qualified build tag resolves to exact tested image',json.loads(run(['image','inspect','qeli-q33:qualified'],'fault parent image identity')[1])[0]['Id']==image);(r/'fault/Dockerfile').write_text('FROM qeli-q33:qualified\nCOPY qeli /usr/local/bin/qeli\n');run(['build','-t','qeli-q33:fault',str(r/'fault')],'build corrupt runtime image',timeout=90)
  create('server',['--sysctl','net.ipv4.ip_forward=1'],img='qeli-q33:fault');time.sleep(2);bad=json.loads(run(['inspect',prefix+'-server'],'bad image state')[1])[0];check('invalid image exits nonzero and never remains running',not bad['State']['Running'] and bad['State']['ExitCode']!=0);check('failed image preserves volume bytes/owner/mode',state('server')==baseline);run(['logs',prefix+'-server'],'bad image logs');run(['rm',prefix+'-server'],'bad image remove')
  create('server',['--sysctl','net.ipv4.ip_forward=1']);create('client');traffic('rollback-known-image');check('known-image recovery preserves identity/config/users',state('server')==baseline)
  for role in ['client','server']:stop(role)
