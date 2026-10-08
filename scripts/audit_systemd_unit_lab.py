@@ -78,12 +78,12 @@ c=http.client.HTTPConnection('127.0.0.1',24880,timeout=5);c.request('GET','/audi
   checked(['chown','-R','qeli:qeli',remote+'/etc'],'owned initial config ownership');checked(['chown','-R','root:root',remote+'/etc/client-links'],'owned private receipt ownership')
   checked(['ip','netns','add',name],'create owned network namespace');ns_created=True
   for args in [['link','set','lo','up'],['link','add','wan0','type','dummy'],['link','set','wan0','up'],['addr','add','192.0.2.1/24','dev','wan0'],['route','add','default','dev','wan0']]:checked(['ip','-n',name,*args],'owned network preparation')
-  template=(ROOT/'qeli/debian/qeli.service').read_text(encoding='utf8');text=template.replace('ExecStart=/usr/bin/qeli ', 'ExecStart='+remote+'/qeli ')
+  template=(ROOT/'qeli/debian/qeli.service').read_text(encoding='utf8');text=template
   for key in ['StateDirectory','RuntimeDirectory','LogsDirectory']:text=text.replace(key+'=qeli',key+'='+name)
-  text=text.replace('[Install]', 'NetworkNamespacePath='+net+'\nBindPaths='+remote+'/etc:/etc/qeli\nEnvironment=QELI_CONTROL_SOCKET=/run/'+name+'/control.sock\n\n[Install]')
+  text=text.replace('[Install]', 'NetworkNamespacePath='+net+'\nBindReadOnlyPaths='+remote+'/qeli:/usr/bin/qeli\nBindPaths='+remote+'/etc:/etc/qeli\nEnvironment=QELI_CONTROL_SOCKET=/run/'+name+'/control.sock\n\n[Install]')
   # These overrides isolate state/network; all packaged hardening, capability and reload directives remain exact.
   parsed=configparser.ConfigParser(interpolation=None,strict=False);parsed.optionxform=str;parsed.read_string(text);base=configparser.ConfigParser(interpolation=None,strict=False);base.optionxform=str;base.read_string(template)
-  altered={'ExecStart','StateDirectory','RuntimeDirectory','LogsDirectory'}
+  altered={'StateDirectory','RuntimeDirectory','LogsDirectory'}
   check('packaged sandbox directives retained',all(parsed['Service'][k]==v for k,v in base['Service'].items() if k not in altered))
   (out/'owned.service').write_text(text,encoding='utf8',newline='\n');(out/'health.sh').write_text('SERVICE='+shlex.quote(unit)+'\n'+health+'\nservice_healthy\n',encoding='utf8',newline='\n')
   checked(['test','!','-e',unitfile],'fresh owned unit')
