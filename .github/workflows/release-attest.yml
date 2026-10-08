@@ -139,25 +139,6 @@ jobs:
             "${{ steps.assets.outputs.subject }}" dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" --clobber
 
-      # Other platform assets are still produced by their platform release processes.
-      # Keep the previous signed publication evidence for them, but do not call it build
-      # provenance. The .deb is excluded because its stronger attestation was minted above.
-      - name: Detect independently-produced non-Linux assets
-        id: other
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -n "$(find dist -maxdepth 1 -type f ! -name 'SHA256SUMS' ! -name '*.deb' -print -quit)" ]; then
-            echo 'present=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'present=false' >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Attest non-Linux release assets (publication evidence only)
-        if: steps.other.outputs.present == 'true'
-        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
-        with:
-          subject-path: |
-            dist/*
-            !dist/SHA256SUMS
-            !dist/*.deb
+      # Downloaded platform assets participate in SHA256SUMS only. Their build
+      # provenance must come from the jobs that actually built them; this Linux
+      # job must not mint build provenance for externally produced bytes.

@@ -96,6 +96,15 @@ class WorkflowTests(unittest.TestCase):
         self.assertRegex(s,r'FROM debian:bookworm-slim@sha256:[0-9a-f]{64}')
         self.assertIn('COPY LICENSE LICENSING.md /usr/share/doc/qeli/',s)
         self.assertIn('COPY qeli/third-party-notices/rust /usr/share/doc/qeli/licenses/rust',s)
+    def test_build_attestation_covers_only_the_locally_built_package(self):
+        source=(Path(__file__).resolve().parent.parent/'.github/workflows/release-attest.yml').read_text(encoding='utf-8')
+        actions=[line.strip() for line in source.splitlines() if 'uses: actions/attest' in line]
+        self.assertEqual(actions,['uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0'])
+        attest=source.split('      - name: Attest the CI-built Linux package',1)[1].split('      - name:',1)[0]
+        self.assertIn('subject-path: ${{ steps.assets.outputs.subject }}',attest)
+        self.assertNotIn('dist/*',attest)
+        self.assertIn('echo "subject=dist/${{ steps.pkg.outputs.name }}"',source)
+
     def test_ci_covers_every_workflow_change(self):
         s=(Path(__file__).resolve().parent.parent/'.github/workflows/ci.yml').read_text(encoding='utf-8')
         self.assertEqual(s.count("      - '.github/workflows/**'"),2)
