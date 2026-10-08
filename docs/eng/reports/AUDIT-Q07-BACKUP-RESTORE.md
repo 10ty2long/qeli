@@ -120,3 +120,5 @@ Review covers archive source/shape, streaming limits/child ownership, staged tru
 
 
 8 October addendum: [Q33/F449](AUDIT-Q33-COMPLETION.md) closes restore script-protection path alias bypass; original Q07 results above remain historical.
+
+**8 October,F450/Q33-F053:** [Q33 complete](../reports/AUDIT-Q33-COMPLETION.md): actual two-HTTP-restore baseline executes a replaced harmless marker; fix retains startup/later worker hooks until supervisor exit and refuses exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; fresh native/ABI qualification and raw seal are in the report. Q33 5/5 DONE;30/37(81.1%),7remain. Q29/Q30/Q31/Q34/D06 historical limits preserved; no push/deploy/release.

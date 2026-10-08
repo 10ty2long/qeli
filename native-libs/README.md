@@ -14,7 +14,7 @@
 
 Предыдущая [сверка 7 октября 2026](../docs/ru/reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
 
-Текущая [квалификация 8 октября, F449](../docs/ru/reports/AUDIT-Q33-COMPLETION.md): source e8f5469e, четыре native targets прошли fresh independent A/B, export gates и14 SHA/copies/provenance. Пересобранная Windows DLL прошла22 C ABI/control/localhost-runner checks без Wintun/OS routes. Новый Android полный runtime и Mac/iOS runtime этим пакетом не квалифицированы; Q33 retained-hook review остаётся OPEN.
+Текущая [квалификация 8 октября, F450](../docs/ru/reports/AUDIT-Q33-COMPLETION.md): source aa98f208, fresh independent A/B четырёх native targets, export gates/14SHA/copies/provenance и свежий Windows ABI22. Серверный retained-hook фикс не меняет C ABI; новый Android полный runtime и Mac/iOS runtime этим пакетом не заявлены. Q33 завершён в согласованном объёме.
 
 ## Содержимое
 

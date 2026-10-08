@@ -261,6 +261,8 @@ Two implementation details worth knowing:
 
 Restore refuses introduced or changed `routing.post_up/post_down` commands and replacement of files referenced by existing hooks. The check accounts for `..`, quotes, spaces and symlinks, including outside aliases into `/etc/qeli`. A literal `/etc/qeli/$SCRIPT` or `/etc/qeli/*.sh` cannot identify the top-level entry: restore is refused before publication. A pattern inside known `/etc/qeli/scripts/` protects the entire `scripts/` entry.
 
+Overlay restore may remove a command or profile from INI; the ready generation retains its original state. Protection also includes commands retained from startup and later worker generations until supervisor exit. Clearing a hook from INI through restore does not allow a second archive to replace its script. Exact restore refuses deleting these files/directories before publication. Releasing old references requires a full supervisor restart after correcting configuration on the server; a worker-only restart does not reset the set.
+
 Keep executable hooks and their dependencies outside `/etc/qeli`, for example under `/opt/site/`, and update them on the server separately from panel archives. Static inspection does not execute the shell and cannot discover paths built entirely from variables, runtime `cd`, or inside an external script. It is not a sandbox for arbitrary hook commands. Files without executable bits are protected too: `sh file.txt` can execute their contents.
 
 > The panel archive contains private identity/TLS keys, password hashes, `password_enc`,

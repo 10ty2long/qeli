@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v160 -->
+<!-- normative-sync: full-system-audit-v161 -->
 
-**Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 8 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -179,7 +179,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
-| 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | IN_PROGRESS |
+| 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
 | 36 | Бенчмарки и методика измерения | H07 | TODO |
@@ -2069,13 +2069,13 @@ Fresh install/upgrade/downgrade/remove, systemd sandbox, identity/users preserva
 
 **Имеющаяся обвязка/fixtures:** `scripts/test_ssh_run.ps1`, `scripts/release_preflight.py`.
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE.**
 
 **Доверие прочитанному конфигу, 23 сентября 2026:**
 [Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): владелец/права и данные
@@ -2119,6 +2119,9 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 **8 октября:** release VPN и package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Матрица extracted production release ELF:18 сценариев/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Реальный pinned H-1 client через пакетную службу:36 PASS, fresh/upgrade/оба rollback, exact TUN route и clean stop. Исходный fixture trust FAIL сохранён, show-identity выполняется от qeli. Продукт/native не менялись; стенд восстановлен, roots SHA-archived/guard-cleaned. Release data-plane и package/service/VPN gate закрыты; full binary/kernel installer и Docker/Actions остаются OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,осталось8; прежние ограничения сохранены.
 
 **8 октября,F445 / Q33-F048:** [Полный installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): подтверждён и исправлен ложный sysctl success; private per-run snapshots/prior files/restore instructions, readback и early tuning path guards. Full QELI_BIN+QELI_SRC и production QELI_DEB: по24 PASS с actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 и persistent files restoration. Linux136 regressions без skips/lint PASS, CI tuning добавлен. Первые FAIL сохранены; root777/845/network/kernel не менялись. Full positive installer и partial kernel recovery gate закрыты, глобальная запись10keys/BBR load/reboot/пустой OS bootstrap не заявлены; Docker/Actions и прежние ограничения остаются OPEN. Q33IN_PROGRESS29/37DONE78.4%,осталось8; без push/deploy/release.
+
+
+**Q33 завершён 8 октября:** [итоговая сверка](../reports/AUDIT-Q33-COMPLETION.md) связывает все пять критериев с evidence. F450 закрывает retained hook и exact deletion; source/runtime ограничения сохранены.
 
 ### 34. CI, зависимости, native provenance и релиз
 
@@ -2461,3 +2464,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **8 октября,F449/Q33-F052:** [Итоговая сверка Q33](../reports/AUDIT-Q33-COMPLETION.md): исправлен обход защиты hook-файла при restore через `..`, кавычки и symlink aliases; literal variables/globs в неизвестном top-level managed entry отклоняются. Точный старый collector на Linux ожидаемо FAIL;14 targeted production helper/gate checks PASS. Полная серверная/native квалификация PASS:CLI5/backup49/IO2/Clippy, freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS; общий29/37DONE78.4%,8осталось. Прежние runtime gates переиспользуются только в неизменённой части; Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED сохраняются. Без push/deploy/release.
+
+**8 октября,F450/Q33-F053:** [Q33 завершён](../reports/AUDIT-Q33-COMPLETION.md): actual baseline два HTTP restore исполняют заменённый harmless marker; фикс хранит hooks startup/последующих worker до завершения supervisor и запрещает exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; свежая native/ABI квалификация и raw seal приведены в отчёте. Q33 5/5 DONE;30/37(81,1%),7осталось. Исторические ограничения Q29/Q30/Q31/Q34/D06 сохраняются; без push/deploy/release.

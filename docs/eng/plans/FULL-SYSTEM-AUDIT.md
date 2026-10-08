@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v160 -->
+<!-- normative-sync: full-system-audit-v161 -->
 
-**Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 8 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -174,7 +174,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
-| 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | IN_PROGRESS |
+| 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | TODO |
 | 36 | Benchmarks and measurement methodology | H07 | TODO |
@@ -2058,13 +2058,13 @@ Install/upgrade/downgrade/remove, systemd sandbox, identity/user preservation, c
 
 **Existing harness/fixtures:** `scripts/test_ssh_run.ps1`, `scripts/release_preflight.py`.
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE.**
 
 **Config snapshot trust, 23 September 2026:**
 [Q14-F019 / Q33-F001](../reports/AUDIT-Q14-Q33-CONFIG-TRUST.md): owner/mode and parsed
@@ -2108,6 +2108,9 @@ final client task drain and Linux runtime/release checks remain open.
 **8 October:** release VPN and package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Extracted production release ELF matrix:18 scenarios/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Genuine pinned H-1 client through packaged service:36 PASS, fresh/upgrade/both rollbacks, exact TUN route and clean stop. Original fixture trust FAIL retained; show-identity runs as qeli. Product/native unchanged; host restored, roots SHA-archived/guard-cleaned. Release data-plane and package/service/VPN gates close; full binary/kernel installer and Docker/Actions remain OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,8remain; previous limits retained.
 
 **8 October,F445 / Q33-F048:** [Full installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): reproduced/repaired false sysctl success; private per-run snapshots/prior files/restore instructions, readback and early tuning path guards. Full QELI_BIN+QELI_SRC and production QELI_DEB:24PASS each with actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 and persistent files restoration. Linux136 regressions without skips/lint PASS, tuning CI added. Initial FAIL retained; host777/845/network/kernel unchanged. Full positive installer/partial kernel recovery gate closes, without global ten-key writes/BBR loading/reboot/empty-OS bootstrap claims; Docker/Actions and previous limits remainOPEN. Q33IN_PROGRESS29/37DONE78.4%,8remain; no push/deploy/release.
+
+
+**Q33 complete 8 October:** [final reconciliation](../reports/AUDIT-Q33-COMPLETION.md) maps all five criteria to evidence. F450 closes retained hooks and exact deletion; source/runtime limits remain.
 
 ### 34. CI, dependencies, native provenance and release
 
@@ -2448,3 +2451,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **8 October,F449/Q33-F052:** [Q33 final reconciliation](../reports/AUDIT-Q33-COMPLETION.md): fixed restore hook-file protection bypass through `..`, quotes and symlink aliases; unknown top-level managed literal variables/globs refuse publication. Exact original Linux collector expected FAIL;14 targeted production helper/gate checks PASS. Full server/native qualification PASS:CLI5/backup49/IO2/Clippy,freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS;overall29/37DONE78.4%,8remain. Previous runtime gates reused only for unchanged paths;Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.
+
+**8 October,F450/Q33-F053:** [Q33 complete](../reports/AUDIT-Q33-COMPLETION.md): actual two-HTTP-restore baseline executes a replaced harmless marker; fix retains startup/later worker hooks until supervisor exit and refuses exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; fresh native/ABI qualification and raw seal are in the report. Q33 5/5 DONE;30/37(81.1%),7remain. Q29/Q30/Q31/Q34/D06 historical limits preserved; no push/deploy/release.
