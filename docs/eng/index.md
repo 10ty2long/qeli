@@ -513,3 +513,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: full amd64 Docker build and release admission](reports/AUDIT-Q34-DOCKER-BUILD.md)
 
 - [Q34: immutable Docker frontend and APT inputs](reports/AUDIT-Q34-DOCKER-INPUTS.md)
+
+- [Q34: OpenWrt source Git flags](reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md)

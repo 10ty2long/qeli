@@ -134,6 +134,49 @@ class SourceTests(unittest.TestCase):
                 if old is None:path.unlink()
                 else:path.write_bytes(old)
 
+    def _hidden_git_inputs_are_refused(self, flag):
+        inputs=("qeli/src/lib.rs", "qeli-openwrt/Makefile", "qeli-openwrt/verify-source.sh",
+                "scripts/openwrt_source_gate.py", "scripts/release_preflight.py")
+        for name in inputs:
+            path=self.root/name
+            if not path.exists():
+                path.parent.mkdir(exist_ok=True)
+                path.write_text("# committed fixture\n")
+                self.git("add",name)
+        self.commit()
+        for name in inputs:
+            with self.subTest(flag=flag, input=name):
+                path=self.root/name; original=path.read_bytes()
+                self.git("update-index", "--"+flag, name)
+                try:
+                    path.write_bytes(original+b"\n// hidden input change\n")
+                    self.assertEqual(self.git("status","--porcelain","--",*gate.INPUTS),"")
+                    errors=self.check()
+                    self.assertTrue(errors)
+                    self.assertIn("Git flags",errors[0])
+                finally:
+                    path.write_bytes(original)
+                    self.git("update-index", "--no-"+flag, name)
+
+    def test_assume_unchanged_cannot_hide_any_source_input(self):
+        self._hidden_git_inputs_are_refused("assume-unchanged")
+
+    def test_skip_worktree_cannot_hide_any_source_input(self):
+        self._hidden_git_inputs_are_refused("skip-worktree")
+
+    def test_unrelated_git_trust_flags_do_not_broaden_input_scope(self):
+        name="notes.txt";path=self.root/name;path.write_text("committed note\n")
+        self.git("add",name);self.commit()
+        for flag in ("assume-unchanged","skip-worktree"):
+            with self.subTest(flag=flag):
+                self.git("update-index","--"+flag,name)
+                try:
+                    path.write_text("hidden unrelated note\n")
+                    self.assertEqual(self.check(),[])
+                finally:
+                    path.write_text("committed note\n")
+                    self.git("update-index","--no-"+flag,name)
+
     def test_non_source_document_change_does_not_block_source_gate(self):
         (self.root/"notes.txt").write_text("unrelated review\n")
         self.assertEqual(self.check(), [])
