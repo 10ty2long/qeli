@@ -100,7 +100,8 @@ A single `qeli` binary plays both roles: `qeli server` and `qeli client`.
 >   binary and **reproduce the .deb layout itself** (user, dirs, `*.conf.example` files,
 >   `qeli.service`, the `49-qeli.rules` polkit rule). Use it for a **build-from-source** or
 >   **air-gapped** install. Add `QELI_SRC=<repo checkout>` to copy the unit and examples
->   straight from source (fully offline); without it they are fetched from GitHub. Example:
+>   straight from source (Qeli payload only); OS dependency setup still uses apt.
+>   Without QELI_SRC, payload is fetched from GitHub. Example:
 >   ```bash
 >   sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <IP>
 >   ```
@@ -287,8 +288,10 @@ sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <publ
 ```
 
 `QELI_BIN` selects the from-binary branch; `QELI_SRC=.` copies the unit and examples
-straight from this checkout (fully offline). See §2's **"Two install branches"**. This also
+straight from this checkout; the OS dependency phase still uses apt. See §2's **"Two install branches"**. This also
 installs the polkit rule, so the panel's `Apply & Restart` works without the extra step below.
+
+With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The full script still uses apt for OS dependencies; a local payload alone does not make the entire first installation disconnected. [Executed scope](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
 
 > ⚠️ **Non-.deb install + web panel:** the panel's **`Apply & Restart`** button runs
 > `systemctl restart` on the service. A **non-root** `User=qeli` service is only allowed

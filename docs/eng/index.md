@@ -472,3 +472,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: server updater transactions](reports/AUDIT-Q33-SERVER-UPDATER.md)
 
 - [Q33: Debian package lifecycle](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
+
+- [Q33: binary installer preparation](reports/AUDIT-Q33-BINARY-INSTALLER.md)

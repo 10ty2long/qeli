@@ -145,6 +145,8 @@ SHA256SUMS того же релиза подтверждает соответс�
 
 Пакет отклоняет linked/non-directory state roots и linked/nonregular default users.conf до распаковки; исправление этих путей остаётся администратору. Новый users.conf пустой0600; обычные существующие файлы сохраняют байты/режим. На загруженном systemd-хосте ошибка применения выбранного service-user оставляет пакет half-configured: исправьте указанную причину и повторите `sudo dpkg --configure qeli`. В незагруженном chroot/container неподтверждённое изменение сопровождается предупреждением и требует повтора после boot. Если служба загруженного хоста не останавливается, удаление пакета отклоняется. Purge удаляет packaged examples, но сохраняет рабочие config/users/identity. [Проверенный объём и ограничения](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
 
+При QELI_BIN явный QELI_SRC должен содержать все восемь примеров, qeli.service и49-qeli.rules: missing files вызывают отказ без fallback на GitHub. Этот набор допускается в private staging до замены бинарника. Без QELI_SRC release payload выбирается по архитектуре хоста и проверяется; QELI_VERIFY_ATTESTATION=1 также требует успешного gh. Linked/nonregular state paths отклоняются; INT/TERM завершают установку после cleanup. Последующая публикация последовательная: ошибка final install не означает автоматический rollback. Полный скрипт ещё использует apt для OS dependencies; локальный payload не делает всю first install отключённой от сети. [Проверенный объём](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+
 ### 3.2. Docker
 
 Образ не обновляется «на месте» — меняется тег и пересоздаётся контейнер. Состояние живёт

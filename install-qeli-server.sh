@@ -82,7 +82,9 @@ cleanup_tmp() {
     [ -n "$p" ] && rm -rf -- "$p" 2>/dev/null || true
   done
 }
-trap cleanup_tmp EXIT INT TERM
+trap cleanup_tmp EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 REPO="litvinovtd/qeli"
 PROFILE=""            # chosen interactively below (or non-interactively via QELI_PROFILE)
@@ -98,6 +100,35 @@ RUN_STAMP="$(date +%Y%m%d-%H%M%S)"   # suffix for every backup this run makes
 log(){ printf '\n\033[1;36m== %s\033[0m\n' "$*"; }
 die(){ printf '\033[1;31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 warn(){ printf '\033[1;33mWARNING: %s\033[0m\n' "$*" >&2; }
+# State paths are writable by the service; refuse links/nonregular names before
+# root writes. Repeat users validation at creation, never open its final name.
+_check_install_state(){
+  local state file
+  for state in /etc/qeli /var/log/qeli /var/lib/qeli /etc/qeli/identity /etc/qeli/client-links; do
+    if [ -L "$state" ] || { [ -e "$state" ] && [ ! -d "$state" ]; }; then
+      die "refusing linked/non-directory state path: $state"
+    fi
+  done
+  for file in "$CONF" /etc/qeli/users.conf; do
+    if [ -L "$file" ] || { [ -e "$file" ] && [ ! -f "$file" ]; }; then
+      die "refusing linked/nonregular state file: $file"
+    fi
+  done
+}
+_ensure_users_file(){
+  local dest=/etc/qeli/users.conf tmp
+  if [ -L "$dest" ] || { [ -e "$dest" ] && [ ! -f "$dest" ]; }; then
+    die "refusing linked/nonregular users file: $dest"
+  fi
+  [ ! -f "$dest" ] || return 0
+  tmp="$(mktemp "${dest}.qeli-XXXXXX")" || return 1
+  QELI_TMP_PATHS+=("$tmp")
+  if ! ln -T -- "$tmp" "$dest" 2>/dev/null; then
+    [ ! -L "$dest" ] && [ -f "$dest" ] || die "could not publish empty users file: $dest"
+  fi
+  rm -f -- "$tmp"
+}
+
 # true iff $1 is a decimal port in 1..65535
 _valid_port(){ case "$1" in ''|*[!0-9]*) return 1 ;; esac; [ "$1" -ge 1 ] && [ "$1" -le 65535 ]; }
 
@@ -153,18 +184,20 @@ _ensure_pkg_payload(){
   [ "$PKG_PAYLOAD_TRIED" -eq 0 ] || return 1
   PKG_PAYLOAD_TRIED=1
   command -v dpkg-deb >/dev/null 2>&1 || { warn "dpkg-deb is missing — cannot unpack the release package."; return 1; }
-  local ref ver json deb_url sha_url tmp_deb tmp_sha want got dest
+  local ref ver json deb_url sha_url tmp_deb tmp_sha want got dest arch pkg_name pkg_arch
   ref="${QELI_REF:-}"
   if [ -z "$ref" ]; then
-    # The tag that matches the binary the operator handed us — NOT `main`.
-    ver="$(qeli version 2>/dev/null | awk '{print $2}')"
+    # Read the supplied binary before publishing it; an installed older binary
+    # must not select the payload for this transaction.
+    ver="$("$QELI_BIN" version 2>/dev/null | awk '{print $2}')"
     [ -n "$ver" ] || { warn "cannot read the version from 'qeli version' — pass QELI_REF=<tag> or QELI_SRC=<checkout>."; return 1; }
     ref="v${ver}"
   fi
   echo "  taking the unit + config examples from release ${ref} (SHA256-verified)"
   json="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/tags/${ref}" 2>/dev/null || true)"
   [ -n "$json" ] || { warn "release ${ref} not found on GitHub — pass QELI_SRC=<repo checkout> (offline) or QELI_REF=<existing tag>."; return 1; }
-  deb_url="$(printf '%s' "$json" | jq -r '.assets[]? | select(.name|endswith(".deb")) | .browser_download_url' | head -n1)"
+  arch="$(dpkg --print-architecture)" || return 1
+  deb_url="$(printf '%s' "$json" | jq -r --arg arch "$arch" '.assets[]? | select(.name|endswith("_" + $arch + ".deb")) | .browser_download_url' | head -n1)"
   sha_url="$(printf '%s' "$json" | jq -r '.assets[]? | select(.name=="SHA256SUMS") | .browser_download_url' | head -n1)"
   [ -n "$deb_url" ] || { warn "release ${ref} publishes no .deb — pass QELI_SRC=<repo checkout>."; return 1; }
   [ -n "$sha_url" ] || { warn "release ${ref} publishes no SHA256SUMS — refusing to install an unverifiable systemd unit. Pass QELI_SRC=<repo checkout>."; return 1; }
@@ -183,6 +216,17 @@ _ensure_pkg_payload(){
     warn "SHA256 check failed for the ${ref} package (want '${want:-<unlisted>}', got ${got}) — refusing to use it."
     return 1
   fi
+  if [ "${QELI_VERIFY_ATTESTATION:-0}" = 1 ]; then
+    command -v gh >/dev/null 2>&1 || { warn "QELI_VERIFY_ATTESTATION=1 requires gh for the release payload."; return 1; }
+    gh attestation verify "$tmp_deb" --repo "$REPO" >/dev/null 2>&1 \
+      || { warn "release payload attestation verification failed."; return 1; }
+  fi
+  pkg_name="$(dpkg-deb -f "$tmp_deb" Package)" || return 1
+  pkg_arch="$(dpkg-deb -f "$tmp_deb" Architecture)" || return 1
+  if [ "$pkg_name" != qeli ] || { [ "$pkg_arch" != "$arch" ] && [ "$pkg_arch" != all ]; }; then
+    warn "release payload must be a qeli package for $arch (or all)."
+    return 1
+  fi
   dest="$(mktemp -d)"
   QELI_TMP_PATHS+=("$dest")
   if ! dpkg-deb -x "$tmp_deb" "$dest" 2>/dev/null; then
@@ -196,8 +240,9 @@ _ensure_pkg_payload(){
 # .deb payload, $3 = destination. Returns non-zero when neither source has it.
 _pkg_file(){
   local rel="$1" pkgrel="$2" dest="$3"
-  if [ -n "${QELI_SRC:-}" ] && [ -f "${QELI_SRC}/${rel}" ]; then
-    install -m644 "${QELI_SRC}/${rel}" "$dest"
+  if [ -n "${QELI_SRC:-}" ]; then
+    [ -f "${QELI_SRC}/${rel}" ] || return 1
+    install -m644 "${QELI_SRC}/${rel}" "$dest" || return 1
     return 0
   fi
   _ensure_pkg_payload || return 1
@@ -245,43 +290,42 @@ _conf_web_set(){
 # come from the SHA256-verified .deb of the matching release (see _ensure_pkg_payload).
 from_source_install(){
   log "Installing from binary ${QELI_BIN} (reproducing the .deb layout)"
-  [ -x "$QELI_BIN" ] || die "QELI_BIN=$QELI_BIN is not an executable file."
-  # 1) binary — 0755 root:root, no file caps (the unit grants caps via AmbientCapabilities).
-  install -m755 "$QELI_BIN" /usr/bin/qeli
+  [ -f "$QELI_BIN" ] && [ -x "$QELI_BIN" ] || die "QELI_BIN=$QELI_BIN is not a regular executable file."
+  _check_install_state
+
+  # Admit the complete payload before replacing the installed binary or state.
+  local stage name
+  stage="$(mktemp -d)"
+  QELI_TMP_PATHS+=("$stage")
+  for name in server server-multiprofile server-ipv6 server-maxobf users client client-reality client-maxobf; do
+    _pkg_file "qeli/config/${name}.conf" "etc/qeli/${name}.conf.example" "$stage/${name}.conf.example" \
+      || die "could not obtain a VERIFIED ${name}.conf example (pass QELI_SRC=<complete checkout> or QELI_REF=<release tag>)."
+  done
+  _pkg_file qeli/debian/qeli.service lib/systemd/system/qeli.service "$stage/qeli.service" \
+    || die "could not obtain a VERIFIED qeli.service unit."
+  _pkg_file qeli/debian/49-qeli.rules etc/polkit-1/rules.d/49-qeli.rules "$stage/49-qeli.rules" \
+    || die "could not obtain a VERIFIED polkit rule."
+
+  install -o root -g root -m755 "$QELI_BIN" /usr/bin/qeli
   setcap -r /usr/bin/qeli 2>/dev/null || true
-  # 2) system user (mirrors postinst: adduser --system --group --no-create-home).
   if ! getent passwd qeli >/dev/null 2>&1; then
     adduser --system --group --no-create-home qeli 2>/dev/null \
       || useradd --system --user-group --no-create-home --shell /usr/sbin/nologin qeli
   fi
-  # 3) directories.
   mkdir -p /etc/qeli /var/log/qeli /var/lib/qeli
-  # 4) example configs — the same complete set the .deb ships.
-  local name
   for name in server server-multiprofile server-ipv6 server-maxobf users client client-reality client-maxobf; do
-    _pkg_file "qeli/config/${name}.conf" "etc/qeli/${name}.conf.example" "/etc/qeli/${name}.conf.example" \
-      || die "could not obtain a VERIFIED ${name}.conf example (pass QELI_SRC=<repo checkout> for an offline install, or QELI_REF=<release tag>)."
+    install -o root -g root -m644 "$stage/${name}.conf.example" "/etc/qeli/${name}.conf.example"
   done
-  # 5) empty users.conf so add-client can append (never seed the sample — it has a known hash).
-  [ -f /etc/qeli/users.conf ] || : > /etc/qeli/users.conf
-  # 6) systemd unit — the exact one the .deb installs. This one runs as root, so it is
-  #    never taken from an unverified source. (Audit 2026-07-27, O2)
-  _pkg_file "qeli/debian/qeli.service" "lib/systemd/system/qeli.service" /lib/systemd/system/qeli.service \
-    || die "could not obtain a VERIFIED qeli.service unit (pass QELI_SRC=<repo checkout>, or QELI_REF=<release tag>)."
-  # 7) ownership + perms (mirrors postinst).
-  chown -R qeli:qeli /etc/qeli /var/log/qeli /var/lib/qeli
+  _ensure_users_file
+  install -d /lib/systemd/system /etc/polkit-1/rules.d
+  install -o root -g root -m644 "$stage/qeli.service" /lib/systemd/system/qeli.service
+  install -o root -g root -m644 "$stage/49-qeli.rules" /etc/polkit-1/rules.d/49-qeli.rules
+  chown -h -R -P qeli:qeli /etc/qeli /var/log/qeli /var/lib/qeli
   chmod 755 /etc/qeli
   systemctl daemon-reload 2>/dev/null || true
   command -v qeli >/dev/null || die "qeli is not on PATH after install."
-  # 8) polkit rule — reuse the binary's own installer (identical to the .deb's rule); if
-  #    this binary predates `install-polkit`, fall back to the shipped rule file.
-  if ! qeli install-polkit >/dev/null 2>&1; then
-    install -d /etc/polkit-1/rules.d
-    _pkg_file "qeli/debian/49-qeli.rules" "etc/polkit-1/rules.d/49-qeli.rules" /etc/polkit-1/rules.d/49-qeli.rules \
-      || echo "  (polkit rule not installed — panel 'Apply & Restart' needs it; run 'qeli install-polkit' later)"
-  fi
-  # The unpacked package tree was only a source of files — drop it.
-  [ -z "$PKG_PAYLOAD" ] || rm -rf "$PKG_PAYLOAD"
+  rm -rf -- "$stage"
+  [ -z "$PKG_PAYLOAD" ] || rm -rf -- "$PKG_PAYLOAD"
   echo "  from-binary install complete: binary, user, dirs, examples, unit, polkit rule."
 }
 
@@ -296,6 +340,10 @@ if [ "$(id -u)" -ne 0 ]; then
   die "must run as root, and 'sudo' is not installed. Switch to root and re-run:  su -"
 fi
 export DEBIAN_FRONTEND=noninteractive
+_check_install_state
+if [ -n "${QELI_BIN:-}" ]; then
+  [ -f "$QELI_BIN" ] && [ -x "$QELI_BIN" ] || die "QELI_BIN=$QELI_BIN is not a regular executable file."
+fi
 if [ -n "${QELI_DEB:-}" ] && [ ! -f "$QELI_DEB" ]; then
   die "QELI_DEB does not name a regular package file: $QELI_DEB"
 fi
@@ -591,7 +639,7 @@ fi
 log "Generating the server identity key"
 qeli show-identity --config "$CONF"
 PUBKEY=$(qeli show-identity --config "$CONF" 2>/dev/null | awk -v p="$PROFILE" '$1==p{print $NF}')
-chown -R qeli:qeli "$CONF" /etc/qeli/identity 2>/dev/null || true
+chown -h -R -P qeli:qeli "$CONF" /etc/qeli/identity 2>/dev/null || true
 
 # ── 6. public host clients will connect to ──────────────────────────────────
 if [ -z "$PUBLIC_HOST" ]; then
@@ -664,7 +712,7 @@ fi
 log "Creating ${NUM_USERS} users + connection strings"
 mkdir -p "$LINKS_DIR"; chmod 700 "$LINKS_DIR"
 # add-client appends to the users file; make sure it exists (older builds error if not).
-[ -f /etc/qeli/users.conf ] || : > /etc/qeli/users.conf
+_ensure_users_file
 SUMMARY="${LINKS_DIR}/CONNECTION-STRINGS.txt"
 SUMMARY_BAK=""
 # This file is the ONLY place the generated passwords exist in the clear, so a forced
@@ -709,7 +757,7 @@ for i in $(seq 1 "$NUM_USERS"); do
   echo "  + ${U}"
 done
 chmod 600 "$LINKS_DIR"/* 2>/dev/null || true
-chown -R qeli:qeli /etc/qeli/users.conf 2>/dev/null || true
+chown -h -R -P qeli:qeli /etc/qeli/users.conf 2>/dev/null || true
 
 # ── 8. OS tuning for mobile / LTE paths (PMTU black-hole fix) ───────────────
 # The post-quantum reality-tls / fake-tls ClientHello is one large TCP segment; on

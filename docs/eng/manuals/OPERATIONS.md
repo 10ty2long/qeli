@@ -146,6 +146,8 @@ Three things worth knowing up front:
 
 The package now rejects linked/non-directory state roots and linked/nonregular default users.conf before unpack; it leaves those paths for the administrator to repair. A new users.conf is empty0600; existing regular files retain their content and mode. On a booted systemd host, failure to apply the selected service user leaves the package half-configured; fix the reported cause and retry `sudo dpkg --configure qeli`. In a nonbooted chroot/container, an unconfirmed user change is warned and must be retried after boot. Removal refuses if the service cannot be stopped on a booted host; purge removes packaged examples but retains unmanaged config/users/identity. [Executed scope and limitations](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
 
+With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The full script still uses apt for OS dependencies; a local payload alone does not make the entire first installation disconnected. [Executed scope](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+
 ### 3.2. Docker
 
 The image is not upgraded in place — you change the tag and recreate the container. State
