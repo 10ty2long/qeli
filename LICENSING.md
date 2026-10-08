@@ -256,3 +256,18 @@ common bundle до login/build. Rust builder и Debian runtime base images за�
 остаются live repository inputs, base digest не делает весь образ воспроизводимым.
 Сохраняйте Debian package copyright resources и соответствующие build/source links.
 Перед локальной сборкой Docker выполните `python3 scripts/native_licenses.py`.
+
+
+Build provenance в `release-attest.yml` создаётся только для DEB, собранного и
+проверенного этим job. Готовые артефакты других платформ включаются в SHA256SUMS;
+их provenance должен выпускаться в реальных platform build jobs. Название шага
+«publication evidence» не меняет build predicate action. Уже опубликованные
+аттестации этим исправлением не удаляются и не становятся доказательством сборки.
+
+`python3 scripts/gen_checksums.py dist` принимает regular files с именами
+`[A-Za-z0-9][A-Za-z0-9._+-]*`; каталоги не обходятся. Пробелы, управляющие символы,
+backslash, symlinks и special files отклоняются. После проверки и хеширования
+всех inputs SHA256SUMS заменяется атомарно в том же каталоге; ошибка сохраняет
+предыдущий manifest. Проверяйте результат `(cd dist && sha256sum -c SHA256SUMS)`.
+Checksums сверяют байты; для подтверждения происхождения требуется соответствующая
+аттестация настоящей сборки.

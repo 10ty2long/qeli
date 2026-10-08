@@ -507,3 +507,5 @@
 - [Q34: toolchain runtime and standard-library notices](reports/AUDIT-Q34-TOOLCHAIN-NOTICES.md)
 
 - [Q34: release source admission and Docker notices](reports/AUDIT-Q34-PUBLICATION-GATES.md)
+
+- [Q34: artifact provenance and atomic checksums](reports/AUDIT-Q34-ATTESTATION-CHECKSUMS.md)
