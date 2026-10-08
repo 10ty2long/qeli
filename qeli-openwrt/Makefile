@@ -88,7 +88,8 @@ define Build/Compile
 	+$(Qeli/VerifySourceArchive) && \
 	cd $(PKG_BUILD_DIR)/qeli && \
 	test -f Cargo.lock && \
-	sed -i 's/^crate-type = \["rlib", "cdylib", "staticlib"\]$$/crate-type = ["rlib"]/' Cargo.toml && \
+	grep -Eqx 'crate-type = (\["rlib"\]|\["rlib", "cdylib", "staticlib"\])' Cargo.toml && \
+	sed -i 's/^crate-type = \["rlib", "cdylib", "staticlib"\]/crate-type = ["rlib"]/' Cargo.toml && \
 	grep -qx 'crate-type = \["rlib"\]' Cargo.toml && \
 	$(CARGO_PKG_VARS) cargo metadata --locked --format-version 1 \
 		--no-default-features --features client-bin > /dev/null && \

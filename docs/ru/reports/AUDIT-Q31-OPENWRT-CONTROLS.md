@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v42 -->
+<!-- normative-sync: q31-openwrt-controls-v43 -->
 
-**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2400,3 +2400,59 @@ The path backup's initial tar directory-mtime error was retained as a preparatio
 note; only backup was retried. Current native SHA/provenance remain valid; Rust,
 SDK recipes, production pin/hash and client runtime code are unchanged. Q31/full
 plan counts remain unchanged. A fresh successful Actions run is still required.
+
+## F399 / Q31-V010: сборка исходников до IPK в настоящем SDK (8 октября)
+
+Полный make target пакета, в отличие от прежнего отдельно экспортированного Compile,
+повторно раскрывает команду через GNU make. Якорь sed терял разделитель, и сборка
+останавливалась до Cargo с `unterminated s command`. Фактический baseline сохранён.
+Теперь перед изменением проверяется точное допустимое объявление библиотеки,
+подстановка не содержит dollar-anchor, а итоговая проверка точного rlib сохраняется.
+Неизвестное объявление, суффикс и отсутствие Cargo.lock отклоняются до изменений/Cargo.
+Проекция применяется только к приватному Cargo.toml SDK.
+
+Официальный x86/64 SDK24.10.4 создал Git source archive из приватного immutable fixture
+с точным деревом qeli bfa0cfc6b25f7c2ddd1a15799bcf75ecf80f38e8 (b68bf907).
+URL/pin/hash изменены только в fixture; production-значения сохранены.
+Настоящие download, проверка hash, prepare, client-only metadata/install Cargo,
+musl link GCC13.3 SDK, install, проверка зависимостей, strip и упаковка IPK прошли.
+Свежий IPK:2259448байт, SHA256
+`f73c53d42de06b8cc885e7a9829bbf0bbb84c22abfdbcaa4a4169889883382fa`.
+Внутри SDK-клиент и три точных production init/UCI/default файла.
+
+Прямой вход make пакета использует приватные официальные prebuilt Rust/std1.89.0
+и копию существующего registry. Upstream bootstrap компилятора Rust не выполнялся;
+cold/hermetic build не подтверждён. На .11 работал один компилятор.
+Первая упаковка отказала из-за отсутствующих libc/libgcc provides; штатный рецепт
+package/toolchain SDK сформировал настоящие таблицы, после чего упаковка прошла.
+libc предоставляет libgcc транзитивно; обход зависимостей и лишний +libgcc не добавлены.
+ELF требует libc.so/libgcc_s.so.1 и использует OpenWrt musl interpreter.
+Закрыт прежний разрыв между standalone ELF и SDK-упаковкой для этого source/target/
+toolchain; другие архитектуры SDK и production release source-cut не подтверждены.
+
+Без skips прошли6 real-Cargo тестов Compile, включая отказ без изменения файла с
+суффиксом, и7 offline opkg методов в SHA-проверенном официальном rootfs24.10.4 с ранее
+signature-admitted зависимостями: nft/legacy providers, отказ без зависимостей,
+обновление изменённого/стандартного UCI, guard удаления/сохранение конфига и отказ
+повреждённого обновления. r2 — явный fixture обновления, упакованный SDK, не релиз.
+Поддельных installed records и force-depends нет.9 запусков свежего SDK-клиента
+в приватных mount/net/PID namespaces проверили version, quoted/BOM INI,
+legacy/core ownership, attached TUN и отказы неверного config/device/attach.
+VPN и firewall хоста не запускались. Проверка подписей cached feeds имеет прежнюю
+дату; свежая signature verification не заявлена. Сначала подготовка rootfs не
+создала tmp/lock и задала неверный lists_dir option; после исправления повторены
+только установочные/runtime-проверки.
+
+Штатный autoremove SDK удалил подготовленные исходники после упаковки. Backup
+исправлен: сохранены оригинальный source/archive, рецепты, логи, тесты, IPK, ELF и
+tool identity; сверка уже удалённого подготовленного дерева не заявлена.
+Локальная копия проверена по SHA. После process/mount/resolved-path guards удалён
+только собственный root; исходные сервис PID777/worker845 сохранились.
+Native source/artifacts неизменны,14SHA/provenance PASS. Не повторялись несвязанные
+Rust matrix/native rebuild; push/deploy/release не выполнялись.
+
+Evidence: `release/certification/evidence/q31-sdk-build-20261008.json`;
+raw: `audit-debt-20260924/q31-sdk-build-20261008` вне репозитория.
+SDK upstream Rust bootstrap, production release-cut archive и успешный актуальный
+Actions/preflight остаются OPEN. Firmware — USER_EXCLUDED. Q31:3/5 IN_PROGRESS;
+полный аудит29/37(78.4%),8осталось. Q29/Q30/D06 без изменения статуса.

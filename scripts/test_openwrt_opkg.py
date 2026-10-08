@@ -20,7 +20,8 @@ SOURCE = Path(__file__).resolve().parents[1]
 class OpkgTests(unittest.TestCase):
     def setUp(self):
         template = Path(TEMPLATE).resolve()
-        self.assertTrue(str(template).startswith('/var/tmp/qeli-q31-openwrt-opkg-'))
+        self.assertEqual(template.parent.parent, Path('/var/tmp'))
+        self.assertTrue(template.parent.name.startswith(('qeli-q31-openwrt-opkg-', 'qeli-sdk-build-20261008.')))
         self.assertEqual(template.name, 'rootfs-template')
         self.assertEqual((template/'.qeli-opkg-audit').read_text().strip(),
                          'qeli-openwrt-opkg-fixture-v1')
