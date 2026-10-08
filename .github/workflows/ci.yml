@@ -98,6 +98,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
+          python3 -m unittest discover -s scripts -p 'test_fuzz_targets.py'
           python3 -m unittest discover -s scripts -p 'test_docker_publish_ref.py'
           python3 -m unittest discover -s scripts -p 'test_release_preflight.py'
           python3 scripts/test_macos_build_paths.py --bash /bin/bash --fixtures "$RUNNER_TEMP/qeli-build-path-fixtures"
@@ -358,6 +359,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_release_tag.py'
           python3 -m unittest discover -s scripts -p 'test_gen_checksums.py'
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
+          python3 -m unittest discover -s scripts -p 'test_fuzz_targets.py'
 
       - name: release certification contracts
         run: |
@@ -830,7 +832,10 @@ jobs:
       - name: Smoke each target (30s)
         working-directory: qeli
         run: |
-          for t in clienthello client_config websocket_head packet_decrypt realtls_record obfs_datagram quic udp_frag data_frag roaming_wire ip_packet; do
+          set -euo pipefail
+          inventory="$(python3 ../scripts/fuzz_targets.py)"
+          mapfile -t targets <<< "$inventory"
+          for t in "${targets[@]}"; do
             echo "=== fuzz $t ==="
             cargo +nightly fuzz run "$t" -- -max_total_time=30
           done
@@ -839,13 +844,26 @@ jobs:
   # across runs, so coverage accumulates (the push `fuzz-smoke` above is only a 30s
   # build-break check with no corpus). Per-target matrix runs in parallel; a crash
   # fails that target and uploads the reproducer as an artifact. Scheduled/manual only.
+  # One manifest-derived matrix shared with smoke; no parallel manual target list.
+  fuzz-targets:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Read all registered fuzz targets
+        id: targets
+        run: python3 ../scripts/fuzz_targets.py --github-output "$GITHUB_OUTPUT"
+
   fuzz-nightly:
+    needs: fuzz-targets
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [clienthello, client_config, websocket_head, packet_decrypt, realtls_record, obfs_datagram, quic, udp_frag, data_frag, roaming_wire, ip_packet]
+        target: ${{ fromJSON(needs.fuzz-targets.outputs.targets) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@4fd1da8b0805d2d2e936788875a7d65dbd677dc2 # nightly
