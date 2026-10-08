@@ -29,7 +29,7 @@ HEADERS = {'PACKAGES.tsv': 'name\tversion\tlicense\tarchive_sha256\tarchive_url'
 SCOPE = ("Cargo.lock superset: includes client, server, target-specific, build and test dependencies.\n"
          "Presence here does not imply linkage into every packaged binary.\n"
          "Upstream legal resources are preserved byte for byte; license expressions are not rewritten.\n"
-         "Rust standard library/toolchain notices and matching source publication require separate review.\n")
+         "Reviewed toolchain notices are retained in the optional policy-bound toolchains layer.\nMatching source publication and per-binary runtime linkage require separate review.\n")
 
 
 def sha(data: bytes) -> str:
@@ -98,6 +98,8 @@ def rows(data: bytes, header: str, fields: int) -> list:
 
 def check_bundle(repository: Path, bundle: Path | None = None) -> dict:
     bundle = bundle or repository / 'qeli/third-party-notices/rust'
+    if bundle.is_symlink():
+        raise ValueError('Symlink native legal bundle root')
     actual = {}
     for path in bundle.rglob('*'):
         if path.is_symlink():
@@ -109,6 +111,12 @@ def check_bundle(repository: Path, bundle: Path | None = None) -> dict:
             actual[name] = path.read_bytes()
     if not actual or sum(map(len, actual.values())) > MAX_TOTAL or any(not data for data in actual.values()):
         raise ValueError('Empty/oversized legal bundle')
+    # The toolchain layer is mandatory when its reviewed source policy exists.
+    # Minimal standalone Cargo fixtures without that policy remain supported.
+    toolchain_report = None
+    if (repository / 'qeli/third-party-notices/toolchain-sources.tsv').exists() or any(name.startswith('toolchains/') for name in actual):
+        from toolchain_licenses import check_bundle as check_toolchains
+        toolchain_report = check_toolchains(repository, bundle / 'toolchains')
     locked = lock_packages(repository)
     expected_binding = ('cargo_lock_lf_sha256=' + sha((repository / 'qeli/Cargo.lock').read_bytes().replace(b'\r\n', b'\n')) + '\nscope=full-cargo-lock\n').encode()
     if actual.get('BINDING.properties') != expected_binding:
@@ -147,6 +155,10 @@ def check_bundle(repository: Path, bundle: Path | None = None) -> dict:
             if origin != 'qeli!' + name:
                 raise ValueError('Invalid project resource origin')
             continue
+        if name.startswith('toolchains/'):
+            if toolchain_report is None or origin != 'toolchains!' + name.removeprefix('toolchains/'):
+                raise ValueError('Unreviewed toolchain legal origin')
+            continue
         parts = PurePosixPath(name).parts
         if len(parts) != 4 or parts[0] != 'files' or (parts[1], parts[2]) not in locked:
             raise ValueError('Unreviewed legal resource')
@@ -167,6 +179,7 @@ def check_bundle(repository: Path, bundle: Path | None = None) -> dict:
         raise ValueError('Incomplete/unindexed legal resources')
     return {'status': 'PASS', 'locked_packages': len(locked), 'resources': sum(counts.values()),
             'indexed_files': len(seen), 'bytes': sum(map(len, actual.values())), 'supplements': len(supplements),
+            'toolchains': toolchain_report,
             'scope': 'Full Cargo.lock superset; not per-binary linkage or complete release licensing'}
 
 
@@ -240,6 +253,13 @@ def generate(repository: Path, archives: Path, supplements_dir: Path, output: Pa
     save('BINDING.properties', ('cargo_lock_lf_sha256=' + sha((repository / 'qeli/Cargo.lock').read_bytes().replace(b'\r\n', b'\n')) + '\nscope=full-cargo-lock\n').encode(), 'qeli!BINDING.properties')
     save('SCOPE.txt', SCOPE.encode(), 'qeli!SCOPE.txt')
     save('Qeli-AGPL-3.0.txt', (repository / 'LICENSE').read_bytes().replace(b'\r\n', b'\n'), 'qeli!Qeli-AGPL-3.0.txt')
+    if (repository / 'qeli/third-party-notices/toolchain-sources.tsv').exists():
+        from toolchain_licenses import check_bundle as check_toolchains, BUNDLE as TOOLCHAIN_BUNDLE
+        source = repository / TOOLCHAIN_BUNDLE
+        check_toolchains(repository, source)
+        for file in sorted(path for path in source.rglob('*') if path.is_file()):
+            name = file.relative_to(source).as_posix()
+            save('toolchains/' + name, file.read_bytes(), 'toolchains!' + name)
     payloads['INDEX.tsv'] = (HEADERS['INDEX.tsv'] + '\n' + ''.join(f'{sha(payloads[name])}\t{name}\t{origins[name]}\n' for name in sorted(payloads))).encode()
     output.mkdir(parents=True)
     for name, data in payloads.items():

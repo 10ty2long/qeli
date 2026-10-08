@@ -180,6 +180,8 @@ abstract class GenerateLegalAssets : DefaultTask() {
     abstract val reviewedInventory: RegularFileProperty
     @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
     abstract val cargoLock: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val toolchainInventory: RegularFileProperty
     @get:InputDirectory @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val nativeLegalBundle: DirectoryProperty
     @get:InputFiles @get:PathSensitive(PathSensitivity.NAME_ONLY)
@@ -229,6 +231,10 @@ abstract class GenerateLegalAssets : DefaultTask() {
             .replace("\r\n", "\n").toByteArray(Charsets.UTF_8))
         check(native.resolve("BINDING.properties").readText(Charsets.UTF_8) ==
             "cargo_lock_lf_sha256=$lockSha\nscope=full-cargo-lock\n") { "Native legal Cargo.lock binding drift" }
+        val toolchainPolicy = toolchainInventory.get().asFile.readText(Charsets.UTF_8).replace("\r\n", "\n")
+        check(native.resolve("toolchains/SOURCES.tsv").readText(Charsets.UTF_8) == toolchainPolicy) {
+            "Native toolchain source inventory drift"
+        }
         val nativeRows = native.resolve("INDEX.tsv").readText(Charsets.UTF_8).trimEnd().lines()
         check(nativeRows.first() == "sha256\tpath\torigin") { "Invalid native legal index" }
         val nativeSeen = mutableSetOf<String>()
@@ -324,6 +330,7 @@ androidComponents.onVariants { variant ->
         apacheLicense.set(rootProject.layout.projectDirectory.file("gradle/licenses/Apache-2.0.txt"))
         reviewedInventory.set(rootProject.layout.projectDirectory.file("gradle/licenses/maven-runtime.tsv"))
         cargoLock.set(rootProject.layout.projectDirectory.file("../qeli/Cargo.lock"))
+        toolchainInventory.set(rootProject.layout.projectDirectory.file("../qeli/third-party-notices/toolchain-sources.tsv"))
         nativeLegalBundle.set(rootProject.layout.projectDirectory.dir("../qeli/third-party-notices/rust"))
         runtimeArtifacts.from(artifacts.map { values -> values.map { it.file } })
         artifactCoordinates.set(artifacts.map { values ->

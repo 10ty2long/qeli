@@ -421,12 +421,14 @@ python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/a
 
 CI runs these checks after assembling both APKs. APKs also include the shared
 `assets/licenses/native-rust/` Cargo.lock legal resource superset. The Gradle task
-checks its lockfile binding/index/checksums; the APK gate compares every native
+checks its lockfile binding/index/checksums and toolchain source inventory; the APK gate compares every native
 legal asset byte for byte with the common bundle. Updating Cargo.lock requires
 reviewing and regenerating this bundle, even when Maven dependencies are unchanged.
 See [common bundle maintenance](../LICENSING.md).
 
 The complete lockfile includes server/build/test/other-target dependencies and
-is not a per-binary linkage list. Rust std/toolchain notices, upstream source
-notices absent from binary archives, matching source publication, signatures and
+is not a per-binary linkage list. Reviewed Rust std, Zig, NDK and GCC/MinGW
+notices are preserved in `native-rust/toolchains/`. The external reviewed TSV is
+a Gradle InputFile, so policy drift invalidates cached legal assets. Upstream
+notices absent from this reviewed scope, matching source publication, signatures and
 full release admission remain separate checks.

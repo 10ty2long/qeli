@@ -127,7 +127,7 @@ def check_apk(apk: Path, repository: Path) -> dict:
             'reviewed_maven_coordinates': len(coordinates), 'indexed_assets': len(seen), 'original_archives': len(artifact_keys),
             'embedded_notices': notices,
             'native_bundle': native_report,
-            'scope': 'Project, Maven and full Cargo.lock legal resource packaging; per-binary linkage/toolchain/source/signature admission remains separate'}
+            'scope': 'Project, Maven and reviewed native Cargo/toolchain legal resource packaging; per-binary linkage/source/signature admission remains separate'}
 
 
 def main() -> int:
