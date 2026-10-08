@@ -376,8 +376,9 @@ an upgrade test fixture. Firmware and VPN connectivity were not exercised.
 
 This run used private official prebuilt Rust/std1.89.0 and a copied registry through
 the direct SDK package entry; upstream Rust bootstrap, cold/hermetic compilation,
-other SDK targets, production release pin/hash cut and a successful current Actions/
-preflight are still unqualified. Production source pin/hash are unchanged. Use the
+other SDK targets and a successful current Actions/preflight remain unqualified.
+The 8 October run did not update production source pin/hash; the subsequent
+9 October source-cut qualification below updates those inputs locally. Use the
 full SDK dependency graph for a release build; the audit's toolchain bootstrap shortcut
 is not release certification. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
@@ -410,3 +411,23 @@ intended inputs before retrying. Flags on unrelated documentation do not change
 this gate's input scope. Clean-source admission still requires the matching
 immutable source pin and actual SDK mirror archive; removing flags does not
 qualify a stale source cut. [Audit](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md).
+
+
+### Qualified local OpenWrt source cut (9 October 2026)
+
+The feed now pins the exact full local dev commit `f4b80a9a3052e9ec12c640036928d543f931dafa` and
+its actual SDK-generated `qeli-0.8.2.tar.zst` SHA256 `d6c112641de77b446d3a32a702221b247556b873c11f648087aebb57d3b209c5`.
+Two real SDK24.10.4 downloads from different private Git URLs and empty download
+caches produced identical archive bytes. SDK prepare verified the archive and
+all 3131 tracked files matched the pinned Git commit, including licenses
+and common native notices. This is a full original commit/tree; its private
+shallow mirror did not synthesize or rewrite a commit.
+
+The public `PKG_SOURCE_URL` is unchanged. GitHub returned HTTP422 for the pinned
+commit during qualification: publish that exact commit before using this recipe
+against GitHub. Local matching pin/hash is not proof of public availability or
+successful Actions, Rust bootstrap, package compilation or router networking.
+The release preflight source gate passes only with the matching SDK archive;
+missing or modified bytes still refuse admission. Every later qeli tree change
+requires a new immutable cut and fresh SDK archive hash. See the
+[qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
