@@ -26,7 +26,10 @@ def main():
     parser.add_argument('--reuse-owned-inputs')
     parser.add_argument('--vpn',action='store_true',help='qualify actual client traffic through owned packaged service')
     parser.add_argument('--installer', choices=['binary','deb'], help='run the complete one-shot installer instead of updater cases')
+    parser.add_argument('--writable-mtu', action='store_true', help='allow only the namespaced tcp_mtu_probing key for actual partial apply/restore')
     args=parser.parse_args()
+    if args.writable_mtu and not args.installer:
+        parser.error('writable-mtu requires the verified installer NET gate')
     for path,sha in [(args.package,args.package_sha256),(args.binary,args.binary_sha256)]:
         if hashlib.sha256(path.read_bytes()).hexdigest()!=sha:
             parser.error('explicit artifact hash mismatch')
@@ -90,7 +93,7 @@ def main():
                 assert run(['sha256sum',remote+'/'+target],'input SHA '+target)[0].split()[0]==sha
                 inputs[target]=sha
         (out/'inputs.json').write_text(json.dumps(inputs,indent=2))
-        text,rc=run(['timeout','--signal=TERM','--kill-after=20','600',*(['nsenter','--net=/run/netns/'+name,'unshare','--mount'] if args.installer else ['unshare','--mount','--net']),'python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name,*(['--vpn'] if args.vpn else []),*(['--installer',args.installer] if args.installer else [])],'actual apt/dpkg manager fixture',timeout=650,required=False)
+        text,rc=run(['timeout','--signal=TERM','--kill-after=20','600',*(['nsenter','--net=/run/netns/'+name,'unshare','--mount'] if args.installer else ['unshare','--mount','--net']),'python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name,*(['--vpn'] if args.vpn else []),*(['--installer',args.installer] if args.installer else []),*(['--writable-mtu'] if args.writable_mtu else [])],'actual apt/dpkg manager fixture',timeout=650,required=False)
         (out/'driver.log').write_text(text,encoding='utf8')
         print(text[-12000:],flush=True)
         with client.open_sftp() as sftp:

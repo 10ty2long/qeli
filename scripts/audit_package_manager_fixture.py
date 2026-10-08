@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--unit', required=True)
     parser.add_argument('--vpn', action='store_true', help='connect a real pinned client across update and rollback')
     parser.add_argument('--installer', choices=['binary','deb'])
+    parser.add_argument('--writable-mtu', action='store_true', help='allow only the namespaced tcp_mtu_probing key for actual partial apply/restore')
     args = parser.parse_args()
     work = args.root.resolve()
     assert work == args.root and work.parent == Path('/var/tmp')

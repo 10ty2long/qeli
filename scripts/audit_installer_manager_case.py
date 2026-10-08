@@ -36,6 +36,11 @@ def qualify(args, work, root, run, check, executable, copy_file, chroot, prop, r
     copy_file(work/'release-binary',root/'fixtures/new-qeli')
     copy_file(work/'qeli_0.8.2_amd64.deb',root/'fixtures/original.deb')
     (root/'fixtures/new-qeli').chmod(0o755)
+    if args.writable_mtu:
+        run(['sysctl','-w','net.ipv4.tcp_mtu_probing=0'],'seed only owned NET MTU value')
+        run(['mount','--bind','/proc/sys/net/ipv4/tcp_mtu_probing',str(root/'proc/sys/net/ipv4/tcp_mtu_probing')],'allow one per-NET kernel key')
+        for file in ['etc/sysctl.d/99-qeli-perf.conf','etc/modules-load.d/qeli-bbr.conf']:
+            (root/file).write_text('# administrator prior '+file+'\n');(root/file).chmod(0o644)
     setup=['QELI_PROFILE=fake-tls']
     if args.installer=='binary':
         setup += ['QELI_BIN=/fixtures/new-qeli','QELI_SRC=/source']
@@ -105,3 +110,22 @@ def qualify(args, work, root, run, check, executable, copy_file, chroot, prop, r
     check('installer never claims unqualified kernel tuning applied',
           'BBR/PMTU sysctl applied' not in text and 'BBR/PMTU probing applied' not in text and
           'BBR/PMTU probing.' not in text and 'kernel tuning incomplete' in text)
+
+    if args.writable_mtu:
+        check('real namespaced MTU probing changed from 0 to 1',
+              chroot(['sysctl','-n','net.ipv4.tcp_mtu_probing'],'actual applied MTU value')[1].strip()=='1')
+        receipts=list(links.glob('kernel-tuning-*'));assert len(receipts)==1
+        receipt=receipts[0]
+        check('per-run root recovery receipt retains actual MTU baseline',
+              'net.ipv4.tcp_mtu_probing=0\n' in (receipt/'runtime.before').read_text() and
+              receipt.stat().st_uid==0 and stat.S_IMODE(receipt.stat().st_mode)==0o700 and
+              all(p.stat().st_uid==0 and stat.S_IMODE(p.stat().st_mode)==0o600 for p in receipt.iterdir()))
+        rc, rollback=chroot(['bash','-e','/'+str((receipt/'restore.txt').relative_to(root))],
+                            'actual partial kernel rollback from generated instructions',required=False)
+        check('restore reports other readonly kernel writes unavailable',rc!=0)
+        check('actual MTU runtime value is restored to 0',
+              chroot(['sysctl','-n','net.ipv4.tcp_mtu_probing'],'actual restored MTU value')[1].strip()=='0')
+        for file in ['etc/sysctl.d/99-qeli-perf.conf','etc/modules-load.d/qeli-bbr.conf']:
+            check('prior persistent file bytes and mode restored '+file,
+                  (root/file).read_text()=='# administrator prior '+file+'\n' and
+                  stat.S_IMODE((root/file).stat().st_mode)==0o644)
