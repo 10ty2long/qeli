@@ -73,7 +73,7 @@ def main():
                 assert run(['sha256sum',remote+'/'+target],'input SHA '+target)[0].split()[0]==sha
                 inputs[target]=sha
         (out/'inputs.json').write_text(json.dumps(inputs,indent=2))
-        text,rc=run(['unshare','--mount','--net','python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name],'actual apt/dpkg manager fixture',timeout=600,required=False)
+        text,rc=run(['timeout','--signal=TERM','--kill-after=20','600','unshare','--mount','--net','python3','-u','-B',remote+'/fixture.py','--root',remote,'--unit',name],'actual apt/dpkg manager fixture',timeout=650,required=False)
         (out/'driver.log').write_text(text,encoding='utf8')
         print(text[-12000:],flush=True)
         with client.open_sftp() as sftp:

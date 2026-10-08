@@ -118,6 +118,7 @@ def main():
         for name in ['passwd','group']:
             rows=[line for line in Path('/etc/'+name).read_text().splitlines() if line.split(':')[0] in ['root','qeli','_apt']]
             (root/'etc'/name).write_text('\n'.join(rows)+'\n')
+        (root/'etc/nsswitch.conf').write_text('passwd: files\ngroup: files\nhosts: files\n')
         copy_file('/etc/debconf.conf', root/'etc/debconf.conf')
         records=Path('/var/lib/dpkg/status').read_text().split('\n\n')
         records=[entry for entry in records if not re.search(r'^Package: qeli$', entry, re.M)]
@@ -155,6 +156,9 @@ case "${1:-}" in
    case "$arg" in qeli|qeli.service) args+=('UNITNAME.service'); found=yes ;; *) args+=("$arg") ;; esac
   done
   [ "$found" = yes ] || exit 94
+  grep -Fx 'NetworkNamespacePath=/run/netns/UNITNAME' /run/qeli-audit-unit/UNITNAME.service >/dev/null
+  grep -Fx 'BindReadOnlyPaths=ROOTFS/usr/bin/qeli:/usr/bin/qeli' /run/qeli-audit-unit/UNITNAME.service >/dev/null
+  grep -Fx 'BindPaths=ROOTFS/etc/qeli:/etc/qeli' /run/qeli-audit-unit/UNITNAME.service >/dev/null
   case "$1" in enable|disable) args+=(--runtime) ;; esac
   set -- "${args[@]}"
   ;;
@@ -224,7 +228,7 @@ obf.mode = fake-tls
             nextpid=ready();check('real service restarted/recovered '+str(revision),nextpid!=pid);pid=nextpid
             check('state bytes/owner/mode preserved '+str(revision),state_snapshot()==baseline)
             if revision!=2:
-                check('failure reported as rollback '+str(revision),'rolled back' in output and 'Done —' not in output)
+                check('failure reported as rollback '+str(revision),'rolled back' in output and 'Done вЂ”' not in output)
             check('real installed ELF restored '+str(revision),hashlib.sha256((root/'usr/bin/qeli').read_bytes()).hexdigest()==hashlib.sha256((work/'release-binary').read_bytes()).hexdigest())
         cache=root/'var/cache/qeli/qeli_0.8.2-2_amd64.deb'
         check('rollback cache private and exact package',cache.stat().st_uid==0 and stat.S_IMODE(cache.stat().st_mode)==0o600 and hashlib.sha256(cache.read_bytes()).digest()==hashlib.sha256((root/'fixtures/qeli_0.8.2-2_amd64.deb').read_bytes()).digest())
