@@ -1233,6 +1233,9 @@ pub struct ServerState {
     /// Actual per-generation values exported to lifecycle hooks. In particular WAN names are
     /// the interfaces selected by auto-detection, not the placeholder text from the config.
     profile_hook_env: Arc<Mutex<HashMap<String, ProfileHookEnv>>>,
+    /// Conservatively retained for the supervisor lifetime: a restored INI does not
+    /// revoke commands already captured by a worker generation.
+    restore_hook_commands: std::sync::Mutex<HashSet<String>>,
     /// Cancelled generations keep resources and JoinSets here until worker shutdown joins them.
     deferred_profiles: crate::profile_teardown::Deferred<ProfileResources>,
     pub failed_auth: Arc<Mutex<FailedAuthTracker>>,
@@ -1338,6 +1341,7 @@ pub(crate) fn test_api_state(
         config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
+        restore_hook_commands: std::sync::Mutex::new(HashSet::new()),
         deferred_profiles: Default::default(),
         failed_auth: Arc::new(Mutex::new(FailedAuthTracker::new(true, 5, 300, 900))),
         worker_tx: None,
@@ -1350,6 +1354,30 @@ pub(crate) fn test_api_state(
 }
 
 impl ServerState {
+    fn remember_restore_hooks(&self, config: &ServerConfig) {
+        let mut commands = self
+            .restore_hook_commands
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        for profile in &config.profiles {
+            for command in [&profile.routing.post_up, &profile.routing.post_down] {
+                if !command.is_empty() {
+                    commands.insert(command.clone());
+                }
+            }
+        }
+    }
+
+    pub(crate) fn retained_restore_hooks(&self) -> Vec<String> {
+        self.remember_restore_hooks(&self.config);
+        self.restore_hook_commands
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .iter()
+            .cloned()
+            .collect()
+    }
+
     /// Refresh the supervisor's live `[web]` settings from the on-disk config, so
     /// a panel change to the admin password / IP allowlist / CSRF origins /
     /// public host takes effect immediately, without a full process restart.
@@ -3868,6 +3896,7 @@ async fn run_worker_inner(
         config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
+        restore_hook_commands: std::sync::Mutex::new(HashSet::new()),
         deferred_profiles: Default::default(),
         failed_auth,
         worker_tx: None,
@@ -4514,6 +4543,7 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
         config_write_lock: Arc::new(Mutex::new(())),
         profiles: Arc::new(RwLock::new(HashMap::new())),
         profile_hook_env: Arc::new(Mutex::new(HashMap::new())),
+        restore_hook_commands: std::sync::Mutex::new(HashSet::new()),
         deferred_profiles: Default::default(),
         failed_auth,
         worker_tx: Some(worker_tx),
@@ -4635,6 +4665,14 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
 
     // Supervise the data-plane worker child process.
     let spawn_worker = || {
+        // Remember before spawning, including configurations introduced by a local
+        // administrator between worker generations. Never release these references on
+        // worker exit: a concurrently stopping generation can still execute post_down.
+        if let Ok(text) = read_config_text(cfg_path) {
+            if let Ok(config) = crate::config::parse_server_config(&text) {
+                state.remember_restore_hooks(&config);
+            }
+        }
         tokio::process::Command::new(&exe)
             .arg("_worker")
             .arg("-c")
@@ -7634,6 +7672,36 @@ mod tests {
 
     fn ip(s: &str) -> IpAddr {
         s.parse().unwrap()
+    }
+
+    #[test]
+    fn restore_hooks_retain_startup_and_later_worker_generations() {
+        let mut config = ServerConfig::default();
+        let mut original = ProfileConfig {
+            name: "first".into(),
+            ..Default::default()
+        };
+        original.routing.post_down = "sh /etc/qeli/first.txt".into();
+        config.profiles.push(original);
+        let state = test_api_state(config, std::path::Path::new("/etc/qeli/server.ini"));
+        let mut later = ServerConfig::default();
+        let mut profile = ProfileConfig {
+            name: "second".into(),
+            ..Default::default()
+        };
+        profile.routing.post_up = "sh /etc/qeli/second.txt".into();
+        later.profiles.push(profile);
+        state.remember_restore_hooks(&later);
+        state.remember_restore_hooks(&ServerConfig::default());
+        state.remember_restore_hooks(&later);
+        let hooks: HashSet<_> = state.retained_restore_hooks().into_iter().collect();
+        assert_eq!(
+            hooks,
+            HashSet::from([
+                "sh /etc/qeli/first.txt".to_string(),
+                "sh /etc/qeli/second.txt".to_string()
+            ])
+        );
     }
 
     #[tokio::test]

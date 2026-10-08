@@ -533,9 +533,10 @@ pub async fn restore_backup(
     // OVERLAY: exact restore removes data, and that must never be what a plain "Restore"
     // click does. (Р1)
     let exact = q.exact.unwrap_or(false);
+    let retained_hooks = state.retained_restore_hooks();
     let result = crate::config_transaction::blocking(write_guard, move || {
         let _restore_guard = restore_guard;
-        restore_blocking(&body, exact, &config_path, until)
+        restore_blocking(&body, exact, &config_path, until, &retained_hooks)
     })
     .await;
     // A failed restore used to answer 200 {ok:false}: the panel rendered the error, but
@@ -749,6 +750,7 @@ fn restore_blocking(
     exact: bool,
     config_path: &str,
     until: Instant,
+    retained_hooks: &[String],
 ) -> Result<String, RestoreFailure> {
     archive_budget(until)?;
     if data.len() < 3 || data[0] != 0x1f || data[1] != 0x8b {
@@ -845,7 +847,7 @@ fn restore_blocking(
     }
 
     let staged_root = format!("{staging}/qeli");
-    if let Err(e) = vet_staged_tree(&staged_root, config_path) {
+    if let Err(e) = vet_staged_tree_with_hooks(&staged_root, config_path, retained_hooks) {
         stage_cleanup();
         return Err(e.into());
     }
@@ -899,6 +901,15 @@ fn restore_blocking(
             return Err(format!("staged tree unreadable: {e}").into());
         }
     };
+
+    if exact {
+        let hooks = hook_referenced_files(config_path, retained_hooks);
+        if let Err(error) = vet_hook_pruning(&archive_names, Path::new(MANAGED_BACKUP_ROOT), &hooks)
+        {
+            stage_cleanup();
+            return Err(error.into());
+        }
+    }
 
     if let Err(error) = archive_budget(until) {
         stage_cleanup();
@@ -1019,8 +1030,11 @@ fn restore_blocking(
 ///
 /// Only paths inside `/etc/qeli` matter — a hook pointing outside it is not something a
 /// restore can reach (and the docs already recommend keeping hooks there).
-fn hook_referenced_files(config_path: &str) -> hook_paths::HookFiles {
+fn hook_referenced_files(config_path: &str, retained_hooks: &[String]) -> hook_paths::HookFiles {
     let mut out = hook_paths::HookFiles::new(Path::new(MANAGED_BACKUP_ROOT));
+    for command in retained_hooks {
+        out.add_command(command);
+    }
     // The LIVE config path, not a hard-coded one.
     //
     // This read `/etc/qeli/server.conf` literally, so a server started with
@@ -1141,7 +1155,31 @@ fn vet_restored_runtime_files(
     Ok(())
 }
 
+fn vet_hook_pruning(
+    archive_names: &std::collections::HashSet<String>,
+    live_root: &Path,
+    hooks: &hook_paths::HookFiles,
+) -> Result<(), String> {
+    for entry in std::fs::read_dir(live_root).map_err(|e| format!("live tree unreadable: {e}"))? {
+        let entry = entry.map_err(|e| format!("live tree unreadable: {e}"))?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if hooks.contains(&name) && !archive_names.contains(&name) {
+            return Err(format!("refused: exact restore would delete '{name}' referenced by a live or retained routing hook; keep hooks outside /etc/qeli"));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
 fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
+    vet_staged_tree_with_hooks(root, config_path, &[])
+}
+
+fn vet_staged_tree_with_hooks(
+    root: &str,
+    config_path: &str,
+    retained_hooks: &[String],
+) -> Result<(), String> {
     // The live server accepts an arbitrary config filename.  Validate that exact
     // staged path as a server config even when it is `server.ini`/`qeli.cfg`; an
     // extension-based gate is not a security boundary.
@@ -1247,7 +1285,7 @@ fn vet_staged_tree(root: &str, config_path: &str) -> Result<(), String> {
     // Validate notification settings before publishing the staged tree.
     crate::config::notify::load_path(&std::path::Path::new(root).join("notify.ini"))
         .map_err(|error| format!("refused: restored notification config is invalid: {error}"))?;
-    let hook_files = hook_referenced_files(config_path);
+    let hook_files = hook_referenced_files(config_path, retained_hooks);
     vet_staged_dir(
         std::path::Path::new(root),
         std::path::Path::new("/etc/qeli"),
@@ -1298,7 +1336,7 @@ fn vet_staged_dir(
         // Refuse to replace a file an existing hook executes — see hook_referenced_files.
         if hook_files.contains(&name) {
             return Err(format!(
-                "refused: '{name}' is executed by a routing.post_up/post_down hook in the live                  config. Replacing it through a restore would run panel-supplied code as root,                  which the file-only hook rule exists to prevent. Update it on the server, or                  point the hook outside /etc/qeli."
+                "refused: '{name}' is executed by a routing.post_up/post_down hook in a live or retained                  worker configuration. Replacing it through a restore would run panel-supplied code as root,                  which the file-only hook rule exists to prevent. Update it on the server, or                  point the hook outside /etc/qeli."
             ));
         }
         let md = match entry.metadata() {
@@ -1954,12 +1992,46 @@ mod tests {
     }
 
     #[test]
+    fn exact_restore_preserves_retained_hook_dependencies_before_publication() {
+        let root = std::env::temp_dir().join(format!(
+            "qeli-hook-prune-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        std::fs::create_dir(root.join("scripts")).unwrap();
+        std::fs::write(root.join("scripts/down.txt"), "original").unwrap();
+        std::fs::write(root.join("ordinary.txt"), "prunable").unwrap();
+        let mut hooks = hook_paths::HookFiles::new(&root);
+        hooks.add_command(&format!("sh {}", root.join("scripts/down.txt").display()));
+        let absent = std::collections::HashSet::new();
+        let error = vet_hook_pruning(&absent, &root, &hooks).unwrap_err();
+        assert!(
+            error.contains("scripts") && error.contains("delete"),
+            "{error}"
+        );
+        assert_eq!(
+            std::fs::read(root.join("scripts/down.txt")).unwrap(),
+            b"original"
+        );
+        assert!(vet_hook_pruning(
+            &std::collections::HashSet::from(["scripts".into()]),
+            &root,
+            &hooks
+        )
+        .is_ok());
+        assert!(vet_hook_pruning(&absent, &root, &hook_paths::HookFiles::new(&root)).is_ok());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn expired_restore_never_reaches_archive_or_live_path_handling() {
         let error = restore_blocking(
             b"not gzip",
             false,
             "/does/not/exist/server.ini",
             Instant::now(),
+            &[],
         )
         .unwrap_err();
         assert!(
