@@ -346,3 +346,29 @@ Update metadata ограничены4MiB; журнал при восстанов
 
 Служба завершает прежний native runner/TUN перед explicit reconfiguration; Disconnect,
 revoke и destroy отменяют отложенный config. Ordinary Connect не обходит generation guard.
+
+
+## Dependency locks and integrity
+
+Обычная сборка использует три committed Gradle lockfile и
+`gradle/verification-metadata.xml`: проверяются транзитивные версии, SHA256 библиотек,
+плагинов и их POM/module metadata. Удаление verification metadata или plugin lock
+останавливает сборку; missing application lock отвергается STRICT mode.
+Проверка дистрибутива wrapper и wrapper JAR остаётся отдельной.
+
+При намеренном обновлении зависимостей сначала подготовьте production host JNI
+для JVM-тестов, как описано выше. Из `qeli-android/` выполните:
+
+```bash
+./gradlew --write-locks --write-verification-metadata sha256 assembleDebug assembleRelease assembleDebugAndroidTest testDebugUnitTest
+./gradlew --write-locks --write-verification-metadata sha256 lintRelease
+./gradlew -PqeliTestBuildType=release --write-locks --write-verification-metadata sha256 assembleReleaseAndroidTest printInstrumentationAbiClasspaths
+```
+
+Проверьте origins и SHA256 новых файлов, обе testBuildType, штатные сборки без
+write-флагов и lint. Коммитьте lockfiles/verification metadata вместе с зависимостями.
+Linux-generation не добавляет автоматически SHA AAPT2 других ОС: текущие Windows/
+macOS classifier JAR сверены с Google Maven; при смене AGP сверяйте их заново.
+Не добавляйте write-флаги в CI или broad trusted-artifact исключения.
+Неизвестный checksum требует проверки происхождения, а не отключения verification.
+[Результаты и ограничения Q34](../docs/ru/reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md).
