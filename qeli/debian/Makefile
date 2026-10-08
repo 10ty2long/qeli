@@ -96,6 +96,7 @@ stage:
 	install -m644 qeli.service $(DEB_DIR)/lib/systemd/system/qeli.service
 	install -d $(DEB_DIR)/etc/polkit-1/rules.d
 	install -m644 49-qeli.rules $(DEB_DIR)/etc/polkit-1/rules.d/49-qeli.rules
+	install -m755 preinst $(DEB_DIR)/DEBIAN/preinst
 	install -m755 postinst $(DEB_DIR)/DEBIAN/postinst
 	install -m755 prerm    $(DEB_DIR)/DEBIAN/prerm
 	install -m755 config    $(DEB_DIR)/DEBIAN/config

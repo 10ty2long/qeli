@@ -136,13 +136,15 @@ Three things worth knowing up front:
 - **Don't edit `*.conf.example` in place.** They are dpkg conffiles, so an upgrade will
   ask you "keep your version or take the new one". Copy them (`cp server.conf.example
   server.conf`) and edit the copy — then upgrades stay silent.
-- **`postinst` runs `chown -R qeli:qeli /etc/qeli` on every install.** Contents are
+- **`postinst` runs `chown -h -R -P qeli:qeli /etc/qeli` on every install.** Contents are
   untouched, ownership is not. If you deliberately set different permissions, re-check
   them after an upgrade.
 - **`apt remove` also runs `systemctl disable`.** After reinstalling you must re-enable
   autostart: `systemctl enable --now qeli`. And `apt purge` **leaves `/etc/qeli` behind**
   (the package has no `postrm`) — keys and password hashes stay on disk; remove them by
   hand if you don't want that.
+
+The package now rejects linked/non-directory state roots and linked/nonregular default users.conf before unpack; it leaves those paths for the administrator to repair. A new users.conf is empty0600; existing regular files retain their content and mode. On a booted systemd host, failure to apply the selected service user leaves the package half-configured; fix the reported cause and retry `sudo dpkg --configure qeli`. In a nonbooted chroot/container, an unconfirmed user change is warned and must be retried after boot. Removal refuses if the service cannot be stopped on a booted host; purge removes packaged examples but retains unmanaged config/users/identity. [Executed scope and limitations](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
 
 ### 3.2. Docker
 

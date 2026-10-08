@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v82 -->
+<!-- normative-sync: audit-debt-v83 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1187,3 +1187,5 @@ physical exclusions are not PASS.
 **8 October,F400–F403:** [Q33 Docker entrypoint](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): four baseline defects reproduce per dash/ash; default argv, explicit CLI config and owner-only/no-replace first-run files fixed.34 scenarios/46 actual chroot invocations PASS without skips; deterministic creator and copy/link failures covered. Docker image/daemon, Debian updater/install and full Q33 remain OPEN. Q31 SDK bootstrap deferred on measured2GB RAM/~9GB disk, below upstream8GB/30GB recommendation; no compiler FAIL/PASS claimed.29/37(78.4%),eight remain; exclusions unchanged.
 
 **8 October,F404–F411:** [Q33 server updater](../reports/AUDIT-Q33-SERVER-UPDATER.md): invalid local input, package admission, CRLF/cleanup, full transaction lock, exact install/downgrade identity, restart/PID health and unsafe legacy cache fixed.14 old regression scenarios FAIL;21 final methods/24 updater+1 installer invocations PASS with genuine dpkg fixtures. Exact CI command, ShellCheck and guarded cleanup PASS; production maintainer scripts/systemd/VPN/Docker remain OPEN. Q33 IN_PROGRESS;29/37(78.4%),eight remain; old debt14DONE+D06accepted, Q29/Q30/Q31/exclusions retained. No push/deploy/release.
+
+**8 October,F412–F416:** [Q33 Debian lifecycle](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md): private no-replace users creation, pre-unpack state guards, explicit service-user/debconf failure handling, stop-failure removal guard and adduser dependency fixed.10 baseline methods/12 expected failures;16 final methods/24 genuine lifecycle dpkg invocations PASS, exact CI command/lint PASS. Production make/scripts with inert binary/dependencies and account/debconf/systemctl seams; full installer/daemon/Docker OPEN. Own root SHA-backed-up and guarded-cleaned; service777/845 unchanged. Q33IN_PROGRESS,29/37(78.4%),eight remain; old debt14DONE+D06accepted,Q29/Q30/Q31/exclusions retained. No push/deploy/release.

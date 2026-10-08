@@ -470,3 +470,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: Docker entrypoint paths and first-run files](reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md)
 
 - [Q33: server updater transactions](reports/AUDIT-Q33-SERVER-UPDATER.md)
+
+- [Q33: Debian package lifecycle](reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md)
