@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-08",
+  "status": "PASS_F396_ORCHESTRATION_WITH_DOCUMENTED_SCOPE",
+  "source_digest": "b4dee1e196aa9aced266fff0bb0a2db1471c971622ee21f9e3b8b88e3f66d35a",
+  "qualification_source_commit": "26a7b503d603aaa5a9e64c78d57aea0f6d1038d3",
+  "base_worktree_commit": "c4877f845448181d623d0650ed7100395a59e33c",
+  "base_dev_commit": "7f4fac1747542b89142c6e7e188fb80c3f96a552",
+  "findings": [
+    "F396"
+  ],
+  "baseline": {
+    "whole_script_real_git": true,
+    "external_ci_lab_certification": "CONTROLLED_SEAMS_NOT_REAL_BUILDS",
+    "positive_control_pass": 1,
+    "mixed_commit_false_pass_reproduced": 3
+  },
+  "verification": {
+    "whole_program_new_methods": 12,
+    "windows_related_methods": 81,
+    "windows_pass": 78,
+    "windows_preexisting_skips": 3,
+    "linux": {
+      "suites": [
+        {
+          "suite": "test_release_preflight.py",
+          "rc": 0,
+          "methods": 12,
+          "uid": 65534,
+          "skipped": 0
+        },
+        {
+          "suite": "test_release_ci_gate.py",
+          "rc": 0,
+          "methods": 18,
+          "uid": 65534,
+          "skipped": 0
+        },
+        {
+          "suite": "test_router_release_gate.py",
+          "rc": 0,
+          "methods": 15,
+          "uid": 65534,
+          "skipped": 0
+        },
+        {
+          "suite": "test_release_certification.py",
+          "rc": 0,
+          "methods": 11,
+          "uid": 65534,
+          "skipped": 0
+        }
+      ],
+      "inputs_unchanged": 328
+    },
+    "backup_and_cleanup": {
+      "root": "/var/tmp/qeli-preflight-identity-20261008.KomlFI",
+      "backup_sha256": "e0c2b0c02ee0d3da9f0b6d40f51805e8fc8720c7bcd0cee149f7422550dbfeef",
+      "process_mount_path_guards": "PASS",
+      "removed": "OWNED_ROOT_REMOVED"
+    }
+  },
+  "source_reconciliation": {
+    "rust_tree": "bfa0cfc6b25f7c2ddd1a15799bcf75ecf80f38e8",
+    "rust_and_native_paths_unchanged_from_base": true,
+    "sdk_package_recipe_unchanged": true,
+    "native_provenance": "PASS_UNCHANGED_INPUTS_PREVIOUS_BUILD_SCOPE",
+    "production_pin_and_hash": "UNCHANGED"
+  },
+  "audit": {
+    "full_done": 29,
+    "full_total": 37,
+    "full_percent": 78.4,
+    "q31_criteria_done": 3,
+    "q31_criteria_total": 5,
+    "q31_status": "IN_PROGRESS",
+    "remaining": "SDK Rust bootstrap/build; production release-cut source archive; successful exact-commit CI/full preflight",
+    "old_debt": "14 DONE + D06 ACCEPTED_LIMITATION",
+    "retained": [
+      "Q29 SIGKILL FAIL; auto-null DnsResolver ENONET",
+      "Q30 Apple runtime exclusions/callback scope",
+      "Mac/Xcode/iOS, real firmware, Windows network VM USER_EXCLUDED",
+      "D06 BPF cancelled"
+    ]
+  },
+  "limits": [
+    "Whole-program external gates controlled in regression fixtures; no new CI/cross/SDK runtime claim",
+    "Ignored caches and edits reverted wholly within one gate are not guarded",
+    "Boundary checks do not lock Git or authorize later publishing",
+    "Historic 41 release cases and prior supplements reused with their original scopes; metadata digest rebind is not fresh execution"
+  ],
+  "raw_directory": "audit-debt-20260924/q31-preflight-identity-20261008",
+  "raw_seal": "PENDING_FINAL_READ_ONLY_RUN"
+}
