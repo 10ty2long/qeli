@@ -114,8 +114,61 @@ Debian: `/usr/share/doc/qeli/licenses/rust/`; OpenWrt:
 с отдельными бинарями. Windows/macOS дополнительно копируют MPL клиента;
 общий комплект содержит AGPL ядра. При распространении сохранять sidecar/resources.
 CI проверяет общий комплект, а APK gate сверяет также готовые APK.
-Rust std/toolchain, .NET notices, source publication и подписи остаются отдельными
+Rust std/toolchain, source publication и подписи остаются отдельными
 проверками; этот комплект не является заявлением полной юридической квалификации.
+
+
+## Общий комплект .NET legal resources
+
+`qeli-shared/third-party-notices/dotnet/` содержит notices всех reviewed NuGet
+lock-графов desktop-клиентов и четырёх runtime-пакетов default publish из
+`qeli-shared/third-party-notices/nuget-runtime.tsv`. Это superset, включая
+Debug/tools/Linux/другие RID; это не перечень linkage каждого executable.
+Windows/macOS publish сохраняет весь каталог как `Legal/DotNet/`, рядом с
+`Legal/NativeRust/` и MPL клиента. При создании Windows архивов сохранять весь
+`Legal`; macOS app включает его в `Contents/MacOS/Legal/`. CI проверяет оба
+RID/Windows-варианта после publish; `build_app.sh` проверяет notices до сборки app.
+
+Проверка без SDK/сети: `python3 scripts/managed_licenses.py`. Она связывает bundle
+со всеми reviewed `packages*.lock.json`, `global.json` и runtime TSV и проверяет
+индекс/SHA, nuspec identity/license, supplements и отдельную OFL Inter.
+NuGet license expression не заменяет найденные upstream LICENSE/NOTICE/copyright.
+В `Avalonia.Fonts.Inter` код объявлен MIT, а встроенные шрифты — SIL OFL 1.1;
+сохранены оба текста и copyright из реальных font name records.
+
+Обновление: обновить locks и reviewed runtime TSV после квалификации default
+publish графов, проверить архивы по official NuGet catalog SHA512, подготовить
+`admissions.tsv` (header `id\tversion\tcontent_hash\tarchive_sha256\tpath`,
+нижний регистр id/version, абсолютный path) и reviewed upstream resources.
+Signed `.nupkg` SHA512 архива отличается от NuGet `contentHash`: генератор
+вычисляет contentHash через официальный API NuGet из **точного** SDK global.json
+и проверяет CMS signature integrity. Это не проверка certificate trust/revocation.
+SDK helper создаётся вне checkout, не имеет PackageReferences и собирается с
+пустым списком NuGet packageSources.
+
+```bash
+python3 scripts/managed_licenses.py --admissions /path/to/admissions.tsv --upstream /path/to/reviewed-upstream --output /path/to/new-bundle --dotnet /path/to/pinned-sdk/dotnet
+```
+
+Генератор пишет только в новый каталог. `receipts.json` имеет schema=1 и rows с
+repository (`owner/repo`), commit, upstream_path, exact raw URL, sha256, payload
+и binding=`nuspec-vcs`; все receipts должны использоваться. Commit/repository
+сверяются с опубликованным nuspec. Исходные байты не нормализуются. Для текущего
+MicroCom.Runtime 0.11.0 нет packaged VCS commit: supplement явно обозначен
+`publisher-declaration; no nuspec-vcs commit`, historical LICENSE совпадает с
+MIT/copyright издателя; точная source-to-binary привязка не утверждается.
+
+Inter дополнительно требует `inter-font-proof.json` (status=PASS, rows с path,
+url, sha256, git_blob, names) и шесть upstream TTF с исходными basename. Генератор
+перепроверяет Git blob/SHA, SFNT name records 0/5/13/14 и наличие точных байтов во
+всех packaged TFM DLL; OFL receipt связывается с git-version шрифта. JSON здесь
+служит build evidence; конфигурации VPN остаются INI.
+
+После review заменить общий bundle, выполнить checker/tests и publish для двух
+Windows и двух macOS вариантов, проверить готовые `Legal/DotNet` каталоги.
+`build_app.sh` использует Python 3.11+ (`PYTHON` позволяет выбрать executable).
+Иные framework/runtime overrides, toolchain notices, source publication,
+сертификатные подписи и full release admission квалифицируются отдельно.
 
 ## SPDX-заголовки (план)
 

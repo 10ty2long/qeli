@@ -501,3 +501,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: Android project licenses and Maven notices](reports/AUDIT-Q34-ANDROID-NOTICES.md)
 
 - [Q34: common Cargo legal resources](reports/AUDIT-Q34-NATIVE-NOTICES.md)
+
+- [Q34: .NET notices and embedded Inter font license](reports/AUDIT-Q34-MANAGED-NOTICES.md)
