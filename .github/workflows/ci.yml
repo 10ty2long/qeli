@@ -86,6 +86,10 @@ jobs:
         run: |
           python3 scripts/managed_licenses.py
           python3 -m unittest discover -s scripts -p 'test_managed_licenses.py'
+      - name: Check and test pinned toolchain legal resources
+        run: |
+          python3 scripts/toolchain_licenses.py
+          python3 -m unittest discover -s scripts -p 'test_toolchain_licenses.py'
       - name: Check common Cargo legal resources
         run: python3 scripts/native_licenses.py
       - name: Test native reproducibility contract

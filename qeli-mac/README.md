@@ -360,3 +360,8 @@ assembly (Python 3.11+, select executable with `PYTHON`). Embedded Inter fonts
 have their own SIL OFL 1.1/copyright, separate from Avalonia code MIT.
 Validate and update the bundle as described in [LICENSING](../LICENSING.md).
 This is a full reviewed dependency superset, not a per-executable linkage list.
+
+The common `Legal/NativeRust/toolchains/` layer also preserves reviewed Rust
+stdlib, Zig, NDK and GCC/MinGW resources. Keep the entire native bundle. Its
+source/version catalog is checked offline; matching-source publication and
+per-binary runtime linkage remain separate qualification. See [maintenance](../LICENSING.md).

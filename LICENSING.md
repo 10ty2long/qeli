@@ -79,7 +79,8 @@ licenses bans sources` с политикой `qeli/deny.toml`: новые нер
 
 APK также включает неизменённый общий комплект Cargo legal resources. Gate
 проверяет его побайтное совпадение с репозиторием. Доступность соответствующих
-исходников, toolchain notices и полное release admission проверяются отдельно.
+исходников и полное release admission проверяются отдельно; reviewed toolchain
+notices теперь входят в общий native-комплект.
 Лицензии каталогов не изменяются.
 
 ## Общий комплект Cargo legal resources
@@ -114,9 +115,54 @@ Debian: `/usr/share/doc/qeli/licenses/rust/`; OpenWrt:
 с отдельными бинарями. Windows/macOS дополнительно копируют MPL клиента;
 общий комплект содержит AGPL ядра. При распространении сохранять sidecar/resources.
 CI проверяет общий комплект, а APK gate сверяет также готовые APK.
-Rust std/toolchain, source publication и подписи остаются отдельными
-проверками; этот комплект не является заявлением полной юридической квалификации.
+Toolchain resources включены в общий комплект, см. ниже. Source publication и
+подписи остаются отдельными проверками; это не полная юридическая квалификация.
 
+
+## Notices стандартных библиотек и runtime toolchain
+
+`qeli/third-party-notices/rust/toolchains/` — часть общего native-комплекта,
+который копируют все существующие рецепты клиентов и пакетов. Сохранены 65
+оригинальных legal resources: Rust stable/nightly и OpenWrt compatibility Rust,
+Zig/libc/libc++/unwind, Android NDK, GCC runtime exception и MinGW.
+Это conservative superset targets/build resources, не перечень linkage каждого
+бинарника. Наличие GPL/OFL/другого текста в license pool не меняет лицензию Qeli.
+Rust `COPYRIGHT-library.html` и companion `licenses/*.txt` сохранены с
+оригинальной структурой каталогов; проверенные HTML содержат встроенные тексты.
+
+Проверка без SDK/сети: `python3 scripts/toolchain_licenses.py` и общий
+`python3 scripts/native_licenses.py`. Reviewed `toolchain-sources.tsv` связывает
+component/version, exact source URL/member и SHA256 original bytes. Rust/Zig
+archive SHA256 проверен целиком; NDK проверен по HTTPS ZIP member ranges/CRC,
+**без** утверждения полного archive SHA256. GCC/MinGW resources взяты из точного
+Git commit; downstream patches и linkage старых бинарей этим не подтверждаются.
+GCC minor старой native metadata не закреплён: observed lab source GCC14.2/MinGW12
+обозначен явно. Rust1.89 относится к SDK compatibility fixture и не закрывает
+публикацию immutable OpenWrt SDK source cut.
+
+Обновление: квалифицировать архивы/члены, обновить reviewed TSV, собрать payloads
+`<sha256>.txt` в новый каталог. Header TSV:
+`component\tversion\tsource_url\tarchive_verification\tarchive_sha256\tmember\tsha256`.
+Допустимые verification значения: `full-archive-sha256`,
+`official-https-zip-member-range-crc`, `exact-git-blob`; для последних двух вместо
+archive SHA используются `not-whole-archive-verified`, `not-archive-source`.
+Генератор пишет только новый каталог:
+
+```bash
+python3 scripts/toolchain_licenses.py --resources /path/to/reviewed-resources --output /path/to/new-toolchains
+```
+
+После review заменить embedded `rust/toolchains`, затем регенерировать внешний
+native INDEX через Cargo bundle generator, приведённый выше. Generator использует
+проверенный embedded toolchain слой как единственный источник. BINDING.json здесь
+— build metadata; конфиги VPN остаются INI. CI требует внешний reviewed TSV и
+проверяет toolchain отдельно, общий checker проверяет оба слоя. Android Gradle
+объявляет TSV InputFile, проверяет его точное совпадение с embedded SOURCES.tsv,
+Cargo binding/index/SHA; изменение TSV инвалидирует cached legal assets. APK gate
+дополнительно проверяет version/source binding и оригинальные bytes каждого файла.
+Windows/macOS, iOS, Debian/OpenWrt и Keenetic сохраняют слой внутри существующих
+common bundle paths. Source publication, dynamic system libraries, подписи и
+full release admission квалифицируются отдельно.
 
 ## Общий комплект .NET legal resources
 
@@ -167,7 +213,7 @@ url, sha256, git_blob, names) и шесть upstream TTF с исходными b
 После review заменить общий bundle, выполнить checker/tests и publish для двух
 Windows и двух macOS вариантов, проверить готовые `Legal/DotNet` каталоги.
 `build_app.sh` использует Python 3.11+ (`PYTHON` позволяет выбрать executable).
-Иные framework/runtime overrides, toolchain notices, source publication,
+Иные framework/runtime overrides, source publication,
 сертификатные подписи и full release admission квалифицируются отдельно.
 
 ## SPDX-заголовки (план)
