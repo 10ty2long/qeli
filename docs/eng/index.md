@@ -468,3 +468,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q32: bounded logs and trace publication](reports/AUDIT-Q32-LOGS-TRACE.md)
 - [AUDIT-Q32-NOTIFICATIONS](reports/AUDIT-Q32-NOTIFICATIONS.md)
 - [Q33: Docker entrypoint paths and first-run files](reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md)
+
+- [Q33: server updater transactions](reports/AUDIT-Q33-SERVER-UPDATER.md)
