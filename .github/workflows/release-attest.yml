@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
   id-token: write
   attestations: write
 
@@ -31,26 +32,24 @@ jobs:
       - name: Check out the exact release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: refs/tags/${{ github.event.release.tag_name || inputs.tag }}
           fetch-depth: 0
 
-      - name: Refuse a tag/source/version mismatch
+      - name: Admit the exact tag, version and successful CI commit
         id: meta
-        shell: bash
-        run: |
-          set -euo pipefail
-          tagged_commit="$(git rev-list -n1 "$TAG")"
-          checked_commit="$(git rev-parse HEAD)"
-          test "$tagged_commit" = "$checked_commit"
-          version="$(python3 -c "import tomllib; print(tomllib.load(open('qeli/Cargo.toml','rb'))['package']['version'])")"
-          test "$TAG" = "v$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "commit=$checked_commit" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/release_tag.py --tag "$TAG" --require-ci --github-output "$GITHUB_OUTPUT"
+
+      - name: Validate common native legal resources before building
+        run: python3 scripts/native_licenses.py
 
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
         with:
           version: 0.13.0
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: ${{ steps.meta.outputs.rust_toolchain }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
@@ -86,6 +85,7 @@ jobs:
           trap 'rm -rf "$extracted"' EXIT
           dpkg-deb -x "${{ steps.pkg.outputs.source }}" "$extracted"
           "$extracted/usr/bin/qeli" version
+          python3 scripts/native_licenses.py --bundle "$extracted/usr/share/doc/qeli/licenses/rust"
           for name in server server-multiprofile server-ipv6 server-maxobf users client client-reality client-maxobf; do
             test -f "$extracted/etc/qeli/$name.conf.example"
           done

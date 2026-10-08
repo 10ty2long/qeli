@@ -16,7 +16,7 @@ on:
       # matches is worse than no job: it shows up green having run nothing. (R-05/R-06)
       - 'qeli-ios/**'
       - 'native-libs/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/**'
       # The docs job gates these, and without them a docs-only change ran NO CI at
       # all: the gate existed but could never be triggered by the thing it guards.
       - 'docs/**'
@@ -44,7 +44,7 @@ on:
       # matches is worse than no job: it shows up green having run nothing. (R-05/R-06)
       - 'qeli-ios/**'
       - 'native-libs/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/**'
       # The docs job gates these, and without them a docs-only change ran NO CI at
       # all: the gate existed but could never be triggered by the thing it guards.
       - 'docs/**'
@@ -353,6 +353,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: docs checks
         run: python3 scripts/check_docs.py
+      - name: Release publication admission contracts
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_release_tag.py'
+          python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
+
       - name: release certification contracts
         run: |
           python3 -m unittest discover -s scripts -p 'test_release_certification.py'

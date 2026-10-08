@@ -23,6 +23,14 @@ class AdmissionTests(unittest.TestCase):
             errors = gate.check_release_ci(Path("fixture-root"), branch, lambda _: None)
         return errors, query
 
+    def test_exact_commit_selector_does_not_need_a_branch(self):
+        outputs = [subprocess.CompletedProcess([],0,HEAD,"") ,
+                   subprocess.CompletedProcess([],0,json.dumps([{"headSha":HEAD,"status":"completed","conclusion":"success"}]),"")]
+        with patch.object(gate.subprocess,"run",side_effect=outputs) as query:
+            self.assertEqual(gate.check_release_ci(Path("fixture-root"),None,lambda _:None,by_commit=True),[])
+        command=query.call_args_list[1].args[0]
+        self.assertIn("--commit",command);self.assertEqual(command[command.index("--commit")+1],HEAD);self.assertNotIn("--branch",command)
+
     def test_exact_green_commit_passes(self):
         errors, query = self.check()
         self.assertEqual(errors, [])

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v170 -->
+<!-- normative-sync: full-system-audit-v171 -->
 
 **Current result, 8 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2476,3 +2476,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **8 October,F473/Q34-F027:** [Toolchain runtime/stdlib notices](../reports/AUDIT-Q34-TOOLCHAIN-NOTICES.md):65 original reviewed Rust/Zig/NDK/GCC-MinGW resources,69 embedded files;533 common native files. Offline policy/version/SHA binding,Gradle source InputFile,common CI and all packaging paths. Qualification and exact scope in report. Source publication,old GCC minor linkage/NDK whole archive/OpenWrt immutable source cut/final Actions-signatures-release remain OPEN. Nativee3fb/14SHA/protected preserved;Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F474–F477/Q34-F028–F031:** [Release publication gates](../reports/AUDIT-Q34-PUBLICATION-GATES.md):actual tag/clean-source/exact-commit CI admission beforebuild,shared Rust pin,Docker reviewed base digests/common notices,extractedDEB notices gate,allworkflow CI filters.86methods/baselineactualGit/CLI/YAMLparse PASS;official metadata and401/currentCIabsence limits in report. Fullsourcepublication/OpenWrt immutablecut/wholeDockerbuild/currentActions/signatures/release OPEN;nativee3fb/14SHA/protected unchanged,labs untouched. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

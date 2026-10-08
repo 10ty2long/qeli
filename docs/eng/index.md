@@ -505,3 +505,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: .NET notices and embedded Inter font license](reports/AUDIT-Q34-MANAGED-NOTICES.md)
 
 - [Q34: toolchain runtime and standard-library notices](reports/AUDIT-Q34-TOOLCHAIN-NOTICES.md)
+
+- [Q34: release source admission and Docker notices](reports/AUDIT-Q34-PUBLICATION-GATES.md)

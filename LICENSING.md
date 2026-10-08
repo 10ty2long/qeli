@@ -14,6 +14,7 @@
 | `qeli-mac/` | MPL 2.0 | `MPL-2.0` | исходники macOS-клиента (UI/glue) |
 | `qeli-ios/` | MPL 2.0 | `MPL-2.0` | исходники iOS-клиента (UI/glue) |
 | `qeli/third-party-notices/rust/` | по upstream | — | неизменённые тексты сторонних Cargo-зависимостей; их лицензии не наследуют AGPL каталога |
+| `qeli-shared/third-party-notices/dotnet/` | по upstream | — | неизменённые NuGet/runtime/font legal resources, не AGPL каталога |
 | `native-libs/third-party/` | по upstream | — | сторонние бинари (напр. Wintun) под их лицензиями |
 
 Тексты: корень и `qeli/` — `LICENSE` (AGPL-3.0); каждый клиентский каталог — свой
@@ -223,3 +224,35 @@ Windows и двух macOS вариантов, проверить готовые 
 принять стандарт **REUSE** (`reuse lint` в CI) для машиночитаемой проверки. Выбор
 `-only` против `-or-later` для AGPL — на усмотрение правообладателя (FSF рекомендует
 `-or-later`; `-only` даёт больше контроля).
+
+## Публикация исходников и проверки release workflow
+
+GitHub предоставляет source ZIP/tar для тега release. Для воспроизводимой ссылки
+сохраняйте полный source commit вместе с release/build evidence; mutable имя тега
+не заменяет commit. Автоматический архив репозитория не доказывает доступность
+соответствующих исходников всех third-party binaries или отсутствие downstream
+patches. OpenWrt SDK archive/hash admission остаётся отдельной проверкой.
+
+`release-attest.yml` checkout использует полный `refs/tags/...`. До установки
+build tools выполняется `scripts/release_tag.py --tag TAG --require-ci`: требуется
+реальный local tag на HEAD, совпадение committed Cargo.version, clean source без
+assume-unchanged/skip-worktree и успешный CI именно этого commit. Missing/stale/
+failed CI блокирует выпуск. Rust берётся из общего native pin. После сборки DEB
+checker сверяет extracted common native legal bundle; только затем идут checksums,
+attestation и upload. `release_preflight.py` по-прежнему нужен перед полным выпуском
+со всеми платформами/SDK/certification; tag workflow не заменяет этот полный gate.
+Старые теги без новых admission scripts/notices требуют собственного проверенного
+рецепта; автоматического legacy обхода нет. Проверка локально без CI/публикации:
+
+```bash
+python3 scripts/release_tag.py --tag v0.8.2
+```
+
+Docker сохраняет AGPL, LICENSING и общий Cargo/toolchain bundle в
+`/usr/share/doc/qeli/`, notices — в `licenses/rust/`. Publication workflow проверяет
+common bundle до login/build. Rust builder и Debian runtime base images закреплены
+по multiarch digest из official Docker Hub metadata. Версия Rust соответствует
+общему pin; изменение pin требует пересмотра builder image и notices. APT packages
+остаются live repository inputs, base digest не делает весь образ воспроизводимым.
+Сохраняйте Debian package copyright resources и соответствующие build/source links.
+Перед локальной сборкой Docker выполните `python3 scripts/native_licenses.py`.

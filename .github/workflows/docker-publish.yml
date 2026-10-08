@@ -29,6 +29,9 @@ jobs:
         id: ref
         run: python3 -B scripts/docker_publish_ref.py
 
+      - name: Validate native legal resources before Docker publication
+        run: python3 scripts/native_licenses.py
+
       # QEMU lets the single amd64 runner build the arm images (emulated). A Rust
       # compile under emulation is slow — a release build of all three arches can
       # take a while; trim `platforms` below if you only need some.
