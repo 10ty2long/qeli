@@ -136,9 +136,18 @@ c=http.client.HTTPConnection('127.0.0.1',24880,timeout=5);c.request('GET','/audi
    expected=mask | 11 if user=='root' else mask
    check('bounded capabilities restored for '+user,int(effective['CapBnd'],16)==expected and int(effective['CapAmb'],16)==(0 if user=='root' else mask) and effective['NoNewPrivs']=='1',effective)
    if user=='root':
-    request="import http.client,json; c=http.client.HTTPConnection('127.0.0.1',24880,timeout=8);c.request('POST','/audit/api/login',json.dumps({'username':'admin','password':'synthetic-audit-password'}),{'Content-Type':'application/json'});r=c.getresponse();r.read();assert r.status==200;cookie=r.getheader('Set-Cookie').split(';',1)[0];c.request('GET','/audit/api/config',headers={'Cookie':cookie});r=c.getresponse();v=json.loads(r.read());assert r.status==200;c.request('PUT','/audit/api/config',json.dumps({'config':v['config'],'expected_revision':v['revision']}),{'Cookie':cookie,'Content-Type':'application/json'});r=c.getresponse();v=json.loads(r.read());assert r.status==200 and v.get('ok') is True,v;print('saved');c.close()"
-    check('root service atomically saves qeli-owned private config',ns(['python3','-B','-c',request],'root config API save')=='saved')
-    check('root save preserves qeli owner and0600',checked(['stat','-c','%u %a',remote+'/etc/server.conf'],'config metadata after root save')==str(uid)+' 600')
+    login="import http.client,json; c=http.client.HTTPConnection('127.0.0.1',24880,timeout=8);c.request('POST','/audit/api/login',json.dumps({'username':'admin','password':'synthetic-audit-password'}),{'Content-Type':'application/json'});r=c.getresponse();r.read();assert r.status==200;cookie=r.getheader('Set-Cookie').split(';',1)[0];c.request('GET','/audit/api/config',headers={'Cookie':cookie});r=c.getresponse();v=json.loads(r.read());assert r.status==200;c.request('PUT','/audit/api/config',json.dumps({'config':v['config'],'expected_revision':v['revision']}),{'Cookie':cookie,'Content-Type':'application/json'});r=c.getresponse();v=json.loads(r.read());"
+    denied=login+"assert v.get('ok') is False and 'trusted config file' in v.get('error',''),v;print('trust denied');c.close()"
+    config_before=checked(['sha256sum',remote+'/etc/server.conf'],'config SHA before trust rejection').split()[0]
+    check('root cannot promote qeli-owned config into trusted commands',ns(['python3','-B','-c',denied],'root config trust denial')=='trust denied')
+    check('rejected root save preserves config bytes',checked(['sha256sum',remote+'/etc/server.conf'],'config SHA after trust rejection').split()[0]==config_before)
+    # The administrator explicitly makes this owned fixture root-trusted. Do not relax command trust.
+    checked(['chown','0:0',remote+'/etc/server.conf'],'administrator approves owned config for root')
+    request=login+"assert r.status==200 and v.get('ok') is True,v;print('saved');c.close()"
+    check('root service saves trusted config inside qeli-owned private directory',ns(['python3','-B','-c',request],'root trusted config API save')=='saved')
+    check('root save preserves root owner and0600',checked(['stat','-c','%u %a',remote+'/etc/server.conf'],'config metadata after root save')=='0 600')
+    checked(['chown',str(uid)+':'+str(gid),remote+'/etc/server.conf'],'restore owned config daemon account')
+
 
   checked(['systemctl','stop',unit],'stop before invalid config')
   with lab.open_sftp() as sf:
