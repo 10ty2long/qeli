@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v92 -->
+<!-- normative-sync: audit-debt-v93 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1336,3 +1336,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): настоящий portable release/jemalloc и production package; реальные apt/dpkg/debconf/CLI/systemd с частной DB и явным unit mapping, финальные 24 PASS. Успешное обновление, package rollback после неисправного unit и повреждённого ELF, exact configured DB, сохранение bytes/UID/mode config/users/identity/receipts/backups, remove/purge. Три fixture FAIL сохранены; audit helpers исправлены, продукт не изменён. Закрыт этот scoped gate; whole binary/kernel installer, release VPN roundtrip, Docker и Actions OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), осталось 8; предыдущие статусы/исключения сохранены.
 
 **8 октября:** release VPN и package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Матрица extracted production release ELF:18 сценариев/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Реальный pinned H-1 client через пакетную службу:36 PASS, fresh/upgrade/оба rollback, exact TUN route и clean stop. Исходный fixture trust FAIL сохранён, show-identity выполняется от qeli. Продукт/native не менялись; стенд восстановлен, roots SHA-archived/guard-cleaned. Release data-plane и package/service/VPN gate закрыты; full binary/kernel installer и Docker/Actions остаются OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,осталось8; прежние ограничения сохранены.
+
+**8 октября,F445 / Q33-F048:** [Полный installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): подтверждён и исправлен ложный sysctl success; private per-run snapshots/prior files/restore instructions, readback и early tuning path guards. Full QELI_BIN+QELI_SRC и production QELI_DEB: по24 PASS с actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 и persistent files restoration. Linux136 regressions без skips/lint PASS, CI tuning добавлен. Первые FAIL сохранены; root777/845/network/kernel не менялись. Full positive installer и partial kernel recovery gate закрыты, глобальная запись10keys/BBR load/reboot/пустой OS bootstrap не заявлены; Docker/Actions и прежние ограничения остаются OPEN. Q33IN_PROGRESS29/37DONE78.4%,осталось8; без push/deploy/release.

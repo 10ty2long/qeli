@@ -1,6 +1,6 @@
 # Q33: actual portable DEB, update and rollback
 
-<!-- normative-sync: q33-package-manager-v2 -->
+<!-- normative-sync: q33-package-manager-v3 -->
 
 8 October 2026. The scoped DEB/update/remove gate uses actual apt/dpkg, debconf, release CLI and systemd. Q33 remains IN_PROGRESS; the full plan is 29/37 DONE (78.4%), 8 sections remain. No product code defects were found in this stage.
 
@@ -70,6 +70,6 @@ Release data-plane and package→systemd→VPN after install/upgrade/rollback cl
 
 ## Remaining work
 
-This closes package lifecycle/rollback in the stated isolation. Whole binary installer/kernel transaction/rollback, Docker image/volume runtime, independent release reproducibility and current remote Actions remain open. Full Rust suite, matrix, soak and benchmark were not rerun. Q31 SDK/bootstrap/source-cut/Actions, Q29 SIGKILL/ENONET and Q30 Apple/callback retain their previous status. Mac/iOS, router and Windows network VM are user-excluded; D06 is an accepted limitation.
+This closes package lifecycle/rollback in the stated isolation. [The subsequent complete installer/kernel gate](AUDIT-Q33-INSTALLER-CONFIG.md) closes both positive install branches, VPN and partial kernel apply/recovery; all-or-nothing rollback of installer actions is not claimed. Docker image/volume runtime, independent release reproducibility and current remote Actions remain open. Full Rust suite, matrix, soak and benchmark were not rerun. Q31 SDK/bootstrap/source-cut/Actions, Q29 SIGKILL/ENONET and Q30 Apple/callback retain their previous status. Mac/iOS, router and Windows network VM are user-excluded; D06 is an accepted limitation.
 
 Certification preserves 41 cases/acceptance and 66 prior supplements and adds the 67th scoped supplement. The 20 required automated and 21 advisory physical rows remain separate; historical dates, artifacts and outcomes are unchanged. Local dev commit; no push/deploy/release.

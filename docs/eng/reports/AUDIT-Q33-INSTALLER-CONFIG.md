@@ -1,6 +1,6 @@
 # Q33: installer preflight and staged INI publication
 
-<!-- normative-sync: q33-installer-config-v1 -->
+<!-- normative-sync: q33-installer-config-v2 -->
 
 8 October 2026. F432–F436 / Q33-F035–F039. Q33 remains IN_PROGRESS.
 
@@ -27,3 +27,27 @@ Only configuration publication is staged. Users/identity/links/tuning/dependenci
 Evidence: `release/certification/evidence/q33-installer-config-20261008.json`. Raw `audit-debt-20260924/q33-installer-config-20261008` SEALED:65 files/6839726 bytes; manifest SHA256 `840af7bd3d22831ecda9dff23f38192b99a3ba1f7cb978aa660cc70911ed177e`. Own .11 root SHA-backed-up/guarded-cleaned; service777/845 unchanged, .10 untouched.
 
 Full29/37 DONE(78.4%),eight remain. Q31 3/5/capacity-deferred bootstrap/source-cut/current Actions, Q29 SIGKILL/ENONET, Q30 Apple/callback, USER_EXCLUDED platforms and D06 ACCEPTED retained. Local dev commit, no push/deploy/release.
+
+## Addendum: complete installer and verified kernel tuning
+
+**F445 / Q33-F048 — false sysctl success and incorrect rollback.** The complete original install-qeli-server.sh used actual CLI/Argon2/identity, iptables and systemd to start the service and carry VPN traffic, but readonly /proc refused sysctl writes while the final message claimed BBR/PMTU probing. Removing 99-qeli-perf.conf and running sysctl --system does not restore previous runtime values unless another file specifies them. Existing persistent files were overwritten without a snapshot.
+
+The fix retains readable runtime values, previous bytes/UID/GID/mode of both persistent files and restore.txt instructions in a unique root0700 kernel-tuning-* receipt under client-links; files are root0600. Persistent settings use private temp+rename and path guards; symlink/nonregular files and linked/non-directory parents refuse before installation. Hardlinks preserve the external inode. A runtime key without a saved baseline is not written. Each write has exit-status and normalized readback checks; partial/readonly/missing keys warn and report effective values/write failures, without false applied claims. Optional tuning failure does not prevent successful VPN installation; publication failure is an installation error. Forced runs retain separate receipts.
+
+Two final complete scenarios — local release ELF with exact QELI_SRC examples/unit and production QELI_DEB — use genuine Bash/coreutils/openssl/CLI/apt/dpkg/debconf/iptables/systemd with one explicit unit-name/path adapter. Chroot uses seeded account/dependency DB; this is not empty-OS bootstrap, HTTP/attestation or host installation. Installer verifies its exact owned NET namespace differs from PID1. /proc is readonly; only per-network-namespace tcp_mtu_probing is writable. Global net.core writes remain unavailable; modprobe sees no /lib/modules. [The kernel field belongs to IPv4 netns](https://github.com/torvalds/linux/blob/v6.12/include/net/netns/ipv4.h).
+
+Each final run has 24 PASS checks: exact ELF, selected fake-TLS profile, qeli0600 INI, five real Argon2 users, root-private links, HTTPS loopback panel listener, default qeli service, two actual MSS rules, generated pinned H-1 link, three inner pings through TUN/clean stop, and unforced reentry preserving bytes/PID. Kernel probing actually changes0→1 and restores0 through generated instructions; previous persistent files restore bytes/mode. Other readonly writes return nonzero during rollback: a retained fixture limit, not complete runtime restoration of all ten global keys. Seven fault methods with explicit sysctl/module seams cover all-ten requests, readback success/failure/unreadable baselines, complete snapshot/file recovery, same-stamp receipts and unsafe paths/hardlinks.
+
+136 Linux regression methods PASS without skips: Debian16/updater21/binary18/admission18/secrets21/version2/config21/ownership2/realCLI10/tuning7. Bash syntax/ShellCheck0.10.0 warning gate PASS; tuning command added to CI, no current remote Actions execution. Retained baseline18 (17PASS/1expectedFAIL), intermediate binary18PASS, initial DEB failure of the new implementation without /dev/fd and first regression fixture missing test_debian_lifecycle. Process-substitution dependence on /dev/fd removed; missing fixture dependency supplied. Windows driver no longer fails when printing Unicode diagnostics. Final results qualify the repaired source.
+
+ The parallel regression driver snapshot differed only in the owned DEB namespace removed by the other final driver; its original assertion FAIL is retained. Separate qualification proves all other host fields match and that namespace belongs to the verified DEB run.
+
+- `q33-installer-manager-baseline-20261008`: FAIL_RETAINED, SEALED 10 files / 69224782 bytes; manifest SHA256 `8ce35eca8c97d46073ad06dbc2be571bd6dcb7d04eb9f181b86f20fa81460e19`.
+- `q33-installer-manager-fixed-20261008`: PASS, SEALED 10 files / 69208658 bytes; manifest SHA256 `17c8a911a9592d8417966f1d66f01392493760e18aacfce9d4aea1be23d3947b`.
+- `q33-installer-manager-deb-20261008`: FAIL_RETAINED, SEALED 11 files / 69701224 bytes; manifest SHA256 `4b9ee12c015f1b4194161721e0ec687290e47e32e235ef5545972d2b18c52ebc`.
+- `q33-installer-manager-deb-final-20261008`: PASS, SEALED 10 files / 69683702 bytes; manifest SHA256 `883714acc70fa998ac89af6bb280a53e3d092248dab56f3b56fdd74c56c9fafb`.
+- `q33-installer-manager-binary-final-20261008`: PASS, SEALED 10 files / 69210622 bytes; manifest SHA256 `71f4c8d99be2893054892930f8e3ad849ef34e759647b0b34db090881b1d7cb5`.
+- `q33-installer-tuning-tests-20261008`: FAIL_RETAINED, SEALED 48 files / 12532172 bytes; manifest SHA256 `91e764f54dee88d5dc710f2de8a5fdc8fb00f86a717559c3a75a1f62044a8dd0`.
+- `q33-installer-tuning-tests-final-20261008`: PASS_SCOPED_WITH_NAMESPACE_OVERLAP, SEALED 55 files / 12547912 bytes; manifest SHA256 `24e7f70688b7c948f1565371e4ec8d8616f06a4214b4ebc2256877ab36b0884d`.
+
+Complete positive installer→real manager→pinned VPN and safe partial kernel apply/recovery close. No all-or-nothing installation rollback, SIGKILL/fsync/power-loss guarantee, real BBR module loading, all global kernel writes, performance benchmark or reboot persistence is claimed. Review the receipt after subsequent administrator changes; it restores saved values without automatically reconciling concurrent changes. Native source923b/prior A-B/ABI and14SHA remain exact: Rust/Cargo/qeli product blobs unchanged, no binary rebuild required. All owned roots SHA-backed-up/guard-cleaned; original .11 service777/845/network/resolver/host ELF/kernel snapshots preserved; .10 unused. Actual Docker image/volume/recreate remains OPEN, as independent release reproducibility/current Actions/previous limits. Q33 IN_PROGRESS;29/37DONE78.4%,8remain. Local dev commit only.

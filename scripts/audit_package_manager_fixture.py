@@ -23,6 +23,8 @@ def main():
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--unit', required=True)
     parser.add_argument('--vpn', action='store_true', help='connect a real pinned client across update and rollback')
+    parser.add_argument('--installer', choices=['binary','deb'])
+    parser.add_argument('--writable-mtu', action='store_true', help='allow only the namespaced tcp_mtu_probing key for actual partial apply/restore')
     args = parser.parse_args()
     work = args.root.resolve()
     assert work == args.root and work.parent == Path('/var/tmp')
@@ -35,6 +37,7 @@ def main():
     client_namespace = args.unit + '-client'
     client_network_created = False
     client_log = None
+    destination = '10.9.2.1' if args.installer else '10.77.1.1'
 
     def save():
         (work / 'results.json').write_text(json.dumps(result, indent=2))
@@ -79,7 +82,7 @@ def main():
             pid = prop('MainPID')
             if pid != '0':
                 _, text = run(['nsenter', '-t', pid, '-n', '--', 'ss', '-lnt'], 'real unit listeners', required=False)
-                if ':443 ' in text and ':24990 ' in text:
+                if ':443 ' in text and (':'+('8080' if args.installer else '24990')+' ') in text:
                     return pid
             time.sleep(.25)
         raise AssertionError('owned packaged service not ready')
@@ -131,14 +134,14 @@ exec "$1" client -c "$2"
         while time.monotonic()<deadline and client.poll() is None:
             rc, _ = run(['ip','-n',client_namespace,'link','show','q33pcvpn'], 'actual client TUN '+label, required=False)
             if rc == 0:
-                rc, output = run(['ip','netns','exec',client_namespace,'ping','-c','3','-W','2','10.77.1.1'],
+                rc, output = run(['ip','netns','exec',client_namespace,'ping','-c','3','-W','2',destination],
                                  'real inner tunnel roundtrip '+label,required=False)
                 if rc == 0:
                     ok = True
                     break
             time.sleep(.25)
         check('packaged systemd service carries authenticated VPN traffic '+label,ok)
-        _, routes = run(['ip','-n',client_namespace,'route','get','10.77.1.1'],'inner route proof '+label)
+        _, routes = run(['ip','-n',client_namespace,'route','get',destination],'inner route proof '+label)
         check('inner destination uses actual client TUN '+label,'dev q33pcvpn' in routes)
         stop_client()
         rc, _ = run(['ip','-n',client_namespace,'link','show','q33pcvpn'],'client clean stop '+label,required=False)
@@ -239,10 +242,17 @@ esac
 exec /usr/bin/systemctl.real "$@"
 '''.replace('UNITNAME',args.unit).replace('ROOTFS',str(root))
         # Wrapper is a name/path adapter; it runs the genuine manager client and never fabricates health.
+        if args.installer:
+            wrapper=wrapper.replace('print "Environment=QELI_CONTROL_SOCKET', 'print "BindPaths=ROOTSTATE:/var/lib/qeli"; print "Environment=QELI_CONTROL_SOCKET').replace('ROOTSTATE',str(root/'var/lib/qeli'))
         (root/'usr/bin/systemctl').write_text(wrapper)
         (root/'usr/bin/systemctl').chmod(0o755)
         executable(shutil.which('mv'))
         copy_file(work/'update-qeli-server.sh',root/'update.sh')
+        if args.installer:
+            from audit_installer_manager_case import qualify
+            qualify(args, work, root, run, check, executable, copy_file, chroot, prop, ready, vpn_roundtrip)
+            result['status']='PASS';save()
+            return 0
         for revision in [1,2,3,4]:
             stage=work/('package-'+str(revision))
             run(['dpkg-deb','-R',str(work/'qeli_0.8.2_amd64.deb'),str(stage)], 'extract production package')
@@ -337,7 +347,7 @@ obf.mode = fake-tls
         result['status']='FAIL';result['error']=traceback.format_exc();save();raise
     finally:
         stop_client(required=False)
-        if client_network_created:
+        if client_network_created or (args.installer and (Path('/run/netns')/client_namespace).exists()):
             run(['ip','netns','delete',client_namespace],'remove only owned peer namespace')
         run(['systemctl','stop',unit],'stop only owned service',required=False)
         result['owned_main_pid_after_stop']=prop('MainPID')

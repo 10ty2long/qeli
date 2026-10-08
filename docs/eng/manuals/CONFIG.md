@@ -892,8 +892,12 @@ In a reality-tls profile: `obf.padding.enabled = false`.
 > IPv4 path. Script: `scripts/prod_tcp_tune.py`.
 > The UDP buffers (`rmem_default`/`wmem_default`) were added 2026-08-02: the 06-08 change
 > raised only `rmem_max`, so the UDP profiles silently stayed at 208 KB.
-> Rollback: remove `/etc/sysctl.d/99-qeli-perf.conf` + `/etc/modules-load.d/qeli-bbr.conf`
-> (`sysctl --system`), remove the mangle rules, restore `tun.mtu`/padding.
+> Installer rollback: inspect the matching run receipt under
+> `/etc/qeli/client-links/kernel-tuning-*/restore.txt`; restore prior persistent files
+> and saved runtime values. Deleting a sysctl file and running `sysctl --system` alone
+> does not restore the previous state. Without a receipt, use your own baseline/backup.
+> Remove only installer-added mangle rules; restore `tun.mtu`/padding separately.
+> A loaded BBR module is not automatically unloaded. [Install and rollback details](GETTING-STARTED.md).
 
 ### 4. UDP profiles: inner MTU and the outer datagram budget
 

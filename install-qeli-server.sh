@@ -114,6 +114,7 @@ _check_install_state(){
       die "refusing linked/nonregular state file: $file"
     fi
   done
+  _check_perf_state
   local i
   for ((i=1; i<=NUM_USERS; i++)); do
     _check_private_file "${LINKS_DIR}/${USER_PREFIX}${i}.qeli"
@@ -601,6 +602,101 @@ _commit_profile_config(){
   [ -z "$CONF_BAK" ] || echo "  previous config backed up → ${CONF_BAK}"
   _publish_private_file "$CONF" "$FINAL_CONF"
   CONF="$FINAL_CONF"
+}
+
+_check_perf_state(){
+  local dir file
+  for dir in /etc/sysctl.d /etc/modules-load.d; do
+    if [ -L "$dir" ] || { [ -e "$dir" ] && [ ! -d "$dir" ]; }; then
+      die "refusing linked/non-directory tuning path: $dir"
+    fi
+  done
+  for file in /etc/sysctl.d/99-qeli-perf.conf /etc/modules-load.d/qeli-bbr.conf; do
+    _check_private_file "$file"
+  done
+}
+_apply_perf_tuning(){
+  local perf=/etc/sysctl.d/99-qeli-perf.conf module=/etc/modules-load.d/qeli-bbr.conf
+  local key desired previous actual verified=0 failures=0 total=0 item owner group mode metadata
+  _check_perf_state
+  mkdir -p /etc/sysctl.d /etc/modules-load.d "$LINKS_DIR"
+  # Retain the receipt on failure as well as success. Each forced reconfiguration
+  # has its own snapshot; it must not replace the previous run's recovery data.
+  PERF_RECEIPT="$(mktemp -d "${LINKS_DIR}/kernel-tuning-${RUN_STAMP}-XXXXXX")" \
+    || die "could not reserve kernel tuning recovery directory."
+  chmod 700 "$PERF_RECEIPT"
+  : > "$PERF_RECEIPT/runtime.before"
+  : > "$PERF_RECEIPT/apply.log"
+  : > "$PERF_RECEIPT/restore.txt"
+  for item in "$perf" "$module"; do
+    _check_private_file "$item"
+    if [ -f "$item" ]; then
+      install -o root -g root -m 600 -- "$item" "$PERF_RECEIPT/$(basename "$item").before"
+      metadata="$(stat -c '%u %g %a' -- "$item")" || die "could not read previous tuning file metadata: $item"
+      read -r owner group mode <<< "$metadata"
+      printf 'install -o %s -g %s -m %s -- "%s/%s.before" "%s"\n' \
+        "$owner" "$group" "$mode" "$PERF_RECEIPT" "$(basename "$item")" "$item" >> "$PERF_RECEIPT/restore.txt"
+    else
+      printf 'rm -f -- "%s"\n' "$item" >> "$PERF_RECEIPT/restore.txt"
+    fi
+  done
+  _perf_sysctl_values > "$PERF_RECEIPT/requested.conf"
+  # Read the old values before any writes. Never change a runtime key whose old
+  # value cannot be saved; the persistent file can still request it after reboot.
+  while IFS='=' read -r key desired; do
+    case "$key" in ''|'#'*) continue ;; esac
+    if previous="$(sysctl -n "$key" 2>> "$PERF_RECEIPT/apply.log")" && [ -n "$previous" ] && [[ "$previous" != *$'\n'* ]]; then
+      printf '%s=%s\n' "$key" "$previous" >> "$PERF_RECEIPT/runtime.before"
+    else
+      printf '%s: previous value unavailable; runtime write skipped\n' "$key" >> "$PERF_RECEIPT/apply.log"
+    fi
+  done < "$PERF_RECEIPT/requested.conf"
+  printf 'sysctl -p "%s/runtime.before"\n' "$PERF_RECEIPT" >> "$PERF_RECEIPT/restore.txt"
+  printf '# Inspect apply.log. Restore only if no later administrator changed these settings.\n# An already loaded tcp_bbr module is left loaded; this is not an installer/service rollback.\n' >> "$PERF_RECEIPT/restore.txt"
+  _write_private_file "$perf" < "$PERF_RECEIPT/requested.conf"
+  _write_private_file "$module" <<< tcp_bbr
+  if ! modprobe tcp_bbr >> "$PERF_RECEIPT/apply.log" 2>&1; then
+    printf 'tcp_bbr module load failed; an existing/built-in implementation may still be usable\n' >> "$PERF_RECEIPT/apply.log"
+  fi
+  while IFS='=' read -r key desired; do
+    case "$key" in ''|'#'*) continue ;; esac
+    total=$((total+1))
+    if grep -Fq "${key}=" "$PERF_RECEIPT/runtime.before"; then
+      if ! sysctl -w "${key}=${desired}" >> "$PERF_RECEIPT/apply.log" 2>&1; then
+        failures=$((failures+1))
+      fi
+    else
+      failures=$((failures+1))
+    fi
+    # Kernel vector values use tabs; compare normalized whitespace, not formatting.
+    actual="$(sysctl -n "$key" 2>> "$PERF_RECEIPT/apply.log" | awk '{$1=$1; print}')" || actual=""
+    if [ "$actual" = "$desired" ]; then verified=$((verified+1)); fi
+  done < "$perf"
+  if [ "$verified" = "$total" ] && [ "$failures" = 0 ]; then
+    SYSCTL_STATUS="kernel tuning applied and verified (${verified}/${total} values)"
+  else
+    SYSCTL_STATUS="kernel tuning incomplete (${verified}/${total} values effective; ${failures} writes unavailable/failed)"
+    warn "${SYSCTL_STATUS}; inspect ${PERF_RECEIPT}/apply.log. Persistent requests remain in ${perf}."
+  fi
+  echo "  ${SYSCTL_STATUS}"
+  echo "  Previous runtime values/files and restore commands: ${PERF_RECEIPT}"
+}
+_perf_sysctl_values(){
+  cat <<'SYSCTL'
+# qeli throughput + PMTU tuning; previous values/files are in the per-run receipt.
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+net.core.rmem_max=16777216
+net.core.wmem_max=16777216
+net.ipv4.tcp_rmem=4096 131072 16777216
+net.ipv4.tcp_wmem=4096 65536 16777216
+net.ipv4.tcp_mtu_probing=1
+# UDP has no receive-buffer autotuning; listeners request 4 MiB. qeli logs the
+# effective SO_RCVBUF and warns when the kernel limits it.
+net.core.rmem_default=4194304
+net.core.wmem_default=4194304
+net.core.netdev_max_backlog=4000
+SYSCTL
 }
 
 # Must run as root. Run it directly as root (no sudo needed), or — if you are a
@@ -1096,30 +1192,7 @@ if [ "$TRANSPORT" = "tcp" ]; then
 else
   echo "  udp-quic: UDP transport has no outer TCP handshake — skipping MSS clamp."
 fi
-# /etc/sysctl.d and /etc/modules-load.d may be absent on a minimal base (no procps/
-# systemd yet) — create them so the heredoc write below can't abort the run (set -e).
-mkdir -p /etc/sysctl.d /etc/modules-load.d
-cat > /etc/sysctl.d/99-qeli-perf.conf <<'SYSCTL'
-# qeli throughput + PMTU tuning (reversible: delete this file + sysctl --system)
-net.core.default_qdisc=fq
-net.ipv4.tcp_congestion_control=bbr
-net.core.rmem_max=16777216
-net.core.wmem_max=16777216
-net.ipv4.tcp_rmem=4096 131072 16777216
-net.ipv4.tcp_wmem=4096 65536 16777216
-net.ipv4.tcp_mtu_probing=1
-# UDP has NO receive-buffer autotuning. Current qeli explicitly requests 4 MiB per UDP
-# listener, so rmem_max must permit it; the default values also protect older qeli builds
-# and other UDP sockets on the host. Left at 208 KB, one scheduling stall makes the kernel
-# drop datagrams; each lost datagram is a lost TCP segment INSIDE the tunnel, so the inner
-# connection halves its window. qeli logs the effective SO_RCVBUF and warns when clamped.
-net.core.rmem_default=4194304
-net.core.wmem_default=4194304
-net.core.netdev_max_backlog=4000
-SYSCTL
-modprobe tcp_bbr 2>/dev/null || true
-echo tcp_bbr > /etc/modules-load.d/qeli-bbr.conf 2>/dev/null || true
-sysctl -p /etc/sysctl.d/99-qeli-perf.conf >/dev/null 2>&1 || true
+_apply_perf_tuning
 
 # ── 8b. web admin panel: enable over HTTPS with a generated password ─────────
 # BIND POLICY (Audit 2026-07-27, O4). This used to `sed 's/^bind = 127\.0\.0\.1/
@@ -1191,30 +1264,27 @@ sleep 2
 systemctl is-active --quiet qeli || die "qeli failed to start — see: journalctl -u qeli -e"
 
 # ── done ────────────────────────────────────────────────────────────────────
-# Perf/revert note has three cases: the clamp went in, the clamp was REFUSED by this
-# host (which is no longer fatal — see O5 above), or the profile is UDP and never
-# wanted one. Reporting a revert command for a rule that was never installed would
-# send the operator chasing a rule that is not there.
+PERF_NOTE="Perf tuning:   ${SYSCTL_STATUS}
+               Details and restore instructions: ${PERF_RECEIPT}/restore.txt"
 if [ "$MSS_APPLIED" = "1" ] || [ "$MSS6_APPLIED" = "1" ]; then
+  PERF_NOTE="${PERF_NOTE}
+Mobile/LTE:    ${MSS_SUMMARY}"
   if [ -n "$MSS_REVERT" ]; then
-    PERF_NOTE="Mobile/LTE:    ${MSS_SUMMARY} + BBR/PMTU probing.
-               Revert installer-added rules: ${MSS_REVERT}
-               Revert tuning: rm /etc/sysctl.d/99-qeli-perf.conf /etc/modules-load.d/qeli-bbr.conf && sysctl --system"
+    PERF_NOTE="${PERF_NOTE}
+               Revert installer-added rules: ${MSS_REVERT}"
   else
-    PERF_NOTE="Mobile/LTE:    ${MSS_SUMMARY} already existed; BBR/PMTU probing applied.
-               MSS ownership: no firewall rule was added, so none is removed by this installer.
-               Revert tuning: rm /etc/sysctl.d/99-qeli-perf.conf /etc/modules-load.d/qeli-bbr.conf && sysctl --system"
+    PERF_NOTE="${PERF_NOTE}
+               MSS ownership: existing rules were kept; this installer added none."
   fi
 elif [ "$TRANSPORT" = "tcp" ]; then
-  PERF_NOTE="Mobile/LTE:    BBR/PMTU sysctl applied; the outer IPv4 MSS clamps could NOT be installed
-               on this host (see the warning above) — large post-quantum ClientHellos may
-               black-hole on LTE/CGNAT. Add both directions once iptables works:
+  PERF_NOTE="${PERF_NOTE}
+Mobile/LTE:    outer IPv4 MSS clamps could NOT be installed (see warning above).
+               Retry both directions once iptables works:
                  iptables -t mangle -A PREROUTING ${MSS_INPUT_RULE}
-                 iptables -t mangle -A OUTPUT ${MSS_RULE}
-               Revert: rm /etc/sysctl.d/99-qeli-perf.conf /etc/modules-load.d/qeli-bbr.conf && sysctl --system"
+                 iptables -t mangle -A OUTPUT ${MSS_RULE}"
 else
-  PERF_NOTE="Perf tuning:   BBR/PMTU sysctl applied (udp-quic has no outer TCP → no MSS clamp).
-               Revert: rm /etc/sysctl.d/99-qeli-perf.conf /etc/modules-load.d/qeli-bbr.conf && sysctl --system"
+  PERF_NOTE="${PERF_NOTE}
+               udp-quic has no outer TCP handshake; no MSS clamp is needed."
 fi
 
 log "Done"

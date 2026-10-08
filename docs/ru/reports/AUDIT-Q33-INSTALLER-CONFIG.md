@@ -1,6 +1,6 @@
 # Q33: ранние проверки installer и публикация подготовленного INI
 
-<!-- normative-sync: q33-installer-config-v1 -->
+<!-- normative-sync: q33-installer-config-v2 -->
 
 8 октября 2026. F432–F436 / Q33-F035–F039. Q33 остаётся IN_PROGRESS.
 
@@ -27,3 +27,27 @@ Secrets21/admission18/binary18/updater21 regression methods PASS (всего78),
 Evidence: `release/certification/evidence/q33-installer-config-20261008.json`. Raw `audit-debt-20260924/q33-installer-config-20261008` SEALED:65 файлов/6839726 байт; manifest SHA256 `840af7bd3d22831ecda9dff23f38192b99a3ba1f7cb978aa660cc70911ed177e`. Собственный .11 root SHA-backed-up/guarded-cleaned; service777/845 не менялись, .10 не затрагивался.
 
 Общий план29/37 DONE(78.4%),осталось8. Q31 3/5/capacity-deferred bootstrap/source-cut/current Actions, Q29 SIGKILL/ENONET, Q30 Apple/callback, USER_EXCLUDED платформы и D06 ACCEPTED сохранены. Локальный dev commit, без push/deploy/release.
+
+## Дополнение: полный установщик и подтверждение тюнинга ядра
+
+**F445 / Q33-F048 — ложный успех sysctl и неверный откат.** Полный старый install-qeli-server.sh на настоящем CLI/Argon2/identity, iptables и systemd успешно запускал службу и клиентский VPN, но в readonly /proc все записи sysctl отклонялись, а итог сообщал «BBR/PMTU probing». Удаление 99-qeli-perf.conf с sysctl --system не восстанавливает прежние значения, если остальные файлы их не задают. Существующие файлы также перезаписывались без сохранения.
+
+Исправление сохраняет читаемые runtime-значения, прежние bytes/UID/GID/mode обоих постоянных файлов и инструкции restore.txt в уникальной root0700 квитанции kernel-tuning-* под client-links; файлы root0600. Постоянные настройки публикуются приватным temp+rename после проверки путей; symlink/nonregular file и linked/non-directory родитель отклоняются до установки. Hardlink не изменяет внешний inode. Параметр без сохранённого исходного значения не записывается в runtime. Каждая запись проверяется кодом возврата и чтением результата с нормализацией пробелов; partial/readonly/missing key предупреждают, итог содержит эффективные значения и ошибки, а не ложный «applied». Необязательный тюнинг не мешает успешной установке VPN. Сбой публикации остаётся ошибкой установки. Повторный forced run имеет отдельную квитанцию.
+
+Два полных финальных сценария — локальный release ELF + точные QELI_SRC examples/unit и production QELI_DEB — проверены настоящими Bash/coreutils/openssl/CLI/apt/dpkg/debconf/iptables/systemd, с единственным явным адаптером имени unit/путей. Linux chroot использует seeded account/dependency DB; это не bootstrap пустой ОС, не HTTP/attestation и не host install. Принимается только собственный NET namespace, отличный от PID1. /proc readonly; RW открыт только для per-network-namespace tcp_mtu_probing. Все глобальные net.core записи остаются запрещёнными; modprobe видит пустой /lib/modules. [Поле ядра принадлежит netns IPv4](https://github.com/torvalds/linux/blob/v6.12/include/net/netns/ipv4.h).
+
+В каждом финальном прогоне 24 проверки PASS: точный ELF, выбранный fake-TLS профиль, qeli0600 INI, пять реальных Argon2 пользователей, root-приватные ссылки, HTTPS loopback panel listener, default qeli service, две реальные MSS rules, сгенерированная pinned H-1 ссылка, три inner ping через TUN и clean client stop, unforced reentry без изменения bytes/PID. Kernel probing реально меняется 0→1 и возвращается в0 по сформированным инструкциям; прежние постоянные файлы bytes/mode восстановлены. Другие readonly записи при откате дают ненулевой результат: это сохранённое ограничение стенда, а не полный runtime-откат всех десяти global keys. Сам запрос всех десяти, readback success/failure/unreadable, полное восстановление snapshot/files, same-stamp receipts и unsafe path/hardlink проверяют семь fault tests с явными sysctl/module seams.
+
+136 Linux regression methods без пропусков PASS: Debian16/updater21/binary18/admission18/secrets21/version2/config21/ownership2/realCLI10/tuning7. Bash syntax и ShellCheck0.10.0 warning gate PASS; новая tuning-команда добавлена в CI, текущий remote Actions не выполнялся. Сохранены baseline18 (17PASS/1expectedFAIL), промежуточный binary18PASS, ранний DEB FAIL новой реализации без /dev/fd и первая regression fixture с недостающим test_debian_lifecycle. Зависимость от process substitution /dev/fd устранена; недостающий тест добавлен в пакет. Windows driver больше не падает при выводе Unicode диагностики. Финальные результаты относятся к исправленному источнику.
+
+ Параллельный snapshot regression driver отличался только именем собственного DEB namespace, который другой финальный driver штатно удалил; исходный assertion FAIL сохранён. Отдельная сверка подтверждает неизменность всех остальных полей и принадлежность namespace проверенному DEB run.
+
+- `q33-installer-manager-baseline-20261008`: FAIL_RETAINED, SEALED 10 files / 69224782 bytes; manifest SHA256 `8ce35eca8c97d46073ad06dbc2be571bd6dcb7d04eb9f181b86f20fa81460e19`.
+- `q33-installer-manager-fixed-20261008`: PASS, SEALED 10 files / 69208658 bytes; manifest SHA256 `17c8a911a9592d8417966f1d66f01392493760e18aacfce9d4aea1be23d3947b`.
+- `q33-installer-manager-deb-20261008`: FAIL_RETAINED, SEALED 11 files / 69701224 bytes; manifest SHA256 `4b9ee12c015f1b4194161721e0ec687290e47e32e235ef5545972d2b18c52ebc`.
+- `q33-installer-manager-deb-final-20261008`: PASS, SEALED 10 files / 69683702 bytes; manifest SHA256 `883714acc70fa998ac89af6bb280a53e3d092248dab56f3b56fdd74c56c9fafb`.
+- `q33-installer-manager-binary-final-20261008`: PASS, SEALED 10 files / 69210622 bytes; manifest SHA256 `71f4c8d99be2893054892930f8e3ad849ef34e759647b0b34db090881b1d7cb5`.
+- `q33-installer-tuning-tests-20261008`: FAIL_RETAINED, SEALED 48 files / 12532172 bytes; manifest SHA256 `91e764f54dee88d5dc710f2de8a5fdc8fb00f86a717559c3a75a1f62044a8dd0`.
+- `q33-installer-tuning-tests-final-20261008`: PASS_SCOPED_WITH_NAMESPACE_OVERLAP, SEALED 55 files / 12547912 bytes; manifest SHA256 `24e7f70688b7c948f1565371e4ec8d8616f06a4214b4ebc2256877ab36b0884d`.
+
+Закрыты full positive installer→real manager→pinned VPN и безопасная проверка partial kernel apply/recovery. Это не атомарный откат установки, SIGKILL/fsync/power-loss гарантия, реальная загрузка BBR, запись всех глобальных kernel keys, performance benchmark или reboot persistence. При более поздних изменениях администратора перед восстановлением нужно проверить квитанцию; receipt возвращает сохранённые параметры, не автоматически согласовывает конкурентные изменения. Native source923b/prior A-B/ABI и14SHA сохраняются: Rust/Cargo/qeli product blobs не менялись, новых бинарников не требовалось. Все собственные roots SHA-backed-up и guard-cleaned, исходная .11 служба777/845/network/resolver/host ELF/kernel snapshots сохранены; .10 не использовался. Docker actual image/volume/recreate остаётся OPEN, как независимая release reproducibility/current Actions/ранее сохранённые ограничения. Q33 IN_PROGRESS;29/37DONE78.4%,осталось8. Только локальный dev commit.
