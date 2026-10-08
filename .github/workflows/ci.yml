@@ -839,23 +839,21 @@ jobs:
   # promoted. Audit 2026-07-27, Z5.)
   security-audit:
     runs-on: ubuntu-latest
-    # HARD GATE (R-04). Was `continue-on-error: true` with a note to promote it "once the
-    # tree is triaged clean" — it now is: `cargo audit` reports 0 vulnerabilities, only one
-    # allowed `unmaintained` warning (RUSTSEC-2025-0134, rustls-pemfile). A soft security
-    # gate reports a new CVE into a log nobody reads, which is the same as not having one.
-    # NB: cargo audit exits 0 on warnings and non-zero on VULNERABILITIES, so an
-    # unmaintained-crate advisory still does not block a merge — only a real CVE does.
+    # Known vulnerabilities and every selected warning class block this job.
+    # Keep tool versions explicit so policy updates are reviewed with the lockfile.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: 1.97.0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+        run: cargo install cargo-audit --version 0.22.2 --locked
       - name: cargo audit
-        run: cargo audit
+        run: cargo audit --deny warnings
       - name: Install cargo-deny
         run: cargo install cargo-deny --version 0.18.4 --locked
-      - name: Dependency policy (bans and sources)
-        run: cargo deny check bans sources
+      - name: Dependency policy (licenses, bans and sources)
+        run: cargo deny --all-features --locked check licenses bans sources

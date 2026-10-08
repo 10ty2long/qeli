@@ -57,12 +57,17 @@
 ## Сторонние зависимости
 
 Rust-крейты (rustls/ring/ml-kem/…), .NET-пакеты (Avalonia, SkiaSharp, BouncyCastle,
-QRCoder, …), Kotlin/Android-библиотеки — каждая под СВОЕЙ лицензией (преим.
-MIT/Apache-2.0/ISC). **Автоматической проверки лицензий в CI сегодня нет:** джоба
-`security-audit` гоняет `cargo audit`, а это база уязвимостей RUSTSEC, не лицензии;
-`cargo-deny`/`cargo-about` в дереве не заведены. Совместимость проверяется вручную при
-добавлении зависимости. Завести `cargo deny check licenses` — открытая задача.
-Сторонние нативные бинари (Wintun и пр.) — в `native-libs/third-party/` под upstream.
+QRCoder, …), Kotlin/Android-библиотеки — каждая под СВОЕЙ лицензией.
+Для Rust CI `security-audit` запускает `cargo deny --all-features --locked check
+licenses bans sources` с политикой `qeli/deny.toml`: новые неразрешённые лицензии
+блокируют проверку. Исключение `AGPL-3.0-only` ограничено самим крейтом `qeli`
+и отражает существующую лицензию ядра; лицензии файлов и клиентов не меняются.
+`cargo audit --deny warnings` отдельно проверяет RustSec и отозванные версии;
+версии обоих инструментов закреплены в workflow. Проверки запускаются из `qeli/`.
+
+Эта автоматизация проверяет Rust-граф зависимостей. .NET/Kotlin-зависимости и
+сторонние нативные бинари (Wintun и пр., `native-libs/third-party/`) требуют
+отдельной проверки upstream-лицензий при изменении или выпуске пакета.
 
 ## SPDX-заголовки (план)
 

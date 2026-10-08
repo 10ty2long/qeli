@@ -7,6 +7,7 @@
 //! rest of the crate uses ring; aws-lc-rs needs cmake which the build host lacks).
 
 use crate::config::server::WebConfig;
+use rustls::pki_types::pem::PemObject;
 use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
@@ -146,8 +147,8 @@ fn read_pem(path: &str, kind: &str) -> anyhow::Result<Vec<u8>> {
 
 fn load_certs(path: &str) -> anyhow::Result<Vec<rustls::pki_types::CertificateDer<'static>>> {
     let pem = read_pem(path, "certificate")?;
-    let mut input = pem.as_slice();
-    let certs: Vec<_> = rustls_pemfile::certs(&mut input).collect::<Result<_, _>>()?;
+    let certs: Vec<_> =
+        rustls::pki_types::CertificateDer::pem_slice_iter(&pem).collect::<Result<_, _>>()?;
     if certs.is_empty() {
         anyhow::bail!("no certificates in {}", path);
     }
@@ -156,9 +157,8 @@ fn load_certs(path: &str) -> anyhow::Result<Vec<rustls::pki_types::CertificateDe
 
 fn load_key(path: &str) -> anyhow::Result<rustls::pki_types::PrivateKeyDer<'static>> {
     let pem = read_pem(path, "private key")?;
-    let mut input = pem.as_slice();
-    rustls_pemfile::private_key(&mut input)?
-        .ok_or_else(|| anyhow::anyhow!("no private key in {}", path))
+    rustls::pki_types::PrivateKeyDer::from_pem_slice(&pem)
+        .map_err(|error| anyhow::anyhow!("parse private key in {}: {}", path, error))
 }
 
 /// Generate a self-signed cert (ECDSA P-256) covering localhost + the bind host,
@@ -219,6 +219,67 @@ mod tests {
         ));
         std::fs::create_dir(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn pem_chain_skips_unrelated_blocks_and_preserves_order() {
+        let dir = fixture();
+        let path = dir.join("chain.pem");
+        std::fs::write(
+            &path,
+            b"ignored text\n-----BEGIN PUBLIC KEY-----\nAQ==\n-----END PUBLIC KEY-----\n\
+              -----BEGIN CERTIFICATE-----\nAQI=\n-----END CERTIFICATE-----\n\
+              -----BEGIN CERTIFICATE-----\nAwQ=\n-----END CERTIFICATE-----\n",
+        )
+        .unwrap();
+        let certs = load_certs(path.to_str().unwrap()).unwrap();
+        assert_eq!(certs.len(), 2);
+        assert_eq!(certs[0].as_ref(), &[1, 2]);
+        assert_eq!(certs[1].as_ref(), &[3, 4]);
+        // A malformed later certificate must fail the whole chain, not silently truncate it.
+        std::fs::write(
+            &path,
+            b"-----BEGIN CERTIFICATE-----\nAQI=\n-----END CERTIFICATE-----\n\
+              -----BEGIN CERTIFICATE-----\n!invalid!\n-----END CERTIFICATE-----\n",
+        )
+        .unwrap();
+        assert!(load_certs(path.to_str().unwrap()).is_err());
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
+    }
+
+    #[test]
+    fn pem_keys_accept_pkcs1_sec1_pkcs8_and_reject_missing_or_malformed() {
+        use rustls::pki_types::PrivateKeyDer;
+        let dir = fixture();
+        let path = dir.join("key.pem");
+        for label in ["RSA PRIVATE KEY", "EC PRIVATE KEY", "PRIVATE KEY"] {
+            let pem = format!(
+                "-----BEGIN CERTIFICATE-----\nAQ==\n-----END CERTIFICATE-----\n\
+                 -----BEGIN {label}-----\nAQID\n-----END {label}-----\n\
+                 -----BEGIN PRIVATE KEY-----\nBA==\n-----END PRIVATE KEY-----\n"
+            );
+            std::fs::write(&path, pem).unwrap();
+            let key = load_key(path.to_str().unwrap()).unwrap();
+            assert_eq!(key.secret_der(), &[1, 2, 3]);
+            assert!(matches!(
+                (label, key),
+                ("RSA PRIVATE KEY", PrivateKeyDer::Pkcs1(_))
+                    | ("EC PRIVATE KEY", PrivateKeyDer::Sec1(_))
+                    | ("PRIVATE KEY", PrivateKeyDer::Pkcs8(_))
+            ));
+        }
+        for pem in [
+            "",
+            "-----BEGIN CERTIFICATE-----\nAQ==\n-----END CERTIFICATE-----\n",
+            "-----BEGIN PRIVATE KEY-----\n!invalid!\n-----END PRIVATE KEY-----\n",
+            "-----BEGIN PRIVATE KEY-----\nAQ==\n",
+        ] {
+            std::fs::write(&path, pem).unwrap();
+            assert!(load_key(path.to_str().unwrap()).is_err());
+        }
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(dir).unwrap();
     }
 
     #[test]
