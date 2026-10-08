@@ -287,6 +287,8 @@ no download. From the repo root:
 sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <public-ip>
 ```
 
+Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and any requested root service helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. A prior root override requires explicit `qeli set-service-user qeli`; the default installer choice does not reset it. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+
 `QELI_BIN` selects the from-binary branch; `QELI_SRC=.` copies the unit and examples
 straight from this checkout; the OS dependency phase uses apt only for missing prerequisites. See §2's **"Two install branches"**. This also
 installs the polkit rule, so the panel's `Apply & Restart` works without the extra step below.

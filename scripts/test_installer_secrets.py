@@ -30,11 +30,15 @@ class SecretTests(unittest.TestCase):
             for lib in re.findall(r'(/[^\s]+)', subprocess.run(['ldd', str(src)], capture_output=True, text=True).stdout):
                 dest = cls.base / lib.lstrip('/'); dest.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(lib, dest)
         cls.stub('qeli', r'''printf '%s\n' "$*" >> /records/qeli-argv
+config=/etc/qeli/server.conf;args=("$@")
+for ((i=0; i<${#args[@]}; i++)); do
+ [[ "${args[i]}" != --config ]] || config="${args[i+1]}"
+done
 case "$1" in
  version) printf 'qeli 0.8.2\n';exit 0 ;;
  show-identity) /usr/bin/mkdir -p /etc/qeli/identity;printf fixture-key > /etc/qeli/identity/default.key;printf 'udp-quic fixture-key\n';exit 0 ;;
- set-web-password) IFS= read -r password || true;/usr/bin/sed -i 's/^enabled = false$/enabled = true/' /etc/qeli/server.conf;exit 0 ;;
- check-config) [[ -s /etc/qeli/server.conf ]] && /usr/bin/grep -q '^\[profile:' /etc/qeli/server.conf;exit ;;
+ set-web-password) IFS= read -r password || true;/usr/bin/sed -i 's/^enabled = false$/enabled = true/' "$config";exit 0 ;;
+ check-config) [[ -s "$config" ]] && /usr/bin/grep -q '^\[profile:' "$config";exit ;;
  set-service-user) exit 0 ;;
  add-client) ;;
  *) exit 1 ;;
