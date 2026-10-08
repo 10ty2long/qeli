@@ -154,7 +154,12 @@ c=http.client.HTTPConnection('127.0.0.1',24880,timeout=5);c.request('GET','/audi
    with sf.open(remote+'/etc/server.conf','w') as f:f.write(config.replace('bind.port = 443','bind.port = invalid'))
   run(['systemctl','start',unit],'invalid INI service start');check('updater rejects actual failed/restarting service',run(['bash',remote+'/health.sh'],'health rejects bad INI',15)[1]!=0)
   check('manager records startup failure',prop('Result')=='exit-code' and prop('MainPID')=='0')
-  checked(['systemctl','stop',unit],'stop owned crash loop');checked(['systemctl','reset-failed',unit],'reset own failure')
+  checked(['systemctl','stop',unit],'stop owned crash loop')
+  reset_text,reset_rc=run(['systemctl','reset-failed',unit],'reset own failure')
+  if reset_rc:
+   # systemd may garbage-collect an inactive unit after stop; this is already reset.
+   check('stopped unit reset or already collected',reset_rc==1 and ('Unit '+unit+' not loaded.') in reset_text)
+   checked(['test','-f',unitfile],'owned unit definition retained for recovery')
   with lab.open_sftp() as sf:
    with sf.open(remote+'/etc/server.conf','w') as f:f.write(config)
   checked(['systemctl','start',unit],'recover owned service');wait_ready();check('recovery healthy',run(['bash',remote+'/health.sh'],'health after recovery',15)[1]==0)
