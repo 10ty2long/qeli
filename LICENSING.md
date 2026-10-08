@@ -13,6 +13,7 @@
 | `qeli-win/` | MPL 2.0 | `MPL-2.0` | исходники Windows-клиента (UI/glue) |
 | `qeli-mac/` | MPL 2.0 | `MPL-2.0` | исходники macOS-клиента (UI/glue) |
 | `qeli-ios/` | MPL 2.0 | `MPL-2.0` | исходники iOS-клиента (UI/glue) |
+| `qeli/third-party-notices/rust/` | по upstream | — | неизменённые тексты сторонних Cargo-зависимостей; их лицензии не наследуют AGPL каталога |
 | `native-libs/third-party/` | по upstream | — | сторонние бинари (напр. Wintun) под их лицензиями |
 
 Тексты: корень и `qeli/` — `LICENSE` (AGPL-3.0); каждый клиентский каталог — свой
@@ -76,9 +77,45 @@ licenses bans sources` с политикой `qeli/deny.toml`: новые нер
 Инвентарь версий проверяется при сборке; CI отдельно сверяет индекс и SHA256
 текстов в готовом APK. См. [порядок проверки и обновления](qeli-android/README.md).
 
-Этот gate проверяет упаковку текстов проекта и Maven notices. Он не заменяет
-проверку сторонних лицензий native core, доступности соответствующих исходников
-и требований к распространяемому приложению. Лицензии каталогов не изменяются.
+APK также включает неизменённый общий комплект Cargo legal resources. Gate
+проверяет его побайтное совпадение с репозиторием. Доступность соответствующих
+исходников, toolchain notices и полное release admission проверяются отдельно.
+Лицензии каталогов не изменяются.
+
+## Общий комплект Cargo legal resources
+
+`qeli/third-party-notices/rust/` содержит тексты upstream из всех registry-пакетов
+закреплённого Cargo.lock: LICENSE/NOTICE/COPYING/COPYRIGHT/UNLICENSE/AUTHORS,
+каталоги LICENSES и объявленный `license-file`. SPDX expressions сохранены
+из опубликованных Cargo.toml. Это полный lockfile, включая server/build/test
+и зависимости других targets; наличие записи не означает linkage в каждом клиенте.
+Оригинальные байты не нормализуются; `INDEX.tsv` хранит SHA256 и origin.
+Для архивов без текстов используются только отдельно проверенные supplements
+с VCS-коммита, записанного в опубликованном `.cargo_vcs_info.json`.
+
+Проверка без Cargo/сети: `python3 scripts/native_licenses.py`. Обновление графа
+требует обновить комплект; старый Cargo.lock binding блокирует проверку.
+Генерация принимает каталог `.crate` архивов и каталог reviewed supplements
+(`receipts.json` плюс payload-файлы) и пишет только в новый каталог:
+
+```bash
+python3 scripts/native_licenses.py --archives /path/to/crates --supplements /path/to/reviewed-supplements --bundle /path/to/new-bundle
+```
+
+SHA каждого архива должен совпадать с Cargo.lock. Receipt фиксирует name/version,
+VCS commit, upstream path/URL, payload path и SHA256; коммит и URL сверяются
+с архивом. После review заменить общий комплект, сохранив upstream bytes.
+JSON здесь — build metadata, не формат конфигурации VPN.
+
+Android: `assets/licenses/native-rust/`; Windows/macOS: `Legal/NativeRust/`
+рядом с опубликованным executable; iOS: folder resource `rust` в app;
+Debian: `/usr/share/doc/qeli/licenses/rust/`; OpenWrt:
+`/usr/share/licenses/qeli/rust/`; Keenetic: `qeli-native-legal.zip` рядом
+с отдельными бинарями. Windows/macOS дополнительно копируют MPL клиента;
+общий комплект содержит AGPL ядра. При распространении сохранять sidecar/resources.
+CI проверяет общий комплект, а APK gate сверяет также готовые APK.
+Rust std/toolchain, .NET notices, source publication и подписи остаются отдельными
+проверками; этот комплект не является заявлением полной юридической квалификации.
 
 ## SPDX-заголовки (план)
 

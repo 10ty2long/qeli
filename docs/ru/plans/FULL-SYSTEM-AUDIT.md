@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v167 -->
+<!-- normative-sync: full-system-audit-v168 -->
 
 **Текущий итог, 8 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2480,3 +2480,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **8 октября,F469/Q34-F023:** [Android licenses/NOTICE packaging](../reports/AUDIT-Q34-ANDROID-NOTICES.md): per-variant canonical project AGPL/MPL,Apache2,Maven runtime inventory,original archive identities and preserved JAR/AAR/nested notices; dedicated original-archive ArtifactView,identical variant visit deduplication. Independent extraction current-checksum-admitted63archives/44AAR/24resources PASS;76license declarations inherited sealed review. CI APK index/hash/coordinate/origin gate12negative fixtures. APK qualification/evidence in linked report; native dependency/upstream-source notices,matching source publication/signatures/currentActions/fullrelease remain OPEN. Native e3fb/protected files unchanged; no new nativeAB/JVM/deviceVPN claim. Q34IN_PROGRESS30/37DONE81.1percent7remain; historical Q29/Q30/Q31/F459/D06/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**8 October, F470/Q34-F024:** [Common Cargo legal resources](../reports/AUDIT-Q34-NATIVE-NOTICES.md): 235 checksum-locked packages,458 upstream resources, six exact-VCS supplements; one common bundle and packaging/CI checks. Actual qualification and limitations in linked report. Rust std/toolchain/.NET/upstream-source notices, source publication, OpenWrt immutable source cut and current Actions remain OPEN. Q34 IN_PROGRESS;30/37 DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/USER_EXCLUDED unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

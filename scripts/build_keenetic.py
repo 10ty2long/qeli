@@ -25,6 +25,7 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(__file__))
 from router_artifact import pull_router_artifact
+from native_licenses import check_bundle, export_bundle_zip
 from ssh_command import run_ssh_command
 from router_toolchain import ARCH_TARGETS, ensure_router_toolchain, router_build_command
 from router_source import (sync_router_source, require_router_source_ready,
@@ -93,6 +94,7 @@ def main():
     parser.add_argument("--sync", action="store_true", help="compatibility option: every run now uploads this checkout")
     parser.add_argument("arch", nargs="?", choices=tuple(TARGETS))
     args = parser.parse_args()
+    check_bundle(REPO_ROOT)
     targets = {args.arch: TARGETS[args.arch]} if args.arch else TARGETS
     try:
         c = connect(LAB_SRV)
@@ -116,6 +118,8 @@ def main():
                 results[arch] = build(c, arch, target)
                 if results[arch] == 0:
                     pull(c, arch, target)
+                    legal = export_bundle_zip(REPO_ROOT, LOCAL_OUT / "qeli-native-legal.zip")
+                    print("native legal sidecar:", legal["zip_sha256"])
             except (OSError, RuntimeError) as error:
                 results[arch] = 1
                 print(f"{arch} failed: {error}")

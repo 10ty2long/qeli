@@ -2,6 +2,7 @@ import org.gradle.api.attributes.AttributeCompatibilityRule
 import org.gradle.api.attributes.CompatibilityCheckDetails
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import java.security.MessageDigest
+import java.nio.file.Files
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
@@ -177,6 +178,10 @@ abstract class GenerateLegalAssets : DefaultTask() {
     abstract val apacheLicense: RegularFileProperty
     @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
     abstract val reviewedInventory: RegularFileProperty
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE)
+    abstract val cargoLock: RegularFileProperty
+    @get:InputDirectory @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val nativeLegalBundle: DirectoryProperty
     @get:InputFiles @get:PathSensitive(PathSensitivity.NAME_ONLY)
     abstract val runtimeArtifacts: ConfigurableFileCollection
     @get:Input abstract val artifactCoordinates: MapProperty<String, String>
@@ -219,6 +224,37 @@ abstract class GenerateLegalAssets : DefaultTask() {
             save(name, source.get().asFile.readText(Charsets.UTF_8).replace("\r\n", "\n").toByteArray(Charsets.UTF_8), name)
         }
         save("MAVEN.tsv", inventory.toByteArray(Charsets.UTF_8), "reviewed Maven runtime inventory")
+        val native = nativeLegalBundle.get().asFile
+        val lockSha = sha(cargoLock.get().asFile.readBytes().toString(Charsets.UTF_8)
+            .replace("\r\n", "\n").toByteArray(Charsets.UTF_8))
+        check(native.resolve("BINDING.properties").readText(Charsets.UTF_8) ==
+            "cargo_lock_lf_sha256=$lockSha\nscope=full-cargo-lock\n") { "Native legal Cargo.lock binding drift" }
+        val nativeRows = native.resolve("INDEX.tsv").readText(Charsets.UTF_8).trimEnd().lines()
+        check(nativeRows.first() == "sha256\tpath\torigin") { "Invalid native legal index" }
+        val nativeSeen = mutableSetOf<String>()
+        for (row in nativeRows.drop(1)) {
+            val fields = row.split('\t')
+            check(fields.size == 3 && fields[0].matches(Regex("[0-9a-f]{64}")))
+            val path = fields[1]
+            check(path.isNotEmpty() && path.split('/').none { it.isEmpty() || it == "." || it == ".." } &&
+                '\\' !in path && ':' !in path && path.none { it.code < 32 || it.code == 127 } &&
+                path != "INDEX.tsv" && nativeSeen.add(path)) { "Unsafe/duplicate native legal path" }
+            val file = native.resolve(path)
+            check(!Files.isSymbolicLink(file.toPath()) && file.isFile && file.length() <= 4 * 1024 * 1024)
+            val bytes = file.readBytes()
+            check(sha(bytes) == fields[0]) { "Native legal checksum mismatch: $path" }
+        }
+        val nativeFiles = native.walkTopDown().filter { it.isFile }.toList()
+        check(nativeFiles.sumOf { it.length() } <= 32 * 1024 * 1024)
+        check(nativeFiles.map { it.relativeTo(native).invariantSeparatorsPath }.toSet() == nativeSeen + "INDEX.tsv") {
+            "Unindexed/missing native legal files"
+        }
+        check(native.resolve("Qeli-AGPL-3.0.txt").readBytes().contentEquals(legal.resolve("AGPL-3.0.txt").readBytes()))
+        for (file in nativeFiles.sortedBy { it.relativeTo(native).invariantSeparatorsPath }) {
+            check(!Files.isSymbolicLink(file.toPath()))
+            val path = file.relativeTo(native).invariantSeparatorsPath
+            save("native-rust/$path", file.readBytes(), "native-rust!$path")
+        }
         val noticeName = Regex("(?i)(license|licence|notice|copying|copyright)([._-].*)?")
         fun notice(name: String) = noticeName.matches(name.substringAfterLast('/'))
         fun retain(coordinate: String, name: String, bytes: ByteArray) {
@@ -287,6 +323,8 @@ androidComponents.onVariants { variant ->
         clientLicense.set(rootProject.layout.projectDirectory.file("LICENSE"))
         apacheLicense.set(rootProject.layout.projectDirectory.file("gradle/licenses/Apache-2.0.txt"))
         reviewedInventory.set(rootProject.layout.projectDirectory.file("gradle/licenses/maven-runtime.tsv"))
+        cargoLock.set(rootProject.layout.projectDirectory.file("../qeli/Cargo.lock"))
+        nativeLegalBundle.set(rootProject.layout.projectDirectory.dir("../qeli/third-party-notices/rust"))
         runtimeArtifacts.from(artifacts.map { values -> values.map { it.file } })
         artifactCoordinates.set(artifacts.map { values ->
             // A module may be visited through multiple Gradle variants; keep one

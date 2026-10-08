@@ -9,3 +9,4 @@
 *.deb binary
 *.zip binary
 *.icns binary
+qeli/third-party-notices/rust/** -text -whitespace

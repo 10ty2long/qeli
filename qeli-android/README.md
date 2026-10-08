@@ -419,8 +419,14 @@ python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/a
 python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
-CI runs these checks after assembling both APKs. This gate covers the project
-license texts and reviewed Maven notice packaging. It does not establish native
-third-party notice completeness, matching source publication, signatures or
-release admission. Those remain separate requirements; Maven metadata is not a
-substitute for reviewing upstream source notices.
+CI runs these checks after assembling both APKs. APKs also include the shared
+`assets/licenses/native-rust/` Cargo.lock legal resource superset. The Gradle task
+checks its lockfile binding/index/checksums; the APK gate compares every native
+legal asset byte for byte with the common bundle. Updating Cargo.lock requires
+reviewing and regenerating this bundle, even when Maven dependencies are unchanged.
+See [common bundle maintenance](../LICENSING.md).
+
+The complete lockfile includes server/build/test/other-target dependencies and
+is not a per-binary linkage list. Rust std/toolchain notices, upstream source
+notices absent from binary archives, matching source publication, signatures and
+full release admission remain separate checks.

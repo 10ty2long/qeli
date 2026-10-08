@@ -113,4 +113,22 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The common Cargo.lock superset travels with every published client. -->
+    <Content Include="..\..\qeli\third-party-notices\rust\**\*">
+      <Link>Legal\NativeRust\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="..\LICENSE">
+      <Link>Legal\MPL-2.0.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+  <Target Name="RequireNativeLegalBundle" BeforeTargets="PrepareForBuild;ComputeFilesToPublish">
+    <Error Condition="!Exists('..\..\qeli\third-party-notices\rust\INDEX.tsv')" Text="Missing native legal bundle; run scripts/native_licenses.py and review its output." />
+  </Target>
 </Project>

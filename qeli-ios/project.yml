@@ -44,6 +44,11 @@ targets:
           - Crypto
       - path: Config/PrivacyInfo.xcprivacy
         buildPhase: resources
+      - path: ../qeli/third-party-notices/rust
+        type: folder
+        buildPhase: resources
+      - path: LICENSE
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(QELI_APP_BUNDLE_ID)

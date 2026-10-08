@@ -82,6 +82,8 @@ jobs:
         working-directory: .          # the script expects the repo root, not qeli/
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check common Cargo legal resources
+        run: python3 scripts/native_licenses.py
       - name: Test native reproducibility contract
         run: python3 -m unittest discover -s scripts -p 'test_native_*.py'
       - name: Test router release and diagnostic gates
@@ -444,7 +446,7 @@ jobs:
       - name: Test Android legal asset admission
         working-directory: .
         run: python3 -m unittest discover -s scripts -p test_check_android_licenses.py
-      - name: Verify project licenses and Maven notices in both APKs
+      - name: Verify project, Maven and Cargo legal resources in both APKs
         working-directory: .
         run: |
           python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/debug/app-debug.apk
@@ -537,6 +539,9 @@ jobs:
               $path = Join-Path $dir $notice
               if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "published package is missing $path" }
             }
+            python ../scripts/native_licenses.py --repo .. --bundle "$dir/Legal/NativeRust"
+            if ($LASTEXITCODE -ne 0) { throw "published Cargo legal bundle check failed: $dir" }
+            if (-not (Test-Path -LiteralPath "$dir/Legal/MPL-2.0.txt" -PathType Leaf)) { throw "missing client MPL text: $dir" }
           }
       - name: Self-test QeliWin platform adapters
         working-directory: qeli-win
