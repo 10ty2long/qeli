@@ -478,3 +478,5 @@
 - [Q33: зависимости installer и допуск пакета](reports/AUDIT-Q33-INSTALLER-ADMISSION.md)
 
 - [Q33: публикация секретов и web-конфига installer](reports/AUDIT-Q33-INSTALLER-SECRETS.md)
+
+- [Q33: ранние проверки installer и подготовленный INI](reports/AUDIT-Q33-INSTALLER-CONFIG.md)

@@ -290,6 +290,8 @@ make -C debian deb             # → qeli/debian/qeli_<версия>_amd64.deb
 sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <публичный-IP>
 ```
 
+Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и запрошенного root service helper старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Прежний root override сбрасывайте явно через `qeli set-service-user qeli`: default installer choice его не отменяет. [Аудит и ограничения](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+
 `QELI_BIN` выбирает ветку установки из бинаря; `QELI_SRC=.` копирует юнит и примеры прямо из
 этого чекаута; apt запускается при отсутствии системных зависимостей. См. §2 **«Две ветки установки»**. Заодно ставит и polkit-правило,
 поэтому кнопка панели `Apply & Restart` работает без отдельного шага ниже.

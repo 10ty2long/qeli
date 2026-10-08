@@ -108,6 +108,8 @@ jobs:
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_admission.py
       - name: Installer secret and config publication fixtures
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_secrets.py
+      - name: Installer preflight and staged config fixtures
+        run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_config.py
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
       # verify.sh proves copy/manifest parity. provenance.py additionally requires the exact

@@ -109,7 +109,7 @@ _check_install_state(){
       die "refusing linked/non-directory state path: $state"
     fi
   done
-  for file in "$CONF" /etc/qeli/users.conf "${LINKS_DIR}/CONNECTION-STRINGS.txt"; do
+  for file in "$CONF" "${FINAL_CONF:-$CONF}" /etc/qeli/users.conf "${LINKS_DIR}/CONNECTION-STRINGS.txt"; do
     if [ -L "$file" ] || { [ -e "$file" ] && [ ! -f "$file" ]; }; then
       die "refusing linked/nonregular state file: $file"
     fi
@@ -491,6 +491,104 @@ _create_client_links(){
   chown -h -R -P qeli:qeli /etc/qeli/users.conf 2>/dev/null || true
 }
 
+_validate_public_host(){
+# Validate the moment it is known, BEFORE it reaches a config file or a share link.
+# The value is either $1 or whatever api.ipify.org / ifconfig.me / icanhazip.com
+# answered, and it used to be spliced straight into `sed -i "s|…|public_host = $X|"` —
+# so a `|` in it closed the s||| command and everything after it executed as further
+# sed commands against server.conf, as root. Accept only characters an IP or hostname
+# can legitimately contain, and bound the length. (Audit 2026-07-27, O3)
+case "$PUBLIC_HOST" in
+  *[!A-Za-z0-9._:-]*)
+    die "PUBLIC_HOST '${PUBLIC_HOST}' contains characters that cannot appear in an IP or hostname — pass a clean address as the first argument." ;;
+  -*)
+    die "PUBLIC_HOST '${PUBLIC_HOST}' starts with '-' — that is not an address." ;;
+esac
+[ "${#PUBLIC_HOST}" -le 253 ] || die "PUBLIC_HOST is ${#PUBLIC_HOST} characters long — no hostname is (max 253)."
+}
+_validate_installer_options(){
+  local flag value
+  for flag in QELI_FORCE_RECONFIG QELI_PANEL_PUBLIC QELI_VERIFY_ATTESTATION QELI_ALLOW_UNVERIFIED; do
+    value="${!flag:-0}"
+    case "$value" in 0|1) ;; *) die "$flag must be 0 or 1 (got '$value')." ;; esac
+  done
+  [ -z "$PUBLIC_HOST" ] || _validate_public_host
+PANEL_PUBLIC=0
+PANEL_ALLOWED="${QELI_PANEL_ALLOWED_IPS:-}"
+if [ "${QELI_PANEL_PUBLIC:-0}" = "1" ]; then
+  [ -n "$PANEL_ALLOWED" ] || die "QELI_PANEL_PUBLIC=1 needs QELI_PANEL_ALLOWED_IPS=<ip[,ip…]> — a public panel needs an explicit source allowlist."
+  # Same reasoning as PUBLIC_HOST: this value lands in the config, so it is data only.
+  # Comma-separated, no spaces (e.g. QELI_PANEL_ALLOWED_IPS=203.0.113.4,198.51.100.0/24).
+  case "$PANEL_ALLOWED" in
+    *[!A-Za-z0-9./,:-]*) die "QELI_PANEL_ALLOWED_IPS must be a comma-separated list of addresses/CIDRs with no spaces (got '${PANEL_ALLOWED}')." ;;
+  esac
+  PANEL_PUBLIC=1
+fi
+}
+_resolve_public_host(){
+if [ -z "$PUBLIC_HOST" ]; then
+  # 1) External echo services — authoritative public IP (esp. behind NAT). Try a
+  #    few, each time-bounded so a blocked/unreachable one can't hang the install.
+  PUBLIC_HOST="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)"
+  [ -n "$PUBLIC_HOST" ] || PUBLIC_HOST="$(curl -fsS --max-time 5 https://ifconfig.me 2>/dev/null || true)"
+  [ -n "$PUBLIC_HOST" ] || PUBLIC_HOST="$(curl -fsS --max-time 5 https://icanhazip.com 2>/dev/null || true)"
+  # 2) Local fallback — src address of the default route. Works even with a /32 WAN
+  #    IP (as many cloud VMs have). On a NAT'd box this is the PRIVATE IP, so warn.
+  if [ -z "$PUBLIC_HOST" ]; then
+    PUBLIC_HOST="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -n1)"
+    [ -n "$PUBLIC_HOST" ] && echo "  (external lookup failed — using the local WAN address ${PUBLIC_HOST}; if this box is behind NAT, re-run with the real public IP)"
+  fi
+  PUBLIC_HOST="$(printf '%s' "$PUBLIC_HOST" | tr -d '[:space:]')"
+  echo "  Auto-detected public IP: ${PUBLIC_HOST:-<unknown>}"
+  echo "  (Separate inbound/outbound IPs or a domain? Re-run with it as an argument.)"
+fi
+[ -n "$PUBLIC_HOST" ] || die "could not determine PUBLIC_HOST — pass it as an argument."
+_validate_public_host
+# Host:port authorities must bracket IPv6 literals (RFC 3986). Keep public_host itself bare:
+# qeli's config/share codec owns authority parsing and adds brackets where required.
+PUBLIC_AUTHORITY_HOST="$PUBLIC_HOST"
+PUBLIC_PANEL_BIND="0.0.0.0"
+ENABLE_IPV6_LISTENER=0
+case "$PUBLIC_HOST" in
+  *:*)
+    PUBLIC_AUTHORITY_HOST="[${PUBLIC_HOST}]"
+    PUBLIC_PANEL_BIND="::"
+    ENABLE_IPV6_LISTENER=1
+    ;;
+esac
+
+# A hostname can gain/use an AAAA record without changing the installed config. When this
+# kernel has IPv6 enabled, make Quick Start dual-carrier-ready even if PUBLIC_HOST itself is
+# a DNS name (or today's auto-detected address happened to be IPv4). The second socket is
+# V6ONLY, so it neither steals nor duplicates the primary IPv4 listener. An explicit IPv6
+# literal still requests this listener even on a misconfigured IPv6-disabled host, making the
+# final service start fail honestly instead of printing an unusable connection link.
+if [ -s /proc/net/if_inet6 ]; then
+  ENABLE_IPV6_LISTENER=1
+fi
+
+}
+_prepare_profile_config(){
+  local count
+  _check_private_file "$CONF"
+  [ -f "$EXAMPLE" ] && [ -r "$EXAMPLE" ] || die "profile example is not readable: $EXAMPLE"
+  count="$(grep -Fxc -- "[profile:${PROFILE}]" "$EXAMPLE" || true)"
+  [ "$count" = 1 ] || die "expected exactly one [profile:${PROFILE}] in $EXAMPLE, got ${count:-none}."
+  FINAL_CONF="$CONF"
+  CONF="$(mktemp "${FINAL_CONF}.qeli-XXXXXX")" || die "could not stage server config."
+  QELI_TMP_PATHS+=("$CONF")
+  awk '/^\[profile:/{exit} {print}' "$EXAMPLE" > "$CONF" || die "could not stage global config sections."
+  awk -v p="[profile:${PROFILE}]" '$0==p{f=1;print;next} /^\[profile:/{f=0} f{print}' "$EXAMPLE" >> "$CONF" \
+    || die "could not stage selected profile."
+}
+_commit_profile_config(){
+  _check_private_file "$FINAL_CONF"
+  CONF_BAK="$(_backup_private_file "$FINAL_CONF")" || die "could not back up server config."
+  [ -z "$CONF_BAK" ] || echo "  previous config backed up → ${CONF_BAK}"
+  _publish_private_file "$CONF" "$FINAL_CONF"
+  CONF="$FINAL_CONF"
+}
+
 # Must run as root. Run it directly as root (no sudo needed), or — if you are a
 # normal user AND sudo is installed — it re-execs itself under sudo. We never
 # install sudo: on a root-only box (no sudo) just run it as root.
@@ -521,6 +619,7 @@ case "$QELI_RUN_AS" in
   qeli|root) ;;
   *) die "QELI_RUN_AS must be 'qeli' or 'root' (got '$QELI_RUN_AS')." ;;
 esac
+_validate_installer_options
 
 # ── pre-flight: never silently destroy a working deployment ─────────────────
 # This is a FIRST-INSTALL script: it writes /etc/qeli/server.conf from scratch and
@@ -732,20 +831,8 @@ command -v qeli >/dev/null || die "qeli is not on PATH after install."
 
 # ── 4. build server.conf: the selected profile only, from the example ───────
 log "Configuring the ${PROFILE} profile on :${PORT}"
-# Only reachable with QELI_FORCE_RECONFIG=1 (see the guard at the top). Keep the
-# previous config: it is the only copy of the identity pinning, the panel
-# password_hash and any hand-written profile this run is about to throw away.
-# (Audit 2026-07-27, K2)
-if [ -e "$CONF" ]; then
-  CONF_BAK="$(_backup_private_file "$CONF")" || die "could not back up server config."
-  echo "  previous config backed up → ${CONF_BAK}"
-fi
-{
-  # global sections ([auth]/[logging]/[web]) — everything before the first profile
-  awk '/^\[profile:/{exit} {print}' "$EXAMPLE"
-  # only the selected profile block (header until the next [profile:)
-  awk -v p="[profile:${PROFILE}]" '$0==p{f=1;print;next} /^\[profile:/{f=0} f{print}' "$EXAMPLE"
-} > "$CONF"
+_resolve_public_host
+_prepare_profile_config
 # Force the listener onto :$PORT regardless of the example's per-profile port
 # (reality-tls already ships on 443; fake-tls ships on 8444 in the example).
 sed -i "s|^bind.port = .*|bind.port = ${PORT}|" "$CONF"
@@ -791,58 +878,7 @@ PUBKEY=$(qeli show-identity --config "$CONF" 2>/dev/null | awk -v p="$PROFILE" '
 chown -h -R -P qeli:qeli "$CONF" /etc/qeli/identity 2>/dev/null || true
 
 # ── 6. public host clients will connect to ──────────────────────────────────
-if [ -z "$PUBLIC_HOST" ]; then
-  # 1) External echo services — authoritative public IP (esp. behind NAT). Try a
-  #    few, each time-bounded so a blocked/unreachable one can't hang the install.
-  PUBLIC_HOST="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)"
-  [ -n "$PUBLIC_HOST" ] || PUBLIC_HOST="$(curl -fsS --max-time 5 https://ifconfig.me 2>/dev/null || true)"
-  [ -n "$PUBLIC_HOST" ] || PUBLIC_HOST="$(curl -fsS --max-time 5 https://icanhazip.com 2>/dev/null || true)"
-  # 2) Local fallback — src address of the default route. Works even with a /32 WAN
-  #    IP (as many cloud VMs have). On a NAT'd box this is the PRIVATE IP, so warn.
-  if [ -z "$PUBLIC_HOST" ]; then
-    PUBLIC_HOST="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -n1)"
-    [ -n "$PUBLIC_HOST" ] && echo "  (external lookup failed — using the local WAN address ${PUBLIC_HOST}; if this box is behind NAT, re-run with the real public IP)"
-  fi
-  PUBLIC_HOST="$(printf '%s' "$PUBLIC_HOST" | tr -d '[:space:]')"
-  echo "  Auto-detected public IP: ${PUBLIC_HOST:-<unknown>}"
-  echo "  (Separate inbound/outbound IPs or a domain? Re-run with it as an argument.)"
-fi
-[ -n "$PUBLIC_HOST" ] || die "could not determine PUBLIC_HOST — pass it as an argument."
-# Validate the moment it is known, BEFORE it reaches a config file or a share link.
-# The value is either $1 or whatever api.ipify.org / ifconfig.me / icanhazip.com
-# answered, and it used to be spliced straight into `sed -i "s|…|public_host = $X|"` —
-# so a `|` in it closed the s||| command and everything after it executed as further
-# sed commands against server.conf, as root. Accept only characters an IP or hostname
-# can legitimately contain, and bound the length. (Audit 2026-07-27, O3)
-case "$PUBLIC_HOST" in
-  *[!A-Za-z0-9._:-]*)
-    die "PUBLIC_HOST '${PUBLIC_HOST}' contains characters that cannot appear in an IP or hostname — pass a clean address as the first argument." ;;
-  -*)
-    die "PUBLIC_HOST '${PUBLIC_HOST}' starts with '-' — that is not an address." ;;
-esac
-[ "${#PUBLIC_HOST}" -le 253 ] || die "PUBLIC_HOST is ${#PUBLIC_HOST} characters long — no hostname is (max 253)."
-# Host:port authorities must bracket IPv6 literals (RFC 3986). Keep public_host itself bare:
-# qeli's config/share codec owns authority parsing and adds brackets where required.
-PUBLIC_AUTHORITY_HOST="$PUBLIC_HOST"
-PUBLIC_PANEL_BIND="0.0.0.0"
-ENABLE_IPV6_LISTENER=0
-case "$PUBLIC_HOST" in
-  *:*)
-    PUBLIC_AUTHORITY_HOST="[${PUBLIC_HOST}]"
-    PUBLIC_PANEL_BIND="::"
-    ENABLE_IPV6_LISTENER=1
-    ;;
-esac
-
-# A hostname can gain/use an AAAA record without changing the installed config. When this
-# kernel has IPv6 enabled, make Quick Start dual-carrier-ready even if PUBLIC_HOST itself is
-# a DNS name (or today's auto-detected address happened to be IPv4). The second socket is
-# V6ONLY, so it neither steals nor duplicates the primary IPv4 listener. An explicit IPv6
-# literal still requests this listener even on a misconfigured IPv6-disabled host, making the
-# final service start fail honestly instead of printing an unusable connection link.
-if [ -s /proc/net/if_inet6 ]; then
-  ENABLE_IPV6_LISTENER=1
-fi
+# Public endpoint was resolved/validated before preparing the staged INI.
 
 # The packaged multiprofile example uses an IPv4 primary listener. An IPv6 literal in the
 # generated link is useful only if the selected profile also owns an IPv6 socket; qeli makes
@@ -1085,17 +1121,7 @@ sysctl -p /etc/sysctl.d/99-qeli-perf.conf >/dev/null 2>&1 || true
 # outright rather than quietly accepted. TLS is enabled through ONE mechanism
 # (_conf_web_set), so there is nothing left that can silently fail to match.
 log "Enabling the web admin panel (HTTPS, generated password)"
-PANEL_PUBLIC=0
-PANEL_ALLOWED="${QELI_PANEL_ALLOWED_IPS:-}"
-if [ "${QELI_PANEL_PUBLIC:-0}" = "1" ]; then
-  [ -n "$PANEL_ALLOWED" ] || die "QELI_PANEL_PUBLIC=1 needs QELI_PANEL_ALLOWED_IPS=<ip[,ip…]> — publishing the admin panel on a wildcard bind with no source allowlist is refused. Use your own address, or drop QELI_PANEL_PUBLIC and reach the panel through an SSH tunnel:  ssh -L ${PANEL_PORT}:127.0.0.1:${PANEL_PORT} root@${PUBLIC_HOST}"
-  # Same reasoning as PUBLIC_HOST: this value lands in the config, so it is data only.
-  # Comma-separated, no spaces (e.g. QELI_PANEL_ALLOWED_IPS=203.0.113.4,198.51.100.0/24).
-  case "$PANEL_ALLOWED" in
-    *[!A-Za-z0-9./,:-]*) die "QELI_PANEL_ALLOWED_IPS must be a comma-separated list of addresses/CIDRs with no spaces (got '${PANEL_ALLOWED}')." ;;
-  esac
-  PANEL_PUBLIC=1
-fi
+# Panel opt-in/allowlist input was checked before dependency/config changes.
 PANEL_PW="$(openssl rand -base64 18 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 20)"
 # Password on stdin, not in argv — see the note on add-client above.
 if [ -n "$PANEL_PW" ] && printf '%s' "$PANEL_PW" \
@@ -1129,11 +1155,6 @@ fi
 # Run-as user: default `qeli` (least privilege). QELI_RUN_AS=root writes a systemd
 # drop-in (via the binary's own helper) BEFORE the first start, so the service comes up
 # as the chosen user. Reverting later: `qeli set-service-user qeli`.
-if [ "$QELI_RUN_AS" = root ]; then
-  log "Configuring the service to run as root (QELI_RUN_AS=root — privilege separation off)"
-  qeli set-service-user root
-fi
-
 # Validate the FINAL file, after add-client and all web-panel rewrites. Earlier
 # `show-identity` only parsed the profile subset that existed before those mutations;
 # it neither rejected unread keys/bad values nor loaded users.conf. Refuse before
@@ -1141,8 +1162,15 @@ fi
 # config and turn an otherwise recoverable edit into an outage.
 log "Validating the final server and users configuration"
 if ! qeli check-config --config "$CONF"; then
-  die "final configuration validation failed; qeli was NOT restarted. Fix ${CONF} (previous copy: ${CONF_BAK:-not available}) and run qeli check-config again."
+  die "staged configuration validation failed; ${FINAL_CONF} was NOT replaced and qeli was NOT restarted. Users/identity/links/tuning may already have changed; inspect their recovery data before retrying."
 fi
+
+if [ "$QELI_RUN_AS" = root ]; then
+  log "Configuring the service to run as root (QELI_RUN_AS=root — privilege separation off)"
+  qeli set-service-user root
+fi
+
+_commit_profile_config
 
 log "Starting the service"
 systemctl enable qeli

@@ -478,3 +478,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: installer dependencies and package admission](reports/AUDIT-Q33-INSTALLER-ADMISSION.md)
 
 - [Q33: installer secret/config publication](reports/AUDIT-Q33-INSTALLER-SECRETS.md)
+
+- [Q33: installer preflight and staged INI](reports/AUDIT-Q33-INSTALLER-CONFIG.md)
