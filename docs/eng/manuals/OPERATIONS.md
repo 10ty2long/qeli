@@ -259,6 +259,10 @@ Two implementation details worth knowing:
   newest 5 kept), so a bad restore is reversible. Those snapshots are excluded from new
   archives. A restore needs a **manual restart** to take effect.
 
+Restore refuses introduced or changed `routing.post_up/post_down` commands and replacement of files referenced by existing hooks. The check accounts for `..`, quotes, spaces and symlinks, including outside aliases into `/etc/qeli`. A literal `/etc/qeli/$SCRIPT` or `/etc/qeli/*.sh` cannot identify the top-level entry: restore is refused before publication. A pattern inside known `/etc/qeli/scripts/` protects the entire `scripts/` entry.
+
+Keep executable hooks and their dependencies outside `/etc/qeli`, for example under `/opt/site/`, and update them on the server separately from panel archives. Static inspection does not execute the shell and cannot discover paths built entirely from variables, runtime `cd`, or inside an external script. It is not a sandbox for arbitrary hook commands. Files without executable bits are protected too: `sh file.txt` can execute their contents.
+
 > The panel archive contains private identity/TLS keys, password hashes, `password_enc`,
 > and client links with plaintext passwords. A complete manual archive additionally contains
 > `panel-secret.key` and the remaining state under `/var/lib/qeli`. Treat both forms as

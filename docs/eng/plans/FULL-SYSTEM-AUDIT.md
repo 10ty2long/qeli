@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v159 -->
+<!-- normative-sync: full-system-audit-v160 -->
 
 **Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2445,3 +2445,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 **8 October,Q31-V011:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): previous32-bit builds predated F395; current6c2225cd ARMv7/MIPS full client builds/SHA/static ELF PASS,318exact transferred inputs.32QEMU CLI/INI and14exact production PublicationLock/budget release behavior checks PASS on cortex-a7/24Kc uid65534. No new product regression/ABI/source change;14nativeSHA/provenance PASS. .11 rustup inventory auto-installed a missing named nightly; only that own addition removed with guards/default preserved,probe compiled sequentially on .10. Verified backups,three own roots cleaned,unrelated old root/services retained. Old four-target A/B keeps original source/date;no cfg(test)/firmware/fullVPN/SDK bootstrap/source-cut/current CI success claim. Q31 remains3/5;29/37(78.4%),8remain;Q29/Q30/D06/exclusions retained. No push/deploy/release.
 
 **8 October,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): fixed branch latest publication, Cargo --locked, removed four destructive/status-ignoring legacy harnesses. Real Docker image/runtime26PASS: pinned H1 VPN fresh/recreation/known-image rollback, root0600/readonly volumes, protected-login readiness, bytes/UID/mode preservation, six exit0 without OOM/SIGKILL. Harness FAIL retained; host snapshots/AppArmor/PID777-845 restored, owned root SHA-backed-up/guard-cleaned. Runtime gate closed; compiler multiarch/registry/currentActions and final Q33 command/hook reconciliation OPEN.29/37DONE78.4%,8remain; historical debt14DONE+D06accepted/exclusions preserved; local dev without push/deploy/release.
+
+
+**8 October,F449/Q33-F052:** [Q33 final reconciliation](../reports/AUDIT-Q33-COMPLETION.md): fixed restore hook-file protection bypass through `..`, quotes and symlink aliases; unknown top-level managed literal variables/globs refuse publication. Exact original Linux collector expected FAIL;14 targeted production helper/gate checks PASS. Full server/native qualification PASS:CLI5/backup49/IO2/Clippy,freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS;overall29/37DONE78.4%,8remain. Previous runtime gates reused only for unchanged paths;Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.

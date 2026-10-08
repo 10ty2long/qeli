@@ -12,7 +12,9 @@
 > `/var/tmp/qeli-native-repro/android-source` на .11 перед сборкой. Каталоги исходников
 > работающих сервисов не используются.
 
-Последняя [сверка 7 октября 2026](../docs/ru/reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
+Предыдущая [сверка 7 октября 2026](../docs/ru/reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
+
+Текущая [квалификация 8 октября, F449](../docs/ru/reports/AUDIT-Q33-COMPLETION.md): source e8f5469e, четыре native targets прошли fresh independent A/B, export gates и14 SHA/copies/provenance. Пересобранная Windows DLL прошла22 C ABI/control/localhost-runner checks без Wintun/OS routes. Новый Android полный runtime и Mac/iOS runtime этим пакетом не квалифицированы; Q33 retained-hook review остаётся OPEN.
 
 ## Содержимое
 

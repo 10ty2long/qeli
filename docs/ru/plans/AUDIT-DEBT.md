@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v94 -->
+<!-- normative-sync: audit-debt-v95 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1340,3 +1340,6 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября,F445 / Q33-F048:** [Полный installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): подтверждён и исправлен ложный sysctl success; private per-run snapshots/prior files/restore instructions, readback и early tuning path guards. Full QELI_BIN+QELI_SRC и production QELI_DEB: по24 PASS с actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 и persistent files restoration. Linux136 regressions без skips/lint PASS, CI tuning добавлен. Первые FAIL сохранены; root777/845/network/kernel не менялись. Full positive installer и partial kernel recovery gate закрыты, глобальная запись10keys/BBR load/reboot/пустой OS bootstrap не заявлены; Docker/Actions и прежние ограничения остаются OPEN. Q33IN_PROGRESS29/37DONE78.4%,осталось8; без push/deploy/release.
 
 **8 октября,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): branch latest publication исправлена, Cargo --locked, четыре destructive/status-ignoring legacy harness удалены. Настоящий Docker image/runtime26PASS: pinned H1 VPN fresh/recreate/known-image rollback, root0600/readonly volumes, protected-login readiness, сохранение bytes/UID/mode, шесть exit0 без OOM/SIGKILL. Harness FAIL сохранены; host snapshots/профили AppArmor/PID777-845 восстановлены, own root SHA-backed-up/guard-cleaned. Runtime gate закрыт; compiler multiarch/registry/currentActions и итоговая command/hook сверка Q33 OPEN.29/37DONE78.4%,осталось8; исторический долг14DONE+D06accepted/exclusions сохранены; локальный dev без push/deploy/release.
+
+
+**8 октября,F449/Q33-F052:** [Итоговая сверка Q33](../reports/AUDIT-Q33-COMPLETION.md): исправлен обход защиты hook-файла при restore через `..`, кавычки и symlink aliases; literal variables/globs в неизвестном top-level managed entry отклоняются. Точный старый collector на Linux ожидаемо FAIL;14 targeted production helper/gate checks PASS. Полная серверная/native квалификация PASS:CLI5/backup49/IO2/Clippy, freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS; общий29/37DONE78.4%,8осталось. Прежние runtime gates переиспользуются только в неизменённой части; Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED сохраняются. Без push/deploy/release.

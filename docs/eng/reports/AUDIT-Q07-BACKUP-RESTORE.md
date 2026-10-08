@@ -117,3 +117,6 @@ Review covers archive source/shape, streaming limits/child ownership, staged tru
 **Q07: PASS within the agreed available Linux/runtime scope.** Read-only storage after extraction prevents immediate staging cleanup: remaining files are private (0700/0600), excluded from backups and removable manually once storage is writable and restore has ended. This filesystem limitation is documented. Publication remains per-file rename without whole-tree atomicity or automatic rollback; power loss and uncoordinated root writes are not certified. Physical advisory checks retain agreed exclusions. Working services were not replaced and no push occurred. The next plan section is Q08.
 
 [Final Q07 evidence](../../../release/certification/evidence/q07-completion-20261003.json).
+
+
+8 October addendum: [Q33/F449](AUDIT-Q33-COMPLETION.md) closes restore script-protection path alias bypass; original Q07 results above remain historical.
