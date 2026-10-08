@@ -88,6 +88,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
+          python3 -m unittest discover -s scripts -p 'test_docker_publish_ref.py'
           python3 -m unittest discover -s scripts -p 'test_release_preflight.py'
           python3 scripts/test_macos_build_paths.py --bash /bin/bash --fixtures "$RUNNER_TEMP/qeli-build-path-fixtures"
           python3 -m unittest discover -s scripts -p 'test_keenetic_probe.py'
