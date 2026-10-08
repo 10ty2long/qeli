@@ -38,3 +38,6 @@
 Сохраняются Q29 SIGKILL FAIL/ENONET, Q30 Apple/callback OPEN, Q31 capacity/source-cut/currentActions, F459/braces OPEN, D06 ACCEPTED_LIMITATION и USER_EXCLUDED Mac/iOS/router/Windows network VM. Старые14 debt DONE не переименованы. Native source e3fb и14 native/copies SHA, CHANGELOG/users/CSS неизменны; новый release native A/B и device VPN runtime этим пакетом не заявлены.
 
 Источники: [OSV batch API](https://google.github.io/osv.dev/post-v1-querybatch/), [AGP built-in Kotlin upgrade](https://developer.android.com/build/releases/agp-9-0-0-release-notes#runtime-dependency-on-kotlin-gradle-plugin), [Kotlin/AGP/R8](https://developer.android.com/build/kotlin-support), [Kotlin cache advisory](https://github.com/advisories/GHSA-r937-wjx7-w2jp), [deps.dev API](https://docs.deps.dev/api/v3/), [Material LICENSE](https://github.com/material-components/material-components-android/blob/1.14.0/LICENSE).
+
+
+Последующая проверка закрывает отсутствие текстов лицензий проекта и перенос найденных Maven NOTICE в APK: [F469/Q34-F023](AUDIT-Q34-ANDROID-NOTICES.md). Проверки сторонних native notices, upstream source notices и source publication остаются OPEN.

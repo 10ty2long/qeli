@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v166 -->
+<!-- normative-sync: full-system-audit-v167 -->
 
 **Current result, 8 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2464,3 +2464,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **8 October,F466–F468/Q34-F020–F022:** [Maven security](../reports/AUDIT-Q34-MAVEN-SECURITY.md): shared early-plugin/project security versions, KGP2.4.21/Netty4.1.137/BC1.85 and remaining targeted fixes; all318 locked package/version records freshOSV0affected (initial326/19affected/50distinctadvisories). CI Maven fail-closed gate8fixtures/actualJDOMnegative-positive PASS; wrong-password test now AEADBadTagException, nullable reflection checked. Java17 officialSHA private qualification: debug/defaultR8/debug-release instrumentation assemblies/201JVMproductionJNI/lint0errors53warnings/offline-strict PASS;2actualoffline policy/driftrefusals+restoredpositive.104freshHTTPS checksums/626exactinheritedsealed records,obsolete admission removed. First unit compileFAIL and harness/API diagnostics preserved. SHA32720631byte backup/proc-mountguardcleanup777845 preserved; nativee3fb/14SHA/protectedfiles unchanged. License metadata318 obtained, actualNOTICE/native copyleft/source-cut/device runtime/currentActions remain OPEN; freshestCI37765333335 is anotherSHAf84a78d9. Q34IN_PROGRESS30-37DONE81.1percent7remain;F459braces/Q29SIGKILLFAIL-ENONET/Q30/Q31/D06accepted/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**8 October,F469/Q34-F023:** [Android licenses/NOTICE packaging](../reports/AUDIT-Q34-ANDROID-NOTICES.md): per-variant canonical project AGPL/MPL,Apache2,Maven runtime inventory,original archive identities and preserved JAR/AAR/nested notices; dedicated original-archive ArtifactView,identical variant visit deduplication. Independent extraction current-checksum-admitted63archives/44AAR/24resources PASS;76license declarations inherited sealed review. CI APK index/hash/coordinate/origin gate12negative fixtures. APK qualification/evidence in linked report; native dependency/upstream-source notices,matching source publication/signatures/currentActions/fullrelease remain OPEN. Native e3fb/protected files unchanged; no new nativeAB/JVM/deviceVPN claim. Q34IN_PROGRESS30/37DONE81.1percent7remain; historical Q29/Q30/Q31/F459/D06/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
