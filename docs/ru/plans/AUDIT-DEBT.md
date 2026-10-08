@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v91 -->
+<!-- normative-sync: audit-debt-v92 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1334,3 +1334,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября, F442–F444 / Q33-F045–F047:** [Systemd](../reports/AUDIT-Q33-SYSTEMD.md): стабильный снимок nft без смешивания diagnostics; управляемый SIGHUP supervisor с сохранением panel lockouts; ограниченные filesystem capabilities root. Current CLI a36d/SHA6161 собран Rust1.97 offline/locked; bin5 + SIGHUP4 + supervisor23 + Clippy PASS; installer/CLI129 + точная локальная CI14 + lint PASS. Настоящий manager257 sandbox/reload/restart/root-qeli/invalid-INI recovery проверен в собственном network namespace; запрет root config trust сохранён. Native A/B/ABI и sealed evidence — в отчёте. Закрыт этот manager gate, а не весь Q33: настоящий package/update rollback pipeline, VPN traffic и Docker image runtime остаются OPEN. Q33 IN_PROGRESS,29/37 DONE(78.4%),осталось8; история/exclusions/deferred пункты сохранены; без push/deploy/release.
 
 **8 октября:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): настоящий portable release/jemalloc и production package; реальные apt/dpkg/debconf/CLI/systemd с частной DB и явным unit mapping, финальные 24 PASS. Успешное обновление, package rollback после неисправного unit и повреждённого ELF, exact configured DB, сохранение bytes/UID/mode config/users/identity/receipts/backups, remove/purge. Три fixture FAIL сохранены; audit helpers исправлены, продукт не изменён. Закрыт этот scoped gate; whole binary/kernel installer, release VPN roundtrip, Docker и Actions OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), осталось 8; предыдущие статусы/исключения сохранены.
+
+**8 октября:** release VPN и package→systemd→VPN: [Q33 DEB](../reports/AUDIT-Q33-PACKAGE-MANAGER.md). Матрица extracted production release ELF:18 сценариев/376 PASS (TCP/UDP, outer/inner4/6, split, leak, TAP, DNS, MTU, legacy0.7.16). Реальный pinned H-1 client через пакетную службу:36 PASS, fresh/upgrade/оба rollback, exact TUN route и clean stop. Исходный fixture trust FAIL сохранён, show-identity выполняется от qeli. Продукт/native не менялись; стенд восстановлен, roots SHA-archived/guard-cleaned. Release data-plane и package/service/VPN gate закрыты; full binary/kernel installer и Docker/Actions остаются OPEN. Q33 IN_PROGRESS;29/37 DONE78.4%,осталось8; прежние ограничения сохранены.

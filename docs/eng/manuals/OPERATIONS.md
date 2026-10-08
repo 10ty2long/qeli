@@ -810,3 +810,5 @@ Qeli requires no additional CAP_BPF or bpffs.
 [Known P2 and disposition](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
 
 DEB update qualification: package downgrade restored the configured DB and service after two faults in an isolated fixture. Remove/purge preserved operator data. This does not guarantee every profile is healthy: updater checks supervisor PID stability; verify a client connection and logs after updating. Details and limits: [Q33 DEB/update](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
+
+Additional release package qualification confirms VPN traffic through systemd after install, upgrade and both rollbacks with a pinned server key. Each stage uses a new client connection; uninterrupted sessions during restart are not guaranteed. IPv4/IPv6, TCP/UDP, DNS and MTU matrix also passed. [Scope and evidence](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
