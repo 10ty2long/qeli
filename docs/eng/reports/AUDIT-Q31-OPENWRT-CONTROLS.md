@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v40 -->
+<!-- normative-sync: q31-openwrt-controls-v42 -->
 
-**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2318,3 +2318,76 @@ Full SDK Rust bootstrap/build and release-cut/preflight/Actions remain OPEN;
 prior standalone cross/QEMU evidence retains its original source/date.
 Q31 remains3/5 IN_PROGRESS; full audit29/37(78.4%),8remain. Q29/Q30/D06 and user
 platform exclusions retain their existing dispositions. No push/deploy/release.
+
+## F396: preflight combined checks from different commits (8 October)
+
+Each gate separately resolved HEAD. A checkout or commit while CI diagnostics,
+optional lab compilation or certification ran could combine a green CI result
+for one commit with source/evidence checks for another and print release PASS.
+This was reproduced by executing the old whole-script ordering with real temporary
+Git repositories and controlled external gates: one unchanged positive control
+passed, three commit-change cases incorrectly passed. These are orchestration
+fixtures, not fresh CI, router compilation or release certification results.
+
+Preflight now admits one clean committed working tree before any external query,
+checks the same commit and cleanliness between every gate and after certification,
+and refuses further gates after source drift. A frozen router snapshot and returned
+build source must match that admitted commit. Independent ordinary gate failures
+still accumulate. Certification execution has a 120-second timeout; process/tool
+errors become a failed verdict. Importing the module no longer runs a release check.
+The optional lab gate remains optional; production OpenWrt source pin/hash remain
+unchanged. Ignored build caches and changes made and reverted wholly within a gate
+are outside this boundary check; this is not a lock against privileged writers or
+permission to publish after later source changes.
+
+Twelve whole-program methods qualify clean/dirty/untracked/ignored inputs, three
+commit-change timings, intermediate edit, failure accumulation, snapshot/report
+mismatch, timeout and SSH close failures. Windows:78 PASS of81 methods, with three
+pre-existing POSIX/opt-in source-gate skips. Linux:56 related orchestration/CI/router/
+certification methods PASS without skips as uid65534.328 staged Git Python files
+were verified before and after; private fixture removed after SHA-verified backup
+and process/mount/path guards. Initial Windows fixture cleared PATH and stopped
+at Git lookup; the environment setup was repaired, then all meaningful cases passed.
+No Rust/native source, binary or SDK build recipe changed; native SHA/provenance
+remain applicable. CI now includes the whole-program tests.
+
+A real read-only whole-script preflight is recorded in the scoped evidence. It is
+expected to refuse unpublished/stale CI and the development source pin, while the
+certification metadata validator is checked separately. Optional lab builds were
+not repeated: earlier actual ARM/MIPS/QEMU execution keeps its original source/date.
+This closes the mixed-commit verdict defect only; full SDK Rust bootstrap/build,
+production release-cut archive and successful current-commit Actions/preflight remain
+OPEN. Both labs were inventoried read-only (about2GiB RAM;9GiB free each); no full
+bootstrap or resource-capacity guarantee is claimed. Q31 remains3/5 IN_PROGRESS;
+full29/37(78.4%),eight remain. Q29/Q30, user exclusions and D06 retained.
+
+Evidence: `release/certification/evidence/q31-preflight-identity-20261008.json`.
+
+## F397–F398: stale CI job diagnostics and two remaining fixture defects (8 October)
+
+Read-only GitHub diagnostics for run37598403060 at83c07f5c confirmed three failed
+jobs. Its native-libs failure is old stale provenance; the current four cores and
+provenance pass locally with the already qualified F395 source. This is not a new
+successful Actions run. macos-build rejected its per-app-ci output leaf because
+the production build permits only dist/per-app-arm64. CI now uses that permitted
+leaf; the path fixture executes the exact production command against build.sh with
+all build/remove tools mocked. Old CI command independently fails; fixed11 Windows
+cases pass (symlink unavailable),12 Linux uid65534 cases pass without skips. This
+fixture is also in the Linux CI job and does not require Xcode or weaken path guards.
+
+The iOS known-key test supplied exit_node=true with the default full gateway,
+contradicting shared split-routing validation. Its exit-node fixture now adds
+supported gateway=false, which projects split mode; other known-key examples stay
+unchanged. The actual shipped configuration ABI reproduces the old refusal and
+accepts the corrected example plus five other keys (seven checks). Initial attempts
+to write explicit routing keys were rejected by the native editor and discarded;
+no unsupported INI syntax remains in the fixture. This proves common policy only,
+not execution of Swift XCTest. iOS Keychain errors status(-34018) remain OPEN for
+signed test-host/runtime qualification. Apple runtime exclusions are preserved;
+no signing/entitlement bypass or failure-to-skip conversion was made.
+
+Both private Python/path lab roots were removed after verified backups and guards.
+The path backup's initial tar directory-mtime error was retained as a preparation
+note; only backup was retried. Current native SHA/provenance remain valid; Rust,
+SDK recipes, production pin/hash and client runtime code are unchanged. Q31/full
+plan counts remain unchanged. A fresh successful Actions run is still required.

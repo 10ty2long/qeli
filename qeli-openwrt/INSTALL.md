@@ -486,3 +486,16 @@ The entire preflight/Actions workflow and production release-cut pin/hash remain
 separate. QEMU CLI inspection does not qualify router VPN, TUN, firewall or firmware.
 Raw logs/artifacts are retained, temporary lab build/emulation roots cleaned;
 no published artifacts or production source pin/hash were changed.
+
+## Stable source during release preflight
+
+Run `python scripts/release_preflight.py <release-branch>` from a clean committed
+working tree, including non-ignored untracked inputs. Preflight prints the admitted
+commit and checks it between gates and after certification. Do not commit, edit or
+switch branches while it runs; source drift returns FAIL and stops later gates.
+The optional lab snapshot/report must carry that same commit. Ordinary gate failures
+still accumulate; certification process timeout120 seconds also refuses release.
+Ignored caches and a change reverted entirely inside one gate are outside this
+boundary guard. Preflight does not lock Git or authorize publishing after later
+changes. The lab gate remains optional; this does not replace actual SDK build,
+release source pin/archive generation or a successful CI run for the exact commit.

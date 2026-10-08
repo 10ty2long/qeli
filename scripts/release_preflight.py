@@ -26,6 +26,9 @@ commits, but the local jemalloc gate stayed green and nobody looked at CI):
                  against this source tree and an exact artifact SHA-256. Physical
                  checks are advisory when unavailable; a recorded failure blocks.
 
+One clean commit is required before the gates and checked between them.
+A commit/worktree change refuses admission instead of combining different sources.
+Ignored build caches and privileged concurrent writers are outside this guard.
 Exit non-zero if any gate fails, so it can front a release script.
 
   python scripts/release_preflight.py [branch]      # branch default: current
@@ -40,16 +43,11 @@ Environment:
                           accept a host key that is not in known_hosts (off by default)
 """
 import os
+import re
 import subprocess
 import sys
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-BRANCH = sys.argv[1] if len(sys.argv) > 1 else subprocess.run(
-    ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=30
-).stdout.strip()
 
 from native_lab import connect_lab
 from router_release_gate import verify_router_release
@@ -57,77 +55,141 @@ from release_ci_gate import check_release_ci
 from openwrt_source_gate import check_openwrt_source
 
 
-failures = []
+def source_identity(root):
+    """Require one clean Git commit; ignored caches are outside this admission."""
+    def query(*args):
+        result = subprocess.run(["git", *args], cwd=root, capture_output=True,
+                                text=True, encoding="utf-8", errors="replace", timeout=30)
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "Git identity query failed")
+        return result.stdout.strip()
+    commit = query("rev-parse", "HEAD^{commit}")
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
+        raise RuntimeError("invalid preflight commit identity")
+    if query("status", "--porcelain", "--untracked-files=all"):
+        raise RuntimeError("release preflight requires a clean committed working tree")
+    return commit
 
-# ── Gate 1: CI green on the branch ───────────────────────────────────────────
-print(f"=== Gate 1: latest CI run on '{BRANCH}' ===")
-failures.extend(check_release_ci(ROOT, BRANCH))
 
-# ── Gate 2: 32-bit router cross-build on the lab (optional) ──────────────────
-lab_pass = os.environ.get("QELI_LAB_PASS", "")
-if not lab_pass:
-    print("\n=== Gate 2: 32-bit lab build — SKIPPED (QELI_LAB_PASS unset) ===")
-else:
-    print("\n=== Gate 2: 32-bit router cross-build on the lab ===")
-    connection = None
+def verdict(failures):
+    print("\n===== PREFLIGHT =====")
+    if failures:
+        print("FAIL:")
+        for failure in failures:
+            print(f"  - {failure}")
+        return 1
+    print("PASS — safe to release")
+    return 0
+
+
+def main(argv=None, root=ROOT):
+    ROOT = root
+    argv = sys.argv[1:] if argv is None else argv
     try:
-        # Reject dirty source/recipes before connecting or preparing lab tools.
-        from router_release_gate import committed_crate_archive
-        snapshot = committed_crate_archive(ROOT)
-        host = os.environ.get("QELI_LAB_SERVER", "10.66.116.10")
-        connection = connect_lab(host, "root", lab_pass)
-        if os.environ.get("QELI_LAB_SRC"):
-            print("  QELI_LAB_SRC is obsolete: using a private committed-source checkout")
-        report = verify_router_release(connection, ROOT, snapshot=snapshot)
-        print(f"  source commit: {report['source_commit']}")
-        print(f"  private checkout: {report['remote_root']}")
-        print(f"  archive SHA256: {report['archive_sha256']}")
-        for result in report["results"]:
-            print(f"  {result['arch']}: {result['status']}")
-            if result["status"] != "PASS":
-                failures.append(f"32-bit {result['arch']} build/admission failed")
-                print("  ! " + result["error"])
-            else:
-                print("  artifact SHA256: " + result["artifact_sha256"])
-    except Exception as error:
-        failures.append(f"32-bit router gate failed: {error}")
-        print(f"  ! {error}")
-    finally:
-        if connection is not None:
-            try:
-                connection.close()
-            except Exception as error:
-                failures.append(f"lab close failed: {error}")
-                print(f"  ! {error}")
+        source_commit = source_identity(ROOT)
+        BRANCH = argv[0] if argv else subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=ROOT,
+            capture_output=True, text=True, timeout=30, check=True).stdout.strip()
+    except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+        return verdict([f"preflight source admission failed: {error}"])
+    print(f"Preflight source commit: {source_commit}")
 
-# ── Gate 3: immutable OpenWrt source and actual SDK mirror archive ────────────
-print("\n=== Gate 3: OpenWrt package source ===")
-failures.extend(check_openwrt_source(ROOT, os.environ.get("QELI_OPENWRT_SOURCE_ARCHIVE")))
+    def stable():
+        try:
+            if source_identity(ROOT) != source_commit:
+                raise RuntimeError("Git HEAD changed during release preflight")
+        except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+            failures.append(f"preflight source changed: {error}")
+            return False
+        return True
 
-# ── Gate 4: release certification evidence ──────────────────────────────────
-print("\n=== Gate 4: IPv6/roaming release certification ===")
-certification = subprocess.run(
-    [sys.executable, os.path.join(ROOT, "scripts", "release_certification.py"), "--quiet"],
-    cwd=ROOT,
-    capture_output=True,
-    text=True,
-    encoding="utf-8",
-    errors="replace",
-)
-if certification.stdout.strip():
-    print(certification.stdout.rstrip())
-if certification.stderr.strip():
-    print(certification.stderr.rstrip())
-if certification.returncode != 0:
-    failures.append(
-        "IPv6/roaming certification is incomplete or stale; see Gate 4 details above"
-    )
+    failures = []
 
-# ── verdict ──────────────────────────────────────────────────────────────────
-print("\n===== PREFLIGHT =====")
-if failures:
-    print("FAIL:")
-    for f in failures:
-        print(f"  - {f}")
-    sys.exit(1)
-print("PASS — safe to release")
+    # ── Gate 1: CI green on the branch ───────────────────────────────────────────
+    print(f"=== Gate 1: latest CI run on '{BRANCH}' ===")
+    failures.extend(check_release_ci(ROOT, BRANCH))
+
+    if not stable():
+        return verdict(failures)
+
+    # ── Gate 2: 32-bit router cross-build on the lab (optional) ──────────────────
+    lab_pass = os.environ.get("QELI_LAB_PASS", "")
+    if not lab_pass:
+        print("\n=== Gate 2: 32-bit lab build — SKIPPED (QELI_LAB_PASS unset) ===")
+    else:
+        print("\n=== Gate 2: 32-bit router cross-build on the lab ===")
+        connection = None
+        try:
+            # Reject dirty source/recipes before connecting or preparing lab tools.
+            from router_release_gate import committed_crate_archive
+            snapshot = committed_crate_archive(ROOT)
+            if snapshot[0] != source_commit:
+                raise RuntimeError("router snapshot differs from the preflight commit")
+            host = os.environ.get("QELI_LAB_SERVER", "10.66.116.10")
+            connection = connect_lab(host, "root", lab_pass)
+            if os.environ.get("QELI_LAB_SRC"):
+                print("  QELI_LAB_SRC is obsolete: using a private committed-source checkout")
+            report = verify_router_release(connection, ROOT, snapshot=snapshot)
+            if report["source_commit"] != source_commit:
+                raise RuntimeError("router build report differs from the preflight commit")
+            print(f"  source commit: {report['source_commit']}")
+            print(f"  private checkout: {report['remote_root']}")
+            print(f"  archive SHA256: {report['archive_sha256']}")
+            for result in report["results"]:
+                print(f"  {result['arch']}: {result['status']}")
+                if result["status"] != "PASS":
+                    failures.append(f"32-bit {result['arch']} build/admission failed")
+                    print("  ! " + result["error"])
+                else:
+                    print("  artifact SHA256: " + result["artifact_sha256"])
+        except Exception as error:
+            failures.append(f"32-bit router gate failed: {error}")
+            print(f"  ! {error}")
+        finally:
+            if connection is not None:
+                try:
+                    connection.close()
+                except Exception as error:
+                    failures.append(f"lab close failed: {error}")
+                    print(f"  ! {error}")
+
+    if not stable():
+        return verdict(failures)
+
+    # ── Gate 3: immutable OpenWrt source and actual SDK mirror archive ────────────
+    print("\n=== Gate 3: OpenWrt package source ===")
+    failures.extend(check_openwrt_source(ROOT, os.environ.get("QELI_OPENWRT_SOURCE_ARCHIVE")))
+
+    if not stable():
+        return verdict(failures)
+
+    # ── Gate 4: release certification evidence ──────────────────────────────────
+    print("\n=== Gate 4: IPv6/roaming release certification ===")
+    try:
+        certification = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "scripts", "release_certification.py"), "--quiet"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+        )
+        if certification.stdout.strip():
+            print(certification.stdout.rstrip())
+        if certification.stderr.strip():
+            print(certification.stderr.rstrip())
+        if certification.returncode != 0:
+            failures.append(
+                "IPv6/roaming certification is incomplete or stale; see Gate 4 details above"
+            )
+    except (OSError, subprocess.SubprocessError) as error:
+        failures.append(f"certification execution failed: {error}")
+
+    stable()
+    return verdict(failures)
+
+
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.exit(main())
