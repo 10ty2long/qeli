@@ -808,3 +808,5 @@ before WAN rename/delete/recreate; then change the interface and restart the pro
 On 3 October 2026 production BPF protection was excluded by user decision; current
 Qeli requires no additional CAP_BPF or bpffs.
 [Known P2 and disposition](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+
+DEB update qualification: package downgrade restored the configured DB and service after two faults in an isolated fixture. Remove/purge preserved operator data. This does not guarantee every profile is healthy: updater checks supervisor PID stability; verify a client connection and logs after updating. Details and limits: [Q33 DEB/update](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).

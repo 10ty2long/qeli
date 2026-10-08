@@ -486,3 +486,5 @@
 - [Q33: смена пользователя службы и права на секреты](reports/AUDIT-Q33-SERVICE-USER.md)
 
 - [Q33: настоящий systemd sandbox, reload и режим root](reports/AUDIT-Q33-SYSTEMD.md)
+
+- [Q33: настоящий DEB, обновление и откат](reports/AUDIT-Q33-PACKAGE-MANAGER.md)

@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v155 -->
+<!-- normative-sync: full-system-audit-v156 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2113,6 +2113,8 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 **8 октября,F439–F441:** [Пользователь службы/ownership](../reports/AUDIT-Q33-SERVICE-USER.md): сохранены права client-links/backups, каталог квитанций root0700; real state validation и сохранение existing override при ошибке исправления; installer явно применяет default qeli после проверки. Baseline ownership2/CLI3 failures;fixed2+10 и117regressions PASS;CI2+10+2,lint3scripts,Rustbin5/Clippy/fmt PASS. Current CLI пересобран0e01;native A/B evidence обновлено. Real systemd/startup/kernel/VPN/Docker остаются OPEN;Q33 IN_PROGRESS,29/37DONE78.4%,осталось8. Исторический долг/exclusions сохранены;только локальный dev.
 
 **8 октября, F442–F444 / Q33-F045–F047:** [Systemd](../reports/AUDIT-Q33-SYSTEMD.md): стабильный снимок nft без смешивания diagnostics; управляемый SIGHUP supervisor с сохранением panel lockouts; ограниченные filesystem capabilities root. Current CLI a36d/SHA6161 собран Rust1.97 offline/locked; bin5 + SIGHUP4 + supervisor23 + Clippy PASS; installer/CLI129 + точная локальная CI14 + lint PASS. Настоящий manager257 sandbox/reload/restart/root-qeli/invalid-INI recovery проверен в собственном network namespace; запрет root config trust сохранён. Native A/B/ABI и sealed evidence — в отчёте. Закрыт этот manager gate, а не весь Q33: настоящий package/update rollback pipeline, VPN traffic и Docker image runtime остаются OPEN. Q33 IN_PROGRESS,29/37 DONE(78.4%),осталось8; история/exclusions/deferred пункты сохранены; без push/deploy/release.
+
+**8 октября:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): настоящий portable release/jemalloc и production package; реальные apt/dpkg/debconf/CLI/systemd с частной DB и явным unit mapping, финальные 24 PASS. Успешное обновление, package rollback после неисправного unit и повреждённого ELF, exact configured DB, сохранение bytes/UID/mode config/users/identity/receipts/backups, remove/purge. Три fixture FAIL сохранены; audit helpers исправлены, продукт не изменён. Закрыт этот scoped gate; whole binary/kernel installer, release VPN roundtrip, Docker и Actions OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), осталось 8; предыдущие статусы/исключения сохранены.
 
 ### 34. CI, зависимости, native provenance и релиз
 
