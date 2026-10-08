@@ -492,3 +492,5 @@
 - [Q33: итоговая сверка, hooks и restore](reports/AUDIT-Q33-COMPLETION.md)
 
 - [Q34: зависимости Rust, политика CI и PEM TLS](reports/AUDIT-Q34-DEPENDENCY-POLICY.md)
+
+- [Q34: client build dependencies and Windows signatures](reports/AUDIT-Q34-CLIENT-SUPPLY.md)

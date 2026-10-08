@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v97 -->
+<!-- normative-sync: audit-debt-v98 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1347,3 +1347,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября,F450/Q33-F053:** [Q33 завершён](../reports/AUDIT-Q33-COMPLETION.md): actual baseline два HTTP restore исполняют заменённый harmless marker; фикс хранит hooks startup/последующих worker до завершения supervisor и запрещает exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; свежая native/ABI квалификация и raw seal приведены в отчёте. Q33 5/5 DONE;30/37(81,1%),7осталось. Исторические ограничения Q29/Q30/Q31/Q34/D06 сохраняются; без push/deploy/release.
 
 **Q34 dependency packet,8 октября:** [F451–F454](../reports/AUDIT-Q34-DEPENDENCY-POLICY.md) закрыты в пределах Rust dependency policy/PEM migration/formatter gate с реальными negative/positive checks. Старые14DONE и D06accepted сохранены; полный Q34/current Actions и согласованные Q29/Q30/Q31/платформенные ограничения остаются отдельными критериями. Не создаёт нового списка D-пунктов и не закрывает непроверенные release payloads.
+
+**8 October, F455–F459 / Q34-F009–F013:** [Client supply chain](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): two npm advisories fixed with byte-identical CSS; official Gradle checksum qualified by real positive/corrupt-wrapper checks; NuGet all/transitive/low audit errors and explicit advisory source, actual vulnerable/unavailable-source refusals; WinDivert official archive match/signature/hash/notices positive+4negative PASS. Three Release managed builds, required conformance, Windows selftest and local codec benchmark PASS. braces advisory remains OPEN (no published patch); SDK/locks/other graphs/currentCI/release coverage pending. Native inputs/copies14SHA unchanged; no lab changes. Q34 IN_PROGRESS,30/37DONE81.1%,7remain; established Q29/Q30/Q31/D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

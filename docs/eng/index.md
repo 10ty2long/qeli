@@ -492,3 +492,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: final reconciliation, hooks and restore](reports/AUDIT-Q33-COMPLETION.md)
 
 - [Q34: Rust dependencies, CI policy and TLS PEM](reports/AUDIT-Q34-DEPENDENCY-POLICY.md)
+
+- [Q34: client build dependencies and Windows signatures](reports/AUDIT-Q34-CLIENT-SUPPLY.md)

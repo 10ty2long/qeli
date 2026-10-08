@@ -501,7 +501,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Verify pinned Wintun version and Authenticode signer
+      - name: Verify pinned Windows drivers, signatures and notices
         working-directory: .
         shell: pwsh
         run: ./scripts/verify_windows_drivers.ps1
