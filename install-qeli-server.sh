@@ -109,10 +109,14 @@ _check_install_state(){
       die "refusing linked/non-directory state path: $state"
     fi
   done
-  for file in "$CONF" /etc/qeli/users.conf; do
+  for file in "$CONF" /etc/qeli/users.conf "${LINKS_DIR}/CONNECTION-STRINGS.txt"; do
     if [ -L "$file" ] || { [ -e "$file" ] && [ ! -f "$file" ]; }; then
       die "refusing linked/nonregular state file: $file"
     fi
+  done
+  local i
+  for ((i=1; i<=NUM_USERS; i++)); do
+    _check_private_file "${LINKS_DIR}/${USER_PREFIX}${i}.qeli"
   done
 }
 _ensure_users_file(){
@@ -263,7 +267,9 @@ _pkg_file(){
 # fails). (Audit 2026-07-27, O3/O4)
 _conf_web_set(){
   local key="$1" val="$2" tmp
-  tmp="$(mktemp)"
+  _check_private_file "$CONF"
+  tmp="$(mktemp "${CONF}.qeli-XXXXXX")" || die "could not stage web config."
+  QELI_TMP_PATHS+=("$tmp")
   awk -v k="$key" -v v="$val" '
     BEGIN { insec = 0; done = 0 }
     /^\[/ {
@@ -275,11 +281,11 @@ _conf_web_set(){
     insec && $0 ~ ("^[[:space:]]*#?[[:space:]]*" k "[[:space:]]*=") { next }
     { print }
     END { if (!done) { print ""; print "[web]"; print k " = " v } }
-  ' "$CONF" > "$tmp"
+  ' "$CONF" > "$tmp" || die "failed to set web.${key} in ${CONF}."
   # Never let a failed rewrite truncate the config we are standing on.
   [ -s "$tmp" ] || { rm -f "$tmp"; die "failed to set web.${key} in ${CONF}."; }
-  cat "$tmp" > "$CONF"          # keep the original inode/owner/mode
-  rm -f "$tmp"
+  chown --reference="$CONF" -- "$tmp" || die "could not preserve config ownership."
+  _publish_private_file "$tmp" "$CONF"
 }
 
 # Install from a prebuilt binary ($QELI_BIN) and reproduce EXACTLY what the .deb sets
@@ -395,6 +401,94 @@ _install_verified_deb(){
   installed="$(dpkg-query -W -f='${Status} ${Version} ${Architecture}' qeli 2>/dev/null || true)"
   [ "$installed" = "install ok installed ${DEB_VERSION} ${DEB_ARCH}" ] \
     || die "package installation did not configure the requested qeli version/architecture; no config was generated."
+}
+
+# Root writes must never open a final secret/config name for truncation.
+# Pathname guards reject static unsafe entries; same-directory rename breaks hard
+# links and does not follow the destination. Ancestor replacement races remain.
+_check_private_file(){
+  local dest="$1"
+  if [ -L "$dest" ] || { [ -e "$dest" ] && [ ! -f "$dest" ]; }; then
+    die "refusing linked/nonregular private file: $dest"
+  fi
+}
+_publish_private_file(){
+  local tmp="$1" dest="$2"
+  _check_private_file "$dest"
+  chmod 600 -- "$tmp" || die "could not make private temporary file: $tmp"
+  mv -T -- "$tmp" "$dest" || die "could not publish private file: $dest"
+}
+_write_private_file(){
+  local dest="$1" tmp
+  _check_private_file "$dest"
+  tmp="$(mktemp "${dest}.qeli-XXXXXX")" || die "could not stage private file: $dest"
+  QELI_TMP_PATHS+=("$tmp")
+  cat > "$tmp" || die "could not write private file: $dest"
+  _publish_private_file "$tmp" "$dest"
+}
+_backup_private_file(){
+  local file="$1" backup
+  _check_private_file "$file"
+  [ -f "$file" ] || return 0
+  backup="$(mktemp "${file}.bak-${RUN_STAMP}-XXXXXX")" || die "could not reserve backup: $file"
+  if ! install -o root -g root -m 600 -- "$file" "$backup"; then
+    rm -f -- "$backup"
+    die "could not back up private file: $file"
+  fi
+  printf '%s\n' "$backup"
+}
+_create_client_links(){
+  local i U P ADD_OUT LINK kept_link summary_tmp journal journal_fd
+  _check_install_state
+  mkdir -p "$LINKS_DIR"; chmod 700 "$LINKS_DIR"
+  _ensure_users_file
+  SUMMARY="${LINKS_DIR}/CONNECTION-STRINGS.txt"
+  SUMMARY_BAK="$(_backup_private_file "$SUMMARY")" || die "could not back up connection-string list."
+  [ -z "$SUMMARY_BAK" ] || echo "  previous connection-string list backed up → ${SUMMARY_BAK}"
+  summary_tmp="$(mktemp "${SUMMARY}.qeli-XXXXXX")" || die "could not stage connection-string list."
+  QELI_TMP_PATHS+=("$summary_tmp")
+  # Retain this file on failure: add-client may commit the user before returning
+  # a link/error. Journal the password first, while it is still recoverable.
+  journal="$(mktemp "${LINKS_DIR}/INSTALL-PENDING-${RUN_STAMP}-XXXXXX")" || die "could not create pending-credentials journal."
+  exec {journal_fd}>"$journal"
+  printf 'Unfinished installer credentials; check users.conf before recovery.\n\n' >&"$journal_fd"
+  echo "  pending credentials on failure → ${journal}"
+  for ((i=1; i<=NUM_USERS; i++)); do
+    U="${USER_PREFIX}${i}"
+    if grep -q "^\[user:${U}\]" /etc/qeli/users.conf 2>/dev/null; then
+      kept_link="${LINKS_DIR}/${U}.qeli"
+      if [ -f "$kept_link" ]; then
+        # Preserve bytes, but make this generated secret private without chmod
+        # following a hard link into an unrelated file.
+        _write_private_file "$kept_link" < "$kept_link"
+      fi
+      echo "  = ${U} already exists — kept (password unchanged)"
+      printf 'user: %s\npass: <unchanged — see %s>\nlink: <re-issue if endpoint/profile settings changed>\n\n' \
+        "$U" "${SUMMARY_BAK:-the previous install or INSTALL-PENDING journal}" >> "$summary_tmp"
+      continue
+    fi
+    P="$(openssl rand -hex 12)" || die "password generation failed; pending credentials: $journal"
+    [ -n "$P" ] || die "password generation returned empty output; pending credentials: $journal"
+    printf 'user: %s\npass: %s\nstatus: pending — account may already exist\n' "$U" "$P" >&"$journal_fd" \
+      || die "could not journal password; no add-client call for $U."
+    if ! ADD_OUT="$(printf '%s' "$P" | qeli add-client "$U" --password-stdin --link \
+             --host "${PUBLIC_AUTHORITY_HOST}:${PORT}" --link-profile "$PROFILE" \
+             --config "$CONF" 2>&1)"; then
+      printf '%s\n' "$ADD_OUT" >&2
+      die "add-client failed for ${U}; pending credentials: $journal"
+    fi
+    LINK="$(printf '%s\n' "$ADD_OUT" | grep -m1 '^qeli://' || true)"
+    [ -n "$LINK" ] || die "add-client did not return a link for $U; pending credentials: $journal"
+    printf 'link: %s\n\n' "$LINK" >&"$journal_fd" || die "could not journal link; pending credentials: $journal"
+    _write_private_file "${LINKS_DIR}/${U}.qeli" <<< "$LINK"
+    printf 'user: %s\npass: %s\nlink: %s\n\n' "$U" "$P" "$LINK" >> "$summary_tmp" \
+      || die "could not stage connection-string list; pending credentials: $journal"
+    echo "  + ${U}"
+  done
+  _publish_private_file "$summary_tmp" "$SUMMARY"
+  exec {journal_fd}>&-
+  rm -f -- "$journal"
+  chown -h -R -P qeli:qeli /etc/qeli/users.conf 2>/dev/null || true
 }
 
 # Must run as root. Run it directly as root (no sudo needed), or — if you are a
@@ -643,8 +737,7 @@ log "Configuring the ${PROFILE} profile on :${PORT}"
 # password_hash and any hand-written profile this run is about to throw away.
 # (Audit 2026-07-27, K2)
 if [ -e "$CONF" ]; then
-  CONF_BAK="${CONF}.bak-${RUN_STAMP}"
-  cp -a "$CONF" "$CONF_BAK"
+  CONF_BAK="$(_backup_private_file "$CONF")" || die "could not back up server config."
   echo "  previous config backed up → ${CONF_BAK}"
 fi
 {
@@ -766,54 +859,7 @@ fi
 
 # ── 7. create users + save ready qeli:// connection strings ─────────────────
 log "Creating ${NUM_USERS} users + connection strings"
-mkdir -p "$LINKS_DIR"; chmod 700 "$LINKS_DIR"
-# add-client appends to the users file; make sure it exists (older builds error if not).
-_ensure_users_file
-SUMMARY="${LINKS_DIR}/CONNECTION-STRINGS.txt"
-SUMMARY_BAK=""
-# This file is the ONLY place the generated passwords exist in the clear, so a forced
-# re-run must not truncate it before we know which users are being kept.
-# (Audit 2026-07-27, K2)
-if [ -s "$SUMMARY" ]; then
-  SUMMARY_BAK="${SUMMARY}.bak-${RUN_STAMP}"
-  cp -a "$SUMMARY" "$SUMMARY_BAK"
-  echo "  previous connection-string list backed up → ${SUMMARY_BAK}"
-fi
-: > "$SUMMARY"
-for i in $(seq 1 "$NUM_USERS"); do
-  U="${USER_PREFIX}${i}"
-  # A user that is already there (only possible on a QELI_FORCE_RECONFIG re-run) is
-  # KEPT, not recreated: `qeli add-client` refuses to overwrite one. That refusal used
-  # to abort the whole installer, because `LINK=$(qeli add-client … | grep …)` is an
-  # assignment from a pipeline — `set -e` killed the script at the assignment, so the
-  # explicit `die` on the next line was unreachable and the service never got started.
-  # (Audit 2026-07-27, K2)
-  if grep -q "^\[user:${U}\]" /etc/qeli/users.conf 2>/dev/null; then
-    echo "  = ${U} already exists — kept (password unchanged; its old link is stale if the short_id changed)"
-    printf 'user: %s\npass: <unchanged — see %s>\nlink: <stale — this run minted a new REALITY short_id>\n      re-issue from the web panel, or drop [user:%s] from /etc/qeli/users.conf\n      and re-run the installer to recreate it with a fresh password.\n\n' \
-      "$U" "${SUMMARY_BAK:-the previous install}" "$U" >> "$SUMMARY"
-    continue
-  fi
-  P="$(openssl rand -hex 12)"   # URL-safe (hex) — embedded straight into the link
-  # Run add-client as its own command so a FAILURE is both survivable and visible.
-  # Password on STDIN, never in argv: /proc/<pid>/cmdline is world-readable, so
-  # `--password "$P"` handed every credential this script generates to any local
-  # account polling /proc, and put it into auditd execve records besides.
-  # (Audit 2026-08-04.)
-  if ! ADD_OUT="$(printf '%s' "$P" | qeli add-client "$U" --password-stdin --link \
-           --host "${PUBLIC_AUTHORITY_HOST}:${PORT}" --link-profile "$PROFILE" \
-           --config "$CONF" 2>&1)"; then
-    printf '%s\n' "$ADD_OUT" >&2
-    die "add-client failed for ${U} (output above)."
-  fi
-  LINK="$(printf '%s\n' "$ADD_OUT" | grep -m1 '^qeli://' || true)"
-  [ -n "$LINK" ] || die "add-client did not return a link for $U."
-  echo "$LINK" > "${LINKS_DIR}/${U}.qeli"
-  printf 'user: %s\npass: %s\nlink: %s\n\n' "$U" "$P" "$LINK" >> "$SUMMARY"
-  echo "  + ${U}"
-done
-chmod 600 "$LINKS_DIR"/* 2>/dev/null || true
-chown -h -R -P qeli:qeli /etc/qeli/users.conf 2>/dev/null || true
+_create_client_links
 
 # ── 8. OS tuning for mobile / LTE paths (PMTU black-hole fix) ───────────────
 # The post-quantum reality-tls / fake-tls ClientHello is one large TCP segment; on

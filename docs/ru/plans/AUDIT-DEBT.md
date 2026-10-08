@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v85 -->
+<!-- normative-sync: audit-debt-v86 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1322,3 +1322,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября,F417–F421:** [Q33 from-binary](../reports/AUDIT-Q33-BINARY-INSTALLER.md): исправлены copy-failure propagation, exclusive source/full staging, state/users, signal exit и remote architecture/metadata/required attestation.14 baseline methods19 ожидаемых ошибок;18 итоговых методов23 запуска(21prefix+2earlywhole) PASS, точная CI-команда/updater21 regressions/lint PASS. HTTP/account/systemctl/qeli/gh seams явные; full installation/VPN/OIDC PASS не заявлен. Полный installer dependencies/publication/tuning/health и Docker OPEN. Собственный каталог backed-up/guarded-cleaned; service777/845 сохранён. Q33IN_PROGRESS,29/37(78.4%),осталось8; старый долг14DONE+D06accepted,Q29/Q30/Q31/exclusions сохранены. Без push/deploy/release.
 
 **8 октября,F422–F426:** [Q33 допуск installer](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md): conditional/rechecked зависимости, qeli/arch/version metadata, exact installed state, required gh и удаление мёртвой URL-ветки QELI_DEB.12 baseline methods14 ошибок;18 final methods22 calls(20helpers+2earlywhole) PASS; точная CI/binary18/updater21 regressions/lint PASS. Recipe38/native14 SHA+provenance PASS. Full positive installer/publication/tuning/health/disconnected host/Docker OPEN. Собственный root backed-up/guarded-cleaned;777/845 сохранены. Q33IN_PROGRESS;29/37DONE78.4%,осталось8; Q31 3/5 и все historical open/excluded/accepted пункты сохранены. Без push/deploy/release.
+
+**8 октября,F427–F431:** [Q33 секреты/web-config](../reports/AUDIT-Q33-INSTALLER-SECRETS.md): исправлены unsafe secret targets, private rename/kept-link copy, staged summary/pending-password recovery, atomic web rewrite/owner600, unique backups и retained-user notice.14 baseline methods15 ожидаемых assertions; итог21 methods22 запуска(20helpers+1earlywhole+1positivewhole с seams) PASS. Точная CI/admission18/binary18/updater21 regressions/lint/recipes38/native14 PASS. Настоящие CLI/parser/identity/users/panel/kernel/service/VPN/Docker и initial config transaction OPEN; automatic rollback/durability/race-pinned-dir не заявлены. Оба root backed-up/guarded-cleaned;777/845 сохранены. Q33IN_PROGRESS,29/37DONE78.4%,осталось8; Q31 3/5 и historical open/excluded/accepted пункты сохранены. Без push/deploy/release.
