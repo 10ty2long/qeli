@@ -391,3 +391,22 @@ No new regression was found in this scope. This is neither the full cfg(test) su
 nor firmware/VPN networking, SDK Rust bootstrap or a new independent clean A/B.
 Previous four-target A/B retains its original source/date. See
 [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md) for artifacts and limits.
+
+
+### Release source Git flags
+
+The shared `scripts/openwrt_source_gate.py` used by release preflight requires
+committed inputs and refuses `assume-unchanged`/`skip-worktree` flags on `qeli/`,
+the package Makefile, `verify-source.sh`, the gate and `release_preflight.py`.
+These flags can hide edits from `git status`. Inspect them before source admission:
+
+```sh
+git ls-files -v -- qeli qeli-openwrt/Makefile qeli-openwrt/verify-source.sh scripts/openwrt_source_gate.py scripts/release_preflight.py
+```
+
+A lowercase status indicates assume-unchanged; `S` indicates skip-worktree.
+Review the affected files, clear the applicable flags explicitly and commit the
+intended inputs before retrying. Flags on unrelated documentation do not change
+this gate's input scope. Clean-source admission still requires the matching
+immutable source pin and actual SDK mirror archive; removing flags does not
+qualify a stale source cut. [Audit](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md).

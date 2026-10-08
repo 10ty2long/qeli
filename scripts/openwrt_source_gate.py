@@ -83,6 +83,9 @@ def check_openwrt_source(root, archive_path=None, emit=print):
     try:
         if _git(root, "status", "--porcelain", "--", *INPUTS).strip():
             raise SourceGateError("committed OpenWrt recipe/source inputs required")
+        flags = _git(root, "ls-files", "-v", "--", *INPUTS).splitlines()
+        if any(line and (line[0].islower() or line[0] == "S") for line in flags):
+            raise SourceGateError("OpenWrt source has assume-unchanged/skip-worktree Git flags")
         head = _oid(root, "HEAD^{commit}", "commit")
         recipe = _git(root, "show", head+":qeli-openwrt/Makefile")
         values = _metadata(recipe)

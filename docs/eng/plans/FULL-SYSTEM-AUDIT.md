@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v174 -->
+<!-- normative-sync: full-system-audit-v175 -->
 
 **Current result, 9 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2488,3 +2488,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 
 **9 October,F481/Q34-F035:** [Immutable Docker inputs](../reports/AUDIT-Q34-DOCKER-INPUTS.md): reviewed frontend digest matches previous whole build;fresh registry index/manifest/config SHA checked. Single signed Debian/security snapshot20261008T000000Z,live sources removed,source-scoped expiry only,archive authentication preserved. Actual SHA-pinned amd64 Debian rootfs APT3signatures/62new150total packages/13commands/check/repeat and4signature negatives PASS;66focused methods/2priorrecipe refusals. SHA-backed-up full installedrootfs/guardedcleanup/original777845/network/profiles preserved;initial harness failures retained. No fresh wholeimage/compiler/ARM/hostedActions/release;remaining Q34/historical limits preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F482/Q34-F036:** [OpenWrt source Git flags](../reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md): actualGit10hidden-input false-PASS reproduced on exactprior gate;scoped ls-files refuses assume-unchanged/skip-worktree on5inputs before pin/hash. Unrelatedflags keep existingboundary.37methodsPASS(25source/12preflight),3existingPOSIX-oldbaseline skips unchanged;sourcecut actualpin/tree mismatch OPEN,pin/hash/SDK untouched. Docs/native14/protected unchanged scope,no lab/network/newcompiler/runtime. Q34IN_PROGRESS30/37DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
