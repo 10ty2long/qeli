@@ -496,3 +496,4 @@
 - [Q34: client build dependencies and Windows signatures](reports/AUDIT-Q34-CLIENT-SUPPLY.md)
 
 - [Q34: .NET SDK and dependency locks](reports/AUDIT-Q34-SDK-LOCKS.md)
+- [Q34: Android dependency locks and checksum verification](reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md)
