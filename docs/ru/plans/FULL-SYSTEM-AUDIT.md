@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v161 -->
+<!-- normative-sync: full-system-audit-v162 -->
 
 **Текущий итог, 8 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2466,3 +2466,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **8 октября,F449/Q33-F052:** [Итоговая сверка Q33](../reports/AUDIT-Q33-COMPLETION.md): исправлен обход защиты hook-файла при restore через `..`, кавычки и symlink aliases; literal variables/globs в неизвестном top-level managed entry отклоняются. Точный старый collector на Linux ожидаемо FAIL;14 targeted production helper/gate checks PASS. Полная серверная/native квалификация PASS:CLI5/backup49/IO2/Clippy, freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS; общий29/37DONE78.4%,8осталось. Прежние runtime gates переиспользуются только в неизменённой части; Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED сохраняются. Без push/deploy/release.
 
 **8 октября,F450/Q33-F053:** [Q33 завершён](../reports/AUDIT-Q33-COMPLETION.md): actual baseline два HTTP restore исполняют заменённый harmless marker; фикс хранит hooks startup/последующих worker до завершения supervisor и запрещает exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; свежая native/ABI квалификация и raw seal приведены в отчёте. Q33 5/5 DONE;30/37(81,1%),7осталось. Исторические ограничения Q29/Q30/Q31/Q34/D06 сохраняются; без push/deploy/release.
+
+**8 октября, F451–F454 / Q34-F005–F008:** [Rust dependency policy и TLS](../reports/AUDIT-Q34-DEPENDENCY-POLICY.md): удалён archived PEM wrapper, der0.8.0 заменён на0.8.1; лицензии/all-features/locked и audit warnings теперь hard gates, tools/toolchain pinned. Свежая RustSec DB5701a6d2: baseline0CVE+2warnings/current0CVE0warnings; реальные license rejects сохранены. TLS10/unit2445+60ignored/CLI5/14HTTPS/feature+release-checks/Clippy/fmt и Wintun file signatures PASS. Первые fmt/FD/harness failures сохранены, процессный fd budget4096; host services сохранены. Свежая native квалификация и raw seal в отчёте. Q34 IN_PROGRESS,30/37DONE81.1%,7осталось; текущий exact-SHA Actions/package/platform/release охват не подменён локальными проверками. Без push/deploy/release.
