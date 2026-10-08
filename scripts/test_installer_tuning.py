@@ -7,6 +7,8 @@ real namespaced kernel mutation are qualified separately by the manager gate.
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import sys
 import unittest
 import test_binary_installer as fixture
@@ -22,6 +24,9 @@ class TuningTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         fixture.BinaryTests.setUpClass.__func__(cls)
+        source=Path(shutil.which('mv'));shutil.copy2(source,cls.base/'usr/bin/mv')
+        for lib in re.findall(r'(/[^\s]+)',subprocess.run(['ldd',str(source)],capture_output=True,text=True).stdout):
+            target=cls.base/lib.lstrip('/');target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(lib,target)
         for name in ['etc/sysctl.d','etc/modules-load.d','etc/qeli/client-links','records/kernel']:
             (cls.base/name).mkdir(parents=True,exist_ok=True)
         cls.stub('sysctl',r'''case "$1" in

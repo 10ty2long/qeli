@@ -617,7 +617,7 @@ _check_perf_state(){
 }
 _apply_perf_tuning(){
   local perf=/etc/sysctl.d/99-qeli-perf.conf module=/etc/modules-load.d/qeli-bbr.conf
-  local key desired previous actual verified=0 failures=0 total=0 item owner group mode
+  local key desired previous actual verified=0 failures=0 total=0 item owner group mode metadata
   _check_perf_state
   mkdir -p /etc/sysctl.d /etc/modules-load.d "$LINKS_DIR"
   # Retain the receipt on failure as well as success. Each forced reconfiguration
@@ -632,7 +632,8 @@ _apply_perf_tuning(){
     _check_private_file "$item"
     if [ -f "$item" ]; then
       install -o root -g root -m 600 -- "$item" "$PERF_RECEIPT/$(basename "$item").before"
-      read -r owner group mode < <(stat -c '%u %g %a' -- "$item")
+      metadata="$(stat -c '%u %g %a' -- "$item")" || die "could not read previous tuning file metadata: $item"
+      read -r owner group mode <<< "$metadata"
       printf 'install -o %s -g %s -m %s -- "%s/%s.before" "%s"\n' \
         "$owner" "$group" "$mode" "$PERF_RECEIPT" "$(basename "$item")" "$item" >> "$PERF_RECEIPT/restore.txt"
     else

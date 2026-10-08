@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--vpn',action='store_true',help='qualify actual client traffic through owned packaged service')
     parser.add_argument('--installer', choices=['binary','deb'], help='run the complete one-shot installer instead of updater cases')
     parser.add_argument('--writable-mtu', action='store_true', help='allow only the namespaced tcp_mtu_probing key for actual partial apply/restore')
+    sys.stdout.reconfigure(errors="backslashreplace")
     args=parser.parse_args()
     if args.writable_mtu and not args.installer:
         parser.error('writable-mtu requires the verified installer NET gate')
