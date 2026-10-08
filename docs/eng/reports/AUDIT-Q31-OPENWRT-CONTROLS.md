@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v39 -->
+<!-- normative-sync: q31-openwrt-controls-v40 -->
 
-**Current checkpoint, 7 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2262,3 +2262,59 @@ No new unverified product fix,no push/deploy/release.
 
 Raw packet: `audit-debt-20260924/q31-live-release-gate-20261007`.
 Machine record: `release/certification/evidence/q31-live-release-gate-20261007.json`.
+
+## F395: serialize core publication with Keenetic NDM application (8 October)
+
+The hook's repeated generation checks left a check-to-command race: the core
+could replace `qeli.tunip` after a check but before an NDM mutation. A later check
+could detect the change and retain pending, but could not prevent that stale mutation.
+Using the lifecycle lock in the writer would deadlock startup, which holds that
+lock while waiting for the first plan.
+
+The Linux writer now acquires `$QELI_TUNIP_FILE.publish-lock` by atomic mkdir only
+around the existing atomic writer. Its wait consumes the existing parent NetworkPlan
+budget, capped at 15 seconds. The matching hook acquires the same sibling directory
+before rereading a ready plan, and holds it through application, save, receipt and
+pending removal. It creates the attach device and waits for the first plan without
+that lock. Core publication releases before post-up; shell cleanup releases both
+locks on normal exit and handled signals. Unknown/stale locks are retained.
+
+The old hook with the exact new Rust lock component and an atomic-rename writer seam
+reproduced three expected failures in four cases. Both dash and BusyBox ash pass
+all four: publisher blocked through save/receipt, busy writer refusal before NDM,
+first publication while lifecycle is held, and stale-owner retention. The writer
+body in this component fixture is a seam, not a full VPN/NDM execution. Five production
+Rust lock tests cover unwind, live owner, stale/file owners, expired parent budget
+and retention of unexpected directory contents. All 2444 Linux library tests PASS,
+60 preexisting ignored; strict all-target Clippy and the actual Linux client build PASS.
+196 existing Keenetic methods plus the four new cases pass per shell without skips
+(400 executions total), including the actual INI inspector and owned native process
+fixture. Eleven Git file comparisons and the unchanged remainder of the client
+module reconcile atomic write/durability, budget, ABI and build recipe evidence.
+
+Source producer: `17c5d382c529a896ddf78b7bb56d1e9b8e157bfa`, native input digest
+`efbe3f1c4f90784ad07a0cb1768b1494ba95debe7815dba6067ec1c74be3d858`;
+318 exact Git/archive native inputs. Fresh A/B/export and Windows ABI/Android JNI
+results and hashes are recorded in
+[q31-plan-publication evidence](../../../release/certification/evidence/q31-plan-publication-20261008.json).
+Raw: `audit-debt-20260924/q31-plan-publication-20261008` outside the repository.
+
+Preparation results remain visible: preliminary full shell run had 71 unavailable
+fixture skips and one outdated pre-lock-rotation expectation. The revised expectation
+requires successful application of the reread current snapshot, no old-address setter,
+exact receipt and one save. A local cp1251 read failed before that edit; the first
+client build omitted required client-bin; the running log-selector typo was repaired
+with owned log aliases without restarting compilation; initial unit-binary backup
+selector used qeli rather than qeli_core and removed nothing. Completed Linux tests
+and Clippy were not repeated. Original .11 service/network snapshots matched exactly. On .10, the three previously observed legacy FORWARD/MASQUERADE lines moved from the default firewall snapshot to the legacy snapshot. Their cause is unattributed; only those exact lines are excluded from the bounded comparison. Other captured network state and original process/service records match. No network-policy mutation was issued by the native harness; whole-host firewall invariance is not claimed. The initial final-check assertion required exact equality, refused this drift, and was corrected to the already documented bounded guard.
+
+Update binary/helper/hook together. Mixed old bundles and administrator writes do
+not cooperate. NDM commands are sequential; a failed command keeps ownership for retry,
+and a later published generation still needs a wan.d event. Whole NDM atomicity,
+full VPN handover, physical firmware and power-loss recovery are not qualified.
+SIGKILL and release panic=abort can leave a lock requiring verified manual recovery.
+This closes the cooperative writer/application race, not the entire Q31 section.
+Full SDK Rust bootstrap/build and release-cut/preflight/Actions remain OPEN;
+prior standalone cross/QEMU evidence retains its original source/date.
+Q31 remains3/5 IN_PROGRESS; full audit29/37(78.4%),8remain. Q29/Q30/D06 and user
+platform exclusions retain their existing dispositions. No push/deploy/release.

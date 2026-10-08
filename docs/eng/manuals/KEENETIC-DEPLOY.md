@@ -361,9 +361,10 @@ or process killing is performed; router reboot normally clears volatile /var/run
 
 Hook checks plan/marker replacement before L3/save and before its applied receipt.
 An observed change retains pending for retry; already completed ndm commands are
-not rolled back. Core publication is outside this lock, so this is not an atomic
-generation protocol. Real firmware ordering and stale-generation ABA remain
-unqualified. Directory publication targets fail installation before dependencies.
+not rolled back. Core publication uses the separate plan publication lock described
+below; the lifecycle lock itself is not used by the core. Matching core/hook builds
+serialize file publication and application, while complete NDM atomicity and real
+firmware ordering remain unqualified. Directory targets fail installation before dependencies.
 
 Installation now keeps same-directory backups of the previous binary/init/helper
 and a0600 /opt/etc/qeli/install-pending recovery record while publishing code.
@@ -441,3 +442,27 @@ configuration, forced environment, profile/source/linker overrides, PATH/shared
 registry/tool caches and clean independent Qeli A/B still require qualification.
 7 real-Cargo methods use dependency-free Linux fixtures; they do not certify a fresh
 Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+## NetworkPlan publication and NDM application
+
+<!-- normative-sync: plan-publication-lock-v1 -->
+
+On Linux, publication also acquires the sibling directory
+`$QELI_TUNIP_FILE.publish-lock` with atomic `mkdir`. The matching Keenetic hook
+holds the same lock from its final plan snapshot through NDM apply/save and receipt
+publication. The client waits within the existing shared NetworkPlan budget
+(maximum 15 seconds); a busy hook returns an error for a later event to retry.
+The lock is separate from `/var/run/qeli.lifecycle.lock`: the hook creates the
+attach device and waits for the first address without holding the publication lock.
+It releases the lock before a later core publication can proceed; the core releases
+it before any post-up hook. A newly published plan still needs a later wan.d event.
+
+Update the binary, `lifecycle.sh` and hook together. Older binaries/hooks and
+administrator writes do not participate. NDM commands remain sequential and may
+partially succeed; pending/applied records retain address ownership for retry.
+Normal return, Rust unwind and handled shell signals release the lock. SIGKILL or
+power loss, including a standalone release panic with `panic=abort`, can leave a
+directory: do not remove an active or unknown owner's lock.
+After independently verifying that the client and hook have stopped, review the
+saved/pending addresses, then remove only the empty stale publication directory
+with `rmdir`. Never discard the plan or recovery receipts to bypass this check.

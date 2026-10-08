@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v39 -->
+<!-- normative-sync: q31-openwrt-controls-v40 -->
 
-**Текущий checkpoint, 7 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2273,3 +2273,59 @@ D06ACCEPTED,Q29SIGKILL/ENONET,Q30callbackdrain и USER_EXCLUDED платформ
 
 Raw packet: `audit-debt-20260924/q31-live-release-gate-20261007`.
 Machine record: `release/certification/evidence/q31-live-release-gate-20261007.json`.
+
+## F395: согласованная публикация ядром и применение NDM на Keenetic (8 октября)
+
+Повторные проверки поколения оставляли гонку между проверкой и командой:
+ядро могло заменить `qeli.tunip` перед мутацией NDM. Следующая проверка обнаруживала
+смену и оставляла pending, но не предотвращала уже выполненную устаревшую команду.
+Общий lifecycle-lock для writer создал бы взаимное ожидание при старте: init
+удерживает его, пока ждёт первый план.
+
+Linux writer теперь захватывает `$QELI_TUNIP_FILE.publish-lock` через атомарный
+mkdir только вокруг прежней атомарной записи. Ожидание расходует общий бюджет
+NetworkPlan, не более 15 секунд. Согласованный хук берёт тот же каталог перед
+повторным чтением готового плана и удерживает до завершения apply/save, receipt
+и удаления pending. Создание attach-интерфейса и ожидание первого плана идут без
+этой блокировки. Ядро освобождает её до post-up; shell cleanup освобождает обе
+блокировки при штатном выходе и обработанных сигналах. Неизвестный/stale lock сохраняется.
+
+Старый хук с точным новым Rust-компонентом блокировки и seam атомарного rename
+воспроизвёл три ожидаемых FAIL из четырёх проверок. На dash и BusyBox ash все четыре
+PASS: writer ждёт save/receipt; занятый writer запрещает NDM-команды; первый план
+публикуется при удерживаемом lifecycle-lock; неизвестный владелец сохраняется.
+Тело записи в этом fixture — seam, не полный VPN/NDM runtime. Пять тестов production
+Rust-lock проверяют unwind, живого владельца, stale/file owner, истёкший общий бюджет
+и сохранение неизвестного содержимого каталога. Все 2444 Linux library теста PASS,
+60 прежних ignored; strict all-target Clippy и сборка настоящего Linux-клиента PASS.
+196 прежних Keenetic methods и четыре новых проходят на каждой оболочке без skips
+(400 выполнений), включая настоящий INI-инспектор и собственный native process
+fixture. Одиннадцать сравнений Git-файлов и неизменный остаток клиентского модуля
+согласуют прежние проверки atomic writer/durability, бюджета, ABI и build recipes.
+
+Producer исходников: `17c5d382c529a896ddf78b7bb56d1e9b8e157bfa`, native digest
+`efbe3f1c4f90784ad07a0cb1768b1494ba95debe7815dba6067ec1c74be3d858`;
+318 точных Git/archive native inputs. Свежие A/B/export и Windows ABI/Android JNI,
+хеши и границы записаны в
+[q31-plan-publication evidence](../../../release/certification/evidence/q31-plan-publication-20261008.json).
+Raw: `audit-debt-20260924/q31-plan-publication-20261008` вне репозитория.
+
+Сохранены результаты подготовки: предварительный shell-прогон имел 71 skip без
+fixture и одно устаревшее ожидание отказа при смене до захвата lock. Новое ожидание
+требует применения перечитанного текущего плана, отсутствия setter старого адреса,
+точного receipt и одного save. Локальный cp1251 read упал до этой правки; первая
+сборка inspector не указала обязательный client-bin; selector лога текущего прогона
+исправлен собственными aliases без перезапуска компиляции; первоначальный selector
+backup unit binary ожидал qeli вместо qeli_core и ничего не удалил. Завершённые
+Linux-тесты и Clippy не повторялись. Снимки исходного сервиса/сети .11 совпали точно. На .10 три ранее наблюдавшиеся legacy FORWARD/MASQUERADE строки перешли из default firewall snapshot в legacy snapshot. Причина не установлена; из сравнения исключены только эти точные строки. Остальные сетевые снимки и записи исходных процессов/сервиса совпали. Native harness не выполнял мутаций сетевой политики; неизменность всего host firewall не заявляется. Первоначальная final-check проверка потребовала полного совпадения, отвергла этот drift и была приведена к уже документированному ограниченному guard.
+
+Обновляй binary/helper/hook вместе. Смешанный старый комплект и записи администратора
+не кооперируют. Команды NDM последовательны; ошибка сохраняет ownership для повтора,
+а более новый опубликованный план требует следующего события wan.d. Полная атомарность
+NDM, VPN handover, физическая прошивка и power-loss recovery не квалифицированы.
+SIGKILL и release panic=abort могут оставлять lock с проверяемым ручным recovery.
+Закрыта гонка согласованного writer/hook, весь Q31 остаётся открытым. Полный SDK
+Rust bootstrap/build и release-cut/preflight/Actions OPEN; прежние standalone
+cross/QEMU доказательства сохраняют исходную дату и snapshot.
+Q31 остаётся3/5 IN_PROGRESS; общий аудит29/37(78.4%),8осталось. Состояния Q29/Q30/D06
+и исключения платформ сохранены. Push/deploy/release не выполнялись.

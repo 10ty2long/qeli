@@ -1917,6 +1917,29 @@ application of identical addresses within one adapter; resetting the adapter may
 restart the counter. This is a runtime file, not an INI parameter or a new
 configuration format. Atomic rename does not make external route/ndm setup atomic.
 
+<!-- normative-sync: plan-publication-lock-v1 -->
+
+On Linux, publication also acquires the sibling directory
+`$QELI_TUNIP_FILE.publish-lock` with atomic `mkdir`. The matching Keenetic hook
+holds the same lock from its final plan snapshot through NDM apply/save and receipt
+publication. The client waits within the existing shared NetworkPlan budget
+(maximum 15 seconds); a busy hook returns an error for a later event to retry.
+The lock is separate from `/var/run/qeli.lifecycle.lock`: the hook creates the
+attach device and waits for the first address without holding the publication lock.
+It releases the lock before a later core publication can proceed; the core releases
+it before any post-up hook. A newly published plan still needs a later wan.d event.
+
+Update the binary, `lifecycle.sh` and hook together. Older binaries/hooks and
+administrator writes do not participate. NDM commands remain sequential and may
+partially succeed; pending/applied records retain address ownership for retry.
+Normal return, Rust unwind and handled shell signals release the lock. SIGKILL or
+power loss, including a standalone release panic with `panic=abort`, can leave a
+directory: do not remove an active or unknown owner's lock.
+After independently verifying that the client and hook have stopped, review the
+saved/pending addresses, then remove only the empty stale publication directory
+with `rmdir`. Never discard the plan or recovery receipts to bypass this check.
+
+
 On Linux, `dev_attach=false` only waits approximately six seconds for an occupied
 name to be released; Qeli does not delete a device based on its observed PID holders.
 Query errors and changed ifindex stop setup. TUN/TAP creation and the first multiqueue

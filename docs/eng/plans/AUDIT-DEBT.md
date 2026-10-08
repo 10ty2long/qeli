@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v75 -->
+<!-- normative-sync: audit-debt-v76 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1172,3 +1172,6 @@ physical exclusions are not PASS.
 **8 October, F389–F394:** [notification INI and delivery](../reports/AUDIT-Q32-NOTIFICATIONS.md): trust enforced before read/save, complete bounded HTTP status and 2xx-only success, query/fragment parsing, conservative special-address guard, post-save cache invalidation and symlink-entry stamps. Three old helper failures plus two actual-library cache failures reproduced; six helper tests, 12 isolated HTTP checks and cache trust/recovery qualify the corrected source. Final library/native counts and guards are in machine evidence. Q32 and Q29/Q30/Q31 scopes remain open; 28/37 overall, nine remain; old debt14 DONE plus D06 accepted.
 
 **8 October, Q32 complete:** all five criteria reconciled across metrics/usage/logs/trace/notifications and unchanged roaming observations; final2439 library, strictClippy/daemon, actual HTTP12/cache, native A/B/ABI22/JNI23 and docs/provenance PASS. Source16 comparisons preserve prior execution scope; physical/TLS/Telegram/browser limits remain documented. Full plan29/37(78.4%),eight remain;Q29/Q30/Q31 and D06 retained.
+
+
+**October8,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): separate core/hook publication lock eliminates cooperative check-to-command race without lifecycle/startup deadlock. Three expected old-hook failures; four Rust/shell cases per dash/ash,196 existing methods per shell without skips,2444 Linux(60preexisting ignored),strictClippy/client PASS. Native refresh/ABI and raw guards are in scoped packet evidence. Mixed bundles/admin writes, sequential NDM/power loss, firmware exclusions and full SDK/release pipeline remain outside closure; Q31 remains3/5IN_PROGRESS. Full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED;Q29/Q30 unchanged.
