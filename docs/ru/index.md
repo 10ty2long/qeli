@@ -480,3 +480,5 @@
 - [Q33: публикация секретов и web-конфига installer](reports/AUDIT-Q33-INSTALLER-SECRETS.md)
 
 - [Q33: ранние проверки installer и подготовленный INI](reports/AUDIT-Q33-INSTALLER-CONFIG.md)
+
+- [Q33: настоящий CLI installer/совместимость версии](reports/AUDIT-Q33-INSTALLER-CLI.md)

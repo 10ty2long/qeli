@@ -35,9 +35,9 @@ for ((i=0; i<${#args[@]}; i++)); do
  [[ "${args[i]}" != --config ]] || config="${args[i+1]}"
 done
 case "$1" in
- version) printf 'qeli 0.8.2\n';exit 0 ;;
+ --version) printf 'qeli 0.8.2\n';exit 0 ;;
  show-identity) /usr/bin/mkdir -p /etc/qeli/identity;printf fixture-key > /etc/qeli/identity/default.key;printf 'udp-quic fixture-key\n';exit 0 ;;
- set-web-password) IFS= read -r password || true;/usr/bin/sed -i 's/^enabled = false$/enabled = true/' "$config";exit 0 ;;
+ set-web-password) : > "$config.lock";IFS= read -r password || true;/usr/bin/sed -i 's/^enabled = false$/enabled = true/' "$config";exit 0 ;;
  check-config) [[ -s "$config" ]] && /usr/bin/grep -q '^\[profile:' "$config";exit ;;
  set-service-user) exit 0 ;;
  add-client) ;;

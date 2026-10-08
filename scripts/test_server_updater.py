@@ -40,7 +40,7 @@ class UpdaterTests(unittest.TestCase):
         for version,arch,name in [('0.8.1','amd64','qeli'),('0.8.1-1','amd64','qeli'),('0.8.2','amd64','qeli'),('0.8.2','arm64','qeli'),('0.8.2','all','qeli'),('0.8.2','amd64','other')]:
             staging=Path(cls.workspace.name)/f'{name}-{version}-{arch}';(staging/'DEBIAN').mkdir(parents=True);(staging/'usr/bin').mkdir(parents=True)
             (staging/'DEBIAN/control').write_text(f'Package: {name}\nVersion: {version}\nArchitecture: {arch}\nMaintainer: Audit <audit@localhost>\nDescription: inert Q33 fixture\n')
-            binary=staging/'usr/bin'/name;binary.write_text('#!/bin/bash\nprintf "qeli '+version.split('-')[0]+'\\n"\n');binary.chmod(0o755)
+            binary=staging/'usr/bin'/name;binary.write_text('#!/bin/bash\n[[ \"$1\" == --version ]] || exit 2\nprintf "qeli '+version.split('-')[0]+'\\n"\n');binary.chmod(0o755)
             subprocess.run(['dpkg-deb','--root-owner-group','-Zxz','--build',str(staging),str(cls.base/'fixtures'/f'{name}_{version}_{arch}.deb')],check=True,capture_output=True)
         record_dir = os.environ.get('QELI_UPDATER_FIXTURE_RECORDS')
         if record_dir:
@@ -63,7 +63,7 @@ exit 0''')
         cls.stub('dpkg',r'''if [[ "$1" == -i && "$(< /records/mode)" == install_refused ]]; then exit 1; fi
 exec /usr/bin/dpkg "$@"''')
         cls.stub('systemctl',r'''printf '%s\n' "$*" >> /records/systemctl.log
-mode="$(< /records/mode)";version="$(/usr/bin/qeli version)"
+mode="$(< /records/mode)";version="$(/usr/bin/qeli --version)"
 case "$1" in
  restart) [[ "$mode" != restart_fail || "$version" != 'qeli 0.8.2' ]] ;;
  show)
@@ -114,7 +114,7 @@ esac'''.replace('/usr/bin/cp /fixtures/releases.json /dev/stdout','while IFS= re
         return p
 
     def version(self):return subprocess.check_output([self.chroot,str(self.root),'/usr/bin/dpkg-query','-W','-f=${Version}','qeli'],text=True)
-    def binary_version(self):return subprocess.check_output([self.chroot,str(self.root),'/usr/bin/qeli','version'],text=True).strip()
+    def binary_version(self):return subprocess.check_output([self.chroot,str(self.root),'/usr/bin/qeli','--version'],text=True).strip()
 
     def online(self,with_sums=True,crlf=False):
         self.env.pop('QELI_DEB',None);assets=[{'name':f'qeli_0.8.2_{arch}.deb','browser_download_url':f'https://fixture/qeli_0.8.2_{arch}.deb'} for arch in ['arm64','amd64']]

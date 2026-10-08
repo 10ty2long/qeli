@@ -480,3 +480,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: installer secret/config publication](reports/AUDIT-Q33-INSTALLER-SECRETS.md)
 
 - [Q33: installer preflight and staged INI](reports/AUDIT-Q33-INSTALLER-CONFIG.md)
+
+- [Q33: actual installer CLI/version compatibility](reports/AUDIT-Q33-INSTALLER-CLI.md)

@@ -47,7 +47,7 @@ class BinaryTests(unittest.TestCase):
         (cls.base / 'prefix.sh').write_bytes(cls.prefix)
         (cls.base / 'installer.sh').write_bytes(source)
         binary = cls.base / 'fixtures/new-qeli'
-        binary.write_text('#!/bin/bash\n[[ "$1" != version ]] || { echo "qeli 0.8.2"; exit 0; };exit 1\n'); binary.chmod(0o755)
+        binary.write_text('#!/bin/bash\n[[ "$1" != --version ]] || { echo "qeli 0.8.2"; exit 0; };exit 1\n'); binary.chmod(0o755)
         cls.stub('adduser', "printf 'qeli:x:234:234:qeli:/nonexistent:/bin/false\\n' >> /etc/passwd\nprintf 'qeli:x:234:\\n' >> /etc/group")
         cls.stub('useradd', 'exit 1')
         cls.stub('setcap', 'exit 0')

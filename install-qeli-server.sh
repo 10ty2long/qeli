@@ -43,7 +43,7 @@
 #                   unit / examples from it (offline). Without it they are taken from the
 #                   SHA256-verified .deb of the release that matches the binary.
 #     QELI_REF      Optional. Release tag to take that unit / those examples from
-#                   (default: v<the version `qeli version` reports>).
+#                   (default: v<the version `qeli --version` reports>).
 #     QELI_RUN_AS    Optional. OS user the service runs as: `qeli` (default,
 #                   unprivileged, least-privilege) or `root`. `root` removes privilege
 #                   separation — only pick it when the qeli user cannot work (a kernel/
@@ -193,8 +193,8 @@ _ensure_pkg_payload(){
   if [ -z "$ref" ]; then
     # Read the supplied binary before publishing it; an installed older binary
     # must not select the payload for this transaction.
-    ver="$("$QELI_BIN" version 2>/dev/null | awk '{print $2}')"
-    [ -n "$ver" ] || { warn "cannot read the version from 'qeli version' — pass QELI_REF=<tag> or QELI_SRC=<checkout>."; return 1; }
+    ver="$("$QELI_BIN" --version 2>/dev/null | awk '{print $2}')"
+    [ -n "$ver" ] || { warn "cannot read the version from 'qeli --version' — pass QELI_REF=<tag> or QELI_SRC=<checkout>."; return 1; }
     ref="v${ver}"
   fi
   echo "  taking the unit + config examples from release ${ref} (SHA256-verified)"
@@ -400,7 +400,7 @@ _install_verified_deb(){
   fi
   installed="$(dpkg-query -W -f='${Status} ${Version} ${Architecture}' qeli 2>/dev/null || true)"
   [ "$installed" = "install ok installed ${DEB_VERSION} ${DEB_ARCH}" ] \
-    || die "package installation did not configure the requested qeli version/architecture; no config was generated."
+    || die "package installation did not configure the requested qeli --version/architecture; no config was generated."
 }
 
 # Root writes must never open a final secret/config name for truncation.
@@ -576,7 +576,9 @@ _prepare_profile_config(){
   [ "$count" = 1 ] || die "expected exactly one [profile:${PROFILE}] in $EXAMPLE, got ${count:-none}."
   FINAL_CONF="$CONF"
   CONF="$(mktemp "${FINAL_CONF}.qeli-XXXXXX")" || die "could not stage server config."
-  QELI_TMP_PATHS+=("$CONF")
+  # Real CLI writers create a persistent sibling lock for this private stage.
+  # All synchronous writers finish before EXIT; retire only this unique stage lock.
+  QELI_TMP_PATHS+=("$CONF" "$CONF.lock")
   awk '/^\[profile:/{exit} {print}' "$EXAMPLE" > "$CONF" || die "could not stage global config sections."
   awk -v p="[profile:${PROFILE}]" '$0==p{f=1;print;next} /^\[profile:/{f=0} f{print}' "$EXAMPLE" >> "$CONF" \
     || die "could not stage selected profile."
