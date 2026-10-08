@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v159 -->
+<!-- normative-sync: full-system-audit-v160 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2458,3 +2458,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **8 October,Q31-V011:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): previous32-bit builds predated F395; current6c2225cd ARMv7/MIPS full client builds/SHA/static ELF PASS,318exact transferred inputs.32QEMU CLI/INI and14exact production PublicationLock/budget release behavior checks PASS on cortex-a7/24Kc uid65534. No new product regression/ABI/source change;14nativeSHA/provenance PASS. .11 rustup inventory auto-installed a missing named nightly; only that own addition removed with guards/default preserved,probe compiled sequentially on .10. Verified backups,three own roots cleaned,unrelated old root/services retained. Old four-target A/B keeps original source/date;no cfg(test)/firmware/fullVPN/SDK bootstrap/source-cut/current CI success claim. Q31 remains3/5;29/37(78.4%),8remain;Q29/Q30/D06/exclusions retained. No push/deploy/release.
 
 **8 октября,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): branch latest publication исправлена, Cargo --locked, четыре destructive/status-ignoring legacy harness удалены. Настоящий Docker image/runtime26PASS: pinned H1 VPN fresh/recreate/known-image rollback, root0600/readonly volumes, protected-login readiness, сохранение bytes/UID/mode, шесть exit0 без OOM/SIGKILL. Harness FAIL сохранены; host snapshots/профили AppArmor/PID777-845 восстановлены, own root SHA-backed-up/guard-cleaned. Runtime gate закрыт; compiler multiarch/registry/currentActions и итоговая command/hook сверка Q33 OPEN.29/37DONE78.4%,осталось8; исторический долг14DONE+D06accepted/exclusions сохранены; локальный dev без push/deploy/release.
+
+
+**8 октября,F449/Q33-F052:** [Итоговая сверка Q33](../reports/AUDIT-Q33-COMPLETION.md): исправлен обход защиты hook-файла при restore через `..`, кавычки и symlink aliases; literal variables/globs в неизвестном top-level managed entry отклоняются. Точный старый collector на Linux ожидаемо FAIL;14 targeted production helper/gate checks PASS. Полная серверная/native квалификация PASS:CLI5/backup49/IO2/Clippy, freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS; общий29/37DONE78.4%,8осталось. Прежние runtime gates переиспользуются только в неизменённой части; Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED сохраняются. Без push/deploy/release.

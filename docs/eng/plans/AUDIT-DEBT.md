@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v94 -->
+<!-- normative-sync: audit-debt-v95 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1211,3 +1211,6 @@ physical exclusions are not PASS.
 **8 October,F445 / Q33-F048:** [Full installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): reproduced/repaired false sysctl success; private per-run snapshots/prior files/restore instructions, readback and early tuning path guards. Full QELI_BIN+QELI_SRC and production QELI_DEB:24PASS each with actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 and persistent files restoration. Linux136 regressions without skips/lint PASS, tuning CI added. Initial FAIL retained; host777/845/network/kernel unchanged. Full positive installer/partial kernel recovery gate closes, without global ten-key writes/BBR loading/reboot/empty-OS bootstrap claims; Docker/Actions and previous limits remainOPEN. Q33IN_PROGRESS29/37DONE78.4%,8remain; no push/deploy/release.
 
 **8 October,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): fixed branch latest publication, Cargo --locked, removed four destructive/status-ignoring legacy harnesses. Real Docker image/runtime26PASS: pinned H1 VPN fresh/recreation/known-image rollback, root0600/readonly volumes, protected-login readiness, bytes/UID/mode preservation, six exit0 without OOM/SIGKILL. Harness FAIL retained; host snapshots/AppArmor/PID777-845 restored, owned root SHA-backed-up/guard-cleaned. Runtime gate closed; compiler multiarch/registry/currentActions and final Q33 command/hook reconciliation OPEN.29/37DONE78.4%,8remain; historical debt14DONE+D06accepted/exclusions preserved; local dev without push/deploy/release.
+
+
+**8 October,F449/Q33-F052:** [Q33 final reconciliation](../reports/AUDIT-Q33-COMPLETION.md): fixed restore hook-file protection bypass through `..`, quotes and symlink aliases; unknown top-level managed literal variables/globs refuse publication. Exact original Linux collector expected FAIL;14 targeted production helper/gate checks PASS. Full server/native qualification PASS:CLI5/backup49/IO2/Clippy,freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS;overall29/37DONE78.4%,8remain. Previous runtime gates reused only for unchanged paths;Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.

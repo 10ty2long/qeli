@@ -488,3 +488,5 @@
 - [Q33: настоящий systemd sandbox, reload и режим root](reports/AUDIT-Q33-SYSTEMD.md)
 
 - [Q33: настоящий DEB, обновление и откат](reports/AUDIT-Q33-PACKAGE-MANAGER.md)
+
+- [Q33: итоговая сверка, hooks и restore](reports/AUDIT-Q33-COMPLETION.md)

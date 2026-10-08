@@ -7,6 +7,9 @@ use serde_json::json;
 use std::path::{Component, Path};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+#[path = "backup/hook_paths.rs"]
+mod hook_paths;
+
 const MANAGED_BACKUP_ROOT: &str = "/etc/qeli";
 const ARCHIVE_BUDGET: Duration = Duration::from_secs(60);
 // Match the upload body limit: never return a portable backup the panel cannot upload.
@@ -1016,40 +1019,8 @@ fn restore_blocking(
 ///
 /// Only paths inside `/etc/qeli` matter — a hook pointing outside it is not something a
 /// restore can reach (and the docs already recommend keeping hooks there).
-fn hook_referenced_files(config_path: &str) -> std::collections::HashSet<String> {
-    let mut out = std::collections::HashSet::new();
-    let mut add = |cmd: &str| {
-        // `script_paths` parses the command STRUCTURALLY — first token, or the first
-        // non-flag argument of a known interpreter — and gives up early on `-c`. The hook
-        // itself is run through `/bin/sh -c`, so `A && sh B`, `. B`, `$(cat B)` and friends
-        // all reference files it never returns. Since the point of this set is "do not let
-        // a restore overwrite anything a root hook will read", scan the raw command text for
-        // /etc/qeli/ paths as well and union the two. Over-blocking here only means an
-        // operator has to move a file; under-blocking means panel access becomes root
-        // execution. (Audit 2026-08-04.)
-        let mut candidates: Vec<String> = crate::hooks::script_paths(cmd);
-        let needle = "/etc/qeli/";
-        let mut rest = cmd;
-        while let Some(i) = rest.find(needle) {
-            let tail = &rest[i..];
-            let end = tail
-                .find(|c: char| {
-                    c.is_whitespace() || matches!(c, '"' | '\'' | ';' | '&' | '|' | ')')
-                })
-                .unwrap_or(tail.len());
-            candidates.push(tail[..end].to_string());
-            rest = &tail[end.max(1)..];
-        }
-        for p in candidates {
-            if let Some(rest) = p.strip_prefix("/etc/qeli/") {
-                // Store the TOP-LEVEL name: publishing works entry by entry, and a hook
-                // pointing at `/etc/qeli/scripts/up.sh` is blocked by refusing `scripts`.
-                if let Some(top) = rest.split('/').next().filter(|t| !t.is_empty()) {
-                    out.insert(top.to_string());
-                }
-            }
-        }
-    };
+fn hook_referenced_files(config_path: &str) -> hook_paths::HookFiles {
+    let mut out = hook_paths::HookFiles::new(Path::new(MANAGED_BACKUP_ROOT));
     // The LIVE config path, not a hard-coded one.
     //
     // This read `/etc/qeli/server.conf` literally, so a server started with
@@ -1059,8 +1030,8 @@ fn hook_referenced_files(config_path: &str) -> std::collections::HashSet<String>
     if let Ok(text) = crate::server::read_config_text(config_path) {
         if let Ok(cfg) = crate::config::parse_server_config(&text) {
             for p in &cfg.profiles {
-                add(&p.routing.post_up);
-                add(&p.routing.post_down);
+                out.add_command(&p.routing.post_up);
+                out.add_command(&p.routing.post_down);
             }
         }
     }
@@ -1308,7 +1279,7 @@ fn normalize_staged_permissions(_root: &std::path::Path) -> std::io::Result<()> 
 fn vet_staged_dir(
     root: &std::path::Path,
     live_root: &std::path::Path,
-    hook_files: &std::collections::HashSet<String>,
+    hook_files: &hook_paths::HookFiles,
 ) -> Result<(), String> {
     let entries = std::fs::read_dir(root).map_err(|e| format!("staged tree unreadable: {e}"))?;
     for entry in entries {
@@ -2056,6 +2027,51 @@ mod tests {
         );
         let _ = std::fs::remove_dir_all(root);
     }
+    #[cfg(unix)]
+    #[test]
+    fn restore_refuses_alias_replacement_before_publication() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+        let base = std::env::temp_dir().join(format!(
+            "qeli-restore-hook-test-{}-{}",
+            std::process::id(),
+            RESTORE_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        let live = base.join("managed");
+        let staged = base.join("staged");
+        std::fs::create_dir_all(&live).unwrap();
+        std::fs::create_dir(&staged).unwrap();
+        let name = "owned script.txt";
+        std::fs::write(live.join(name), b"trusted script").unwrap();
+        std::fs::write(staged.join(name), b"untrusted replacement").unwrap();
+        std::fs::set_permissions(staged.join(name), std::fs::Permissions::from_mode(0o600))
+            .unwrap();
+        symlink(&live, base.join("outside")).unwrap();
+        for command in [
+            format!("sh '{}/../managed/{name}'", live.display()),
+            format!("sh '{}/{name}'", live.display()),
+            format!("sh '{}/outside/{name}'", base.display()),
+            format!("sh {}/*.txt", live.display()),
+        ] {
+            let mut files = hook_paths::HookFiles::new(&live);
+            files.add_command(&command);
+            let error = vet_staged_dir(&staged, &live, &files).unwrap_err();
+            assert!(
+                error.contains("routing.post_up/post_down"),
+                "{command}: {error}"
+            );
+            assert_eq!(std::fs::read(live.join(name)).unwrap(), b"trusted script");
+            assert_eq!(
+                std::fs::read(staged.join(name)).unwrap(),
+                b"untrusted replacement"
+            );
+        }
+        // Ordinary external hooks still permit data-only publication validation.
+        let mut files = hook_paths::HookFiles::new(&live);
+        files.add_command("/opt/site/up.sh");
+        vet_staged_dir(&staged, &live, &files).unwrap();
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
     #[test]
     fn panel_backup_refuses_external_or_ambiguous_active_paths() {
         let config = crate::config::server::ServerConfig::default();
@@ -2253,7 +2269,7 @@ mod tests {
         let same = srv("routing.post_up = /opt/site/up.sh\n");
         std::fs::write(staged.join("nested/server.conf"), &same).unwrap();
         std::fs::write(live.join("server.conf"), &same).unwrap();
-        let hooks = std::collections::HashSet::new();
+        let hooks = hook_paths::HookFiles::new(&live);
         assert!(
             vet_staged_dir(&staged, &live, &hooks).is_err(),
             "a top-level config cannot authorize commands in a nested file"
