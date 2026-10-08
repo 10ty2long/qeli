@@ -1014,7 +1014,10 @@ fn set_service_user(user: String, unit: String, dry_run: bool) -> anyhow::Result
          # a bounded capability set) still applies on top of root.\n\
          [Service]\n\
          User=root\n\
-         Group=root\n"
+         Group=root\n\
+         # Root must still read/update private state owned by the qeli account.\n\
+         CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER\n\
+         AmbientCapabilities=\n"
     );
 
     if dry_run {

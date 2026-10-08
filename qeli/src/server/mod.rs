@@ -4448,12 +4448,14 @@ async fn usage_sweep(state: Arc<ServerState>, mut shutdown: tokio::sync::watch::
 }
 
 pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
-    // Install both signal handlers before the panel, outbound clients or worker exist.
+    // Install all signal handlers before the panel, outbound clients or worker exist.
     use tokio::signal::unix::{signal, SignalKind};
     let mut sigterm = signal(SignalKind::terminate())
         .map_err(|e| anyhow::anyhow!("failed to install SIGTERM handler: {}", e))?;
     let mut sigint = signal(SignalKind::interrupt())
         .map_err(|e| anyhow::anyhow!("failed to install SIGINT handler: {}", e))?;
+    let mut sighup = signal(SignalKind::hangup())
+        .map_err(|e| anyhow::anyhow!("failed to install SIGHUP handler: {}", e))?;
     // Validate the config parses and has at least one profile before starting.
     let (config_content, config_command_trust) = crate::config_source::load(cfg_path)?.into_parts();
     let (config, bad_values): (ServerConfig, Vec<String>) =
@@ -4529,6 +4531,21 @@ pub async fn run_supervisor(cfg_path: &str) -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("cannot resolve current_exe for worker: {}", e))?;
     let notifications = notify::start()?;
     let mut services = crate::server_supervisor::SupervisorServices::new();
+
+    let reload_state = state.clone();
+    let mut reload_shutdown = services.subscribe();
+    services.spawn("supervisor SIGHUP reload", async move {
+        loop {
+            tokio::select! {
+                biased;
+                _ = crate::server_supervisor::wait_for_shutdown(&mut reload_shutdown) => return Ok(()),
+                received = sighup.recv() => {
+                    anyhow::ensure!(received.is_some(), "supervisor SIGHUP stream closed");
+                    reload_on_sighup(&reload_state).await;
+                }
+            }
+        }
+    });
 
     // Web panel — the always-up control plane.
     //
@@ -4861,6 +4878,22 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
         *state.dummy_password_hashes.write().await = dummy_password_hashes;
     }
     log::info!("SIGHUP: reloaded users database ({} users)", count);
+    // The supervisor's failed_auth tracker protects panel login, not VPN auth.
+    // Keep it intact and let the worker apply its own policy/session changes.
+    if let Some(tx) = &state.worker_tx {
+        match tx.try_send(WorkerCmd::ReloadUsers) {
+            Ok(()) => {}
+            Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => {
+                // Every queued command reloads or restarts the worker; it will read
+                // the latest file, so no detached or unbounded sender is needed.
+                log::info!("SIGHUP: worker commands already queued; latest users will be read");
+            }
+            Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => {
+                log::warn!("SIGHUP: worker command receiver unavailable");
+            }
+        }
+        return;
+    }
     let revoked = control::apply_user_policy_to_sessions(state).await;
     if revoked > 0 {
         log::info!(
@@ -9596,6 +9629,56 @@ pool.cidr = 10.{net}.0.0/24
         candidate = startup.clone();
         candidate.logging.format = "json".into();
         assert!(sighup_startup_only_fields(&startup, &candidate).is_empty());
+    }
+
+    #[tokio::test]
+    async fn supervisor_sighup_preserves_panel_lockouts_and_forwards_valid_users() {
+        use crate::config::users::UserEntry;
+        let dir = std::env::temp_dir().join(format!(
+            "qeli-supervisor-hup-{}-{}",
+            std::process::id(),
+            rand::random::<u64>()
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("server.conf");
+        let mut candidate = ServerConfig::default();
+        candidate.auth.users_file = dir.join("users.conf").to_string_lossy().into_owned();
+        candidate.profiles.push(ProfileConfig::baseline());
+        let mut state = test_api_state(candidate.clone(), &path);
+        let (tx, mut rx) = tokio::sync::mpsc::channel(1);
+        Arc::get_mut(&mut state).unwrap().worker_tx = Some(tx.clone());
+        let before = state.failed_auth.lock().await.thresholds();
+        let address = ip("198.51.100.7");
+        for _ in 0..before.1 {
+            state
+                .failed_auth
+                .lock()
+                .await
+                .record_failure("admin", address);
+        }
+        assert!(state.failed_auth.lock().await.user_tarpit("admin") > Duration::ZERO);
+        candidate.auth.brute_force.max_attempts = 2;
+        candidate.auth.users.push(UserEntry {
+            username: "alice".into(),
+            password_hash: "$argon2id$x".into(),
+            ..Default::default()
+        });
+        candidate.profiles[0].tun.mtu = 0;
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        reload_on_sighup(&state).await;
+        assert!(rx.try_recv().is_err());
+        assert!(state.users_db.read().await.users.is_empty());
+        candidate.profiles[0].tun.mtu = 1400;
+        std::fs::write(&path, candidate.to_ini_string()).unwrap();
+        reload_on_sighup(&state).await;
+        assert!(matches!(rx.try_recv(), Ok(WorkerCmd::ReloadUsers)));
+        assert_eq!(state.users_db.read().await.users[0].username, "alice");
+        assert_eq!(state.failed_auth.lock().await.thresholds(), before);
+        assert!(state.failed_auth.lock().await.user_tarpit("admin") > Duration::ZERO);
+        tx.try_send(WorkerCmd::Restart).unwrap();
+        reload_on_sighup(&state).await;
+        assert!(matches!(rx.try_recv(), Ok(WorkerCmd::Restart)));
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[tokio::test]

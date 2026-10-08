@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parent.parent
 
 def main():
  ap=argparse.ArgumentParser(description=__doc__)
- ap.add_argument('--host',default='10.66.116.11');ap.add_argument('--binary',type=Path,required=True);ap.add_argument('--sha256',required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--reuse-remote-binary')
+ ap.add_argument('--host',default='10.66.116.11');ap.add_argument('--binary',type=Path,required=True);ap.add_argument('--sha256',required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--reuse-remote-binary');ap.add_argument('--skip-reload-baseline',action='store_true')
  a=ap.parse_args();binary=a.binary.resolve()
  if not re.fullmatch('[a-f0-9]{64}',a.sha256) or hashlib.sha256(binary.read_bytes()).hexdigest()!=a.sha256:ap.error('explicit binary SHA mismatch')
  if a.reuse_remote_binary and (not re.fullmatch(r'/var/tmp/qeli-q33-[0-9]+/qeli',a.reuse_remote_binary)):ap.error('reuse binary must be an owned prior q33 root')
@@ -113,11 +113,33 @@ c=http.client.HTTPConnection('127.0.0.1',24880,timeout=5);c.request('GET','/audi
   code="from pathlib import Path;import hashlib,json; p=Path('/etc/qeli/identity/fixture.key'); s=p.stat(); print(json.dumps({'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'uid':s.st_uid,'mode':s.st_mode&511,'size':s.st_size}))"
   identity=json.loads(ns(['python3','-B','-c',code],'generated identity'));check('fresh identity owned by daemon and private',identity['uid']==uid and identity['mode']==0o600 and identity['size']==32,identity)
   receipt=run(['nsenter','-t',pid,'-m','--','setpriv','--reuid='+str(uid),'--regid='+str(gid),'--clear-groups','test','-r','/etc/qeli/client-links/INSTALL-PENDING-fixture'],'receipt unreadable');check('daemon cannot read administrator receipt',receipt[1]!=0)
-  checked(['systemctl','reload',unit],'real ExecReload');check('reload retains supervisor',prop('MainPID')==pid);wait_ready()
+  if a.skip_reload_baseline:r['skipped_baseline_reload']='previous run proves supervisor exits on SIGHUP; not a passing reload qualification'
+  else:
+   with lab.open_sftp() as sf:
+    with sf.open(remote+'/etc/users.conf','w') as f:f.write('[user:reload-fixture]\npassword_hash = '+re.search(r'^password_hash\s*=\s*(.+)$',config,re.M)[1]+'\n')
+   checked(['systemctl','reload',unit],'real ExecReload');check('reload retains supervisor',prop('MainPID')==pid);wait_ready()
+   deadline=time.monotonic()+10
+   while time.monotonic()<deadline:
+    journal=checked(['journalctl','-u',unit,'--no-pager','-o','json','-n','100'],'reload journal')
+    rows=[json.loads(row) for row in journal.splitlines() if row.startswith('{')];reload_pids={row.get('_PID') for row in rows if 'SIGHUP: reloaded users database (1 users)' in row.get('MESSAGE','')}
+    if pid in reload_pids and len(reload_pids)>=2:break
+    time.sleep(.2)
+   check('supervisor and worker apply reload without replacement',pid in reload_pids and len(reload_pids)>=2,sorted(reload_pids))
+   with lab.open_sftp() as sf:
+    with sf.open(remote+'/etc/users.conf','w') as f:f.write('')
+   checked(['systemctl','reload',unit],'restore empty fixture users');wait_ready()
   checked(['systemctl','restart',unit],'real restart');nextpid=wait_ready();check('real restart replaces supervisor',nextpid!=pid);check('restart preserves identity bytes',json.loads(ns(['python3','-B','-c',code],'identity after restart'))['sha256']==identity['sha256'])
   for user in ['root','qeli']:
    checked([remote+'/qeli','set-service-user',user,'--unit',unit],'actual custom run-as '+user);checked(['systemctl','restart',unit],'apply owned run-as '+user);wait_ready();check('manager applies run-as '+user,prop('User')==user)
    check('healthy after run-as '+user,run(['bash',remote+'/health.sh'],'health after run-as '+user,15)[1]==0)
+   effective=json.loads(checked(['python3','-B','-c',"import json;d=dict(x.split(':',1) for x in open('/proc/"+prop('MainPID')+"/status') if ':' in x);print(json.dumps({k:d[k].strip() for k in ['CapBnd','CapAmb','NoNewPrivs']}))"],'unit bounding set after '+user))
+   expected=mask | 11 if user=='root' else mask
+   check('bounded capabilities restored for '+user,int(effective['CapBnd'],16)==expected and int(effective['CapAmb'],16)==(0 if user=='root' else mask) and effective['NoNewPrivs']=='1',effective)
+   if user=='root':
+    request="import http.client,json; c=http.client.HTTPConnection('127.0.0.1',24880,timeout=8);c.request('POST','/audit/api/login',json.dumps({'username':'admin','password':'synthetic-audit-password'}),{'Content-Type':'application/json'});r=c.getresponse();r.read();assert r.status==200;cookie=r.getheader('Set-Cookie').split(';',1)[0];c.request('GET','/audit/api/config',headers={'Cookie':cookie});r=c.getresponse();v=json.loads(r.read());assert r.status==200;c.request('PUT','/audit/api/config',json.dumps({'config':v['config'],'expected_revision':v['revision']}),{'Cookie':cookie,'Content-Type':'application/json'});r=c.getresponse();v=json.loads(r.read());assert r.status==200 and v.get('ok') is True,v;print('saved');c.close()"
+    check('root service atomically saves qeli-owned private config',ns(['python3','-B','-c',request],'root config API save')=='saved')
+    check('root save preserves qeli owner and0600',checked(['stat','-c','%u %a',remote+'/etc/server.conf'],'config metadata after root save')==str(uid)+' 600')
+
   checked(['systemctl','stop',unit],'stop before invalid config')
   with lab.open_sftp() as sf:
    with sf.open(remote+'/etc/server.conf','w') as f:f.write(config.replace('bind.port = 443','bind.port = invalid'))

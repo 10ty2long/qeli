@@ -76,7 +76,8 @@ class RealCliTests(unittest.TestCase):
         for user in ['root','qeli']:
             p=self.run_cli('set-service-user',user,'--unit','audit-fixture.service');self.assertEqual(p.returncode,0,p.stderr)
             path=self.root/'etc/systemd/system/audit-fixture.service.d/run-as.conf'
-            if user=='root':self.assertIn('User=root',path.read_text())
+            if user=='root':
+                self.assertIn('User=root',path.read_text());self.assertIn('CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER',path.read_text());self.assertIn('AmbientCapabilities=\n',path.read_text())
             else:self.assertFalse(path.exists())
         self.assertNotIn('restart', (self.root/'records/systemctl.log').read_text())
 
