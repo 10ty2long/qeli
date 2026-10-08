@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v162 -->
+<!-- normative-sync: full-system-audit-v163 -->
 
 **Current result, 8 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2455,3 +2455,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 **8 October,F450/Q33-F053:** [Q33 complete](../reports/AUDIT-Q33-COMPLETION.md): actual two-HTTP-restore baseline executes a replaced harmless marker; fix retains startup/later worker hooks until supervisor exit and refuses exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; fresh native/ABI qualification and raw seal are in the report. Q33 5/5 DONE;30/37(81.1%),7remain. Q29/Q30/Q31/Q34/D06 historical limits preserved; no push/deploy/release.
 
 **8 October, F451–F454 / Q34-F005–F008:** [Rust dependency policy and TLS](../reports/AUDIT-Q34-DEPENDENCY-POLICY.md): removed archived PEM wrapper,der0.8.0 updated to0.8.1;licenses/all-features/locked and audit warnings are hard gates,pinned tools/toolchain. Fresh RustSec DB5701a6d2: baseline0CVE+2warnings/current0CVE0warnings;real license refusals retained. TLS10/unit2445+60ignored/CLI5/14HTTPS/feature+release-checks/Clippy/fmt and Wintun file signatures PASS. Initial fmt/FD/harness failures retained,process fd budget4096;host services preserved. Fresh native qualification and raw seal in report. Q34 IN_PROGRESS,30/37DONE81.1%,7remain;exact-SHA Actions/package/platform/release coverage is not replaced by local checks. NO_PUSH_DEPLOY_RELEASE.
+
+**8 October, F455–F459 / Q34-F009–F013:** [Client supply chain](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): two npm advisories fixed with byte-identical CSS; official Gradle checksum qualified by real positive/corrupt-wrapper checks; NuGet all/transitive/low audit errors and explicit advisory source, actual vulnerable/unavailable-source refusals; WinDivert official archive match/signature/hash/notices positive+4negative PASS. Three Release managed builds, required conformance, Windows selftest and local codec benchmark PASS. braces advisory remains OPEN (no published patch); SDK/locks/other graphs/currentCI/release coverage pending. Native inputs/copies14SHA unchanged; no lab changes. Q34 IN_PROGRESS,30/37DONE81.1%,7remain; established Q29/Q30/Q31/D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
