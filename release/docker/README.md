@@ -578,3 +578,21 @@ On 2026-10-08 the actual amd64 runtime stage was built with a SHA-verified exist
 runtime/volume/recreation/fault-recovery checks on Debian13/Docker29.8.2. This did
 not rerun the Rust compiler stage, multiarch publication, Internet NAT or old
 throughput benchmarks. See the [scoped audit report](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md).
+
+## Release source and legal resources
+
+The runtime image retains the project AGPL, LICENSING and common reviewed Cargo/
+toolchain notices in `/usr/share/doc/qeli/`; the complete native legal bundle is
+under `licenses/rust/`. Validate `python3 scripts/native_licenses.py` from the repo
+root before a local build. Publication CI runs that check before registry login.
+Rust1.97.0 builder and Debian Bookworm runtime bases use recorded multiarch digests;
+base pinning does not pin live APT packages or qualify a whole image rebuild.
+The official tag metadata lists amd64,arm64/v8 and arm/v7; current layer pull/full
+Docker build/runtime on these new pins remains a separate qualification.
+
+GitHub provides release-tag source archives. Record the exact source commit and
+build provenance alongside distributed artifacts; a tag name alone can be moved.
+The Linux release workflow now requires an actual tag on HEAD, matching committed
+Cargo version and successful CI for that exact commit before installing build tools.
+This does not replace the full multi-platform/SDK release preflight. See
+[licensing and publication maintenance](../../LICENSING.md).

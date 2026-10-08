@@ -33,12 +33,12 @@ def _emit_failed_jobs(root, run, emit):
         emit(f"  ! failed-job details unavailable: {error}")
 
 
-def check_release_ci(root, branch, emit=print):
+def check_release_ci(root, branch, emit=print, *, by_commit=False):
     """A missing command, identity or valid CI response cannot qualify a release."""
     root = Path(root)
     failures = []
     try:
-        if not isinstance(branch, str) or not branch.strip() or branch == "HEAD":
+        if not by_commit and (not isinstance(branch, str) or not branch.strip() or branch == "HEAD"):
             raise RuntimeError("release branch is unavailable; pass its name explicitly")
         # Establish local identity before GitHub: empty stdout from a failed git
         # command must never skip the comparison with the workflow commit.
@@ -46,7 +46,8 @@ def check_release_ci(root, branch, emit=print):
         if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", head):
             raise RuntimeError("git returned an invalid release commit identity")
         runs = json.loads(_query(root, [
-            "gh", "run", "list", "--branch", branch, "--workflow", "CI",
+            "gh", "run", "list", "--commit" if by_commit else "--branch",
+            head if by_commit else branch, "--workflow", "CI",
             "--limit", "1", "--json", "conclusion,status,headSha,databaseId",
         ], 120))
         if not isinstance(runs, list):

@@ -19,7 +19,7 @@
 
 # ---- build stage (buildx runs this natively per target arch; cross arches
 #      build under QEMU emulation — slow but correct) --------------------------
-FROM rust:1-bookworm AS build
+FROM rust:1.97.0-bookworm@sha256:8fa55b2f3ddf97471ab6a767bfa3f37e6bad0986ba823e75fea57e2a2a5c3073 AS build
 WORKDIR /src/qeli
 # Only the real build inputs are copied (no target/, no client apps) so the
 # context is small and the layers cache well. The `ring` crypto provider needs a
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
  && strip /qeli
 
 # ---- runtime stage ----------------------------------------------------------
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 # qeli shells out to `ip` (iproute2 — always, for the TUN + routes) and to
 # `iptables` (server NAT mode only); ca-certificates is for any outbound TLS
 # (REALITY cert borrowing). The rest is a bundled diagnostic toolkit so you can
@@ -61,6 +61,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /qeli /usr/local/bin/qeli
+# Preserve the same reviewed Cargo/toolchain notices as other distributions.
+COPY LICENSE LICENSING.md /usr/share/doc/qeli/
+COPY qeli/third-party-notices/rust /usr/share/doc/qeli/licenses/rust
 # Baked-in example configs — the entrypoint seeds a writable copy on first run.
 # These live in /usr/share/qeli (NOT /etc/qeli): a volume mounted at /etc/qeli
 # would otherwise hide them and the first-run seed would fail.
