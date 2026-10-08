@@ -151,7 +151,33 @@
       "scope": "ACTUAL_SHARED_ABI_POLICY_ONLY; Swift XCTest/Keychain runtime NOT_RUN",
       "initial_candidates": "explicit routing syntax refused by native editor; fixed fixture uses supported gateway=false and its shared default split mode"
     },
-    "native_recipe_methods": 37
+    "native_recipe_methods": 37,
+    "final_checks": [
+      {
+        "check": "docs",
+        "rc": 0
+      },
+      {
+        "check": "bindings",
+        "rc": 0
+      },
+      {
+        "check": "sha",
+        "rc": 0
+      },
+      {
+        "check": "provenance",
+        "rc": 0
+      },
+      {
+        "check": "certification",
+        "rc": 0
+      },
+      {
+        "check": "diff",
+        "rc": 0
+      }
+    ]
   },
   "source_reconciliation": {
     "rust_tree": "bfa0cfc6b25f7c2ddd1a15799bcf75ecf80f38e8",
@@ -183,7 +209,11 @@
     "Historic 41 release cases and prior supplements reused with their original scopes; metadata digest rebind is not fresh execution"
   ],
   "raw_directory": "audit-debt-20260924/q31-preflight-identity-20261008",
-  "raw_seal": "PENDING_FINAL_READ_ONLY_RUN",
+  "raw_seal": {
+    "file_count": 56,
+    "total_bytes": 5658697,
+    "manifest_sha256": "b49a5d7259cde183e169eeaf6e387603e848b9a90d83c143d6099f92906fea75"
+  },
   "orchestration_source_commit": "26a7b503d603aaa5a9e64c78d57aea0f6d1038d3",
   "ci_diagnostics": {
     "run": {
@@ -198,5 +228,13 @@
     "ios_known_key": "F398 invalid default gateway fixture fixed; shared ABI validated",
     "ios_keychain": "status(-34018) OPEN; requires signed-host/runtime verification",
     "actual_successful_actions": "NOT_RUN"
+  },
+  "live_read_only_preflight": {
+    "source_commit": "c1b26f34795e1ade1e24cd0cca7fffaf1ca06bc1",
+    "rc": 1,
+    "verdict": "EXPECTED_FAIL_STALE_FAILED_CI_AND_DEVELOPMENT_PIN",
+    "optional_lab": "SKIPPED_NOT_NEW_BUILD",
+    "certification_metadata": "PASS_NOT_FRESH_MATRIX",
+    "cwd": "outside_repository"
   }
 }
