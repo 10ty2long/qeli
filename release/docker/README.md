@@ -539,3 +539,22 @@ idle + load + ~90 s of combined soak. The netns/veth overhead is negligible.
 > **Stability depends on `dns = off`** for client containers — Docker bind-mounts
 > `/etc/resolv.conf`, which the default `dns = tunnel` cannot atomically replace
 > (EBUSY → reconnect loop). The entrypoint warns if it's missing; see §5.
+
+## First-run configuration and filesystem behavior
+
+With no arguments the entrypoint selects `server`. `QELI_CONFIG` chooses the default
+path; an explicit `--config PATH`, `--config=PATH`, `-c PATH` or `-cPATH` takes
+precedence and is passed to qeli once. Missing/empty/duplicate config options refuse
+before writing. Help/version options do not create config or users files.
+
+New config and empty users files are0600. Existing regular files retain their contents
+and permissions; symlinks and other file types refuse startup. Creation publishes a
+complete temporary file with GNU `ln -T`, preserving a concurrent regular creator and
+refusing a concurrent link/directory. First-run volumes need hard-link support; failed
+copy/link or readonly storage refuses instead of leaving a partial final file. This
+is not fsync/power-loss durability, and SIGKILL can leave a temporary file. Administrator
+changes to parent paths are outside the cooperative publication boundary.
+
+[Q33 audit](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md) records34 shell/chroot
+scenarios. These checks use an argv-recording executable and do not qualify Docker
+image builds, daemon networking, health or recreation.

@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v44 -->
+<!-- normative-sync: q31-openwrt-controls-v45 -->
 
 **Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);Q31-V011 current32-bit/core-module execution;F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
@@ -2502,3 +2502,11 @@ whole preflight остаются OPEN; firmware USER_EXCLUDED. Q31:3/5 IN_PROGRE
 полный29/37(78.4%),8осталось; Q29/Q30/D06 сохранены. Без push/deploy/release.
 Evidence: `release/certification/evidence/q31-current-32bit-20261008.json`;
 raw: `audit-debt-20260924/q31-current-32bit-20261008` вне репозитория.
+
+## Q31-V012: решение по ресурсам SDK bootstrap (8 октября)
+
+Read-only inventory: обе VM имеют2020932KiB RAM, два CPU, ~9GiB свободного root-диска; отдельного диска сборки и активных компиляторов нет. [Рекомендации Rust upstream](https://rustc-dev-guide.rust-lang.org/building/prerequisites.html) —8GB RAM и30GB+ свободного диска, это явно не строгие требования. Закреплённый feed собирает compiler/std/cargo/dist Rust1.89; прежняя компиляция пакета prebuilt Rust не квалифицирует bootstrap. Компиляция bootstrap на этом стенде отложена; OOM/ENOSPC или compiler FAIL не выдумываются.
+
+На .11 начата отдельная загрузка официального SDK и отменена после9437184 байт. SHA-admission/распаковка SDK, host/prepare, host/configure и compile не выполнялись. SSH launch timeout и отказ первого process-group guard — примечания подготовки; остановлена только точная собственная python/curl группа. Backup834257байт SHA256 `a40bc8dcf7fefbbd9386283e2582fe054da62a0a816cb89aad0796de16013981` скопирован и проверен; свой каталог удалён после path/process/fd/mount guards. PID777/worker845/service сохранены. Raw13файлов/1016634байт; manifest SHA256 `9c9b347eb444fe467fdbb6f46edad754408d61eee7f2fb197b2bdb770ba5ce6d`.
+
+Полный bootstrap OPEN/capacity-deferred; release source-cut/current Actions также OPEN. Прежние package/32-bit PASS сохранены. Чтобы независимая работа не стояла, продолжены проверки entrypoint Q33. Q31 остаётся3/5 IN_PROGRESS, полный29/37(78.4%),восемь осталось; exclusions/Q29/Q30/D06 сохранены. Production pin/hash, Rust/native artifacts и сервисы не менялись; push/deploy/release отсутствуют.

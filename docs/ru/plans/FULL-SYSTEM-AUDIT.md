@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v145 -->
+<!-- normative-sync: full-system-audit-v146 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2093,6 +2093,8 @@ watchers/sampler клиента имеют владельца. Исправле�
 features проверяются в CI. 883 host Rust tests PASS; четыре Linux-теста только cross-check.
 Server-only check имеет 23 прежних transport dead-code warnings. Лимиты password_file,
 финальный drain клиента и Linux runtime/release checks ещё открыты.
+
+**8 октября,F400–F403:** [Q33 Docker entrypoint](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): четыре старые ошибки воспроизведены на dash/ash; исправлены пустой argv, явный CLI-config и новые файлы0600 без перезаписи.34 сценария/46 chroot-запусков PASS без skips; проверены конкурентные creators и copy/link failures. Docker image/daemon, Debian updater/install и полный Q33 OPEN. Bootstrap Rust SDK Q31 отложен: измерены2GB RAM/~9GB диска, ниже рекомендации upstream8GB/30GB; compiler FAIL/PASS не заявляется.29/37(78.4%),осталось восемь; exclusions сохранены.
 
 ### 34. CI, зависимости, native provenance и релиз
 
