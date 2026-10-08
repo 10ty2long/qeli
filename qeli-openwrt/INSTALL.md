@@ -521,3 +521,14 @@ other SDK targets, production release pin/hash cut and a successful current Acti
 preflight are still unqualified. Production source pin/hash are unchanged. Use the
 full SDK dependency graph for a release build; the audit's toolchain bootstrap shortcut
 is not release certification. See [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Current standalone 32-bit verification (8 October)
+
+After the publication-lock change, the current committed source was rebuilt through
+Gate2 for ARMv7/MIPS. Both static ELF/SHA checks and32 QEMU CLI/INI cases pass on
+cortex-a7/24Kc under uid65534. Fourteen additional executions check the exact
+production publication-lock/budget modules in the same standalone release policy.
+No new regression was found in this scope. This is neither the full cfg(test) suite
+nor firmware/VPN networking, SDK Rust bootstrap or a new independent clean A/B.
+Previous four-target A/B retains its original source/date. See
+[Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md) for artifacts and limits.

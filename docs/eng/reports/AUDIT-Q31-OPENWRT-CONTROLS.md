@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v43 -->
+<!-- normative-sync: q31-openwrt-controls-v44 -->
 
-**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);Q31-V011 current32-bit/core-module execution;F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2447,3 +2447,49 @@ raw packet: `audit-debt-20260924/q31-sdk-build-20261008` outside the repository.
 SDK upstream Rust bootstrap, production release-cut archive and successful current
 Actions/preflight remain OPEN. Firmware is USER_EXCLUDED. Q31 remains3/5 IN_PROGRESS;
 full audit29/37(78.4%),eight remain. Q29/Q30/D06 dispositions are unchanged.
+
+## Q31-V011: current ARMv7/MIPS after F395 (8 October)
+
+Q31-V009's 32-bit clients predated the F395 production publication lock. The same
+release gate now froze commit6c2225cd and built both current client-only targets:
+ARMv7 Rust1.97.0/Zig0.13.0 and MIPS nightly-2026-06-10/build-std/soft-float with
+one compiler at a time on .10. Exact318 transferred inputs match the Git archive,
+including the intentional private rlib manifest projection.47 non-transferred
+archive files are outside that managed build contract; every src file and the
+three required Cargo/config inputs matches. SHA/static ELF admission passed.
+
+| Target | Bytes | SHA256 |
+|---|---:|---|
+| ARMv7 hard-float | 4996156 | `0d7f0d75b2e3bc99ebbef8d5fd89d4cabc56fdbf2d4412686efc7bfd183f9fea` |
+| MIPS little-endian O32/static PIE | 6865260 | `943a484ad428e34c5256f2deff75281d19670d2f8ab13bb6bc95417e5f9e0905` |
+
+The new clients passed32 CLI/INI executions on cortex-a7/24Kc under retained
+SHA-admitted QEMU10.0.13, uid65534 on .11. No VPN/TUN/firewall or binfmt change.
+Two small release binaries also compile the exact committed PublicationLock and
+operation_budget modules with their real log dependency, no mocked imports.
+Seven behavior checks per CPU (14 total) pass:0700/drop release, live-owner wait,
+stale canary/foreign file preservation, expired parent refusal, nonempty release
+retention, nested cleanup scope restoration and thread-local budget. These are
+production-module release executions, not the crate's cfg(test) suite, full FFI/
+handshake or firmware lifecycle. panic=abort does not establish unwind/SIGKILL
+recovery. No new product regression was found in the executed scope.
+
+A .11 tool inventory unexpectedly auto-installed a missing named nightly when
+rustup component list was called. Missing Zig/targets made that host unsuitable
+for probe compilation; the probe stayed sequential on .10. Only that newly created
+nightly was uninstalled after exact-path/process guards; default settings bytes
+and the original three toolchains were preserved. This preparation was not read-only.
+Two build roots and one emulation root were removed after verified source/binary
+backup and SHA/process/mount/path guards. Existing unrelated R8L058 root was retained.
+Original .10 PID745/901 and .11 PID777/845/service state stayed unchanged.
+
+Rust/ABI/production scripts and packaged native artifacts are unchanged.14 native
+hashes/provenance remain PASS; no native rebuild or unrelated large suite repeated.
+This updates current32-bit build/runtime applicability; previous four-target clean
+A/B evidence keeps its original source/date and is not relabelled as new execution.
+Actual read-only CI still returns failed run37598403060 on83c07f5c, not current dev.
+Upstream SDK Rust bootstrap, production source-cut and successful current Actions/
+whole preflight remain OPEN; firmware USER_EXCLUDED. Q31 remains3/5 IN_PROGRESS;
+full29/37(78.4%),eight remain; Q29/Q30/D06 retained. No push/deploy/release.
+Evidence: `release/certification/evidence/q31-current-32bit-20261008.json`;
+raw: `audit-debt-20260924/q31-current-32bit-20261008` outside the repository.
