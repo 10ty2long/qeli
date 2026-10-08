@@ -27,8 +27,7 @@ binary is not part of this image.
 > **Re-verified (2026-07-08)** on Docker 29 / Debian 13 with `qeli 0.7.9`: a
 > **two-container** server↔client test on a user bridge — auth, tunnel-gateway ping,
 > and internet egress via the server's NAT all pass (0% loss). Copy-paste walkthrough
-> with full server + client configs in **§2d**; automated in
-> [`scripts/docker_2container_test.py`](../../scripts/docker_2container_test.py).
+> with full server + client configs in **§2d**. This is historical 0.7.9 evidence.
 
 ---
 
@@ -149,9 +148,12 @@ A self-contained connectivity test: a **server** and a **client** container on o
 Docker host, on a user-defined bridge, verified with pings through the tunnel. This
 is the minimal "does it actually work in Docker" reproduction — no remote server, no
 published ports (the two containers reach each other **by name** on the bridge's
-embedded DNS). The whole thing is automated in
-[`scripts/docker_2container_test.py`](../../scripts/docker_2container_test.py); the
-manual steps are below.
+embedded DNS). The manual steps are below. For isolated audit runs,
+[`scripts/audit_docker_runtime_case.py`](../../scripts/audit_docker_runtime_case.py)
+requires a separately prepared, resource-limited audit daemon and SHA-verified
+image record; it never installs Docker or uses the host default socket. Its pinned
+TCP test covers local tunnel traffic, volumes, recreation and deliberate bad-image
+recovery; it does not repeat the historical Internet/NAT or throughput benchmark.
 
 **1. Config dirs + the server config.** One fake-TLS TCP profile on `:443` with NAT
 egress on. `dns.enabled = false` (the server pushes no resolver); comments must be on
