@@ -150,10 +150,13 @@ final class ConfigHardeningTests: XCTestCase {
             XCTAssertTrue("\(error)".contains("gatway"), "message must name the key: \(error)")
         }
 
-        // Keys this port does not read but the Rust client does — must open cleanly.
+        // Recognized portable keys must open and validate with their shared policy.
         for k in ["keepalive = 25", "post_up = /bin/true", "exit_node = true",
                   "lan_subnet = 10.0.0.0/24", "tcp_nodelay = true", "autostart = true"] {
-            let c = try VPNConfig.fromINI(ini(k))
+            // exit_node is known, but still requires its valid shared routing policy.
+            let profile = k == "exit_node = true"
+                ? ini(k, "gateway = false") : ini(k)
+            let c = try VPNConfig.fromINI(profile)
             XCTAssertTrue(c.unknownKeys.isEmpty, "\(k) must not be treated as a typo")
             XCTAssertNoThrow(try c.validate())
         }

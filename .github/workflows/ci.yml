@@ -89,6 +89,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
           python3 -m unittest discover -s scripts -p 'test_release_preflight.py'
+          python3 scripts/test_macos_build_paths.py --bash /bin/bash --fixtures "$RUNNER_TEMP/qeli-build-path-fixtures"
           python3 -m unittest discover -s scripts -p 'test_keenetic_probe.py'
           python3 -m unittest discover -s scripts -p 'test_keenetic_address_retirement.py'
           python3 -m unittest discover -s scripts -p 'test_openwrt_source_gate.py'
@@ -582,7 +583,7 @@ jobs:
         run: brew install xcodegen
       - name: Build and test macOS per-app system extension
         working-directory: qeli-mac
-        run: ./per-app/build.sh "$PWD/dist/per-app-ci" arm64
+        run: ./per-app/build.sh "$PWD/dist/per-app-arm64" arm64
 
   # iOS had NO CI at all: the Swift client (QeliCore crypto/protocol + the packet-tunnel
   # extension) could stop compiling and nothing would notice until a manual Xcode build.

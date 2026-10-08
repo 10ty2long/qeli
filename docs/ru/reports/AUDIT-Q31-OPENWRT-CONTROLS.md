@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v41 -->
+<!-- normative-sync: q31-openwrt-controls-v42 -->
 
-**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F396 whole-preflight source identity;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2371,3 +2371,32 @@ Q31 остаётся3/5IN_PROGRESS; весь план29/37(78.4%),восемь �
 Q29/Q30, исключения пользователя и D06 сохранены.
 
 Evidence: `release/certification/evidence/q31-preflight-identity-20261008.json`.
+
+## F397–F398: разбор старого CI и исправление двух fixtures (8 октября)
+
+Read-only GitHub diagnostics for run37598403060 at83c07f5c confirmed three failed
+jobs. Its native-libs failure is old stale provenance; the current four cores and
+provenance pass locally with the already qualified F395 source. This is not a new
+successful Actions run. macos-build rejected its per-app-ci output leaf because
+the production build permits only dist/per-app-arm64. CI now uses that permitted
+leaf; the path fixture executes the exact production command against build.sh with
+all build/remove tools mocked. Old CI command independently fails; fixed11 Windows
+cases pass (symlink unavailable),12 Linux uid65534 cases pass without skips. This
+fixture is also in the Linux CI job and does not require Xcode or weaken path guards.
+
+The iOS known-key test supplied exit_node=true with the default full gateway,
+contradicting shared split-routing validation. Its exit-node fixture now adds
+supported gateway=false, which projects split mode; other known-key examples stay
+unchanged. The actual shipped configuration ABI reproduces the old refusal and
+accepts the corrected example plus five other keys (seven checks). Initial attempts
+to write explicit routing keys were rejected by the native editor and discarded;
+no unsupported INI syntax remains in the fixture. This proves common policy only,
+not execution of Swift XCTest. iOS Keychain errors status(-34018) remain OPEN for
+signed test-host/runtime qualification. Apple runtime exclusions are preserved;
+no signing/entitlement bypass or failure-to-skip conversion was made.
+
+Both private Python/path lab roots were removed after verified backups and guards.
+The path backup's initial tar directory-mtime error was retained as a preparation
+note; only backup was retried. Current native SHA/provenance remain valid; Rust,
+SDK recipes, production pin/hash and client runtime code are unchanged. Q31/full
+plan counts remain unchanged. A fresh successful Actions run is still required.

@@ -7,6 +7,7 @@ inside the supplied audit directory and every shell runs the original build.sh.
 from __future__ import annotations
 import argparse
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,7 +15,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 
-def run(bash: str, fixture_root: Path, source: Path) -> list[tuple[str, bool]]:
+def run(bash: str, fixture_root: Path, source: Path, workflow: Path) -> list[tuple[str, bool]]:
     directory = Path(tempfile.mkdtemp(prefix="qeli-build-path-", dir=fixture_root)).resolve()
     assert directory.parent == fixture_root.resolve()
     results = []
@@ -51,6 +52,10 @@ def run(bash: str, fixture_root: Path, source: Path) -> list[tuple[str, bool]]:
             ("mismatched architecture leaf refused", dist + "/per-app-x86_64", "arm64", False),
             ("unknown architecture refused", dist + "/per-app-arm64", "unknown", False),
         ]
+        command = re.search(r'run: ./per-app/build\.sh "([^"\n]+)" arm64', workflow.read_text(encoding="utf-8"))
+        if command is None: raise ValueError("missing macOS CI per-app build command")
+        ci_output = command[1].replace("$PWD", posix + "/qeli-mac")
+        cases.append(("CI production output leaf", ci_output, "arm64", True))
         for name, output, arch, accepted in cases:
             events.unlink(missing_ok=True)
             result = subprocess.run([bash, "-c", 'export PATH="$1/tools:$PATH"; /bin/sh "$1/qeli-mac/per-app/build.sh" "$2" "$3"', "fixture", posix, output, arch], env=env, capture_output=True, text=True, timeout=10)
@@ -80,9 +85,10 @@ def main() -> int:
     parser.add_argument("--bash", required=True)
     parser.add_argument("--fixtures", type=Path, required=True)
     parser.add_argument("--source", type=Path, default=ROOT / "qeli-mac/per-app/build.sh")
+    parser.add_argument("--workflow", type=Path, default=ROOT / ".github/workflows/ci.yml")
     args = parser.parse_args()
     args.fixtures.mkdir(parents=True, exist_ok=True)
-    checks = run(args.bash, args.fixtures, args.source)
+    checks = run(args.bash, args.fixtures, args.source, args.workflow)
     for name, ok in checks: print(f"[{'PASS' if ok else 'FAIL'}] {name}")
     print(f"BUILD_PATH_CHECKS={len(checks)}; FAILED={sum(not ok for _, ok in checks)}")
     return 0 if all(ok for _, ok in checks) else 1
