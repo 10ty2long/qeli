@@ -698,17 +698,17 @@ under `sudo`. An atomic write — write a temp file, then `rename` — swapped i
 owned by the writer**, so a single `sudo qeli add-client` flipped `/etc/qeli/users.conf`
 from `qeli:qeli` to `root:root`. The lock file is created with the owner of the file it
 guards, so it went root-owned too — and the panel, running as `qeli`, could no longer take
-it. The `chown -R` in postinst does not help here: it runs at install time, **before** those
+it. The ownership repair in postinst does not help here: it runs at install time, **before** those
 writes.
 
 **Fixed** in 0.7.13: an atomic write now preserves the owner of the file it replaces
 (regression test `atomic_write_preserves_owner`, run as root). On an **already broken**
 install the ownership has to be restored by hand, once:
 ```bash
-sudo chown -R qeli:qeli /etc/qeli
+sudo qeli set-service-user qeli
 sudo systemctl restart qeli
 ```
-Check (everything should belong to `qeli`):
+Check: daemon configs/identity/users and their locks should belong to `qeli`; `client-links` remains root0700 and reserved `*.bak-*` backups retain their owner.
 ```bash
 ls -la /etc/qeli/
 ```

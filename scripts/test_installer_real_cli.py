@@ -80,4 +80,57 @@ class RealCliTests(unittest.TestCase):
             else:self.assertFalse(path.exists())
         self.assertNotIn('restart', (self.root/'records/systemctl.log').read_text())
 
+    def copy_binary(self):
+        shutil.copy2(BINARY,self.root/'usr/bin/qeli');(self.root/'usr/bin/qeli').chmod(0o755)
+
+    def root_override(self):
+        for name, line in [('passwd', 'qeli:x:234:234::/var/lib/qeli:/usr/sbin/nologin'), ('group', 'qeli:x:234:')]:
+            path=self.root/'etc'/name
+            if not any(row.startswith('qeli:') for row in path.read_text().splitlines()):
+                with path.open('a') as stream:stream.write(line+'\n')
+        self.copy_binary();p=self.run_cli('set-service-user','root');self.assertEqual(p.returncode,0,p.stderr)
+        return self.root/'etc/systemd/system/qeli.service.d/run-as.conf'
+
+    def test_default_service_revert_keeps_admin_data_private(self):
+        dropin=self.root_override();links=self.root/'etc/qeli/client-links';links.chmod(0o700)
+        receipt=links/'INSTALL-PENDING-fixture';receipt.write_text('private password');receipt.chmod(0o600)
+        backup=self.root/'etc/qeli/server.conf.bak-fixture';backup.write_text('private backup');backup.chmod(0o600)
+        users=self.root/'etc/qeli/users.conf';users.write_text('daemon data');users.chmod(0o600)
+        p=self.run_cli('set-service-user','qeli');self.assertEqual(p.returncode,0,p.stderr)
+        self.assertFalse(dropin.exists());self.assertEqual(users.stat().st_uid,234)
+        for file in [receipt,backup]:self.assertEqual(file.stat().st_uid,0);self.assertEqual(file.stat().st_mode&0o777,0o600)
+        self.assertEqual(links.stat().st_uid,0);self.assertEqual(links.stat().st_mode&0o777,0o700)
+        p=subprocess.run([self.chroot,'--userspec=234:234',str(self.root),'/bin/bash','-c','test -r /etc/qeli/client-links/INSTALL-PENDING-fixture'],capture_output=True)
+        self.assertNotEqual(p.returncode,0)
+
+    def test_default_service_refuses_linked_state_and_keeps_override(self):
+        dropin=self.root_override();state=self.root/'etc/qeli';state.rename(self.root/'saved-state');state.symlink_to('/outside')
+        witness=self.root/'outside/witness';witness.write_text('outside');before=witness.stat().st_uid
+        p=self.run_cli('set-service-user','qeli');self.assertNotEqual(p.returncode,0,p.stdout+p.stderr)
+        self.assertTrue(dropin.exists());self.assertEqual(witness.stat().st_uid,before)
+
+    def test_default_service_chown_failure_keeps_override(self):
+        dropin=self.root_override();fault=self.root/'usr/local/bin/chown'
+        fault.write_text('#!/bin/bash\nexit 42\n');fault.chmod(0o755)
+        p=self.run_cli('set-service-user','qeli');self.assertNotEqual(p.returncode,0,p.stdout+p.stderr);self.assertTrue(dropin.exists())
+
+    def test_default_service_nonroot_refusal(self):
+        dropin=self.root_override();before=dropin.read_bytes()
+        p=subprocess.run([self.chroot,'--userspec=234:234',str(self.root),'/usr/bin/qeli','set-service-user','qeli'],env=self.env,capture_output=True,text=True)
+        self.assertNotEqual(p.returncode,0);self.assertEqual(dropin.read_bytes(),before)
+
+    def test_forced_installer_default_removes_prior_root_override(self):
+        self.install('udp-quic');dropin=self.root/'etc/systemd/system/qeli.service.d/run-as.conf';self.assertTrue(dropin.exists())
+        links=self.root/'etc/qeli/client-links';before={p.name:(p.read_bytes(),p.stat().st_uid,p.stat().st_mode&0o777) for p in links.iterdir() if p.is_file() and p.name!='CONNECTION-STRINGS.txt'}
+        self.env.update(QELI_RUN_AS='qeli',QELI_FORCE_RECONFIG='1')
+        p=subprocess.run([self.chroot,str(self.root),'/bin/bash','/installer.sh','vpn.example'],env=self.env,capture_output=True,text=True,timeout=60)
+        if RECORDS:
+            record=Path(RECORDS)/self.id().split('.')[-1];(record/'forced-installer.log').write_text(p.stdout+p.stderr)
+        self.assertEqual(p.returncode,0,p.stdout+p.stderr);self.assertFalse(dropin.exists())
+        self.assertEqual((self.root/'etc/qeli/server.conf').stat().st_uid,234)
+        self.assertEqual(self.run_cli('check-config','--config','/etc/qeli/server.conf').returncode,0)
+        for name,metadata in before.items():
+            file=links/name;self.assertEqual((file.read_bytes(),file.stat().st_uid,file.stat().st_mode&0o777),metadata)
+        self.assertEqual(links.stat().st_uid,0);self.assertEqual(links.stat().st_mode&0o777,0o700)
+
 if __name__=='__main__':unittest.main(verbosity=2)

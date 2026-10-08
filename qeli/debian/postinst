@@ -14,7 +14,7 @@ trap 'exit 143' TERM
 case "$1" in
     configure)
         # Reject unsafe package state before any pathname-based writes/chown.
-        for state in /etc/qeli /var/log/qeli /var/lib/qeli; do
+        for state in /etc/qeli /etc/qeli/client-links /var/log/qeli /var/lib/qeli; do
             if [ -L "$state" ] || { [ -e "$state" ] && [ ! -d "$state" ]; }; then
                 echo "qeli: refusing linked/non-directory state path: $state" >&2
                 exit 1
@@ -63,7 +63,14 @@ case "$1" in
         # `setcap` on a copy you control), which is the correct trade.
         setcap -r /usr/bin/qeli 2>/dev/null || true
 
-        chown -h -R -P qeli:qeli /etc/qeli /var/log/qeli /var/lib/qeli
+        # Keep administrator receipts/journals/backups out of daemon ownership.
+        find -P /etc/qeli -path /etc/qeli/client-links -prune -o -name '*.bak-*' -prune \
+            -o -exec chown -h qeli:qeli '{}' +
+        if [ -d /etc/qeli/client-links ]; then
+            chown -h root:root /etc/qeli/client-links
+            chmod 700 /etc/qeli/client-links
+        fi
+        chown -h -R -P qeli:qeli /var/log/qeli /var/lib/qeli
         chmod 755 /etc/qeli
 
         systemctl daemon-reload 2>/dev/null || true
@@ -112,7 +119,7 @@ case "$1" in
         echo "as the service user:"
         echo "    sudo -u qeli qeli add-client <name> --config /etc/qeli/server.conf"
         echo "or restore ownership once you are done:"
-        echo "    chown -R qeli:qeli /etc/qeli"
+        echo "    qeli set-service-user qeli"
         echo ""
         echo "Start: systemctl start qeli"
         ;;

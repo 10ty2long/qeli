@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v153 -->
+<!-- normative-sync: full-system-audit-v154 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2109,6 +2109,8 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 **8 октября,F432–F436:** [Q33 preflight/подготовленный INI](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): explicit host/panel/boolean до изменений; auto-host до config/identity; ровно один profile header/явные awk errors; полный private INI stage через CLI/web/final validation, root helper после проверки, backup/rename publication. Baseline17methods22expected assertions; исправлено21method28whole(3positive/25refusals), точная CI21/28,78regressions/lint/recipes38/native14/docs9(676Markdown) PASS. Filesystem настоящий; CLI/systemctl/kernel seams, actual parser/auth/daemon/VPN/Docker OPEN. Config сохранён до commit; users/identity/links/tuning/bin/deps/drop-in могут измениться, restart-after-publish не откатывается, прежний root override OPEN. Собственный .11 root backed-up/cleaned;777/845 сохранены. Q33IN_PROGRESS,Q31 3/5,29/37DONE78.4%,осталось8,historical OPEN/USER_EXCLUDED/D06ACCEPTED сохранены. Без push/deploy/release.
 
 **8 октября,F437–F438:** [Настоящий CLI/version](../reports/AUDIT-Q33-INSTALLER-CLI.md): --version для старого binary, строгие fixture argv и unique stage-lock cleanup. Version baseline2fail→2PASS; realCLI initial4lockfail→5PASS, повторCI2+5;99regressions/lint/recipes38/native14/docs9(678Markdown)PASS. Genuine debug artifact85ea/SHA37a6 reused для неизменённых CLI/parser/trust paths;4laterclient/notify различия — не fullcurrentRust/releaseABI qualification. Настоящие три profile keys/Argon2/users/panel/INI/link/custom-dropin flows;systemctl/daemon/kernel/preflight-ip seams,VPN/Docker/default-unit-rootrevertOPEN. Package CI добавлен,Actions не исполнялся. Own root backed-up/cleaned,777/845 сохранены. Raw334files41695825bytesSEALED. Q33IN_PROGRESS,Q31 3/5,29/37DONE78.4%осталось8,history/exclusions/D06accepted сохранены;без push/deploy/release.
+
+**8 октября,F439–F441:** [Пользователь службы/ownership](../reports/AUDIT-Q33-SERVICE-USER.md): сохранены права client-links/backups, каталог квитанций root0700; real state validation и сохранение existing override при ошибке исправления; installer явно применяет default qeli после проверки. Baseline ownership2/CLI3 failures;fixed2+10 и117regressions PASS;CI2+10+2,lint3scripts,Rustbin5/Clippy/fmt PASS. Current CLI пересобран0e01;native A/B evidence обновлено. Real systemd/startup/kernel/VPN/Docker остаются OPEN;Q33 IN_PROGRESS,29/37DONE78.4%,осталось8. Исторический долг/exclusions сохранены;только локальный dev.
 
 ### 34. CI, зависимости, native provenance и релиз
 

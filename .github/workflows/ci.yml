@@ -108,6 +108,8 @@ jobs:
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_admission.py
       - name: Installer secret and config publication fixtures
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_secrets.py
+      - name: Installer and Debian private state ownership
+        run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_service_state_ownership.py
       - name: Installer and updater legacy CLI version discovery
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_cli_version.py
       - name: Installer preflight and staged config fixtures
