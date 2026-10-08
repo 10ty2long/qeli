@@ -97,7 +97,7 @@ def main():
         output = subprocess.run(['ldd', str(work/'release-binary')], capture_output=True, text=True).stdout
         for library in re.findall(r'(/[^\s]+)', output):
             copy_file(library, root/library.lstrip('/'))
-        for folder in ['usr/share/debconf','usr/share/perl5/Debconf']:
+        for folder in ['usr/share/debconf','usr/share/dpkg','usr/share/perl5/Debconf','usr/share/perl5/Dpkg']:
             shutil.copytree('/'+folder, root/folder)
         for parent in ['/usr/share/perl','/usr/lib/x86_64-linux-gnu/perl','/usr/lib/x86_64-linux-gnu/perl-base']:
             if Path(parent).is_dir():
@@ -111,7 +111,7 @@ def main():
         for name in ['tmp','run/systemd/system','run/qeli-audit-unit','run/qeli-audit-dropin','etc/qeli',
                      'etc/systemd/system','var/lib/dpkg/info','var/lib/dpkg/updates','var/lib/dpkg/triggers',
                      'var/cache/debconf','var/cache/qeli','var/cache/apt/archives/partial','var/log/apt',
-                     'var/lib/apt/lists/partial','etc/apt/sources.list.d','usr/local/bin','fixtures','dev','proc']:
+                     'var/lib/apt/lists/partial','etc/apt/sources.list.d','etc/apt/apt.conf.d','usr/local/bin','fixtures','dev','proc']:
             (root/name).mkdir(parents=True, exist_ok=True)
         (root/'bin').mkdir()
         for name in ['sh','bash']:
