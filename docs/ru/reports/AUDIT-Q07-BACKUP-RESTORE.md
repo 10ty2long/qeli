@@ -120,3 +120,5 @@ Review покрывает источник/структуру архивов, st
 
 
 Дополнение 8 октября: [Q33/F449](AUDIT-Q33-COMPLETION.md) закрывает обход защиты scripts через path aliases при restore; исходные результаты Q07 выше остаются историческими.
+
+**8 октября,F450/Q33-F053:** [Q33 завершён](../reports/AUDIT-Q33-COMPLETION.md): actual baseline два HTTP restore исполняют заменённый harmless marker; фикс хранит hooks startup/последующих worker до завершения supervisor и запрещает exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; свежая native/ABI квалификация и raw seal приведены в отчёте. Q33 5/5 DONE;30/37(81,1%),7осталось. Исторические ограничения Q29/Q30/Q31/Q34/D06 сохраняются; без push/deploy/release.

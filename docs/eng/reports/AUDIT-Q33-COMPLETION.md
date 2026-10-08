@@ -1,8 +1,8 @@
 # Q33: final installation, update, file and hook reconciliation
 
-<!-- normative-sync: q33-completion-v1 -->
+<!-- normative-sync: q33-completion-v2 -->
 
-8 October 2026. F449/Q33-F052 is closed: targeted Linux14,CLI5,backup49,private IO2 and Clippy PASS; native A/B/14SHA/provenance and fresh Windows ABI22 PASS. All Q33 remains IN_PROGRESS pending the retained hook snapshot check below.
+8 October 2026. Q33 complete within agreed scope. F449/Q33-F052 and F450/Q33-F053 closed; real two-HTTP-restore retained-hook reproduction and fixed startup/later worker generation checks pass. Exact results and limits follow.
 
 ## Final fix
 
@@ -35,8 +35,24 @@ Current Linux source e8f5469e: actual CLI build/bin5/backup49 PASS, including tw
 Fresh independent A/B builds PASS for Windows/macOS universal2/Android arm64+x86_64 from e8f5469e, native source digest8d1cc8fa. Six actual compiler commands use fresh separate A/B targets, offline private registries/caches, jobs1 and panic=unwind. Export gates6Reality+22client (+21JNI Android) PASS. All14 SHA/canonical-consumed pairs/provenance PASS; actual refreshed Windows DLL22 C ABI/control/localhost-runner checks PASS (no Wintun/OS routes). New library bytes are recorded; previous ABI results are not relabeled as executions on these files. Mac runtime/iOS/firmware remain USER_EXCLUDED; no new Android full runtime/soak/benchmark claim.
 `q33-hook-restore-20261008`: SEALED 133 files / 160469796 bytes; manifest SHA256 `e11346af579035340f8446e1f9917db7ffa9bf87cbd400c827c7b4143fd37c03`.
 
-## Remaining reconciliation
+## Retained hook: F450 / Q33-F053
 
-SOURCE REVIEW OPEN: verify two restores while a ready generation retains its original `post_down`. `vet_server_config` skips empty staged hook commands, while the collector reads current INI; a running snapshot may still retain the earlier command. This is a source hypothesis, not a runtime-proven exploit. An isolated real restore with ready-generation state is required. F449 closes path aliases; this separate check remains necessary before all Q33 is complete.
+Real HTTP requests against the e8f5469e ELF confirmed the chain: a ready worker retains `post_down = sh /etc/qeli/owned.txt`; the first overlay restore clears the command in INI, the second publishes another `owned.txt`, and stopping the original worker executes the replacement. The harmless marker reads `replaced`. This is an actual runtime reproduction, in private MNT/NET/PID with private `/etc/qeli`, `/var/lib/qeli` and `/tmp`; the lab service remains intact.
 
-Q33 remains IN_PROGRESS until this reconciliation is complete. Overall 29/37 DONE (78.4%), 8 remain. Historical debt 14 DONE + D06 ACCEPTED_LIMITATION, Q29 SIGKILL FAIL/ENONET, Q30 Apple/callback, Q31 3/5/capacity/source-cut and user platform exclusions remain. No push/deploy/release.
+The fix retains commands from the startup snapshot and configurations read by the supervisor before each worker launch. References conservatively live until supervisor exit: removing a command/profile from INI or retiring a worker does not release them. Restore combines retained commands with current INI. The first safe overlay remains allowed; replacement in the second returns HTTP400 before snapshot/publication. Exact restore also refuses deleting a protected top-level entry, including a directory containing a nested script.
+
+Current Linux source aa98f208: actual CLI build/bin5/backup50, retained-generation1, post_down3, separately isolated private-FS/preload IO2 and Clippy -D warnings PASS. Runtime: baseline6 expected-vulnerability checks, fixed8 and fixed-later10 PASS. The last scenario manually changes the command and restarts only the worker through the real API; the supervisor survives, the new generation becomes ready, and after two restores shutdown executes `original`. Checks cover exact refusal before publication, preserved script and successful safe overlay. The marker exists only in the owned fixture. Linux ELF SHA256 `73af3c9e60b23c17f994f87a198184fc6f624fb6f96f90af7ae5b7877bff5b2b`, 78778192 bytes.
+
+The initial baseline fixture failure is retained: inherited `/sys` displayed host interfaces, causing a false ready assertion. Checking actual `ip link` inside private NET fixes the fixture; the first run counts neither as product failure nor PASS. Repeated baseline confirms the full chain. An early Android cleanup invocation before artifact downloads completed refused on missing local result.json before SSH/deletion; it was retried only after PASS. Original root777/845 and installed ELF75bc remain; a SHA-verified recoverable archive was downloaded before guarded cleanup.
+
+Fresh independent A/B PASS for Windows/macOS universal2/Android arm64+x86_64 from aa98f208, native source digest374be1f4. Six fresh build-command batches, separate A/B targets/private offline registry/caches,jobs1,panic=unwind; exports6Reality+22client (+21JNI Android), all14SHA/canonical-consumed pairs/provenance PASS. Actual refreshed Windows DLL22 C ABI/control/localhost-runner checks PASS; no Wintun/OSroutes. New native bytes are recorded, old ABI/runtime results are not relabeled. Mac cross-build emits retained missing-xcrun/SDK warnings; real Mac/iOS runtime remains USER_EXCLUDED, no new Android full runtime/soak/benchmark claim.
+
+`q33-retained-hooks-20261008`: SEALED 112 files / 167439176 bytes; manifest SHA256 `b817b3916307f8b7ad20d6f07dda0bae0ce99fc1430c34337451370d9e4bb3bc`.
+
+## Q33 conclusion and limits
+
+All five Q33 criteria are complete within agreed scope: review/dead code; positive/boundary/negative; failures/concurrency; Linux target integration; fixes/retest/evidence. The table above preserves exact sources and limits of previous installer/package/systemd/Docker/VPN runs: those payloads were not rebuilt for F450, and earlier results are not relabeled as executions on the new ELF.
+
+Q33 DONE. Overall30/37 DONE (81.1%),7 remain. No new mandatory debt from this item. The static hook collector is best-effort for literal paths, not a shell sandbox: entirely variable-built paths, runtime cd/external dependencies and unsynchronized admin edits between supervisor/worker reads are not qualified. Keep hooks outside `/etc/qeli`; conservative protection can last until full supervisor restart. Whole-tree atomic restore, automatic rollback, power-loss/fsync and empty OS bootstrap are not claimed. Multiarch compiler/registry/current Actions/release attestation remain in Q34, not PASS.
+
+Historical debt14 DONE + D06 ACCEPTED_LIMITATION; Q29 SIGKILL FAIL/ENONET, Q30 Apple/callback, Q31 3/5/capacity/source-cut and user platform exclusions are preserved. No push/deploy/release.

@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v95 -->
+<!-- normative-sync: audit-debt-v96 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1214,3 +1214,5 @@ physical exclusions are not PASS.
 
 
 **8 October,F449/Q33-F052:** [Q33 final reconciliation](../reports/AUDIT-Q33-COMPLETION.md): fixed restore hook-file protection bypass through `..`, quotes and symlink aliases; unknown top-level managed literal variables/globs refuse publication. Exact original Linux collector expected FAIL;14 targeted production helper/gate checks PASS. Full server/native qualification PASS:CLI5/backup49/IO2/Clippy,freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS;overall29/37DONE78.4%,8remain. Previous runtime gates reused only for unchanged paths;Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.
+
+**8 October,F450/Q33-F053:** [Q33 complete](../reports/AUDIT-Q33-COMPLETION.md): actual two-HTTP-restore baseline executes a replaced harmless marker; fix retains startup/later worker hooks until supervisor exit and refuses exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; fresh native/ABI qualification and raw seal are in the report. Q33 5/5 DONE;30/37(81.1%),7remain. Q29/Q30/Q31/Q34/D06 historical limits preserved; no push/deploy/release.
