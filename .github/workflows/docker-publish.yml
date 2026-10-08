@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  actions: read            # exact-commit CI admission before release publication
   packages: write           # push to GHCR with the automatic GITHUB_TOKEN
   id-token: write           # OIDC token for the signed build attestation (R-02)
   attestations: write       # record the attestation against this repo (R-02)
@@ -24,10 +25,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Validate publication ref
         id: ref
         run: python3 -B scripts/docker_publish_ref.py
+
+      - name: Admit release tag, Cargo version and exact-commit CI
+        if: steps.ref.outputs.release_tag == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci
 
       - name: Validate native legal resources before Docker publication
         run: python3 scripts/native_licenses.py

@@ -596,3 +596,27 @@ The Linux release workflow now requires an actual tag on HEAD, matching committe
 Cargo version and successful CI for that exact commit before installing build tools.
 This does not replace the full multi-platform/SDK release preflight. See
 [licensing and publication maintenance](../../LICENSING.md).
+
+
+### Release tag admission and compiler qualification
+
+The publication workflow checks the full Git ref and, for a release tag, runs
+`python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci` before
+build tools or registry login. The tag must identify the checked-out clean commit,
+match committed `qeli/Cargo.toml` version, and have successful CI for that exact
+commit. SemVer syntax alone is insufficient. Manual branch builds retain SHA-only
+tags. Missing, failed or stale CI refuses release publication; this gate needs
+`actions: read`. Local tag/version inspection without publication:
+
+```sh
+python3 scripts/release_tag.py --tag v0.8.2
+```
+
+[Q34 compiler/image qualification](../../docs/eng/reports/AUDIT-Q34-DOCKER-BUILD.md)
+records an actual amd64 build with the pinned Rust/Debian bases, default release
+fat LTO/jemalloc and no prebuilt binary override; exact image notices and compact
+VPN/recreation/rollback checks passed. This is scoped amd64 evidence. ARM images,
+registry publication, hosted signatures and reproducible A/B remain separate.
+The runtime fixture used explicit AppArmor unconfined with default seccomp;
+Docker's automatically loaded default profile was restored after strict ownership
+checks. It does not qualify the default AppArmor confinement on this new image.

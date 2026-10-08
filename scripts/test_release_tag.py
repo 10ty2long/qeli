@@ -105,6 +105,17 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn('dist/*',attest)
         self.assertIn('echo "subject=dist/${{ steps.pkg.outputs.name }}"',source)
 
+    def test_docker_release_uses_exact_tag_version_ci_admission_before_login(self):
+        source=(Path(__file__).resolve().parent.parent/'.github/workflows/docker-publish.yml').read_text(encoding='utf-8')
+        self.assertIn('actions: read',source)
+        self.assertIn('ref: ${{ github.ref }}',source)
+        self.assertIn('fetch-depth: 0',source)
+        self.assertIn("if: steps.ref.outputs.release_tag == 'true'",source)
+        command='python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci'
+        self.assertLess(source.index('python3 -B scripts/docker_publish_ref.py'),source.index(command))
+        self.assertLess(source.index(command),source.index('docker/login-action@'))
+        self.assertIn('GH_TOKEN: ${{ github.token }}',source)
+
     def test_ci_covers_every_workflow_change(self):
         s=(Path(__file__).resolve().parent.parent/'.github/workflows/ci.yml').read_text(encoding='utf-8')
         self.assertEqual(s.count("      - '.github/workflows/**'"),2)
