@@ -248,36 +248,39 @@ pub fn load() -> NotifyConfig {
 }
 
 fn file_stamp_for(path: &std::path::Path) -> FileStamp {
-    std::fs::metadata(path).ok().map(|metadata| {
-        let modified_ns = metadata
-            .modified()
-            .ok()
-            .and_then(|value| value.duration_since(std::time::UNIX_EPOCH).ok())
-            .map(|value| value.as_nanos())
-            .unwrap_or(0);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::MetadataExt;
-            FileStampValue {
-                modified_ns,
-                len: metadata.len(),
-                changed_secs: metadata.ctime(),
-                changed_ns: metadata.ctime_nsec(),
-                mode: metadata.mode(),
-                uid: metadata.uid(),
-                gid: metadata.gid(),
-                device: metadata.dev(),
-                inode: metadata.ino(),
+    std::fs::symlink_metadata(path)
+        .ok()
+        .filter(|metadata| metadata.is_file())
+        .map(|metadata| {
+            let modified_ns = metadata
+                .modified()
+                .ok()
+                .and_then(|value| value.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|value| value.as_nanos())
+                .unwrap_or(0);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::MetadataExt;
+                FileStampValue {
+                    modified_ns,
+                    len: metadata.len(),
+                    changed_secs: metadata.ctime(),
+                    changed_ns: metadata.ctime_nsec(),
+                    mode: metadata.mode(),
+                    uid: metadata.uid(),
+                    gid: metadata.gid(),
+                    device: metadata.dev(),
+                    inode: metadata.ino(),
+                }
             }
-        }
-        #[cfg(not(unix))]
-        {
-            FileStampValue {
-                modified_ns,
-                len: metadata.len(),
+            #[cfg(not(unix))]
+            {
+                FileStampValue {
+                    modified_ns,
+                    len: metadata.len(),
+                }
             }
-        }
-    })
+        })
 }
 
 fn file_stamp() -> FileStamp {
@@ -909,6 +912,30 @@ mod tests {
         let after = file_stamp_for(&path);
         assert_ne!(before, after);
         let _ = std::fs::remove_file(path);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn notify_stamp_cannot_reuse_a_regular_target_through_a_symlink() {
+        use std::os::unix::fs::symlink;
+        let dir =
+            std::env::temp_dir().join(format!("qeli-notify-stamp-link-{}", std::process::id()));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("notify.ini");
+        let target = dir.join("target.ini");
+        std::fs::write(&path, b"[notify]\nserver_name=fixture\n").unwrap();
+        assert!(file_stamp_for(&path).is_some());
+        std::fs::rename(&path, &target).unwrap();
+        symlink("target.ini", &path).unwrap();
+        assert!(
+            file_stamp_for(&path).is_none(),
+            "cache stamp must inspect the entry, not follow its target"
+        );
+        std::fs::remove_file(&path).unwrap();
+        std::fs::rename(&target, &path).unwrap();
+        assert!(file_stamp_for(&path).is_some());
+        std::fs::remove_file(&path).unwrap();
+        std::fs::remove_dir(&dir).unwrap();
     }
 
     #[test]
