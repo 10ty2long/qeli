@@ -1043,26 +1043,27 @@ sudo qeli set-service-user root --unit qeli-server.service   # non-standard unit
 sudo systemctl restart qeli          # required for either to take effect
 ```
 
+`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+
 **What `set-service-user` actually does.** It never edits the packaged unit file
 (`/lib/systemd/system/qeli.service`) — dpkg overwrites that on every upgrade and your
 change would silently vanish. Instead it manages a **systemd drop-in override**:
 
 | argument | effect |
 |---|---|
-| `root` | writes `/etc/systemd/system/qeli.service.d/run-as.conf` containing `[Service] User=root / Group=root`, which takes precedence over the packaged `User=qeli`. Lives in `/etc`, so it survives package upgrades. |
+| `root` | writes `/etc/systemd/system/qeli.service.d/run-as.conf` containing `[Service] User=root / Group=root`, adding `CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER` to the bounded network capabilities and clearing root ambient capabilities; it takes precedence over the packaged `User=qeli`. Lives in `/etc`, so it survives package upgrades. |
 | `qeli` | repairs daemon-state ownership under `/etc/qeli` before removing that drop-in (the packaged unit already says `User=qeli`). It preserves `client-links` and `*.bak-*` administrator data, protecting the receipts directory as root0700. A repair failure keeps an existing root override; restart is a separate step. |
 
 Both then run `systemctl daemon-reload`; you restart the service to apply. The command is
 idempotent (safe to re-run), requires root, and rejects anything other than `qeli`/`root`.
 The unit's hardening — `ProtectSystem=full`, `NoNewPrivileges=true`, the bounded
-`CapabilityBoundingSet` — **stays in force either way**; `root` only changes *who* the
-process runs as.
+`CapabilityBoundingSet` — **stays in force either way**. Root adds three filesystem capabilities to read and update private state owned by qeli; the network capability set remains bounded. Switching back removes the drop-in and restores the packaged qeli capability settings.
 
 > ⚠️ **When to run as root — and why you normally should not.**
 > The default `qeli` user exists for privilege separation: if the daemon is ever
 > compromised, the attacker gets an account that owns nothing but `/etc/qeli` — **not the
-> machine**. Running as root throws that away: a compromise of the VPN daemon becomes
-> **full root on the host**. The daemon is reachable from the internet, so this is not a
+> machine**. Running as root removes that account boundary and permits access to other owners’ files.
+> The packaged filesystem sandbox and capability bounds still apply, but UID 0 is a much broader privilege. The daemon is reachable from the internet, so this is not a
 > theoretical distinction.
 >
 > Legitimate reasons to pick `root`:

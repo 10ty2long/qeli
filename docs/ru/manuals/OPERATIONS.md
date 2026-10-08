@@ -157,6 +157,13 @@ Installer проверяет явные endpoint/panel options и непусты
 
 Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN той ранней проверкой не закрывались; default-unit ownership/drop-in transition проверен [последующим service-user аудитом](../reports/AUDIT-Q33-SERVICE-USER.md). [Доказательства и ограничения](../reports/AUDIT-Q33-INSTALLER-CLI.md).
 
+### Reload службы и конфигурация владельца root
+
+`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
+
+Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+
+
 ### 3.2. Docker
 
 Образ не обновляется «на месте» — меняется тег и пересоздаётся контейнер. Состояние живёт

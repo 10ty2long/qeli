@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v154 -->
+<!-- normative-sync: full-system-audit-v155 -->
 
 **Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2100,6 +2100,8 @@ final client task drain and Linux runtime/release checks remain open.
 **8 October,F437–F438:** [Actual CLI/version](../reports/AUDIT-Q33-INSTALLER-CLI.md): --version for old binary compatibility, strict fixture argv and unique stage-lock cleanup. Version baseline2fail→2PASS; realCLI initial4lockfail→5PASS, repeatedCI2+5;99regressions/lint/recipes38/native14/docs9(678Markdown)PASS. Genuine debug artifact85ea/SHA37a6 reused for unchanged CLI/parser/trust paths;4laterclient/notify differences, not fullcurrentRust/releaseABI qualification. Real three-profile keys/Argon2/users/panel/INI/link/custom-dropin flows;systemctl/daemon/kernel/preflight-ip seams,VPN/Docker/default-unit-rootrevertOPEN. Package CI added,not executed Actions. Own root backed-up/cleaned,777/845 unchanged. Raw334files41695825bytesSEALED. Q33IN_PROGRESS,Q31 3/5,29/37DONE78.4%8remain,history/exclusions/D06accepted retained;no push/deploy/release.
 
 **8 October,F439–F441:** [Service user/ownership](../reports/AUDIT-Q33-SERVICE-USER.md): preserve client-links/backups ownership, root0700 receipt directory; validate real state and retain existing override on repair failure; explicitly apply installer default qeli after validation. Baseline ownership2/CLI3 failures;fixed2+10 and117regressions PASS;CI2+10+2,lint3scripts,Rustbin5/Clippy/fmt PASS. Current CLI rebuilt0e01;native A/B evidence refreshed. Real systemd/startup/kernel/VPN/Docker remain OPEN;Q33 IN_PROGRESS,29/37DONE78.4%,8remain. Historical debt/exclusions retained;local dev only.
+
+**8 October, F442–F444 / Q33-F045–F047:** [Systemd](../reports/AUDIT-Q33-SYSTEMD.md): stable nft diagnostics boundary; supervisor SIGHUP with managed shutdown and preserved panel lockouts; bounded root filesystem capabilities. Current CLI a36d/SHA6161 built Rust1.97 offline/locked; bin5 + SIGHUP4 + supervisor23 + Clippy PASS; installer/CLI129 + exact localCI14 + lint PASS. Real manager257 sandbox/reload/restart/root-qeli/invalid-INI recovery qualified in an owned network namespace; root config trust refusal retained. Native A/B/ABI and sealed evidence in report. This closes that scoped manager gate, not whole Q33: actual package/update rollback pipeline, VPN traffic and Docker image runtime remain OPEN. Q33 IN_PROGRESS, 29/37 DONE (78.4%),8 remain; previous exclusions/deferred items/history unchanged; no push/deploy/release.
 
 ### 34. CI, dependencies, native provenance and release
 
