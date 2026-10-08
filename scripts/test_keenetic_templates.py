@@ -372,14 +372,15 @@ for argument in "$@"; do
 done
 ''')
 
-    def test_observed_plan_replacement_cannot_publish_stale_receipt(self):
+    def test_replacement_before_lock_applies_current_snapshot_without_stale_mutation(self):
         folder=self.hook_setup();self.rotate_plan_after_first_read()
-        self.assertNotEqual(self.run_script(self.hook).returncode,0)
-        self.assertNotIn('interface OpkgTun0 ip address 10.8.0.2 255.255.255.255',self.calls('ndmc-calls'))
-        self.assertNotIn('system configuration save',self.calls('ndmc-calls'))
-        self.assertFalse((folder/'qeli.opkgtun.applied').exists())
-        self.assertTrue((folder/'qeli.opkgtun.apply-pending').exists())
+        # Replacement happened before publication exclusion was acquired. The
+        # hook rereads under that lock and may safely apply the current snapshot.
         self.assertEqual(self.run_script(self.hook).returncode,0)
+        self.assertNotIn('interface OpkgTun0 ip address 10.8.0.2 255.255.255.255',self.calls('ndmc-calls'))
+        self.assertEqual(self.calls('ndmc-calls').count('system configuration save'),1)
+        self.assertEqual((folder/'qeli.opkgtun.applied').read_text(), 'opkgtun0\n'+(folder/'qeli.tunip').read_text())
+        self.assertFalse((folder/'qeli.opkgtun.apply-pending').exists())
         self.assertIn('interface OpkgTun0 ip address 10.8.0.9 255.255.255.255',self.calls('ndmc-calls'))
         self.assertIn('interface OpkgTun0 ipv6 address fd00::9/128',self.calls('ndmc-calls'))
         self.assertIn('interface OpkgTun0 ip mtu 1280',self.calls('ndmc-calls'))
