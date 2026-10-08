@@ -252,8 +252,14 @@ Docker сохраняет AGPL, LICENSING и общий Cargo/toolchain bundle �
 `/usr/share/doc/qeli/`, notices — в `licenses/rust/`. Publication workflow проверяет
 common bundle до login/build. Rust builder и Debian runtime base images закреплены
 по multiarch digest из official Docker Hub metadata. Версия Rust соответствует
-общему pin; изменение pin требует пересмотра builder image и notices. APT packages
-остаются live repository inputs, base digest не делает весь образ воспроизводимым.
+общему pin; изменение pin требует пересмотра builder image и notices. Dockerfile
+frontend также закреплён по digest. Единственные APT sources — подписанный снимок
+Debian `20261008T000000Z` из `release/docker/debian.sources`; inherited live sources
+удаляются перед его копированием. `Check-Valid-Until: no` относится только к этому
+историческому снимку, проверки подписей и package hashes остаются обязательными.
+Дата фиксирует также security packages: обновляйте её явно вместе с base/frontend
+pins и повторной проверкой установки/подписей. Это не доказательство побайтной
+воспроизводимости всего образа или актуальности каждого установленного пакета.
 Сохраняйте Debian package copyright resources и соответствующие build/source links.
 Перед локальной сборкой Docker выполните `python3 scripts/native_licenses.py`.
 
