@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v81 -->
+<!-- normative-sync: audit-debt-v82 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1185,3 +1185,5 @@ physical exclusions are not PASS.
 **8 October,Q31-V011:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): previous32-bit builds predated F395; current6c2225cd ARMv7/MIPS full client builds/SHA/static ELF PASS,318exact transferred inputs.32QEMU CLI/INI and14exact production PublicationLock/budget release behavior checks PASS on cortex-a7/24Kc uid65534. No new product regression/ABI/source change;14nativeSHA/provenance PASS. .11 rustup inventory auto-installed a missing named nightly; only that own addition removed with guards/default preserved,probe compiled sequentially on .10. Verified backups,three own roots cleaned,unrelated old root/services retained. Old four-target A/B keeps original source/date;no cfg(test)/firmware/fullVPN/SDK bootstrap/source-cut/current CI success claim. Q31 remains3/5;29/37(78.4%),8remain;Q29/Q30/D06/exclusions retained. No push/deploy/release.
 
 **8 October,F400–F403:** [Q33 Docker entrypoint](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): four baseline defects reproduce per dash/ash; default argv, explicit CLI config and owner-only/no-replace first-run files fixed.34 scenarios/46 actual chroot invocations PASS without skips; deterministic creator and copy/link failures covered. Docker image/daemon, Debian updater/install and full Q33 remain OPEN. Q31 SDK bootstrap deferred on measured2GB RAM/~9GB disk, below upstream8GB/30GB recommendation; no compiler FAIL/PASS claimed.29/37(78.4%),eight remain; exclusions unchanged.
+
+**8 October,F404–F411:** [Q33 server updater](../reports/AUDIT-Q33-SERVER-UPDATER.md): invalid local input, package admission, CRLF/cleanup, full transaction lock, exact install/downgrade identity, restart/PID health and unsafe legacy cache fixed.14 old regression scenarios FAIL;21 final methods/24 updater+1 installer invocations PASS with genuine dpkg fixtures. Exact CI command, ShellCheck and guarded cleanup PASS; production maintainer scripts/systemd/VPN/Docker remain OPEN. Q33 IN_PROGRESS;29/37(78.4%),eight remain; old debt14DONE+D06accepted, Q29/Q30/Q31/exclusions retained. No push/deploy/release.

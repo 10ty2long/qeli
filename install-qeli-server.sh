@@ -296,6 +296,9 @@ if [ "$(id -u)" -ne 0 ]; then
   die "must run as root, and 'sudo' is not installed. Switch to root and re-run:  su -"
 fi
 export DEBIAN_FRONTEND=noninteractive
+if [ -n "${QELI_DEB:-}" ] && [ ! -f "$QELI_DEB" ]; then
+  die "QELI_DEB does not name a regular package file: $QELI_DEB"
+fi
 PUBLIC_HOST="${1:-}"
 # OS user the service will run as (default the unprivileged `qeli`). Validated up front so
 # a typo fails before we install anything; applied just before the service is started.

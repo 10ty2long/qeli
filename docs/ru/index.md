@@ -468,3 +468,5 @@
 - [Q32: ограничение логов и публикация trace](reports/AUDIT-Q32-LOGS-TRACE.md)
 - [AUDIT-Q32-NOTIFICATIONS](reports/AUDIT-Q32-NOTIFICATIONS.md)
 - [Q33: пути и новые файлы Docker entrypoint](reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md)
+
+- [Q33: транзакции обновления сервера](reports/AUDIT-Q33-SERVER-UPDATER.md)

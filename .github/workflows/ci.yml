@@ -96,6 +96,10 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_openwrt_archive.py'
       - name: Test Docker entrypoint in isolated Linux chroots
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_docker_entrypoint.py
+      - name: Test server updater package transactions in isolated chroots
+        run: |
+          command -v jq >/dev/null || sudo apt-get install -y --no-install-recommends jq
+          sudo unshare --mount --net --pid --fork python3 -B scripts/test_server_updater.py
       - name: Verify native library hashes
         run: bash native-libs/verify.sh
       # verify.sh proves copy/manifest parity. provenance.py additionally requires the exact

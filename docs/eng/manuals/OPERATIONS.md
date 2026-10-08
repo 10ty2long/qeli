@@ -110,52 +110,21 @@ the right things by itself:
 sudo ./update-qeli-server.sh
 ```
 
-What it actually does:
-1. Detects the current version and the latest GitHub release (`QELI_REPO` overrides the repo).
-2. Downloads the `.deb` **and `SHA256SUMS`** and **verifies the checksum** — refusing to install on a mismatch.
-3. **Copies the current binary** to a backup beside it.
-4. Installs the package and restarts `qeli`.
-5. If the service **fails to come up**, it **restores the old binary** and restarts again;
-   if that also fails it says plainly that the service is down and points you at the journal.
+The updater holds a transaction lock in root-owned0700 `/run/qeli-updater`. A second updater refuses while the first is running. It selects the host architecture's release package, checks SHA256SUMS, validates Package/Version/Architecture and installs it. A restart failure, missing/zero MainPID or changed MainPID during the2+3-second observation enters rollback; an active stable supervisor does not establish VPN readiness.
 
-So rollback-on-failure is built in; nothing extra to do. `QELI_FORCE=1` reinstalls even
-the current version.
+It saves the old binary and uses the previous package from root-owned0700 `/var/cache/qeli` for rollback, matching the installed Debian version including revision. A package downgrade must report the expected configured dpkg identity and pass the same health check. If no usable old package exists or downgrade fails, binary-only restoration is the last resort: it warns that dpkg may still record the newer version. Recovery returns nonzero because the update failed. Reinstall the previous package to reconcile metadata; do not treat a restored binary as a complete downgrade.
 
-Three caveats:
-
-- **The rollback covers the binary only.** The script does not back up your config, users
-  or identity key, and it does not roll back dpkg's metadata (the package registers as new
-  while the old binary sits on disk). Take a backup before a major upgrade — see
-  [§4](#4-what-to-back-up).
-- **`QELI_DEB=/path/to.deb` disables checksum verification** — there is nothing to compare
-  against. Use it deliberately, for your own builds.
-- **The script itself verifies only the SHA256** from the same release — that is integrity,
-  not provenance: whoever can replace the release can replace `SHA256SUMS` with it.
-  For the Linux `.deb`, the `release-build-and-attest` workflow now checks out the exact
-  release tag, builds `make deb-portable`, runs the package smoke checks, creates signed
-  **build provenance**, and only then uploads that same byte sequence and regenerates
-  `SHA256SUMS`:
-
-  ```bash
-  gh attestation verify qeli_0.8.1_amd64.deb -R litvinovtd/qeli
-  ```
-
-  That verification binds the Linux package to this repository, workflow and tagged source
-  commit. Other desktop/mobile assets still receive publication evidence only until their
-  release builds also move into CI. The container has its own build provenance:
-  `gh attestation verify oci://ghcr.io/litvinovtd/qeli:latest -R litvinovtd/qeli`.
-  Verification needs `gh` and network access, so the updater does not run it — use it
-  manually when independently signed source/build evidence is required.
-
-The manual equivalent, if you'd rather not use the script:
+`QELI_FORCE=1` reinstalls even the current version. For an offline package:
 
 ```bash
-sudo cp -a "$(command -v qeli)" /root/qeli.bak      # 1. back up the binary
-sudo apt install ./qeli_<version>_amd64.deb         # 2. install
-sudo systemctl restart qeli && systemctl status qeli
-# roll back if it didn't come up:
-sudo systemctl stop qeli && sudo cp -a /root/qeli.bak "$(command -v qeli)" && sudo systemctl start qeli
+sudo env QELI_DEB=/path/qeli.deb ./update-qeli-server.sh
 ```
+
+The local path must exist; a typo refuses instead of downloading. Local input skips release checksum/attestation lookup and needs neither curl nor jq; use a trusted package. Updater-owned downloads are cleaned on normal exit/failure/INT/TERM; the supplied local file stays. The service-owned legacy `/var/lib/qeli/packages` is preserved and ignored, never imported into the root rollback cache.
+
+SHA256SUMS from the same release establish integrity against its metadata, not independent provenance. Set `QELI_VERIFY_ATTESTATION=1` to require `gh attestation verify` for a remote package; missing gh or failed verification aborts. Keep separate backups of configs/users/identity/client links before major upgrades: the updater preserves them but does not back them up. See [§4](#4-what-to-back-up) and [the scoped updater audit](../reports/AUDIT-Q33-SERVER-UPDATER.md).
+
+For manual package rollback, keep a trusted old .deb and install it with `apt-get install --allow-downgrades`, then restart/check the service and inspect dpkg's installed version. Binary restoration alone is emergency recovery, with the metadata limitation above.
 
 > **The package does not touch your configs.** The `.deb` only installs `*.conf.example`;
 > your `/etc/qeli/server.conf`, `users.conf` and the identity key are not in the package

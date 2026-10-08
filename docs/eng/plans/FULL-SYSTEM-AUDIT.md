@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v146 -->
+<!-- normative-sync: full-system-audit-v147 -->
 
 **Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2084,6 +2084,8 @@ Server-only check has 23 existing transport dead-code warnings. password_file bo
 final client task drain and Linux runtime/release checks remain open.
 
 **8 October,F400–F403:** [Q33 Docker entrypoint](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): four baseline defects reproduce per dash/ash; default argv, explicit CLI config and owner-only/no-replace first-run files fixed.34 scenarios/46 actual chroot invocations PASS without skips; deterministic creator and copy/link failures covered. Docker image/daemon, Debian updater/install and full Q33 remain OPEN. Q31 SDK bootstrap deferred on measured2GB RAM/~9GB disk, below upstream8GB/30GB recommendation; no compiler FAIL/PASS claimed.29/37(78.4%),eight remain; exclusions unchanged.
+
+**8 October,F404–F411:** [Q33 server updater](../reports/AUDIT-Q33-SERVER-UPDATER.md): invalid local input, package admission, CRLF/cleanup, full transaction lock, exact install/downgrade identity, restart/PID health and unsafe legacy cache fixed.14 old regression scenarios FAIL;21 final methods/24 updater+1 installer invocations PASS with genuine dpkg fixtures. Exact CI command, ShellCheck and guarded cleanup PASS; production maintainer scripts/systemd/VPN/Docker remain OPEN. Q33 IN_PROGRESS;29/37(78.4%),eight remain; old debt14DONE+D06accepted, Q29/Q30/Q31/exclusions retained. No push/deploy/release.
 
 ### 34. CI, dependencies, native provenance and release
 
