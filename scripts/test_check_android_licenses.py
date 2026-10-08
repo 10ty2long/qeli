@@ -27,6 +27,18 @@ class AndroidLicenseTests(unittest.TestCase):
             file.write_bytes(data)
             self.assets[name] = data
             self.origins[name] = name
+        from test_native_licenses import fixture
+        from native_licenses import generate
+        repo, archives, receipts, bundle = fixture(self.repo / 'native-fixture')
+        # The two fixtures use the same canonical core text.
+        generate(repo, archives, receipts, bundle)
+        import shutil
+        shutil.copytree(repo / 'qeli', self.repo / 'qeli')
+        for file in bundle.rglob('*'):
+            if file.is_file():
+                name = 'native-rust/' + file.relative_to(bundle).as_posix()
+                self.assets[name] = file.read_bytes()
+                self.origins[name] = 'native-rust!' + name.removeprefix('native-rust/')
         self.assets['ARTIFACTS.tsv'] = b'coordinate\tartifact\tsha256\ng:a:1\ta-1.aar\t' + b'0' * 64 + b'\n'
         self.origins['ARTIFACTS.tsv'] = 'original archive identities'
         original = 'classes.jar!META-INF/NOTICE.txt'
@@ -57,6 +69,16 @@ class AndroidLicenseTests(unittest.TestCase):
         self.assertEqual(result['status'], 'PASS')
         self.assertEqual(result['reviewed_maven_coordinates'], 1)
         self.assertEqual(result['embedded_notices'][0]['origin'], 'classes.jar!META-INF/NOTICE.txt')
+
+    def test_missing_native_resource(self):
+        name = next(name for name in self.assets if name.startswith('native-rust/files/'))
+        self.write(omitted=[name])
+        with self.assertRaisesRegex(ValueError, 'Missing legal asset'): check_apk(self.apk, self.repo)
+
+    def test_native_resource_byte_drift(self):
+        name = next(name for name in self.assets if name.startswith('native-rust/files/'))
+        self.write(altered={name: b'tampered'})
+        with self.assertRaisesRegex(ValueError, 'Canonical text/inventory drift'): check_apk(self.apk, self.repo)
 
     def test_missing_core_license(self):
         self.write(omitted=['AGPL-3.0.txt'])

@@ -106,6 +106,9 @@ define Package/qeli/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/qeli-client $(1)/usr/bin/qeli-client
 
+	$(INSTALL_DIR) $(1)/usr/share/licenses/qeli
+	$(CP) $(PKG_BUILD_DIR)/qeli/third-party-notices/rust $(1)/usr/share/licenses/qeli/
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/qeli.init $(1)/etc/init.d/qeli
 

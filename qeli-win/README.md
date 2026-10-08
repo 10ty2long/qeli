@@ -235,6 +235,7 @@ dotnet build QeliWin\QeliWin.csproj -c Debug
 dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained false `
   -p:PublishSingleFile=true -o dist\net-required
 Copy-Item dist\net-required\QeliWin.exe dist\QeliWin-net-required.exe
+Copy-Item dist\net-required\Legal dist\ -Recurse -Force
 Copy-Item dist\net-required\Wintun-LICENSE.txt dist\
 Copy-Item dist\net-required\WinDivert-LICENSE.txt dist\
 Copy-Item dist\net-required\WinDivert-NOTICE.txt dist\
@@ -244,9 +245,17 @@ dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained tru
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -o dist\standalone
 Copy-Item dist\standalone\QeliWin.exe dist\QeliWin-standalone.exe
+Copy-Item dist\standalone\Legal dist\ -Recurse -Force
+Copy-Item dist\standalone\Wintun-LICENSE.txt dist\
+Copy-Item dist\standalone\WinDivert-LICENSE.txt dist\
+Copy-Item dist\standalone\WinDivert-NOTICE.txt dist\
 ```
 
-Wintun DLL вшита в exe как ресурс (`EmbeddedResource`), но `Wintun-LICENSE.txt` и notices WinDivert должны распространяться рядом с обоими вариантами приложения.
+Распространять весь publish-каталог либо executable вместе с `Legal/`,
+`Wintun-LICENSE.txt` и notices WinDivert. `Legal/` содержит MPL клиента, AGPL ядра
+и общий Cargo.lock комплект; он сохраняется отдельно при single-file publish.
+Проверка: из корня репозитория `python scripts/native_licenses.py --bundle qeli-win/dist/standalone/Legal/NativeRust`.
+См. [обновление комплекта](../LICENSING.md).
 
 ## Headless-режимы (для отладки/CI)
 

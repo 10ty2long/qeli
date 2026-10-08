@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Check the project/Maven legal assets in a built Android APK.
 
-This packaging check does not certify native third-party notices, matching
-source publication, signing, or all legal requirements of a release.
+This packaging check verifies the common Cargo.lock legal superset as well as
+Maven resources. It does not certify per-binary linkage, toolchain notices,
+matching source publication, signing, or all legal requirements of a release.
 """
 from __future__ import annotations
 
@@ -13,6 +14,8 @@ import re
 import sys
 import zipfile
 from pathlib import Path, PurePosixPath
+
+from native_licenses import check_bundle
 
 PREFIX = 'assets/licenses/'
 MAX_ASSET = 4 * 1024 * 1024
@@ -27,7 +30,13 @@ def check_apk(apk: Path, repository: Path) -> dict:
         'Apache-2.0.txt': repository / 'qeli-android/gradle/licenses/Apache-2.0.txt',
         'MAVEN.tsv': repository / 'qeli-android/gradle/licenses/maven-runtime.tsv',
     }
+    native_report = check_bundle(repository)
+    native = repository / 'qeli/third-party-notices/rust'
+    canonical.update({'native-rust/' + path.relative_to(native).as_posix(): path for path in native.rglob('*') if path.is_file()})
     expected = {name: source.read_bytes().replace(b'\r\n', b'\n') for name, source in canonical.items()}
+    for name, source in canonical.items():
+        if name.startswith('native-rust/'):
+            expected[name] = source.read_bytes()
     lines = expected['MAVEN.tsv'].decode('utf-8').splitlines()
     if not lines or lines[0] != 'coordinate\tlicense\treview':
         raise ValueError('Invalid reviewed Maven inventory')
@@ -117,7 +126,8 @@ def check_apk(apk: Path, repository: Path) -> dict:
     return {'status': 'PASS', 'apk_sha256': hashlib.sha256(apk.read_bytes()).hexdigest(),
             'reviewed_maven_coordinates': len(coordinates), 'indexed_assets': len(seen), 'original_archives': len(artifact_keys),
             'embedded_notices': notices,
-            'scope': 'Project license and reviewed Maven notice packaging only; native dependency/source/signature admission remains separate'}
+            'native_bundle': native_report,
+            'scope': 'Project, Maven and full Cargo.lock legal resource packaging; per-binary linkage/toolchain/source/signature admission remains separate'}
 
 
 def main() -> int:
