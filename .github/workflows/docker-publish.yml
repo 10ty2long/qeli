@@ -25,6 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Validate publication ref
+        id: ref
+        run: python3 -B scripts/docker_publish_ref.py
+
       # QEMU lets the single amd64 runner build the arm images (emulated). A Rust
       # compile under emulation is slow — a release build of all three arches can
       # take a while; trim `platforms` below if you only need some.
@@ -42,11 +46,13 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ghcr.io/${{ github.repository }}
+          flavor: latest=false
           tags: |
-            type=semver,pattern={{version}}
+            type=semver,pattern={{version}},enable=${{ steps.ref.outputs.release_tag }}
+            type=sha,format=long
             # `latest` only for a real release tag — never a pre-release (v1.2.3-rc1),
             # so an RC can never clobber the tag users pull by default.
-            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+            type=raw,value=latest,enable=${{ steps.ref.outputs.stable_release }}
 
       - id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7

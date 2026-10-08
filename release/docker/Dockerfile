@@ -40,7 +40,7 @@ COPY qeli/src ./src
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/src/qeli/target \
-    cargo build --release --features jemalloc --bin qeli \
+    cargo build --locked --release --features jemalloc --bin qeli \
  && cp target/release/qeli /qeli \
  && strip /qeli
 
