@@ -849,6 +849,12 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
+      - name: Android dependency audit fixtures
+        working-directory: .
+        run: python3 -m unittest discover -s scripts -p test_audit_android_dependencies.py
+      - name: Android locked Maven vulnerabilities
+        working-directory: .
+        run: python3 scripts/audit_android_dependencies.py
       - name: Install cargo-audit
         run: cargo install cargo-audit --version 0.22.2 --locked
       - name: cargo audit

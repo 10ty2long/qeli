@@ -372,3 +372,26 @@ macOS classifier JAR сверены с Google Maven; при смене AGP св�
 Не добавляйте write-флаги в CI или broad trusted-artifact исключения.
 Неизвестный checksum требует проверки происхождения, а не отключения verification.
 [Результаты и ограничения Q34](../docs/ru/reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md).
+
+
+## Security versions и Maven CVE gate
+
+`gradle/security-versions.properties` — единый список исправленных build dependency
+версий для plugin classpath и project configurations. Kotlin обновляется через
+buildscript classpath AGP built-in Kotlin; отдельный Kotlin Android plugin не нужен.
+Это сборочная политика; формат VPN-конфигов остаётся INI.
+
+Из корня репозитория запустите:
+
+```bash
+python3 -m unittest discover -s scripts -p test_audit_android_dependencies.py
+python3 scripts/audit_android_dependencies.py
+```
+
+Gate опрашивает OSV по всем трём lockfile, включая build tooling и UTP, а также
+проверяет согласованность security pins. Известная уязвимость, ошибка API, неполный
+ответ или цикл пагинации приводят к ненулевому exit code; сбой сети не означает PASS.
+При обновлении versions выполните матрицу генерации выше, удалите старые неиспользуемые
+checksum entries и независимо проверьте новые файлы. Затем повторите gate и штатные
+сборки без write-флагов. Изменение Kotlin требует JVM/R8/lint/instrumentation проверки.
+[Результаты Q34](../docs/ru/reports/AUDIT-Q34-MAVEN-SECURITY.md).
