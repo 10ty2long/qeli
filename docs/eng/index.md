@@ -490,3 +490,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: actual DEB, update and rollback](reports/AUDIT-Q33-PACKAGE-MANAGER.md)
 
 - [Q33: final reconciliation, hooks and restore](reports/AUDIT-Q33-COMPLETION.md)
+
+- [Q34: Rust dependencies, CI policy and TLS PEM](reports/AUDIT-Q34-DEPENDENCY-POLICY.md)

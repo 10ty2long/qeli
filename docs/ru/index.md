@@ -490,3 +490,5 @@
 - [Q33: настоящий DEB, обновление и откат](reports/AUDIT-Q33-PACKAGE-MANAGER.md)
 
 - [Q33: итоговая сверка, hooks и restore](reports/AUDIT-Q33-COMPLETION.md)
+
+- [Q34: зависимости Rust, политика CI и PEM TLS](reports/AUDIT-Q34-DEPENDENCY-POLICY.md)
