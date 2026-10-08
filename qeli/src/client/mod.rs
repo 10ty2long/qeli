@@ -14,6 +14,8 @@ pub mod killswitch;
 mod network_lease;
 #[cfg(target_os = "linux")]
 mod network_task;
+#[cfg(target_os = "linux")]
+mod plan_publication;
 #[cfg(all(target_os = "linux", feature = "experimental-roaming"))]
 mod roaming_linux;
 #[cfg(target_os = "linux")]
@@ -8433,6 +8435,10 @@ fn publish_network_plan_state(plan: &NetworkPlan) -> anyhow::Result<()> {
         return Ok(());
     }
     let state = network_plan_state(plan);
+    let _publication = plan_publication::PublicationLock::acquire(std::path::Path::new(&path))
+        .map_err(|error| {
+            anyhow::anyhow!("could not acquire network-plan publication lock: {error}")
+        })?;
     crate::util::write_atomic(&path, state.as_bytes()).map_err(|error| {
         anyhow::anyhow!(
             "could not publish authenticated network plan to QELI_TUNIP_FILE '{path}': {error}"

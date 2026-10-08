@@ -30,7 +30,7 @@ export PATH=/opt/sbin:/opt/bin:/usr/sbin:/usr/bin:/sbin:/bin
 [ -f "$STATE" ] || exit 0
 . /opt/etc/qeli/lifecycle.sh || exit 1
 qeli_lock_acquire || exit 1
-trap 'qeli_lock_release' 0
+trap 'status=$?; qeli_plan_lock_release || status=1; qeli_lock_release || status=1; trap - 0; exit "$status"' 0
 trap 'exit 1' HUP INT TERM
 qeli_install_ready || exit 1
 
@@ -56,6 +56,12 @@ read_plan() {
   WANT_IP6="${WANT_IP6_CIDR%/*}"
 }
 read_plan
+# Freeze a ready plan before show/no-op or mutation. With no plan, create the
+# attach device and wait WITHOUT this lock: the core needs that device first.
+if [ -n "$WANT_IP" ] || [ -n "$WANT_IP6" ]; then
+  qeli_plan_lock_acquire "$TUNIP" || exit 1
+  read_plan
+fi
 
 # Only our last complete, saved application can qualify a no-op. Addresses alone
 # cannot prove that MTU/MSS/global/security/save completed, or that the plan is new.
@@ -77,8 +83,8 @@ plan_is_current() {
   [ "$(cat "$STATE" 2>/dev/null)" = "$IF" ] &&
     [ "$(cat "$TUNIP" 2>/dev/null)" = "$PLAN" ]
 }
-# Writer publication is independent of the shell lock. Every observed stale
-# success boundary must leave retry intent, including after PENDING removal.
+# The matching core writer is excluded by the publication lock. Keep checks for
+# older/non-cooperative writers and administrator changes; these retain retry intent.
 require_current_plan() {
   plan_is_current || {
     (umask 077; : >> "$PENDING") || return 1
@@ -123,6 +129,13 @@ while [ -z "$IP" ] && [ -z "$IP6" ] && [ $i -lt 10 ]; do
   i=$((i + 1)); sleep 1
 done
 [ -n "$IP" ] || [ -n "$IP6" ] || { echo "wan.d/010-qeli: $NDM_IF создан, ждём attach qeli (нет IP в $TUNIP)" >> "$LOG"; exit 0; }
+
+if [ "$QELI_PLAN_LOCK_HELD" != 1 ]; then
+  qeli_plan_lock_acquire "$TUNIP" || exit 1
+  read_plan
+  IP="$WANT_IP"; IP6="$WANT_IP6"; IP6_CIDR="$WANT_IP6_CIDR"
+  [ -n "$IP" ] || [ -n "$IP6" ] || exit 1
+fi
 
 MTU="$(printf '%s\n' "$PLAN" | sed -n 's/^mtu=\([0-9][0-9]*\)$/\1/p' | head -n1)"
 case "$MTU" in
@@ -204,8 +217,7 @@ ndm_apply "interface $NDM_IF ip tcp adjust-mss pmtu" || exit 1
 ndm_apply "interface $NDM_IF security-level public" || exit 1
 ndm_apply "interface $NDM_IF up" || exit 1
 ndm_apply "system configuration save" || exit 1
-# The core can republish independently of shell lifecycle exclusion.
-# An observed replacement must not publish a complete application receipt.
+# Non-cooperative replacement must not publish a complete application receipt.
 require_current_plan || exit 1
 # The private sibling is published only after every mutation and save succeeded.
 # A publication/removal failure retains PENDING so matching addresses cannot hide it.

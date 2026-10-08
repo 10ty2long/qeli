@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v75 -->
+<!-- normative-sync: audit-debt-v76 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1301,3 +1301,6 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября, F389–F394:** [INI уведомлений и доставка](../reports/AUDIT-Q32-NOTIFICATIONS.md): доверие перед чтением/сохранением, полная ограниченная HTTP-строка и успех только 2xx, query/fragment, консервативная проверка специальных адресов, сброс кеша после записи и проверка записи симлинка. Воспроизведены три старых helper-ошибки и две ошибки кеша настоящей библиотеки; шесть helper tests, 12 изолированных HTTP-проверок и cache trust/recovery проверяют исправления. Финальные library/native результаты и guards — в machine evidence. Q32 и Q29/Q30/Q31 открыты; всего 28/37, осталось девять; старый долг14 DONE плюс принятое D06.
 
 **8 октября, Q32 завершён:** пять критериев сверены для metrics/usage/logs/trace/notifications и неизменных roaming observations; финальные2439 library, strictClippy/daemon, реальные HTTP12/cache, native A/B/ABI22/JNI23 и docs/provenance PASS. Сравнения16 сохраняют область прежнего выполнения; границы physical/TLS/Telegram/browser документированы. План29/37(78,4%),осталось восемь;Q29/Q30/Q31 и D06 сохранены.
+
+
+**8октября,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): отдельный core/hook publication-lock закрывает гонку между проверкой и командой без deadlock lifecycle/startup. Три ожидаемых FAIL старого hook; четыре Rust/shell случая и196 прежних methods на каждой dash/ash без skips,2444 Linux(60прежних ignored),strictClippy/client PASS. Native refresh/ABI и raw guards записаны в scoped packet evidence. Смешанный комплект/admin writes, последовательный NDM/power loss, исключённая прошивка и полный SDK/release pipeline вне закрытия;Q31 остаётся3/5IN_PROGRESS. Общий29/37(78.4%),8осталось;старый долг14DONE+D06ACCEPTED;Q29/Q30 сохранены.
