@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v172 -->
+<!-- normative-sync: full-system-audit-v173 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2495,3 +2495,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **9 October,F478–F479/Q34-F032–F033:** [Attestation/checksums](../reports/AUDIT-Q34-ATTESTATION-CHECKSUMS.md): removed unsupported build provenance for downloaded foreign assets; only actual CI-built DEB remains a subject. Atomic SHA256SUMS publication with consumer-compatible filename/regular-file admission and retained old manifest on failure. Linux11 no-skips/real GNU verify/baseline defect PASS;Windows7+4POSIXskips,release18,recipes38,YAML parse PASS (67distinct methods). SHA-backed-up/guard-cleaned own Python fixture;777845/service/network/native14SHA/protected unchanged. No Docker/native rebuild or hosted signing. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F480/Q34-F034:** [Full Docker build](../reports/AUDIT-Q34-DOCKER-BUILD.md): tag/Cargo/exact-commitCI gate before publication tools/login,fullref/history/actionsread;actual classifier mismatch baseline/refusal and64focusedmethods/YAML PASS. Full fresh amd64 defaultfatLTO/jemalloc pinnedRust/Debian build826.546s/no binaryoverride,exact533image notices/CLI/dependencies and26pinnedVPN/recreation/invalidimage rollback checks PASS. Originalhost restored,own image/source/fixtures archiveSHA-qualified before guarded cleanup;public cache/tools exclusion explicit. Harness refusals/profile restoration retained;explicitunconfined runtime is not defaultAppArmor qualification. Multiarch/currentActions/signatures/sourcepublication remainOPEN;Q34IN_PROGRESS30/37DONE81.1percent7remain;native14SHA/protected/historicalQ29Q30Q31F459D06exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

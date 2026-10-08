@@ -509,3 +509,5 @@
 - [Q34: release source admission and Docker notices](reports/AUDIT-Q34-PUBLICATION-GATES.md)
 
 - [Q34: artifact provenance and atomic checksums](reports/AUDIT-Q34-ATTESTATION-CHECKSUMS.md)
+
+- [Q34: full amd64 Docker build and release admission](reports/AUDIT-Q34-DOCKER-BUILD.md)
