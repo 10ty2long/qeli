@@ -2,6 +2,7 @@ package com.qeli.crypto
 
 import java.nio.charset.CharacterCodingException
 import java.util.Base64
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
@@ -25,12 +26,8 @@ class BackupCryptoTest {
 
     @Test fun wrongPassphraseFails() {
         val enc = BackupCrypto.encrypt(sample, "correct horse")
-        try {
+        assertThrows(AEADBadTagException::class.java) {
             BackupCrypto.decrypt(enc, "battery staple")
-            throw AssertionError("wrong passphrase must not decrypt")
-        } catch (e: Exception) {
-            // GCM tag mismatch (AEADBadTagException) — a wrong passphrase is rejected, not garbage.
-            assertTrue(e !is AssertionError)
         }
     }
 

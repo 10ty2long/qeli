@@ -497,3 +497,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 
 - [Q34: .NET SDK and dependency locks](reports/AUDIT-Q34-SDK-LOCKS.md)
 - [Q34: Android dependency locks and checksum verification](reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md)
+- [Q34: Android Maven security and license inventory](reports/AUDIT-Q34-MAVEN-SECURITY.md)

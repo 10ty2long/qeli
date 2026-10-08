@@ -98,7 +98,7 @@ timeout = 30
       .apply { isAccessible = true }.invoke(request, config)
      val kind = Class.forName("com.qeli.VpnConnectRequest\$Permission")
      request.javaClass.getDeclaredMethod("awaitPermission", kind).apply { isAccessible = true }
-      .invoke(request, kind.enumConstants.first { it.toString() == "NOTIFICATION" })
+      .invoke(request, requireNotNull(kind.enumConstants).first { it.toString() == "NOTIFICATION" })
     }
     val registry = activity.activityResultRegistry
     @Suppress("UNCHECKED_CAST")
