@@ -1049,25 +1049,27 @@ sudo qeli set-service-user root --unit qeli-server.service   # нестанда�
 sudo systemctl restart qeli          # нужен, чтобы изменение вступило в силу
 ```
 
+`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
+
 **Что именно делает `set-service-user`.** Он **не** правит поставляемый юнит
 (`/lib/systemd/system/qeli.service`): dpkg перезапишет его при каждом обновлении, и правка
 молча потеряется. Вместо этого он управляет **systemd drop-in override**:
 
 | аргумент | что делает |
 |---|---|
-| `root` | пишет `/etc/systemd/system/qeli.service.d/run-as.conf` с `[Service] User=root / Group=root` — он приоритетнее поставляемого `User=qeli`. Лежит в `/etc`, поэтому переживает обновления пакета. |
+| `root` | пишет `/etc/systemd/system/qeli.service.d/run-as.conf` с `[Service] User=root / Group=root`, добавляет `CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER` к ограниченным сетевым capabilities и очищает ambient capabilities root — он приоритетнее поставляемого `User=qeli`. Лежит в `/etc`, поэтому переживает обновления пакета. |
 | `qeli` | сначала восстанавливает владельца файлов службы в `/etc/qeli`, сохраняя administrator data `client-links` и `*.bak-*`, затем удаляет drop-in (в поставляемом юните уже `User=qeli`). Каталог receipts защищается root0700. Ошибка repair сохраняет существующий root override; restart выполняется отдельно. |
 
 Оба варианта затем выполняют `systemctl daemon-reload`; для применения перезапустите службу.
 Команда идемпотентна (повторный запуск безопасен), требует root и отвергает любые значения,
 кроме `qeli`/`root`. Закалка юнита — `ProtectSystem=full`, `NoNewPrivileges=true`,
-ограниченный `CapabilityBoundingSet` — **действует в обоих случаях**; `root` меняет только то,
-*от кого* работает процесс.
+ограниченный `CapabilityBoundingSet` — **действует в обоих случаях**. Root дополнительно получает три filesystem capabilities для чтения и обновления приватных файлов qeli. Возврат к qeli удаляет drop-in и восстанавливает capabilities поставляемого юнита.
 
 > ⚠️ **Когда запускать от root — и почему обычно не стоит.**
 > Пользователь `qeli` по умолчанию нужен для разделения привилегий: если демон скомпрометируют,
 > атакующий получит учётку, которой не принадлежит ничего, кроме `/etc/qeli`, — **а не машину**.
-> Запуск от root это убирает: компрометация VPN-демона становится **полным root на хосте**.
+> Запуск от root убирает эту границу учётных записей и разрешает доступ к файлам других владельцев.
+> Sandbox файловой системы и capability bounds сохраняются, но UID 0 имеет гораздо более широкие права.
 > Демон доступен из интернета, так что различие не теоретическое.
 >
 > Законные причины выбрать `root`:

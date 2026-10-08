@@ -2736,3 +2736,9 @@ provider доступен и вне VPN, и внутри него. `Automatic` �
 [Матрица, точные артефакты и ограничения](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md).
 Проверка доверенного CA, отказа при неверном CA/SAN и восстановления выполнена
 на API34 для TCP/UDP/QUIC: [strict DoT](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md).
+
+### Reload службы и конфигурация владельца root
+
+`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
+
+Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).

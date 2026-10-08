@@ -61,7 +61,10 @@ def snapshot(lab):
         'routes4': 'ip -4 route show table all', 'routes6': 'ip -6 route show table all',
         'firewall4': 'iptables-save', 'firewall6': 'ip6tables-save',
         'firewall4_legacy': 'iptables-legacy-save', 'firewall6_legacy': 'ip6tables-legacy-save',
-        'nft': 'nft list ruleset',
+        # nft emits successful iptables ownership warnings on stderr. SSH merges
+        # stderr/stdout at arbitrary chunk boundaries, corrupting otherwise equal
+        # snapshots. Suppress only successful diagnostics; retain fatal stderr/rc.
+        'nft': "python3 -c 'import subprocess,sys; p=subprocess.run([\"nft\",\"list\",\"ruleset\"],capture_output=True); sys.stdout.buffer.write(p.stdout); sys.stderr.buffer.write(p.stderr if p.returncode else b\"\"); sys.exit(p.returncode)'",
         'listener': "ss -lntp | grep ':443'", 'resolver_sha256': 'sha256sum /etc/resolv.conf',
         'named_namespaces': 'ip netns list',
     }.items()}

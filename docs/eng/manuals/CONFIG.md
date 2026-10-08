@@ -3726,3 +3726,9 @@ Profile configuration is INI. Edit/import it through the app; the internal encry
 Saving INI does not replace the configuration of an existing session. Reconnect explicitly when the app requests it. Direct external-process store writes bypassing app coordination are unsupported; finish every writer before maintenance. A revision detects conflicts but cannot make arbitrary writes ignoring the lock atomic.
 
 [D08 checks and boundaries](../plans/AUDIT-DEBT.md).
+
+### Service reload and root-owned configuration
+
+`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+
+Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).

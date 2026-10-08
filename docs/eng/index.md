@@ -484,3 +484,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q33: actual installer CLI/version compatibility](reports/AUDIT-Q33-INSTALLER-CLI.md)
 
 - [Q33: service-user transitions and secret ownership](reports/AUDIT-Q33-SERVICE-USER.md)
+
+- [Q33: real systemd sandbox, reload and root mode](reports/AUDIT-Q33-SYSTEMD.md)
