@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v80 -->
+<!-- normative-sync: audit-debt-v81 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1183,3 +1183,5 @@ physical exclusions are not PASS.
 **8 October,F399/Q31-V010:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual SDK nested make broke sed before Cargo; exact admission plus dollar-free substitution fixes it. Official24.10.4 x86/64 Git download/hash/prepare, Rust1.89 prebuilt client compile/link, SDK install/dependency/strip/IPK PASS.6 real-Cargo,7 offline opkg and9 fresh SDK-client OpenWrt userspace cases PASS without skips. Stock toolchain tables repaired a fixture packaging prerequisite; no dependency bypass. Initial rootfs prep/autoremove backup-selection failures retained. SHA-verified backup and guarded own-root cleanup; service unchanged, native14SHA/provenance PASS. Upstream Rust bootstrap/cold-hermetic build, production source-cut and successful current Actions/preflight remain OPEN; firmware USER_EXCLUDED. Q31 remains3/5, full29/37(78.4%),8remain; old debt14DONE+D06accepted,Q29/Q30 retained. No push/deploy/release.
 
 **8 October,Q31-V011:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): previous32-bit builds predated F395; current6c2225cd ARMv7/MIPS full client builds/SHA/static ELF PASS,318exact transferred inputs.32QEMU CLI/INI and14exact production PublicationLock/budget release behavior checks PASS on cortex-a7/24Kc uid65534. No new product regression/ABI/source change;14nativeSHA/provenance PASS. .11 rustup inventory auto-installed a missing named nightly; only that own addition removed with guards/default preserved,probe compiled sequentially on .10. Verified backups,three own roots cleaned,unrelated old root/services retained. Old four-target A/B keeps original source/date;no cfg(test)/firmware/fullVPN/SDK bootstrap/source-cut/current CI success claim. Q31 remains3/5;29/37(78.4%),8remain;Q29/Q30/D06/exclusions retained. No push/deploy/release.
+
+**8 October,F400–F403:** [Q33 Docker entrypoint](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): four baseline defects reproduce per dash/ash; default argv, explicit CLI config and owner-only/no-replace first-run files fixed.34 scenarios/46 actual chroot invocations PASS without skips; deterministic creator and copy/link failures covered. Docker image/daemon, Debian updater/install and full Q33 remain OPEN. Q31 SDK bootstrap deferred on measured2GB RAM/~9GB disk, below upstream8GB/30GB recommendation; no compiler FAIL/PASS claimed.29/37(78.4%),eight remain; exclusions unchanged.
