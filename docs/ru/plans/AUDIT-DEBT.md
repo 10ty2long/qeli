@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v74 -->
+<!-- normative-sync: audit-debt-v75 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1297,3 +1297,7 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **8 октября, F384:** [usage Q32](../reports/AUDIT-Q32-USAGE.md) различает ошибку до публикации и неподтверждённую сохранность после rename. Baseline memory700/file0 воспроизведён, исправленный harness16/uid65534,2426library (60ignored),strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; подробности в evidence. Исходное host firewall расхождение и неуспешные подготовительные прогоны сохранены. Агрегат остаётся14/15 DONE плюсD06 ACCEPTED_LIMITATION.
 
 **8 октября, F385–F388:** [Q32: I/O логов и trace](../reports/AUDIT-Q32-LOGS-TRACE.md) квалифицирован: три baseline-ошибки, harness11/UID65534, настоящие сигнальные выгрузки,2434 library (60ignored), строгийClippy/daemon,118 групп Node VM и четыре nativeA/B/WindowsABI22/AndroidJNI23 PASS. Логи неудач/исправление входов и первоначальный legacy firewall drift сохранены; пределы источников/входов/host/платформ — в evidence. Итого14/15 DONE плюсD06 ACCEPTED_LIMITATION; Q32 и другие незавершённые разделы полного аудита остаются открыты.
+
+**8 октября, F389–F394:** [INI уведомлений и доставка](../reports/AUDIT-Q32-NOTIFICATIONS.md): доверие перед чтением/сохранением, полная ограниченная HTTP-строка и успех только 2xx, query/fragment, консервативная проверка специальных адресов, сброс кеша после записи и проверка записи симлинка. Воспроизведены три старых helper-ошибки и две ошибки кеша настоящей библиотеки; шесть helper tests, 12 изолированных HTTP-проверок и cache trust/recovery проверяют исправления. Финальные library/native результаты и guards — в machine evidence. Q32 и Q29/Q30/Q31 открыты; всего 28/37, осталось девять; старый долг14 DONE плюс принятое D06.
+
+**8 октября, Q32 завершён:** пять критериев сверены для metrics/usage/logs/trace/notifications и неизменных roaming observations; финальные2439 library, strictClippy/daemon, реальные HTTP12/cache, native A/B/ABI22/JNI23 и docs/provenance PASS. Сравнения16 сохраняют область прежнего выполнения; границы physical/TLS/Telegram/browser документированы. План29/37(78,4%),осталось восемь;Q29/Q30/Q31 и D06 сохранены.

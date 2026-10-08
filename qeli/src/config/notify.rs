@@ -171,7 +171,15 @@ pub const MAX_NOTIFY_INI_BYTES: u64 = 64 * 1024;
 fn load_path_unlocked(path: &Path) -> anyhow::Result<(NotifyConfig, String)> {
     match crate::config_source::load_bounded(path, MAX_NOTIFY_INI_BYTES) {
         Ok(snapshot) => {
-            let (raw, _) = snapshot.into_parts();
+            let (raw, trust) = snapshot.into_parts();
+            // Outbound destinations and credentials are privileged configuration.
+            // Never let a panel save upgrade the trust of attacker-writable bytes.
+            #[cfg(unix)]
+            trust
+                .check()
+                .map_err(|reason| anyhow::anyhow!("untrusted notification INI: {reason}"))?;
+            #[cfg(not(unix))]
+            let _ = trust;
             let config = NotifyConfig::from_ini(&raw)?;
             Ok((config, raw))
         }
@@ -328,6 +336,37 @@ mod tests {
         std::fs::remove_file(&ini).unwrap();
         std::fs::remove_file(&old).unwrap();
         assert_eq!(load_path(&ini).unwrap(), NotifyConfig::default());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn untrusted_sidecar_cannot_send_or_be_authorized_by_panel_save() {
+        use std::os::unix::{fs::symlink, fs::PermissionsExt};
+        let dir = directory("trust");
+        let ini = dir.join("notify.ini");
+        let cfg = fixture();
+        let raw = cfg.to_ini_string().unwrap();
+        std::fs::write(&ini, &raw).unwrap();
+        std::fs::set_permissions(&ini, std::fs::Permissions::from_mode(0o666)).unwrap();
+        assert!(load_path(&ini)
+            .unwrap_err()
+            .to_string()
+            .contains("untrusted"));
+        assert!(save_path_if_unchanged(&ini, &cfg, &raw).is_err());
+        assert_eq!(std::fs::read_to_string(&ini).unwrap(), raw);
+        assert_eq!(
+            std::fs::metadata(&ini).unwrap().permissions().mode() & 0o777,
+            0o666
+        );
+        std::fs::set_permissions(&ini, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert_eq!(load_path(&ini).unwrap(), cfg);
+        let link = dir.join("linked.ini");
+        symlink(&ini, &link).unwrap();
+        assert!(load_path(&link)
+            .unwrap_err()
+            .to_string()
+            .contains("symlink"));
         std::fs::remove_dir_all(dir).unwrap();
     }
 

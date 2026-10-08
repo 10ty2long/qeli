@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v74 -->
+<!-- normative-sync: audit-debt-v75 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -18,7 +18,7 @@ Connections to both Linux VMs were verified; the running server and its files we
 it is neither a fix nor PASS.
 
 
-**Current snapshot, October7:** 14/15 DONE, D06 ACCEPTED_LIMITATION.
+**Historical snapshot, October7:** 14/15 DONE, D06 ACCEPTED_LIMITATION.
 D11/D15 are closed for the current package after fresh A/B, exports/signatures,
 14 SHA entries, provenance, Windows/Android ABI and managed checks, Linux
 2417 library/12 CLI units, strict Clippy and debug client/daemon builds.
@@ -1168,3 +1168,7 @@ physical exclusions are not PASS.
 **8 October, F384:** [Q32 usage](../reports/AUDIT-Q32-USAGE.md) distinguishes pre-publication failure from uncertain durability after rename. Baseline memory700/file0 reproduced; patched harness16/uid65534,2426library (60ignored),strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; details in evidence. Initial host firewall drift and failed preparations retained. Aggregate remains14/15 DONE plusD06 ACCEPTED_LIMITATION.
 
 **8 October, F385–F388:** [Q32 log/trace I/O](../reports/AUDIT-Q32-LOGS-TRACE.md) is qualified: three baseline failures, harness11/UID65534, real signal dumps,2434 library (60ignored), strictClippy/daemon,118 Node VM groups and four native A/B/WindowsABI22/AndroidJNI23 PASS. Failure logs/input corrections and initial legacy firewall drift retained; scoped source/input/host/physical limits in evidence. Aggregate14/15 DONE plusD06 ACCEPTED_LIMITATION; Q32 and other unfinished full-audit sections remain open.
+
+**8 October, F389–F394:** [notification INI and delivery](../reports/AUDIT-Q32-NOTIFICATIONS.md): trust enforced before read/save, complete bounded HTTP status and 2xx-only success, query/fragment parsing, conservative special-address guard, post-save cache invalidation and symlink-entry stamps. Three old helper failures plus two actual-library cache failures reproduced; six helper tests, 12 isolated HTTP checks and cache trust/recovery qualify the corrected source. Final library/native counts and guards are in machine evidence. Q32 and Q29/Q30/Q31 scopes remain open; 28/37 overall, nine remain; old debt14 DONE plus D06 accepted.
+
+**8 October, Q32 complete:** all five criteria reconciled across metrics/usage/logs/trace/notifications and unchanged roaming observations; final2439 library, strictClippy/daemon, actual HTTP12/cache, native A/B/ABI22/JNI23 and docs/provenance PASS. Source16 comparisons preserve prior execution scope; physical/TLS/Telegram/browser limits remain documented. Full plan29/37(78.4%),eight remain;Q29/Q30/Q31 and D06 retained.

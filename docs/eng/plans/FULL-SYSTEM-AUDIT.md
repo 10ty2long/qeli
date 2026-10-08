@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v139 -->
+<!-- normative-sync: full-system-audit-v140 -->
 
-**Current result, 8 October: 28/37 sections DONE/PASS (75.7%), 9 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 8 October: 29/37 sections DONE/PASS (78.4%), 8 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -173,7 +173,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | IN_PROGRESS |
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
-| 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | IN_PROGRESS |
+| 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | IN_PROGRESS |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | TODO |
@@ -2024,13 +2024,13 @@ Counters/quota/session accounting across reconnect/reap/crash, corrupt stores an
 
 **Existing harness/fixtures:** `scripts/test_roaming_control_stats.py`, `scripts/test_blocked_settings.py`.
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE/PASS within documented scope.**
 
 **Notification ownership, 23 September 2026:**
 [Q14-F018 / Q32-F001](../reports/AUDIT-Q14-Q32-NOTIFICATIONS.md): 128 accepted deliveries,
@@ -2044,6 +2044,11 @@ autostart ownership, config trust and Linux runtime E2E remain open.
 **8 October, F384:** [Q32 usage](../reports/AUDIT-Q32-USAGE.md): post-rename fsync failure reproduced; memory retains the published reset, typed cause is preserved and control reports uncertain durability. 16 harness/2426 Linux tests PASS (60ignored), strictClippy/daemon,A-B four cores,WindowsABI22/AndroidJNI23 PASS; report evidence. Store and registration/quota/shutdown reviewed; logs/trace/roaming/notify remain open. Q32 IN_PROGRESS,28/37 overall.
 
 **8 October, F385–F388:** [Q32 logs and trace](../reports/AUDIT-Q32-LOGS-TRACE.md): descriptor-pinned log reads reject raced symlinks/FIFOs, four I/O slots survive caller cancellation, tail preserves complete boundary lines and trace uses atomic0600 publication outside Tokio workers with one admitted dump. Three baseline failures reproduced; extracted harness11/UID65534, real SIGUSR1 twice with65536 ordered rows,2434 library tests (60ignored), strictClippy/daemon and118 Node VM groups PASS. Four current native A/B, WindowsABI22/AndroidJNI23 and final gates in report evidence. Failed preparations/known legacy firewall drift retained; no wholehost claim for initial .10 baseline. Capture/HTTP/disk/physical scope limits retained. Q32 remains IN_PROGRESS; roaming, notification trust/secret-redaction and full integration remain open. Overall28/37(75.7%), nine remain.
+
+**8 October, F389–F394:** [notification INI and delivery](../reports/AUDIT-Q32-NOTIFICATIONS.md): trust enforced before read/save, complete bounded HTTP status and 2xx-only success, query/fragment parsing, conservative special-address guard, post-save cache invalidation and symlink-entry stamps. Three old helper failures plus two actual-library cache failures reproduced; six helper tests, 12 isolated HTTP checks and cache trust/recovery qualify the corrected source. Final library/native counts and guards are in machine evidence. Q32 and Q29/Q30/Q31 scopes remain open; 28/37 overall, nine remain; old debt14 DONE plus D06 accepted.
+
+
+**8 October, Q32 complete:** all five criteria reconciled across metrics/usage/logs/trace/notifications and unchanged roaming observations; final2439 library, strictClippy/daemon, actual HTTP12/cache, native A/B/ABI22/JNI23 and docs/provenance PASS. Source16 comparisons preserve prior execution scope; physical/TLS/Telegram/browser limits remain documented. Full plan29/37(78.4%),eight remain;Q29/Q30/Q31 and D06 retained.
 
 ### 33. Installation, updates, file permissions and hooks
 

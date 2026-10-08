@@ -899,7 +899,30 @@ Graceful stop closes admission, drains for at most ten seconds, then cancels and
 remaining deliveries. There is no durable retry; full queues, shutdown or network errors
 can lose notifications. The grace starts at the first worker/supervisor stop request;
 the queue drains concurrently with cleanup and does not add ten seconds afterwards.
-HTTP 4xx/5xx are logged with the channel name.
+HTTP responses outside 2xx are logged with the channel name.
+
+<!-- normative-sync: notify-delivery-trust-v1 -->
+
+On Unix the sidecar must be a regular file owned by root or the running user,
+without group/other write permission. Symlinks are refused; `0600` is recommended.
+An untrusted file disables automatic channels and produces a panel error. A panel
+save never repairs its permissions or authorizes its contents: repair the file as
+an administrator, then reload it. Successful saves invalidate the process cache;
+the next event loads the current stable INI snapshot, including a later manual edit.
+
+Webhook URLs preserve query parameters and omit fragments (`#...`) from requests.
+Encode spaces in the URL. Delivery accepts only HTTP/1.0 or HTTP/1.1 final status
+lines of at most 4 KiB; interim 1xx responses are unsupported. Only 2xx is success.
+3xx is a failure and redirects are not followed. Malformed remote response text
+is never copied into panel errors or the journal.
+
+Destinations must pass the conservative public-address policy before connection,
+each candidate is checked before use; only a validated address is selected and pinned.
+Loopback, private/link-local, documentation, benchmark and reserved destinations,
+IPv6 translation/tunnelling prefixes and special protocol assignments are refused.
+This also excludes some globally reachable special-purpose addresses; it is not an
+exact IANA reachability classifier. Internal webhooks and NAT64 destinations are
+unsupported. HTTPS verifies certificates and names against the bundled root store.
 
 ### Update banner (opt-in)
 When `[web] update_check = true`, the panel shows a dismissible **"Update available"**

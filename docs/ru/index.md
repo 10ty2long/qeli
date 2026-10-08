@@ -466,3 +466,4 @@
 - [Q32: метрики после пропусков и смены worker](reports/AUDIT-Q32-METRICS.md)
 - [Q32: сброс usage после публикации](reports/AUDIT-Q32-USAGE.md)
 - [Q32: ограничение логов и публикация trace](reports/AUDIT-Q32-LOGS-TRACE.md)
+- [AUDIT-Q32-NOTIFICATIONS](reports/AUDIT-Q32-NOTIFICATIONS.md)
