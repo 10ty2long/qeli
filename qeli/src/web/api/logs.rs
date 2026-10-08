@@ -387,7 +387,14 @@ mod tests {
         assert_eq!(value["count"], 2);
         let outside = dir.0.join("outside-log");
         fs::write(&outside, "private-marker").unwrap();
-        fs::write(&path, format!("[logging]\nfile = {}\n[profile:fixture]\n", outside.display())).unwrap();
+        fs::write(
+            &path,
+            format!(
+                "[logging]\nfile = {}\n[profile:fixture]\n",
+                outside.display()
+            ),
+        )
+        .unwrap();
         let response = app.oneshot(request("/logs".into())).await.unwrap();
         let body = to_bytes(response.into_body(), 4096).await.unwrap();
         let value: Value = serde_json::from_slice(&body).unwrap();
