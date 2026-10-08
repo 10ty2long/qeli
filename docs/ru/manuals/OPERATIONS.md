@@ -155,6 +155,8 @@ SHA256SUMS того же релиза подтверждает соответс�
 
 Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и запрошенного root service helper старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Прежний root override сбрасывайте явно через `qeli set-service-user qeli`: default installer choice его не отменяет. [Аудит и ограничения](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
 
+Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN/default-unit root override transition этой проверкой не закрываются. [Доказательства и ограничения](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+
 ### 3.2. Docker
 
 Образ не обновляется «на месте» — меняется тег и пересоздаётся контейнер. Состояние живёт

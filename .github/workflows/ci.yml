@@ -108,6 +108,8 @@ jobs:
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_admission.py
       - name: Installer secret and config publication fixtures
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_secrets.py
+      - name: Installer and updater legacy CLI version discovery
+        run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_cli_version.py
       - name: Installer preflight and staged config fixtures
         run: sudo unshare --mount --net --pid --fork python3 -B scripts/test_installer_config.py
       - name: Verify native library hashes
@@ -224,6 +226,15 @@ jobs:
           deb=$(ls qeli/debian/qeli_*_amd64.deb | head -n1)
           echo "deb=$deb" >> "$GITHUB_OUTPUT"
           ls -la "$deb"
+      - name: Installer with the actual packaged CLI
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null || sudo apt-get install -y --no-install-recommends jq
+          payload=$(mktemp -d)
+          trap 'rm -rf -- "$payload"' EXIT
+          dpkg-deb -x "${{ steps.pkg.outputs.deb }}" "$payload"
+          test -x "$payload/usr/bin/qeli"
+          sudo env QELI_AUDIT_BINARY="$payload/usr/bin/qeli" unshare --mount --net --pid --fork python3 -B scripts/test_installer_real_cli.py
       - name: Runs on the declared glibc floor (debian:10 = glibc 2.28)
         run: |
           set -euo pipefail

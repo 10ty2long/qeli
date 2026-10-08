@@ -156,6 +156,8 @@ If user/link creation fails, the old CONNECTION-STRINGS.txt remains and a root06
 
 Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and any requested root service helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. A prior root override requires explicit `qeli set-service-user qeli`; the default installer choice does not reset it. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
 
+Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN/default-unit root override transition remain outside this qualification. [Evidence and limits](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+
 ### 3.2. Docker
 
 The image is not upgraded in place — you change the tag and recreate the container. State

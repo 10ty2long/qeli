@@ -121,7 +121,7 @@ norm(){ printf '%s' "$1" | sed 's/^v//'; }
 
 CUR=""
 if command -v qeli >/dev/null 2>&1; then
-  CUR="$(qeli version 2>/dev/null | awk '{print $2}')"
+  CUR="$(qeli --version 2>/dev/null | awk '{print $2}')"
 fi
 PREV_PKG_VERSION="$(dpkg-query -W -f='${Version}' qeli 2>/dev/null || true)"
 echo "Installed version: ${CUR:-unknown}"
@@ -315,7 +315,7 @@ esac
 # Rolling back by copying the old BINARY over the new one leaves dpkg recording the NEW
 # version, with the new package's files still on disk. The next `apt upgrade` or
 # `apt --fix-broken install` then silently puts the broken binary back, and in the
-# meantime `qeli version` disagrees with `dpkg -s qeli` — which is what made the version
+# meantime `qeli --version` disagrees with `dpkg -s qeli` — which is what made the version
 # check at the top of this script see "an update is available" on every single run.
 # So the primary rollback is a PACKAGE downgrade, and for that a copy of the previously
 # installed .deb has to exist: nothing republishes a superseded pre-release into apt.
@@ -381,7 +381,7 @@ if apt-get install -y --no-install-recommends "$TMP_DEB" \
   if [ "$INSTALLED" = "install ok installed ${DEB_VERSION} ${DEB_ARCH}" ]; then
     UPDATE_INSTALLED=1
   else
-    echo "Package installation did not configure the requested qeli version — attempting rollback." >&2
+    echo "Package installation did not configure the requested qeli --version — attempting rollback." >&2
   fi
 else
   echo "Package installation failed — attempting rollback." >&2
@@ -419,7 +419,7 @@ service_healthy() {
 }
 log "Restarting ${SERVICE}"
 if [ "$UPDATE_INSTALLED" = 1 ] && systemctl restart "$SERVICE" && service_healthy; then
-  NEW="$(qeli version 2>/dev/null | awk '{print $2}')"
+  NEW="$(qeli --version 2>/dev/null | awk '{print $2}')"
   log "Done — ${CUR:-?} → ${NEW:-?}"
   [ -n "$LATEST_TAG" ] && echo "Release notes: https://github.com/${REPO}/releases/tag/${LATEST_TAG}"
   # keep only the most recent rollback binary; drop older ones
@@ -465,7 +465,7 @@ if [ "$ROLLED_BACK" != "0" ]; then
       echo "" >&2
       echo "WARNING: only the BINARY was rolled back — dpkg still records qeli ${NEW_PKG_VER:-<new>}." >&2
       echo "         The next 'apt upgrade' or 'apt --fix-broken install' WILL restore the broken" >&2
-      echo "         binary, and 'qeli version' now disagrees with 'dpkg -s qeli'. Reinstall the" >&2
+      echo "         binary, and 'qeli --version' now disagrees with 'dpkg -s qeli'. Reinstall the" >&2
       echo "         previous package by hand as soon as you can:" >&2
       echo "           apt-get install -y --allow-downgrades ./qeli_${CUR:-<old>}_$(dpkg --print-architecture 2>/dev/null || echo amd64).deb" >&2
     fi
