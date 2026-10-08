@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v40 -->
+<!-- normative-sync: q31-openwrt-controls-v41 -->
 
-**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);F396 whole-preflight source identity;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2329,3 +2329,45 @@ Rust bootstrap/build и release-cut/preflight/Actions OPEN; прежние stand
 cross/QEMU доказательства сохраняют исходную дату и snapshot.
 Q31 остаётся3/5 IN_PROGRESS; общий аудит29/37(78.4%),8осталось. Состояния Q29/Q30/D06
 и исключения платформ сохранены. Push/deploy/release не выполнялись.
+
+## F396: preflight объединял проверки разных коммитов (8 октября)
+
+Каждый gate отдельно читал HEAD. Checkout или коммит во время CI, долгой сборки
+в лабе либо сертификации позволял объединить успешные результаты разных версий
+и получить общий PASS. Старый целый скрипт воспроизведён с настоящими временными
+Git-репозиториями и контролируемыми внешними gates: штатный контроль проходит,
+три сценария смены коммита ошибочно проходят. Это проверка оркестрации, не новые
+прогоны Actions, роутерной сборки или релизной сертификации.
+
+До внешних запросов допускается один чистый committed working tree. Между каждым
+gate и после сертификации проверяются тот же коммит и чистота; при изменении
+следующие gates не запускаются. Snapshot и source_commit отчёта сборки обязаны
+совпадать с исходным коммитом. Обычные независимые отказы gates суммируются.
+Для процесса сертификации установлен timeout120секунд, ошибки запуска дают FAIL.
+Импорт модуля больше не запускает preflight. Gate2 остаётся optional; production
+OpenWrt pin/hash не менялись. Ignored caches и изменения, полностью сделанные и
+откаченные внутри одного gate, вне этой проверки границ. Это не блокировка
+privileged writers и не разрешение публиковать после последующих изменений.
+
+12 методов полного скрипта покрывают clean/dirty/untracked/ignored inputs, три
+момента смены коммита, промежуточную правку, накопление отказов, snapshot/report
+mismatch, timeout и ошибку закрытия SSH. Windows:78PASS из81 методов; три старых
+POSIX/opt-in source-gate skips. Linux:56 связанных orchestration/CI/router/
+certification методов без пропусков,uid65534.328 staged Git Python-файлов сверены
+до/после; приватный fixture удалён после SHA-сверенного backup и process/mount/path
+guards. Первичная Windows-обвязка очистила PATH и остановилась на поиске Git;
+окружение исправлено, содержательные проверки затем прошли. Rust/native source,
+бинарники и SDK recipe не менялись; native SHA/provenance применимы. Новые тесты
+включены в CI.
+
+Настоящий read-only запуск всего preflight записан в scoped evidence: ожидается
+отказ для unpublished/stale CI и development source pin; validator metadata
+сертификации проверяется отдельно. Optional lab builds не повторялись: прежние
+ARM/MIPS/QEMU evidence сохраняют исходные SHA и дату. Закрыт дефект смешанного
+вердикта, но full SDK Rust bootstrap/build, production release-cut archive и
+успешные актуальные Actions/preflight остаются OPEN. Лабы проверены только чтением
+(около2GiB RAM и9GiB свободно каждая); bootstrap/capacity guarantee не заявлены.
+Q31 остаётся3/5IN_PROGRESS; весь план29/37(78.4%),восемь осталось.
+Q29/Q30, исключения пользователя и D06 сохранены.
+
+Evidence: `release/certification/evidence/q31-preflight-identity-20261008.json`.

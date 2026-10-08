@@ -160,7 +160,7 @@ class CallerTests(unittest.TestCase):
     def test_preflight_accumulates_gate_failure_and_can_continue(self):
         path = Path(__file__).with_name("release_preflight.py")
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        nodes = [n for n in tree.body if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)
+        nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call)
                  and isinstance(n.value.func, ast.Attribute) and n.value.func.attr == "extend"
                  and any(isinstance(v, ast.Call) and isinstance(v.func, ast.Name)
                          and v.func.id == "check_release_ci" for v in n.value.args)]
@@ -172,7 +172,7 @@ class CallerTests(unittest.TestCase):
 
     def test_default_branch_lookup_uses_repository_root(self):
         tree = ast.parse(Path(__file__).with_name("release_preflight.py").read_text(encoding="utf-8"))
-        node = next(n for n in tree.body if isinstance(n, ast.Assign)
+        node = next(n for n in ast.walk(tree) if isinstance(n, ast.Assign)
                     and any(isinstance(v, ast.Name) and v.id == "BRANCH" for v in n.targets))
         call = next(n for n in ast.walk(node) if isinstance(n, ast.Call)
                     and isinstance(n.func, ast.Attribute) and n.func.attr == "run")

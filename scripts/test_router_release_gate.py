@@ -161,7 +161,7 @@ class PreflightCallerTests(unittest.TestCase):
         path=Path(__file__).with_name('release_preflight.py')
         tree=ast.parse(path.read_text())
         nodes=[]
-        for node in tree.body:
+        for node in next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="main").body:
             if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='lab_pass' for t in node.targets):nodes.append(node)
             elif isinstance(node,ast.If) and isinstance(node.test,ast.UnaryOp) and isinstance(node.test.operand,ast.Name) and node.test.operand.id=='lab_pass':nodes.append(node)
         self.assertEqual(len(nodes),2)
@@ -169,7 +169,7 @@ class PreflightCallerTests(unittest.TestCase):
         connect=Mock(return_value=connection,side_effect=connect_error)
         verify=Mock(return_value={'source_commit':'fixture','remote_root':ROOT,'archive_sha256':'0'*64,
             'results':[{'arch':'armv7','status':'PASS','artifact_sha256':'1'*64}]},side_effect=build_error)
-        namespace={'os':os,'ROOT':'fixture','failures':[],'connect_lab':connect,'verify_router_release':verify}
+        namespace={'os':os,'ROOT':'fixture','source_commit':'fixture','failures':[],'connect_lab':connect,'verify_router_release':verify}
         with patch.dict(os.environ,{'QELI_LAB_PASS':credential},clear=True),patch.object(gate,'committed_crate_archive',return_value=('fixture',b''),side_effect=snapshot_error),contextlib.redirect_stdout(io.StringIO()):
             exec(compile(ast.Module(body=nodes,type_ignores=[]),str(path),'exec'),namespace)
         return namespace['failures'],connect,connection,verify

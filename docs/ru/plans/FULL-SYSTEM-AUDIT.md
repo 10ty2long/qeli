@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v141 -->
+<!-- normative-sync: full-system-audit-v142 -->
 
 **Текущий итог, 8 октября: 29/37 разделов DONE/PASS (78,4%), осталось 8. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2422,3 +2422,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **8октября,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): отдельный core/hook publication-lock закрывает гонку между проверкой и командой без deadlock lifecycle/startup. Три ожидаемых FAIL старого hook; четыре Rust/shell случая и196 прежних methods на каждой dash/ash без skips,2444 Linux(60прежних ignored),strictClippy/client PASS. Native refresh/ABI и raw guards записаны в scoped packet evidence. Смешанный комплект/admin writes, последовательный NDM/power loss, исключённая прошивка и полный SDK/release pipeline вне закрытия;Q31 остаётся3/5IN_PROGRESS. Общий29/37(78.4%),8осталось;старый долг14DONE+D06ACCEPTED;Q29/Q30 сохранены.
+
+**8 October,F396:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): whole preflight requires one clean commit between gates; three old mixed-commit false-PASS cases reproduced.12 whole-program methods,56 Linux related methods uid65534 without skips PASS; Windows78PASS/3pre-existing skips. Snapshot/report identity and120-second certification timeout qualified; optional lab build and production pin/hash unchanged. Current native inputs/artifacts unchanged, SHA/provenance retained; owned Python fixture removed after verified backup. Full SDK/bootstrap/release-cut/successful Actions/preflight remain OPEN; Q31 remains3/5,full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED,Q29/Q30/exclusions retained.

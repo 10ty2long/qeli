@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v76 -->
+<!-- normative-sync: audit-debt-v77 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1175,3 +1175,5 @@ physical exclusions are not PASS.
 
 
 **October8,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): separate core/hook publication lock eliminates cooperative check-to-command race without lifecycle/startup deadlock. Three expected old-hook failures; four Rust/shell cases per dash/ash,196 existing methods per shell without skips,2444 Linux(60preexisting ignored),strictClippy/client PASS. Native refresh/ABI and raw guards are in scoped packet evidence. Mixed bundles/admin writes, sequential NDM/power loss, firmware exclusions and full SDK/release pipeline remain outside closure; Q31 remains3/5IN_PROGRESS. Full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED;Q29/Q30 unchanged.
+
+**8 October,F396:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): whole preflight requires one clean commit between gates; three old mixed-commit false-PASS cases reproduced.12 whole-program methods,56 Linux related methods uid65534 without skips PASS; Windows78PASS/3pre-existing skips. Snapshot/report identity and120-second certification timeout qualified; optional lab build and production pin/hash unchanged. Current native inputs/artifacts unchanged, SHA/provenance retained; owned Python fixture removed after verified backup. Full SDK/bootstrap/release-cut/successful Actions/preflight remain OPEN; Q31 remains3/5,full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED,Q29/Q30/exclusions retained.

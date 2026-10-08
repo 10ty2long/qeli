@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v76 -->
+<!-- normative-sync: audit-debt-v77 -->
 
 Дата текущей сверки: 8 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1304,3 +1304,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 
 
 **8октября,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): отдельный core/hook publication-lock закрывает гонку между проверкой и командой без deadlock lifecycle/startup. Три ожидаемых FAIL старого hook; четыре Rust/shell случая и196 прежних methods на каждой dash/ash без skips,2444 Linux(60прежних ignored),strictClippy/client PASS. Native refresh/ABI и raw guards записаны в scoped packet evidence. Смешанный комплект/admin writes, последовательный NDM/power loss, исключённая прошивка и полный SDK/release pipeline вне закрытия;Q31 остаётся3/5IN_PROGRESS. Общий29/37(78.4%),8осталось;старый долг14DONE+D06ACCEPTED;Q29/Q30 сохранены.
+
+**8 October,F396:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): whole preflight requires one clean commit between gates; three old mixed-commit false-PASS cases reproduced.12 whole-program methods,56 Linux related methods uid65534 without skips PASS; Windows78PASS/3pre-existing skips. Snapshot/report identity and120-second certification timeout qualified; optional lab build and production pin/hash unchanged. Current native inputs/artifacts unchanged, SHA/provenance retained; owned Python fixture removed after verified backup. Full SDK/bootstrap/release-cut/successful Actions/preflight remain OPEN; Q31 remains3/5,full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED,Q29/Q30/exclusions retained.
