@@ -94,6 +94,9 @@ def main():
                         'apt-get','perl','readlink','test']:
             executable(shutil.which(program))
         executable('/usr/bin/systemctl', 'systemctl.real')
+        output = subprocess.run(['ldd', str(work/'release-binary')], capture_output=True, text=True).stdout
+        for library in re.findall(r'(/[^\s]+)', output):
+            copy_file(library, root/library.lstrip('/'))
         for folder in ['usr/share/debconf','usr/share/perl5/Debconf']:
             shutil.copytree('/'+folder, root/folder)
         for parent in ['/usr/share/perl','/usr/lib/x86_64-linux-gnu/perl','/usr/lib/x86_64-linux-gnu/perl-base']:
@@ -123,6 +126,9 @@ def main():
         records=Path('/var/lib/dpkg/status').read_text().split('\n\n')
         records=[entry for entry in records if not re.search(r'^Package: qeli$', entry, re.M)]
         (root/'var/lib/dpkg/status').write_text('\n\n'.join(records)+'\n\n')
+        for filelist in Path('/var/lib/dpkg/info').glob('*.list'):
+            if filelist.name != 'qeli.list':
+                copy_file(filelist, root/'var/lib/dpkg/info'/filelist.name)
         (root/'etc/apt/sources.list').touch()
         (root/'etc/apt/apt.conf').write_text('APT::Get::List-Cleanup "false"; Acquire::Retries "0";\n')
         (root/'var/cache/qeli').chmod(0o700)
@@ -228,7 +234,7 @@ obf.mode = fake-tls
             nextpid=ready();check('real service restarted/recovered '+str(revision),nextpid!=pid);pid=nextpid
             check('state bytes/owner/mode preserved '+str(revision),state_snapshot()==baseline)
             if revision!=2:
-                check('failure reported as rollback '+str(revision),'rolled back' in output and 'Done вЂ”' not in output)
+                check('failure reported as rollback '+str(revision),'rolled back' in output and 'Done РІР‚вЂќ' not in output)
             check('real installed ELF restored '+str(revision),hashlib.sha256((root/'usr/bin/qeli').read_bytes()).hexdigest()==hashlib.sha256((work/'release-binary').read_bytes()).hexdigest())
         cache=root/'var/cache/qeli/qeli_0.8.2-2_amd64.deb'
         check('rollback cache private and exact package',cache.stat().st_uid==0 and stat.S_IMODE(cache.stat().st_mode)==0o600 and hashlib.sha256(cache.read_bytes()).digest()==hashlib.sha256((root/'fixtures/qeli_0.8.2-2_amd64.deb').read_bytes()).digest())

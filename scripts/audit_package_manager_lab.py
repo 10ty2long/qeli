@@ -23,10 +23,13 @@ def main():
     parser.add_argument('--binary-sha256',required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--host',default='10.66.116.11')
+    parser.add_argument('--reuse-owned-inputs')
     args=parser.parse_args()
     for path,sha in [(args.package,args.package_sha256),(args.binary,args.binary_sha256)]:
         if hashlib.sha256(path.read_bytes()).hexdigest()!=sha:
             parser.error('explicit artifact hash mismatch')
+    if args.reuse_owned_inputs and not __import__('re').fullmatch(r'/var/tmp/qeli-q33-pkg-[0-9]+',args.reuse_owned_inputs):
+        parser.error('reuse source must be a prior owned package fixture')
     args.output.mkdir(parents=True,exist_ok=False)
     out=args.output
     name='qeli-q33-pkg-'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S%f')
@@ -68,7 +71,13 @@ def main():
         inputs={}
         with client.open_sftp() as sftp:
             for source,target in [(args.package,'qeli_0.8.2_amd64.deb'),(args.binary,'release-binary'),(ROOT/'update-qeli-server.sh','update-qeli-server.sh'),(ROOT/'scripts/audit_package_manager_fixture.py','fixture.py')]:
-                sftp.put(str(source),remote+'/'+target)
+                if args.reuse_owned_inputs and target in ['qeli_0.8.2_amd64.deb','release-binary']:
+                    prior=args.reuse_owned_inputs+'/'+target
+                    run(['test','!','-L',prior],'reuse nonlinked input')
+                    assert run(['sha256sum',prior],'reuse prior input SHA')[0].split()[0]==hashlib.sha256(source.read_bytes()).hexdigest()
+                    run(['cp','--',prior,remote+'/'+target],'copy only prior owned input')
+                else:
+                    sftp.put(str(source),remote+'/'+target)
                 sha=hashlib.sha256(source.read_bytes()).hexdigest()
                 assert run(['sha256sum',remote+'/'+target],'input SHA '+target)[0].split()[0]==sha
                 inputs[target]=sha
