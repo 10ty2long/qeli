@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v90 -->
+<!-- normative-sync: audit-debt-v91 -->
 
 Current reconciliation:8 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1203,3 +1203,5 @@ physical exclusions are not PASS.
 **8 October,F439–F441:** [Service user/ownership](../reports/AUDIT-Q33-SERVICE-USER.md): preserve client-links/backups ownership, root0700 receipt directory; validate real state and retain existing override on repair failure; explicitly apply installer default qeli after validation. Baseline ownership2/CLI3 failures;fixed2+10 and117regressions PASS;CI2+10+2,lint3scripts,Rustbin5/Clippy/fmt PASS. Current CLI rebuilt0e01;native A/B evidence refreshed. Real systemd/startup/kernel/VPN/Docker remain OPEN;Q33 IN_PROGRESS,29/37DONE78.4%,8remain. Historical debt/exclusions retained;local dev only.
 
 **8 October, F442–F444 / Q33-F045–F047:** [Systemd](../reports/AUDIT-Q33-SYSTEMD.md): stable nft diagnostics boundary; supervisor SIGHUP with managed shutdown and preserved panel lockouts; bounded root filesystem capabilities. Current CLI a36d/SHA6161 built Rust1.97 offline/locked; bin5 + SIGHUP4 + supervisor23 + Clippy PASS; installer/CLI129 + exact localCI14 + lint PASS. Real manager257 sandbox/reload/restart/root-qeli/invalid-INI recovery qualified in an owned network namespace; root config trust refusal retained. Native A/B/ABI and sealed evidence in report. This closes that scoped manager gate, not whole Q33: actual package/update rollback pipeline, VPN traffic and Docker image runtime remain OPEN. Q33 IN_PROGRESS, 29/37 DONE (78.4%),8 remain; previous exclusions/deferred items/history unchanged; no push/deploy/release.
+
+**8 October:** [DEB/update/remove](../reports/AUDIT-Q33-PACKAGE-MANAGER.md): actual portable release/jemalloc and production package; genuine apt/dpkg/debconf/CLI/systemd with private DB and explicit unit mapping, final 24 PASS. Successful update, package rollback after broken unit and corrupt ELF, exact configured DB, preserved bytes/UID/mode of config/users/identity/receipts/backups, remove/purge. Three fixture FAIL runs retained; audit helpers repaired, product unchanged. This scoped gate closes; whole binary/kernel installer, release VPN roundtrip, Docker and Actions remain OPEN. Q33 IN_PROGRESS; 29/37 DONE (78.4%), 8 remain; previous status/exclusions retained.
