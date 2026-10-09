@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v186 -->
+<!-- normative-sync: full-system-audit-v187 -->
 
 **Current result, 9 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2517,3 +2517,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 **9 October,F493/Q34-F047:** [Explicit E2E APK](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): four installers require source/size/SHA/native-bound BUILD.json; private transfer,remoteSHA/ADB status and refusal before canonical server restoration.89Windows+18Linux methods,5real transfer/refusal cases with controlledADB,lint/docs PASS; own inputs SHA-recovered/cleaned,original777/845 retained. No real emulator/VPN/release runtime. Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 October,F494/Q34-F048:** [Common release source admission](../reports/AUDIT-Q34-PUBLICATION-GATES.md): preflight/certification/tag reject hidden Git flags; certification pins and rechecks commit. New certification evidence compatibility retained.165Windows+33Linux methods PASS,own fixture removed,original .11 service retained;no CI dispatch/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October,F495/Q34-F049:** [Actual publisher certification](../reports/AUDIT-Q34-PUBLICATION-GATES.md): baseline admitted a failed required case; both release workflows now require --require-certification before DEB build/Docker login.132Windows+41Linux methods and semantic workflow lint PASS; own SHA fixture cleaned,original .11 service retained.No current Actions/OIDC/publication/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

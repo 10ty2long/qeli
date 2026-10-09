@@ -35,11 +35,11 @@ jobs:
           ref: refs/tags/${{ github.event.release.tag_name || inputs.tag }}
           fetch-depth: 0
 
-      - name: Admit the exact tag, version and successful CI commit
+      - name: Admit exact tag, runtime certification and successful CI commit
         id: meta
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/release_tag.py --tag "$TAG" --require-ci --github-output "$GITHUB_OUTPUT"
+        run: python3 scripts/release_tag.py --tag "$TAG" --require-ci --require-certification --github-output "$GITHUB_OUTPUT"
 
       - name: Validate common native legal resources before building
         run: python3 scripts/native_licenses.py

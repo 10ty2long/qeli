@@ -11,6 +11,7 @@ from docker_publish_ref import classify
 from native_repro import DEFAULT_RUST_TOOLCHAIN
 from release_ci_gate import check_release_ci
 from release_source import source_identity
+from release_certification import CertificationError, load_and_validate
 
 ROOT = Path(__file__).resolve().parent.parent
 OID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
@@ -45,10 +46,19 @@ def main(argv=None):
     parser.add_argument("--repo", type=Path, default=ROOT)
     parser.add_argument("--tag", required=True)
     parser.add_argument("--require-ci", action="store_true", help="Require successful CI on this exact commit")
+    parser.add_argument("--require-certification", action="store_true",
+                        help="Require current-source runtime certification before publication")
     parser.add_argument("--github-output", type=Path)
     args = parser.parse_args(argv)
     try:
         identity = admit_tag(args.repo, args.tag)
+        if args.require_certification:
+            manifest = args.repo / "release/certification" / (identity["version"] + ".json")
+            _, failures = load_and_validate(manifest, args.repo)
+            if failures:
+                raise CertificationError("Release certification refused: " + "; ".join(failures))
+            if admit_tag(args.repo, args.tag) != identity:
+                raise ValueError("Release source changed during certification admission")
         if args.require_ci:
             failures = check_release_ci(args.repo, args.tag, by_commit=True)
             if failures:
@@ -61,7 +71,7 @@ def main(argv=None):
                     stream.write(f"{key}={value}\n")
         print(json.dumps({"status": "PASS", **identity}, sort_keys=True))
         return 0
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
+    except (OSError, ValueError, CertificationError, subprocess.SubprocessError) as error:
         print(f"Release publication refused: {error}", file=sys.stderr)
         return 1
 

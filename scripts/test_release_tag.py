@@ -9,9 +9,11 @@ import unittest
 from unittest.mock import patch
 import release_tag as gate
 from native_repro import DEFAULT_RUST_TOOLCHAIN
+import release_certification as certification
+from test_release_certification import complete_manifest
 
 
-class TagTests(unittest.TestCase):
+class GitFixture(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name); (self.root / "qeli").mkdir()
@@ -27,6 +29,9 @@ class TagTests(unittest.TestCase):
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             rc=gate.main(["--repo", str(self.root), "--tag", "v0.8.2", *extra])
         return rc, output.getvalue()
+
+
+class TagTests(GitFixture):
     def test_lightweight_tag_matches_exact_source_and_pin(self):
         self.tag(); self.assertEqual(gate.admit_tag(self.root,"v0.8.2"),dict(commit=self.head,version="0.8.2",rust_toolchain=DEFAULT_RUST_TOOLCHAIN))
     def test_annotated_tag_peeled_to_source_commit(self):
@@ -79,6 +84,128 @@ class TagTests(unittest.TestCase):
         for error in [FileNotFoundError('git'),subprocess.TimeoutExpired('git',30)]:
             with patch.object(gate.subprocess,'run',side_effect=error):rc,text=self.cli()
             self.assertEqual(rc,1)
+
+
+class PublisherCertificationTests(GitFixture):
+    def setUp(self):
+        super().setUp()
+        self.manifest = self.root / "release/certification/0.8.2.json"
+        self.manifest.parent.mkdir(parents=True)
+        self.document = complete_manifest()
+        self.document["release_version"] = "0.8.2"
+        digest = certification.repository_source_digest(self.root)
+        self.document["source_digest"] = digest
+        for case in self.document["cases"]:
+            if "source_digest" in case:case["source_digest"] = digest
+        self.record()
+
+    def record(self):
+        self.manifest.write_text(json.dumps(self.document) + "\n", encoding="utf8")
+        self.git("add", "--", "release/certification")
+        self.git("commit", "--quiet", "--allow-empty", "-m", "certification")
+        self.head = self.git("rev-parse", "HEAD")
+        self.git("tag", "-f", "v0.8.2")
+
+    def publication(self, ci=None):
+        # GITHUB_OUTPUT lives outside the source fixture, as on Actions.
+        output = Path(self.temp.name).parent / (Path(self.temp.name).name + "-outputs")
+        self.addCleanup(lambda: output.unlink(missing_ok=True))
+        output.write_text("existing=kept\n")
+        with patch.object(gate, "check_release_ci", return_value=[] if ci is None else ci) as query:
+            rc, text = self.cli(["--require-ci", "--require-certification",
+                                 "--github-output", str(output)])
+        return rc, text, output.read_text(), query
+
+    def test_failed_automated_case_refuses_before_ci_and_outputs(self):
+        self.document["cases"][0]["status"] = "failed"; self.record()
+        rc, text, output, query = self.publication()
+        self.assertEqual(rc, 1, text); self.assertIn("status is 'failed'", text)
+        self.assertEqual(output, "existing=kept\n"); query.assert_not_called()
+
+    def test_missing_stale_and_malformed_manifests_refuse(self):
+        for mode in ("missing", "stale", "malformed"):
+            with self.subTest(mode=mode):
+                if mode == "missing":self.manifest.unlink()
+                elif mode == "stale":
+                    data=dict(self.document, source_digest="e"*64)
+                    self.manifest.write_text(json.dumps(data),encoding="utf8")
+                else:self.manifest.write_text("{",encoding="utf8")
+                self.git("add", "--", "release/certification")
+                self.git("commit", "--quiet", "-m", mode)
+                self.git("tag", "-f", "v0.8.2")
+                rc, text, output, query = self.publication()
+                self.assertEqual(rc, 1, text); self.assertEqual(output, "existing=kept\n")
+                query.assert_not_called()
+                self.record()
+
+    def test_physical_failure_blocks_but_unavailable_remains_advisory(self):
+        case = self.document["cases"][len(certification.REQUIRED_CASES)]
+        for status, expected in (("failed", 1), ("not_available", 0)):
+            with self.subTest(status=status):
+                case["status"] = status; self.record()
+                rc, text, output, query = self.publication()
+                self.assertEqual(rc, expected, text)
+                if expected:
+                    self.assertEqual(output, "existing=kept\n"); query.assert_not_called()
+                else:query.assert_called_once()
+
+    def test_valid_evidence_and_ci_write_metadata_only_after_admission(self):
+        rc, text, output, query = self.publication()
+        self.assertEqual(rc, 0, text)
+        self.assertEqual(output, f"existing=kept\ncommit={self.head}\nversion=0.8.2\nrust_toolchain={DEFAULT_RUST_TOOLCHAIN}\n")
+        query.assert_called_once_with(self.root, "v0.8.2", by_commit=True)
+        rc, text, output, _ = self.publication(["CI refused"])
+        self.assertEqual(rc, 1, text); self.assertEqual(output, "existing=kept\n")
+
+    def test_manifest_or_head_change_during_validation_refuses(self):
+        original = gate.load_and_validate
+        for mode in ("manifest", "head"):
+            with self.subTest(mode=mode):
+                if mode == "head":
+                    self.git("commit", "--quiet", "--allow-empty", "-m", "next")
+                    other = self.git("rev-parse", "HEAD")
+                    self.git("checkout", "--quiet", "--detach", self.head)
+                def validate(*args):
+                    result = original(*args)
+                    if mode == "manifest":self.manifest.write_text("{}")
+                    else:self.git("checkout", "--quiet", other)
+                    return result
+                with patch.object(gate,"load_and_validate",side_effect=validate):
+                    rc,text,output,query=self.publication()
+                self.assertEqual(rc,1,text);self.assertEqual(output,"existing=kept\n")
+                query.assert_not_called()
+                if mode == "manifest":self.git("checkout", "--", "release/certification")
+                else:self.git("checkout","--quiet","--detach",self.head)
+
+    def test_validator_io_and_identity_failure_are_refusals(self):
+        for error in (OSError("manifest unreadable"), certification.CertificationError("identity refused")):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(gate,"load_and_validate",side_effect=error):
+                    rc,text,output,query=self.publication()
+                self.assertEqual(rc,1,text);self.assertEqual(output,"existing=kept\n")
+                query.assert_not_called()
+
+    def test_actual_cli_certification_success_and_failed_case_refusal(self):
+        output=Path(self.temp.name).parent/(Path(self.temp.name).name+"-cli-output")
+        self.addCleanup(lambda:output.unlink(missing_ok=True))
+        command=[__import__("sys").executable,"-B",gate.__file__,"--repo",str(self.root),
+                 "--tag","v0.8.2","--require-certification","--github-output",str(output)]
+        accepted=subprocess.run(command,capture_output=True,text=True,timeout=30)
+        self.assertEqual(accepted.returncode,0,accepted.stderr)
+        self.assertEqual(json.loads(accepted.stdout)["status"],"PASS")
+        self.document["cases"][0]["status"]="failed";self.record()
+        output.write_text("existing=kept\n")
+        refused=subprocess.run(command,capture_output=True,text=True,timeout=30)
+        self.assertEqual(refused.returncode,1,refused.stderr)
+        self.assertNotIn('"status": "PASS"',refused.stdout)
+        self.assertEqual(output.read_text(),"existing=kept\n")
+
+    def test_tag_admission_precedes_certification_and_ci(self):
+        self.git("tag","-d","v0.8.2")
+        with patch.object(gate,"load_and_validate") as validate:
+            rc,text,output,query=self.publication()
+        self.assertEqual(rc,1,text);self.assertEqual(output,"existing=kept\n")
+        validate.assert_not_called();query.assert_not_called()
 
 
 class WorkflowTests(unittest.TestCase):
@@ -150,6 +277,18 @@ class WorkflowTests(unittest.TestCase):
         s=(Path(__file__).resolve().parent.parent/'.github/workflows/ci.yml').read_text(encoding='utf-8')
         self.assertEqual(s.count("      - '.github/workflows/**'"),2)
         self.assertIn("'test_release_tag.py'",s)
+
+
+    def test_publishers_require_runtime_certification_before_build_and_login(self):
+        root=Path(__file__).resolve().parent.parent
+        release=(root/".github/workflows/release-attest.yml").read_text(encoding="utf8")
+        docker=(root/".github/workflows/docker-publish.yml").read_text(encoding="utf8")
+        for source,boundary in ((release,"make -C qeli/debian"),(docker,"docker/login-action@")):
+            start=source.index("python3 scripts/release_tag.py")
+            command=source[start:].splitlines()[0]
+            self.assertIn("--require-ci",command)
+            self.assertIn("--require-certification",command)
+            self.assertLess(start,source.index(boundary))
 
 
 if __name__=='__main__':unittest.main()
