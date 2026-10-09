@@ -104,8 +104,10 @@ APK после native gate собирается `scripts/rebuild_apk.py [--relea
 собирает unit tests + APK, проверяет подпись release-варианта и забирает файл только после
 сверки удалённого SHA256, не затирая native cores. `scripts/build_mac_universal.py` так же
 проверяет canonical dylib, пакетно подписывает и инспектирует каждый Mach-O и атомарно
-забирает universal ZIP по SHA256. Крупные self-contained tar.gz кэшируются на лабе только
-после сверки с локальным SHA256, поэтому неизменившийся повторный прогон не загружает их заново.
+забирает universal ZIP по SHA256. Каждый запуск Mac packager использует собственный remote workspace:
+оба self-contained TAR и metadata передаются с SHA-проверкой, общий кэш не используется.
+Unsafe TAR/stale canonical dylib отклоняются до SSH; соединения закрываются при ошибках.
+Remote workspace сохраняется для диагностики; локальный ZIP заменяется только после SHA gate.
 Если verified remote SHA256 уже совпадает со всеми локальными копиями, итоговый бинарник/ZIP
 также не передаётся повторно.
 

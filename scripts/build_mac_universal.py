@@ -12,6 +12,10 @@ binary (the already-universal libqeli.dylib is copied as-is), assembles the .app
 with rcodesign, repacks a Unix-perm zip, and pulls it back to qeli-mac/dist/.
 """
 import os, sys
+import re
+import shlex
+import tarfile
+from pathlib import PurePosixPath
 from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -24,8 +28,6 @@ INFO_PLIST_IN = ROOT / "qeli-mac" / "Info.plist.in"
 ICNS = DIST / "Qeli.icns"
 CANONICAL_DYLIB = ROOT / "qeli-mac" / "QeliMac" / "native" / "libqeli.dylib"
 HOST = ("10.66.116.10", os.environ.get("QELI_LAB_USER", "root"))
-RDIR = "/root/mac-build"
-INPUT_CACHE = "/root/qeli-mac-input-cache"
 LIPO = "/usr/bin/llvm-lipo-19"
 RCS = "/usr/local/bin/rcodesign"
 
@@ -36,14 +38,6 @@ def conn():
 
 def r(c, cmd, t=600):
     return c.checked(cmd, "macOS universal packaging", timeout=t)
-
-
-def remote_digest_if_present(c, remote_path):
-    output, return_code = c.run(f'test -f "{remote_path}" && sha256sum "{remote_path}"')
-    if return_code != 0:
-        return None
-    digest = output.split()[0].lower() if output.split() else ""
-    return digest if len(digest) == 64 else None
 
 
 # Remote assembly script (runs on .10).
@@ -85,7 +79,7 @@ def inventory(directory):
             raise RuntimeError(f"unsupported universal input: {path}")
     return files
 
-def assemble(root="/root/mac-build", lipo="/usr/bin/llvm-lipo-19"):
+def assemble(root, lipo="/usr/bin/llvm-lipo-19"):
     root = Path(root)
     arm = inventory(root / "osx-arm64")
     x64 = inventory(root / "osx-x64")
@@ -135,14 +129,17 @@ def assemble(root="/root/mac-build", lipo="/usr/bin/llvm-lipo-19"):
     return {"merged": len(merge), "copied": len(arm)-len(merge)}
 
 if __name__ == "__main__":
-    assemble()
+    import sys
+    if len(sys.argv) != 2:
+        raise SystemExit("expected one owned workspace path")
+    assemble(sys.argv[1])
 '''
 
 
 REMOTE_SIGN_PY = r'''
 import os, subprocess, sys
-RDIR="/root/mac-build"; APP=RDIR+"/Qeli.app"; MACOS=APP+"/Contents/MacOS"
-RCS="/usr/local/bin/rcodesign"
+RDIR=sys.argv[1]; APP=RDIR+"/Qeli.app"; MACOS=APP+"/Contents/MacOS"
+RCS=sys.argv[2]
 MACHO_MAGICS={
     b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf",
     b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca", b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca",
@@ -171,94 +168,113 @@ print(f"[sign] {len(machos)}/{len(machos)} Mach-O ad-hoc; bundle OK")
 '''
 
 
-def main():
-    c = conn()
-    rcodesign = r(c, f"{RCS} --version")
-    if rcodesign != DEFAULT_RCODESIGN:
-        raise RuntimeError(f"rcodesign is {rcodesign}, expected {DEFAULT_RCODESIGN}")
-    print("[rcodesign]", rcodesign)
-    print("[lipo]", r(c, f"{LIPO} -version 2>/dev/null | head -1 || echo MISSING"))
+def inspect_payload(local, arch, native_sha):
+    """Reject unsafe members and stale core bytes before any SSH connection."""
+    seen = set()
+    regular = set()
+    with tarfile.open(local, "r:gz") as archive:
+        for member in archive:
+            path = PurePosixPath(member.name)
+            if ("\\" in member.name or path.is_absolute() or ".." in path.parts
+                    or not path.parts or path.parts[0] != arch
+                    or not (member.isdir() or member.isfile()) or path in seen):
+                raise RuntimeError(f"unsafe or duplicate macOS payload member: {member.name}")
+            seen.add(path)
+            if member.isfile():
+                regular.add(path)
+            if member.isfile() and path == PurePosixPath(arch, "libqeli.dylib"):
+                import hashlib
+                with archive.extractfile(member) as stream:
+                    if hashlib.file_digest(stream, "sha256").hexdigest() != native_sha:
+                        raise RuntimeError(f"stale canonical dylib in {local}")
+    for required in ("QeliMac", "libqeli.dylib"):
+        if PurePosixPath(arch, required) not in regular:
+            raise RuntimeError(f"missing {required} in {local}")
 
-    r(c, f"mkdir -p {INPUT_CACHE}")
+
+def prepare_inputs():
+    native_sha = sha256_file(CANONICAL_DYLIB)
+    files = []
+    for arch in ("osx-arm64", "osx-x64"):
+        local = DIST / (arch + ".tar.gz")
+        digest = sha256_file(local)
+        inspect_payload(local, arch, native_sha)
+        if sha256_file(local) != digest:
+            raise RuntimeError(f"macOS payload changed during admission: {local}")
+        files.append((local, digest))
+    for local in (INFO_PLIST_IN, ICNS):
+        files.append((local, sha256_file(local)))
+    return files, native_sha
+
+
+def build(c, inputs, native_sha, workspace):
+    quoted = shlex.quote(workspace)
     sf = c.open_sftp()
-    for t in ("osx-arm64.tar.gz", "osx-x64.tar.gz"):
-        local = DIST / t
-        expected = sha256_file(local)
-        cached = f"{INPUT_CACHE}/{t}"
-        if remote_digest_if_present(c, cached) != expected:
-            # Reuse the prior work directory once when introducing the cache. It is subject
-            # to the same digest check; an unknown or stale remote file is never trusted.
-            previous = f"{RDIR}/{t}"
-            if remote_digest_if_present(c, previous) == expected:
-                r(c, f'cp "{previous}" "{cached}"')
-                print(f"[cache seed] {t}")
-            else:
-                sf.put(os.fspath(local), cached)
-                print(f"[upload] {t}")
-        if remote_sha256(c, cached) != expected:
-            raise RuntimeError(f"cached macOS input changed after upload: {t}")
-        print(f"[input] {t} sha256={expected}")
-    r(c, f"rm -rf {RDIR}; mkdir -p {RDIR}; cp {INPUT_CACHE}/*.tar.gz {RDIR}/")
-    sf.put(os.fspath(INFO_PLIST_IN), f"{RDIR}/Info.plist.in")
-    sf.put(os.fspath(ICNS), f"{RDIR}/Qeli.icns")
-    sf.close()
-    print("[extract]", r(c, f"cd {RDIR} && tar -xzf osx-arm64.tar.gz && tar -xzf osx-x64.tar.gz && echo OK"))
-
-    # Assemble the universal Contents/MacOS via lipo.
-    r(c, f"cat > {RDIR}/assemble.py <<'PYEOF'\n{REMOTE_PY}\nPYEOF")
-    print(r(c, f"cd {RDIR} && python3 assemble.py", t=900))
-    expected_dylib = sha256_file(CANONICAL_DYLIB)
-    assembled_dylib = remote_sha256(c, f"{RDIR}/Qeli.app/Contents/MacOS/libqeli.dylib")
-    if assembled_dylib != expected_dylib:
-        raise RuntimeError(
-            f"assembled app contains dylib {assembled_dylib}, expected {expected_dylib}"
-        )
-    print(f"[dylib] verified sha256={assembled_dylib}")
-
-    # Info.plist (universal: both arches in LSArchitecturePriority) + icns.
-    r(c, f"cd {RDIR} && sed 's|<string>__ARCH__</string>|<string>arm64</string>\\n        <string>x86_64</string>|' "
-         f"Info.plist.in > Qeli.app/Contents/Info.plist")
-    r(c, f"cp {RDIR}/Qeli.icns {RDIR}/Qeli.app/Contents/Resources/Qeli.icns")
-    r(c, f"chmod +x {RDIR}/Qeli.app/Contents/MacOS/QeliMac")
-
-    # One remote transaction signs and inspects every Mach-O, then signs the bundle. This
-    # avoids two SSH round trips per binary while preserving the same fail-closed checks.
-    r(c, f"cat > {RDIR}/sign_app.py <<'PYSIGN'\n{REMOTE_SIGN_PY}\nPYSIGN")
-    print(r(c, f"cd {RDIR} && python3 sign_app.py", t=900))
-
-    # Zip with Unix perms (executable bits survive).
+    try:
+        for local, expected in inputs:
+            remote = workspace + "/" + local.name
+            sf.put(os.fspath(local), remote)
+            if remote_sha256(c, remote) != expected:
+                raise RuntimeError(f"macOS input changed after upload: {local.name}")
+            print(f"[input] {local.name} sha256={expected}")
+    finally:
+        sf.close()
+    print("[extract]", r(c, f"cd {quoted} && tar -xzf osx-arm64.tar.gz && tar -xzf osx-x64.tar.gz"))
+    r(c, f"cat > {quoted}/assemble.py <<'PYEOF'\n{REMOTE_PY}\nPYEOF")
+    print(r(c, f"cd {quoted} && python3 assemble.py {quoted}", t=900))
+    assembled_dylib = remote_sha256(c, workspace + "/Qeli.app/Contents/MacOS/libqeli.dylib")
+    if assembled_dylib != native_sha:
+        raise RuntimeError(f"assembled dylib {assembled_dylib}, expected {native_sha}")
+    r(c, f"cd {quoted} && sed 's|<string>__ARCH__</string>|<string>arm64</string>\\n        <string>x86_64</string>|' "
+         "Info.plist.in > Qeli.app/Contents/Info.plist")
+    r(c, f"cp {quoted}/Qeli.icns {quoted}/Qeli.app/Contents/Resources/Qeli.icns")
+    r(c, f"chmod +x {quoted}/Qeli.app/Contents/MacOS/QeliMac")
+    r(c, f"cat > {quoted}/sign_app.py <<'PYSIGN'\n{REMOTE_SIGN_PY}\nPYSIGN")
+    print(r(c, f"cd {quoted} && python3 sign_app.py {quoted} {shlex.quote(RCS)}", t=900))
     zip_py = (
         "import os,zipfile\n"
-        f"root=r'{RDIR}'; app='Qeli.app'; out=os.path.join(root,'Qeli-macOS-universal.zip')\n"
-        "zf=zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6)\n"
-        "for dp,dn,fn in os.walk(os.path.join(root,app)):\n"
-        " for n in fn:\n"
-        "  full=os.path.join(dp,n); rel=os.path.relpath(full,root)\n"
-        "  zi=zipfile.ZipInfo(rel.replace(os.sep,'/')); st=os.stat(full)\n"
-        "  zi.external_attr=(st.st_mode & 0xFFFF)<<16; zi.compress_type=zipfile.ZIP_DEFLATED\n"
-        "  zf.writestr(zi, open(full,'rb').read())\n"
-        "zf.close(); print(os.path.getsize(out))\n"
+        f"root={workspace!r}; app='Qeli.app'; out=os.path.join(root,'Qeli-macOS-universal.zip')\n"
+        "with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as zf:\n"
+        " for dp,dn,fn in os.walk(os.path.join(root,app)):\n"
+        "  dn.sort()\n"
+        "  for n in sorted(fn):\n"
+        "   full=os.path.join(dp,n); rel=os.path.relpath(full,root)\n"
+        "   zi=zipfile.ZipInfo(rel.replace(os.sep,'/')); st=os.stat(full)\n"
+        "   zi.external_attr=(st.st_mode & 0xFFFF)<<16; zi.compress_type=zipfile.ZIP_DEFLATED\n"
+        "   with open(full,'rb') as incoming: zf.writestr(zi,incoming.read())\n"
+        "print(os.path.getsize(out))\n"
     )
-    r(c, f"cat > {RDIR}/mkzip.py <<'PYZIP'\n{zip_py}PYZIP")
-    zsize = r(c, f"cd {RDIR} && python3 mkzip.py")
-    print(f"[zip] Qeli-macOS-universal.zip = {zsize} bytes")
-
-    remote_zip = f"{RDIR}/Qeli-macOS-universal.zip"
+    r(c, f"cat > {quoted}/mkzip.py <<'PYZIP'\n{zip_py}PYZIP")
+    print("[zip]", r(c, f"cd {quoted} && python3 mkzip.py"))
+    remote_zip = workspace + "/Qeli-macOS-universal.zip"
     zip_digest = remote_sha256(c, remote_zip)
     sf = c.open_sftp()
     try:
         size, digest, _changes = pull_verified_artifact(
-            sf,
-            remote_zip,
-            zip_digest,
-            ROOT,
-            ("qeli-mac/dist/Qeli-macOS-universal.zip",),
+            sf, remote_zip, zip_digest, ROOT, ("qeli-mac/dist/Qeli-macOS-universal.zip",),
         )
     finally:
         sf.close()
-        c.close()
     print(f"[pull] -> {DIST / 'Qeli-macOS-universal.zip'} ({size} bytes, sha256={digest})")
     print("[done]")
+
+
+def main():
+    inputs, native_sha = prepare_inputs()
+    c = conn()
+    try:
+        rcodesign = r(c, f"{RCS} --version")
+        if rcodesign != DEFAULT_RCODESIGN:
+            raise RuntimeError(f"rcodesign is {rcodesign}, expected {DEFAULT_RCODESIGN}")
+        print("[rcodesign]", rcodesign)
+        print("[lipo]", r(c, f"{LIPO} --version"))
+        workspace = r(c, "mktemp -d /var/tmp/qeli-mac-build.XXXXXXXX")
+        if not re.fullmatch(r"/var/tmp/qeli-mac-build\.[A-Za-z0-9]{8}", workspace):
+            raise RuntimeError(f"unexpected macOS workspace: {workspace!r}")
+        print("[workspace]", workspace, "(retained for diagnostics)")
+        build(c, inputs, native_sha, workspace)
+    finally:
+        c.close()
 
 
 if __name__ == "__main__":
