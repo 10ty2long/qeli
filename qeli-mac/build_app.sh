@@ -41,6 +41,17 @@ for output in "$OUT" "$APP" "$ARCHIVE" "$PER_APP_OUT" "$ROOT/dist/Qeli.icns"; do
   fi
 done
 
+# An unsigned bundle is not a successful package. Admit a signer before any
+# compiler, publish or output replacement; keep one selected tool for this run.
+if SIGN_TOOL="$(command -v codesign)"; then
+  SIGN_KIND=codesign
+elif SIGN_TOOL="$(command -v rcodesign)"; then
+  SIGN_KIND=rcodesign
+else
+  echo "codesign or rcodesign is required before building an app archive" >&2
+  exit 1
+fi
+
 # 1. Native whole-client core (current ABI 1.15, compatibility floor 1.11 + realtls FFI) —
 #    universal libqeli.dylib. Built once
 #    into QeliMac/native/ by build_dylib.sh (cargo + lipo on Mac, cargo-zigbuild on Linux).
@@ -110,15 +121,12 @@ if [[ "$(uname -s)" == "Darwin" && -n "${QELI_MAC_SIGN_IDENTITY:-}" \
   echo "   Developer-ID signed with per-app routing support"
 else
   echo "==> Ad-hoc code-signing (per-app extension unavailable in this build)…"
-  if command -v codesign >/dev/null 2>&1; then
-    codesign --force --deep --sign - "$APP"
+  if [[ "$SIGN_KIND" == codesign ]]; then
+    "$SIGN_TOOL" --force --deep --sign - "$APP"
     echo "   signed with codesign (ad-hoc)"
-  elif command -v rcodesign >/dev/null 2>&1; then
-    rcodesign sign "$APP"
-    echo "   signed with rcodesign (ad-hoc)"
   else
-    echo "   WARNING: no codesign/rcodesign — bundle is UNSIGNED (won't launch on Apple Silicon)."
-    echo "            install one:  cargo install apple-codesign   # provides rcodesign"
+    "$SIGN_TOOL" sign "$APP"
+    echo "   signed with rcodesign (ad-hoc)"
   fi
 fi
 

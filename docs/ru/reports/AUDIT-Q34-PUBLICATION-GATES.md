@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v4 -->
+<!-- normative-sync: q34-publication-gates-v5 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -219,3 +219,47 @@ Q30/Q31,D06accepted,USER_EXCLUDED и прочие open пункты сохран
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F495 evidence: q34-publisher-certification-20261009; SEALED 42 files / 1211464 bytes; manifest SHA256 d11345555e523dc6296de351daf95a0a2d8b942c4d672527a7cbd43fd5c80837.
+
+
+## 9 октября: F496 / Q34-F050 — отказ упаковки без подписанта
+
+build_app.sh объявлял подписант обязательным, но при отсутствии codesign и
+rcodesign лишь печатал предупреждение. Затем создавал неподписанный архив и
+сообщал Done. Воспроизводитель выполняет прежний Bash-скрипт с настоящими
+файлами и tar, контролируемыми compiler/sign tools: 8 методов дали 3 ожидаемых
+провала assertions — обе архитектуры и запуск native bootstrap до отказа.
+
+Теперь подписант выбирается до native build, publish и замены выходных файлов.
+При отсутствии обоих инструментов скрипт возвращает ошибку; предыдущие bundle
+и архив остаются нетронутыми. Приоритет codesign сохранён, ad-hoc ветка вызывает
+выбранный путь инструмента. Ненулевой exit подписанта останавливает скрипт до
+tar и сохраняет предыдущий архив. Уже собранный bundle при ошибке подписанта
+может остаться в dist; его атомарная замена и параллельные сборки этим не исправлены.
+Developer-ID/per-app/notarization сценарии не изменены.
+
+57 Windows методов PASS: 8 app-signer, 38 native-recipes и 11 workflow contracts.
+Все четыре workflows приняты pinned semantic actionlint; Bash syntax PASS.
+В Linux .11 прошли те же 8 app-signer методов. Проверены arm64/x86_64, отсутствие
+подписанта до native bootstrap, оба положительных пути, приоритет codesign,
+ошибки обоих подписантов и неизвестная архитектура. Test suite включён в CI.
+Настоящие файловые операции и tar проверены, compiler/sign tools контролируемые:
+это не сборка payload, не проверка криптографической подписи и не запуск на Mac.
+Apple runtime остаётся исключённым пользователем.
+
+Два committed Linux source inputs и их TAR проверены SHA. Приватный каталог
+с тремя известными файлами удалён после проверок набора, process/fd и mounts;
+original service777/845 и CLI75bc неизменны, .10 не использовалась.
+На локальном диске обнаружено отсутствие свободного места. Удалена только старая
+распакованная копия SDK из audit-scratch: 5577 файлов /807336133 bytes, полный
+SHA512 исходного ZIP, точный набор и SHA каждого файла совпали. Проверены resolved
+path, отсутствие reparse points и использующих SDK процессов. Исходный ZIP,
+SEALED packets и shared caches сохранены; освобождено около800MB.
+
+Native source digest,14 artifact SHA,qeli tree,protected files и OpenWrt source
+cut сохранены; их прежняя execution qualification наследуется без пересборок.
+41 certification cases и97 прежних supplements сохранены кроме source_digest
+bookkeeping; добавлен98 scoped supplement. Q34 IN_PROGRESS:30/37 DONE81,1%,7remain.
+Прежние open/accepted/excluded пункты не закрыты этим исправлением.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F496 evidence: q34-app-signer-20261009; SEALED 35 files / 1203484 bytes; manifest SHA256 74dd6ad767b38be09ef2513e689c22c42bf4d37754e270684e7d6f30b85e5ea4.
