@@ -106,7 +106,8 @@ class WorkflowTests(unittest.TestCase):
             scope=text.split('  '+job+':',1)[1].split('  '+end+':',1)[0]
             with self.subTest(job=job):
                 self.assertIn('toolchain: ${{ env.QELI_FUZZ_TOOLCHAIN }}',scope)
-                self.assertIn('RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}',scope)
+                self.assertIn('echo "RUSTUP_TOOLCHAIN=$QELI_FUZZ_TOOLCHAIN" >> "$GITHUB_ENV"',scope)
+                self.assertNotIn('      RUSTUP_TOOLCHAIN: ${{ env.',scope)
                 self.assertIn('install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked',scope)
                 self.assertIn('test -f fuzz/Cargo.lock',scope)
                 self.assertIn('fetch --locked --manifest-path fuzz/Cargo.toml',scope)

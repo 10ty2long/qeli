@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v113 -->
+<!-- normative-sync: audit-debt-v114 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1263,3 +1263,6 @@ physical exclusions are not PASS.
 
 
 **9 October,F485–F486/Q34-F039–F040:** [Reproducible fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): pinned nightly/cargo-fuzz,independent146-package lock,locked-fetch/offline/SHA and strict audit. All15 real ASan targets:85,930,590 executions,no crash artifacts;72 Windows+13 Linux methods and actual missing/stale/drift refusals PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash updated. Scope and retained harness failures in report.Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/historical limits preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

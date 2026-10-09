@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v178 -->
+<!-- normative-sync: full-system-audit-v179 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2513,3 +2513,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **9 октября,F485–F486/Q34-F039–F040:** [Воспроизводимый fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): фиксированы nightly/cargo-fuzz и отдельный146-package lock; locked-fetch/offline/SHA и отдельный strict audit. Все15 настоящих ASan targets:85 930 590 выполнений,без crash artifacts;72 Windows+13 Linux regression methods и реальные missing/stale/drift отказы PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash обновлены. Scope и сохранённые ошибки обвязки в отчёте. Q34 IN_PROGRESS30/37DONE81,1%,7осталось;Q35 TODO и прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

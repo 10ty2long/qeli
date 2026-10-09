@@ -1,6 +1,6 @@
 # Q34: воспроизводимый fuzz CI и полный ASan smoke
 
-<!-- normative-sync: q34-fuzz-toolchain-v1 -->
+<!-- normative-sync: q34-fuzz-toolchain-v2 -->
 
 Дата: 9 октября 2026.
 
@@ -79,3 +79,11 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 ## Evidence
 
 `q34-fuzz-toolchain-20261009`: SEALED 154 files / 358276286 bytes; manifest SHA256 `eb1dd886685937f9a311420ab44d8b0d59bfcd4825e642cc945d816af3f27b60`.
+
+## Последующая проверка Actions: F487 / Q34-F041
+
+Финальный semantic review выявил внесённую этим патчем ошибку: env context недоступен в job-level env. Первичная проверка YAML её не обнаружила; hosted CI тогда не запускался. Официальный SHA-qualified actionlint1.7.12 воспроизвёл два отказа baseline. В исправленном workflow RUSTUP_TOOLCHAIN передаётся отдельным шагом через GITHUB_ENV после установки compiler. Final actionlint rc0,13 regression methods и точный Bash export с LF PASS. Smoke Bash,lock,compiler/tool versions и эффективное окружение настоящего lab прогона не изменились; повторное исполнение85 930 590 случаев не заявляется. Предыдущий sealed packet сохранён; исправление и ограничения зафиксированы отдельным evidence supplement. Это исправление собственного CI patch, не новая найденная ошибка parser.
+
+[Допустимые контексты GitHub](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts) и [GITHUB_ENV](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable).
+
+Context correction evidence: `q34-fuzz-context-20261009`;SEALED 33 files;manifest SHA256 `a62231996d1d5eb1a0889cfde3ea4cd65f1121514ecf056cb17fa2282735c3c9`.

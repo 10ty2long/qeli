@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v113 -->
+<!-- normative-sync: audit-debt-v114 -->
 
 Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1392,3 +1392,6 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 
 
 **9 октября,F485–F486/Q34-F039–F040:** [Воспроизводимый fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): фиксированы nightly/cargo-fuzz и отдельный146-package lock; locked-fetch/offline/SHA и отдельный strict audit. Все15 настоящих ASan targets:85 930 590 выполнений,без crash artifacts;72 Windows+13 Linux regression methods и реальные missing/stale/drift отказы PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash обновлены. Scope и сохранённые ошибки обвязки в отчёте. Q34 IN_PROGRESS30/37DONE81,1%,7осталось;Q35 TODO и прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
