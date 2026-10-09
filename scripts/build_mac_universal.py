@@ -48,41 +48,94 @@ def remote_digest_if_present(c, remote_path):
 
 # Remote assembly script (runs on .10).
 REMOTE_PY = r'''
-import os, subprocess, shutil, sys
-RDIR="/root/mac-build"; ARM=RDIR+"/osx-arm64"; X64=RDIR+"/osx-x64"
-APP=RDIR+"/Qeli.app"; MACOS=APP+"/Contents/MacOS"; RES=APP+"/Contents/Resources"
-LIPO="/usr/bin/llvm-lipo-19"
-shutil.rmtree(APP, ignore_errors=True)
-os.makedirs(MACOS); os.makedirs(RES)
-def fileb(p):
-    try: return subprocess.run(["file","-b",p],capture_output=True).stdout
-    except Exception: return b""
-def is_macho(p): return b"Mach-O" in fileb(p)
-def is_universal(p): return b"universal binary" in fileb(p)
-lipo_n=copy_n=mac_n=0
-for dp,dn,fn in os.walk(ARM):
-    for name in fn:
-        a=os.path.join(dp,name); rel=os.path.relpath(a,ARM)
-        dst=os.path.join(MACOS,rel); os.makedirs(os.path.dirname(dst),exist_ok=True)
-        x=os.path.join(X64,rel)
-        # Already-fat files (libqeli.dylib + NuGet native assets like
-        # libSkiaSharp/libHarfBuzzSharp/libAvaloniaNative ship universal2) -> copy
-        # as-is; lipo refuses to re-fatten them.
-        if name=="libqeli.dylib" or is_universal(a):
-            shutil.copy2(a,dst); copy_n+=1; continue
-        if is_macho(a) and os.path.exists(x):
-            rc=subprocess.run([LIPO,"-create",a,x,"-output",dst]).returncode
-            if rc!=0:                          # fallback: not lipo-able -> copy arm64
-                shutil.copy2(a,dst); copy_n+=1
-            else: lipo_n+=1; mac_n+=1
+from pathlib import Path
+import shutil
+import subprocess
+
+MACHO_MAGICS = {
+    b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf",
+    b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca", b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca",
+}
+REQUIRED_ARCHES = {"arm64", "x86_64"}
+
+def macho(path):
+    with path.open("rb") as stream:
+        return stream.read(4) in MACHO_MAGICS
+
+def architectures(lipo, path):
+    result = subprocess.run(
+        [lipo, "-archs", str(path)], check=True, capture_output=True,
+        text=True, timeout=60,
+    )
+    names = result.stdout.split()
+    if not names or len(names) != len(set(names)):
+        raise RuntimeError(f"ambiguous architecture inventory: {path}")
+    return set(names)
+
+def inventory(directory):
+    if directory.is_symlink() or not directory.is_dir():
+        raise RuntimeError(f"expected payload directory: {directory}")
+    files = {}
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise RuntimeError(f"symlinked universal input: {path}")
+        if path.is_file():
+            files[path.relative_to(directory)] = path
+        elif not path.is_dir():
+            raise RuntimeError(f"unsupported universal input: {path}")
+    return files
+
+def assemble(root="/root/mac-build", lipo="/usr/bin/llvm-lipo-19"):
+    root = Path(root)
+    arm = inventory(root / "osx-arm64")
+    x64 = inventory(root / "osx-x64")
+    arm_machos = {rel for rel, path in arm.items() if macho(path)}
+    x64_machos = {rel for rel, path in x64.items() if macho(path)}
+    for required in ("QeliMac", "libqeli.dylib"):
+        if Path(required) not in arm_machos:
+            raise RuntimeError(f"missing required Mach-O: {required}")
+    if x64_machos - arm_machos:
+        raise RuntimeError(f"x64-only Mach-O inputs: {sorted(map(str, x64_machos - arm_machos))}")
+
+    # Admit the complete input graph before replacing the old bundle.
+    merge = set()
+    for rel in sorted(arm_machos):
+        arches = architectures(lipo, arm[rel])
+        if arches == REQUIRED_ARCHES:
+            continue
+        if rel == Path("libqeli.dylib"):
+            raise RuntimeError("canonical libqeli.dylib must already contain arm64 and x86_64")
+        if arches != {"arm64"} or rel not in x64_machos:
+            raise RuntimeError(f"missing universal pair: {rel}")
+        if architectures(lipo, x64[rel]) != {"x86_64"}:
+            raise RuntimeError(f"wrong x64 partner architecture: {rel}")
+        merge.add(rel)
+
+    app = root / "Qeli.app"
+    if app.is_symlink():
+        raise RuntimeError("refusing symlinked app output")
+    if app.exists():
+        shutil.rmtree(app)
+    macos = app / "Contents/MacOS"
+    macos.mkdir(parents=True)
+    (app / "Contents/Resources").mkdir()
+    for rel, path in arm.items():
+        output = macos / rel
+        output.parent.mkdir(parents=True, exist_ok=True)
+        if rel in merge:
+            subprocess.run(
+                [lipo, "-create", str(path), str(x64[rel]), "-output", str(output)],
+                check=True, capture_output=True, text=True, timeout=60,
+            )
         else:
-            shutil.copy2(a,dst); copy_n+=1
-print(f"[assemble] lipo={lipo_n} copy={copy_n} (universal Mach-O={mac_n})")
-# verify a key binary is fat
-v=subprocess.run(["/usr/bin/file","-b",MACOS+"/QeliMac"],capture_output=True).stdout.decode()
-print("[apphost]", v.strip()[:80])
-d=subprocess.run(["/usr/bin/file","-b",MACOS+"/libqeli.dylib"],capture_output=True).stdout.decode()
-print("[dylib]", d.strip()[:80])
+            shutil.copy2(path, output)
+        if rel in arm_machos and architectures(lipo, output) != REQUIRED_ARCHES:
+            raise RuntimeError(f"assembled Mach-O is not universal2: {rel}")
+    print(f"[assemble] lipo={len(merge)} copy={len(arm)-len(merge)}; all Mach-O arm64+x86_64")
+    return {"merged": len(merge), "copied": len(arm)-len(merge)}
+
+if __name__ == "__main__":
+    assemble()
 '''
 
 
