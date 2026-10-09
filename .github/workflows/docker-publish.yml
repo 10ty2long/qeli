@@ -1,8 +1,8 @@
 name: docker-publish
 
 # Build the multi-arch qeli image (both roles, all deps) and publish it to GHCR
-# on every release tag, so `ghcr.io/<owner>/qeli:latest` always tracks the latest
-# release. Manual runs (workflow_dispatch) build from the selected branch/tag.
+# on release tags. Only the highest stable Git version may update `latest`.
+# Manual runs (workflow_dispatch) build from the selected branch/tag.
 #
 # Result: users never rebuild — `docker pull ghcr.io/litvinovtd/qeli:latest`.
 # The Dockerfile itself is version-agnostic (it builds whatever source is checked
@@ -19,6 +19,12 @@ permissions:
   packages: write           # push to GHCR with the automatic GITHUB_TOKEN
   id-token: write           # OIDC token for the signed build attestation (R-02)
   attestations: write       # record the attestation against this repo (R-02)
+
+# Serialize publication across refs; per-ref groups would still race on latest.
+# GitHub may replace a pending run; an executing publication is never cancelled.
+concurrency:
+  group: docker-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -54,7 +60,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Derive tags from the git ref: the semver version (from a v* tag) + `latest`.
+      # Keep version/SHA tags; latest requires the highest stable Git version.
       - id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
@@ -63,9 +69,9 @@ jobs:
           tags: |
             type=semver,pattern={{version}},enable=${{ steps.ref.outputs.release_tag }}
             type=sha,format=long
-            # `latest` only for a real release tag — never a pre-release (v1.2.3-rc1),
-            # so an RC can never clobber the tag users pull by default.
-            type=raw,value=latest,enable=${{ steps.ref.outputs.stable_release }}
+            # Old stable versions, branches and RCs cannot overwrite latest.
+            # Numeric comparison is independent of workflow queue ordering.
+            type=raw,value=latest,enable=${{ steps.ref.outputs.latest_release }}
 
       - id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7

@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v1 -->
+<!-- normative-sync: q34-publication-gates-v2 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -64,3 +64,54 @@ Q34IN_PROGRESS30/37DONE81.1percent7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEAS
 ## Evidence
 
 `q34-publication-gates-20261008`: SEALED 73 files / 1725534 bytes; manifest SHA256 `ce00677e40dae1fa6d7fee5067f2df5a2d5c5c8db5f3154c8c779411070df9cd`.
+
+## 9 October: F490 / Q34-F044 — prevent an old Docker release from replacing latest
+
+A real Git repository with `v0.8.2` and `v0.9.0` reproduces the defect: the
+baseline CLI emits `stable_release=true` for `v0.8.2`, and the workflow uses
+that flag for `latest`. Re-running an old stable version could roll back the channel.
+
+`docker_publish_ref.py` now emits a separate `latest_release` flag. Stable tags
+require a complete Git repository, the candidate tag in the fetched inventory,
+and no higher stable MAJOR/MINOR/PATCH version. Comparison is numeric; build
+metadata has equal precedence. Branches and RCs return false without querying
+Git; unrelated or invalid tags do not define the stable channel. Older stable
+releases retain version and SHA publication, without `latest`. Git failures,
+timeout, shallow checkout or a missing tag refuse publication before outputs
+and before login/build. Existing Cargo version / exact-commit CI admission
+remains separate and mandatory for release tags.
+
+The workflow uses a shared concurrency group across refs, with
+`cancel-in-progress: false` to preserve an executing run. Serialization alone
+would be insufficient because GitHub does not guarantee queue ordering;
+numeric version admission is also required. GitHub may replace a pending run
+when another arrives; publication of every queued version is not guaranteed.
+See [official concurrency rules](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency).
+Automatic metadata-action `latest` remains disabled; the explicit tag uses
+the new output. See [metadata-action](https://github.com/docker/metadata-action).
+
+Sixteen methods passed on Windows and the same sixteen on Linux: old/new tags,
+numeric order, RC/unrelated tags, equal build metadata precedence, branches
+without Git queries, missing tags/repositories, a real shallow clone, Git
+failure/timeout preserving outputs, and the actual CLI. Another 59 related
+release admission / CI / preflight / workflow gate methods passed on Windows.
+Official SHA-verified actionlint1.7.12 accepted all four workflows. Linux inputs
+and the full output were recovered and SHA checked; the owned fixture was
+removed after process/fd/mount guards using only an exact file list and
+nonrecursive deletion. The .11 service, PID777/845 and installed Qeli SHA
+were preserved; .10 was unused.
+
+Scope: this selects the highest fetched stable Git tag, not GHCR registry state.
+A newer tag blocks an older version from updating `latest` even before its build
+succeeds. Complete current fetching and retained stable tags are prerequisites;
+tag deletion/movement, external registry writers and executing old workflow
+revisions are not qualified. Old refs use their own workflow and do not acquire
+this fix retroactively. No push, hosted Actions, signing or multiarch build ran.
+Core/native artifacts and the existing OpenWrt source cut are unchanged;
+previous qualification is inherited, not newly executed.
+
+F490 is closed within this scope. Q34 IN_PROGRESS; 30/37 DONE (81.1%), seven
+sections remain. Q29 SIGKILL FAIL/ENONET, Q30/Q31, F459 braces OPEN, D06
+ACCEPTED_LIMITATION and USER_EXCLUDED are retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F490 evidence: `q34-docker-latest-20261009`; SEALED 31 files / 1049840 bytes; manifest SHA256 `61d93c90e2640e781acf6ef239b72ce1a0cce1fd5e3f5a7eafb8ba24816581d2`.

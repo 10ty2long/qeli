@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v181 -->
+<!-- normative-sync: full-system-audit-v182 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2520,3 +2520,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **9 октября, F488/Q34-F042:** [Постоянный Actions lint](../reports/AUDIT-Q34-WORKFLOW-LINT.md): новый CI gate проверяет все .yml/.yaml официальным SHA-закреплённым actionlint1.7.12. Все четыре baseline workflow уже корректны; закрыт пробел постоянного контроля. На каждой из Windows/Linux:11 unit+8 реальных сценариев PASS, включая отказ ошибочного env/нового yaml/подменённого бинарника. Временная .11 сохранена и удалена,777/845 сохранены. Ядро/native/source cut неизменны; hosted CI и остальные границы в отчёте. Q34 IN_PROGRESS;30/37 DONE81.1%,7 остаются. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября,F489/Q34-F043:** [MicroCom source binding](../reports/AUDIT-Q34-SOURCE-BINDING.md): совместимый pin0.11.2 сохраняет52 API и указывает тот же exact commit в DLL/nuspec; full76-file upstream SHA проверен, publisher-only исключение удалено.24 настоящих Windows/Linux graph pairs, baseline/fixed COM consumer12 assertions,187-file bundle regeneration, builds/publishes/conformance PASS. Более новые API-несовместимые кандидаты не применены. Границы и cleanup evidence в отчёте; native/qeli tree неизменны. Q34IN_PROGRESS30/37DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября, F490/Q34-F044:** [Docker latest](../reports/AUDIT-Q34-PUBLICATION-GATES.md): воспроизведён откат latest старым стабильным тегом; отдельный числовой допуск максимальной версии и общая concurrency group. 16 Windows +16 Linux методов, 59 связанных Windows методов и официальный lint четырёх workflow PASS. Входы/логи восстановлены, собственный Linux-каталог удалён, служба777/845 сохранена. Границы Git-tag inventory/очереди/старых refs и прочие обязательства в отчёте. Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

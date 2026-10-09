@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v1 -->
+<!-- normative-sync: q34-publication-gates-v2 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -67,3 +67,54 @@ Q34 IN_PROGRESS,30/37 DONE81,1%,осталось7. LOCAL_DEV_COMMIT;NO_PUSH_DEPL
 ## Evidence
 
 `q34-publication-gates-20261008`: SEALED 73 files / 1725534 bytes; manifest SHA256 `ce00677e40dae1fa6d7fee5067f2df5a2d5c5c8db5f3154c8c779411070df9cd`.
+
+## 9 октября: F490 / Q34-F044 — защита Docker latest от старого релиза
+
+На настоящем Git-репозитории с `v0.8.2` и `v0.9.0` воспроизведено:
+прежний CLI выдаёт `stable_release=true` для `v0.8.2`, а workflow использует
+этот флаг для `latest`. Повторный запуск старой версии мог откатить канал.
+
+`docker_publish_ref.py` теперь отдельно выдаёт `latest_release`. Для стабильного
+тега требуется полный Git-репозиторий, наличие самого тега и отсутствие более
+высокой стабильной версии в полученном списке тегов. Сравнение числовое по
+MAJOR/MINOR/PATCH; build metadata не меняет приоритет. RC и ветки получают false,
+не обращаясь к списку тегов; посторонние и некорректные теги его не определяют.
+Старый стабильный релиз сохраняет публикацию версии и SHA, но не `latest`.
+Отказ Git, timeout, shallow checkout или отсутствующий тег блокируют публикацию
+до записи outputs и до login/build. Прежний допуск Cargo version / exact-commit CI
+сохраняется отдельно: выбор `latest` его не заменяет.
+
+В workflow общая concurrency group сериализует публикации разных refs;
+`cancel-in-progress: false` сохраняет уже выполняющийся запуск. Одной
+сериализации недостаточно: GitHub не гарантирует порядок очереди, поэтому
+необходима и проверка максимальной версии. GitHub может отменить прежний
+ожидающий запуск при появлении следующего — сохранение всех ожидающих публикаций
+не гарантируется. См. [официальные правила concurrency](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency).
+Автоматический `latest` metadata-action остаётся выключен;
+явный тег использует новый флаг. См. [metadata-action](https://github.com/docker/metadata-action).
+
+Проверено 16 методов на Windows и те же 16 на Linux: старый/новый тег,
+числовое сравнение, RC/посторонние теги, равный приоритет build metadata,
+ветки без Git-запроса, отсутствующий тег/репозиторий, настоящий shallow clone,
+отказ/timeout с сохранением outputs и настоящий CLI. Ещё 59 связанных методов
+release admission / CI / preflight / workflow gate прошли на Windows.
+Официальный SHA-проверенный actionlint1.7.12 принял все четыре workflow.
+Linux-входы и полный лог восстановлены и проверены SHA; собственный каталог
+удалён после проверки процессов, файловых дескрипторов и mount points, только
+по точному списку файлов без рекурсивного удаления. Служба .11, PID777/845 и SHA
+установленного Qeli сохранены; .10 не использовалась.
+
+Граница: правило выбирает максимальный полученный стабильный Git-тег, а не
+опрашивает состояние GHCR. Более новый тег, даже до успешной сборки, запрещает
+старому менять `latest`. Требуются полный актуальный fetch и сохранение стабильных
+тегов; удаление/перемещение тегов, внешние записи в GHCR и восстановление старого
+workflow вне этого изменения не квалифицированы. Старые refs используют свой
+workflow и не получают исправление задним числом. Реальные push, hosted Actions,
+подписи и multiarch-сборка не выполнялись. Ядро, native артефакты и OpenWrt source
+cut неизменны; прежние свидетельства не являются новым прогоном.
+
+F490 закрыт в этих границах. Q34 IN_PROGRESS; 30/37 DONE (81,1%), 7 разделов
+остаются. Q29 SIGKILL FAIL/ENONET, Q30/Q31, F459 braces OPEN, D06
+ACCEPTED_LIMITATION и USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F490 evidence: `q34-docker-latest-20261009`; SEALED 31 files / 1049840 bytes; manifest SHA256 `61d93c90e2640e781acf6ef239b72ce1a0cce1fd5e3f5a7eafb8ba24816581d2`.
