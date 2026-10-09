@@ -39,11 +39,11 @@ jobs:
         id: ref
         run: python3 -B scripts/docker_publish_ref.py
 
-      - name: Admit release tag, Cargo version and exact-commit CI
+      - name: Admit release tag, runtime certification and exact-commit CI
         if: steps.ref.outputs.release_tag == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci
+        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci --require-certification
 
       - name: Validate native legal resources before Docker publication
         run: python3 scripts/native_licenses.py
