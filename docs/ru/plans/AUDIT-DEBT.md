@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v123 -->
+<!-- normative-sync: audit-debt-v124 -->
 
 Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1413,3 +1413,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **9 октября,F495/Q34-F049:** [Certification actual publisher](../reports/AUDIT-Q34-PUBLICATION-GATES.md): confirmed PASS при failed обязательном кейсе; оба release workflows теперь требуют --require-certification до DEB build/Docker login.132Windows+41Linux методов и semantic workflow lint PASS; own SHA fixture очищён,служба .11 сохранена. Без current Actions/OIDC/publication/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81,1%,7remain; historical limits сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября, F496/Q34-F050:** [Отказ упаковки без подписанта](../reports/AUDIT-Q34-PUBLICATION-GATES.md): подтверждённый unsigned archive/Done; build_app.sh теперь отказывает до native/publish и сохраняет прежние outputs. 57 Windows +8 Linux методов, Bash syntax и workflow lint PASS. Подписанты контролируемые; actual Mac signature/runtime не проверены. Own Linux fixture очищён, служба сохранена; удалена только SDK-копия с полной сверкой сохранённого ZIP. Q34 IN_PROGRESS,30/37 DONE81,1%,7remain; прочие ограничения сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября, F497–F498/Q34-F051–F052:** [Universal2 и retired resign](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён arm64 fallback при lipo failure/missing Intel; проверяется полный Mach-O graph и каждый output. Удалён неиспользуемый unchecked SSH-resign helper.58Windows/11Linux методов включая2actualLLVM PASS, workflow lint/docs PASS. Synthetic headers, без full payload/signature/Mac runtime; служба сохранена, own root очищён.Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

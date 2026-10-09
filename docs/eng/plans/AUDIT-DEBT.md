@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v123 -->
+<!-- normative-sync: audit-debt-v124 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1284,3 +1284,5 @@ physical exclusions are not PASS.
 **9 October,F495/Q34-F049:** [Actual publisher certification](../reports/AUDIT-Q34-PUBLICATION-GATES.md): baseline admitted a failed required case; both release workflows now require --require-certification before DEB build/Docker login.132Windows+41Linux methods and semantic workflow lint PASS; own SHA fixture cleaned,original .11 service retained.No current Actions/OIDC/publication/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 October, F496/Q34-F050:** [Refuse packaging without a signer](../reports/AUDIT-Q34-PUBLICATION-GATES.md): confirmed unsigned archive/Done; build_app.sh now refuses before native/publish and retains old outputs.57 Windows +8 Linux methods,Bash syntax and workflow lint PASS. Signers controlled; actual Mac signature/runtime not tested. Own Linux fixture cleaned,service retained; only SDK copy removed after complete retained-ZIP comparison.Q34 IN_PROGRESS,30/37DONE81.1%,7remain; other limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October, F497–F498/Q34-F051–F052:** [Universal2 and retired resign](../reports/AUDIT-Q34-PUBLICATION-GATES.md): removed arm64 fallback on lipo failure/missing Intel; full Mach-O graph and every output admitted. Retired unused unchecked SSH-resign helper.58Windows/11Linux methods including2actualLLVM PASS,workflow lint/docs PASS. Synthetic headers,no full payload/signature/Mac runtime; originalservice retained,ownroot cleaned.Q34IN_PROGRESS30/37DONE81.1%,7remain;previous limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

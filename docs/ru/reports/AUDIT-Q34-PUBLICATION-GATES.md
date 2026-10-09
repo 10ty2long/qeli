@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v5 -->
+<!-- normative-sync: q34-publication-gates-v6 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -263,3 +263,46 @@ bookkeeping; добавлен98 scoped supplement. Q34 IN_PROGRESS:30/37 DONE81,
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F496 evidence: q34-app-signer-20261009; SEALED 35 files / 1203484 bytes; manifest SHA256 74dd6ad767b38be09ef2513e689c22c42bf4d37754e270684e7d6f30b85e5ea4.
+
+
+## 9 октября: F497–F498 / Q34-F051–F052 — состав universal2 и retired resign helper
+
+REMOTE_PY в build_mac_universal.py при ошибке lipo копировал arm64-файл.
+Отсутствующий x64-партнёр тоже не блокировал сборку. Вывод file для apphost/core
+лишь печатался, не проверяя две архитектуры. На точном старом assembly body
+9 методов дали 7 ожидаемых failures; адаптированы только fixed workspace/tool
+assignments для собственных fixtures, filesystem настоящий, subprocess контролируемый.
+
+Теперь полный Mach-O input graph допускается до замены bundle. Требуются apphost
+и canonical universal libqeli.dylib; thin arm64 input требует соответствующий thin
+x86_64 partner. Проверка LLVM archs отвергает неверные/неполные/неоднозначные slices,
+Intel-only Mach-O не пропускаются, symlink inputs отклоняются. Lipo failure/timeout
+не заменяется arm64-copy; каждый выходной Mach-O обязан содержать ровно arm64+x86_64.
+Bad inputs сохраняют прежний bundle. Если сама сборка ломается после допуска,
+partial bundle может остаться; atomic replacement/concurrency этим не закрыты.
+
+Удалён build_mac_dist_resign.py: действующих nonarchive production callers нет.
+Он подключался по SSH при импорте, использовал fixed remote workspace, не проверял
+exit status и скачивал результат без SHA gate. Обе точные старые signing f-string
+commands с controlled false вместо rcodesign и настоящим Bash/tail вернули rc0
+при ошибке подписанта. Старый модуль не импортировался и в лабе не исполнялся.
+Перепаковка направлена в текущий build_mac_universal.py с проверяемой подписью/
+загрузкой; migration описана в README, исторические archive mentions сохранены.
+
+58 Windows методов PASS:9assembly/38native-recipes/11workflow; pinned semantic
+actionlint принял все4workflow. Linux .11:9controlled assembly +2actual LLVM19 tests
+PASS. Настоящий lipo создал universal2 из минимальных Mach-O headers, подтвердил
+архитектуры и отказал неверному Intel-partner, сохранив marker старого bundle.
+Это синтетические object headers: full .NET payload, реальная подпись, запуск на
+Mac/Intel и installer не квалифицированы. Assembly suite включён в CI.
+
+Два committed source inputs плюс LLVM harness и TAR проверены SHA; четыре known
+files/own root удалены после exact-set/process/fd/mount guards. Service777/845 и
+CLI75bc сохранены,.10unused. Initial staged-deletion test inventory error и локальная
+ошибка TAR append до SSH сохранены; исправлены как harness failures.
+Native14/digest/qeli tree/protected/OpenWrt cut неизменны; prior execution inherited.
+41cases98prior supplements сохранены кроме source_digest bookkeeping; добавлен99.
+Q34IN_PROGRESS,30/37DONE81,1%,7remain; прежние open/accepted/USER_EXCLUDED сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F497-F498 evidence: q34-mac-universal-20261009; SEALED 43 files / 1267910 bytes; manifest SHA256 b9629520955cf7076a8d2d1c9db288a8b397af85a93132fe654e83844588ef5f.
