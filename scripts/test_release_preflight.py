@@ -188,5 +188,44 @@ class PreflightTests(unittest.TestCase):
         connection.close.assert_called_once()
 
 
+    def test_hidden_flags_refuse_before_external_queries(self):
+        for flag in ("assume-unchanged", "skip-worktree"):
+            with self.subTest(flag=flag):
+                self.git("update-index", "--" + flag, "--", "source")
+                try:
+                    (self.root / "source").write_text("hidden edit")
+                    self.assertEqual(self.git("status", "--porcelain"), "")
+                    rc, text, events, connect, _ = self.execute(credential="fixture-only")
+                    self.assertEqual(rc, 1, text)
+                    self.assertIn("assume-unchanged/skip-worktree", text)
+                    self.assertEqual(events, [])
+                    connect.assert_not_called()
+                finally:
+                    self.git("update-index", "--no-" + flag, "--", "source")
+                    (self.root / "source").write_text("original")
+
+    def test_flags_added_during_ci_refuse_before_other_gates(self):
+        for flag in ("assume-unchanged", "skip-worktree"):
+            with self.subTest(flag=flag):
+                try:
+                    rc, text, events, _, _ = self.execute(
+                        change=lambda: self.git("update-index", "--" + flag, "--", "source"))
+                    self.assertEqual(rc, 1, text)
+                    self.assertEqual(events, ["ci"])
+                finally:
+                    self.git("update-index", "--no-" + flag, "--", "source")
+
+    def test_flags_added_during_certification_prevent_pass(self):
+        for flag in ("assume-unchanged", "skip-worktree"):
+            with self.subTest(flag=flag):
+                try:
+                    rc, text, _, _, _ = self.execute(phase="certification",
+                        change=lambda: self.git("update-index", "--" + flag, "--", "source"))
+                    self.assertEqual(rc, 1, text)
+                    self.assertNotIn("PASS — safe to release", text)
+                finally:
+                    self.git("update-index", "--no-" + flag, "--", "source")
+
+
 if __name__ == "__main__":
     unittest.main()
