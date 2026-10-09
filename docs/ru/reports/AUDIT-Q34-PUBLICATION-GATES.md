@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v2 -->
+<!-- normative-sync: q34-publication-gates-v3 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -118,3 +118,51 @@ F490 закрыт в этих границах. Q34 IN_PROGRESS; 30/37 DONE (81,
 ACCEPTED_LIMITATION и USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F490 evidence: `q34-docker-latest-20261009`; SEALED 31 files / 1049840 bytes; manifest SHA256 `61d93c90e2640e781acf6ef239b72ce1a0cce1fd5e3f5a7eafb8ba24816581d2`.
+
+
+## 9 октября: F494 / Q34-F048 — единый допуск исходников release
+
+Реальный Git воспроизвёл пропуск в старых preflight и certification:
+assume-unchanged и skip-worktree скрывали изменение tracked-файла от status.
+Preflight допускал прежний HEAD, certification возвращал digest committed tree,
+хотя рабочий файл уже отличался. Проверка release tag запрещала эти флаги.
+
+Теперь release_source.py используется всеми тремя входами. До внешних запросов
+проверяются существующий commit, индексные флаги и чистота дерева с NUL-разделением
+Git paths. Любой assume-unchanged/skip-worktree блокирует допуск, даже без изменения
+файла. Preflight повторяет проверку между этапами и после certification.
+Certification читает ls-tree по принятому commit и повторно проверяет identity:
+смена HEAD, новый скрывающий флаг или видимое изменение блокируют результат.
+Git queries ограничены 30 секундами; отсутствие Git, timeout и ненулевой exit
+превращаются в отказ certification, а не в успешную проверку.
+
+Для штатного run_ipv6_release_matrix.py --record разрешены новые untracked-файлы
+только внутри release/certification/, поскольку этот каталог исключён из digest.
+Изменение уже tracked evidence требует commit; untracked source вне этого каталога
+блокирует certification. Игнорируемые build caches разрешены. Preflight и release
+tag требуют чистое дерево без новых untracked evidence: сначала зафиксируй отчёт,
+затем запускай release gate. Пользовательский --evidence вне certification также
+нужно зафиксировать либо разместить в ignored output. Алгоритм digest для чистого
+committed source сохранён; скрытые изменения manifest/evidence тоже отклоняются.
+Проверка не защищает от привилегированного параллельного изменения ignored caches.
+
+165 Windows методов и 33 Linux метода PASS: реальные Git fixtures, hidden flags,
+смена HEAD, поздние флаги, query errors, новые evidence, tracked evidence edits,
+ignored caches, orchestration и прежние tag/CI/router/OpenWrt/recipe contracts.
+Существующие CI suites уже включают новые regression tests; workflow не менялся.
+Внешние CI/lab build gates в orchestration контролируемые; настоящая CI-публикация,
+SDK/router compile и runtime VPN этим прогоном не заявлены.
+
+Linux source archive проверен SHA до исполнения; 16 известных inputs удалены
+после SHA/process/fd/mount guards без recursive deletion. Initial cleanup generator
+получил SyntaxError до исполнения из-за широкой замены FILES; helper encoding typo
+отказал до SSH. Оба отказа сохранены, исправленная очистка завершена. Служба .11
+777/845 и /usr/bin/qeli75bc сохранены; .10 не использовалась. Native14/source digest/
+qeli tree/protected inputs неизменны; прежние execution proofs унаследованы без
+Rust/APK/Maven rebuild. 41 certification cases и 95 прежних supplements сохранены
+кроме source_digest bookkeeping; добавлен supplement96 этой ограниченной проверки.
+Q34 IN_PROGRESS,30/37 DONE81,1%,осталось7; F459/Q29 SIGKILL FAIL-ENONET/Q30/Q31,
+D06accepted,USER_EXCLUDED и expected release publisher OPEN сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F494 evidence: q34-release-source-trust-20261009; SEALED 51 files / 1287941 bytes; manifest SHA256 2c7e1d8ea5e65a74c96f6db525eed2fe05310a1ba8febdafc41d908a11fd39dc.

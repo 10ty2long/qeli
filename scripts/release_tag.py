@@ -10,6 +10,7 @@ import tomllib
 from docker_publish_ref import classify
 from native_repro import DEFAULT_RUST_TOOLCHAIN
 from release_ci_gate import check_release_ci
+from release_source import source_identity
 
 ROOT = Path(__file__).resolve().parent.parent
 OID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
@@ -25,12 +26,10 @@ def git(root, *args):
 
 def admit_tag(root, tag):
     classify("tag", tag)
-    if git(root, "status", "--porcelain", "--untracked-files=all"):
-        raise ValueError("Release publication requires a clean committed source")
-    flags = git(root, "ls-files", "-v").splitlines()
-    if any(line and (line[0].islower() or line[0] == "S") for line in flags):
-        raise ValueError("Release source has assume-unchanged/skip-worktree Git flags")
-    commit = git(root, "rev-parse", "--verify", "HEAD^{commit}")
+    try:
+        commit = source_identity(root)
+    except RuntimeError as error:
+        raise ValueError(str(error)) from error
     tagged = git(root, "rev-parse", "--verify", "refs/tags/" + tag + "^{commit}")
     if not OID.fullmatch(commit) or tagged != commit:
         raise ValueError("Release tag does not identify the checked-out commit")

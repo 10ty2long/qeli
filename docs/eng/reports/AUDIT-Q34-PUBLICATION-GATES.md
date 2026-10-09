@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v2 -->
+<!-- normative-sync: q34-publication-gates-v3 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -115,3 +115,51 @@ sections remain. Q29 SIGKILL FAIL/ENONET, Q30/Q31, F459 braces OPEN, D06
 ACCEPTED_LIMITATION and USER_EXCLUDED are retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F490 evidence: `q34-docker-latest-20261009`; SEALED 31 files / 1049840 bytes; manifest SHA256 `61d93c90e2640e781acf6ef239b72ce1a0cce1fd5e3f5a7eafb8ba24816581d2`.
+
+
+## 9 October: F494 / Q34-F048 — common release source admission
+
+Real Git reproduced a bypass in baseline preflight and certification:
+assume-unchanged and skip-worktree hid a tracked worktree edit from status.
+Preflight admitted the old HEAD and certification returned the committed-tree
+digest although the worktree file differed. Release tag admission already
+rejected these flags.
+
+All three entry points now use release_source.py. Existing commit, index trust
+flags and clean source are checked before external queries, using NUL-separated
+Git paths. Either flag refuses admission even without an edit. Preflight checks
+again between phases and after certification. Certification queries ls-tree for
+the admitted commit and checks identity again: HEAD drift, a newly hidden flag
+or visible source edit refuses the result. Git queries have a 30-second limit;
+missing Git, timeout and nonzero exit produce a certification refusal.
+
+New untracked files are allowed only within release/certification/ for the normal
+run_ipv6_release_matrix.py --record writer; that subtree is excluded from digest.
+Tracked evidence edits require a commit; untracked source outside that subtree
+refuses certification. Ignored build caches remain allowed. Preflight and tag
+admission require no new untracked evidence: commit reports before these gates.
+A custom --evidence outside certification must be committed or kept in ignored
+output. Clean committed-source digest serialization is unchanged; hidden
+manifest/evidence edits also refuse. Privileged concurrent ignored-cache writers
+remain outside the guard.
+
+165 Windows and 33 Linux methods PASS: actual Git fixtures, hidden edits/flags,
+HEAD drift, late flags, query failures, new evidence, tracked evidence changes,
+ignored caches, orchestration and prior tag/CI/router/OpenWrt/recipe contracts.
+Existing CI suites already cover the new tests; workflows unchanged. External
+CI/lab builds in orchestration are controlled; no actual current-source CI
+publication, SDK/router compilation or runtime VPN qualification is claimed.
+
+The Linux source archive was SHA-checked before execution; 16 known inputs were
+removed after SHA/process/fd/mount guards without recursive deletion. The initial
+cleanup generator failed with SyntaxError before execution due to a broad FILES
+replacement; a helper encoding typo refused before SSH. Both failures retained,
+corrected cleanup completed. Original .11 service777/845 and /usr/bin/qeli75bc
+retained; .10 unused. Native14/source digest/qeli tree/protected inputs unchanged,
+prior execution proofs inherited without Rust/APK/Maven rebuild.41 certification
+cases and95 prior supplements preserved modulo source_digest bookkeeping;
+supplement96 records this scoped check. Q34 IN_PROGRESS,30/37 DONE81.1%,7remain;
+F459/Q29 SIGKILL FAIL-ENONET/Q30/Q31,D06accepted,USER_EXCLUDED and expected release
+publisher OPEN retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F494 evidence: q34-release-source-trust-20261009; SEALED 51 files / 1287941 bytes; manifest SHA256 2c7e1d8ea5e65a74c96f6db525eed2fe05310a1ba8febdafc41d908a11fd39dc.

@@ -43,7 +43,6 @@ Environment:
                           accept a host key that is not in known_hosts (off by default)
 """
 import os
-import re
 import subprocess
 import sys
 
@@ -55,20 +54,7 @@ from release_ci_gate import check_release_ci
 from openwrt_source_gate import check_openwrt_source
 
 
-def source_identity(root):
-    """Require one clean Git commit; ignored caches are outside this admission."""
-    def query(*args):
-        result = subprocess.run(["git", *args], cwd=root, capture_output=True,
-                                text=True, encoding="utf-8", errors="replace", timeout=30)
-        if result.returncode:
-            raise RuntimeError(result.stderr.strip() or "Git identity query failed")
-        return result.stdout.strip()
-    commit = query("rev-parse", "HEAD^{commit}")
-    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
-        raise RuntimeError("invalid preflight commit identity")
-    if query("status", "--porcelain", "--untracked-files=all"):
-        raise RuntimeError("release preflight requires a clean committed working tree")
-    return commit
+from release_source import source_identity
 
 
 def verdict(failures):
