@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v5 -->
+<!-- normative-sync: q34-publication-gates-v6 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -254,3 +254,46 @@ Previous open/accepted/excluded items are not closed by this change.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F496 evidence: q34-app-signer-20261009; SEALED 35 files / 1203484 bytes; manifest SHA256 74dd6ad767b38be09ef2513e689c22c42bf4d37754e270684e7d6f30b85e5ea4.
+
+
+## 9 October: F497–F498 / Q34-F051–F052 — universal2 graph and retired resign helper
+
+REMOTE_PY in build_mac_universal.py copied arm64 after lipo failure or a missing
+x64 partner. Apphost/core file output was printed without enforcing both slices.
+The exact old assembly body produced7expected failures in9methods; only fixed
+workspace/tool assignments were adapted to owned fixtures. Filesystem is real,
+subprocess controlled.
+
+The complete Mach-O input graph is now admitted before bundle replacement.
+Apphost and canonical universal libqeli.dylib are mandatory; thin arm64 inputs
+require corresponding thin x86_64 partners. LLVM archs rejects wrong,incomplete
+or ambiguous slices. Intel-only Mach-O and symlink inputs refuse. Lipo failure/
+timeout never falls back to arm64-copy; every output Mach-O must contain exactly
+arm64+x86_64. Bad input retains the old bundle. A later assembly failure can leave
+a partial bundle; atomic replacement/concurrent builds remain outside this change.
+
+Removed build_mac_dist_resign.py: no current nonarchive production caller exists.
+It connected via SSH on import, used a fixed workspace, ignored exit status and
+downloaded output without SHA admission. Both exact old signing f-string commands,
+using controlled false instead of rcodesign and actual Bash/tail, returned rc0
+despite signer failure. No old module import or lab execution. README directs
+repacking through current build_mac_universal.py with checked signing/download;
+historical archive mentions retained.
+
+58Windows methods PASS:9assembly/38native-recipes/11workflow; pinned semantic
+actionlint accepts all4workflows. Linux .11:9controlled assembly +2actual LLVM19
+tests PASS. Genuine lipo produced universal2 from minimal Mach-O headers,admitted
+both architectures and refused the wrong Intel partner,retaining the old marker.
+These are synthetic object headers: no full .NET payload,actual signature,Mac/
+Intel launch or installer qualification. Assembly suite added to CI.
+
+Two committed inputs plus LLVM harness and TAR SHA-checked;4known files/own root
+removed after exact-set/process/fd/mount guards. Service777/845/CLI75bc unchanged,
+.10unused. Initial staged-deletion inventory error and local TAR append error
+before SSH retained and corrected as harness failures. Native14/digest/qeli tree/
+protected/OpenWrt cut unchanged; prior execution inherited.41cases98prior
+supplements preserved modulo source_digest bookkeeping; append99. Q34IN_PROGRESS,
+30/37DONE81.1%,7remain; previous open/accepted/USER_EXCLUDED retained.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F497-F498 evidence: q34-mac-universal-20261009; SEALED 43 files / 1267910 bytes; manifest SHA256 b9629520955cf7076a8d2d1c9db288a8b397af85a93132fe654e83844588ef5f.

@@ -52,6 +52,13 @@ qeli-mac/
 └── ../qeli-shared/    production lifecycle/model + отдельный QeliConformance runner
 ```
 
+Universal2-архив из подготовленных osx-arm64/osx-x64 payloads собирает
+python scripts/build_mac_universal.py (из корня checkout). Сборщик проверяет
+arm64+x86_64 в каждом Mach-O: отсутствующий Intel-партнёр, ошибка lipo
+или неполный результат останавливают упаковку. Canonical libqeli.dylib
+должна уже содержать обе архитектуры. Старый build_mac_dist_resign.py удалён;
+для обновления native-ядра пересобери universal-архив из актуальных payloads.
+
 ## Сборка (в лабе — Linux, либо на Mac)
 
 Нужен полный checkout с корневыми `global.json`, `Directory.Build.props`,
