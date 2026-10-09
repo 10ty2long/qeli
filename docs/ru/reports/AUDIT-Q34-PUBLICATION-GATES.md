@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v3 -->
+<!-- normative-sync: q34-publication-gates-v4 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -166,3 +166,56 @@ D06accepted,USER_EXCLUDED и expected release publisher OPEN сохранены.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F494 evidence: q34-release-source-trust-20261009; SEALED 51 files / 1287941 bytes; manifest SHA256 2c7e1d8ea5e65a74c96f6db525eed2fe05310a1ba8febdafc41d908a11fd39dc.
+
+
+## 9 октября: F495 / Q34-F049 — certification в actual release workflows
+
+Release DEB и release-tag Docker запускали release_tag.py --require-ci,
+но не проверяли certification manifest. CI запускал unit-тесты валидатора,
+а не admission самого manifest. На настоящем приватном Git fixture с тегом
+v0.8.2 и committed failed обязательным linux.outer4.inner4.tcp.full старая
+точная publisher-команда при контролируемом CI success вернула PASS/rc0 и
+записала GITHUB_OUTPUT. Сам валидатор в этом же fixture отклонил failed-кейс.
+Это подтверждённый пропуск, без настоящей публикации.
+
+Оба publisher entrypoints теперь явно передают --require-certification вместе
+с --require-ci. После tag/version/source admission общий validator проверяет
+release/certification/VERSION.json по текущему source digest и обязательным
+runtime case statuses. Missing, malformed, stale и failed evidence блокируют
+допуск до CI query, DEB compile, Docker login/build/push и записи outputs.
+После чтения manifest повторяется source/tag identity; HEAD drift или изменение
+tracked manifest также блокируют допуск. Ошибки I/O/CertificationError дают rc1.
+Успех требует одновременно certification и CI на exact commit.
+
+Недоступные физические случаи сохраняют advisory-статус по действующей политике;
+explicit failed physical case блокирует release. USER_EXCLUDED устройства не
+объявляются проверенными. Branch/SHA Docker publication сохраняет свой отдельный
+контракт: новый gate обязателен для release tags. Обычный read-only вызов
+release_tag.py без --require-certification проверяет metadata, не заменяет
+полный release admission. Для ручного допуска:
+python scripts/release_tag.py --tag vVERSION --require-ci --require-certification
+Заменить VERSION на committed Cargo version. Полный release_preflight.py остаётся
+проверкой дополнительных SDK/router/source gates, а не заменяется этой командой.
+
+132 Windows метода и 41 Linux метод PASS. Проверены настоящий offline CLI,
+Git tags и committed JSON manifests, failed automated/physical кейсы, advisory
+unavailable, missing/stale/malformed manifests, I/O refusal, смена HEAD/manifest,
+отсутствие новых outputs при отказе, positive metadata и CI refusal.
+CI success в orchestration контролируемый; реальные GH query/build/upload/OIDC
+в этих тестах не исполнялись. Семантический pinned actionlint принял все четыре
+workflow; существующий CI suite уже включает новые тесты. Два workflows явно
+проверены на ordering gate перед compilation/login.
+
+В .11 выполнены только приватные Python/Git fixtures. Восемь source inputs и
+их archive проверены SHA; девять файлов удалены без recursive deletion после
+process/fd/mount guards. Original service777/845 и CLI75bc сохранены, .10 не
+использовалась. Native14/qeli tree/protected inputs/OpenWrt source cut неизменны;
+прежняя квалификация наследуется без Rust/APK/Maven rebuild.41 cases и96 прежних
+certification supplements сохранены кроме source_digest bookkeeping; добавлен97.
+Это не новый PASS actual release/OIDC/signatures/current-source Actions и не
+перезапуск всей runtime matrix. F459 по [первичному advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) всё ещё без published
+patch, не подавлен. Q34 IN_PROGRESS,30/37DONE81,1%,осталось7;Q29 SIGKILL FAIL-ENONET,
+Q30/Q31,D06accepted,USER_EXCLUDED и прочие open пункты сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F495 evidence: q34-publisher-certification-20261009; SEALED 42 files / 1211464 bytes; manifest SHA256 d11345555e523dc6296de351daf95a0a2d8b942c4d672527a7cbd43fd5c80837.

@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v3 -->
+<!-- normative-sync: q34-publication-gates-v4 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -163,3 +163,52 @@ F459/Q29 SIGKILL FAIL-ENONET/Q30/Q31,D06accepted,USER_EXCLUDED and expected rele
 publisher OPEN retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F494 evidence: q34-release-source-trust-20261009; SEALED 51 files / 1287941 bytes; manifest SHA256 2c7e1d8ea5e65a74c96f6db525eed2fe05310a1ba8febdafc41d908a11fd39dc.
+
+
+## 9 October: F495 / Q34-F049 — certification in actual release workflows
+
+DEB and release-tag Docker publishers called release_tag.py --require-ci without
+validating the certification manifest. CI ran validator unit tests, not manifest
+admission. The exact baseline publisher command returned PASS/rc0 and wrote
+GITHUB_OUTPUT with a real private Git tag v0.8.2 and a committed failed mandatory
+linux.outer4.inner4.tcp.full result under controlled successful CI. The validator
+rejected the same manifest. This reproduces the bypass without publication.
+
+Both publisher entrypoints now pass --require-certification with --require-ci.
+After tag/version/source admission the shared validator checks
+release/certification/VERSION.json against current source digest and mandatory
+runtime case statuses. Missing, malformed, stale and failed evidence refuse before
+CI queries, DEB compilation, Docker login/build/push or writing outputs. Source/tag
+identity is checked again after reading evidence; HEAD drift and tracked manifest
+changes also refuse. I/O and CertificationError failures return rc1. Admission
+requires both certification and successful CI for the exact commit.
+
+Unavailable physical cases remain advisory under existing policy; an explicit
+failed physical result blocks release. USER_EXCLUDED devices are not claimed
+qualified. Branch/SHA Docker publication retains its separate policy; the new gate
+is mandatory for release tags. A normal read-only release_tag.py call without
+--require-certification checks metadata, not full release admission. Manual gate:
+python scripts/release_tag.py --tag vVERSION --require-ci --require-certification
+Replace VERSION with committed Cargo version. Full release_preflight.py still
+checks additional SDK/router/source gates and is not replaced by this command.
+
+132 Windows and41 Linux methods PASS. Actual offline CLI, Git tags and committed
+JSON manifests cover failed automated/physical results, unavailable advisory,
+missing/stale/malformed evidence, I/O refusal, HEAD/manifest drift, retained outputs
+on refusal, positive metadata and CI refusal. Successful CI responses are
+controlled; no actual GH query/build/upload/OIDC in these tests. Pinned semantic
+actionlint accepts all4workflows; existing CI suite includes the new tests.
+Both workflows explicitly verify admission precedes compilation/login.
+
+Only private Python/Git fixtures ran on .11. Eight source inputs plus archive
+were SHA-checked; nine known files removed nonrecursively after process/fd/mount
+guards. Original777/845 service and CLI75bc retained; .10unused. Native14/qeli tree/
+protected inputs/OpenWrt source cut unchanged; prior qualification inherited
+without Rust/APK/Maven rebuild.41 cases and96 prior supplements preserved modulo
+source_digest bookkeeping; append97. This is not newly qualified actual release/
+OIDC/signatures/current-source Actions or a rerun of the full runtime matrix.
+The [primary advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) still lists no published F459 patch; no suppression.
+Q34 IN_PROGRESS30/37DONE81.1%,7remain;Q29SIGKILLFAIL-ENONET,Q30/Q31,D06accepted,
+USER_EXCLUDED and other open items retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F495 evidence: q34-publisher-certification-20261009; SEALED 42 files / 1211464 bytes; manifest SHA256 d11345555e523dc6296de351daf95a0a2d8b942c4d672527a7cbd43fd5c80837.

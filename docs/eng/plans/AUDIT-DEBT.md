@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v121 -->
+<!-- normative-sync: audit-debt-v122 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1280,3 +1280,5 @@ physical exclusions are not PASS.
 **9 October,F493/Q34-F047:** [Explicit E2E APK](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): four installers require source/size/SHA/native-bound BUILD.json; private transfer,remoteSHA/ADB status and refusal before canonical server restoration.89Windows+18Linux methods,5real transfer/refusal cases with controlledADB,lint/docs PASS; own inputs SHA-recovered/cleaned,original777/845 retained. No real emulator/VPN/release runtime. Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 October,F494/Q34-F048:** [Common release source admission](../reports/AUDIT-Q34-PUBLICATION-GATES.md): preflight/certification/tag reject hidden Git flags; certification pins and rechecks commit. New certification evidence compatibility retained.165Windows+33Linux methods PASS,own fixture removed,original .11 service retained;no CI dispatch/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October,F495/Q34-F049:** [Actual publisher certification](../reports/AUDIT-Q34-PUBLICATION-GATES.md): baseline admitted a failed required case; both release workflows now require --require-certification before DEB build/Docker login.132Windows+41Linux methods and semantic workflow lint PASS; own SHA fixture cleaned,original .11 service retained.No current Actions/OIDC/publication/Rust/APK rebuild.Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
