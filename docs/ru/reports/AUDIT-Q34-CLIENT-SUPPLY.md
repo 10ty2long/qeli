@@ -1,6 +1,6 @@
 # Q34: зависимости сборки клиентов и подписи Windows
 
-<!-- normative-sync: q34-client-supply-v2 -->
+<!-- normative-sync: q34-client-supply-v3 -->
 
 8 октября 2026. F455–F458 / Q34-F009–F012 закрыты в указанном ниже объёме. F459 / Q34-F013 остаётся OPEN. Q34 IN_PROGRESS; полный аудит 30/37 DONE (81.1%), осталось7. Только локальные изменения; без push, deployment и release.
 
@@ -75,3 +75,65 @@ Q34 IN_PROGRESS,30/37 DONE81,1%,7 разделов остаются;Q29 SIGKILL 
 D06 ACCEPTED_LIMITATION и USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F491 evidence: `q34-apk-builder-20261009`; SEALED 36 files / 1205550 bytes; manifest SHA256 `bf6a65063b2ee57f87813097cb2601d15d075dffa25ebf0a9007139abcaa8bf9`.
+
+
+## 9 октября: F492 / Q34-F046 — отдельный полный snapshot для каждой APK-сборки
+
+Закрыт дефект общего source workspace сборщика: разные вызовы записывали файлы
+в `/root/android-project` и `/root/qeli-src`, поэтому могли смешать исходники и
+выходы. Старый фильтр расширений также пропускал 11 tracked-файлов Android,
+включая Gradle lockfiles, Java instrumentation receiver и legal inputs; conformance
+помещался внутрь Android project вместо соседнего каталога.
+
+Теперь сборщик до SSH требует чистый committed Git tree без скрытых trust flags,
+проверяет native provenance и создаёт полный Git snapshot `qeli`, `qeli-android`,
+`conformance`, `LICENSE`, `LICENSING.md`. Он сверяет список и Git blob каждого
+члена архива, отказывает symlink/unsafe members и export-преобразованиям. На .11
+каждый вызов получает собственный `/var/tmp/qeli-apk-build.XXXXXXXX`, свой
+Cargo target и Gradle project state. Полный список SHA проверяется после передачи
+и после сборки. Native JNI directory задаётся явно. APK и `BUILD.json` сохраняются
+в `qeli-android/dist/<commit>-<run>/`, без перезаписи результатов другого вызова.
+Неуспешный remote checkout сохраняется для диагностики; автоматической очистки нет.
+
+CLI: debug по умолчанию, `--release` для release. По умолчанию Gradle offline;
+`--online` явно разрешает недостающие зависимости при прежних strict locks/checksums.
+`--gradle-user-home` и `--android-sdk` принимают абсолютные пути на удалённой лабе.
+`--signing-properties` также remote path и допустим только с `--release`;
+legacy default `/root/android-project/keystore.properties` остаётся только источником
+ключевых параметров. Java Properties корректно разбирает escapes и относительный
+`storeFile`; приватная копия с umask077 удаляется в finally. `apksigner` выбирается
+из заданного SDK. Это проверено synthetic fixtures, без production release signing.
+
+Реальный snapshot:1046 файлов,25896960 bytes, artifact source commit
+`40c644229eb3f91429d6ead272e2428e2ebd320a`. Проверенный builder commit
+`82d31cb3bd8567c386236f45668f7f0c6159a890` использует те же выбранные исходники.
+Два настоящих каталога были развёрнуты независимо; изменение settings во втором
+вызвало SHA-отказ, первый собрал реальный debug APK. Второй конкурентный compiler
+не запускался. Свежий host Rust JNI собран за97,89s; финальная проверка использовала
+его cache. JVM: 201 tests,0 failures/errors,0 skipped. APK SHA256
+`1525e14c4098bca83e3f1557f29c5c9a1d1c85878042c1ea90ef97815b4027ee`; обе JNI совпали с snapshot, упаковка лицензий
+прошла полноценный существующий gate; debug-подпись действительна.
+
+71 Windows и22 финальных Linux regression methods PASS; официальный actionlint
+проверил4workflow, docs724Markdown/9checks PASS. Сохранены первые отказы: отсутствующий
+AGP в offline-cache, неполная SDK-копия harness и ENOSPC при локальном дубликате
+Maven-cache. Locks/verification не отключались. Повторный APK использовал явно
+разрешённый online-режим, приватные cache/wrapper/SDK из проверенных источников;
+нужные Build Tools36.0/licenses скопированы read-only с существующей лабы;
+Gradle скачал Platform Tools37.0.1 только в приватный SDK. Последовательное SFTP-чтение
+host JNI остановлено уже после успешного build/publication; выход восстановлен через
+ограниченный prefetch16 с независимой SHA-проверкой, без повторной компиляции.
+Неполный новый архив удалён; освобождены только прежние собственные regenerable
+publish-каталоги после проверки2619SHA и сохранности уникальных Qeli-файлов.
+
+APK, host JNI, JUnit XML и все сохраняемые исходники/логи восстановлены с SHA,
+оба own remote roots удалены после process/fd/mount guards. Compiler/dependency/SDK
+cache исключены из recovery archive как воспроизводимые; их происхождение и hashes
+зафиксированы отдельно. Служба .11,PID777/845, установленный CLI75bc сохранены;
+.10 не использовалась. Ядро,14 native SHA,protected files/OpenWrt cut неизменны.
+Нет установки APK, emulator/VPN runtime, release/expected-publisher qualification
+или hosted Actions. Ожидаемый release-издатель и F459 braces OPEN остаются.
+Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются;Q29 SIGKILL FAIL/ENONET,Q30/Q31,
+D06 ACCEPTED_LIMITATION,USER_EXCLUDED сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F492 evidence: `q34-apk-snapshot-20261009`; SEALED 127 files / 180541943 bytes; manifest SHA256 `5db226ad94b5c7e764973618383df4955b4b845abd36254b1d9d544907ee3f28`.
