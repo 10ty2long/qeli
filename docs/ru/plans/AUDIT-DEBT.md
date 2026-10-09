@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v118 -->
+<!-- normative-sync: audit-debt-v119 -->
 
 Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1403,3 +1403,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **9 октября, F490/Q34-F044:** [Docker latest](../reports/AUDIT-Q34-PUBLICATION-GATES.md): воспроизведён откат latest старым стабильным тегом; отдельный числовой допуск максимальной версии и общая concurrency group. 16 Windows +16 Linux методов, 59 связанных Windows методов и официальный lint четырёх workflow PASS. Входы/логи восстановлены, собственный Linux-каталог удалён, служба777/845 сохранена. Границы Git-tag inventory/очереди/старых refs и прочие обязательства в отчёте. Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября, F491/Q34-F045:** [APK-builder](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): убраны глобальный SIGKILL GradleDaemon и удаление общего cache-журнала; import-safe main и finally закрывают SSH/SFTP при отказах.63 Windows/Linux метода и официальный lint4workflow PASS; отдельный PID/mount probe воспроизводит baseline SIGKILL, исправленная оркестрация сохраняет чужой процесс/cache. Evidence восстановлен, own root удалён, служба777/845 сохранена. Нового APK нет; общий source workspace/ожидаемый release-signer и прежние ограничения остаются открытыми. Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября,F492/Q34-F046:** [Приватная APK-сборка](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): полный committed snapshot вместо общих source directories/фильтра расширений; locks/legal/Java/conformance сохранены, собственные Cargo/Gradle/output paths. Реальный APK/JVM и SHA-отказ мутации отдельного root PASS;71 Windows+22 Linux методов,lint/docs PASS. APK/исходники восстановлены,2 own roots удалены,служба777/845 сохранена. Offline/SDK/ENOSPC отказы и границы release/runtime в отчёте;Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

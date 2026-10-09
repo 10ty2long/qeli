@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v118 -->
+<!-- normative-sync: audit-debt-v119 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1274,3 +1274,5 @@ physical exclusions are not PASS.
 **9 October, F490/Q34-F044:** [Docker latest](../reports/AUDIT-Q34-PUBLICATION-GATES.md): reproduced old stable tag rollback of latest; separate numeric highest-version admission and shared concurrency group.16 Windows +16 Linux methods,59 related Windows methods and official lint of4workflows PASS. Inputs/output recovered,owned Linux fixture removed,service777/845 preserved. Git-tag inventory/queue/old-ref boundaries and other obligations remain in report. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 October,F491/Q34-F045:** [APK builder](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): removed global GradleDaemon SIGKILL/shared cache journal deletion; import-safe main/finally close SSH/SFTP on failures.63 Windows/Linux methods and official lint4workflows PASS; separate PID/mount probe reproduces baseline SIGKILL while fixed orchestration preserves foreign worker/cache. Evidence recovered,owned root removed,service777/845 preserved. No new APK; shared source workspace/expected release signer and previous limits remain open. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October,F492/Q34-F046:** [Private APK snapshot](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): complete committed inputs replace shared source directories/extension filter; locks/legal/Java/conformance retained, owned Cargo/Gradle/output paths. Real APK/JVM and separate-root mutation refusal PASS;71 Windows+22 Linux methods,lint/docs PASS. APK/source SHA-recovered,2owned roots removed,original777/845 retained. Offline/SDK/ENOSPC refusals and release/runtime limits in report;Q34IN_PROGRESS30/37DONE81.1%,7remain;historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

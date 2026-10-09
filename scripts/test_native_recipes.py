@@ -120,23 +120,21 @@ class NativeRecipeTests(unittest.TestCase):
     def test_apk_rebuild_uses_strict_shared_lab_connection(self):
         source = (Path(__file__).parent / "rebuild_apk.py").read_text(encoding="utf-8")
         self.assertIn("from native_lab import connect_lab", source)
-        self.assertIn("apksigner} verify", source)
+        self.assertIn("signer)} verify", source)
         self.assertIn("pull_verified_artifact", source)
-        self.assertIn('CONFORMANCE = REPO_ROOT / "conformance"', source)
-        self.assertIn('CONFORMANCE.glob("*.json")', source)
-        self.assertIn('REMOTE, "conformance", fixture.name', source)
-        for tree in (
-            "app/src/androidTest",
-            "app/src/main/kotlin",
-            "app/src/main/res",
-            "app/src/test",
-        ):
-            self.assertIn(f'"{tree}"', source)
+        self.assertIn('SOURCE_PATHS = ("qeli", "qeli-android", "conformance", "LICENSE", "LICENSING.md")', source)
+        self.assertIn('git(root, "archive", "--format=tar", commit', source)
+        self.assertIn('validate_evidence(root, digest)', source)
+        self.assertIn('qeli-android/app/gradle.lockfile', source)
+        self.assertIn('qeli-android/gradle/verification-metadata.xml', source)
+        self.assertIn('mktemp -d /var/tmp/qeli-apk-build.', source)
+        self.assertIn('sha256sum --status -c source.sha256', source)
         self.assertIn("--max-workers=1", source)
         self.assertIn("-Xmx1536m", source)
         self.assertIn("splitlines()[-80:]", source)
-        self.assertIn("shutil.copy2(cur, prev)", source)
-        self.assertNotIn("os.replace(cur, prev)", source)
+        self.assertIn('local_run = "dist/"+snapshot["commit"]', source)
+        self.assertNotIn('MIRRORED_SOURCE_TREES', source)
+        self.assertNotIn('REMOTE_QELI = "/root/qeli-src"', source)
         self.assertNotIn("AutoAddPolicy", source)
 
         root = Path(__file__).resolve().parents[1]
