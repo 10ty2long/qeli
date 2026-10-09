@@ -813,7 +813,6 @@ jobs:
   fuzz-smoke:
     runs-on: ubuntu-latest
     env:
-      RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}
       CARGO_BUILD_JOBS: 1
     # Parser harness drift and a reproduced crash are release blockers, not advisory
     # telemetry; keep this job hard even though cargo-fuzz uses nightly. (R-04)
@@ -825,6 +824,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
+      - name: Pin nested fuzz compiler processes
+        run: echo "RUSTUP_TOOLCHAIN=$QELI_FUZZ_TOOLCHAIN" >> "$GITHUB_ENV"
       - name: Install cargo-fuzz
         run: cargo +"$QELI_FUZZ_TOOLCHAIN" install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked --jobs 1
       - name: Fetch the reviewed fuzz dependency graph
@@ -885,7 +886,6 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
-      RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}
       CARGO_BUILD_JOBS: 1
     strategy:
       fail-fast: false
@@ -899,6 +899,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
+      - name: Pin nested fuzz compiler processes
+        run: echo "RUSTUP_TOOLCHAIN=$QELI_FUZZ_TOOLCHAIN" >> "$GITHUB_ENV"
       - name: Install cargo-fuzz
         run: cargo +"$QELI_FUZZ_TOOLCHAIN" install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked --jobs 1
       - name: Fetch the reviewed fuzz dependency graph

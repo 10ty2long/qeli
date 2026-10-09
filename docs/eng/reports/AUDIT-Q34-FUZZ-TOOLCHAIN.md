@@ -1,6 +1,6 @@
 # Q34: reproducible fuzz CI and complete ASan smoke
 
-<!-- normative-sync: q34-fuzz-toolchain-v1 -->
+<!-- normative-sync: q34-fuzz-toolchain-v2 -->
 
 Date: 9 October 2026.
 
@@ -66,3 +66,11 @@ D06 ACCEPTED_LIMITATION,USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 ## Evidence
 
 `q34-fuzz-toolchain-20261009`: SEALED 154 files / 358276286 bytes; manifest SHA256 `eb1dd886685937f9a311420ab44d8b0d59bfcd4825e642cc945d816af3f27b60`.
+
+## Subsequent Actions semantic check: F487 / Q34-F041
+
+Final review found a regression introduced by this patch: env context is unavailable in job-level env. The initial YAML parse did not detect it;hosted CI had not run. Official SHA-qualified actionlint1.7.12 reproduced both baseline failures. Export RUSTUP_TOOLCHAIN through a dedicated GITHUB_ENV step after compiler setup instead. Final actionlint rc0,13 regressions and exact Bash LF export PASS. Smoke Bash,lock,compiler/tool pins and effective real-lab environment remain identical;no repeat of the85,930,590 cases is claimed. Original sealed packet is preserved,with a separate corrective evidence supplement. This repairs our CI patch,not a parser defect.
+
+[GitHub contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts) and [GITHUB_ENV](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable).
+
+Context correction evidence: `q34-fuzz-context-20261009`;SEALED 33 files;manifest SHA256 `a62231996d1d5eb1a0889cfde3ea4cd65f1121514ecf056cb17fa2282735c3c9`.
