@@ -147,7 +147,7 @@ def deploy_snapshot(c, sf, snapshot):
     return remote
 
 
-def build(c, sf, release=False, snapshot=None, signing_properties=None):
+def build(c, sf, release=False, snapshot=None, signing_properties=None, offline=True, gradle_user_home=None, android_sdk="/root/android-sdk"):
     snapshot = prepare_snapshot() if snapshot is None else snapshot
     remote = deploy_snapshot(c, sf, snapshot)
     project = remote+"/qeli-android"
@@ -164,7 +164,7 @@ def build(c, sf, release=False, snapshot=None, signing_properties=None):
             c.checked("umask 077; java " + shlex.quote(remote+"/PrepareSigning.java") + " " +
                       shlex.quote(signing_properties) + " " + shlex.quote(signing_dest), "prepare private APK signing", 60)
         host_core = crate+"/target/debug/libqeli_core.so"
-        command = (f"export PATH=/root/.cargo/bin:$PATH; cd {shlex.quote(crate)} && "
+        command = (f"export PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR={shlex.quote(crate+'/target')}; cd {shlex.quote(crate)} && "
                    f"timeout --signal=TERM --kill-after=30s 1200s cargo +{rust_toolchain()} build "
                    "--locked --offline --jobs 1 --no-default-features --features transport-core-ffi --lib")
         output, rc = sh(c, command)
@@ -176,10 +176,13 @@ def build(c, sf, release=False, snapshot=None, signing_properties=None):
             raise RuntimeError("Host core missing ConfigCore JNI export")
         variant = "release" if release else "debug"
         task = "assembleRelease" if release else "assembleDebug"
+        cache = "" if gradle_user_home is None else "GRADLE_USER_HOME="+shlex.quote(gradle_user_home)+" "
+        mode = "--offline " if offline else ""
         command = (f"cd {shlex.quote(project)} && chmod +x gradlew && "
-                   f"ANDROID_HOME=/root/android-sdk QELI_CONFIG_NATIVE_LIBRARY={shlex.quote(host_core)} "
+                   f"{cache}QELI_NATIVE_JNI_DIR={shlex.quote(project+'/app/src/main/jniLibs')} "
+                   f"ANDROID_HOME={shlex.quote(android_sdk)} QELI_CONFIG_NATIVE_LIBRARY={shlex.quote(host_core)} "
                    f"timeout --signal=TERM --kill-after=30s 1200s ./gradlew testDebugUnitTest {task} "
-                   "--offline --no-daemon --max-workers=1 -Dorg.gradle.vfs.watch=false "
+                   f"{mode}--no-daemon --max-workers=1 -Dorg.gradle.vfs.watch=false "
                    "'-Dorg.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8' 2>&1")
         output, rc = sh(c, command)
         print("\n".join(output.splitlines()[-80:]))
@@ -213,18 +216,25 @@ def build(c, sf, release=False, snapshot=None, signing_properties=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--release", action="store_true")
+    parser.add_argument("--online", action="store_true", help="allow missing Gradle dependencies to download under strict locks/checksums")
+    parser.add_argument("--gradle-user-home", help="absolute remote dependency cache directory")
+    parser.add_argument("--android-sdk", default="/root/android-sdk", help="absolute remote Android SDK directory")
     parser.add_argument("--signing-properties", help="absolute remote keystore.properties path; --release only")
     args = parser.parse_args(argv)
     if args.signing_properties and not args.release:
         parser.error("--signing-properties requires --release")
     if args.signing_properties and (not args.signing_properties.startswith("/") or any(ord(char) < 32 for char in args.signing_properties)):
         parser.error("--signing-properties requires an absolute remote path")
+    if args.gradle_user_home and (not args.gradle_user_home.startswith("/") or any(ord(char) < 32 for char in args.gradle_user_home)):
+        parser.error("--gradle-user-home requires an absolute remote path")
+    if not args.android_sdk.startswith("/") or any(ord(char) < 32 for char in args.android_sdk):
+        parser.error("--android-sdk requires an absolute remote path")
     snapshot = prepare_snapshot(REPO_ROOT)  # Refuse dirty/stale inputs before SSH.
     connection = conn()
     sftp = None
     try:
         sftp = connection.open_sftp()
-        build(connection, sftp, args.release, snapshot, args.signing_properties)
+        build(connection, sftp, args.release, snapshot, args.signing_properties, offline=not args.online, gradle_user_home=args.gradle_user_home, android_sdk=args.android_sdk)
         return 0
     finally:
         try:

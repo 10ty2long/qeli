@@ -22,7 +22,7 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(p.returncode,0,p.stderr)
 
     def test_invalid_arguments_before_connection(self):
-        for args in [["--invalid"],["--signing-properties","/private/config"],["--release","--signing-properties","relative"]]:
+        for args in [["--invalid"],["--signing-properties","/private/config"],["--release","--signing-properties","relative"],["--gradle-user-home","relative"]]:
             with patch.object(apk,"conn",side_effect=AssertionError("SSH")),contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as error:apk.main(args)
                 self.assertEqual(error.exception.code,2)
@@ -37,7 +37,7 @@ class BuilderTests(unittest.TestCase):
             c=MagicMock()
             with patch.object(apk,"prepare_snapshot",return_value=DUMMY),patch.object(apk,"conn",return_value=c),patch.object(apk,"build") as build:
                 self.assertEqual(apk.main(args),0)
-                build.assert_called_once_with(c,c.open_sftp.return_value,release,DUMMY,props)
+                build.assert_called_once_with(c,c.open_sftp.return_value,release,DUMMY,props,offline=True,gradle_user_home=None,android_sdk="/root/android-sdk")
             c.open_sftp.return_value.close.assert_called_once();c.close.assert_called_once()
 
     def test_build_failure_closes_handles(self):
@@ -92,6 +92,23 @@ class BuilderTests(unittest.TestCase):
         with patch.object(apk,"deploy_snapshot",return_value="/var/tmp/qeli-apk-build.AAAAAAAA"):
             with self.assertRaisesRegex(RuntimeError,"signing"):apk.build(c,MagicMock(),True,DUMMY)
         self.assertEqual(c.checked.call_args.args[0],"rm -f -- /var/tmp/qeli-apk-build.AAAAAAAA/qeli-android/keystore.properties")
+
+    def test_explicit_online_cache_and_environment_ownership(self):
+        c=MagicMock();commands=[]
+        def command(connection,cmd,t=1200):
+            commands.append(cmd)
+            if "testDebugUnitTest" in cmd:return "controlled refusal",7
+            if "nm -D" in cmd:return "1",0
+            return "",0
+        with patch.object(apk,"deploy_snapshot",return_value="/var/tmp/qeli-apk-build.AAAAAAAA"),patch.object(apk,"sh",side_effect=command),contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError,"APK build failed"):
+                apk.build(c,MagicMock(),False,DUMMY,offline=False,gradle_user_home="/private/cache with spaces",android_sdk="/private/sdk with spaces")
+        self.assertIn("CARGO_TARGET_DIR=/var/tmp/qeli-apk-build.AAAAAAAA/qeli/target",commands[0])
+        build=[cmd for cmd in commands if "testDebugUnitTest" in cmd][0]
+        self.assertIn("GRADLE_USER_HOME='/private/cache with spaces'",build)
+        self.assertIn("QELI_NATIVE_JNI_DIR=/var/tmp/qeli-apk-build.AAAAAAAA/qeli-android/app/src/main/jniLibs",build)
+        self.assertNotIn("--offline",build)
+        self.assertIn("ANDROID_HOME='/private/sdk with spaces'",build)
 
     def test_simultaneous_local_outputs_do_not_overwrite_each_other_or_legacy_apk(self):
         payload=b"qualified controlled APK bytes";digest=hashlib.sha256(payload).hexdigest()
