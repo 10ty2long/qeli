@@ -1024,7 +1024,7 @@ python scripts/reality_tls_repeat.py # reality-tls ×5 → median/σ (release/re
 python scripts/ab_071_072.py         # host-neutral A/B (0.7.1 from tag vs 0.7.2 interleaved) — when the host is under steal/contention
 python scripts/ab_074_079.py         # same for 0.7.4->0.7.9 (0.7.10 candidate); A/B template for any tag<->current pair
 python scripts/ab_079_0711.py        # 0.7.9->0.7.11 (dev batch, x25519-dalek 3 bump)
-python scripts/e2e_android_faketls.py # Android e2e: rebuild the APK (rebuild_apk.py) -> inject a fake-tls profile -> Connect -> ping through the tunnel
+python scripts/e2e_android_faketls.py --apk-receipt "qeli-android/dist/COMMIT-RUN/BUILD.json" # Android e2e: rebuild the APK (rebuild_apk.py) -> inject a fake-tls profile -> Connect -> ping through the tunnel
 # GOTCHA: a foreign qeli.service may auto-start on .11 (a server on vpn0 10.9.0.1) — it loads the client; `systemctl stop qeli.service` before benchmarking
 python scripts/config_functest.py    # default-config functionality: e2e server.conf + server-maxobf.conf + parse all
 python scripts/multicore_probe.py    # the precise data-plane CPU (/proc delta: idle/up/down/bidir)
