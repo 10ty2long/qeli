@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v112 -->
+<!-- normative-sync: audit-debt-v113 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1260,3 +1260,6 @@ physical exclusions are not PASS.
 
 
 **9 October,F484/Q34-F038:** [Fuzz CI inventory](../reports/AUDIT-Q34-FUZZ-INVENTORY.md): actualCargo15targets butoldsmoke/nightly11 omitcontrol_v2/quic_envelope/realtls_client/websocket_frame. Sharedmanifesthelper drives bothconsumers,earlymetadatafailure blocks instead ofemptysmoke;nightlydynamicneeds/output matrix.69localmethodsPASS+10repeatLinuxunits+10actualCI Bash scenarios with controlledcargo receipts inclbaselinegap,15calls/early23failure/malformed/missing/outputpreservation/new16thtarget/externalsymlink refusal. ActualRust/libFuzzer/hostedActions and pinnedfuzztools remainseparate OPEN;no core/native/tree changes,previousOpenWrtcut retainsqelitree. SHA-backed-up fullownedfixture/procmountguards/service777845 preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q35TODO andhistoricalQ29/Q30/Q31/F459/D06/exclusions retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**9 October,F485–F486/Q34-F039–F040:** [Reproducible fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): pinned nightly/cargo-fuzz,independent146-package lock,locked-fetch/offline/SHA and strict audit. All15 real ASan targets:85,930,590 executions,no crash artifacts;72 Windows+13 Linux methods and actual missing/stale/drift refusals PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash updated. Scope and retained harness failures in report.Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/historical limits preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
