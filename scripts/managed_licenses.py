@@ -27,7 +27,7 @@ SUPPLEMENT_HEADER = 'id\tversion\trepository\tcommit\tupstream_path\turl\tsha256
 SCOPE = ('All reviewed desktop NuGet lock graphs plus reviewed default publish runtime packs.\n'
          'Includes debug, tools, Linux and other-RID packages; not a per-binary linkage claim.\n'
          'Archive and upstream text bytes are preserved; embedded font names are decoded UTF-16BE.\n'
-         'MicroCom.Runtime has no packaged VCS commit: its MIT supplement follows the publisher declaration.\n'
+         'MicroCom.Runtime uses the packaged VCS commit for its upstream MIT supplement.\n'
          'SDK overrides, trust/revocation, other toolchain notices and source publication need separate review.\n')
 RUNTIME = 'qeli-shared/third-party-notices/nuget-runtime.tsv'
 BUNDLE = 'qeli-shared/third-party-notices/dotnet'
@@ -180,8 +180,6 @@ def supplement_allowed(key, repo_meta, record, font_proof):
     published_repo = repo_meta.get('url', '').removesuffix('/').removesuffix('.git').lower()
     if record['binding'] == 'nuspec-vcs':
         return published_repo == ('https://github.com/' + repository).lower() and repo_meta.get('commit') == commit
-    if record['binding'] == 'publisher-declaration; no nuspec-vcs commit':
-        return key == ('microcom.runtime', '0.11.0') and not repo_meta.get('commit') and repository == 'kekekeks/MicroCom' and path == 'LICENSE' and commit == '4b8a38f773c109bad558ee3713d9f16d80776e42'
     if record['binding'] == 'embedded-font-version-git-0a5106e0b':
         return (key[0] == 'avalonia.fonts.inter' and repository == 'rsms/inter' and path == 'LICENSE.txt'
                 and commit.startswith('0a5106e0b') and font_proof and all(any(r['id'] == 5 and 'git-0a5106e0b' in r['text'] for r in font['names']) for font in font_proof['rows']))

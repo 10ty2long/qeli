@@ -64,3 +64,5 @@ LOCAL_DEV_COMMIT; NO_PUSH_DEPLOY_RELEASE.
 ## Evidence
 
 `q34-managed-notices-20261008`: SEALED 1115 files / 34492726 bytes; manifest SHA256 `1f0b212530fe7876f20418132dd1446127fe3cc4edb60feaa6a060dcb8c65cac`.
+
+[9October follow-up](AUDIT-Q34-SOURCE-BINDING.md): MicroCom publisher-only limitation resolved by compatible0.11.2 pin, exact VCS binding and fresh qualification. The historical packet above is unchanged.

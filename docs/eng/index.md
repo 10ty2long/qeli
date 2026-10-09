@@ -523,3 +523,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: Fuzz toolchain and ASan smoke](reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md)
 
 - [Permanent Actions lint](reports/AUDIT-Q34-WORKFLOW-LINT.md) — Q34/F488, 9 October 2026.
+
+- [MicroCom source identity and compatibility](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.

@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v115 -->
+<!-- normative-sync: audit-debt-v116 -->
 
 Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1397,3 +1397,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября, F488/Q34-F042:** [Постоянный Actions lint](../reports/AUDIT-Q34-WORKFLOW-LINT.md): новый CI gate проверяет все .yml/.yaml официальным SHA-закреплённым actionlint1.7.12. Все четыре baseline workflow уже корректны; закрыт пробел постоянного контроля. На каждой из Windows/Linux:11 unit+8 реальных сценариев PASS, включая отказ ошибочного env/нового yaml/подменённого бинарника. Временная .11 сохранена и удалена,777/845 сохранены. Ядро/native/source cut неизменны; hosted CI и остальные границы в отчёте. Q34 IN_PROGRESS;30/37 DONE81.1%,7 остаются. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября,F489/Q34-F043:** [MicroCom source binding](../reports/AUDIT-Q34-SOURCE-BINDING.md): совместимый pin0.11.2 сохраняет52 API и указывает тот же exact commit в DLL/nuspec; full76-file upstream SHA проверен, publisher-only исключение удалено.24 настоящих Windows/Linux graph pairs, baseline/fixed COM consumer12 assertions,187-file bundle regeneration, builds/publishes/conformance PASS. Более новые API-несовместимые кандидаты не применены. Границы и cleanup evidence в отчёте; native/qeli tree неизменны. Q34IN_PROGRESS30/37DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

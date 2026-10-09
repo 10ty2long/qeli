@@ -55,6 +55,12 @@
           "Avalonia": "11.3.20"
         }
       },
+      "MicroCom.Runtime": {
+        "type": "Direct",
+        "requested": "[0.11.2, )",
+        "resolved": "0.11.2",
+        "contentHash": "NWcE1B2M1TDNx7nWHL5JsAsSwe7Z1AK11idqQ04LQlBUaKu0nfXFPOj5khsYptwlgQQK+aZVNuuK6yaxDOaIkw=="
+      },
       "QRCoder": {
         "type": "Direct",
         "requested": "[1.8.0, )",
@@ -199,11 +205,6 @@
         "type": "Transitive",
         "resolved": "8.3.1.1",
         "contentHash": "UsJtQsfAJoFDZrXc4hCUfRPMqccfKZ0iumJ/upcUjz/cmsTgVFGNEL5yaJWmkqsuFYdMWbj/En5/kS4PFl9hBA=="
-      },
-      "MicroCom.Runtime": {
-        "type": "Transitive",
-        "resolved": "0.11.0",
-        "contentHash": "MEnrZ3UIiH40hjzMDsxrTyi8dtqB5ziv3iBeeU4bXsL/7NLSal9F1lZKpK+tfBRnUoDSdtcW3KufE4yhATOMCA=="
       },
       "Microsoft.Win32.SystemEvents": {
         "type": "Transitive",

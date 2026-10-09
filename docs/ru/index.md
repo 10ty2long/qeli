@@ -523,3 +523,5 @@
 - [Q34: Fuzz toolchain and ASan smoke](reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md)
 
 - [Постоянный Actions lint](reports/AUDIT-Q34-WORKFLOW-LINT.md) — Q34/F488, 9 October 2026.
+
+- [Источник и совместимость MicroCom](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
