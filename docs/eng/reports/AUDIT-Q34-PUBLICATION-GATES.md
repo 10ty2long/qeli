@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v4 -->
+<!-- normative-sync: q34-publication-gates-v5 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -212,3 +212,45 @@ Q34 IN_PROGRESS30/37DONE81.1%,7remain;Q29SIGKILLFAIL-ENONET,Q30/Q31,D06accepted,
 USER_EXCLUDED and other open items retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F495 evidence: q34-publisher-certification-20261009; SEALED 42 files / 1211464 bytes; manifest SHA256 d11345555e523dc6296de351daf95a0a2d8b942c4d672527a7cbd43fd5c80837.
+
+
+## 9 October: F496 / Q34-F050 — refuse packaging without a signer
+
+build_app.sh documented a required signer but merely warned when both codesign
+and rcodesign were absent. It then produced an unsigned archive and printed Done.
+The reproducer executes the old Bash script with real files/tar and controlled
+compiler/sign tools: 8 methods produced 3 expected failed assertions covering
+both architectures and native bootstrap before refusal.
+
+The signer is now selected before native build, publish or output replacement.
+Missing both tools returns an error and retains the previous bundle/archive.
+The codesign priority is preserved; the ad-hoc branch invokes the selected tool
+path. A nonzero signer exit stops before tar and preserves the previous archive.
+The prepared bundle can remain in dist after a signing error; atomic replacement
+and concurrent builds are not addressed. Developer-ID/per-app/notarization
+scenarios are unchanged.
+
+57 Windows methods PASS: 8 app-signer,38 native-recipes and11 workflow contracts.
+Pinned semantic actionlint accepts all4 workflows; Bash syntax PASS. Linux .11
+passes the same8 app-signer methods. Coverage includes arm64/x86_64, missing signer
+before native bootstrap,both positive paths,codesign priority,both signer failures
+and unknown architecture. The suite is included in CI. Filesystem/tar operations
+are real, compiler/sign tools controlled: no actual payload compilation, signature
+verification or Mac runtime qualification. Apple runtime remains USER_EXCLUDED.
+
+Two committed Linux source inputs and their TAR were SHA-checked. The private
+directory and3known files were removed after exact-set,process/fd and mount guards;
+original service777/845 andCLI75bc are unchanged,.10unused. Local disk ran out of
+space. Only an old extracted SDK under audit-scratch was removed:5577files/
+807336133bytes, complete original ZIP SHA512 and exact every-file SHA/set match.
+Resolved-path,no-reparse and active-process guards passed. Original ZIP,SEALED
+packets and shared caches retained; approximately800MB recovered.
+
+Native source digest,14artifact SHA,qeli tree,protected inputs and OpenWrt source
+cut unchanged; previous execution qualification inherited without rebuilds.
+41certification cases and97prior supplements preserved modulo source_digest
+bookkeeping; append98scoped supplement. Q34IN_PROGRESS:30/37DONE81.1%,7remain.
+Previous open/accepted/excluded items are not closed by this change.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F496 evidence: q34-app-signer-20261009; SEALED 35 files / 1203484 bytes; manifest SHA256 74dd6ad767b38be09ef2513e689c22c42bf4d37754e270684e7d6f30b85e5ea4.
