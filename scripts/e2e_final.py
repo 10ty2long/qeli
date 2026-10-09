@@ -363,16 +363,21 @@ def identity_key(profile):
     return match.group(1)
 
 
+# Installation failure must not enter canonical server restoration/restart.
+try:
+    ensure_emulator()
+    print("[install]", install_verified_apk(cc, APK_ARGS.apk, ADB))
+except BaseException:
+    cc.close()
+    sc.close()
+    raise
+
 original_server_bytes = read_remote_bytes(sc, "/etc/qeli/server.conf")
 original_users_bytes = read_remote_bytes(sc, "/etc/qeli/users.conf")
 original_server_config = original_server_bytes.decode("utf-8")
 original_users_config = original_users_bytes.decode("utf-8")
 passed = False
 try:
-    ensure_emulator()
-    install = install_verified_apk(cc, APK_ARGS.apk, ADB)
-    print("[install]", install)
-
     config = clean_test_config(original_server_config)
     lines = []
     for line in config.splitlines():

@@ -100,6 +100,15 @@ class CliTests(unittest.TestCase):
    for args,rc in [([],2),(['--help'],0),(['--apk-receipt','/missing/BUILD.json'],2)]:
     with self.subTest(script=name,args=args):
      result=subprocess.run([sys.executable,'-S','-B',str(root/name),*args],capture_output=True,timeout=8);self.assertEqual(result.returncode,rc,result.stdout+result.stderr);self.assertNotIn(b'Connecting',result.stdout+result.stderr)
+ def test_final_install_failure_precedes_server_restoration(self):
+  import ast
+  from types import SimpleNamespace
+  source=(Path(__file__).parent/'e2e_final.py').read_text(encoding='utf8');tree=ast.parse(source)
+  index=next(i for i,n in enumerate(tree.body) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='original_server_bytes' for t in n.targets))
+  gate=tree.body[index-1];self.assertIsInstance(gate,ast.Try)
+  cc=MagicMock();sc=MagicMock();reader=MagicMock();namespace=dict(cc=cc,sc=sc,ensure_emulator=MagicMock(),install_verified_apk=MagicMock(side_effect=RuntimeError('ADB rejected')),APK_ARGS=SimpleNamespace(apk='exact input'),ADB='/sdk/adb',read_remote_bytes=reader)
+  with self.assertRaisesRegex(RuntimeError,'ADB rejected'):exec(compile(ast.Module(body=[gate,tree.body[index]],type_ignores=[]),'exact final gate','exec'),namespace)
+  cc.close.assert_called_once();sc.close.assert_called_once();reader.assert_not_called()
  def test_kill_switch_option_survives(self):
   with patch.object(apk,'read_apk_receipt',return_value=apk.ApkInput('a'*40,SHA,DATA)),contextlib.redirect_stdout(io.StringIO()):
    result=apk.read_cli(['--apk-receipt','BUILD.json','--kill-switch'],kill_switch=True);self.assertTrue(result.kill_switch)
