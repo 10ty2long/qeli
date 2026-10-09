@@ -1006,7 +1006,7 @@ python scripts/reality_tls_repeat.py # reality-tls ×5 → медиана/σ (re
 python scripts/ab_071_072.py         # host-нейтральный A/B (0.7.1 из тега vs 0.7.2 вперемешку) — при steal/контеншене хоста
 python scripts/ab_074_079.py         # то же для 0.7.4→0.7.9 (0.7.10-кандидат); шаблон A/B для любой пары тег↔текущий
 python scripts/ab_079_0711.py        # 0.7.9→0.7.11 (dev-batch, бамп x25519-dalek 3)
-python scripts/e2e_android_faketls.py # Android e2e: пересобрать APK (rebuild_apk.py) → инжект fake-tls профиля → Connect → ping через туннель
+python scripts/e2e_android_faketls.py --apk-receipt "qeli-android/dist/COMMIT-RUN/BUILD.json" # Android e2e: пересобрать APK (rebuild_apk.py) → инжект fake-tls профиля → Connect → ping через туннель
 # ГОТЧА: на .11 может авто-подняться чужой qeli.service (сервер на vpn0 10.9.0.1) — грузит клиента; `systemctl stop qeli.service` перед бенчем
 python scripts/config_functest.py    # работоспособность дефолтных конфигов: e2e server.conf + server-maxobf.conf + парс всех
 python scripts/multicore_probe.py    # точный CPU дата-плоскости (/proc-дельта: idle/up/down/bidir)

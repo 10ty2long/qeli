@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v184 -->
+<!-- normative-sync: full-system-audit-v185 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2526,3 +2526,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **9 октября, F491/Q34-F045:** [APK-builder](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): убраны глобальный SIGKILL GradleDaemon и удаление общего cache-журнала; import-safe main и finally закрывают SSH/SFTP при отказах.63 Windows/Linux метода и официальный lint4workflow PASS; отдельный PID/mount probe воспроизводит baseline SIGKILL, исправленная оркестрация сохраняет чужой процесс/cache. Evidence восстановлен, own root удалён, служба777/845 сохранена. Нового APK нет; общий source workspace/ожидаемый release-signer и прежние ограничения остаются открытыми. Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября,F492/Q34-F046:** [Приватная APK-сборка](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): полный committed snapshot вместо общих source directories/фильтра расширений; locks/legal/Java/conformance сохранены, собственные Cargo/Gradle/output paths. Реальный APK/JVM и SHA-отказ мутации отдельного root PASS;71 Windows+22 Linux методов,lint/docs PASS. APK/исходники восстановлены,2 own roots удалены,служба777/845 сохранена. Offline/SDK/ENOSPC отказы и границы release/runtime в отчёте;Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября,F493/Q34-F047:** [Явный APK для E2E](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): четыре installer-сценария требуют source/size/SHA/native-bound BUILD.json; приватная передача,remoteSHA/ADB status и ранний отказ перед canonical server restoration.89Windows+18Linux методов,5real transfer/refusal cases с контролируемымADB,lint/docs PASS; own inputs восстановлены/очищены,служба777/845 сохранена. Настоящий emulator/VPN/release runtime не запускался. Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

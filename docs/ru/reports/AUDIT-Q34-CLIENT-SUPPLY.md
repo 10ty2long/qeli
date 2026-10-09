@@ -1,6 +1,6 @@
 # Q34: зависимости сборки клиентов и подписи Windows
 
-<!-- normative-sync: q34-client-supply-v3 -->
+<!-- normative-sync: q34-client-supply-v4 -->
 
 8 октября 2026. F455–F458 / Q34-F009–F012 закрыты в указанном ниже объёме. F459 / Q34-F013 остаётся OPEN. Q34 IN_PROGRESS; полный аудит 30/37 DONE (81.1%), осталось7. Только локальные изменения; без push, deployment и release.
 
@@ -137,3 +137,54 @@ Q34 IN_PROGRESS;30/37 DONE81,1%,7 остаются;Q29 SIGKILL FAIL/ENONET,Q30/Q
 D06 ACCEPTED_LIMITATION,USER_EXCLUDED сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F492 evidence: `q34-apk-snapshot-20261009`; SEALED 127 files / 180541943 bytes; manifest SHA256 `5db226ad94b5c7e764973618383df4955b4b845abd36254b1d9d544907ee3f28`.
+
+
+## 9 октября: F493 / Q34-F047 — явный проверенный APK для E2E
+
+Четыре installer-сценария e2e_android_faketls.py, e2e_android_udpquic.py,
+e2e_android_bonding.py и e2e_final.py брали APK из общего /root/android-project.
+Read-only .11 inventory подтвердил там SHA324e19e8…, отличающийся от нового
+проверенного APK1525e14c…. Три сценария игнорировали exit status: точные старые
+csh/a/install expressions продолжали исполнение при контролируемом Failure/rc7.
+В e2e_final отказ установки попадал в finally перезапуска канонического сервера.
+
+Общий android_apk_input.py требует --apk-receipt до SSH и импорта необязательной
+SSH-библиотеки. Явный BUILD.json выбирает соседний app-debug.apk. Проверяются debug
+variant, размер/SHA, существующий source commit, совпадение выбранных Git source
+trees с чистым HEAD и native provenance. Bytes замораживаются до подключения;
+перенос всей пары файлов допустим, старое абсолютное local_artifact не управляет
+чтением. Общий/latest APK автоматически не выбирается; release APK отклоняется,
+поскольку сценарии используют debug/run-as. Fake-TLS --kill-switch сохранён.
+
+Файл передаётся в собственный mktemp-каталог; remote SHA проверяется до ADB.
+Установка ограничена180s и требует rc0, отдельную строку Success и отсутствие
+Failure. Finally удаляет точный private blob/root через rm/rmdir. Отказ предшествует
+настройке сервера/туннеля; в e2e_final подготовка вынесена перед server restoration
+block, оба соединения закрываются при отказе. Shared source/cache не меняются.
+
+Сначала запусти scripts/rebuild_apk.py, затем выбранный E2E с --apk-receipt
+"qeli-android/dist/COMMIT-RUN/BUILD.json", заменив COMMIT-RUN каталогом из вывода
+сборщика. Требуется чистый repository tree и тот же выбранный source/native input.
+Команда benchmark-мануала обновлена в обоих языках.
+
+89 Windows и18 финальных Linux методов PASS; новый suite включён в CI,
+официальный actionlint принял4workflow; docs724Markdown/9checks PASS. Настоящий
+общий installer на .11 передал прежний проверенный30MB APK в пяти случаях:
+success, Success/rc7, Failure/rc0, Success+Failure/rc0 и реальная байтовая подмена
+до remote SHA. Приватный контролируемый ADB получил четыре вызова с исходным SHA;
+при подмене вызова нет. Пять install roots и два fixture roots удалены после
+SHA-восстановления inputs/events/logs и guards. Служба777/845 и CLI75bc сохранены;
+.10 не использовалась. Ошибки генераторов/cleanup harness сохранены отдельно:
+отказали до подключения либо удаления; финальная очистка подтверждена.
+
+Это проверка выбора/передачи/статуса/раннего отказа, без настоящей установки
+в emulator, VPN transport matrix или перезапуска production server. Два REALITY
+сценария и production lifecycle, использующие уже установленный клиент без данного
+installer path, не объявлены новым runtime PASS. Прежние201JVM/debug APK/legal/
+signature результаты унаследованы без пересборки. Receipt связывает выбранные
+inputs, не является независимой publisher attestation. Native14/source cut/
+protected files неизменны; Q34IN_PROGRESS30/37DONE81,1%,7remain;
+F459/Q29/Q30/Q31/D06accepted/USER_EXCLUDED и expected release publisher OPEN сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F493 evidence: `q34-apk-consumers-20261009`; SEALED 90 files / 1637228 bytes; manifest SHA256 `c6888dfc8edc8712f6f92d98fa9165c5e93e350830c1a2f8b0d9c994e349ac84`.

@@ -1,6 +1,6 @@
 # Q34: client build dependencies and Windows signatures
 
-<!-- normative-sync: q34-client-supply-v3 -->
+<!-- normative-sync: q34-client-supply-v4 -->
 
 8 October 2026. F455–F458 / Q34-F009–F012 are closed in the scope below. F459 / Q34-F013 remains OPEN. Full Q34 remains IN_PROGRESS; full audit 30/37 DONE (81.1%), 7 remain. Local changes only; no push, deployment or release.
 
@@ -137,3 +137,53 @@ Q34 IN_PROGRESS;30/37 DONE81.1%,7 remain;Q29 SIGKILL FAIL/ENONET,Q30/Q31,
 D06 ACCEPTED_LIMITATION,USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F492 evidence: `q34-apk-snapshot-20261009`; SEALED 127 files / 180541943 bytes; manifest SHA256 `5db226ad94b5c7e764973618383df4955b4b845abd36254b1d9d544907ee3f28`.
+
+
+## 9 October: F493 / Q34-F047 — explicit verified E2E APK
+
+Four installers e2e_android_faketls.py, e2e_android_udpquic.py,
+e2e_android_bonding.py and e2e_final.py selected shared /root/android-project APK.
+Read-only .11 inventory found SHA324e19e8…, different from the newly qualified
+APK1525e14c…. Three scripts ignored exit status: exact baseline csh/a/install
+expressions continued after controlled Failure/rc7. Installation failure in
+e2e_final entered finally and restarted the canonical server.
+
+Common android_apk_input.py requires --apk-receipt before SSH and the optional
+SSH library import. An explicit BUILD.json selects sibling app-debug.apk.
+Debug variant, size/SHA, existing source commit, identical selected Git source
+trees at clean HEAD and native provenance are required. Bytes are frozen before
+connection; moving the whole publication directory works, stale absolute
+local_artifact metadata does not select the input. No automatic shared/latest
+APK; release refused because these tests use debug/run-as. Fake-TLS --kill-switch retained.
+
+The installer uploads into a private mktemp root and verifies remote SHA before
+ADB. A180s process deadline, rc0, standalone Success and absence of Failure are
+required. Finally removes the exact private blob/root via rm/rmdir. Refusal
+precedes server/tunnel setup; e2e_final prepares before server restoration and
+closes both connections on refusal. Shared source/cache unchanged.
+
+Run scripts/rebuild_apk.py first, then the selected E2E with --apk-receipt
+"qeli-android/dist/COMMIT-RUN/BUILD.json", replacing COMMIT-RUN with the printed
+build directory. Clean repository and identical selected source/native inputs
+are required. Both benchmark manual commands are updated.
+
+89 Windows and18 final Linux methods PASS; new suite in CI, official actionlint
+accepts4workflow; docs724Markdown/9checks PASS. The actual common installer on .11
+transferred the prior qualified30MB APK in five cases: success, Success/rc7,
+Failure/rc0, Success+Failure/rc0 and actual byte mutation before remote SHA.
+Private controlled ADB recorded four calls with original SHA and no call on
+mutation. Five install roots and two fixture roots removed after SHA recovery
+of inputs/events/logs and guards. Original777/845 service and CLI75bc retained;
+.10 unused. Generator/cleanup harness errors retained separately: refused before
+connection or deletion; final cleanup confirmed.
+
+This qualifies selection/transfer/status/early refusal, without real emulator
+installation, VPN transport matrix or production server restart. Two REALITY
+scripts and production lifecycle using an already installed client without this
+installer path are not claimed newly runtime-qualified. Prior201JVM/debug APK/
+legal/signature evidence inherited, no rebuild. Receipt binds selected inputs,
+not independent publisher attestation. Native14/source cut/protected files unchanged;
+Q34IN_PROGRESS30/37DONE81.1%,7remain;F459/Q29/Q30/Q31/D06accepted/USER_EXCLUDED
+and expected release publisher OPEN retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F493 evidence: `q34-apk-consumers-20261009`; SEALED 90 files / 1637228 bytes; manifest SHA256 `c6888dfc8edc8712f6f92d98fa9165c5e93e350830c1a2f8b0d9c994e349ac84`.
