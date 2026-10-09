@@ -60,6 +60,10 @@ on:
     # free health check). 03:17 UTC — off the top of the hour to dodge scheduler load.
     - cron: '17 3 * * *'
 
+env:
+  QELI_FUZZ_TOOLCHAIN: nightly-2026-06-10
+  QELI_CARGO_FUZZ_VERSION: 0.13.2
+
 defaults:
   run:
     working-directory: qeli
@@ -808,37 +812,57 @@ jobs:
   # short smoke is a merge blocker; full coverage-guided fuzzing runs nightly.
   fuzz-smoke:
     runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}
+      CARGO_BUILD_JOBS: 1
     # Parser harness drift and a reproduced crash are release blockers, not advisory
     # telemetry; keep this job hard even though cargo-fuzz uses nightly. (R-04)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@4fd1da8b0805d2d2e936788875a7d65dbd677dc2 # nightly
+        with:
+          toolchain: ${{ env.QELI_FUZZ_TOOLCHAIN }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
+        run: cargo +"$QELI_FUZZ_TOOLCHAIN" install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked --jobs 1
+      - name: Fetch the reviewed fuzz dependency graph
+        id: fuzz-lock
+        run: |
+          set -euo pipefail
+          test -f fuzz/Cargo.lock
+          cargo +"$QELI_FUZZ_TOOLCHAIN" fetch --locked --manifest-path fuzz/Cargo.toml
+          sha256sum fuzz/Cargo.lock > "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
       # Build first and report the outcome explicitly: an API drift that stops the
       # harnesses compiling is a genuine regression in the untrusted-input parsers, and
       # a soft job would otherwise bury it. This gate intentionally fails the run. (R-04)
       - name: Build the fuzz harnesses
+        env:
+          CARGO_NET_OFFLINE: true
         working-directory: qeli
         run: |
           set -euo pipefail
-          if ! cargo +nightly fuzz build; then
+          if ! cargo +"$QELI_FUZZ_TOOLCHAIN" fuzz build; then
             echo "::error::fuzz harnesses no longer build — the parser API drifted"
             exit 1
           fi
       - name: Smoke each target (30s)
+        env:
+          CARGO_NET_OFFLINE: true
         working-directory: qeli
         run: |
           set -euo pipefail
           inventory="$(python3 ../scripts/fuzz_targets.py)"
           mapfile -t targets <<< "$inventory"
           for t in "${targets[@]}"; do
+            sha256sum --check "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
             echo "=== fuzz $t ==="
-            cargo +nightly fuzz run "$t" -- -max_total_time=30
+            cargo +"$QELI_FUZZ_TOOLCHAIN" fuzz run "$t" -- -max_total_time=30
           done
+      - name: Refuse fuzz lockfile drift
+        if: always() && steps.fuzz-lock.outcome == 'success'
+        run: sha256sum --check "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
 
   # Continuous fuzzing: a longer nightly run of each target with a corpus persisted
   # across runs, so coverage accumulates (the push `fuzz-smoke` above is only a 30s
@@ -860,6 +884,9 @@ jobs:
     needs: fuzz-targets
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}
+      CARGO_BUILD_JOBS: 1
     strategy:
       fail-fast: false
       matrix:
@@ -867,11 +894,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@4fd1da8b0805d2d2e936788875a7d65dbd677dc2 # nightly
+        with:
+          toolchain: ${{ env.QELI_FUZZ_TOOLCHAIN }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
+        run: cargo +"$QELI_FUZZ_TOOLCHAIN" install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked --jobs 1
+      - name: Fetch the reviewed fuzz dependency graph
+        id: fuzz-lock
+        run: |
+          set -euo pipefail
+          test -f fuzz/Cargo.lock
+          cargo +"$QELI_FUZZ_TOOLCHAIN" fetch --locked --manifest-path fuzz/Cargo.toml
+          sha256sum fuzz/Cargo.lock > "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
       - name: Restore/seed corpus
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
@@ -882,7 +918,12 @@ jobs:
           restore-keys: |
             fuzz-corpus-${{ matrix.target }}-
       - name: Fuzz ${{ matrix.target }} (10 min)
-        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=600
+        env:
+          CARGO_NET_OFFLINE: true
+        run: cargo +"$QELI_FUZZ_TOOLCHAIN" fuzz run ${{ matrix.target }} -- -max_total_time=600
+      - name: Refuse fuzz lockfile drift
+        if: always() && steps.fuzz-lock.outcome == 'success'
+        run: sha256sum --check "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
       - name: Upload crash reproducer
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -917,6 +958,8 @@ jobs:
         run: cargo install cargo-audit --version 0.22.2 --locked
       - name: cargo audit
         run: cargo audit --deny warnings
+      - name: Audit the independent fuzz dependency graph
+        run: cargo audit --deny warnings --file fuzz/Cargo.lock
       - name: Install cargo-deny
         run: cargo install cargo-deny --version 0.18.4 --locked
       - name: Dependency policy (licenses, bans and sources)

@@ -519,3 +519,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q34: OpenWrt exact local source cut](reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md)
 
 - [Q34: Fuzz CI inventory](reports/AUDIT-Q34-FUZZ-INVENTORY.md)
+
+- [Q34: Fuzz toolchain and ASan smoke](reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md)
