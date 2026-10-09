@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v116 -->
+<!-- normative-sync: audit-debt-v117 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1270,3 +1270,5 @@ physical exclusions are not PASS.
 **9 October, F488/Q34-F042:** [Permanent Actions lint](../reports/AUDIT-Q34-WORKFLOW-LINT.md): new CI gate checks every .yml/.yaml with official SHA-pinned actionlint1.7.12. All four baseline workflows already valid; persistent coverage gap closed. Each Windows/Linux:11 unit+8 actual scenarios PASS, including invalid env/new yaml/tampered binary refusal. Owned .11 backed up and removed;777/845 preserved. Core/native/source cut unchanged; hosted CI and other boundaries retained in report. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9October,F489/Q34-F043:** [MicroCom source binding](../reports/AUDIT-Q34-SOURCE-BINDING.md): compatible0.11.2 retains52API and exact DLL/nuspec commit; full76-file upstream SHA verified,publisher-only exception removed.24actualWindows/Linuxgraphpairs,baseline/fixedCOMconsumer12assertions,187-file bundle regeneration/builds/publishes/conformancePASS. Later incompatible candidates not applied. Scope/cleanup evidence in report;native/qeli tree unchanged. Q34IN_PROGRESS30/37DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October, F490/Q34-F044:** [Docker latest](../reports/AUDIT-Q34-PUBLICATION-GATES.md): reproduced old stable tag rollback of latest; separate numeric highest-version admission and shared concurrency group.16 Windows +16 Linux methods,59 related Windows methods and official lint of4workflows PASS. Inputs/output recovered,owned Linux fixture removed,service777/845 preserved. Git-tag inventory/queue/old-ref boundaries and other obligations remain in report. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

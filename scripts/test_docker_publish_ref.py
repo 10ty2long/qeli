@@ -4,8 +4,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
 import unittest
-from docker_publish_ref import classify
+from docker_publish_ref import classify, publication_outputs
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -40,7 +41,7 @@ class RefTests(unittest.TestCase):
             env = {**os.environ, "GITHUB_REF_TYPE": "branch", "GITHUB_REF_NAME": "dev", "GITHUB_OUTPUT": str(output)}
             p = subprocess.run([sys.executable, "-B", str(ROOT / "scripts/docker_publish_ref.py")], env=env, capture_output=True)
             self.assertEqual(p.returncode, 0)
-            self.assertEqual(output.read_text(), "existing=value\nrelease_tag=false\nstable_release=false\n")
+            self.assertEqual(output.read_text(), "existing=value\nrelease_tag=false\nstable_release=false\nlatest_release=false\n")
             before = output.read_bytes()
             env.update(GITHUB_REF_TYPE="tag", GITHUB_REF_NAME="vmalformed")
             p = subprocess.run([sys.executable, "-B", str(ROOT / "scripts/docker_publish_ref.py")], env=env, capture_output=True)
@@ -53,8 +54,96 @@ class RefTests(unittest.TestCase):
         self.assertIn("flavor: latest=false", workflow)
         self.assertIn("type=semver,pattern={{version}},enable=${{ steps.ref.outputs.release_tag }}", workflow)
         self.assertIn("type=sha,format=long", workflow)
-        self.assertIn("type=raw,value=latest,enable=${{ steps.ref.outputs.stable_release }}", workflow)
+        self.assertIn("type=raw,value=latest,enable=${{ steps.ref.outputs.latest_release }}", workflow)
         self.assertNotIn("!contains(github.ref_name, '-')", workflow)
+        self.assertIn("concurrency:\n  group: docker-publish\n  cancel-in-progress: false", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
+
+
+class LatestTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.git("init", "--quiet")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "commit", "--quiet", "--allow-empty", "-m", "fixture")
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
+
+    def tags(self, *tags):
+        for tag in tags:
+            self.git("tag", tag)
+
+    def test_old_stable_cannot_downgrade_latest(self):
+        self.tags("v0.8.2", "v0.9.0")
+        # Baseline admits the old tag to latest; the publication decision must not.
+        self.assertEqual(classify("tag", "v0.8.2")["stable_release"], "true")
+        result = publication_outputs(self.root, "tag", "v0.8.2")
+        self.assertEqual(result, {"release_tag": "true", "stable_release": "true", "latest_release": "false"})
+        self.assertEqual(publication_outputs(self.root, "tag", "v0.9.0")["latest_release"], "true")
+
+    def test_numeric_order_not_lexical_or_creation_order(self):
+        self.tags("v10.0.0", "v2.99.99", "v10.0.2", "v10.0.10", "v9.99.99", "v10.1.0")
+        for tag in ["v2.99.99", "v9.99.99", "v10.0.10", "v10.0.2"]:
+            self.assertEqual(publication_outputs(self.root, "tag", tag)["latest_release"], "false")
+        self.assertEqual(publication_outputs(self.root, "tag", "v10.1.0")["latest_release"], "true")
+
+    def test_prereleases_and_unrelated_tags_do_not_block_stable(self):
+        self.tags("v1.2.3", "v99.0.0-rc.1", "v100.0.0-01", "vtest", "backup")
+        self.assertEqual(publication_outputs(self.root, "tag", "v1.2.3")["latest_release"], "true")
+
+    def test_build_metadata_has_equal_precedence(self):
+        self.tags("v1.2.3", "v1.2.3+build-42")
+        for tag in ["v1.2.3", "v1.2.3+build-42"]:
+            self.assertEqual(publication_outputs(self.root, "tag", tag)["latest_release"], "true")
+
+    def test_branch_and_prerelease_do_not_need_git_inventory(self):
+        with patch("docker_publish_ref.subprocess.run", side_effect=AssertionError("unexpected Git query")):
+            for kind, name in [("branch", "dev"), ("tag", "v1.2.3-rc.1")]:
+                self.assertEqual(publication_outputs(self.root, kind, name)["latest_release"], "false")
+
+    def test_missing_tag_or_repository_refuse(self):
+        self.tags("v1.2.3")
+        with self.assertRaisesRegex(ValueError, "missing"):
+            publication_outputs(self.root, "tag", "v1.2.4")
+        with tempfile.TemporaryDirectory() as outside:
+            with self.assertRaises(ValueError):
+                publication_outputs(Path(outside), "tag", "v1.2.3")
+
+    def test_shallow_repository_refuses(self):
+        self.tags("v1.2.3")
+        clone = self.root / "shallow"
+        subprocess.run(["git", "clone", "--quiet", "--depth=1", self.root.as_uri(), str(clone)], check=True, capture_output=True)
+        with self.assertRaisesRegex(ValueError, "complete Git history"):
+            publication_outputs(clone, "tag", "v1.2.3")
+
+    def test_git_failure_and_timeout_preserve_cli_output(self):
+        output = self.root / "outputs"
+        output.write_bytes(b"existing=value\n")
+        env = {**os.environ, "GITHUB_REF_TYPE": "tag", "GITHUB_REF_NAME": "v1.2.3", "GITHUB_OUTPUT": str(output)}
+        with patch.dict(os.environ, env):
+            for error in [OSError("Git missing"), subprocess.TimeoutExpired("git", 30)]:
+                with patch("docker_publish_ref.subprocess.run", side_effect=error):
+                    from docker_publish_ref import main
+                    self.assertEqual(main(["--repo", str(self.root)]), 1)
+                self.assertEqual(output.read_bytes(), b"existing=value\n")
+
+    def test_real_cli_old_new_and_missing_tags(self):
+        self.tags("v1.2.3", "v1.3.0")
+        output = self.root / "outputs"
+        for tag, expected in [("v1.2.3", "false"), ("v1.3.0", "true")]:
+            output.write_bytes(b"existing=value\n")
+            env = {**os.environ, "GITHUB_REF_TYPE": "tag", "GITHUB_REF_NAME": tag, "GITHUB_OUTPUT": str(output)}
+            command = [sys.executable, "-B", str(ROOT / "scripts/docker_publish_ref.py"), "--repo", str(self.root)]
+            result = subprocess.run(command, env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(output.read_bytes(), f"existing=value\nrelease_tag=true\nstable_release=true\nlatest_release={expected}\n".encode())
+        before = output.read_bytes()
+        env["GITHUB_REF_NAME"] = "v1.4.0"
+        self.assertNotEqual(subprocess.run(command, env=env, capture_output=True).returncode, 0)
+        self.assertEqual(output.read_bytes(), before)
 
 
 if __name__ == "__main__":
