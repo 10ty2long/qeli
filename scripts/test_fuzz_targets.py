@@ -91,10 +91,51 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('inventory="$(python3 ../scripts/fuzz_targets.py)"',smoke)
         self.assertIn('for t in "${targets[@]}"; do',smoke)
         self.assertNotIn('mapfile -t targets < <(',smoke)
+        self.assertIn('cargo audit --deny warnings --file fuzz/Cargo.lock',text)
         self.assertIn('--github-output "$GITHUB_OUTPUT"',setup)
         self.assertIn('needs: fuzz-targets',nightly)
         self.assertIn('target: ${{ fromJSON(needs.fuzz-targets.outputs.targets) }}',nightly)
         self.assertIn("test_fuzz_targets.py",text)
+
+    def test_ci_freezes_both_tools_and_the_independent_dependency_graph(self):
+        import re
+        text=(gate.ROOT/'.github/workflows/ci.yml').read_text(encoding='utf8')
+        self.assertRegex(text,r'QELI_FUZZ_TOOLCHAIN: nightly-\d{4}-\d{2}-\d{2}\n')
+        self.assertRegex(text,r'QELI_CARGO_FUZZ_VERSION: \d+\.\d+\.\d+\n')
+        for job,end in [('fuzz-smoke','fuzz-targets'),('fuzz-nightly','security-audit')]:
+            scope=text.split('  '+job+':',1)[1].split('  '+end+':',1)[0]
+            with self.subTest(job=job):
+                self.assertIn('toolchain: ${{ env.QELI_FUZZ_TOOLCHAIN }}',scope)
+                self.assertIn('RUSTUP_TOOLCHAIN: ${{ env.QELI_FUZZ_TOOLCHAIN }}',scope)
+                self.assertIn('install cargo-fuzz --version "$QELI_CARGO_FUZZ_VERSION" --locked',scope)
+                self.assertIn('test -f fuzz/Cargo.lock',scope)
+                self.assertIn('fetch --locked --manifest-path fuzz/Cargo.toml',scope)
+                self.assertIn('CARGO_NET_OFFLINE: true',scope)
+                self.assertIn('sha256sum --check "$RUNNER_TEMP/qeli-fuzz-lock.sha256"',scope)
+                self.assertNotIn('cargo +nightly ',scope)
+                self.assertNotRegex(scope,r'fuzz (build|run)[^\n]*--locked')
+
+    def test_fuzz_lock_keeps_parent_versions_for_common_registry_packages(self):
+        import tomllib
+        rows=lambda path:tomllib.loads(path.read_text(encoding='utf8'))['package']
+        parent=rows(gate.ROOT/'qeli/Cargo.lock')
+        fuzz=rows(gate.ROOT/'qeli/fuzz/Cargo.lock')
+        known={(r['name'],r['version'],r.get('source')):r.get('checksum') for r in parent}
+        parent_names={r['name'] for r in parent}
+        self.assertTrue(any(r['name']=='qeli-fuzz' for r in fuzz))
+        self.assertTrue(any(r['name']=='libfuzzer-sys' for r in fuzz))
+        for row in fuzz:
+            if row.get('source') and row['name'] in parent_names:
+                key=(row['name'],row['version'],row['source'])
+                with self.subTest(package=key):
+                    self.assertIn(key,known)
+                    self.assertEqual(row.get('checksum'),known[key])
+
+    def test_readme_describes_every_registered_target(self):
+        import re
+        text=(gate.ROOT/'qeli/fuzz/README.md').read_text(encoding='utf8')
+        documented=re.findall(r'^\| `([a-z][a-z0-9_-]*)` \|',text,re.MULTILINE)
+        self.assertEqual(sorted(documented),gate.registered_targets(gate.ROOT/'qeli/fuzz/Cargo.toml'))
 
 
 if __name__ == '__main__':
