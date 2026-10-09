@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v179 -->
+<!-- normative-sync: full-system-audit-v180 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2516,3 +2516,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 
 **9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 октября, F488/Q34-F042:** [Постоянный Actions lint](../reports/AUDIT-Q34-WORKFLOW-LINT.md): новый CI gate проверяет все .yml/.yaml официальным SHA-закреплённым actionlint1.7.12. Все четыре baseline workflow уже корректны; закрыт пробел постоянного контроля. На каждой из Windows/Linux:11 unit+8 реальных сценариев PASS, включая отказ ошибочного env/нового yaml/подменённого бинарника. Временная .11 сохранена и удалена,777/845 сохранены. Ядро/native/source cut неизменны; hosted CI и остальные границы в отчёте. Q34 IN_PROGRESS;30/37 DONE81.1%,7 остаются. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

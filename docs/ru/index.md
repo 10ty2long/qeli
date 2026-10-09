@@ -521,3 +521,5 @@
 - [Q34: Fuzz CI inventory](reports/AUDIT-Q34-FUZZ-INVENTORY.md)
 
 - [Q34: Fuzz toolchain and ASan smoke](reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md)
+
+- [Постоянный Actions lint](reports/AUDIT-Q34-WORKFLOW-LINT.md) — Q34/F488, 9 October 2026.

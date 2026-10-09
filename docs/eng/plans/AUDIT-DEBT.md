@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v114 -->
+<!-- normative-sync: audit-debt-v115 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1266,3 +1266,5 @@ physical exclusions are not PASS.
 
 
 **9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October, F488/Q34-F042:** [Permanent Actions lint](../reports/AUDIT-Q34-WORKFLOW-LINT.md): new CI gate checks every .yml/.yaml with official SHA-pinned actionlint1.7.12. All four baseline workflows already valid; persistent coverage gap closed. Each Windows/Linux:11 unit+8 actual scenarios PASS, including invalid env/new yaml/tampered binary refusal. Owned .11 backed up and removed;777/845 preserved. Core/native/source cut unchanged; hosted CI and other boundaries retained in report. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
