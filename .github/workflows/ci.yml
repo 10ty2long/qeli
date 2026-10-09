@@ -74,6 +74,19 @@ permissions:
   contents: read
 
 jobs:
+  # Validate Actions contexts, jobs, expressions and matrix references in every workflow.
+  workflow-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Test workflow gate failures and tool admission
+        run: python3 -m unittest discover -s scripts -p 'test_check_workflows.py'
+      - name: Check all workflows with SHA-pinned actionlint
+        run: python3 scripts/check_workflows.py --install-dir "$RUNNER_TEMP/qeli-actionlint"
+
   # Hard gate: the committed native libraries (.so/.dll/.dylib) must match their
   # manifest. They are opaque blobs whose diff no reviewer can read, so without this a
   # swapped binary passes review unnoticed; the manifest also pins each canonical copy to
