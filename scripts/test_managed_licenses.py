@@ -103,6 +103,22 @@ class ManagedLicensesTests(unittest.TestCase):
     def test_unbound_supplement_cannot_be_silently_skipped(self):
         self.receipts.write_text(json.dumps({'schema': 1, 'rows': [{'repository': 'other/demo', 'commit': '1' * 40, 'upstream_path': 'LICENSE', 'url': 'https://raw.githubusercontent.com/other/demo/' + '1' * 40 + '/LICENSE', 'binding': 'nuspec-vcs'}]}), encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'Unbound'): self.generate()
+    def test_microcom_supplement_requires_packaged_vcs_commit(self):
+        commit = 'a83e5a26aa68adaa6001338e2cee2411dd380d1f'
+        record = {'repository': 'kekekeks/MicroCom', 'commit': commit, 'upstream_path': 'LICENSE',
+                  'url': f'https://raw.githubusercontent.com/kekekeks/MicroCom/{commit}/LICENSE',
+                  'binding': 'nuspec-vcs'}
+        metadata = {'url': 'https://github.com/kekekeks/MicroCom', 'commit': commit}
+        self.assertTrue(legal.supplement_allowed(('microcom.runtime', '0.11.2'), metadata, record, {}))
+        self.assertFalse(legal.supplement_allowed(('microcom.runtime', '0.11.2'), {'url': metadata['url']}, record, {}))
+        self.assertFalse(legal.supplement_allowed(('microcom.runtime', '0.11.2'), dict(metadata, commit='0'*40), record, {}))
+
+    def test_old_publisher_only_exception_is_removed(self):
+        record = {'repository': 'kekekeks/MicroCom', 'commit': '4b8a38f773c109bad558ee3713d9f16d80776e42',
+                  'upstream_path': 'LICENSE', 'binding': 'publisher-declaration; no nuspec-vcs commit'}
+        record['url'] = f"https://raw.githubusercontent.com/{record['repository']}/{record['commit']}/LICENSE"
+        self.assertFalse(legal.supplement_allowed(('microcom.runtime', '0.11.0'), {}, record, {}))
+
     def test_fake_font_metadata_rejected(self):
         self.generate(); (self.bundle / 'FONTS.json').write_text('{"schema":1,"rows":[{}]}', encoding='utf-8'); self.reindex()
         with self.assertRaisesRegex(ValueError, 'Unlinked'): legal.check_bundle(self.repo)
