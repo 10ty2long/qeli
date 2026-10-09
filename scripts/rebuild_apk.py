@@ -190,7 +190,7 @@ def build(c, sf, release=False, snapshot=None, signing_properties=None, offline=
             raise RuntimeError(f"APK build failed (rc={rc}); retained {remote}")
         artifact = project+f"/app/build/outputs/apk/{variant}/app-{variant}.apk"
         if release:
-            signer = c.checked("find /root/android-sdk/build-tools -name apksigner -type f | sort -V | tail -1", "find apksigner", 30)
+            signer = c.checked(f"find {shlex.quote(android_sdk+'/build-tools')} -name apksigner -type f | sort -V | tail -1", "find apksigner", 30)
             if not signer:
                 raise RuntimeError("apksigner not found")
             c.checked(f"{shlex.quote(signer)} verify --verbose --print-certs {shlex.quote(artifact)}", "APK signature verification", 60)

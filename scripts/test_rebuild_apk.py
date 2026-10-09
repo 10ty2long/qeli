@@ -110,6 +110,22 @@ class BuilderTests(unittest.TestCase):
         self.assertNotIn("--offline",build)
         self.assertIn("ANDROID_HOME='/private/sdk with spaces'",build)
 
+    def test_release_signer_lookup_uses_selected_private_sdk(self):
+        calls=[];c=MagicMock()
+        def checked(cmd,label,timeout=1200):
+            calls.append((cmd,label))
+            if label=="find apksigner":raise RuntimeError("controlled signer query")
+            return ""
+        c.checked.side_effect=checked
+        def command(connection,cmd,t=1200):
+            return ("1",0) if "nm -D" in cmd else ("BUILD SUCCESSFUL",0)
+        with patch.object(apk,"deploy_snapshot",return_value="/var/tmp/qeli-apk-build.AAAAAAAA"),patch.object(apk,"sh",side_effect=command),contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(RuntimeError,"controlled signer query"):
+                apk.build(c,MagicMock(),True,DUMMY,android_sdk="/private/sdk with spaces")
+        lookup=[cmd for cmd,label in calls if label=="find apksigner"][0]
+        self.assertIn("find '/private/sdk with spaces/build-tools'",lookup)
+        self.assertTrue(calls[-1][0].startswith("rm -f -- /var/tmp/qeli-apk-build."))
+
     def test_simultaneous_local_outputs_do_not_overwrite_each_other_or_legacy_apk(self):
         payload=b"qualified controlled APK bytes";digest=hashlib.sha256(payload).hexdigest()
         with tempfile.TemporaryDirectory() as temporary:
