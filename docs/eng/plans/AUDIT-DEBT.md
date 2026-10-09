@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v117 -->
+<!-- normative-sync: audit-debt-v118 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1272,3 +1272,5 @@ physical exclusions are not PASS.
 **9October,F489/Q34-F043:** [MicroCom source binding](../reports/AUDIT-Q34-SOURCE-BINDING.md): compatible0.11.2 retains52API and exact DLL/nuspec commit; full76-file upstream SHA verified,publisher-only exception removed.24actualWindows/Linuxgraphpairs,baseline/fixedCOMconsumer12assertions,187-file bundle regeneration/builds/publishes/conformancePASS. Later incompatible candidates not applied. Scope/cleanup evidence in report;native/qeli tree unchanged. Q34IN_PROGRESS30/37DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 October, F490/Q34-F044:** [Docker latest](../reports/AUDIT-Q34-PUBLICATION-GATES.md): reproduced old stable tag rollback of latest; separate numeric highest-version admission and shared concurrency group.16 Windows +16 Linux methods,59 related Windows methods and official lint of4workflows PASS. Inputs/output recovered,owned Linux fixture removed,service777/845 preserved. Git-tag inventory/queue/old-ref boundaries and other obligations remain in report. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**9 October,F491/Q34-F045:** [APK builder](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): removed global GradleDaemon SIGKILL/shared cache journal deletion; import-safe main/finally close SSH/SFTP on failures.63 Windows/Linux methods and official lint4workflows PASS; separate PID/mount probe reproduces baseline SIGKILL while fixed orchestration preserves foreign worker/cache. Evidence recovered,owned root removed,service777/845 preserved. No new APK; shared source workspace/expected release signer and previous limits remain open. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

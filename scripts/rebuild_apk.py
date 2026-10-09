@@ -6,9 +6,9 @@ wiping jniLibs, builds a same-source Linux host core for JVM tests, then builds
 offline and pulls the APK locally (rotating the previous one).
 The default is debug; ``--release`` additionally requires a valid APK signature.
 """
+import argparse
 import os, sys, posixpath, shlex, shutil
 from pathlib import Path
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from native_lab import connect_lab, pull_verified_artifact, remote_sha256, sync_qeli_source
 from native_repro import require_lab_password, rust_toolchain, sha256_file
@@ -44,10 +44,6 @@ MIRRORED_SOURCE_TREES = (
 )
 
 DIST = os.path.join(LOCAL, "dist")
-if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--release"):
-    raise SystemExit("usage: rebuild_apk.py [--release]")
-RELEASE = len(sys.argv) == 2
-VARIANT = "release" if RELEASE else "debug"
 
 def conn():
     return connect_lab(HOST[0], HOST[1], require_lab_password())
@@ -55,120 +51,144 @@ def conn():
 def sh(c, cmd, t=1200):
     return c.run(cmd, timeout=t)
 
-c = conn(); sf = c.open_sftp()
+def build(c, sf, release=False):
+    RELEASE = release
+    VARIANT = "release" if RELEASE else "debug"
 
-# 1. Push the repo's committed .so so .11 builds with the in-repo native core.
-print("=== 1. push repo jniLibs/*.so -> .11 ===")
-for abi in ("arm64-v8a", "x86_64"):
-    lp = os.path.join(LOCAL, "app", "src", "main", "jniLibs", abi, "libqeli.so")
-    rp = f"{REMOTE}/app/src/main/jniLibs/{abi}/libqeli.so"
-    sh(c, f"mkdir -p {posixpath.dirname(rp)}")
-    sf.put(lp, rp)
-    print(f"  [push] {abi}/libqeli.so ({os.path.getsize(lp)} bytes)")
+    # 1. Push the repo's committed .so so .11 builds with the in-repo native core.
+    print("=== 1. push repo jniLibs/*.so -> .11 ===")
+    for abi in ("arm64-v8a", "x86_64"):
+        lp = os.path.join(LOCAL, "app", "src", "main", "jniLibs", abi, "libqeli.so")
+        rp = f"{REMOTE}/app/src/main/jniLibs/{abi}/libqeli.so"
+        sh(c, f"mkdir -p {posixpath.dirname(rp)}")
+        sf.put(lp, rp)
+        print(f"  [push] {abi}/libqeli.so ({os.path.getsize(lp)} bytes)")
 
-# 2. Sync Kotlin/resources/gradle and the repo-level shared conformance fixtures in place
-# (skip jniLibs so the freshly rebuilt .so stays). Android's JVM tests deliberately read
-# the same fixtures as Rust/C#/Swift; leaving the lab's old copies behind can make a release
-# fail or, worse, certify vectors from a different commit.
-print("=== 2. sync sources + shared conformance (preserving jniLibs) ===")
-for relative in MIRRORED_SOURCE_TREES:
-    remote_tree = posixpath.join(REMOTE, relative)
-    clean_output, clean_rc = sh(c, f"rm -rf -- {shlex.quote(remote_tree)}")
-    if clean_rc != 0:
-        raise RuntimeError(f"remote source cleanup failed for {relative}:\n{clean_output}")
+    # 2. Sync Kotlin/resources/gradle and the repo-level shared conformance fixtures in place
+    # (skip jniLibs so the freshly rebuilt .so stays). Android's JVM tests deliberately read
+    # the same fixtures as Rust/C#/Swift; leaving the lab's old copies behind can make a release
+    # fail or, worse, certify vectors from a different commit.
+    print("=== 2. sync sources + shared conformance (preserving jniLibs) ===")
+    for relative in MIRRORED_SOURCE_TREES:
+        remote_tree = posixpath.join(REMOTE, relative)
+        clean_output, clean_rc = sh(c, f"rm -rf -- {shlex.quote(remote_tree)}")
+        if clean_rc != 0:
+            raise RuntimeError(f"remote source cleanup failed for {relative}:\n{clean_output}")
 
-sources = []
-remote_directories = set()
-for root, dirs, names in os.walk(LOCAL):
-    dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
-    for nm in names:
-        if nm in SKIP_FILES or (nm not in SYNC_FILES and not nm.endswith(SYNC_EXT)):
-            continue
-        full = os.path.join(root, nm)
-        rel = os.path.relpath(full, LOCAL).replace(os.sep, "/")
-        remote = posixpath.join(REMOTE, rel)
-        sources.append((full, remote))
+    sources = []
+    remote_directories = set()
+    for root, dirs, names in os.walk(LOCAL):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        for nm in names:
+            if nm in SKIP_FILES or (nm not in SYNC_FILES and not nm.endswith(SYNC_EXT)):
+                continue
+            full = os.path.join(root, nm)
+            rel = os.path.relpath(full, LOCAL).replace(os.sep, "/")
+            remote = posixpath.join(REMOTE, rel)
+            sources.append((full, remote))
+            remote_directories.add(posixpath.dirname(remote))
+    for fixture in sorted(CONFORMANCE.glob("*.json")):
+        remote = posixpath.join(REMOTE, "conformance", fixture.name)
+        sources.append((os.fspath(fixture), remote))
         remote_directories.add(posixpath.dirname(remote))
-for fixture in sorted(CONFORMANCE.glob("*.json")):
-    remote = posixpath.join(REMOTE, "conformance", fixture.name)
-    sources.append((os.fspath(fixture), remote))
-    remote_directories.add(posixpath.dirname(remote))
-mkdir_output, mkdir_rc = sh(
-    c,
-    "mkdir -p " + " ".join(shlex.quote(path) for path in sorted(remote_directories)),
-)
-if mkdir_rc != 0:
-    raise RuntimeError(f"remote source directory creation failed:\n{mkdir_output}")
-for full, remote in sources:
-    sf.put(full, remote)
-print(f"  [sync] {len(sources)} files including shared conformance fixtures")
-print("  [versionName on .11]:",
-      sh(c, f"grep -E 'versionCode|versionName' {REMOTE}/app/build.gradle.kts")[0])
+    mkdir_output, mkdir_rc = sh(
+        c,
+        "mkdir -p " + " ".join(shlex.quote(path) for path in sorted(remote_directories)),
+    )
+    if mkdir_rc != 0:
+        raise RuntimeError(f"remote source directory creation failed:\n{mkdir_output}")
+    for full, remote in sources:
+        sf.put(full, remote)
+    print(f"  [sync] {len(sources)} files including shared conformance fixtures")
+    print("  [versionName on .11]:",
+          sh(c, f"grep -E 'versionCode|versionName' {REMOTE}/app/build.gradle.kts")[0])
 
-# 2b. JVM tests load the production Rust configuration service. Android ELF cannot
-# load in a Linux JVM, so build a host-only test core from the exact local source.
-# It is never copied into jniLibs or the APK.
-print("=== 2b. sync Rust source and build Linux host core for JVM tests ===")
-rust_count = sync_qeli_source(c, sf, LOCAL_QELI, REMOTE_QELI)
-print(f"  [sync] {rust_count} Rust source/assets files")
-host_core = f"{REMOTE_QELI}/target/debug/libqeli_core.so"
-host_command = (
-    f"export PATH=/root/.cargo/bin:$PATH; cd {shlex.quote(REMOTE_QELI)} "
-    f"&& cargo +{rust_toolchain()} build --locked --offline "
-    "--no-default-features --features transport-core-ffi --lib"
-)
-host_output, host_rc = sh(c, host_command, t=1200)
-print("\n".join(host_output.splitlines()[-35:]))
-if host_rc != 0:
-    print(f"[host core] FAILED (rc={host_rc})"); c.close(); sys.exit(1)
-exports, exports_rc = sh(
-    c,
-    f"nm -D {shlex.quote(host_core)} | grep -c 'Java_com_qeli_ConfigCore_nativeRequest$'",
-)
-if exports_rc != 0 or exports.strip() != "1":
-    print("[host core] missing ConfigCore JNI export"); c.close(); sys.exit(1)
-print(f"  [host core] {host_core}: ConfigCore JNI export present")
+    # 2b. JVM tests load the production Rust configuration service. Android ELF cannot
+    # load in a Linux JVM, so build a host-only test core from the exact local source.
+    # It is never copied into jniLibs or the APK.
+    print("=== 2b. sync Rust source and build Linux host core for JVM tests ===")
+    rust_count = sync_qeli_source(c, sf, LOCAL_QELI, REMOTE_QELI)
+    print(f"  [sync] {rust_count} Rust source/assets files")
+    host_core = f"{REMOTE_QELI}/target/debug/libqeli_core.so"
+    host_command = (
+        f"export PATH=/root/.cargo/bin:$PATH; cd {shlex.quote(REMOTE_QELI)} "
+        f"&& cargo +{rust_toolchain()} build --locked --offline "
+        "--no-default-features --features transport-core-ffi --lib"
+    )
+    host_output, host_rc = sh(c, host_command, t=1200)
+    print("\n".join(host_output.splitlines()[-35:]))
+    if host_rc != 0:
+        raise RuntimeError(f"host core build failed (rc={host_rc})")
+    exports, exports_rc = sh(
+        c,
+        f"nm -D {shlex.quote(host_core)} | grep -c 'Java_com_qeli_ConfigCore_nativeRequest$'",
+    )
+    if exports_rc != 0 or exports.strip() != "1":
+        raise RuntimeError("host core missing ConfigCore JNI export")
+    print(f"  [host core] {host_core}: ConfigCore JNI export present")
 
-# 3. Build (clear any stale gradle lock first; offline).
-assemble_task = "assembleRelease" if RELEASE else "assembleDebug"
-print(f"=== 3. ./gradlew testDebugUnitTest {assemble_task} --offline ===")
-sh(c, "pkill -9 -f GradleDaemon 2>/dev/null; rm -rf /root/.gradle/caches/journal-1 2>/dev/null; true")
-out, rc = sh(c, f"cd {REMOTE} && chmod +x gradlew && QELI_CONFIG_NATIVE_LIBRARY={shlex.quote(host_core)} ./gradlew clean testDebugUnitTest {assemble_task} --offline --no-daemon "
-                f"--max-workers=1 -Dorg.gradle.vfs.watch=false "
-                f"'-Dorg.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8' 2>&1", t=1200)
-print("\n".join(out.splitlines()[-80:]))
-if rc != 0 or "BUILD SUCCESSFUL" not in out:
-    print(f"[build] FAILED (rc={rc})"); c.close(); sys.exit(1)
+    # 3. Build offline with Gradle-owned locking. Never kill another build or
+    # remove shared cache journals: --no-daemon already bounds our own invocation.
+    assemble_task = "assembleRelease" if RELEASE else "assembleDebug"
+    print(f"=== 3. ./gradlew testDebugUnitTest {assemble_task} --offline ===")
+    out, rc = sh(c, f"cd {REMOTE} && chmod +x gradlew && QELI_CONFIG_NATIVE_LIBRARY={shlex.quote(host_core)} ./gradlew clean testDebugUnitTest {assemble_task} --offline --no-daemon "
+                    f"--max-workers=1 -Dorg.gradle.vfs.watch=false "
+                    f"'-Dorg.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8' 2>&1", t=1200)
+    print("\n".join(out.splitlines()[-80:]))
+    if rc != 0 or "BUILD SUCCESSFUL" not in out:
+        raise RuntimeError(f"APK build failed (rc={rc})")
 
-apk = f"{REMOTE}/app/build/outputs/apk/{VARIANT}/app-{VARIANT}.apk"
-print("[apk on .11]", sh(c, f"stat -c '%y %s bytes' {apk}")[0])
-print("  [.so in apk]", sh(c, f"unzip -l {apk} | grep libqeli.so")[0])
-# version from the built APK (if aapt is available)
-aapt, _ = sh(c, "find /root/android-sdk/build-tools -name aapt 2>/dev/null | head -1")
-if aapt:
-    print("  [badging]", sh(c, f"{aapt} dump badging {apk} 2>/dev/null | grep -oE \"version(Code|Name)='[^']*'\" | tr '\\n' ' '")[0])
-if RELEASE:
-    apksigner, _ = sh(c, "find /root/android-sdk/build-tools -name apksigner 2>/dev/null | sort -V | tail -1")
-    if not apksigner:
-        print("[signing] FAILED: apksigner not found"); c.close(); sys.exit(1)
-    signature, signature_rc = sh(c, f"{apksigner} verify --verbose --print-certs {apk} 2>&1")
-    print("  [signing]", "verified" if signature_rc == 0 else signature)
-    if signature_rc != 0:
-        c.close(); sys.exit(1)
+    apk = f"{REMOTE}/app/build/outputs/apk/{VARIANT}/app-{VARIANT}.apk"
+    print("[apk on .11]", sh(c, f"stat -c '%y %s bytes' {apk}")[0])
+    print("  [.so in apk]", sh(c, f"unzip -l {apk} | grep libqeli.so")[0])
+    # version from the built APK (if aapt is available)
+    aapt, _ = sh(c, "find /root/android-sdk/build-tools -name aapt 2>/dev/null | head -1")
+    if aapt:
+        print("  [badging]", sh(c, f"{aapt} dump badging {apk} 2>/dev/null | grep -oE \"version(Code|Name)='[^']*'\" | tr '\\n' ' '")[0])
+    if RELEASE:
+        apksigner, _ = sh(c, "find /root/android-sdk/build-tools -name apksigner 2>/dev/null | sort -V | tail -1")
+        if not apksigner:
+            raise RuntimeError("apksigner not found")
+        signature, signature_rc = sh(c, f"{apksigner} verify --verbose --print-certs {apk} 2>&1")
+        print("  [signing]", "verified" if signature_rc == 0 else signature)
+        if signature_rc != 0:
+            raise RuntimeError("APK signature verification failed")
 
-# 4. Pull into local dist/ (rotate the previous APK).
-print("=== 4. pull APK -> local dist ===")
-os.makedirs(DIST, exist_ok=True)
-cur = os.path.join(DIST, f"app-{VARIANT}.apk")
-digest = remote_sha256(c, apk)
-if os.path.exists(cur) and sha256_file(cur) != digest:
-    prev = os.path.join(DIST, f"app-{VARIANT}.prev.apk")
-    if os.path.exists(prev):
-        os.remove(prev)
-    # Copy rather than move: a failed SFTP read must leave the current verified APK intact.
-    shutil.copy2(cur, prev)
-    print(f"  [backup] app-{VARIANT}.apk -> app-{VARIANT}.prev.apk")
-size, pulled_digest, _changes = pull_verified_artifact(sf, apk, digest, LOCAL, (f"dist/app-{VARIANT}.apk",))
-print(f"  [saved] {cur} ({size} bytes, sha256={pulled_digest})")
-sf.close(); c.close()
-print("[done]")
+    # 4. Pull into local dist/ (rotate the previous APK).
+    print("=== 4. pull APK -> local dist ===")
+    os.makedirs(DIST, exist_ok=True)
+    cur = os.path.join(DIST, f"app-{VARIANT}.apk")
+    digest = remote_sha256(c, apk)
+    if os.path.exists(cur) and sha256_file(cur) != digest:
+        prev = os.path.join(DIST, f"app-{VARIANT}.prev.apk")
+        if os.path.exists(prev):
+            os.remove(prev)
+        # Copy rather than move: a failed SFTP read must leave the current verified APK intact.
+        shutil.copy2(cur, prev)
+        print(f"  [backup] app-{VARIANT}.apk -> app-{VARIANT}.prev.apk")
+    size, pulled_digest, _changes = pull_verified_artifact(sf, apk, digest, LOCAL, (f"dist/app-{VARIANT}.apk",))
+    print(f"  [saved] {cur} ({size} bytes, sha256={pulled_digest})")
+    print("[done]")
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--release", action="store_true")
+    args = parser.parse_args(argv)
+    connection = conn()
+    sftp = None
+    try:
+        sftp = connection.open_sftp()
+        build(connection, sftp, args.release)
+        return 0
+    finally:
+        try:
+            if sftp is not None:
+                sftp.close()
+        finally:
+            connection.close()
+
+
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    raise SystemExit(main())

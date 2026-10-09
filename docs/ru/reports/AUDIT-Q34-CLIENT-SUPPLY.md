@@ -1,6 +1,6 @@
 # Q34: зависимости сборки клиентов и подписи Windows
 
-<!-- normative-sync: q34-client-supply-v1 -->
+<!-- normative-sync: q34-client-supply-v2 -->
 
 8 октября 2026. F455–F458 / Q34-F009–F012 закрыты в указанном ниже объёме. F459 / Q34-F013 остаётся OPEN. Q34 IN_PROGRESS; полный аудит 30/37 DONE (81.1%), осталось7. Только локальные изменения; без push, deployment и release.
 
@@ -31,3 +31,47 @@ Scratch/caches/output находятся в собственных локаль�
 Открытые части Q34: SDK, locking/verification .NET/Android, остальные dependency graphs, release payload и текущий exact-SHA Actions admission. Old14 debtDONE+D06accepted; Q29SIGKILLFAIL/ENONET, Q30Apple/callbackOPEN, Q31capacity/source-cut/currentActions и USER_EXCLUDED Mac/iOS/router/Windows network VM сохранены. Нет нового Android runtime/soak либо physical Mac результата.
 
 Источники политики: [Gradle wrapper checksums](https://docs.gradle.org/current/userguide/gradle_wrapper.html#sec:verification), [NuGet audit](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages), [selector-parser advisory](https://github.com/postcss/postcss-selector-parser/security/advisories/GHSA-rj75-hqrm-r3gf), [braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+
+## 9 октября: F491 / Q34-F045 — APK-builder не должен останавливать чужой Gradle
+
+`scripts/rebuild_apk.py` перед сборкой вызывал глобальный
+`pkill -9 -f GradleDaemon` и удалял `/root/.gradle/caches/journal-1`, хотя
+собственная Gradle-команда уже использует `--no-daemon`. Имя процесса не
+обозначает владельца сборки; этот шаг мог убить другую задачу и повредить её cache.
+Глобальная остановка и удаление общего журнала убраны. Gradle управляет своими
+блокировками. Команды Rust/Gradle, offline, один worker, зеркалирование исходников,
+проверка release-подписи и SHA-загрузка APK сохранены.
+
+Исполнение вынесено в `build`/`main`: импорт больше не подключается к лабе,
+ошибочные аргументы отклоняются до SSH, а `finally` закрывает SFTP и SSH при
+ошибках открытия/сборки/закрытия. CLI по-прежнему принимает debug по умолчанию
+или `--release`; ошибка сборки/подписи завершает CLI неуспешно. Новые тесты
+подключены к постоянному CI.
+
+В собственных PID/mount namespaces .11 прежняя точная команда реально убила
+подставной сторонний `GradleDaemon` и свой shell, оба с returncode -9.
+Shared-cache path был закрыт приватным bind mount; host-процессы и настоящий
+cache не были доступны этому воспроизведению. Удаление журнала прежней командой
+не заявлено: shell был убит раньше. Исправленная настоящая оркестрация запускает
+контролируемый `gradlew`, который возвращает compile failure7; builder правильно
+отказывает, а сторонний процесс остаётся жив и marker cache побайтно прежним.
+Это проверка процесса и отказа, не запуск настоящего Gradle/compiler/APK.
+
+На Windows:7 новых lifecycle/orchestration методов,38 native recipe и11 workflow
+методов PASS. На Linux: те же7 новых методов и отдельное настоящее воспроизведение
+конкуренции PASS. Официальный SHA-проверенный actionlint1.7.12 принял четыре
+workflow. Входы и полные Linux-логи восстановлены с SHA, собственный каталог удалён
+по точному списку после process/fd/mount guards; служба .11,PID777/845 и установленный
+CLI75bc сохранены. .10 не использовалась. Исходники ядра/native recipe,14 native SHA,
+protected files и прежний OpenWrt source cut неизменны; новый APK не собирался.
+
+Граница: это устранение глобальной остановки и повреждения общего cache.
+Builder по-прежнему использует существующие фиксированные source directories;
+одновременные APK-сборки разных исходников в этих же directories этим пакетом
+не квалифицированы. Release-проверка `apksigner` подтверждает действительную
+подпись, но не ожидаемого издателя; текущий подписанный release payload и его
+издатель остаются отдельным открытым требованием. F459 braces OPEN; подавлений нет.
+Q34 IN_PROGRESS,30/37 DONE81,1%,7 разделов остаются;Q29 SIGKILL FAIL/ENONET,Q30/Q31,
+D06 ACCEPTED_LIMITATION и USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F491 evidence: `q34-apk-builder-20261009`; SEALED 36 files / 1205550 bytes; manifest SHA256 `bf6a65063b2ee57f87813097cb2601d15d075dffa25ebf0a9007139abcaa8bf9`.
