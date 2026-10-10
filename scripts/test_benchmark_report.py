@@ -13,6 +13,7 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from benchmark_evidence import parse_iperf_result
 from benchmark_report import aggregate, population
+from benchmark_host_state import COMMANDS, SCHEMA
 
 
 def write(path, value):
@@ -31,8 +32,9 @@ def fixture(root, index, rate):
         binary_source_provenance='UNVERIFIED', seconds=8, tcp_parallel=1, recordizer='off',
         topology='two VM fixture', hosts=['10.66.116.10', '10.66.116.11'],
         selected_modes=['tcp-fixture', 'udp-fixture'], server=copy.deepcopy(host), client=copy.deepcopy(host))
+    core = dict(addresses='IPv4 fixture', routes='route fixture', qeli_listener='listener443 fixture')
     run = dict(schema_version=2, status='COMPLETED', errors=[], host_restored=True,
-               host_before=[{}, {}], host_after=[{}, {}], meta=meta, baseline={}, modes={})
+               host_before=[dict(core), dict(core)], host_after=[dict(core), dict(core)], meta=meta, baseline={}, modes={})
     for name, transport in (('direct', 'tcp'), ('tcp-fixture', 'tcp'), ('udp-fixture', 'udp')):
         row = run['baseline'] if name == 'direct' else dict(status='COMPLETED', transport=transport,
             configuration_template_sha256='f' * 64, pids=dict(server=123, client=456),
@@ -100,6 +102,39 @@ class BenchmarkReportTests(unittest.TestCase):
     def test_two_runs_cannot_become_a_statistical_report(self):
         with self.assertRaisesRegex(ValueError, 'at least three'):
             aggregate(self.runs[:2])
+
+    def test_empty_archived_snapshots_cannot_claim_restoration(self):
+        self.mutate('results.json', lambda run: run.update(host_before=[{}, {}], host_after=[{}, {}]))
+        with self.assertRaisesRegex(ValueError, 'core snapshot incomplete'):
+            aggregate(self.runs)
+
+    def test_full_backend_counters_are_recomputed_and_missing_backend_refuses(self):
+        before = {key: 'fixture' for key in COMMANDS}
+        before.update(snapshot_schema=SCHEMA, nft='{"nftables":[]}', legacy4='*filter\n:INPUT ACCEPT [1:2]\nCOMMIT')
+        after = dict(before, legacy4='*filter\n:INPUT ACCEPT [50:1000]\nCOMMIT')
+        for index in range(3):
+            self.mutate('results.json', lambda run: run.update(host_before=[before, before], host_after=[after, after]), run=index)
+            self.mutate('results.json', lambda run: run['meta'].update(host_state_sha256='9' * 64), run=index)
+        self.assertEqual(aggregate(self.runs)['comparison']['host_snapshot_coverage'], SCHEMA)
+        self.mutate('results.json', lambda run: run['host_after'][0].pop('legacy6'))
+        with self.assertRaisesRegex(ValueError, 'population incomplete'):
+            aggregate(self.runs)
+
+    def test_claimed_restoration_cannot_hide_nft_rule_change(self):
+        before = {key: 'fixture' for key in COMMANDS}
+        before.update(snapshot_schema=SCHEMA, nft='{"nftables":[{"rule":{"expr":[{"accept":null}]}}]}')
+        after = dict(before, nft='{"nftables":[{"rule":{"expr":[{"drop":null}]}}]}')
+        self.mutate('results.json', lambda run: run.update(host_before=[before, before], host_after=[after, after]))
+        with self.assertRaisesRegex(ValueError, 'host state restoration'):
+            aggregate(self.runs)
+
+    def test_full_and_archived_core_coverage_cannot_be_mixed(self):
+        state = {key: 'fixture' for key in COMMANDS}
+        state.update(snapshot_schema=SCHEMA, nft='{"nftables":[]}')
+        self.mutate('results.json', lambda run: run.update(host_before=[state, state], host_after=[state, state]))
+        self.mutate('results.json', lambda run: run['meta'].update(host_state_sha256='9' * 64))
+        with self.assertRaisesRegex(ValueError, 'runs differ'):
+            aggregate(self.runs)
 
     def test_repeating_directory_or_run_identity_refuses(self):
         with self.assertRaisesRegex(ValueError, 'duplicate run'):

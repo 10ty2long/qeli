@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 
 from benchmark_evidence import counter_deltas, parse_iperf_result
+from benchmark_host_state import SCHEMA, structural_host_snapshot
 from native_repro import atomic_write_bytes
 
 
@@ -87,7 +88,10 @@ def validate_run(directory):
     run = read_json(root / 'results.json', root, hashes)
     if run.get('schema_version') != 2 or run.get('status') != 'COMPLETED' or run.get('host_restored') is not True or run.get('errors') != []:
         raise ValueError('run incomplete, failed, or host restoration unverified')
-    if run.get('host_before') != run.get('host_after') or not isinstance(run.get('host_before'), list) or len(run['host_before']) != 2:
+    for row in run.get('host_before', []) + run.get('host_after', []):
+        if isinstance(row, dict) and 'snapshot_schema' not in row and (set(row) != {'addresses', 'routes', 'qeli_listener'} or any(not isinstance(value, str) or not value.strip() for value in row.values())):
+            raise ValueError('archived host core snapshot incomplete')
+    if not isinstance(run.get('host_before'), list) or len(run['host_before']) != 2 or not isinstance(run.get('host_after'), list) or len(run['host_after']) != 2 or [structural_host_snapshot(row) for row in run['host_before']] != [structural_host_snapshot(row) for row in run['host_after']]:
         raise ValueError('host state restoration disagrees with raw snapshots')
     meta = run['meta']
     for key in ('binary_sha256', 'harness_sha256', 'configuration_builder_sha256', 'admission_sha256', 'local_native_source_digest'):
@@ -110,6 +114,13 @@ def validate_run(directory):
     number(meta['elapsed_seconds'], 'monotonic run duration', positive=True)
     comparison = {key: meta[key] for key in ('binary_sha256', 'harness_sha256', 'configuration_builder_sha256',
         'admission_sha256', 'seconds', 'tcp_parallel', 'recordizer', 'topology', 'hosts', 'selected_modes')}
+    coverage = [row.get('snapshot_schema', 'archived-core-only') for row in run['host_before']]
+    if coverage[0] != coverage[1]:
+        raise ValueError('host snapshot coverage differs across hosts')
+    comparison['host_snapshot_coverage'] = coverage[0]
+    comparison['host_state_sha256'] = meta.get('host_state_sha256')
+    if coverage[0] == SCHEMA and not re.fullmatch('[0-9a-f]{64}', meta.get('host_state_sha256', '')):
+        raise ValueError('full host snapshot helper identity missing')
     for host in ('server', 'client'):
         comparison[host] = {key: meta[host][key] for key in ('kernel', 'cpu', 'iperf', 'version', 'boot_id', 'cpu_governor')}
         governor = meta[host]['cpu_governor']
