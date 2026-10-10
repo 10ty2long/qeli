@@ -9,6 +9,60 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
+## Client drops and TCP client comparison — 10 October 2026
+
+**Q36-F009:** the TCP distributor silently discarded packets on pool refusal,
+a full pinned queue, oversized input or absence of live carriers. Shared core
+runtime now records these reasons separately; Linux CLI exposes
+`stats.tcp_uplink_drops`; [status semantics](../manuals/OPERATIONS.md#tcp-client-queue-drops).
+Full preserves flow pinning; Closed retries the same packet on a live carrier
+without a false drop. Queue capacities, policy and pacing are unchanged.
+C ABI and GUI stats are unchanged. tx_packets/tx_bytes count TUN inputs before
+enqueue, not confirmed delivery. Downlink-to-TUN handoff is outside these
+counters; zero uplink drops does not establish zero total client loss or waiting.
+
+[Diagnostic JSON](../../../release/benchmark_v0.8.2_2026-10-10_client_uplink.json): fixed server `7769f43c`,
+old client `7769f43c`, new client `9900f38d`. Plain TCP and real TLS,
+IPv4 inner/outer, P=1, recordizer=off, MTU1400/1500. Three **fresh sessions**
+per carrier/client, each with 8-second unlimited and 250 Mbps/direction bidir
+phases; client and rate order alternate. 24 phases/96 raw JSON.
+Median [min–max], Mbps; missing old counters are UNAVAILABLE:
+
+| Carrier | Client | Target Mbps/direction | ↑ Mbps median [min–max] | ↓ Mbps median [min–max] | Client queue-full drops median [min–max] |
+|---|---|---:|---:|---:|---:|
+| tcp-plain-raw | old | unlimited | 31.2 [26.6–55.0] | 507.0 [472.6–512.0] | UNAVAILABLE |
+| tcp-plain-raw | old | 250 | 248.0 [229.5–249.7] | 249.5 [249.3–249.8] | UNAVAILABLE |
+| tcp-plain-raw | new | unlimited | 34.7 [32.0–46.2] | 500.8 [484.2–505.2] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | new | 250 | 249.8 [249.6–250.0] | 250.0 [250.0–250.0] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | old | unlimited | 463.6 [234.2–499.5] | 722.1 [686.5–905.4] | UNAVAILABLE |
+| tcp-reality-tls | old | 250 | 249.9 [249.6–249.9] | 249.8 [249.7–249.9] | UNAVAILABLE |
+| tcp-reality-tls | new | unlimited | 415.3 [388.6–459.4] | 700.5 [686.8–770.7] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | 250 | 249.9 [249.7–249.9] | 249.9 [249.9–249.9] | 0.0 [0.0–0.0] |
+
+All new-client phases report zero uplink drops. Both old and new plain TCP retain unlimited asymmetry;
+these measurements establish neither a counter-induced regression nor its
+precise cause. Linux status samples every 2 seconds; before/after include
+3-second settling periods, so these are not exact iperf-only counter windows.
+Receivers, both bitrate fields, unique cookies, PID/CPU policy, MTU, CPU/RSS,
+kernel/server deltas and monotonic client telemetry were revalidated.
+
+9 Rust uplink tests PASS (5 new); release jemalloc, rustfmt and both Clippy
+gates PASS, including minimal transport-core-ffi. All 915 source inputs match
+before/after build; the new CLI SHA is pinned. The earlier .11 staged CLI was
+SHA-restored. This qualifies one artifact, not independent reproducibility.
+Initial harness failures are retained: missing import, conformance fixtures
+and four integration-lint INI examples were corrected before final PASS.
+The first cleanup guard refused before changes because dep-info paths were
+relative; read-only inspection qualified 14 qeli units/68 SHA-archived metadata files.
+
+Host gate: 10.66.116.10: FAIL iptables4,legacy4; 10.66.116.11: restored. Original FAIL evidence is retained;
+status DIAGNOSTIC_MEASUREMENTS_ONLY. Both owned remote roots were SHA-archived
+and removed; only private-source Cargo unit metadata was invalidated after
+backup. The earlier CLI and active services were preserved. Evidence:
+audit-debt-20260924/q36-client-uplink-20261010/.
+Downlink handoff observability/exact cause/UDP-bidir/IPv6/latency/auth-rate
+and full Q35 8-hour soak remain OPEN. Q36 IN_PROGRESS,30/37 DONE (81.1%).
+
 ## Bidir pressure diagnostics — 10 October 2026
 
 [Pressure JSON](../../../release/benchmark_v0.8.2_2026-10-10_bidir_pressure.json): the same CLI SHA `7769f43c`,

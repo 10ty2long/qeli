@@ -18502,5 +18502,13 @@
     "scope": "diagnostic pressure sweep; repeated windows within one session per carrier, no performance PASS",
     "phases": 36,
     "raw_json_files": 90
+  },
+  "supplemental_client_uplink": {
+    "artifact": "benchmark_v0.8.2_2026-10-10_client_uplink.json",
+    "sha256": "13f5cedea985e6081144af25d2a1802a4f3ae74241ee584bd30992fd8daaac7a",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY",
+    "scope": "IPv4, plain and real TLS, fresh old/new client sessions with fixed qualified old server; no performance PASS",
+    "phases": 24,
+    "raw_json_files": 96
   }
 }

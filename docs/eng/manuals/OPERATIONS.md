@@ -604,6 +604,28 @@ neighboring async tasks responsive but can delay process exit; there is no hard 
 deadline. Diagnostics failures do not change the VPN result. If a write fails, the file
 may be stale: inspect exit status and logs. [Validation and limits](../reports/AUDIT-Q25-STATUS-WRITER.md).
 
+## TCP client queue drops
+
+The `stats.tcp_uplink_drops` object in the `QELI_CLIENT_STATUS` diagnostic file
+records losses while handing TUN packets to the TCP carrier. `pool_exhausted`
+means refusal by the bounded pool, `queue_full` a full selected carrier queue,
+`oversize` a packet larger than its slot, and `no_carrier` no live carrier after
+closed queues are removed. `total` is derived from that snapshot's reason values.
+Successful retry from a closed carrier to a live one is not a packet drop; a full
+live queue preserves flow pinning and records one loss.
+
+These counters live in the common TCP data plane and are published here through
+Linux status schema 1. The C ABI layout and GUI statistics are not extended.
+Check `updated_at_ms` freshness and `generation`: the sampler runs every two
+seconds, and slow storage can delay publication. These counters cover the hand-off
+before encryption, not confirmed peer delivery. On this path, tx_packets/tx_bytes
+count valid TUN packets observed before enqueue.
+
+Zero values do not exclude TCP downlink-to-TUN losses, device write errors,
+retransmissions or network loss. Server dropped and UDP RcvbufErrors measure
+other locations. [Validation and limits](../reports/BENCHMARK.md).
+<!-- normative-sync: manual-tcp-uplink-drops-v1 -->
+
 ## Linux client identity files
 
 `/var/lib/qeli/device-id` (`QELI_DEVICE_ID_FILE`) is loaded once before connecting.

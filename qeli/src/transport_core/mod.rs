@@ -35,6 +35,12 @@ pub(crate) mod buffer_pool;
 #[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub(crate) mod carrier;
 
+#[cfg_attr(
+    not(any(feature = "client", feature = "transport-core-ffi")),
+    allow(dead_code)
+)]
+pub(crate) mod client_uplink;
+
 // System DNS/NSS admission and cancellation are shared by all client adapters.
 pub(crate) mod resolver;
 
@@ -922,6 +928,7 @@ pub(crate) struct RuntimeCounters {
     pub rx_packets: portable_atomic::AtomicU64,
     pub rx_bytes: portable_atomic::AtomicU64,
     pub udp: Arc<udp_buffer::UdpBufferCounters>,
+    pub tcp_uplink: client_uplink::UplinkCounters,
 }
 
 #[derive(Debug, Clone, Copy)]
