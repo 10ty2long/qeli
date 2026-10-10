@@ -116,6 +116,7 @@
 | [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Память release TCP/UDP при 100 переключениях |
 | [AUDIT-Q35-FRAGMENT-FUZZ.md](reports/AUDIT-Q35-FRAGMENT-FUZZ.md) | ASan fuzz проверки UDP-фрагментов и лимитов |
 | [AUDIT-Q35-LONG-SOAK.md](reports/AUDIT-Q35-LONG-SOAK.md) | Одновременная 30-минутная проверка TCP/UDP roaming по 900 переключений |
+| [AUDIT-Q35-CLIENT-CONFIG-FUZZ.md](reports/AUDIT-Q35-CLIENT-CONFIG-FUZZ.md) | Инварианты повторного разбора клиентского INI и qeli:// при ASan fuzzing |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Владелец namespace, защита reconnect и точная очистка семейств |
 | [AUDIT-Q25-KILL-SWITCH-BUDGET.md](reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md) | Общий срок отключения kill-switch, частичная очистка и безопасный повтор |
 | [AUDIT-Q25-KILL-SWITCH-REFRESH.md](reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md) | Общий срок refresh и запрет вставки при unknown inspection |
