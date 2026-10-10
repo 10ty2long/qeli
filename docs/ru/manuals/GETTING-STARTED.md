@@ -278,17 +278,18 @@ journalctl -u qeli -n 30 --no-pager   # ошибок прав быть не до
 
 ### Вариант B — сборка из исходников
 
-Нужен Rust (stable). В корне репозитория:
+Для серверной сборки используйте Rust 1.97.0, как в основных CI jobs. В корне репозитория:
 
 ```bash
+rustup toolchain install 1.97.0 --profile minimal
 cd qeli
-cargo build --release --features jemalloc   # бинарь → qeli/target/release/qeli
+cargo +1.97.0 build --locked --release --features jemalloc   # бинарь → qeli/target/release/qeli
 # --features jemalloc обязателен для СЕРВЕРНОГО бинаря: без него RSS воркера
 # упирается в ~180 МБ под churn'ом хендшейков (glibc держит освобождённые арены)
 # вместо ~40–60 МБ с jemalloc. Клиенту это не нужно.
 
 # (опц.) собрать свой .deb из свежего бинаря (Makefile уже включает jemalloc):
-make -C debian deb             # → qeli/debian/qeli_<версия>_amd64.deb
+RUSTUP_TOOLCHAIN=1.97.0 make -C debian deb  # → qeli/debian/qeli_<версия>_amd64.deb
 ```
 
 Без пакета можно запускать бинарь напрямую (см. шаг 4), но тогда systemd-юнит,

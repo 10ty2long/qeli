@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v8 -->
+<!-- normative-sync: q34-publication-gates-v9 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -387,3 +387,60 @@ append101. Q34IN_PROGRESS,30/37DONE81.1%,7remain; previous open/accepted/
 USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F501 evidence: q34-ci-toolchain-20261010; SEALED 22 files / 1183992 bytes; manifest SHA256 3a2362b4f92fadd4dffee764d264748923aa941115c528d20a1f9376f528be8d.
+
+
+## 10 October: F502–F503 / Q34-F056–F057 — CI event and source coverage
+
+Old CI admission accepted success with matching headSha regardless of event.
+Default GitHub PR checkout tests a synthetic merge, while a workflow run headSha
+can identify the PR head. A genuine private Git fixture creates different head/
+merge trees; exact old gate admits head with a controlled green PR response.
+Actual read-only metadata for historical Qeli PR185/run37184654438 confirms
+event=pull_request/head_sha=PR head. That historical run failed; no false-green
+or successful historical build is claimed.
+[Checkout PR semantics](https://github.com/actions/checkout#checkout-pull-request-head-commit-instead-of-merge-commit).
+
+Query now explicitly includes --event push and requests event, then independently
+requires event=push. Missing/unknown/PR/manual/scheduled events refuse even with
+matching SHA/success. Latest push run is selected, not an arbitrary old green.
+Branch/exact-commit callers share this gate; status/SHA/query failures and failed
+job diagnostics retained. PR CI continues testing merge integration; release
+requires successful push CI for its source.
+[gh run list](https://cli.github.com/manual/gh_run_list).
+
+Both paths filters missed global.json, NuGet.Config, Directory.Build.props/
+targets, LICENSE, .gitattributes and .gitignore. Actual YAML and these single-level
+names versus the old patterns confirm7misses for both push/PR. Remove both filters:
+every push/PR starts CI. Semantic YAML except event filters equals baseline, with
+jobs/matrix/schedule/dispatch/compiler pins unchanged. No manually maintained root
+input list remains. Actionlint validates syntax/semantics, not hosted dispatch.
+
+132 Windows and67 Linux methods PASS. Negatives cover green PR/exact head, missing/
+wrong event, query/status/SHA errors, actual Git and real tag caller preserving
+existing GITHUB_OUTPUT on refusal. Push positives and existing certification/tag/
+preflight/router/recipe cases pass. Pinned actionlint accepts4workflows. Developer
+instructions updated: CONTRIBUTING and both GETTING-STARTED use1.97.0/locked
+commands; require push CI before release.
+
+Initial Windows failure: old multiline controlled gh fixture lacked event; fixed,
+initial log retained. Initial Linux archive missed dynamically read
+release_preflight.py:67methods/22FileNotFoundError, not a product regression.
+Incomplete archive retained; complete initial log not saved, console traceback in
+chat is truncated. Resume reused the same owned root after initial archive SHA,
+added exact committed input and passed67methods.24source inputs/TAR read back
+byte-identical;25known files removed after SHA/exact-set/process/fd/mount guards.
+Source TAR is itself recovery, no duplicate ZIP. Service777/845/CLI75bc unchanged,
+.10unused; no SDK/native/APK rebuild.
+
+Live push lookup for starting main commit returned no runs: current-source hosted
+CI PASS not claimed. Two read-only GitHub queries, no dispatch/push. F459 braces
+refreshed against official npm/GitHub metadata on10October:latest3.0.3,no patched
+version; remains OPEN, no advisory suppression or CSS/dependency changes.
+[Advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+
+Native14/sourcee3fb/qeli tree/protected/OpenWrt cut unchanged; prior execution
+inherited.41cases/101prior supplements preserved modulo source_digest bookkeeping;
+append102. Q34IN_PROGRESS,30/37DONE81.1%,7remain; previous open/accepted/
+USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F502-F503 evidence: q34-ci-admission-20261010; SEALED 51 files / 2003222 bytes; manifest SHA256 e07eb37c184f19b94fb28c807befb0f1afc22b309f3e254d378c0550770f9713.

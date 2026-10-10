@@ -274,17 +274,18 @@ journalctl -u qeli -n 30 --no-pager   # no permission errors
 
 ### Option B — build from source
 
-Requires Rust (stable). From the repo root:
+Use Rust 1.97.0 for the server build, matching the main CI jobs. From the repo root:
 
 ```bash
+rustup toolchain install 1.97.0 --profile minimal
 cd qeli
-cargo build --release --features jemalloc   # binary → qeli/target/release/qeli
+cargo +1.97.0 build --locked --release --features jemalloc   # binary → qeli/target/release/qeli
 # --features jemalloc is required for the SERVER binary: without it the worker's
 # RSS plateaus around ~180 MB under handshake churn (glibc keeps freed arenas)
 # instead of ~40–60 MB with jemalloc. A client build does not need it.
 
 # (optional) build your own .deb from the fresh binary (the Makefile enables jemalloc):
-make -C debian deb             # → qeli/debian/qeli_<version>_amd64.deb
+RUSTUP_TOOLCHAIN=1.97.0 make -C debian deb  # → qeli/debian/qeli_<version>_amd64.deb
 ```
 
 Without the package you can run the binary directly (see step 4), but then you create the

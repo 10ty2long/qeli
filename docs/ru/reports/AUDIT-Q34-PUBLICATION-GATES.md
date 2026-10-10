@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v8 -->
+<!-- normative-sync: q34-publication-gates-v9 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -397,3 +397,63 @@ source_digest bookkeeping, добавляется101. Q34IN_PROGRESS,30/37DONE81
 предыдущие open/accepted/USER_EXCLUDED сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F501 evidence: q34-ci-toolchain-20261010; SEALED 22 files / 1183992 bytes; manifest SHA256 3a2362b4f92fadd4dffee764d264748923aa941115c528d20a1f9376f528be8d.
+
+
+## 10 октября: F502–F503 / Q34-F056–F057 — событие CI и охват исходников
+
+Прежний CI gate принимал success с совпадающим headSha независимо от event.
+GitHub PR checkout по умолчанию проверяет synthetic merge, а headSha workflow run
+может быть HEAD pull request. На настоящем private Git fixture созданы отличающиеся
+head/merge trees; точный старый gate при controlled green PR response допустил HEAD.
+Настоящий read-only metadata запрос к историческому Qeli PR185/run37184654438
+подтвердил event=pull_request и head_sha=PR head. Сам исторический run failed;
+он не назван ложным green или успешной сборкой.
+[Checkout PR semantics](https://github.com/actions/checkout#checkout-pull-request-head-commit-instead-of-merge-commit).
+
+Теперь запрос явно содержит --event push и поле event; response повторно требует
+event=push. Missing/unknown/PR/manual/scheduled event блокирует допуск даже при
+совпадающем SHA/success. Выбирается последний push run, а не любой старый green.
+Branch и exact-commit callers используют тот же gate; прежние status/SHA/query
+failures и failed-job diagnostics сохраняются. CI PR продолжает тестировать merge,
+но для релиза требуется успешный push CI на исходнике релиза.
+[gh run list](https://cli.github.com/manual/gh_run_list).
+
+Второй дефект: оба paths filters не покрывали global.json, NuGet.Config,
+Directory.Build.props/targets, LICENSE, .gitattributes и .gitignore. Actual YAML
+и проверка этих одноуровневых имён против прежних patterns подтвердили 7 пропусков
+для push и PR. Удалены оба filters: каждый push/PR запускает CI. Semantically YAML
+кроме этих event filters совпадает с baseline; jobs/matrix/schedule/dispatch и
+compiler pins сохранены. Это также исключает необходимость вручную поддерживать
+список корневых build inputs. Actionlint проверяет форму workflow; hosted event
+dispatch этим не исполнялся.
+
+132 Windows метода и67 Linux методов PASS. Негативные случаи проверяют green PR
+на exact head, отсутствующее/неподходящее event, query/status/SHA failures, Git
+identity и настоящий tag caller: при ошибке прежний GITHUB_OUTPUT не дописывается.
+Положительный push и прежние certification/tag/preflight/router/recipe cases
+проходят. Pinned actionlint принял4workflow. Исправлены developer инструкции:
+CONTRIBUTING и оба GETTING-STARTED теперь используют Rust1.97.0/locked commands;
+описан обязательный push CI перед релизом.
+
+Initial Windows failure: старый multiline controlled gh fixture не имел event,
+его исправили; initial log сохранён. Initial Linux archive не содержал динамически
+читаемый release_preflight.py:67methods/22FileNotFoundError, не product regression.
+Incomplete archive сохранён; полный initial log не был записан, console traceback
+в чате ограничен. Resume использовал тот же own root после SHA исходного archive,
+добавил exact committed input и прошёл67methods.24source inputs/TAR прочитаны
+обратно побайтно;25known files удалены после SHA/exact-set/process/fd/mount guards.
+Source TAR сам является recovery, дополнительный duplicate ZIP не создавался.
+Service777/845/CLI75bc сохранены, .10unused; SDK/native/APK не пересобирались.
+
+Live push lookup исходного main commit вернул пустой список: current-source hosted
+CI PASS не заявлен. Два GitHub запроса read-only, без dispatch/push. F459 braces
+перепроверен по official npm/GitHub metadata10октября: latest3.0.3, patched version
+отсутствует; OPEN, без подавления advisory или изменения CSS/dependencies.
+[Advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+
+Native14/sourcee3fb/qeli tree/protected/OpenWrt cut неизменны; prior execution
+inherited.41cases/101prior supplements сохранены кроме source_digest bookkeeping,
+append102. Q34IN_PROGRESS,30/37DONE81,1%,7remain; прежние open/accepted/USER_EXCLUDED
+сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F502-F503 evidence: q34-ci-admission-20261010; SEALED 51 files / 2003222 bytes; manifest SHA256 e07eb37c184f19b94fb28c807befb0f1afc22b309f3e254d378c0550770f9713.

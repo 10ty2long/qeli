@@ -1,4 +1,4 @@
-"""Read-only CI admission for the exact local release commit."""
+"""Read-only push-CI admission for the exact local release commit."""
 import json
 from pathlib import Path
 import re
@@ -47,16 +47,19 @@ def check_release_ci(root, branch, emit=print, *, by_commit=False):
             raise RuntimeError("git returned an invalid release commit identity")
         runs = json.loads(_query(root, [
             "gh", "run", "list", "--commit" if by_commit else "--branch",
-            head if by_commit else branch, "--workflow", "CI",
-            "--limit", "1", "--json", "conclusion,status,headSha,databaseId",
+            head if by_commit else branch, "--workflow", "CI", "--event", "push",
+            "--limit", "1", "--json", "conclusion,status,headSha,databaseId,event",
         ], 120))
         if not isinstance(runs, list):
             raise RuntimeError("CI response must be a list of workflow runs")
         if not runs:
-            raise RuntimeError("no CI run found for the branch")
+            raise RuntimeError("no push CI run found for the selected release source")
         run = runs[0]
         if not isinstance(run, dict):
             raise RuntimeError("CI response contains an invalid workflow run")
+        # PR runs usually test a synthetic merge tree, not this head commit.
+        if run.get("event") != "push":
+            raise RuntimeError("release coverage requires a push CI run; PR/manual/scheduled runs cannot qualify it")
         sha = run.get("headSha")
         if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", sha):
             raise RuntimeError("CI run has no valid headSha; release coverage is unknown")

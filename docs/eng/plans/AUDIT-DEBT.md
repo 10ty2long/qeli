@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v126 -->
+<!-- normative-sync: audit-debt-v127 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1290,3 +1290,5 @@ physical exclusions are not PASS.
 **10 October, F499–F500/Q34-F053–F054:** [Packager inputs/resources](../reports/AUDIT-Q34-PUBLICATION-GATES.md): all SSH/SFTP exit paths closed, private workspaces, safe TAR/core before SSH and 4 upload SHA gates.72 Windows/23 Linux methods +3 actual main trials PASS; corruption retains prior ZIP. Controlled signer/synthetic headers,no Mac/signature PASS.48 owned lab files cleaned,service unchanged. NuGet/HTTP duplicates removed after SHA,archives/SEALED retained. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October, F501/Q34-F055:** [CI compiler pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): removed implicit stable in7jobs,compiler1.97.0 matches reviewed policy; other matrix/nightly choices retained. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification without hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October,F502–F503/Q34-F056–F057:** [CI event/coverage](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate requires push event/exact SHA; green PR merge cannot replace source CI. Paths filters removed, all root policy changes run CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh,not hosted Actions.25ownedlabfiles cleaned,service unchanged. Developer docs1.97/locked updated;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
