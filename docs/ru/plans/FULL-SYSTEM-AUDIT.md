@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v212 -->
+<!-- normative-sync: full-system-audit-v213 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2625,3 +2625,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 
 
 **11 октября,Q36-F013:** [unpaced RTT](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 TCP-bidir P1/P4 нагрузок и78 окон/15600 ICMP probes;p50/p95/p99/raw tails/loss/CPU/RSS/drops retained.Конечные counters сохраняются до admission;ping oversend исправлен,original 2FAIL/3partial окна/1inherited baseline retained.68 Windows/68 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Физическое насыщение не доказано;auth-rate/остальные IPv6 сочетания OPEN.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 октября,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 свежих серверных серий,1/4/16 peers TCP/UDP/QUIC;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL и interrupted transfer retained,1partial peer отдельно;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
