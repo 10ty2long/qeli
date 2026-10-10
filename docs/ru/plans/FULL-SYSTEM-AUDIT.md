@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v210 -->
+<!-- normative-sync: full-system-audit-v211 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2619,3 +2619,6 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 
 
 **10 октября,Q36-F011:** [latency](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 окон/15600 ICMP probes;idle и100M TCP bidir,p50/p95/p99,raw tails/loss retained.53 Windows/4 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Полная Q36 матрица остаётся IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 октября,Q36-F012:** [UDP/IPv6](../reports/BENCHMARK.md):общий UDP-bidir runner/report,dual-family kernel counters,63 Windows/63 Linux/11 workflow/4 actionlint workflows/9docs PASS.69 fresh sessions/204 phases,all12 IPv4 UDP-bidir P1/P4;3core carriers independent outer/inner v6 TCP+UDP P1/P4.Original harness FAIL/4 partial windows retained;2baselines inherited;2own roots archived/removed,services preserved.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
