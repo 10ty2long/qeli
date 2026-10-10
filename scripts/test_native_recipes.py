@@ -164,7 +164,7 @@ class NativeRecipeTests(unittest.TestCase):
         self.assertIn('"CodeSignatureFlags(ADHOC"', macpack.REMOTE_SIGN_PY)
         source = Path(macpack.__file__).read_text(encoding="utf-8")
         self.assertIn("python3 sign_app.py", source)
-        self.assertIn("remote_sha256(c, cached) != expected", source)
+        self.assertIn("remote_sha256(c, remote) != expected", source)
 
     def test_android_e2e_uses_current_abi_strict_ssh_and_exact_restore(self):
         source = (Path(__file__).parent / "e2e_final.py").read_text(encoding="utf-8")

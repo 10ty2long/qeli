@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v189 -->
+<!-- normative-sync: full-system-audit-v190 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2536,3 +2536,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **9 октября, F496/Q34-F050:** [Отказ упаковки без подписанта](../reports/AUDIT-Q34-PUBLICATION-GATES.md): подтверждённый unsigned archive/Done; build_app.sh теперь отказывает до native/publish и сохраняет прежние outputs. 57 Windows +8 Linux методов, Bash syntax и workflow lint PASS. Подписанты контролируемые; actual Mac signature/runtime не проверены. Own Linux fixture очищён, служба сохранена; удалена только SDK-копия с полной сверкой сохранённого ZIP. Q34 IN_PROGRESS,30/37 DONE81,1%,7remain; прочие ограничения сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **9 октября, F497–F498/Q34-F051–F052:** [Universal2 и retired resign](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён arm64 fallback при lipo failure/missing Intel; проверяется полный Mach-O graph и каждый output. Удалён неиспользуемый unchecked SSH-resign helper.58Windows/11Linux методов включая2actualLLVM PASS, workflow lint/docs PASS. Synthetic headers, без full payload/signature/Mac runtime; служба сохранена, own root очищён.Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, F499–F500/Q34-F053–F054:** [Входы и ресурсы упаковщика](../reports/AUDIT-Q34-PUBLICATION-GATES.md): закрытие SSH/SFTP на всех путях, отдельные workspace, safe TAR/core до SSH и 4 upload SHA gates.72 Windows/23 Linux методов +3 actual main trials PASS; повреждение сохраняет прежний ZIP. Controlled signer/synthetic headers, без Mac/signature PASS.48 own lab files очищены, service сохранён. NuGet/HTTP дубликаты удалены по SHA, archives/SEALED сохранены. Q34 IN_PROGRESS;30/37 DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

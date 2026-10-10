@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v6 -->
+<!-- normative-sync: q34-publication-gates-v7 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -306,3 +306,60 @@ Q34IN_PROGRESS,30/37DONE81,1%,7remain; прежние open/accepted/USER_EXCLUDE
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F497-F498 evidence: q34-mac-universal-20261009; SEALED 43 files / 1267910 bytes; manifest SHA256 b9629520955cf7076a8d2d1c9db288a8b397af85a93132fe654e83844588ef5f.
+
+
+## 10 октября: F499–F500 / Q34-F053–F054 — входы и ресурсы упаковщика macOS
+
+Ранние ошибки версии, загрузки, сборки или скачивания оставляли SSH/SFTP открытыми.
+Общий /root/mac-build и cache могли смешивать входы запусков; Info.plist и иконка
+не имели SHA gate. Старый исходник дал 12 ожидаемых failures и 2 положительных
+контроля в 14 методах с реальными TAR/файлами и контролируемыми SSH-интерфейсами.
+
+Теперь finally закрывает соединение и открытые SFTP, включая ошибку закрытия SFTP.
+Каждый запуск получает собственный mktemp workspace; прежние общие каталоги/cache
+не используются и не удаляются. До SSH оба TAR проверяются на безопасные уникальные
+пути, обычные файлы/каталоги, обязательные apphost/core и SHA canonical dylib в
+каждой архитектуре. Изменение TAR во время допуска отвергается. Четыре входа,
+включая Info.plist.in/Qeli.icns, проходят SHA после загрузки до распаковки.
+Assembly/signing/ZIP получают явный workspace. Скачивание сохраняет SHA gate
+и атомарную замену локального ZIP.
+
+Удалённые каталоги сохраняются для диагностики, путь печатается. При двух запусках
+из одного checkout локальный ZIP общий: последний успешный результат заменяет
+предыдущий. Для сохранения обоих нужны разные checkout/output каталоги. README
+описывает это ограничение; полное доверие к managed payload и конкурентная
+публикация этим не квалифицированы.
+
+72 Windows метода PASS: 14 packager, 9 assembly, 38 native-recipes, 11 workflow.
+Pinned actionlint принял все 4 workflow, suite включён в CI. Linux .11: 23 метода
+PASS и 3 прогона настоящего main через SSH/SFTP — две успешные сборки в разных
+workspace и повреждённая при загрузке иконка. Настоящие tar, LLVM19, universal2
+assembly, ZIP, SHA и atomic pull. Проверены ZIP contents/executable bit/core и
+различие иконок; повреждение отказало до распаковки, сохранило прежний ZIP;
+все handles закрыты. Подписант контролируемый, Mach-O — синтетические headers.
+Это не проверка криптографической подписи, полного .NET payload или запуска Mac.
+
+Шесть committed modules и source TAR проверены SHA. 4 own lab roots/48 known files
+сохранены в маленьком recovery ZIP и удалены после exact-set/SHA/process/fd/mount
+guards. Service777/845/CLI75bc неизменны, .10 unused.
+
+Первый baseline упал в setUp с ENOSPC до проверки продукта; предметный повтор
+дал 12 expected failures. Initial final shell wildcard assertion ошибочно совпал
+с embedded Python rglob: проверка ограничена первой shell-строкой и повторена.
+Ошибка harness и исходный baseline сохранены. HTTP403 automatic review отказал
+до исполнения из-за ошибки сервиса; последующий разрешённый запуск прошёл.
+
+Для сокращения собственного scratch сохранены 72 исходных NuGet archives с SHA/
+metadata sidecars (216 файлов/391161706 bytes) в
+audit-scratch-20261008/q34-sdk-locks/nuget-recovery-packages. После сверки всех SHA
+удалены 2718 развёрнутых копий/1067432869 bytes и 72 точных HTTP-дубликата/
+391142266 bytes. SEALED packets, исходные архивы и общие caches сохранены.
+Recovery inputs требуют восстановления перед повторным offline publish и не
+считаются установленным NuGet cache. Новые проверки не пересобирали SDK/native/app.
+
+Native14/digest/qeli tree/protected/OpenWrt cut неизменны, prior execution inherited.
+41 cases/99 prior supplements сохраняются кроме source_digest bookkeeping,
+добавляется supplement100. Q34 IN_PROGRESS; 30/37 DONE (81,1%), 7 остаются;
+прежние open/accepted/USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F499-F500 evidence: q34-mac-isolation-20261009; SEALED 42 files / 1477945 bytes; manifest SHA256 c9e0e144657b4029f2e1b01ee959154a4a1e6249a6d17a2a761a2a4d3083085d.
