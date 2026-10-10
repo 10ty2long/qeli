@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v195 -->
+<!-- normative-sync: full-system-audit-v196 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2154,6 +2154,16 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming with retained corpora
 **Status: IN_PROGRESS.**
 
 **10 October,F504–F505:** [Stability gate](../reports/BENCHMARK.md): fixed false admission from incomplete/rounded/invalid measurements and removed host-wide cleanup.89Windows/19Linux methods,4workflow lint and actual read-only .11 refusal PASS;service777/845/CLI75bc preserved. No new throughput/soak or wholeQ34/Q35/Q36 completion.30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 October,Q35-V001:** [Actual bounded soak](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+current isolated runners executed100TCP+100QUIC over440.95s;33assertions PASS,
+one session/original workers/TUN, stable fd and sampled RSS<32MiB. Actual
+compiled ELF reused after318 compiler-input byte checks; no new compilation.
+Logs retained, exact owned root cleaned, lab service/config preserved. Bounded
+integration is complete;30–60min/8h,10k, tasks churn and other Q35 levels remain
+open. Whole section IN_PROGRESS, overall30/37(81.1%),7remain.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 

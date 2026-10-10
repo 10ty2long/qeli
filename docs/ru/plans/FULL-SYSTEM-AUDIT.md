@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v195 -->
+<!-- normative-sync: full-system-audit-v196 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2165,6 +2165,16 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming с сохранени
 **Статус: IN_PROGRESS.**
 
 **10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 октября,Q35-V001:** [Реальный bounded soak](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+текущие изолированные runner выполнили100TCP+100QUIC за440,95с;33утверждения
+PASS, одна сессия/исходные workers/TUN, fd стабильны, sampled RSS<32МиБ.
+Реально собранный ELF повторно использован после побайтной сверки318 compiler
+inputs; новая компиляция не нужна. Журналы сохранены, собственный root очищен,
+служба и настройки лабы сохранены. Короткая интеграционная проверка выполнена;
+30–60мин/8ч,10k, tasks churn и остальные уровни Q35 открыты. Полный статус
+IN_PROGRESS, общий итог30/37(81,1%),7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Бенчмарки и методика измерения
 

@@ -1,6 +1,6 @@
 # Q34/Q25 — memory across 100 release handovers
 
-<!-- normative-sync: audit-q34-release-soak-v3 -->
+<!-- normative-sync: audit-q34-release-soak-v4 -->
 Historical24September checkpoint: debt statuses below refer to that date. The current [ledger](../plans/AUDIT-DEBT.md) includes later closures; the new Q35 scope is recorded at the end.
 
 
@@ -150,3 +150,63 @@ closed; wholeQ35 is not complete. Q29SIGKILL/ENONET,Q30/Q31,F459,D06 accepted
 limitation and USER_EXCLUDED remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F508 evidence: q35-isolation-20261010; SEALED 48 files / 3037712 bytes; manifest SHA256 cf6b60799473f333c870bd94b412462b9abac406cee18c6ff92c9b4710f3cd83.
+
+## Q35: actual bounded soak after runner isolation, 10 October 2026
+
+Q35-V001 qualifies the updated runners with a real VPN:
+`linux_roaming_release_soak.sh` executed100 TCP fake-tls and100 QUIC handovers,
+sample_every=10. Total duration **440.95 seconds**, exit0; TCP **16/16** and
+QUIC **17/17** assertions PASS. Current scripts from
+`5d9e792ce4d6e6d2c2635e3cb5c0cdd3ed5c99f1` include mandatory F508 isolation.
+An independent outer isolation and timeout480s bounded the actual test.
+
+The previously compiled Linux x86_64 release0.8.2 default server/client+jemalloc
+ELF was executed, SHA256
+`98335046d0c16b2126b22334102011ecfaff8390e0a3b09be5e6c7df87104bc2`.
+All **318 effective Cargo/src compiler inputs** are byte-identical to current
+Git. Original build source TAR SHA256
+`4e9718ca2bec0434796e1b97eb67eecbdde386f02af381ad281676bab3bd955c`.
+Broader qeli-tree differences are limited to the independent fuzz Cargo.lock/
+README excluded by the actual Docker compiler COPY recipe. This reuses an
+actual qualified executable; no new build of the current Docker recipe is
+claimed. No new native/SDK caches were created.
+
+| Process | RSS baseline → final, KiB | Final / sampled peak growth, KiB | fd baseline → final | socket fd baseline → final |
+|---|---:|---:|---:|---:|
+| TCP client | 50192 → 52556 | 2364 / 2660 | 18 → 18 | 6 → 6 |
+| TCP server | 58520 → 63184 | 4664 / 4664 | 21 → 21 | 7 → 7 |
+| QUIC client | 56324 → 56932 | 608 / 3232 | 18 → 19 | 6 → 7 |
+| QUIC server | 66560 → 73932 | 7372 / 8924 | 21 → 21 | 7 → 7 |
+
+The RSS32768KiB threshold is unchanged. One additional client QUIC socket
+remained stable after the first sample. A single authenticated session,
+original client/server workers and TUN, tunnel connectivity and exact carrier
+bypass were retained; each client/server committed exactly100 transactions.
+TCP orphan/grace/failure=0; QUIC candidates=0,CID aliases=3. Reverse-path
+filters were restored and sysctl leases released.
+
+The initial SSH launch channel timed out while a background shell group kept
+its descriptors open. The actual job continued under its own deadline, as
+independent read-only polls confirmed. It was not relaunched. A collector
+expected-label error (missing TCP /single) was corrected from the retained
+log before cleanup. Both failures and initial source-binding refusals remain
+in evidence; they are not reported as VPN failures.
+
+All64 exact regular files were SHA checked before deletion; original inputs
+are retained in the local TAR and all generated regular files backed up
+separately. One stale Unix socket was classified via lstat, then removed only
+after process/cwd/exe/root/fd/argv and mount owner guards. Root absence was
+independently confirmed. Service PID777/845/CLI SHA75bc, routes, links,
+firewall rules, sysctl, hosts/resolver and mounts were preserved. Only builtin
+NAT-chain packet/byte counters changed; raw snapshots/diff are retained and
+structural comparison normalizes only builtin counters. .10 unused; host
+service and packages unchanged.
+
+**Limits:**200 actual handovers and33 assertions over7m21s, sampling every10.
+Unsampled peaks, tasks/threads churn,10k endurance,30–60min/8h, other adapters
+and throughput benchmarks are not qualified here. Q35 remains IN_PROGRESS;
+overall30/37DONE(81.1%),7sections remain. Existing Q29/Q30/Q31/F459/D06 and
+USER_EXCLUDED limitations remain. No product implementation changes in this
+block.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+Q35-V001 evidence: q35-runtime-isolation-20261010; SEALED 68 files / 15738597 bytes; manifest SHA256 02427686f08ea2ce22fcdfea86f3f52c5af979101d9d0a015ef93874a33722a2.
