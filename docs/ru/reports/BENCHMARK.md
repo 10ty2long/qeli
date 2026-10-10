@@ -9,6 +9,61 @@
 сверены до/после сборки. Это квалификация происхождения конкретного CLI,
 не доказательство воспроизводимости двух независимых сборок.
 
+## Клиентские потери и сравнение TCP-клиентов — 10 октября 2026
+
+**Q36-F009:** TCP distributor молча отбрасывал пакеты при отказе пула,
+переполнении закреплённой очереди, oversized input или отсутствии живого
+carrier. Эти причины теперь считаются отдельно в общем runtime ядра и
+публикуются Linux CLI как `stats.tcp_uplink_drops`; [семантика статуса](../manuals/OPERATIONS.md#сбросы-в-очереди-tcp-клиента).
+Full по-прежнему сохраняет flow pinning, Closed повторяет тот же пакет на
+живом carrier без ложного drop. Ёмкости, политика очередей и pacing не менялись.
+C ABI и GUI stats не расширялись. `tx_packets/tx_bytes` считают входы из TUN
+до enqueue, а не подтверждённую передачу. Downlink→TUN handoff пока не
+покрыт этими счётчиками; нулевой uplink counter не доказывает отсутствие
+всех клиентских потерь или ожидания очереди.
+
+[Диагностический JSON](../../../release/benchmark_v0.8.2_2026-10-10_client_uplink.json): фиксированный сервер
+`7769f43c`, старый клиент `7769f43c` и новый `9900f38d`. Plain TCP и real TLS,
+IPv4 inner/outer, P=1, recordizer=off, MTU1400/1500. Три **новые сессии**
+на каждую пару carrier/client; в каждой по 8 с bidir unlimited и 250 Мбит/с
+на направление. Порядок клиентов и лимитов чередуется. 24 фазы/96 raw JSON.
+Медиана [min–max], Мбит/с; старые отсутствующие counters обозначены UNAVAILABLE:
+
+| Carrier | Client | Target Mbps/direction | ↑ Mbps median [min–max] | ↓ Mbps median [min–max] | Client queue-full drops median [min–max] |
+|---|---|---:|---:|---:|---:|
+| tcp-plain-raw | old | unlimited | 31.2 [26.6–55.0] | 507.0 [472.6–512.0] | UNAVAILABLE |
+| tcp-plain-raw | old | 250 | 248.0 [229.5–249.7] | 249.5 [249.3–249.8] | UNAVAILABLE |
+| tcp-plain-raw | new | unlimited | 34.7 [32.0–46.2] | 500.8 [484.2–505.2] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | new | 250 | 249.8 [249.6–250.0] | 250.0 [250.0–250.0] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | old | unlimited | 463.6 [234.2–499.5] | 722.1 [686.5–905.4] | UNAVAILABLE |
+| tcp-reality-tls | old | 250 | 249.9 [249.6–249.9] | 249.8 [249.7–249.9] | UNAVAILABLE |
+| tcp-reality-tls | new | unlimited | 415.3 [388.6–459.4] | 700.5 [686.8–770.7] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | 250 | 249.9 [249.7–249.9] | 249.9 [249.9–249.9] | 0.0 [0.0–0.0] |
+
+Во всех фазах нового клиента uplink drops равны нулю. Старый и новый plain TCP сохраняют unlimited-асимметрию;
+эти замеры не устанавливают регрессию от добавления счётчиков или точную причину.
+Счётчики Linux status обновляются раз в 2 с; before/after включают по 3 с
+на стабилизацию, поэтому это не точная граница только iperf. Проверены receiver,
+оба bitrate поля, независимые cookies, PID/CPU policy, MTU, CPU/RSS,
+kernel/server deltas и монотонная клиентская телеметрия.
+
+9 Rust uplink-тестов PASS (5 новых); release jemalloc, rustfmt и оба Clippy
+gate PASS, включая minimal transport-core-ffi. Снимок 915 исходных входов
+сверен до/после сборки; SHA нового CLI закреплён. Прежний staged CLI .11
+восстановлен по SHA; это один квалифицированный артефакт, не независимая
+воспроизводимость сборки. Ошибки первых обвязок сохранены: недостающий import,
+conformance fixtures и четыре INI-примера integration lint исправлены до PASS.
+Первый cleanup guard остановился до изменений из-за относительных dep-info;
+после read-only проверки 14 qeli units/68 metadata files SHA-архивированы.
+
+Host gate: 10.66.116.10: FAIL iptables4,legacy4; 10.66.116.11: restored. Исходные FAIL не исключаются из evidence;
+статус DIAGNOSTIC_MEASUREMENTS_ONLY. Два собственных remote roots SHA-архивированы
+и удалены; только metadata Cargo units из private source инвалидированы после
+backup, прежний CLI и активные службы сохранены. Пакет:
+`audit-debt-20260924/q36-client-uplink-20261010/`.
+Downlink handoff observability/точная причина/UDP-bidir/IPv6/latency/auth-rate
+и полный Q35 8 ч soak OPEN. Q36 IN_PROGRESS, 30/37 DONE (81,1%).
+
 ## Диагностика bidir под ограниченной нагрузкой — 10 октября 2026
 
 [Pressure JSON](../../../release/benchmark_v0.8.2_2026-10-10_bidir_pressure.json): тот же CLI SHA `7769f43c`,

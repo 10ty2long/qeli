@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v207 -->
+<!-- normative-sync: full-system-audit-v208 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2600,3 +2600,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **10 October,F512/Q35-F010:** [Release-soak admission](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): old gate falsely passed in0.064s with eight silent children. It now requires eight phase results, final TCP10k/UDP10k+3×1k checkpoints and28800s on a monotonic clock. Seven Linux contract tests and Bash syntax PASS; silent child/missing checkpoint/eight hours minus1ns refuse. Actual eight-hour VPN soak remains OPEN,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October, Q36-F008:** [Bidir pressure](../reports/BENCHMARK.md): 36 phases/90 raw JSON, three windows at100/250/unlimited for plain/TLS/QUIC and baseline. Plain TCP restores symmetry under paced load, but low unlimited uplink also occurs with zero session drops: cause OPEN. Fixed paced raw admission into unlimited populations;49 Windows/49 Linux PASS, previous228 raw readmitted. Both owned roots SHA-archived/cleaned, services preserved. Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October,Q36-F009:** [Client TCP uplink](../reports/BENCHMARK.md): four drop reasons recorded by core/Linux status; Full/Closed flow semantics preserved.9 Rust tests/release/fmt/2Clippy PASS.24 phases/96 raw JSON,3 fresh sessions old/new,fixed server; plain TCP asymmetry cause and downlink observability OPEN.915 source inputs checked,staged CLI restored,2owned roots SHA-archived/cleaned,services preserved.Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

@@ -47,7 +47,7 @@ mod trace {
     #[inline]
     pub(crate) fn record(_direction: Dir, _label: &str, _bytes: usize, _stream: u8) {}
 }
-use crate::transport_core::buffer_pool::PooledBuffer;
+use crate::transport_core::buffer_pool::{BufferPool, PooledBuffer};
 #[cfg(target_os = "linux")]
 use crate::transport_core::linux_tun::LinuxTunPumpStop;
 #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
@@ -58,6 +58,7 @@ use crate::transport_core::linux_tun::{
 use crate::transport_core::packet_tun::TunWriter;
 #[cfg(target_os = "ios")]
 type TunPacket = PooledBuffer;
+use crate::transport_core::client_uplink::{UplinkCounters, UplinkDrop};
 #[cfg(target_os = "linux")]
 use crate::transport_core::network::is_full_tunnel;
 use crate::transport_core::network::{build_network_plan, server_push_log_lines, HandshakeNetwork};
@@ -2020,6 +2021,7 @@ impl ClientStatusReporter {
                 "udp_drops_tun_write": udp.tun_write_drops,
                 "udp_buffer_grows": udp.grow_events,
                 "udp_recv_buffer_bytes": udp.granted_recv_bytes,
+                "tcp_uplink_drops": counters.tcp_uplink.snapshot(),
             },
         });
         // Keep the state lock until enqueue: an older sampled state must never be
@@ -4511,6 +4513,167 @@ fn select_tcp_stream_index(
         .map(|(index, _)| index)
 }
 
+fn prepare_bonded_uplink(
+    bytes: &[u8],
+    pool: &BufferPool,
+    counters: &UplinkCounters,
+) -> Option<PooledBuffer> {
+    let Some(mut packet) = pool.try_acquire() else {
+        counters.note(UplinkDrop::PoolExhausted);
+        return None;
+    };
+    if bytes.len() > packet.capacity() {
+        counters.note(UplinkDrop::Oversize);
+        return None;
+    }
+    packet.as_vec_mut().extend_from_slice(bytes);
+    Some(packet)
+}
+
+fn queue_tcp_uplink(
+    streams: &mut Vec<ClientStreamSender>,
+    mut packet: ClientUplink,
+    flow: u64,
+    stable_width: Option<u32>,
+    counters: &UplinkCounters,
+) {
+    while let Some(index) = select_tcp_stream_index(streams, flow, stable_width) {
+        match streams[index].try_send(packet) {
+            Ok(()) => return,
+            // Preserve flow pinning: a full live queue drops once, without rerouting.
+            Err(mpsc::error::TrySendError::Full(_)) => {
+                counters.note(UplinkDrop::QueueFull);
+                return;
+            }
+            Err(mpsc::error::TrySendError::Closed(value)) => {
+                packet = value;
+                streams.remove(index);
+            }
+        }
+    }
+    counters.note(UplinkDrop::NoCarrier);
+}
+
+#[cfg(test)]
+mod tcp_uplink_tests {
+    use super::*;
+
+    fn stream(slot: u32) -> (ClientStreamSender, mpsc::Receiver<ClientUplink>) {
+        let (sender, receiver) = mpsc::channel(1);
+        let (terminal_sender, _terminal_receiver) = mpsc::channel(1);
+        (
+            ClientStreamSender {
+                logical_slot_id: slot,
+                sender,
+                terminal_sender,
+            },
+            receiver,
+        )
+    }
+
+    #[test]
+    fn pool_refusal_and_oversize_are_distinct_and_release_the_slot() {
+        let pool = BufferPool::new(1, 64).unwrap();
+        let counters = UplinkCounters::default();
+        let held = pool.try_acquire().unwrap();
+        assert!(prepare_bonded_uplink(b"data", &pool, &counters).is_none());
+        drop(held);
+        assert!(prepare_bonded_uplink(&[0; 65], &pool, &counters).is_none());
+        let accepted = prepare_bonded_uplink(b"data", &pool, &counters).unwrap();
+        assert_eq!(accepted.as_ref(), b"data");
+        let snapshot = counters.snapshot();
+        assert_eq!(
+            (snapshot.total, snapshot.pool_exhausted, snapshot.oversize),
+            (2, 1, 1)
+        );
+    }
+
+    #[test]
+    fn full_pinned_queue_drops_once_and_releases_buffer_without_repinning() {
+        let (pinned, mut pinned_rx) = stream(0);
+        let (other, mut other_rx) = stream(1);
+        pinned
+            .try_send(ClientUplink::Owned(b"held".to_vec()))
+            .ok()
+            .unwrap();
+        let mut streams = vec![pinned, other];
+        let counters = UplinkCounters::default();
+        let pool = BufferPool::new(1, 64).unwrap();
+        let packet = prepare_bonded_uplink(b"discard", &pool, &counters).unwrap();
+        queue_tcp_uplink(
+            &mut streams,
+            ClientUplink::Bonded(packet),
+            0,
+            Some(2),
+            &counters,
+        );
+        assert!(matches!(
+            other_rx.try_recv(),
+            Err(mpsc::error::TryRecvError::Empty)
+        ));
+        assert!(pinned_rx.try_recv().is_ok());
+        assert!(pool.try_acquire().is_some());
+        assert_eq!(
+            (counters.snapshot().total, counters.snapshot().queue_full),
+            (1, 1)
+        );
+        assert_eq!(streams.len(), 2);
+    }
+
+    #[test]
+    fn closed_carrier_retries_a_live_slot_without_counting_a_packet_drop() {
+        for stable_width in [None, Some(2)] {
+            let (closed, closed_rx) = stream(0);
+            drop(closed_rx);
+            let (live, mut live_rx) = stream(1);
+            let mut streams = vec![closed, live];
+            let counters = UplinkCounters::default();
+            queue_tcp_uplink(
+                &mut streams,
+                ClientUplink::Owned(b"delivered".to_vec()),
+                0,
+                stable_width,
+                &counters,
+            );
+            let ClientUplink::Owned(packet) = live_rx.try_recv().unwrap() else {
+                panic!("wrong packet");
+            };
+            assert_eq!(packet, b"delivered");
+            assert_eq!(counters.snapshot().total, 0);
+            assert_eq!(streams.len(), 1);
+        }
+    }
+
+    #[test]
+    fn missing_or_all_closed_carriers_count_one_drop_per_packet() {
+        let counters = UplinkCounters::default();
+        queue_tcp_uplink(
+            &mut vec![],
+            ClientUplink::Owned(vec![1]),
+            0,
+            None,
+            &counters,
+        );
+        let (first, first_rx) = stream(0);
+        drop(first_rx);
+        let (second, second_rx) = stream(1);
+        drop(second_rx);
+        let mut streams = vec![first, second];
+        queue_tcp_uplink(
+            &mut streams,
+            ClientUplink::Owned(vec![2]),
+            0,
+            Some(2),
+            &counters,
+        );
+        assert!(streams.is_empty());
+        assert_eq!(
+            (counters.snapshot().total, counters.snapshot().no_carrier),
+            (2, 2)
+        );
+    }
+}
+
 #[cfg(feature = "experimental-roaming")]
 async fn send_tcp_close_session(outs: &Arc<std::sync::Mutex<Vec<ClientStreamSender>>>) {
     let senders = crate::util::lock_or_recover(outs, "client::outs").clone();
@@ -6879,34 +7042,16 @@ where
                 // not reorder healthy flows. Legacy sessions retain modulo-live-width.
                 let mut g = crate::util::lock_or_recover(&outs, "client::outs");
                 let h = crate::protocol::flow_hash(ip_packet.as_ref());
-                let mut pkt = if let Some(pool) = &bonded_uplink_pool {
-                    let Some(mut packet) = pool.try_acquire() else {
+                let pkt = if let Some(pool) = &bonded_uplink_pool {
+                    let Some(packet) = prepare_bonded_uplink(ip_packet.as_ref(), pool, &runtime_counters.tcp_uplink) else {
                         continue;
                     };
-                    if ip_packet.len() > packet.capacity() {
-                        continue;
-                    }
-                    packet.as_vec_mut().extend_from_slice(ip_packet.as_ref());
                     drop(ip_packet);
                     ClientUplink::Bonded(packet)
                 } else {
                     ClientUplink::Tun(ip_packet)
                 };
-                while !g.is_empty() {
-                    let Some(i) = select_tcp_stream_index(&g, h, stable_stream_width) else {
-                        break;
-                    };
-                    match g[i].try_send(pkt) {
-                        Ok(()) => break,
-                        // Backpressure on the pinned stream: drop (inner TCP retransmits).
-                        Err(mpsc::error::TrySendError::Full(_)) => break,
-                        // Dead stream: remove it and re-pin to the next stable live slot.
-                        Err(mpsc::error::TrySendError::Closed(v)) => {
-                            pkt = v;
-                            g.remove(i);
-                        }
-                    }
-                }
+                queue_tcp_uplink(&mut g, pkt, h, stable_stream_width, &runtime_counters.tcp_uplink);
             }
 
             else => break,
