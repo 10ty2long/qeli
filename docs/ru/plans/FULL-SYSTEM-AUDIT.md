@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v202 -->
+<!-- normative-sync: full-system-audit-v203 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2193,7 +2193,7 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 
 Зафиксировать SHA/binaries, CPU/governor/affinity/VM contention, MTU/mode и background load. P=1/P=4, up/down/bidir, inner/outer v4/v6, TCP/UDP goodput, p50/p95/p99, loss/jitter, CPU/RSS/auth rate. ≥3 независимых повтора, median+spread/raw results; dev не подменяется числами 0.8.0.
 
-**Имеющаяся обвязка/fixtures:** `scripts/perf_combined_load.py`, `scripts/bench_bonding.py`.
+**Имеющаяся обвязка/fixtures:** `scripts/bench_bonding.py` (исторический, с явным guard).
 
 - [ ] Review и мёртвый код.
 - [ ] Штатные, граничные и негативные сценарии.
@@ -2206,6 +2206,13 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 отказывает при обрезанном интервале или неверных TCP/UDP метриках. Пять unit-
 тестов и все 35 архивных raw iperf-файлов PASS. Новых повторных измерений и
 матрицы P=4/IPv6/bidir пока нет; 30/37 DONE (81,1%).
+
+**Q36-F002:** исторический `bench_bonding.py` теперь отказывает при обычном
+запуске до SSH и изменения host-состояния, как уже делал `benchmark.py`.
+Неиспользуемый `perf_combined_load.py` с захардкоженными реквизитами и
+изменениями производственного firewall удалён. Subprocess-тест проверил
+оба оставшихся отказа; доступ к `.10` для новых замеров пока отклонён
+на SSH-аутентификации.
 
 **Статус: IN_PROGRESS.**
 

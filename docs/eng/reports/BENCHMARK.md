@@ -89,6 +89,14 @@ measured throughput on current dev; Q36 remains in progress.
 Historical [benchmark.py](../../../scripts/benchmark.py) stops services,
 uses host-wide `pkill`, replaces binaries and the resolver file. It now
 requires explicit `--allow-host-wide-benchmark` before SSH access.
+The same guard now covers historical `bench_bonding.py`, which changes lab
+qdisc, services and VPN state. Obsolete `perf_combined_load.py` was removed:
+no current workflow calls it, it contained embedded credentials, and it also
+changed production firewall/VPN state. Ordinary invocation of the two
+remaining host-wide scripts exits with code 2 before credentials or SSH;
+a subprocess test checks that refusal. Old results remain historical. On
+10 October, read-only qualification of `.10` stopped at SSH authentication;
+no new Q36 measurements were run.
 
 ## Current 0.8.2 measurement — 1 October 2026
 
