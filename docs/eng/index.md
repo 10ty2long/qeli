@@ -117,6 +117,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q35-FRAGMENT-FUZZ.md](reports/AUDIT-Q35-FRAGMENT-FUZZ.md) | ASan fuzz oracles for UDP fragmentation and limits |
 | [AUDIT-Q35-LONG-SOAK.md](reports/AUDIT-Q35-LONG-SOAK.md) | Concurrent 30-minute TCP/UDP roaming soak with 900 switches each |
 | [AUDIT-Q35-CLIENT-CONFIG-FUZZ.md](reports/AUDIT-Q35-CLIENT-CONFIG-FUZZ.md) | ASan fuzz oracles for client INI and qeli:// canonical reparse |
+| [AUDIT-Q35-RELEASE-ADMISSION.md](reports/AUDIT-Q35-RELEASE-ADMISSION.md) | Release-soak false-PASS refusal and eight-hour minimum |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Namespace ownership, reconnect protection and exact family cleanup |
 | [AUDIT-Q25-KILL-SWITCH-BUDGET.md](reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md) | Shared kill-switch cleanup deadline, partial cleanup and verified retry |
 | [AUDIT-Q25-KILL-SWITCH-REFRESH.md](reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md) | Shared refresh deadline and refusing insertion after unknown inspection |
