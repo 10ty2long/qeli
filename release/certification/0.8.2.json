@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+  "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q20-dhcp-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "36a0e491f9437773b73b3e29f9c7ab0b7f624142e782dd78777f0c6168e6cef1",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T08:29:28.135331+00:00",
@@ -19,7 +19,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -30,7 +30,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -41,7 +41,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -52,7 +52,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -63,7 +63,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -74,7 +74,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -85,7 +85,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -96,7 +96,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -107,7 +107,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -118,7 +118,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -129,7 +129,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -140,7 +140,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -151,7 +151,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -162,7 +162,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q19-dns-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "4c70a6595b6f5a9a9b2809c7975f12212895347fdabc9e05d4135f5a69a8a2f3",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T07:43:44.973730+00:00",
@@ -173,7 +173,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q21-packets-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "36a0e491f9437773b73b3e29f9c7ab0b7f624142e782dd78777f0c6168e6cef1",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T08:58:11.871354+00:00",
@@ -184,7 +184,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -195,7 +195,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q21-packets-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "36a0e491f9437773b73b3e29f9c7ab0b7f624142e782dd78777f0c6168e6cef1",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T08:51:04.390495+00:00",
@@ -206,7 +206,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q16-acl-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "eb2b90bf1bc60c985190d65560ef205a4769212ffcaf9169048c371b31ad5932",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
       "executed_at": "2026-10-04T06:09:16.905074+00:00",
@@ -217,7 +217,7 @@
       "kind": "automated",
       "status": "passed",
       "evidence": "release/certification/evidence/q23-roaming-20261004.json",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6",
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d",
       "artifact_sha256": "bfbb16cb8ca4145b9b8c5f8a838d272546431e9f79246a78817cbf376607386b",
       "executed_at": "2026-10-04T11:53:07.619912+00:00",
       "environment": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
@@ -228,147 +228,147 @@
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "android.cellular-to-wifi",
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "android.carrier-gap-background",
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "android.sleep-wake-nat-rebind",
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "android.ipv6-dns-leak",
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "android.roaming-race-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "Only Android emulator available; physical Wi-Fi/cellular/LTE/sleep qualification is not established by AVD tests.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "ios.wifi-cellular-nat64",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "ios.sleep-wake-rollback",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "ios.per-app-mdm",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "ios.roaming-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "windows.ethernet-wifi",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "windows.sleep-wake",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "windows.ipv6-per-app-leak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "windows.roaming-race-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "macos.wifi-ethernet",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "macos.sleep-wake",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "macos.ipv6-pf-per-app-leak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "macos.networkextension-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "openwrt.ipv6-roaming-flap-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "keenetic.ipv6-roaming-flap-soak",
       "kind": "physical",
       "status": "not_available",
       "reason": "User excluded Windows VM/Mac/iOS/router runtime.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     },
     {
       "id": "rollout.canary-legacy-peer",
       "kind": "physical",
       "status": "pending",
       "reason": "Production canary has not been executed; lab interop is a separate automated case.",
-      "source_digest": "e51d49fcabea10b3c5e31704ebbe2fc6587b4fe1ac49825be552c5ff1e3205b6"
+      "source_digest": "bcbaaad010ff8e94da6d266cdf148936b523f016b745842ba72e3b506880bd3d"
     }
   ],
   "acceptance": {
@@ -806,6 +806,10 @@
     {
       "evidence": "release/certification/evidence/q35-fault-concurrency-20261010.json",
       "scope": "F509/Q35-F006 actual UDPfamily baseline worker SUN_LEN due long TMPDIR/WORK control socket, client refused connection and case timeout137; initial9other cases PASS but initialmatrixexit1 retained. Shared isolation creates0700private /run/qeli-roaming-control aftertmpfs; primary/secondary controls separate short names. TCP/UDPmain+soakstats+bondingbandwidth/revoke use shared short paths;7scriptchanges incl actual kernel concurrent shortAFUNIXlisteners. No core/INI/ABI/native compiler input changes. Initial external observer TCP-only authmarker missingUDP corrected; earlier read-only retry refused unfinished job beforemutation. Exact current changedscript SHA bound+original inputarchive/reference reused no14MBbinary/TAR duplication. Actual patched35Linuxscript/7kernelmethods,14VPNcase executions in7max-two concurrentpairs all assertionsPASS/exits0 and7live authenticated client/worker proc snapshots separate PIDns. TCPsuccess2/resume/grace/starvationfixed,UDProllback/commit-race/supersede/family/loss-replay,TCP+UDP3flipsoakcontrolsmoke,bondingfixed,multinodesecondary. Deep retry WORK exceeds original SUN_LEN paths; actual F509 failure corrected. No newbounded100/10k/30min/8h/continuouspeaks/tasks/wholeDoS/otheradapters/throughput/hostedCI claim. SHA-backed exactregular originals/TAR+generated backups and typedstalesockets,proc/cwd/exe/root/fd/argv/mount guards/absenceconfirm; .11service777/845/CLI75bc,routes/links/firewall/sysctl/mounts/hosts/resolver preserved,builtin packetbyte counters onlynormalized raw retained,.10unused,no package changes.9docs724Markdown PASS; unchanged nativee3fb14/protected/qelitree/SDKcutSHA reverified;oldcore/native/11Windows/actionlint4execution inherited.41cases106prior supplements preserve modulo sourcedigest,append107.74SEALEDmanifestanchors/newpayloadSHA verified,oldpayloads inherited.15productdocs+2cert transferred localdev;current module inventory37rows reconciled from existing per-section closure evidence to30DONE/7pending29,30,31,34,35,36,37 without claiming new closure. Q34/Q35IN_PROGRESS,Q36TODO30/37DONE81.1percent7remain,Q29/Q30/Q31/F459/D06accepted/USER_EXCLUDED unchanged.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE."
+    },
+    {
+      "evidence": "release/certification/evidence/q35-fragment-oracles-20261010.json",
+      "scope": "F510/Q35 two changed fuzz targets with structured valid fragments and exact output oracles: data_frag forward/reverse/duplicates/completed-ID reuse/authenticated conflict/invalid-MAC and 32record/512KiB resource recovery;udp_frag up to24parts/reorder/duplicates/historical1200B acceptance/oversize refusal/recovery. Actual pinned nightly-2026-06-10 cargo-fuzz0.13.2 ASan builds;14 initial seeds each and 9630 data_frag+237183 udp_frag runs over61s each, zero new crash artifacts, lock unchanged. First harness RecordTooLarge (32KiB>16645B) and intermediate FileExistsError retained, final valid 16385B pressure. Two target source SHA matches qualified lab;300 selected files corpus/logs SHA backed up; own root8547 files+2350 dirs deleted after process/fd/mount guards, .11 service777/845 CLI75bc retained. Other13 targets unchanged inherited85,930,590 earlier runs, no full nightly/long VPN soak/wholeDoS claim. RU/EN report/plan/index and fuzzREADME docs9 pass. Q35 IN_PROGRESS,30/37 DONE, remaining7 Q29/Q30/Q31/Q34/Q35/Q36/Q37; F459/D06accepted/USER_EXCLUDED retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE."
     }
   ]
 }
