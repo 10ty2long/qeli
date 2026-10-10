@@ -1,5 +1,5 @@
 # Client roaming (seamless network change) — implementation plan
-<!-- normative-sync: roaming-v49-soak-admission -->
+<!-- normative-sync: roaming-v50-netns-isolation -->
 
 > Audit update, 23 September 2026: the Linux route adapter uses a connection owner lease;
 > cleanup closes admission for new mutations. `dev_attach=true` does not supply
@@ -957,3 +957,20 @@ Primary risks are cross-worker UDP state, TCP orphan/JOIN/reaper races, nonce re
 platform binding rollback, outer-family PMTU changes, iOS behavior, and interactions
 
 Soak admission: canonical decimal counts1..2147483647 without leading zeros;sample_every<=iterations. Standalone UDP below10kQUIC/1kadapters emits SMOKE and exits0 when children succeed, not endurance PASS. Full roaming_resource_release_gate.sh refuses downgraded counts before its first phase. Separate mandatory bounded release100 is retained. Details/evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+
+### Mandatory isolation for Linux TCP/UDP runners
+
+`roaming_netns_e2e.sh` and `roaming_udp_netns_e2e.sh` require root or equivalent
+namespace/mount capabilities, util-linux unshare supporting --kill-child, Python3
+and kernel overlayfs/sysfs. Keep `roaming_netns_isolation.sh` and
+`roaming_netns_supervisor.py` beside them; all cases/modes use them automatically.
+Missing privileges or failed mounts refuse before cleanup. There is no environment
+opt-out. Arguments, cwd, INI settings and soak thresholds are preserved. Private
+mount/process namespaces disappear on completion/interruption; the individual
+WORK directory and logs remain available for result analysis.
+
+CI executes unprivileged `test_roaming_netns_isolation.py`. Separate
+`test_roaming_netns_isolation_kernel.py` requires an independent outer lab and
+verifies parent namespace identities before creating sentinels. Qualification,
+real kernel execution and inherited boundaries are in the
+[Q35 report](../reports/AUDIT-Q34-RELEASE-SOAK.md).

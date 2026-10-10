@@ -26,7 +26,7 @@ BIN=${1:-${BIN:-/opt/qeli-src/target/release/qeli}}
 CASE=${2:-${CASE:-success}}
 WIRE_MODE=${QELI_ROAMING_UDP_WIRE_MODE:-quic}
 DEVICE_TYPE=${QELI_ROAMING_DEVICE_TYPE:-tun}
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 2
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd) || exit 2
 if [ "$CASE" = soak ]; then
   if [ ! -r "$SCRIPT_DIR/roaming_soak_parameters.sh" ]; then
     echo "required roaming soak parameter helper is missing" >&2
@@ -35,6 +35,13 @@ if [ "$CASE" = soak ]; then
   source "$SCRIPT_DIR/roaming_soak_parameters.sh" || exit 2
   roaming_soak_counts "${QELI_ROAMING_SOAK_ITERATIONS:-10000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" || exit 2
 fi
+# Isolation must succeed before initial cleanup can touch fixed namespace names.
+if [ ! -r "$SCRIPT_DIR/roaming_netns_isolation.sh" ]; then
+  echo "required roaming namespace isolation helper is missing" >&2
+  exit 2
+fi
+source "$SCRIPT_DIR/roaming_netns_isolation.sh" || exit 2
+roaming_netns_isolate "${BASH_SOURCE[0]}" "$@" || exit 2
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-roaming-udp-netns-XXXXXX") || exit 2
 # Each test creates new namespaces; never reuse the host or another case's journal.
 export STATE_DIRECTORY="$WORK/state"
