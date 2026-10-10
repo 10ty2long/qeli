@@ -9,6 +9,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import ipaddress
 import os
 from pathlib import Path
 import re
@@ -207,7 +208,9 @@ def save_results(path, output):
     atomic_write_bytes(path, (json.dumps(output, indent=2, allow_nan=False) + '\n').encode('utf-8'))
 
 
-def configs(mode, key):
+def configs(mode, key, *, outer_family=4, inner_family=4):
+    if type(outer_family) is not int or type(inner_family) is not int or outer_family not in (4, 6) or inner_family not in (4, 6):
+        raise ValueError('unsupported benchmark address family')
     server = modes.server_ini(mode)
     server = server.replace('[auth]\n', '[auth]\nusers_file = /etc/qeli/users.conf\n')
     server = server.replace('file = /var/log/qeli/server.log\n', '')
@@ -220,10 +223,31 @@ def configs(mode, key):
     server += '\n[web]\nenabled = false\n'
     client = modes.client_ini(mode, key).replace('server = ' + modes.SERVER[0] + ':', 'server = 10.255.42.1:')
     client = client.replace('[logging]', 'dev = qbench0\ngateway = false\ndns = off\nallow_ipv6_leak = true\ntimeout = 5\n\n[logging]')
+    if outer_family == 6:
+        server = server.replace('bind.address = 10.255.42.1', 'bind.address = fd42:36:42::1')
+        client = client.replace('server = 10.255.42.1:', 'server = [fd42:36:42::1]:')
+    if inner_family == 6:
+        server = re.sub(r'^(?:tun.address|pool.cidr|pool.exclude) = .*\n', '', server, flags=re.M)
+        server = server.replace('[profile:bench]\n', '[profile:bench]\ntun.ip_mode = ipv6\ntun.ipv6_address = fd42:36:9::1\npool.ipv6.cidr = fd42:36:9::/64\nrouting.ipv6.mode = off\n')
+        client = client.replace('[qeli]\n', '[qeli]\nipv6 = required\n')
     return server, client
 
 
-def udp_kernel(fixture):
+def udp_kernel(fixture, family=4):
+    if type(family) is not int or family not in (4, 6):
+        raise ValueError('unsupported UDP kernel family')
+    if family == 6:
+        result = {}
+        for line in fixture.checked(fixture.run_in('cat /proc/net/snmp6')).splitlines():
+            if not line.startswith('Udp6'):
+                continue
+            fields = line.split()
+            if len(fields) != 2 or fields[0][4:] in result or not fields[1].isdecimal():
+                raise ValueError('invalid IPv6 UDP kernel counter')
+            result[fields[0][4:]] = int(fields[1])
+        if 'RcvbufErrors' not in result:
+            raise ValueError('IPv6 UDP kernel drop counter missing')
+        return result
     lines = fixture.checked(fixture.run_in('cat /proc/net/snmp')).splitlines()
     for index, line in enumerate(lines[:-1]):
         if line.startswith('Udp:') and lines[index + 1].startswith('Udp:'):
@@ -235,11 +259,17 @@ def application_stats(fixture):
     return json.loads(fixture.checked('python3 ' + fixture.remote + '/control.py ' + fixture.remote + '/run/control.sock'))
 
 
+def udp_kernel_all(fixture):
+    ipv4, ipv6 = udp_kernel(fixture, 4), udp_kernel(fixture, 6)
+    return dict(ipv4=ipv4, ipv6=ipv6, RcvbufErrors=ipv4['RcvbufErrors'] + ipv6['RcvbufErrors'])
+
+
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local, *, expected_bitrate=0):
+    ipaddress.ip_address(ip)  # A literal target prevents shell interpolation.
     bidir = '--bidir' in flags.split()
     receiver = client if '-R' in flags.split() else server
-    before_kernel = udp_kernel(receiver)
-    before_client_kernel = udp_kernel(client) if bidir else None
+    before_kernel = udp_kernel_all(receiver)
+    before_client_kernel = udp_kernel_all(client) if bidir else None
     before_app = application_stats(server)
     duration = seconds + 1
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -254,20 +284,23 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
     (local / (name + '-processes.json')).write_text(json.dumps(samples, indent=2) + '\n')
-    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate) if bidir else parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
-    after_kernel = udp_kernel(receiver)
+    protocol = 'udp' if '-u' in flags.split() else 'tcp'
+    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate, protocol=protocol) if bidir else parse_iperf_result(raw, protocol, seconds)
+    after_kernel = udp_kernel_all(receiver)
     after_app = application_stats(server)
     counters = dict(before=dict(kernel=before_kernel, application=before_app),
                     after=dict(kernel=after_kernel, application=after_app))
     if bidir:
         counters['before']['client_kernel'] = before_client_kernel
-        counters['after']['client_kernel'] = udp_kernel(client)
+        counters['after']['client_kernel'] = udp_kernel_all(client)
     save_results(local / (name + '-counters.json'), counters)
     deltas = (bidir_counter_deltas if bidir else counter_deltas)(counters['before'], counters['after'])
     return dict(**metrics, **deltas, server=samples[0], client=samples[1])
 
 
 def phase_flags(phase, parallel):
+    if phase == 'udp_bidir':
+        return '-u -P ' + str(parallel) + ' --bidir -b 100000000 -l 1200'
     if phase in ('tcp_up', 'tcp_down', 'tcp_bidir'):
         return '-P ' + str(parallel) + {'tcp_up': '', 'tcp_down': ' -R', 'tcp_bidir': ' --bidir'}[phase]
     if phase in ('udp_100', 'udp_500'):
@@ -283,7 +316,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seconds', type=int, default=8)
     parser.add_argument('--tcp-parallel', type=int, choices=(1, 4), default=1)
-    parser.add_argument('--measurement', choices=('standard', 'tcp-bidir'), default='standard')
+    parser.add_argument('--measurement', choices=('standard', 'tcp-bidir', 'udp-bidir'), default='standard')
     parser.add_argument('--modes', nargs='+', choices=[mode['name'] for mode in modes.MODES])
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{64}', args.sha256) or not 5 <= args.seconds <= 30:
@@ -345,8 +378,8 @@ def main():
                 text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json'))
                 raw = json.loads(text)
                 (direct_local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
-                metrics = parse_iperf_bidir(raw, seconds, args.tcp_parallel) if name == 'tcp_bidir' else parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
-                output['baseline'][name] = metrics if name == 'tcp_bidir' else {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
+                metrics = parse_iperf_bidir(raw, seconds, args.tcp_parallel, expected_bitrate=100000000 if name == 'udp_bidir' else 0, protocol='udp' if name == 'udp_bidir' else 'tcp') if name.endswith('_bidir') else parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
+                output['baseline'][name] = metrics if name.endswith('_bidir') else {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
             print('BASELINE', output['baseline'], flush=True)
         finally:
             cleanup_fixtures(direct_client, direct_server)
@@ -396,10 +429,12 @@ def main():
                 server.wait(server.run_in("ss -lnt | grep -q ':5203'"))
                 for phase in measurement_phases(args.measurement, mode['transport']):
                     result[phase] = measure(server, client, server_pid, client_pid, ip, phase,
-                        phase_flags(phase, args.tcp_parallel), 5 if phase.startswith('udp_') else args.seconds, local)
+                        phase_flags(phase, args.tcp_parallel), 5 if phase.startswith('udp_') else args.seconds, local,
+                        expected_bitrate=100000000 if phase == 'udp_bidir' else 0)
                 result['status'] = 'COMPLETED'
-                up, down = (result['tcp_bidir']['up_mbps'], result['tcp_bidir']['down_mbps']) if args.measurement == 'tcp-bidir' else (result['tcp_up']['mbps'], result['tcp_down']['mbps'])
-                print('COMPLETED', name, args.measurement, 'TCP Mbps up/down', round(up, 1), round(down, 1), flush=True)
+                phase = args.measurement.replace('-', '_')
+                up, down = (result[phase]['up_mbps'], result[phase]['down_mbps']) if args.measurement in ('tcp-bidir', 'udp-bidir') else (result['tcp_up']['mbps'], result['tcp_down']['mbps'])
+                print('COMPLETED', name, args.measurement, 'receiver Mbps up/down', round(up, 1), round(down, 1), flush=True)
             except Exception as error:
                 result.update(status='FAIL', error=str(error))
                 print('FAIL', name, str(error)[:500], flush=True)

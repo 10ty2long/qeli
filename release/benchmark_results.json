@@ -18523,5 +18523,10 @@
     "path": "benchmark_v0.8.2_2026-10-10_latency.json",
     "sha256": "85ec7e369538a20132d48ae1982c05c1181b1cf9e08d61520e4c38d56e40bcaa",
     "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
+  },
+  "supplemental_udp_ipv6": {
+    "path": "benchmark_v0.8.2_2026-10-10_udp_ipv6.json",
+    "sha256": "24abcc5a8eb9960d548269ec79b9f07e6966783ccfb6d592f1fcff5f5f27ebfa",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
   }
 }

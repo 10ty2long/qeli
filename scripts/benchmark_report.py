@@ -161,9 +161,9 @@ def validate_run(directory, *, measurements_only=False):
             raise ValueError('phase population missing or unexpected: ' + name)
         for phase in phases:
             raw = read_json(root / name / (phase + '-iperf.json'), root, hashes)
-            metrics = parse_iperf_bidir(raw, meta['seconds'], meta['tcp_parallel']) if phase == 'tcp_bidir' else parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
+            metrics = parse_iperf_bidir(raw, 5 if phase == 'udp_bidir' else meta['seconds'], meta['tcp_parallel'], expected_bitrate=100000000 if phase == 'udp_bidir' else 0, protocol='udp' if phase == 'udp_bidir' else 'tcp') if phase.endswith('_bidir') else parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
             expected = summary[phase]
-            keys = tuple(metrics) if phase == 'tcp_bidir' else ('mbps', 'retransmits', 'lost_percent') + (() if name == 'direct' else ('jitter_ms',))
+            keys = tuple(metrics) if phase.endswith('_bidir') else ('mbps', 'retransmits', 'lost_percent') + (() if name == 'direct' else ('jitter_ms',))
             for key in keys:
                 if metrics[key] is None:
                     equal = expected[key] is None
@@ -188,7 +188,7 @@ def validate_run(directory, *, measurements_only=False):
                         values[host + '_' + key] = sample[key]
                     values[host + '_load1_max'] = max(row['host_load'][0] for row in sample['samples'])
                 counters = read_json(root / name / (phase + '-counters.json'), root, hashes)
-                deltas = (bidir_counter_deltas if phase == 'tcp_bidir' else counter_deltas)(counters['before'], counters['after'])
+                deltas = (bidir_counter_deltas if phase.endswith('_bidir') else counter_deltas)(counters['before'], counters['after'])
                 for key in deltas:
                     if type(expected[key]) is not int or expected[key] != deltas[key]:
                         raise ValueError('drop summary disagrees with raw counters')

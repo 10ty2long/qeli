@@ -1,6 +1,6 @@
 # qeli load testing
 
-The latest structured measurement is **qeli 0.8.2, 10 October 2026**:
+The primary structured measurement is **qeli 0.8.2, 10 October 2026**:
 [canonical JSON](../../../release/benchmark_results.json) and
 [dated snapshot](../../../release/benchmark_v0.8.2_2026-10-10_repeated_12modes.json).
 Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e` was built from committed package
@@ -8,6 +8,114 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 `--offline --locked --release --features jemalloc`; all 902 input files matched
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
+
+The latest supplemental measurement is [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json),
+69 sessions / 204 windows. It uses CLI SHA-256
+`238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
+with 916 qualified build inputs. Details and limitations follow below.
+
+## UDP-bidir and independent inner/outer families — 10 October 2026
+
+**Q36-F012:** the shared runner and offline report support `--measurement udp-bidir`.
+Both receivers are mandatory; UDP sender flags differ from TCP. Admission binds
+protocol, P, sender/receiver duration, both bitrate fields, 1200-byte datagrams,
+packets/lost_packets/jitter and loss. CI now runs the whole `test_benchmark*.py`
+suite including latency: 63 Windows and 63 Linux methods, 11 workflow methods,
+actionlint 1.7.12 (4 workflows) and 9 docs checks PASS. Windows admission combines
+the full suite with a repeat of the 10 changed methods after validator refinement.
+
+The first P4 run exposed an error in the new validator.
+[iperf3 3.18](https://github.com/esnet/iperf/blob/3.18/src/iperf_api.c)
+computes JSON loss using sender packet counts, while receiver `packets` can
+differ. A real loss fixture pins the distinction; delivered goodput comes only
+from receiver bytes/rate. `*_packets` retains the raw summary field and does not
+replace delivered payload bytes. Loss and goodput are published independently.
+The original FAIL and four partial windows remain separate, including P4 with
+19.37%/13.42% loss: its full counter window is unavailable after rejection.
+Two completed baselines are inherited without rerunning; the incomplete cell
+was repeated in a fresh session. No failed phase is labelled PASS.
+
+[Complete JSON](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json): 69 completed fresh sessions,
+204 five-second phases, 3 repeats per each of 23 cells. Both VMs use qualified CLI
+`238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`; all 916 build inputs unchanged, no rebuild.
+All 12 IPv4 modes carry UDP payload bidir P1/P4. TCP fake-TLS, UDP fake-TLS
+and QUIC additionally cover outer4/inner6,outer6/inner4,outer6/inner6 with TCP
+and UDP payload bidir P1/P4. Direct baseline covers both families.
+NetworkPlan,server peer and raw iperf endpoints verify actual families.
+Cell/phase order rotates; every metric retains median/min/max.
+The public CLI `--measurement udp-bidir --tcp-parallel 1|4` uses IPv4;
+this packet's IPv6 matrix calls shared `configs(..., outer_family=..., inner_family=...)`
+through a separate isolated driver. The compatible `--tcp-parallel` option name
+also specifies the number of streams for UDP-bidir.
+
+UDP target 100 Mbps **per stream per direction**: P1=100+100, P4=400+400.
+Payload 1200, TUN MTU 1400, underlay 1500, recordizer policy off.
+Each VM has 2 vCPUs and about 2 GiB RAM; kernel/governor and environment metadata
+remain in `host_metadata`. These VM results do not establish physical-device capacity.
+Tables show medians of three sessions; full ranges, CPU/RSS/steal/load, retransmits, packets and
+per-family drop deltas remain in JSON.
+
+| Carrier | Outer/inner | P1 ↑/↓ Mbps | P1 loss ↑/↓ % | P4 ↑/↓ Mbps | P4 loss ↑/↓ % |
+|---|---|---:|---:|---:|---:|
+| direct | 4/4 | 100.0/100.0 | 0.00/0.00 | 400.0/400.0 | 0.00/0.00 |
+| direct | 6/6 | 100.0/100.0 | 0.00/0.00 | 400.0/400.0 | 0.00/0.00 |
+| tcp-faketls | 4/4 | 100.0/100.0 | 0.00/0.00 | 302.2/365.6 | 23.64/6.01 |
+| tcp-faketls | 4/6 | 100.0/100.0 | 0.00/0.00 | 295.9/348.4 | 24.54/10.18 |
+| tcp-faketls | 6/4 | 100.0/100.0 | 0.00/0.00 | 313.6/358.2 | 21.10/7.82 |
+| tcp-faketls | 6/6 | 100.0/100.0 | 0.00/0.00 | 291.3/335.5 | 25.17/11.66 |
+| tcp-frag | 4/4 | 100.0/100.0 | 0.00/0.00 | 297.6/347.9 | 24.02/10.07 |
+| tcp-obfs-awg | 4/4 | 100.0/100.0 | 0.00/0.00 | 206.9/379.1 | 46.14/0.80 |
+| tcp-obfs | 4/4 | 100.0/100.0 | 0.00/0.00 | 254.3/366.2 | 35.89/5.63 |
+| tcp-padding | 4/4 | 100.0/100.0 | 0.00/0.00 | 267.3/375.2 | 32.85/3.49 |
+| tcp-plain-raw | 4/4 | 100.0/100.0 | 0.00/0.00 | 313.6/302.1 | 21.17/21.43 |
+| tcp-reality-tls | 4/4 | 99.9/99.9 | 0.00/0.00 | 399.3/399.3 | 0.00/0.00 |
+| tcp-reality | 4/4 | 100.0/100.0 | 0.00/0.00 | 297.0/349.1 | 25.15/8.93 |
+| udp-faketls-awg | 4/4 | 100.0/100.0 | 0.00/0.00 | 361.5/157.7 | 9.62/36.98 |
+| udp-faketls | 4/4 | 100.0/100.0 | 0.00/0.00 | 366.3/138.5 | 8.13/39.28 |
+| udp-faketls | 4/6 | 100.0/100.0 | 0.00/0.00 | 354.3/77.8 | 10.70/50.90 |
+| udp-faketls | 6/4 | 100.0/100.0 | 0.00/0.00 | 347.4/107.7 | 12.84/44.67 |
+| udp-faketls | 6/6 | 100.0/100.0 | 0.00/0.00 | 351.7/113.6 | 11.90/54.95 |
+| udp-padding | 4/4 | 100.0/100.0 | 0.00/0.00 | 358.5/98.0 | 9.81/46.86 |
+| udp-quic | 4/4 | 100.0/100.0 | 0.00/0.00 | 364.3/121.2 | 8.57/47.41 |
+| udp-quic | 4/6 | 100.0/100.0 | 0.00/0.00 | 349.2/150.1 | 12.48/51.49 |
+| udp-quic | 6/4 | 100.0/100.0 | 0.00/0.00 | 345.9/90.6 | 12.85/55.44 |
+| udp-quic | 6/6 | 100.0/100.0 | 0.00/0.00 | 356.1/80.6 | 10.40/62.16 |
+
+`tcp-reality-tls` has zero median P4 loss, but the maximum across the three
+windows is 0.693/0.000% ↑/↓. A zero median does not imply loss-free results
+in every repeat; the worst window remains in JSON.
+
+TCP payload bidir in the new family cells;other IPv4 TCP measurements follow below:
+
+| Carrier | Outer/inner | TCP P1 ↑/↓ Mbps | TCP P4 ↑/↓ Mbps |
+|---|---|---:|---:|
+| direct | 4/4 | 14480.2/15323.9 | 6114.2/20810.4 |
+| direct | 6/6 | 12950.1/16385.3 | 5430.1/20863.5 |
+| tcp-faketls | 4/6 | 61.0/485.5 | 39.4/476.6 |
+| tcp-faketls | 6/4 | 63.3/440.0 | 44.5/521.5 |
+| tcp-faketls | 6/6 | 45.4/446.0 | 36.0/520.7 |
+| udp-faketls | 4/6 | 134.1/754.8 | 100.7/777.5 |
+| udp-faketls | 6/4 | 168.0/644.8 | 91.8/779.9 |
+| udp-faketls | 6/6 | 153.8/688.3 | 101.6/689.4 |
+| udp-quic | 4/6 | 177.4/630.4 | 81.3/777.1 |
+| udp-quic | 6/4 | 48.6/255.7 | 32.7/260.1 |
+| udp-quic | 6/6 | 30.8/282.6 | 37.7/254.6 |
+
+Kernel snapshots now include IPv4 and IPv6 on both sides:inner family selection
+cannot hide outer UDP carrier drops in the other family. Admission checks both
+counters,their sum and individual resets. These are isolated namespace counters,
+not per-socket attribution. Maximum phase deltas: {'server_session_drops': 46527, 'server_ipv4_rcvbuf_drops': 0, 'server_ipv6_rcvbuf_drops': 162, 'client_ipv4_rcvbuf_drops': 162605, 'client_ipv6_rcvbuf_drops': 163072}.
+Client status before the first phase observes effective UDP receive buffers of
+[4194304] bytes, separately from `rmem_max`. Per-phase socket sizes and client
+drop deltas were not captured; automatic growth is not established. Server `dropped`
+combines multiple causes rather than queue loss alone. P4 loss remains visible
+and does not by itself establish a specific defect or cause.
+
+Host gates: pilot/10.66.116.10: FAIL (iptables4); pilot/10.66.116.11: PASS; attempt1/10.66.116.10: FAIL (iptables4); attempt1/10.66.116.11: PASS; matrix/10.66.116.10: PASS; matrix/10.66.116.11: PASS. All FAIL remain in DIAGNOSTIC_MEASUREMENTS_ONLY. Both owned
+roots were SHA-archived and removed; active services preserved. The IPv6
+cross-product currently covers three core carriers; all IPv6 obfuscation modes,
+auth-rate, full saturated/P4 latency and exact asymmetry cause remain OPEN.
+Q36 IN_PROGRESS; overall 30/37 DONE, 81.1 percent. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ## RTT distributions across all carriers — 10 October 2026
 
