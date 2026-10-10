@@ -18,7 +18,7 @@ import time
 import uuid
 
 import benchmark as modes
-from benchmark_evidence import counter_deltas, parse_iperf_result
+from benchmark_evidence import bidir_counter_deltas, counter_deltas, measurement_phases, parse_iperf_bidir, parse_iperf_result
 import benchmark_host_state
 from native_lab import connect_lab
 from native_repro import atomic_write_bytes, source_digest
@@ -236,8 +236,10 @@ def application_stats(fixture):
 
 
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local):
+    bidir = '--bidir' in flags.split()
     receiver = client if '-R' in flags.split() else server
     before_kernel = udp_kernel(receiver)
+    before_client_kernel = udp_kernel(client) if bidir else None
     before_app = application_stats(server)
     duration = seconds + 1
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -252,13 +254,25 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
     (local / (name + '-processes.json')).write_text(json.dumps(samples, indent=2) + '\n')
-    metrics = parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
+    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1])) if bidir else parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
     after_kernel = udp_kernel(receiver)
     after_app = application_stats(server)
     counters = dict(before=dict(kernel=before_kernel, application=before_app),
                     after=dict(kernel=after_kernel, application=after_app))
+    if bidir:
+        counters['before']['client_kernel'] = before_client_kernel
+        counters['after']['client_kernel'] = udp_kernel(client)
     save_results(local / (name + '-counters.json'), counters)
-    return dict(**metrics, **counter_deltas(counters['before'], counters['after']), server=samples[0], client=samples[1])
+    deltas = (bidir_counter_deltas if bidir else counter_deltas)(counters['before'], counters['after'])
+    return dict(**metrics, **deltas, server=samples[0], client=samples[1])
+
+
+def phase_flags(phase, parallel):
+    if phase in ('tcp_up', 'tcp_down', 'tcp_bidir'):
+        return '-P ' + str(parallel) + {'tcp_up': '', 'tcp_down': ' -R', 'tcp_bidir': ' --bidir'}[phase]
+    if phase in ('udp_100', 'udp_500'):
+        return '-u -b ' + phase[4:] + 'M -l 1200'
+    raise ValueError('unsupported benchmark phase')
 
 
 def main():
@@ -269,6 +283,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seconds', type=int, default=8)
     parser.add_argument('--tcp-parallel', type=int, choices=(1, 4), default=1)
+    parser.add_argument('--measurement', choices=('standard', 'tcp-bidir'), default='standard')
     parser.add_argument('--modes', nargs='+', choices=[mode['name'] for mode in modes.MODES])
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{64}', args.sha256) or not 5 <= args.seconds <= 30:
@@ -299,7 +314,7 @@ def main():
         admission_sha256=hashlib.sha256((Path(__file__).parent / 'benchmark_evidence.py').read_bytes()).hexdigest(),
         host_state_sha256=hashlib.sha256(Path(benchmark_host_state.__file__).read_bytes()).hexdigest(),
         tracked_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=repo_root, text=True).strip()),
-        seconds=args.seconds, tcp_parallel=args.tcp_parallel, recordizer='off', hosts=hosts, selected_modes=selected,
+        seconds=args.seconds, tcp_parallel=args.tcp_parallel, measurement=args.measurement, recordizer='off', hosts=hosts, selected_modes=selected,
         remote_artifact_root=remote,
         throughput='receiver bits_per_second; UDP offered rates 100/500 Mbps',
         topology='two VM, isolated IPvlan network and private mount namespaces, local TLS target'), modes={})
@@ -324,12 +339,14 @@ def main():
             direct_server.create(); direct_client.create()
             direct_server.start('iperf3 -s -B 10.255.42.1 -p 5203', 'iperf.log')
             direct_server.wait(direct_server.run_in("ss -lnt | grep -q ':5203'"))
-            for name, flags, seconds in (('tcp_up', '-P ' + str(args.tcp_parallel), args.seconds), ('tcp_down', '-P ' + str(args.tcp_parallel) + ' -R', args.seconds), ('udp_500', '-u -b 500M -l 1200', 5)):
+            for name in measurement_phases(args.measurement, 'direct'):
+                flags = phase_flags(name, args.tcp_parallel)
+                seconds = 5 if name.startswith('udp_') else args.seconds
                 text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json'))
                 raw = json.loads(text)
                 (direct_local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
-                metrics = parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
-                output['baseline'][name] = {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
+                metrics = parse_iperf_bidir(raw, seconds, args.tcp_parallel) if name == 'tcp_bidir' else parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
+                output['baseline'][name] = metrics if name == 'tcp_bidir' else {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
             print('BASELINE', output['baseline'], flush=True)
         finally:
             cleanup_fixtures(direct_client, direct_server)
@@ -377,16 +394,12 @@ def main():
                 result['mtus'] = dict(server=fixture_mtus(server), client=fixture_mtus(client))
                 server.start('iperf3 -s -B ' + ip + ' -p 5203', 'iperf.log')
                 server.wait(server.run_in("ss -lnt | grep -q ':5203'"))
-                for direction, flags in (('up', '-P ' + str(args.tcp_parallel)), ('down', '-P ' + str(args.tcp_parallel) + ' -R')):
-                    result['tcp_' + direction] = measure(server, client, server_pid, client_pid,
-                        ip, 'tcp_' + direction, flags, args.seconds, local)
-                if mode['transport'] == 'udp':
-                    for rate in (100, 500):
-                        result['udp_' + str(rate)] = measure(server, client, server_pid, client_pid,
-                            ip, 'udp_' + str(rate), '-u -b ' + str(rate) + 'M -l 1200', 5, local)
+                for phase in measurement_phases(args.measurement, mode['transport']):
+                    result[phase] = measure(server, client, server_pid, client_pid, ip, phase,
+                        phase_flags(phase, args.tcp_parallel), 5 if phase.startswith('udp_') else args.seconds, local)
                 result['status'] = 'COMPLETED'
-                print('COMPLETED', name, 'TCP Mbps up/down', round(result['tcp_up']['mbps'], 1),
-                      round(result['tcp_down']['mbps'], 1), flush=True)
+                up, down = (result['tcp_bidir']['up_mbps'], result['tcp_bidir']['down_mbps']) if args.measurement == 'tcp-bidir' else (result['tcp_up']['mbps'], result['tcp_down']['mbps'])
+                print('COMPLETED', name, args.measurement, 'TCP Mbps up/down', round(up, 1), round(down, 1), flush=True)
             except Exception as error:
                 result.update(status='FAIL', error=str(error))
                 print('FAIL', name, str(error)[:500], flush=True)

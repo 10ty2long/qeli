@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v205 -->
+<!-- normative-sync: full-system-audit-v206 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2226,6 +2226,8 @@ VM восстановлен через stdin; прежний getpass/PTTY отк
 Q36 IN_PROGRESS, общий итог 30/37 DONE81,1%.
 
 **10 октября, текущий Q36 CLI:** [повторный замер](../reports/BENCHMARK.md): SHA `7769f43c` из 902 файлов снимка Git; три отдельных полных прохода каждого P=1/P=4, 72 режима/210 фаз, 600 raw JSON SHA, median/min/max без удаления выбросов. Первичные core/доступные dumps совпали; отдельные 2 режима/9 фаз с полной матрицей firewall PASS. Внешний FAIL из-за известного vpn-nat цикла сохранён. Q36-F005: все backend и строгая структурная сверка, пустые core snapshots отказывают; 35 Windows/35 Linux методов PASS. Собственные каталоги SHA-архивированы/очищены, службы сохранены. Bidir/IPv6/latency/auth-rate остаются OPEN, Q36 IN_PROGRESS, 30/37 DONE (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, Q36-F006/F007:** [TCP bidir](../reports/BENCHMARK.md): три полных P=1/P=4 прохода всех 12 транспортов, 78 фаз/228 raw JSON. Оба receiver и kernel counters сверены; асимметрия uplink сохранена. Четыре host gates COMPLETED, два FAIL из-за известного внешнего NAT-цикла; явный MEASUREMENTS_ONLY не даёт AGGREGATED и не скрывает ошибки. 47 Windows/47 Linux методов PASS, 14 own roots SHA-архивированы/очищены, службы сохранены. TCP-bidir IPv4 измерен; UDP-bidir/IPv6/latency/auth-rate/drop diagnosis/8 ч soak OPEN. Q36 IN_PROGRESS, 30/37 (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **Статус: IN_PROGRESS.**
 
