@@ -19,8 +19,8 @@ def raw_result(up=100, down=200, unique=0):
         received = dict(seconds=8.01, bytes=int(rate * 1e6), bits_per_second=rate * 1e6, sender=sender)
         end['sum_received' + suffix] = received
         end['sum_sent' + suffix] = dict(received, retransmits=3)
-    return dict(start=dict(timestamp=dict(timesecs=unique),
-                          test_start=dict(protocol='TCP', bidir=1, reverse=0, num_streams=1, duration=8)), end=end)
+    return dict(start=dict(timestamp=dict(timesecs=unique), target_bitrate=0,
+                          test_start=dict(protocol='TCP', bidir=1, reverse=0, num_streams=1, duration=8, target_bitrate=0)), end=end)
 
 
 def bidir_fixture(root, index):
@@ -47,6 +47,31 @@ def bidir_fixture(root, index):
 
 
 class BidirTests(unittest.TestCase):
+    def test_paced_results_require_explicit_matching_bitrate(self):
+        raw = raw_result()
+        for settings in (raw['start'], raw['start']['test_start']):
+            settings['target_bitrate'] = 100000000
+        with self.assertRaisesRegex(ValueError, 'bitrate'):
+            parse_iperf_bidir(raw, 8, 1)
+        self.assertEqual(parse_iperf_bidir(raw, 8, 1, expected_bitrate=100000000)['up_mbps'], 100)
+        for field in ('start', 'test_start'):
+            for value in (None, True, -1, 0, 100000000.0):
+                changed = copy.deepcopy(raw)
+                (changed['start'] if field == 'start' else changed['start']['test_start'])['target_bitrate'] = value
+                with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'bitrate'):
+                    parse_iperf_bidir(changed, 8, 1, expected_bitrate=100000000)
+
+    def test_report_refuses_paced_input_in_unlimited_population(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            runs = [bidir_fixture(Path(temporary) / str(i), i) for i in range(3)]
+            path = runs[1] / 'udp-fixture/tcp_bidir-iperf.json'
+            raw = json.loads(path.read_text())
+            for settings in (raw['start'], raw['start']['test_start']):
+                settings['target_bitrate'] = 100000000
+            write(path, raw)
+            with self.assertRaisesRegex(ValueError, 'bitrate'):
+                aggregate(runs)
+
     def test_two_receiver_directions_not_sender_goodput(self):
         raw = raw_result()
         raw['end']['sum_sent']['bits_per_second'] = 900e6
