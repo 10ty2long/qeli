@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v209 -->
+<!-- normative-sync: full-system-audit-v210 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2616,3 +2616,6 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **10 октября,Q36-F009:** [Клиентский TCP uplink](../reports/BENCHMARK.md): четыре причины drop теперь учитываются ядром/Linux status; Full/Closed flow semantics сохранены.9 Rust тестов/release/fmt/2Clippy PASS.24 фазы/96 raw JSON,3 fresh sessions old/new,сервер фиксирован; причина plain TCP асимметрии и downlink observability OPEN.915 source inputs сверены,staged CLI восстановлен,2own roots SHA-архивированы/очищены,службы сохранены.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября,Q36-F010:** [TCP downlink](../reports/BENCHMARK.md): закрыта наблюдаемость mux pool/Full/Disconnected, пять новых Rust тестов/release/fmt/2Clippy PASS.18 фаз/72 raw JSON,3 fresh sessions plain/TLS/mux,negotiated mode подтверждён.916 inputs сверены,staged CLI восстановлен,2own roots SHA-архивированы/очищены,службы сохранены.Причина асимметрии OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 октября,Q36-F011:** [latency](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 окон/15600 ICMP probes;idle и100M TCP bidir,p50/p95/p99,raw tails/loss retained.53 Windows/4 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Полная Q36 матрица остаётся IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

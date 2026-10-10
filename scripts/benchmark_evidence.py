@@ -1,6 +1,44 @@
 """Pure measurement admission shared by the lab runner and offline reports."""
 
 import math
+import re
+
+
+def parse_ping_latency(raw, expected_packets):
+    """Linux iputils RTT population; lost probes are reported, never imputed."""
+    if not isinstance(raw, str) or type(expected_packets) is not int or expected_packets <= 0:
+        raise ValueError('invalid requested ping population')
+    summaries = re.findall(r'^([0-9]+) packets transmitted, ([0-9]+) received, ([0-9.]+)% packet loss,', raw, re.M)
+    if len(summaries) != 1:
+        raise ValueError('ping summary missing or ambiguous')
+    sent, received, loss = summaries[0]
+    sent, received, loss = int(sent), int(received), float(loss)
+    if sent != expected_packets or not 0 < received <= sent or not math.isfinite(loss):
+        raise ValueError('ping population truncated or invalid')
+    actual_loss = 100 * (sent - received) / sent
+    # iputils rounds the printed loss to its display precision.
+    if abs(actual_loss - loss) > .051:
+        raise ValueError('ping loss disagrees with population')
+    replies = []
+    for line in raw.splitlines():
+        if 'icmp_seq=' not in line:
+            continue
+        match = re.fullmatch(r'\[([0-9]+\.[0-9]+)\] [0-9]+ bytes from .+: icmp_seq=([0-9]+) ttl=[0-9]+ time=([0-9]+(?:\.[0-9]+)?) ms', line)
+        if not match:
+            raise ValueError('unsupported or censored ping reply')
+        epoch, sequence, rtt = float(match[1]), int(match[2]), float(match[3])
+        if not math.isfinite(epoch) or not math.isfinite(rtt) or not 1 <= sequence <= sent:
+            raise ValueError('invalid ping reply')
+        replies.append(dict(epoch=epoch, sequence=sequence, rtt_ms=rtt))
+    if len(replies) != received or len({r['sequence'] for r in replies}) != received:
+        raise ValueError('ping replies missing or duplicated')
+    ordered = sorted(r['rtt_ms'] for r in replies)
+    return dict(transmitted=sent, received=received, lost=sent-received,
+                lost_percent=actual_loss, percentile_method='nearest-rank',
+                p50_ms=ordered[math.ceil(.50*received)-1],
+                p95_ms=ordered[math.ceil(.95*received)-1],
+                p99_ms=ordered[math.ceil(.99*received)-1],
+                min_ms=ordered[0], max_ms=ordered[-1], replies=replies)
 
 
 def measurement_phases(profile, transport):

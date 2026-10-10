@@ -1,0 +1,3737 @@
+{
+  "kind": "qeli-q36-latency-v1",
+  "status": "DIAGNOSTIC_MEASUREMENTS_ONLY",
+  "source_qualification": {
+    "inherited_packet": "q36-client-downlink-20261010",
+    "build_receipt_sha256": "1e924e4a46b424316276e0bad75c6c06e700d1a9a4242566d17eeb8055867c42",
+    "sealed_receipt_sha256": "5514c1f29da647c32e2bdf992600d62563b3c7ab4b840b566313a8614a8e6a92",
+    "source_inputs": 916,
+    "binary_sha256": "238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71",
+    "rebuilt": false
+  },
+  "binary_sha256": "238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71",
+  "sessions": 39,
+  "latency_windows": 78,
+  "transmitted": 15600,
+  "received": 15600,
+  "load_phases": 39,
+  "scope": "IPv4 inner/outer; 200 ICMP 56-byte probes at 20ms, idle and paced TCP bidir P1 100M per direction; not saturated latency or one-way delay",
+  "percentile_method": "nearest-rank per window; median/min/max across three fresh sessions; lost probes have no fabricated RTT",
+  "measurements": {
+    "direct/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.342,
+        "max": 0.347,
+        "median": 0.347,
+        "range": 0.004999999999999949,
+        "spread_pct": 1.44092219020171
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 0.392,
+        "max": 0.397,
+        "median": 0.392,
+        "range": 0.0050000000000000044,
+        "spread_pct": 1.2594458438287215
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 0.406,
+        "max": 0.433,
+        "median": 0.411,
+        "range": 0.02699999999999997,
+        "spread_pct": 6.235565819861422
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.159,
+        "max": 0.221,
+        "median": 0.22,
+        "range": 0.062,
+        "spread_pct": 28.054298642533936
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 0.418,
+        "max": 0.444,
+        "median": 0.426,
+        "range": 0.026000000000000023,
+        "spread_pct": 5.855855855855863
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "direct/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.297,
+        "max": 0.302,
+        "median": 0.3,
+        "range": 0.0050000000000000044,
+        "spread_pct": 1.655629139072845
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 0.38,
+        "max": 0.388,
+        "median": 0.383,
+        "range": 0.008000000000000007,
+        "spread_pct": 2.0618556701030966
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 0.397,
+        "max": 0.42,
+        "median": 0.403,
+        "range": 0.022999999999999965,
+        "spread_pct": 5.476190476190467
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.084,
+        "max": 0.111,
+        "median": 0.102,
+        "range": 0.026999999999999996,
+        "spread_pct": 24.32432432432432
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 0.438,
+        "max": 0.675,
+        "median": 0.463,
+        "range": 0.23700000000000004,
+        "spread_pct": 35.111111111111114
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-plain-raw/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.987,
+        "max": 1.013,
+        "median": 0.99,
+        "range": 0.025999999999999912,
+        "spread_pct": 2.566633761105619
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.142,
+        "max": 1.167,
+        "median": 1.147,
+        "range": 0.025000000000000133,
+        "spread_pct": 2.1422450728363462
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.208,
+        "max": 1.249,
+        "median": 1.225,
+        "range": 0.04100000000000015,
+        "spread_pct": 3.2826261008807145
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.561,
+        "max": 0.61,
+        "median": 0.583,
+        "range": 0.04899999999999993,
+        "spread_pct": 8.03278688524589
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.293,
+        "max": 1.85,
+        "median": 1.296,
+        "range": 0.5570000000000002,
+        "spread_pct": 30.108108108108112
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-plain-raw/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.716,
+        "max": 2.996,
+        "median": 2.826,
+        "range": 0.2799999999999998,
+        "spread_pct": 9.345794392523354
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.465,
+        "max": 4.608,
+        "median": 4.508,
+        "range": 0.1429999999999998,
+        "spread_pct": 3.103298611111105
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.989,
+        "max": 5.313,
+        "median": 5.286,
+        "range": 0.32399999999999984,
+        "spread_pct": 6.098249576510439
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.244,
+        "max": 0.247,
+        "median": 0.245,
+        "range": 0.0030000000000000027,
+        "spread_pct": 1.2145748987854255
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 5.238,
+        "max": 9.635,
+        "median": 5.659,
+        "range": 4.396999999999999,
+        "spread_pct": 45.63570316554228
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-faketls/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.954,
+        "max": 1.031,
+        "median": 0.988,
+        "range": 0.07699999999999996,
+        "spread_pct": 7.468477206595536
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.096,
+        "max": 1.156,
+        "median": 1.15,
+        "range": 0.05999999999999983,
+        "spread_pct": 5.190311418685112
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.13,
+        "max": 1.219,
+        "median": 1.184,
+        "range": 0.08900000000000019,
+        "spread_pct": 7.301066447908133
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.53,
+        "max": 0.581,
+        "median": 0.55,
+        "range": 0.050999999999999934,
+        "spread_pct": 8.777969018932863
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.65,
+        "max": 3.515,
+        "median": 2.959,
+        "range": 1.8650000000000002,
+        "spread_pct": 53.058321479374115
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-faketls/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.919,
+        "max": 3.12,
+        "median": 2.933,
+        "range": 0.20100000000000007,
+        "spread_pct": 6.442307692307692
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.429,
+        "max": 4.671,
+        "median": 4.534,
+        "range": 0.242,
+        "spread_pct": 5.180903446799401
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.744,
+        "max": 5.253,
+        "median": 4.754,
+        "range": 0.5090000000000003,
+        "spread_pct": 9.689701123167715
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.232,
+        "max": 0.283,
+        "median": 0.232,
+        "range": 0.05099999999999996,
+        "spread_pct": 18.021201413427544
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.799,
+        "max": 5.531,
+        "median": 5.344,
+        "range": 0.7319999999999993,
+        "spread_pct": 13.234496474416913
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-padding/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.976,
+        "max": 0.991,
+        "median": 0.985,
+        "range": 0.015000000000000013,
+        "spread_pct": 1.5136226034308753
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.119,
+        "max": 1.139,
+        "median": 1.125,
+        "range": 0.020000000000000018,
+        "spread_pct": 1.7559262510974505
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.168,
+        "max": 1.229,
+        "median": 1.182,
+        "range": 0.061000000000000165,
+        "spread_pct": 4.9633848657445245
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.501,
+        "max": 0.562,
+        "median": 0.558,
+        "range": 0.061000000000000054,
+        "spread_pct": 10.854092526690396
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.271,
+        "max": 2.085,
+        "median": 1.51,
+        "range": 0.8140000000000001,
+        "spread_pct": 39.04076738609113
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-padding/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.963,
+        "max": 3.0,
+        "median": 2.989,
+        "range": 0.03699999999999992,
+        "spread_pct": 1.2333333333333307
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.328,
+        "max": 4.619,
+        "median": 4.55,
+        "range": 0.2909999999999995,
+        "spread_pct": 6.300064949123174
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.738,
+        "max": 5.086,
+        "median": 5.022,
+        "range": 0.34799999999999986,
+        "spread_pct": 6.842312229650016
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.278,
+        "max": 0.487,
+        "median": 0.282,
+        "range": 0.20899999999999996,
+        "spread_pct": 42.91581108829568
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 5.232,
+        "max": 5.534,
+        "median": 5.284,
+        "range": 0.3019999999999996,
+        "spread_pct": 5.457173834477769
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-frag/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.922,
+        "max": 0.998,
+        "median": 0.968,
+        "range": 0.07599999999999996,
+        "spread_pct": 7.61523046092184
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.11,
+        "max": 1.156,
+        "median": 1.144,
+        "range": 0.04599999999999982,
+        "spread_pct": 3.9792387543252428
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.183,
+        "max": 1.241,
+        "median": 1.19,
+        "range": 0.05800000000000005,
+        "spread_pct": 4.6736502820306285
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.51,
+        "max": 0.579,
+        "median": 0.546,
+        "range": 0.06899999999999995,
+        "spread_pct": 11.917098445595842
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.609,
+        "max": 2.993,
+        "median": 1.782,
+        "range": 1.384,
+        "spread_pct": 46.24122953558303
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-frag/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.587,
+        "max": 2.967,
+        "median": 2.831,
+        "range": 0.3799999999999999,
+        "spread_pct": 12.807549713515332
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.206,
+        "max": 4.718,
+        "median": 4.294,
+        "range": 0.5119999999999996,
+        "spread_pct": 10.852055955913508
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.718,
+        "max": 5.518,
+        "median": 4.869,
+        "range": 0.7999999999999998,
+        "spread_pct": 14.498006524102935
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.23,
+        "max": 0.398,
+        "median": 0.244,
+        "range": 0.168,
+        "spread_pct": 42.21105527638191
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 5.374,
+        "max": 6.802,
+        "median": 5.387,
+        "range": 1.428,
+        "spread_pct": 20.993825345486616
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-obfs/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.968,
+        "max": 1.027,
+        "median": 1.009,
+        "range": 0.05899999999999994,
+        "spread_pct": 5.7448880233690325
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.138,
+        "max": 1.181,
+        "median": 1.155,
+        "range": 0.04300000000000015,
+        "spread_pct": 3.6409822184589435
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.175,
+        "max": 1.216,
+        "median": 1.199,
+        "range": 0.040999999999999925,
+        "spread_pct": 3.3717105263157854
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.513,
+        "max": 0.6,
+        "median": 0.592,
+        "range": 0.08699999999999997,
+        "spread_pct": 14.499999999999991
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.179,
+        "max": 1.442,
+        "median": 1.254,
+        "range": 0.2629999999999999,
+        "spread_pct": 18.2385575589459
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-obfs/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.77,
+        "max": 2.942,
+        "median": 2.838,
+        "range": 0.17200000000000015,
+        "spread_pct": 5.846363018354861
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.237,
+        "max": 4.561,
+        "median": 4.537,
+        "range": 0.32399999999999984,
+        "spread_pct": 7.103705327778997
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.673,
+        "max": 4.946,
+        "median": 4.803,
+        "range": 0.2729999999999997,
+        "spread_pct": 5.519611807521219
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.255,
+        "max": 0.334,
+        "median": 0.319,
+        "range": 0.07900000000000001,
+        "spread_pct": 23.652694610778447
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.842,
+        "max": 9.834,
+        "median": 5.324,
+        "range": 4.992,
+        "spread_pct": 50.76266015863331
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-reality/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.925,
+        "max": 1.005,
+        "median": 0.994,
+        "range": 0.07999999999999985,
+        "spread_pct": 7.96019900497511
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.125,
+        "max": 1.146,
+        "median": 1.132,
+        "range": 0.020999999999999908,
+        "spread_pct": 1.8324607329842868
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.164,
+        "max": 1.207,
+        "median": 1.189,
+        "range": 0.04300000000000015,
+        "spread_pct": 3.562551781275902
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.524,
+        "max": 0.626,
+        "median": 0.544,
+        "range": 0.10199999999999998,
+        "spread_pct": 16.293929712460063
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.198,
+        "max": 1.567,
+        "median": 1.279,
+        "range": 0.369,
+        "spread_pct": 23.54818123803446
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-reality/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.788,
+        "max": 2.854,
+        "median": 2.839,
+        "range": 0.06600000000000028,
+        "spread_pct": 2.3125437981780017
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.383,
+        "max": 4.421,
+        "median": 4.409,
+        "range": 0.038000000000000256,
+        "spread_pct": 0.85953404207193
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.765,
+        "max": 5.154,
+        "median": 4.781,
+        "range": 0.38900000000000023,
+        "spread_pct": 7.5475358944509185
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.221,
+        "max": 0.369,
+        "median": 0.222,
+        "range": 0.148,
+        "spread_pct": 40.108401084010836
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 5.233,
+        "max": 6.983,
+        "median": 5.801,
+        "range": 1.75,
+        "spread_pct": 25.060862093656024
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-reality-tls/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 13.343,
+        "max": 13.394,
+        "median": 13.363,
+        "range": 0.051000000000000156,
+        "spread_pct": 0.3807675078393302
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 17.741,
+        "max": 18.244,
+        "median": 17.884,
+        "range": 0.5030000000000001,
+        "spread_pct": 2.757070817803109
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 18.701,
+        "max": 19.483,
+        "median": 19.418,
+        "range": 0.782,
+        "spread_pct": 4.013755581789247
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 6.019,
+        "max": 7.255,
+        "median": 7.093,
+        "range": 1.2359999999999998,
+        "spread_pct": 17.036526533425224
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 19.588,
+        "max": 19.701,
+        "median": 19.689,
+        "range": 0.11299999999999955,
+        "spread_pct": 0.5735749454342409
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-reality-tls/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 5.637,
+        "max": 6.148,
+        "median": 5.712,
+        "range": 0.5110000000000001,
+        "spread_pct": 8.31164606376058
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 9.355,
+        "max": 12.508,
+        "median": 10.572,
+        "range": 3.1529999999999987,
+        "spread_pct": 25.2078669651423
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 10.316,
+        "max": 15.858,
+        "median": 12.537,
+        "range": 5.542,
+        "spread_pct": 34.94766048682053
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.707,
+        "max": 1.154,
+        "median": 1.083,
+        "range": 0.44699999999999995,
+        "spread_pct": 38.73483535528596
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 10.521,
+        "max": 17.083,
+        "median": 15.241,
+        "range": 6.561999999999998,
+        "spread_pct": 38.41245682842591
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-faketls/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.982,
+        "max": 0.998,
+        "median": 0.993,
+        "range": 0.016000000000000014,
+        "spread_pct": 1.603206412825653
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.13,
+        "max": 1.171,
+        "median": 1.135,
+        "range": 0.04100000000000015,
+        "spread_pct": 3.5012809564474945
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.158,
+        "max": 2.157,
+        "median": 1.363,
+        "range": 0.9990000000000001,
+        "spread_pct": 46.31432545201669
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.534,
+        "max": 0.586,
+        "median": 0.559,
+        "range": 0.051999999999999935,
+        "spread_pct": 8.87372013651876
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.169,
+        "max": 2.295,
+        "median": 1.975,
+        "range": 1.126,
+        "spread_pct": 49.06318082788671
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-faketls/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 1.322,
+        "max": 2.013,
+        "median": 1.918,
+        "range": 0.6909999999999998,
+        "spread_pct": 34.32687531048187
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 3.337,
+        "max": 3.722,
+        "median": 3.708,
+        "range": 0.3849999999999998,
+        "spread_pct": 10.34390112842557
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.101,
+        "max": 4.745,
+        "median": 4.139,
+        "range": 0.6440000000000001,
+        "spread_pct": 13.572181243414128
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.201,
+        "max": 0.235,
+        "median": 0.21,
+        "range": 0.033999999999999975,
+        "spread_pct": 14.468085106382967
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.714,
+        "max": 5.26,
+        "median": 4.967,
+        "range": 0.5459999999999994,
+        "spread_pct": 10.380228136882119
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-padding/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.954,
+        "max": 1.023,
+        "median": 1.001,
+        "range": 0.06899999999999995,
+        "spread_pct": 6.74486803519061
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.144,
+        "max": 1.162,
+        "median": 1.155,
+        "range": 0.018000000000000016,
+        "spread_pct": 1.5490533562822706
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.218,
+        "max": 1.948,
+        "median": 1.304,
+        "range": 0.73,
+        "spread_pct": 37.474332648870636
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.555,
+        "max": 0.584,
+        "median": 0.581,
+        "range": 0.028999999999999915,
+        "spread_pct": 4.965753424657516
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.244,
+        "max": 4.118,
+        "median": 2.045,
+        "range": 2.8740000000000006,
+        "spread_pct": 69.79116075764935
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-padding/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 1.639,
+        "max": 2.285,
+        "median": 1.913,
+        "range": 0.6460000000000001,
+        "spread_pct": 28.271334792122538
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 3.692,
+        "max": 3.805,
+        "median": 3.723,
+        "range": 0.11299999999999999,
+        "spread_pct": 2.9697766097240508
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.2,
+        "max": 4.442,
+        "median": 4.319,
+        "range": 0.242,
+        "spread_pct": 5.447996398018907
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.228,
+        "max": 0.356,
+        "median": 0.228,
+        "range": 0.12799999999999997,
+        "spread_pct": 35.95505617977528
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.586,
+        "max": 5.111,
+        "median": 4.733,
+        "range": 0.5249999999999995,
+        "spread_pct": 10.271962433965943
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-quic/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.983,
+        "max": 1.01,
+        "median": 0.986,
+        "range": 0.027000000000000024,
+        "spread_pct": 2.6732673267326756
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.153,
+        "max": 1.169,
+        "median": 1.162,
+        "range": 0.016000000000000014,
+        "spread_pct": 1.368691189050475
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.233,
+        "max": 1.286,
+        "median": 1.251,
+        "range": 0.052999999999999936,
+        "spread_pct": 4.121306376360801
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.551,
+        "max": 0.601,
+        "median": 0.587,
+        "range": 0.04999999999999993,
+        "spread_pct": 8.319467554076532
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.283,
+        "max": 1.961,
+        "median": 1.364,
+        "range": 0.6780000000000002,
+        "spread_pct": 34.574196838347795
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-quic/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.987,
+        "max": 2.014,
+        "median": 1.617,
+        "range": 1.0269999999999997,
+        "spread_pct": 50.9930486593843
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 3.334,
+        "max": 3.811,
+        "median": 3.354,
+        "range": 0.47699999999999987,
+        "spread_pct": 12.516399895040664
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 3.682,
+        "max": 4.454,
+        "median": 4.153,
+        "range": 0.7719999999999998,
+        "spread_pct": 17.33273462056578
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.201,
+        "max": 0.289,
+        "median": 0.273,
+        "range": 0.08799999999999997,
+        "spread_pct": 30.449826989619368
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 3.899,
+        "max": 4.742,
+        "median": 4.566,
+        "range": 0.843,
+        "spread_pct": 17.777309152256425
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-obfs-awg/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.969,
+        "max": 1.009,
+        "median": 0.978,
+        "range": 0.039999999999999925,
+        "spread_pct": 3.964321110009905
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.12,
+        "max": 1.156,
+        "median": 1.153,
+        "range": 0.03599999999999981,
+        "spread_pct": 3.1141868512110538
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.164,
+        "max": 1.225,
+        "median": 1.185,
+        "range": 0.061000000000000165,
+        "spread_pct": 4.979591836734709
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.526,
+        "max": 0.548,
+        "median": 0.527,
+        "range": 0.02200000000000002,
+        "spread_pct": 4.014598540145986
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.263,
+        "max": 3.125,
+        "median": 2.706,
+        "range": 1.862,
+        "spread_pct": 59.584
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "tcp-obfs-awg/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 2.665,
+        "max": 2.792,
+        "median": 2.725,
+        "range": 0.12699999999999978,
+        "spread_pct": 4.548710601719186
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 4.316,
+        "max": 4.35,
+        "median": 4.341,
+        "range": 0.03399999999999981,
+        "spread_pct": 0.7816091954022997
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.692,
+        "max": 4.902,
+        "median": 4.763,
+        "range": 0.20999999999999996,
+        "spread_pct": 4.283965728274175
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.3,
+        "max": 0.435,
+        "median": 0.332,
+        "range": 0.135,
+        "spread_pct": 31.034482758620697
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.804,
+        "max": 7.6,
+        "median": 5.474,
+        "range": 2.7959999999999994,
+        "spread_pct": 36.78947368421051
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-faketls-awg/idle": {
+      "p50_ms": {
+        "n": 3,
+        "min": 0.889,
+        "max": 0.992,
+        "median": 0.978,
+        "range": 0.10299999999999998,
+        "spread_pct": 10.383064516129025
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 1.069,
+        "max": 1.172,
+        "median": 1.163,
+        "range": 0.10299999999999998,
+        "spread_pct": 8.788395904436863
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 1.104,
+        "max": 1.827,
+        "median": 1.363,
+        "range": 0.7229999999999999,
+        "spread_pct": 39.57307060755336
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.527,
+        "max": 0.613,
+        "median": 0.549,
+        "range": 0.08599999999999997,
+        "spread_pct": 14.029363784665572
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 1.138,
+        "max": 4.068,
+        "median": 2.513,
+        "range": 2.9299999999999997,
+        "spread_pct": 72.02556538839724
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    },
+    "udp-faketls-awg/loaded": {
+      "p50_ms": {
+        "n": 3,
+        "min": 1.121,
+        "max": 2.174,
+        "median": 1.906,
+        "range": 1.053,
+        "spread_pct": 48.43606255749769
+      },
+      "p95_ms": {
+        "n": 3,
+        "min": 3.342,
+        "max": 3.876,
+        "median": 3.54,
+        "range": 0.5339999999999998,
+        "spread_pct": 13.777089783281726
+      },
+      "p99_ms": {
+        "n": 3,
+        "min": 4.1,
+        "max": 4.51,
+        "median": 4.303,
+        "range": 0.41000000000000014,
+        "spread_pct": 9.090909090909093
+      },
+      "min_ms": {
+        "n": 3,
+        "min": 0.223,
+        "max": 0.278,
+        "median": 0.277,
+        "range": 0.05500000000000002,
+        "spread_pct": 19.784172661870514
+      },
+      "max_ms": {
+        "n": 3,
+        "min": 4.471,
+        "max": 4.617,
+        "median": 4.524,
+        "range": 0.1459999999999999,
+        "spread_pct": 3.1622265540394157
+      },
+      "lost": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "lost_percent": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "received": {
+        "n": 3,
+        "min": 200,
+        "max": 200,
+        "median": 200,
+        "range": 0,
+        "spread_pct": 0.0
+      }
+    }
+  },
+  "load_measurements": {
+    "direct": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.02775213269041,
+        "max": 100.02890118701839,
+        "median": 100.02793947670354,
+        "range": 0.0011490543279819576,
+        "spread_pct": 0.0011487223335882035
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.02775213269041,
+        "max": 100.02890118701839,
+        "median": 100.02793947670354,
+        "range": 0.0011490543279819576,
+        "spread_pct": 0.0011487223335882035
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      }
+    },
+    "tcp-plain-raw": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.06465995765147,
+        "max": 100.07489751877704,
+        "median": 100.06563487322921,
+        "range": 0.010237561125563843,
+        "spread_pct": 0.01022989918489925
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 99.93368527184303,
+        "max": 100.06563487322921,
+        "median": 99.94390943301947,
+        "range": 0.13194960138618228,
+        "spread_pct": 0.1318630532383569
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 50.108980828011624,
+        "max": 52.33116196821081,
+        "median": 50.33070275448222,
+        "range": 2.222181140199183,
+        "spread_pct": 4.246382187250253
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 68448,
+        "max": 70772,
+        "median": 70688,
+        "range": 2324,
+        "spread_pct": 3.283784547561186
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.05640157924421884,
+        "max": 0.11242270938729623,
+        "median": 0.05646527385657821,
+        "range": 0.05602113014307739,
+        "spread_pct": 49.830795262267344
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.16,
+        "max": 0.58,
+        "median": 0.37,
+        "range": 0.41999999999999993,
+        "spread_pct": 72.41379310344827
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 51.77496091516959,
+        "max": 53.66340591141394,
+        "median": 52.441737839336724,
+        "range": 1.8884449962443455,
+        "spread_pct": 3.51905542365637
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 53916,
+        "max": 56484,
+        "median": 54104,
+        "range": 2568,
+        "spread_pct": 4.5464202251965125
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05636978579481398,
+        "median": 0.0,
+        "range": 0.05636978579481398,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.75,
+        "median": 0.1,
+        "range": 0.75,
+        "spread_pct": 100.0
+      }
+    },
+    "tcp-faketls": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03881912264866,
+        "max": 100.05110060173381,
+        "median": 100.04346648950252,
+        "range": 0.01228147908514643,
+        "spread_pct": 0.01227520638081847
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03881912264866,
+        "max": 100.05110060173381,
+        "median": 100.04346648950252,
+        "range": 0.01228147908514643,
+        "spread_pct": 0.01227520638081847
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 50.33064148286835,
+        "max": 54.33050075867538,
+        "median": 51.10805948256193,
+        "range": 3.999859275807026,
+        "spread_pct": 7.362087998366807
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 66236,
+        "max": 72556,
+        "median": 68372,
+        "range": 6320,
+        "spread_pct": 8.710513258724294
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05605381165919283,
+        "median": 0.0,
+        "range": 0.05605381165919283,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.25,
+        "max": 0.49,
+        "median": 0.39,
+        "range": 0.24,
+        "spread_pct": 48.97959183673469
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 52.44162145336153,
+        "max": 57.66403330378054,
+        "median": 53.219258110701446,
+        "range": 5.2224118504190145,
+        "spread_pct": 9.056619093754282
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54404,
+        "max": 54568,
+        "median": 54472,
+        "range": 164,
+        "spread_pct": 0.30054244245711903
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.05611672278338945,
+        "max": 0.05636978579481398,
+        "median": 0.056274620146314014,
+        "range": 0.0002530630114245258,
+        "spread_pct": 0.44893378226711356
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.16,
+        "max": 0.66,
+        "median": 0.16,
+        "range": 0.5,
+        "spread_pct": 75.75757575757575
+      }
+    },
+    "tcp-padding": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.04713971395765,
+        "max": 100.06897222806188,
+        "median": 100.05786107466845,
+        "range": 0.021832514104232814,
+        "spread_pct": 0.02181746611175095
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 99.93799189792044,
+        "max": 100.05786107466845,
+        "median": 100.04713971395765,
+        "range": 0.11986917674801134,
+        "spread_pct": 0.1197998592619931
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 52.10806886305371,
+        "max": 53.219015096455855,
+        "median": 52.108097850292204,
+        "range": 1.1109462334021458,
+        "spread_pct": 2.087498672022836
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 68560,
+        "max": 72472,
+        "median": 70900,
+        "range": 3912,
+        "spread_pct": 5.397946793244291
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05652911249293386,
+        "median": 0.05646527385657821,
+        "range": 0.05652911249293386,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.15,
+        "max": 0.49,
+        "median": 0.38,
+        "range": 0.33999999999999997,
+        "spread_pct": 69.38775510204081
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 54.55259665338754,
+        "max": 55.662543228801745,
+        "median": 55.44139585155044,
+        "range": 1.109946575414206,
+        "spread_pct": 1.9940637114832405
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54460,
+        "max": 56796,
+        "median": 55196,
+        "range": 2336,
+        "spread_pct": 4.11296570180999
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05630630630630631,
+        "median": 0.0,
+        "range": 0.05630630630630631,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.1,
+        "max": 0.76,
+        "median": 0.27,
+        "range": 0.66,
+        "spread_pct": 86.8421052631579
+      }
+    },
+    "tcp-frag": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03332279446764,
+        "max": 100.04479081824691,
+        "median": 100.03544630421356,
+        "range": 0.011468023779272585,
+        "spread_pct": 0.011462889457292125
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03332279446764,
+        "max": 100.04479081824691,
+        "median": 100.03544630421356,
+        "range": 0.011468023779272585,
+        "spread_pct": 0.011462889457292125
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 50.108799675888285,
+        "max": 50.88641370577646,
+        "median": 50.55314091291881,
+        "range": 0.7776140298881771,
+        "spread_pct": 1.5281368311477306
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 66464,
+        "max": 68932,
+        "median": 68444,
+        "range": 2468,
+        "spread_pct": 3.5803400452619982
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0562429696287964,
+        "max": 0.05685048322910745,
+        "median": 0.056625141562853906,
+        "range": 0.0006075136003110479,
+        "spread_pct": 1.0686164229471329
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.09,
+        "max": 0.25,
+        "median": 0.1,
+        "range": 0.16,
+        "spread_pct": 64.0
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 51.219452012536394,
+        "max": 52.552697611238635,
+        "median": 51.88629618790687,
+        "range": 1.3332455987022414,
+        "spread_pct": 2.5369689079806967
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54400,
+        "max": 54460,
+        "median": 54424,
+        "range": 60,
+        "spread_pct": 0.11017260374587279
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05656108597285068,
+        "median": 0.0,
+        "range": 0.05656108597285068,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.14,
+        "max": 0.5,
+        "median": 0.42,
+        "range": 0.36,
+        "spread_pct": 72.0
+      }
+    },
+    "tcp-obfs": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.06193529433953,
+        "max": 100.07524755789969,
+        "median": 100.06268518687371,
+        "range": 0.01331226356015236,
+        "spread_pct": 0.013302253938918263
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.06193529433953,
+        "max": 100.07524755789969,
+        "median": 100.06268518687371,
+        "range": 0.01331226356015236,
+        "spread_pct": 0.013302253938918263
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 52.441633765146605,
+        "max": 53.33030767382035,
+        "median": 53.10803201916067,
+        "range": 0.888673908673745,
+        "spread_pct": 1.6663581131184602
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 68420,
+        "max": 68748,
+        "median": 68516,
+        "range": 328,
+        "spread_pct": 0.4771047885029356
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.05577244841048522,
+        "max": 0.056593095642331635,
+        "median": 0.05646527385657821,
+        "range": 0.0008206472318464178,
+        "spread_pct": 1.4500836586726185
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.05,
+        "max": 0.37,
+        "median": 0.17,
+        "range": 0.32,
+        "spread_pct": 86.48648648648648
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 53.55316986316439,
+        "max": 56.10790101002486,
+        "median": 54.99683262214331,
+        "range": 2.554731146860469,
+        "spread_pct": 4.553246692304547
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54460,
+        "max": 56248,
+        "median": 54780,
+        "range": 1788,
+        "spread_pct": 3.178779689944533
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.05614823133071308,
+        "max": 0.05636978579481398,
+        "median": 0.056274620146314014,
+        "range": 0.0002215544641008954,
+        "spread_pct": 0.39303761931498427
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.09,
+        "max": 0.44,
+        "median": 0.43,
+        "range": 0.35,
+        "spread_pct": 79.54545454545455
+      }
+    },
+    "tcp-reality": {
+      "up_mbps": {
+        "n": 3,
+        "min": 99.97756781377657,
+        "max": 100.03702025784713,
+        "median": 100.03173646660663,
+        "range": 0.059452444070558386,
+        "spread_pct": 0.05943044276740528
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 99.97756781377657,
+        "max": 100.03702025784713,
+        "median": 100.03173646660663,
+        "range": 0.059452444070558386,
+        "spread_pct": 0.05943044276740528
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 49.663792115283236,
+        "max": 50.55286468278126,
+        "median": 49.997695250378854,
+        "range": 0.889072567498026,
+        "spread_pct": 1.7586986871603538
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 64908,
+        "max": 66948,
+        "median": 66832,
+        "range": 2040,
+        "spread_pct": 3.0471410647069375
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.055991041433370664,
+        "max": 0.05630630630630631,
+        "median": 0.0562429696287964,
+        "range": 0.00031526487293564304,
+        "spread_pct": 0.5599104143336975
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.03,
+        "max": 0.32,
+        "median": 0.28,
+        "range": 0.29000000000000004,
+        "spread_pct": 90.625
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 51.33028311144455,
+        "max": 52.663858372794415,
+        "median": 52.552662029903765,
+        "range": 1.3335752613498641,
+        "spread_pct": 2.5322399508023397
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54128,
+        "max": 56060,
+        "median": 54452,
+        "range": 1932,
+        "spread_pct": 3.4463075276489508
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.056593095642331635,
+        "median": 0.05636978579481398,
+        "range": 0.056593095642331635,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.05,
+        "max": 0.82,
+        "median": 0.35,
+        "range": 0.7699999999999999,
+        "spread_pct": 93.90243902439023
+      }
+    },
+    "tcp-reality-tls": {
+      "up_mbps": {
+        "n": 3,
+        "min": 99.76132600212274,
+        "max": 99.97647125186228,
+        "median": 99.95973022384354,
+        "range": 0.21514524973953542,
+        "spread_pct": 0.21519588263676503
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "range": 1,
+        "spread_pct": 100.0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 99.95973022384354,
+        "max": 100.02282358010997,
+        "median": 99.97647125186228,
+        "range": 0.06309335626643531,
+        "spread_pct": 0.06307895938960639
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 1,
+        "max": 2,
+        "median": 1,
+        "range": 1,
+        "spread_pct": 50.0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 27.44299006671325,
+        "max": 27.887297292693404,
+        "median": 27.77643247238131,
+        "range": 0.44430722598015393,
+        "spread_pct": 1.593224403630411
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 70012,
+        "max": 71992,
+        "median": 71252,
+        "range": 1980,
+        "spread_pct": 2.7503055895099493
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.056211354693648116,
+        "median": 0.05549389567147614,
+        "range": 0.056211354693648116,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.02,
+        "max": 0.42,
+        "median": 0.2,
+        "range": 0.39999999999999997,
+        "spread_pct": 95.23809523809523
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 27.33189398439173,
+        "max": 27.665112502099173,
+        "median": 27.664828314270803,
+        "range": 0.3332185177074436,
+        "spread_pct": 1.2044719416274163
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 55460,
+        "max": 59024,
+        "median": 56812,
+        "range": 3564,
+        "spread_pct": 6.038221740309025
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05595970900951315,
+        "median": 0.0,
+        "range": 0.05595970900951315,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.09,
+        "max": 0.67,
+        "median": 0.25,
+        "range": 0.5800000000000001,
+        "spread_pct": 86.56716417910448
+      }
+    },
+    "udp-faketls": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03221111061305,
+        "max": 100.05377469068537,
+        "median": 100.03507156064849,
+        "range": 0.02156358007232484,
+        "spread_pct": 0.021551990556067935
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "range": 1,
+        "spread_pct": 100.0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03221111061305,
+        "max": 100.05377469068537,
+        "median": 100.03507156064849,
+        "range": 0.02156358007232484,
+        "spread_pct": 0.021551990556067935
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.66463660134889,
+        "max": 38.22019339229392,
+        "median": 37.8868732565991,
+        "range": 0.5555567909450332,
+        "spread_pct": 1.453568759432411
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 78664,
+        "max": 87124,
+        "median": 80728,
+        "range": 8460,
+        "spread_pct": 9.710297966117254
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05646527385657821,
+        "median": 0.0,
+        "range": 0.05646527385657821,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.16,
+        "max": 0.43,
+        "median": 0.26,
+        "range": 0.27,
+        "spread_pct": 62.7906976744186
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.10909551411262,
+        "max": 38.21995456427891,
+        "median": 37.55302690996195,
+        "range": 1.1108590501662903,
+        "spread_pct": 2.906489719389982
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 59156,
+        "max": 62008,
+        "median": 59348,
+        "range": 2852,
+        "spread_pct": 4.599406528189909
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.056818181818181816,
+        "median": 0.0,
+        "range": 0.056818181818181816,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.14,
+        "max": 0.63,
+        "median": 0.14,
+        "range": 0.49,
+        "spread_pct": 77.77777777777779
+      }
+    },
+    "udp-padding": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03623327483925,
+        "max": 100.0773978519474,
+        "median": 100.07370990428745,
+        "range": 0.04116457710814814,
+        "spread_pct": 0.041132741249971794
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03623327483925,
+        "max": 100.0773978519474,
+        "median": 100.07370990428745,
+        "range": 0.04116457710814814,
+        "spread_pct": 0.041132741249971794
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.10900305168472,
+        "max": 37.997878971342196,
+        "median": 37.88675051029917,
+        "range": 0.8888759196574796,
+        "spread_pct": 2.3392777273906873
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 81048,
+        "max": 82716,
+        "median": 82616,
+        "range": 1668,
+        "spread_pct": 2.0165385173364303
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.05589714924538849,
+        "max": 0.056179775280898875,
+        "median": 0.05605381165919283,
+        "range": 0.0002826260355103874,
+        "spread_pct": 0.5030743432084872
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.09,
+        "max": 0.26,
+        "median": 0.22,
+        "range": 0.17,
+        "spread_pct": 65.38461538461539
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.77574306723982,
+        "max": 39.77545381320934,
+        "median": 38.21986195894631,
+        "range": 1.9997107459695158,
+        "spread_pct": 5.027499511031142
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 59260,
+        "max": 59264,
+        "median": 59260,
+        "range": 4,
+        "spread_pct": 0.006749460043198319
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.16,
+        "max": 0.7,
+        "median": 0.24,
+        "range": 0.5399999999999999,
+        "spread_pct": 77.14285714285714
+      }
+    },
+    "udp-quic": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03654556820177,
+        "max": 100.07586013225654,
+        "median": 100.05252509861789,
+        "range": 0.03931456405476297,
+        "spread_pct": 0.03928476258191482
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03654556820177,
+        "max": 100.07586013225654,
+        "median": 100.05252509861789,
+        "range": 0.03931456405476297,
+        "spread_pct": 0.03928476258191482
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 36.99789480758412,
+        "max": 37.5539610894689,
+        "median": 37.22065448845022,
+        "range": 0.5560662818847817,
+        "spread_pct": 1.4807127284389598
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 81964,
+        "max": 88404,
+        "median": 86156,
+        "range": 6440,
+        "spread_pct": 7.284738247138134
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.0,
+        "median": 0.0,
+        "range": 0.0,
+        "spread_pct": 0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.13,
+        "max": 0.39,
+        "median": 0.15,
+        "range": 0.26,
+        "spread_pct": 66.66666666666667
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.331711730612405,
+        "max": 39.109222513842354,
+        "median": 38.55328217521796,
+        "range": 1.7775107832299497,
+        "spread_pct": 4.54499135747538
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 59088,
+        "max": 59392,
+        "median": 59192,
+        "range": 304,
+        "spread_pct": 0.5118534482758674
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.05652911249293386,
+        "max": 0.05707762557077625,
+        "median": 0.05685048322910745,
+        "range": 0.0005485130778423927,
+        "spread_pct": 0.9609949123798756
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.1,
+        "max": 0.46,
+        "median": 0.4,
+        "range": 0.36,
+        "spread_pct": 78.26086956521739
+      }
+    },
+    "tcp-obfs-awg": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.03058734713912,
+        "max": 100.05289997296077,
+        "median": 100.04074298020768,
+        "range": 0.022312625821655274,
+        "spread_pct": 0.022300828689303387
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.03058734713912,
+        "max": 100.05289997296077,
+        "median": 100.04074298020768,
+        "range": 0.022312625821655274,
+        "spread_pct": 0.022300828689303387
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 51.441432211254444,
+        "max": 52.8865059228599,
+        "median": 51.99669769558983,
+        "range": 1.4450737116054526,
+        "spread_pct": 2.732405339300037
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 68328,
+        "max": 74640,
+        "median": 72564,
+        "range": 6312,
+        "spread_pct": 8.45659163987138
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.056433408577878104,
+        "median": 0.056179775280898875,
+        "range": 0.056433408577878104,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.23,
+        "max": 0.39,
+        "median": 0.3,
+        "range": 0.16,
+        "spread_pct": 41.02564102564102
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 52.77561998803888,
+        "max": 53.774848416686645,
+        "median": 53.1082093137504,
+        "range": 0.9992284286477613,
+        "spread_pct": 1.8581706096222006
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 54488,
+        "max": 55136,
+        "median": 54596,
+        "range": 648,
+        "spread_pct": 1.1752756819500831
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.056211354693648116,
+        "median": 0.0,
+        "range": 0.056211354693648116,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.06,
+        "max": 0.65,
+        "median": 0.28,
+        "range": 0.5900000000000001,
+        "spread_pct": 90.76923076923077
+      }
+    },
+    "udp-faketls-awg": {
+      "up_mbps": {
+        "n": 3,
+        "min": 100.02811433174897,
+        "max": 100.07599764997964,
+        "median": 100.03344770431,
+        "range": 0.04788331823067438,
+        "spread_pct": 0.047846955668784386
+      },
+      "up_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "range": 1,
+        "spread_pct": 100.0
+      },
+      "down_mbps": {
+        "n": 3,
+        "min": 100.02811433174897,
+        "max": 100.07599764997964,
+        "median": 100.03344770431,
+        "range": 0.04788331823067438,
+        "spread_pct": 0.047846955668784386
+      },
+      "down_retransmits": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_session_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "client_kernel_rcvbuf_drops": {
+        "n": 3,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "range": 0,
+        "spread_pct": 0
+      },
+      "server_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.88687936889382,
+        "max": 38.109472111338285,
+        "median": 37.99800185413175,
+        "range": 0.22259274244446203,
+        "spread_pct": 0.5840877086781715
+      },
+      "server_rss_peak_kib": {
+        "n": 3,
+        "min": 79444,
+        "max": 80800,
+        "median": 79948,
+        "range": 1356,
+        "spread_pct": 1.6782178217821797
+      },
+      "server_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.05605381165919283,
+        "median": 0.05592841163310962,
+        "range": 0.05605381165919283,
+        "spread_pct": 100.0
+      },
+      "server_load1_max": {
+        "n": 3,
+        "min": 0.15,
+        "max": 0.29,
+        "median": 0.22,
+        "range": 0.13999999999999999,
+        "spread_pct": 48.275862068965516
+      },
+      "client_cpu_avg_pct": {
+        "n": 3,
+        "min": 37.88674153132011,
+        "max": 39.7753925886606,
+        "median": 37.99792307600205,
+        "range": 1.888651057340489,
+        "spread_pct": 4.748290172449277
+      },
+      "client_rss_peak_kib": {
+        "n": 3,
+        "min": 59024,
+        "max": 61376,
+        "median": 59316,
+        "range": 2352,
+        "spread_pct": 3.8321167883211715
+      },
+      "client_host_steal_pct": {
+        "n": 3,
+        "min": 0.0,
+        "max": 0.057208237986270026,
+        "median": 0.0,
+        "range": 0.057208237986270026,
+        "spread_pct": 100.0
+      },
+      "client_load1_max": {
+        "n": 3,
+        "min": 0.17,
+        "max": 0.55,
+        "median": 0.35,
+        "range": 0.38,
+        "spread_pct": 69.0909090909091
+      }
+    }
+  },
+  "host_gates": {
+    "10.66.116.10": {
+      "host_restored": false,
+      "differences": {
+        "legacy4": {
+          "before": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          },
+          "after": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT",
+              "-A FORWARD -i vpn0 -j ACCEPT",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          }
+        }
+      }
+    },
+    "10.66.116.11": {
+      "host_restored": true,
+      "differences": {}
+    }
+  },
+  "conditions": {
+    "direct": {
+      "mtus": {
+        "qeli-bench-s": {
+          "lo": 65536,
+          "qd14v": 1500
+        },
+        "qeli-bench-c": {
+          "lo": 65536,
+          "qd14v": 1500
+        }
+      }
+    },
+    "tcp-plain-raw": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "a0ce378af26bc66ec1f14bbdef6b1684bd8aa54f6ae078144ecdd425d208b30f"
+    },
+    "tcp-faketls": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "a120430f793b66ab205273582e83f6b0f95bc094a04598a2d30989cb0622b536"
+    },
+    "tcp-padding": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "2b123a43ec8718b27cd1aa2322537b712645040f862f8ffbe2caa31f98f36ea5"
+    },
+    "tcp-frag": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "1d4d1a7d16c9f22b6a60c19599759f57ff8793a10c3bf55e9aa1f39dff4137c9"
+    },
+    "tcp-obfs": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "b024632c9250961bb71785d55da25b259bbfcf89de3cdb93ff8e7f9b8452a9d3"
+    },
+    "tcp-reality": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "550b34f00b59dc480e032e4345601f9164bdd18f1eb08d20e16f69f24dd7f11f"
+    },
+    "tcp-reality-tls": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "da75df2054a7ea868dab4fe58a9c9af98973516eedc5c6900f65f44b8db827a7"
+    },
+    "udp-faketls": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "2af4cbc6e1d34d7c0a90ae7faf324313ebff1092fb255b0e1cd5a8e71c2aa9bb"
+    },
+    "udp-padding": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "4c58aa94ed940498a748a1fa0330aae6ace9d06aca29de89faddbe5abd56e061"
+    },
+    "udp-quic": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "00785b68c130066bd439e0d126c02111d069d377b174fec260a582a2c686d806"
+    },
+    "tcp-obfs-awg": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "325e5803e4cf7d2a74d29acb12dcb2c16358a5435f00a65bb8309f4c0a1a2d3b"
+    },
+    "udp-faketls-awg": {
+      "mtus": {
+        "server": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        },
+        "client": {
+          "qbench0": 1400,
+          "qd14v": 1500
+        }
+      },
+      "rmem_max": {
+        "qeli-bench-s": 16777216,
+        "qeli-bench-c": 16777216
+      },
+      "configuration_template_sha256": "454212dd0d901e0951a8e487368e5bd2d0be395aa9ac5a51a5580ed0cd8438fb"
+    }
+  },
+  "input_hashes": {
+    "execution.json": "37cd7088196f005d40601290ae2a6fe9999ad87a4943d33c55e4515dd472658a",
+    "r1-direct/load-iperf.json": "347d757a0bca4be27cfff321d0ed89e54056495e8756577ea1b20f5f815f11fb",
+    "r1-direct/idle-ping.txt": "124c4dd639db3c9f9bab1db04b23798cdf568219b14a90ca5267df2a28048757",
+    "r1-direct/loaded-ping.txt": "ddef3aad2f264e8f6f13769bb39c982b1b385adce737259c65de39e251d1badd",
+    "r1-tcp-plain-raw/load-iperf.json": "68db759ced8ffc1a8af6944650b2eb631298a0bcac2139fcee4e27d01323ff81",
+    "r1-tcp-plain-raw/load-counters.json": "cc134421da1d866dc35e33c8c53f3dae3f9e326b3b91a499574ac0a2f7c9f9f1",
+    "r1-tcp-plain-raw/load-processes.json": "a049590cfc9b1faf1b6c52da093ff5910deb39a8a01a4f40371d239207619218",
+    "r1-tcp-plain-raw/idle-ping.txt": "5588c0737353eb66c9faf1848501b130eedf3eaf8e5397602a61a292fb1ad9f6",
+    "r1-tcp-plain-raw/loaded-ping.txt": "dc1a8d20ab93514e49e29f998f13a4c3715639714c6f171212f0afc028e01551",
+    "r1-tcp-faketls/load-iperf.json": "565e2c72f8fff8568c0f47c2f9727d9a9f21fa7ccc5ec4bf0ea195e48997553e",
+    "r1-tcp-faketls/load-counters.json": "5131c35a1b3cb242e34b51b977cf1f60d5cfa064ec94334d1bea8e74264d92d7",
+    "r1-tcp-faketls/load-processes.json": "e1953469eea6e6f6a4c16aead5c47e43bf6ce420743c34be15ebf02b9c4f50ed",
+    "r1-tcp-faketls/idle-ping.txt": "647954a2b22331caa54460fc7b40903b3a438f01dea7c313cb63bb1857acaa5c",
+    "r1-tcp-faketls/loaded-ping.txt": "54cb25fa128e1b7e0e647edb0b32f3b6b3f8d50314aeaedcb33d05a1437c700d",
+    "r1-tcp-padding/load-iperf.json": "d14b6b9085cdaaac4b84b0425db7cbbbe01784350b967a0f051fb4bfc3abbaf8",
+    "r1-tcp-padding/load-counters.json": "c6680e145b90d25b549ebc6739f29f4ee262640e99125550eb09574d8a981649",
+    "r1-tcp-padding/load-processes.json": "9753c73b0a860231bfeacace3f1316e2ec3457a07c220b2a697870880e466dc8",
+    "r1-tcp-padding/idle-ping.txt": "cd2ed35857f72bb90a1c73a0fd9cc497b5f0bed7b5dfc72a5999e44e1bc18aac",
+    "r1-tcp-padding/loaded-ping.txt": "42c91dd4ca467d07f18a1e2568e279bdcdb8ff075c677d0f73f90a268bdcb2ed",
+    "r1-tcp-frag/load-iperf.json": "63e4544bb88123ef483055d2bdd166e1fcd716c1c23d17a9aab1291986188982",
+    "r1-tcp-frag/load-counters.json": "7d9101d0774f572fbfb819e8184e6687258c8bba119ecb7463f8e46db0da6303",
+    "r1-tcp-frag/load-processes.json": "0996573eb26d3a1c332c64b895dfe35983bcc39308152ea38b25cf9176a8a8b8",
+    "r1-tcp-frag/idle-ping.txt": "81d9dde2ba3d7c1fcfda6746fbd439a8b33b78b37a297de9306a5b5750ebf6b4",
+    "r1-tcp-frag/loaded-ping.txt": "793112d4eefd26eff060e51f209dd2641d802194d1e5c127ecda0eb93f72d873",
+    "r1-tcp-obfs/load-iperf.json": "90491121f309859f562a1d7abfd2f3ba5b251418a2a56f8244a2366f3a38001b",
+    "r1-tcp-obfs/load-counters.json": "c55ee9c0abb7ed26a348255b8ee8fa605785627e37c3f1823e544f42fb2325c9",
+    "r1-tcp-obfs/load-processes.json": "10257075ac6f74683a1e4f179466058f4a34cff95c1a10906be8be440930dda3",
+    "r1-tcp-obfs/idle-ping.txt": "cbc4c27beb1931b9c6f90be3263decb7eed105949fc2ea589c17ccf821fcf2d9",
+    "r1-tcp-obfs/loaded-ping.txt": "074f9a5e193113650fc530a59905be32f9310066d2e8219cf2c6c32119b1169d",
+    "r1-tcp-reality/load-iperf.json": "dade24825df0afbe5c594cb82e444715fee049528e058562c778c42ad854eb5c",
+    "r1-tcp-reality/load-counters.json": "001d01aa72c831a266789e331a1fd6a6048f1546226b6e95454ae605b554cf24",
+    "r1-tcp-reality/load-processes.json": "54b33154c0e0caff9c2380c0278a9958d50875483ce2112c9c13b7b41909f5cc",
+    "r1-tcp-reality/idle-ping.txt": "00894e3ca1ab7ee0a04ac37c0668011414fbc6047cb5b6c3c57069a9e2a28866",
+    "r1-tcp-reality/loaded-ping.txt": "2bf982988b79c0303a63f333f5cfd88539896b2fa1a263908f2a692e4fb5270e",
+    "r1-tcp-reality-tls/load-iperf.json": "b1e89d75141e549169fad80a60d0bef863780fa765db6667e956fdceaf102fbb",
+    "r1-tcp-reality-tls/load-counters.json": "e958348845c164e520117e06eadeee15478887845874c9d44f05f31b96ea17ad",
+    "r1-tcp-reality-tls/load-processes.json": "03e11df38f4313db3e5a2c82c55e483fcfa5eca92743f347f9c69397d4bdaaef",
+    "r1-tcp-reality-tls/idle-ping.txt": "efa5a51116d6c6316ef150b8efd12831d1dd2bf62c96b47173a4ffac6e3eccf1",
+    "r1-tcp-reality-tls/loaded-ping.txt": "f413a3e2b80b9dee75d2a723f210397c83a639f98a6779de372ed0f14ea82e62",
+    "r1-udp-faketls/load-iperf.json": "c50fa25e79cef9ef5c4fd39a25fe927b21ea7468b59992b5050e27b3783961fd",
+    "r1-udp-faketls/load-counters.json": "80c0bc872f449ff7768e77d34a57bc8d48a791dcfc59ea4807337f3678e3f639",
+    "r1-udp-faketls/load-processes.json": "49ba92c87005185265b4d68a2945a420f2b83e50dd29b0886a8d74d50e6f03fa",
+    "r1-udp-faketls/idle-ping.txt": "2e6e34e1b419458386575648c9e384d4d6cdd87c7a79de4b0722a4a878bd76fb",
+    "r1-udp-faketls/loaded-ping.txt": "adfdeb5a363b51c9fda67bd78f0cbb9ac51d84cab8f2080a8a5445356c78b87e",
+    "r1-udp-padding/load-iperf.json": "c3abff5b4e94c09b43cb5fae130b36fbabf162abdf85bbde69583df1ad0cbaad",
+    "r1-udp-padding/load-counters.json": "5a62b1c0c3849820415c34eb155d7831ac623c45786f77d26ef78c5c2a28dd12",
+    "r1-udp-padding/load-processes.json": "b8234a44da814ceb87d1c7b9a92443e9d27ff53812b9f6c1752ab4c0e7052611",
+    "r1-udp-padding/idle-ping.txt": "59ec73d33f88f6c6296507b3c1696ec5b880bb014ee56e9bf3e509ae982fa22b",
+    "r1-udp-padding/loaded-ping.txt": "644ce1d4bf2e9b54cc75b250130d00f86eec049eccbe01dc26292d4e1e2383ef",
+    "r1-udp-quic/load-iperf.json": "7a80784b367d080962fc9c32097aa71f9443fc561cb9d4c14c243a2e139edbf1",
+    "r1-udp-quic/load-counters.json": "909a64fb2de76233ef3b134fa105fceaf1ed38d59e97df85ff5db3fea51c5a5c",
+    "r1-udp-quic/load-processes.json": "37fa241649172ff538834d21ff2d951be0ef61f8ab7f4224f44872d0d45f3bdc",
+    "r1-udp-quic/idle-ping.txt": "4266e988a18965e197bf1f8ac526c3dc4c4e29fa8ead6fd8870cad4613a56f6c",
+    "r1-udp-quic/loaded-ping.txt": "bda7729cb968f00c7eaada11b47d734d25166252e1bf8bc3705d8366f60c1273",
+    "r1-tcp-obfs-awg/load-iperf.json": "b50dec0e2feedfccb532c1477378767efa5d8ddd7f3614402b3ca111fdf69a76",
+    "r1-tcp-obfs-awg/load-counters.json": "fe505b7dad8364cd3ca1994d3606a475b1ae75b86c5885184f14d76b80ce9ece",
+    "r1-tcp-obfs-awg/load-processes.json": "401bfa5f40a6ce9c2ea2671437e344c2619eed1041e841183c880b92acf5573d",
+    "r1-tcp-obfs-awg/idle-ping.txt": "a0057c1cd7e42aa68373e6b7d5417cbb63661d8f3281eca7d010a511d9f37f43",
+    "r1-tcp-obfs-awg/loaded-ping.txt": "d3fc67fd812e2dfef3182c6094c4f09d48e515cb82acf69a6e2fd3c496577eaa",
+    "r1-udp-faketls-awg/load-iperf.json": "63b52d8d474ae70b86e1809a306041af5bd1e0db4cd0a2842aa28594b334c63e",
+    "r1-udp-faketls-awg/load-counters.json": "2b93b183f7109865f910c256925e5fd303d539a82743e29e65bf21e55b22e6cb",
+    "r1-udp-faketls-awg/load-processes.json": "7136be7220da9856f13b1da44ce6815350149a49d6d10c2f2d85fd59b35cf327",
+    "r1-udp-faketls-awg/idle-ping.txt": "c7c478b382dc3d2b6f7af8966bd7e3df7a4d85facc74acc43382550a4b0428ae",
+    "r1-udp-faketls-awg/loaded-ping.txt": "08bbdb5b6c566ed173d8a0c60cb9db08be9b37fc05ae3d5d66177274fec9d844",
+    "r2-udp-faketls-awg/load-iperf.json": "880309bb961648cc531915914b74844bb05731225bcf18a7039b2d03539f4292",
+    "r2-udp-faketls-awg/load-counters.json": "c0e379c567e38bc86f99ad2574260bbf18ed38793eb5ecd5d0bdd05adff270c5",
+    "r2-udp-faketls-awg/load-processes.json": "da5fd3ffbd7e87bd8631bd1b5b7ba7d0aeb649ef7081909358e9eb8b05bad5e7",
+    "r2-udp-faketls-awg/loaded-ping.txt": "d5e50003727a08d88bfbc1c14cb6c8f44c9e9fbed08c06d2f04e1249d3420ded",
+    "r2-udp-faketls-awg/idle-ping.txt": "18997ef0d16ed5f95fb0c9417d46c84c50c0e3f71d321d27dbcd08da9aef356b",
+    "r2-tcp-obfs-awg/load-iperf.json": "f8884fd9cbb8653aff5856b0a06656a35def15c117b257db77b5373e15cf222b",
+    "r2-tcp-obfs-awg/load-counters.json": "74b02ff93ea5f486ad93e7a48d06562a9ecd2da17108a8b682bfe0d426f5aea5",
+    "r2-tcp-obfs-awg/load-processes.json": "8623e360167a797b68778bca877e89f6f03e5931dcbfe03e4c7bc38a0d4a1fd7",
+    "r2-tcp-obfs-awg/loaded-ping.txt": "5e3350bc2023ac99ea45613488f171ed77b8729d7b9dcef05e6fb3c6e2c27a85",
+    "r2-tcp-obfs-awg/idle-ping.txt": "b3a13c6bda8e78e25f1b935f67719bbf683c05d16159804263b60cf0e8c86f27",
+    "r2-udp-quic/load-iperf.json": "a416970f8c20bc824a77fdd96ef5ea3414cf5023d15761914f35bac6420025b9",
+    "r2-udp-quic/load-counters.json": "7084d40cc81a9b9582d5198156a29affb221fafb36b5aa736e4146444f86328f",
+    "r2-udp-quic/load-processes.json": "012c669943864fd351d21952864bbe4327a09d672d3e6b870efcaa2050e9610e",
+    "r2-udp-quic/loaded-ping.txt": "a94cbce568713a83f6b472ba89baf027c780cf8b460e18f73161fd3c4601878e",
+    "r2-udp-quic/idle-ping.txt": "23e232c722a524c5f64ac4dd90e82abe176950984182a1e25d28bf57cc7d58a9",
+    "r2-udp-padding/load-iperf.json": "9632492752b48ec9215bd32070c0df9920f22b34266ded7e9524d0c65b6e9bb0",
+    "r2-udp-padding/load-counters.json": "6dae69c3c373127c76eff6db67443e713d6b718af41d85d1b84cac7c2e2d01f2",
+    "r2-udp-padding/load-processes.json": "244d08c8529983983adb7088abdff8fe5481a7716019db0c001ed1dbd56194b3",
+    "r2-udp-padding/loaded-ping.txt": "719f98f20bde0740bda765da466acae8c74d480fb36139b5196316bb01ad8b86",
+    "r2-udp-padding/idle-ping.txt": "f5b23ea3c0fc73b22e678e9ef213d948bd7f1ee046ffde9aea8fa28e5810c338",
+    "r2-udp-faketls/load-iperf.json": "7e50f88fc6779f560250bde67fec7b6483443a9741fe04e523e26fae1156c5ed",
+    "r2-udp-faketls/load-counters.json": "0d4d7f1a277766bad0da8d7a6476327bec40951dfa53d3f3fa4ddc3c60fe9cd3",
+    "r2-udp-faketls/load-processes.json": "e8c3d62daec82a8503432176af2e29a4f5d9adfbda1ef8201cfd52a4e2924741",
+    "r2-udp-faketls/loaded-ping.txt": "88f19749bcbdedb43d99a40488054ae974a3aad88a4268255714d158a630289f",
+    "r2-udp-faketls/idle-ping.txt": "74b84112f8fd403d6abbde0fe3c8f1c631b9087ebe349f4f2e7ec9d6f8703c4f",
+    "r2-tcp-reality-tls/load-iperf.json": "2c82b54723062fe127ecabf4ca98abb46e4648cdae2370705ebb9a8e0dd7ef44",
+    "r2-tcp-reality-tls/load-counters.json": "4701ee2b5317093aa1930c02b3ae769effdcacd7267c4b6cedba7335ca0a3630",
+    "r2-tcp-reality-tls/load-processes.json": "982ddf3c6258bfb3601855d4bd06690cef5a04186bcb4c928363531d04f7840e",
+    "r2-tcp-reality-tls/loaded-ping.txt": "66869eb7edb97852ce10556e3718908c9dd708c798371206e7d5d132af71b573",
+    "r2-tcp-reality-tls/idle-ping.txt": "9b9b7770823956443deb365b0dcfb27190d1b86be8298d3162c3ced9f0651fbd",
+    "r2-tcp-reality/load-iperf.json": "5170a28d52e46949b5d4f1f0b02679ed8ac14337be779bc7926201503e226057",
+    "r2-tcp-reality/load-counters.json": "339907293fa58c372aa8456bb38aa1f7750ed22b9bd9996db1274db939faf883",
+    "r2-tcp-reality/load-processes.json": "e581bfeb9c7e734dca268a89aec26b95ab6ba27bcad836c690c28c2688982aca",
+    "r2-tcp-reality/loaded-ping.txt": "bbb8dbf30dbce28f9a8064cf3cc22e51b62134985d586f3934c8986b1a0e3661",
+    "r2-tcp-reality/idle-ping.txt": "75149a996255a632211a86fcd25f409a8b902329eae62735aacc4ee1c4042b20",
+    "r2-tcp-obfs/load-iperf.json": "9c85d77bdfff93c428f6da7e36fd85ef9fcee236f39ce42ad0c6d3572b8646d9",
+    "r2-tcp-obfs/load-counters.json": "0596b90ba8cf3de5f76983f31fa8fc257adbf749dba77c0dcbc151a6538e3571",
+    "r2-tcp-obfs/load-processes.json": "d51ad44664cf9b29c3881a55b6d79d911b7785254f143cc818ba21c2b610e5c2",
+    "r2-tcp-obfs/loaded-ping.txt": "742c60ceb458f211e1268fefeb912f2535aec8c283b71a606da60527292064c1",
+    "r2-tcp-obfs/idle-ping.txt": "e95caaee0dd50aad249895e73d94c1cb9f0428313df611716ca6cbb5085cd157",
+    "r2-tcp-frag/load-iperf.json": "ff6f30a289837cdafb119143490d99934840bc88f980841a119c159089de3891",
+    "r2-tcp-frag/load-counters.json": "57eb97f0ac662d46743a2e60ed9ac8b638937ada2e457113909f23db0b661a70",
+    "r2-tcp-frag/load-processes.json": "be57a9ff5a98f6b5acacb3ff47751df90fab729fd899058e434ded935de9129f",
+    "r2-tcp-frag/loaded-ping.txt": "68fd1d997dbfec87807ce9e78195cd7dd7f08b6a9befddea08af009f7f491788",
+    "r2-tcp-frag/idle-ping.txt": "3fadc30d8a469fd59486adfc5afb3f9e2779e941e44f3283e78819fdc3a65313",
+    "r2-tcp-padding/load-iperf.json": "2045ef421534ce77b2fdb0baf4592783174110d92014a3b515dd7e085dccd1d3",
+    "r2-tcp-padding/load-counters.json": "e40572310ad3ee2496febf22a94f61db553e41886d3fb0dba63ca5946e1e47e6",
+    "r2-tcp-padding/load-processes.json": "0624f4c0d8f181397b8c1010df765fd9911750f213ec460231b03086512a29e5",
+    "r2-tcp-padding/loaded-ping.txt": "e64b525cbb641a95530134736a9275d1ef4148b1543d6a252bd0b52daaa216a3",
+    "r2-tcp-padding/idle-ping.txt": "cdb27668add696077f9633eba1bbf84a4c7ae3f5c6ae5f0b70012d72431cf305",
+    "r2-tcp-faketls/load-iperf.json": "5b0e2db1725cd665442e90b28437290ea149666e0030aa15afb49ab0a53111cd",
+    "r2-tcp-faketls/load-counters.json": "42ef77b18f1723661925096ef643b435dce3ff62bc8ec456e369c746c18753b7",
+    "r2-tcp-faketls/load-processes.json": "499ddb20f832ef2d0c280c9b8c77df214b4bc471194cfc7efb70e5fd5d5f103c",
+    "r2-tcp-faketls/loaded-ping.txt": "359fdafb011d9e3bedaf3baf3041ba8e3772f8baafeefa76d202e122e5411317",
+    "r2-tcp-faketls/idle-ping.txt": "c015b86ae32697ae4df237722a458eb6dc666a30e153a4294c0696eb392955c0",
+    "r2-tcp-plain-raw/load-iperf.json": "bf5458911ed93a05b6398536ac9147173925a57b2adc755ce8edb054061fe605",
+    "r2-tcp-plain-raw/load-counters.json": "a150ef5b771b8b347c37ff69242efabc43c17cf2ad523a4d2e779e0efce5d9cf",
+    "r2-tcp-plain-raw/load-processes.json": "b9a08f66f86f5db41018b22cd9d8f9fd6f8e6aafa07a0eac7259912e6a390193",
+    "r2-tcp-plain-raw/loaded-ping.txt": "565043e0b795fb67b4f7e78b01e3519d95a0f16ac21b6b485a87a11f9064ca9d",
+    "r2-tcp-plain-raw/idle-ping.txt": "f3bf2e4cc50ca3bd975a8cc948acce98f9c550da1dc7b9fa60e442927e32c643",
+    "r2-direct/load-iperf.json": "4e13b4e236dcecc36b95e4698fe161fb6a913b55d1e186986f42052c9dc7bd36",
+    "r2-direct/loaded-ping.txt": "841ac7c1d6059990d3ed3521a1ba9c0d96dd439ab632b49f247c6a78c42b7824",
+    "r2-direct/idle-ping.txt": "1df2ec3aecc5ad51f783cad0fbe5da306948aefc5dc6e6ef865384ffb2c6b446",
+    "r3-direct/load-iperf.json": "b20dc7b8662b589fac514d3a36f3956ff7caf1b4bcd5c7ef659909308f00786d",
+    "r3-direct/idle-ping.txt": "e439e32609ee4a7a2a609b3a5d06792ee72e519ea7f347ae7ae0e1088e282281",
+    "r3-direct/loaded-ping.txt": "4d06ea04abd778e5e8b7868bcdbe6dfc1c4d9fb02926d28b985de8c2c47bff9d",
+    "r3-tcp-plain-raw/load-iperf.json": "fe3bbd22f96440d41ecd50e989d5a6dda3a9ffae79588833327ba3e7ad0b0b12",
+    "r3-tcp-plain-raw/load-counters.json": "99411f96a5ce02c83729edc8105185cc077e0cc03e370be33358a57e2df8f3cd",
+    "r3-tcp-plain-raw/load-processes.json": "371abe3bf6533827a8b6aed1b1e6aed0a76754ff61f27ad2abe0904644d224f1",
+    "r3-tcp-plain-raw/idle-ping.txt": "4b31403e29b159b06ba41803bd8b464ebb933df682fe0cbf0945baf30eaa1cdd",
+    "r3-tcp-plain-raw/loaded-ping.txt": "93a83df16c6d23c9b48ffc17b0067d363b94f4d5b34c8737b0ef64f5858618b3",
+    "r3-tcp-faketls/load-iperf.json": "7ac04c4b6e83f568f0a379ea1d79da2a002b522bbc7b3b8ff076dd016516997e",
+    "r3-tcp-faketls/load-counters.json": "7f9cfb80654dca1f367d8aa9bed3573146da142b99cf921e7977ef20f0bc4c89",
+    "r3-tcp-faketls/load-processes.json": "80733c1c31d279ef3028675e5e199cc9a9fd5b0b24916daadb5f4f62bac93c65",
+    "r3-tcp-faketls/idle-ping.txt": "1fb8659f0c407537013169d5836ca438f7c9896e3be75c0ce639e59d1c85ef51",
+    "r3-tcp-faketls/loaded-ping.txt": "44429d1366214c0bc74ae05e5d44cc9279581df48bb66aa3752a8b57281651b1",
+    "r3-tcp-padding/load-iperf.json": "754f35f95f85392017be6bdb120e8c6680900cb74d83a357c87b747c72303dd6",
+    "r3-tcp-padding/load-counters.json": "9ef64b1b524f7c75e0eb5fee1998d28c4aaa9536a306b4d06ad18a03c109b8a2",
+    "r3-tcp-padding/load-processes.json": "473ef28827514a5cab423bf3e84ecc3c5f4be54cf0b79270a3c6dba31097df5d",
+    "r3-tcp-padding/idle-ping.txt": "ed033be732b16c024a4e7b728ae84ce7719288e2da96a3385606d7d95f1a556e",
+    "r3-tcp-padding/loaded-ping.txt": "7bfbcc1b1825fbb3d03c36269105489a871ee66ac67682ba9fd73c145cef7edc",
+    "r3-tcp-frag/load-iperf.json": "058dc4e31e03d2a78acc9ed4553b0236ed7ce68b10647a1b13ef3b14c5a682bc",
+    "r3-tcp-frag/load-counters.json": "76d9bbe8065a6b389c6e4ff99b94ea8604a5618e6fbbd6709c6630c64a932d3d",
+    "r3-tcp-frag/load-processes.json": "908611ed664a46b87d7615b33b57c06a5a1218e058772557dfe2a1ac842085c0",
+    "r3-tcp-frag/idle-ping.txt": "3e71404955f2063c105b4a549e33e03fa85760e4b64d557b461d30fd2d3c0f7a",
+    "r3-tcp-frag/loaded-ping.txt": "60211e0ae35577d079869f2fa54fb3829a58010b8861ffaf7234195d02caadd7",
+    "r3-tcp-obfs/load-iperf.json": "66e832963a29106a396772012262bf5568b66b7ee2f195cde85b30002c49d875",
+    "r3-tcp-obfs/load-counters.json": "75bedaa938a783b1f0f68f842d082b4c3f4d3eed191fbce050e1a9ef2fcd68ca",
+    "r3-tcp-obfs/load-processes.json": "4029a3c7e4388fddb2a85b1765c005828cce7f7231f2b9a4526ca7d85b96a73e",
+    "r3-tcp-obfs/idle-ping.txt": "0a2ad11c7c8236a30772ddf4444ca214432a2ae084ce083c1a56368943c851ce",
+    "r3-tcp-obfs/loaded-ping.txt": "895e46785b3816c5e095af20f5772730dddd4f58721133f1341807ffa07481ab",
+    "r3-tcp-reality/load-iperf.json": "9cf67ecccef48b3f6cf37f75642e91316572065f22952834ae30dd25b441ba07",
+    "r3-tcp-reality/load-counters.json": "e69fa298d9e602f6c630b8b8afacc6cd3685231001cfe26ba2a679e5ac042f73",
+    "r3-tcp-reality/load-processes.json": "fbd8a09988dfda4cb38db9ec1fce3874b616db11e1ef3bdbe89b903ce6302215",
+    "r3-tcp-reality/idle-ping.txt": "b3a036e9af958fbb63c17e233dc344b91c4235100aa79fb8bad2dd4d5143d462",
+    "r3-tcp-reality/loaded-ping.txt": "8f633ff10aa262c3fe2ea0654999195b33e7054bbf45c1e92d5a232437b58fe1",
+    "r3-tcp-reality-tls/load-iperf.json": "683833cd37edc14f2a777833d4ea554811b1f9bcfd4be0304b4fa33bc6165bab",
+    "r3-tcp-reality-tls/load-counters.json": "8bc20ee031764cce089b9220bdd1267c636a07717f7b566578d2b2d102c18812",
+    "r3-tcp-reality-tls/load-processes.json": "31c10b76950eb8cd1011d187b08eb8bcf57aeaff0aee7edd7b5c0b8bfc411438",
+    "r3-tcp-reality-tls/idle-ping.txt": "c4627dafd7d9e8d9a5d85f12a35cf8c7c88484d78e1b674d330068d033acb535",
+    "r3-tcp-reality-tls/loaded-ping.txt": "631057fb1df191a452bff1f6cbac187f6aea7ddd389027bd550f89618fe1611f",
+    "r3-udp-faketls/load-iperf.json": "a831a526c37d84ed08e33a85f4a25a23684534dd17d86f11d62d4ddf9a2c4e7e",
+    "r3-udp-faketls/load-counters.json": "f1c090f286d264f267d5503ceb832a561abe7507510c5c51c197c5550993e097",
+    "r3-udp-faketls/load-processes.json": "fc856f3aedd47d5782d06125678817d5f901515025b7f45afdff701b7baa3185",
+    "r3-udp-faketls/idle-ping.txt": "bc38d89525f7ebcafeebbd121ad0539fefc15edbac9d1c2989893b3f87521852",
+    "r3-udp-faketls/loaded-ping.txt": "6a7d1e9fecd7d9fe3b7a39f2238366da5d55e5e7ae1c6b0681021d36ea6d5617",
+    "r3-udp-padding/load-iperf.json": "ac1acd7b42ac7ff87632c3b927e148ec8de538fd415f11a9d6923cca264ce8af",
+    "r3-udp-padding/load-counters.json": "1689b81d9a96da781f61116459f189cbe9fa3a2645b4d4c778e241c0ff5490ea",
+    "r3-udp-padding/load-processes.json": "e87010273269039b2d46853363e4a4a87ff70b80f0b2d22d70a8ac48a8381dc0",
+    "r3-udp-padding/idle-ping.txt": "10690144e938fd78547e3dee1ff252586f29125166cecc3aae076b80ed0b8dc1",
+    "r3-udp-padding/loaded-ping.txt": "e659852183a1d36f3820e90b6f87c31d45b5dafb010d6d8197453f7057b99c77",
+    "r3-udp-quic/load-iperf.json": "da919433128b17d565ee98b14956be7ff03e6e2fb78d81e68e139128a27ea8e8",
+    "r3-udp-quic/load-counters.json": "04c8ead406dd3992f6538259498db8fbbc4a3f0e5bd8f02afe25dda3a1e34be3",
+    "r3-udp-quic/load-processes.json": "e4fb212560250efa315cd72080fc64018d2885633d49388d916ce744b769b690",
+    "r3-udp-quic/idle-ping.txt": "bca2b1dc8ac222da6d819a9a02f755575e55878cc6661ce6da791dac1aedf32c",
+    "r3-udp-quic/loaded-ping.txt": "f06e4f9c1c0a0a0b5b5a5972d9a3504d1b4eef36242af02298fd7234879b7186",
+    "r3-tcp-obfs-awg/load-iperf.json": "debd0c13357d4b4bea7cfccbf79a4eff4d38077a9e20a6a7bde071781d0a85c3",
+    "r3-tcp-obfs-awg/load-counters.json": "2393178776d656f990d7d393cc85be069c3ac7e517a940a4b7c440c59b935fbb",
+    "r3-tcp-obfs-awg/load-processes.json": "81b6303f914d0d040f6d9c793b322c2d7a14125d323f07296b0d400a5df12826",
+    "r3-tcp-obfs-awg/idle-ping.txt": "60f3046be9c852a9bf32ae08d048dbd3a38396ab53d1d80f5cb007003672ee71",
+    "r3-tcp-obfs-awg/loaded-ping.txt": "7ee4b33d727c85501b6762feb24fceb16476e976a409a40c186411dfa3ac349c",
+    "r3-udp-faketls-awg/load-iperf.json": "24c120d260f782713238281996beebc6406c1009ee05c38fc7ad93034a041331",
+    "r3-udp-faketls-awg/load-counters.json": "7103c560e880425b3e392c1f75f35f8fb513711dfab90d3e89a71e6a6176e06d",
+    "r3-udp-faketls-awg/load-processes.json": "5b2010292042cdf626550301bff4a7e2b05210751fa6865a2cbabe4ee0fce19c",
+    "r3-udp-faketls-awg/idle-ping.txt": "80b70dc349092e300bf02c202c04be855ea3bcbea50def6a0c130ba5e8326e96",
+    "r3-udp-faketls-awg/loaded-ping.txt": "3affa0e3d2a97566752f380716ca1454836aa0dc798cfae2dfcd7f791ba93e3a"
+  },
+  "helper_inputs": {
+    "benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+    "benchmark_isolated_lab.py": "a7a2c77f9c194da43c449f0b1fea2b99a33e3653bef7dbfa42a9bfc9a707cbc3",
+    "benchmark_evidence.py": "3f84d3f8fc86dc64eb37ff7da53b66fc9d2ed0d400a6d02bc130a20a0c7a3f96",
+    "benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+    "native_lab.py": "da52f1b2c94628074b56e002c6e2e0b8c09ebab207128c5dea780928469c61b0",
+    "native_repro.py": "23b7750a13d847fe0bac36107dca674188068bb7a9482ef003a27c7e54ca8c0c",
+    "ssh_command.py": "ea3800d9b7f8fa4abc7027166a0a6889c59c0e8dd683549a6e006c060da05b6b",
+    "ssh_hostkey.py": "c82e9149d94b066f306f5eea265e726e72281eeb1cf9f8f084260a9ab9a00a39"
+  },
+  "limits": [
+    "No one-way, saturated, P4, IPv6, UDP payload bidir or auth-rate claims",
+    "No latency regression threshold or universal performance PASS",
+    "Only successful replies form RTT population; loss retained separately",
+    "p99 per window is the 198th ordered value of 200 replies, not a long-duration tail guarantee"
+  ],
+  "checks": {
+    "windows_benchmark_methods": 53,
+    "linux_new_latency_methods": 4,
+    "docs_checks": 9
+  },
+  "cleanup": {
+    "status": "OWNED_ROOTS_ARCHIVED_AND_REMOVED",
+    "active_services_unchanged": true,
+    "receipt_sha256": "7dc60cc0a54787bb162d44a34d852ad0687c8b60bfdddc3ee828b9914971a5ee"
+  },
+  "driver_sha256": "d19b59a70407949d4d572adb241165045009b913f946b53edb365271a9f4c43b"
+}

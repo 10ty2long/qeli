@@ -9,6 +9,56 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
+## RTT distributions across all carriers — 10 October 2026
+
+**Q36-F011:** [latency JSON](../../../release/benchmark_v0.8.2_2026-10-10_latency.json) contains three fresh
+sessions per each of 12 carriers and the direct baseline. Both VMs use the same
+qualified CLI `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71` from the 916 Q36-F010 build inputs;
+no rebuild. IPv4 inner/outer, TUN MTU1400, underlay1500, recordizer policy off.
+39 sessions, 78 windows, 15,600 transmitted ICMP probes,15600 received
+RTTs, 0 lost probes. Every raw reply and tail is retained; carrier and
+idle/loaded order changes between repeats.
+
+Each window: 200 56-byte probes at 20 ms. p50/p95/p99 use nearest-rank over
+received replies; lost probes receive no fabricated RTT. Values below are
+medians across three windows in ms; p99 also includes full min–max.
+With 200 replies p99 is the 198th ordered RTT of 200 replies: a short measurement,
+not an hours-long tail guarantee or one-way latency.
+
+Loaded: an independent 8 s TCP bidir P=1 test, target 100 Mbps per direction;
+ping epochs lie inside the conservative iperf interval. Both receivers,
+bitrate, cookies, CPU/RSS samples and kernel/server deltas are re-admitted from
+raw. This is paced load, not saturation: actual goodput and every CPU/RSS/drop
+value remain in JSON. The direct baseline has no Qeli process sampler.
+
+| Carrier | Idle p50 | Idle p95 | Idle p99 [min–max] | Loaded p50 | Loaded p95 | Loaded p99 [min–max] |
+|---|---:|---:|---:|---:|---:|---:|
+| direct | 0.347 | 0.392 | 0.411 [0.406–0.433] | 0.300 | 0.383 | 0.403 [0.397–0.420] |
+| tcp-faketls | 0.988 | 1.150 | 1.184 [1.130–1.219] | 2.933 | 4.534 | 4.754 [4.744–5.253] |
+| tcp-frag | 0.968 | 1.144 | 1.190 [1.183–1.241] | 2.831 | 4.294 | 4.869 [4.718–5.518] |
+| tcp-obfs | 1.009 | 1.155 | 1.199 [1.175–1.216] | 2.838 | 4.537 | 4.803 [4.673–4.946] |
+| tcp-obfs-awg | 0.978 | 1.153 | 1.185 [1.164–1.225] | 2.725 | 4.341 | 4.763 [4.692–4.902] |
+| tcp-padding | 0.985 | 1.125 | 1.182 [1.168–1.229] | 2.989 | 4.550 | 5.022 [4.738–5.086] |
+| tcp-plain-raw | 0.990 | 1.147 | 1.225 [1.208–1.249] | 2.826 | 4.508 | 5.286 [4.989–5.313] |
+| tcp-reality | 0.994 | 1.132 | 1.189 [1.164–1.207] | 2.839 | 4.409 | 4.781 [4.765–5.154] |
+| tcp-reality-tls | 13.363 | 17.884 | 19.418 [18.701–19.483] | 5.712 | 10.572 | 12.537 [10.316–15.858] |
+| udp-faketls | 0.993 | 1.135 | 1.363 [1.158–2.157] | 1.918 | 3.708 | 4.139 [4.101–4.745] |
+| udp-faketls-awg | 0.978 | 1.163 | 1.363 [1.104–1.827] | 1.906 | 3.540 | 4.303 [4.100–4.510] |
+| udp-padding | 1.001 | 1.155 | 1.304 [1.218–1.948] | 1.913 | 3.723 | 4.319 [4.200–4.442] |
+| udp-quic | 0.986 | 1.162 | 1.251 [1.233–1.286] | 1.617 | 3.354 | 4.153 [3.682–4.454] |
+
+Real TLS stands out: median p99 19.418 ms idle and 12.537 ms
+under the specified load. This is a three-session observation, not an established
+cause or a reason to change transport defaults.
+
+The parser refuses truncated/duplicate populations, wrong loss, duplicate
+summaries and censored `time<…`;53 Windows benchmark methods, 4 new Linux
+methods and 9 docs checks PASS. Host gate: 10.66.116.10: FAIL (legacy4); 10.66.116.11: PASS. Firewall differences remain
+without waiver. Both owned roots were SHA-archived and removed; active services
+and original staged CLIs preserved. IPv6, UDP payload bidir, auth-rate, saturated/P4
+latency and the exact raw TCP asymmetry cause are outside this packet.
+Q36 IN_PROGRESS; overall 30/37 DONE, 81.1 percent. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
 ## TCP downlink losses and actual mux — 10 October 2026
 
 **Q36-F010:** closes the receive-to-TUN observability gap left in Q36-F009.
