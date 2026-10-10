@@ -1,8 +1,8 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v127 -->
+<!-- normative-sync: audit-debt-v128 -->
 
-Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
+Дата текущей сверки: 10 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
 багов и не процент готовности всех 37 разделов. Источник: 57 исходных `AUDIT-Q*.md`
 и план `CLIENT-CONFIG-CORE.md`; повторяющиеся ограничения объединены.
@@ -1421,3 +1421,4 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **10 октября, F501/Q34-F055:** [Compiler CI pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён implicit stable в7jobs, compiler1.97.0 совпадает с reviewed policy; остальные matrix/nightly choices сохранены. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification без hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября,F502–F503/Q34-F056–F057:** [Событие и охват CI](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate требует push event/exact SHA; green PR merge не заменяет source CI. Paths filters удалены, все root policy inputs запускают CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh, не hosted Actions.25ownlabfiles очищены,service сохранён. Developer docs1.97/locked обновлены;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+**10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
