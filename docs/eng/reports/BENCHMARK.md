@@ -9,11 +9,82 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+The latest supplemental measurement is [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+## IPv6 carrier coverage — 11 October 2026
+
+**Q36-F015:** [JSON](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json) adds the remaining nine
+carriers with **outer6/inner6**. Three fresh sessions per carrier, TCP and UDP
+payload bidir P1/P4: 27 new sessions / 108 five-second windows / 324 raw JSON
+files, plus the execution manifest. Existing three core-carrier populations
+and the direct IPv6 baseline remain independently qualified, with explicit source
+and SHA references; those successful cells were not repeated. All 12 carriers now
+have this family pair measured, rather than only the former core three.
+
+The existing CLI `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71` uses the same 916 qualified inputs;
+no source change, compiler or new binary. Both VMs use private IPvlan/network and
+mount namespaces; production services and staged binaries are preserved.
+IPv6-only NetworkPlan addresses, outer server peer and every raw iperf local/remote
+endpoint prove the address families. TUN MTU1400, underlay1500, recordizer off;
+REALITY fallback target stays fixture-local IPv4, without changing the IPv6 carrier
+or inner benchmark payload.
+
+UDP load is 100Mbit/s per stream per direction, 1200-byte datagrams:
+P1=100+100, P4=400+400Mbit/s. TCP is unpaced bidir. Each value below is a median
+of three independent windows, Mbit/s except the loss columns. Full median/min/max,
+retransmits, jitter, drops, CPU/RSS/load/steal and individual runs remain in JSON.
+Carrier/phase order changes on the second repeat; inherited populations remain
+separate and are not pooled with new ones.
+
+| Carrier | Source | TCP P1 up / down | TCP P4 up / down | UDP P4 up / down | UDP P4 loss %, up / down |
+|---|---|---:|---:|---:|---:|
+| direct | inherited | 12950.1 / 16385.3 | 5430.1 / 20863.5 | 400.0 / 400.0 | 0.00 / 0.00 |
+| tcp-plain-raw | new | 41.1 / 466.8 | 34.2 / 498.7 | 290.0 / 328.2 | 24.46 / 12.79 |
+| tcp-padding | new | 69.1 / 451.5 | 52.4 / 490.0 | 294.5 / 329.7 | 22.78 / 11.74 |
+| tcp-frag | new | 39.4 / 456.3 | 40.0 / 443.9 | 258.0 / 329.4 | 32.70 / 15.50 |
+| tcp-obfs | new | 53.0 / 480.8 | 41.0 / 494.6 | 225.2 / 339.7 | 43.48 / 13.36 |
+| tcp-reality | new | 63.7 / 428.5 | 42.9 / 495.0 | 301.5 / 303.7 | 22.84 / 21.77 |
+| tcp-reality-tls | new | 348.1 / 763.3 | 92.3 / 834.7 | 376.2 / 397.6 | 5.39 / 0.00 |
+| udp-padding | new | 123.3 / 636.3 | 68.0 / 683.2 | 354.9 / 122.6 | 9.46 / 42.72 |
+| tcp-obfs-awg | new | 49.9 / 476.3 | 36.2 / 495.5 | 226.1 / 338.0 | 41.02 / 10.07 |
+| udp-faketls-awg | new | 183.0 / 666.1 | 78.5 / 683.2 | 349.0 / 100.2 | 12.15 / 56.37 |
+| tcp-faketls | inherited | 45.4 / 446.0 | 36.0 / 520.7 | 291.3 / 335.5 | 25.17 / 11.66 |
+| udp-faketls | inherited | 153.8 / 688.3 | 101.6 / 689.4 | 351.7 / 113.6 | 11.90 / 54.95 |
+| udp-quic | inherited | 30.8 / 282.6 | 37.7 / 254.6 | 356.1 / 80.6 | 10.40 / 62.16 |
+
+Both receiver directions are re-admitted against exact P/protocol/duration/rate
+and endpoints. Server application counters and IPv4/IPv6 kernel counters on both
+hosts are recomputed; resets refuse admission. CPU/RSS samples verify process
+identity and affinity0-1/nice0 and retain VM contention; 100% means one logical CPU.
+RSS is sampled maximum. Client status and effective UDP receive capacity are
+observed before the first phase, without claiming per-phase client drop deltas.
+
+Loss under high offered load and TCP asymmetry remain diagnostic observations;
+these short windows do not establish stable throughput, losslessness or a regression
+cause. No results are removed to improve medians. Complete host/firewall gates and
+cleanup differences are retained without exemption for the external NAT cycle.
+Both owned roots were SHA-archived and removed; nine docs checks PASS.
+
+New UDP P1 windows have zero loss. P4 median downlink loss is 42.72% for
+udp-padding and 56.37% for udp-faketls-awg; TCP asymmetry persists.
+Kernel counters include every UDP socket in each namespace, including iperf,
+so they do not independently locate a Qeli client defect. Both host gates
+passed immediately after measurement. After archiving, .10 lacked two
+pre-existing vpn0 FORWARD rules and MASQUERADE for 10.8.0.0/24; the complete
+diff is retained. This difference is not admitted as successful firewall
+restoration or removed by modifying unrelated rules.
+
+No implementation changed, so the sealed Q36-F014 **73 Windows/73 Linux** benchmark
+checks are reused after exact test-input hashes are verified, rather than repeated.
+The all-carrier family-template test already covers each inner/outer pair.
+The plan registry now correctly marks Q36 IN_PROGRESS and distinguishes the closed
+September debt queue from current work. Other-carrier mixed-family cells, IPv6 RTT,
+full carrier AUTH/rate and TCP asymmetry cause remain OPEN; Q35 soak is separate.
+Q36 IN_PROGRESS; 30/37 DONE (81.1%); LOCAL_DEV_COMMIT; NO_PUSH_DEPLOY_RELEASE.
 
 ## Prepared-peer AUTH bursts — 11 October 2026
 

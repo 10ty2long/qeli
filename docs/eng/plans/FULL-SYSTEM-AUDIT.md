@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v213 -->
+<!-- normative-sync: full-system-audit-v214 -->
 
-**Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -177,11 +177,11 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | IN_PROGRESS |
-| 36 | Benchmarks and measurement methodology | H07 | TODO |
+| 36 | Benchmarks and measurement methodology | H07 | IN_PROGRESS |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | TODO |
 
-Table reconciled against section21–23,26,28 completion and open29–31 statuses
-on10October. Earlier checkpoint totals below remain historical.
+Table reconciled against section21–23,26,28 completion and open29–31,35–36 statuses
+on11October. Earlier checkpoint totals below remain historical.
 
 ## 6. Scenarios for each section
 
@@ -2281,7 +2281,15 @@ A changed contract reopens regression checks for its consumers. Final PASS requi
 mandatory sections closed, resolved blockers, justified N/A cases, matching native/source
 SHA, physical scenario evidence, reproducible benchmarks and accurate support limits.
 
-**Next work:** close the [debt register](AUDIT-DEBT.md) before starting new sections.
+**Current queue, 11 October:** finish the remaining Q36 cells and
+[methodology checks](../reports/BENCHMARK.md); separate Q35 soak obligations and
+Q37 final reconciliation remain open. Sections29–31 and34 close against their
+own remaining criteria; user-excluded platforms do not re-enter the queue.
+
+**Historical queue on 24 September:** the [debt register](AUDIT-DEBT.md) below
+was dispositioned on3October:14 DONE,D06 ACCEPTED_LIMITATION. The next paragraph
+preserves that checkpoint's original obligations, rather than the current queue.
+
 D02 still needs durable namespace identity for global entries after crashes;
 then D04 crash recovery and remaining D05/D06 network budgets/resource context.
 Lock/I/O, directory-trust, standalone kill-switch and Linux route/TUN checks have
@@ -2615,3 +2623,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October,Q36-F013:** [unpaced RTT](../reports/BENCHMARK.md):3 fresh sessions per12 carriers+direct,78 TCP-bidir P1/P4 loads and78 windows/15600 ICMP probes;p50/p95/p99/raw tails/loss/CPU/RSS/drops retained.Final counters saved before admission;ping oversend fixed,original 2FAIL/3partial windows/1inherited baseline retained.68 Windows/68 Linux/9docs PASS;2own roots SHA-archived/removed,services preserved.Physical saturation not established;auth-rate/remaining IPv6 combinations OPEN.Q36 IN_PROGRESS,30/37DONE81.1percent;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 fresh-server bursts,1/4/16 TCP/UDP/QUIC peers;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL and interrupted transfer retained,1partial peer separately;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October,Q36-F015:** [IPv6 carriers](../reports/BENCHMARK.md):27new sessions/108TCP+UDP bidir P1/P4 windows remaining9carriers outer6/inner6,324raw JSON +manifest;core3/direct inherited separately with sealed SHA,all12 now covered for this pair.916CLI inputs unchanged/no rebuild;73Windows/73Linux previous exact-input checks reused,9docs PASS.2owned roots SHA-archived/removed,services preserved,all host gates retained.Q36 registry TODO→IN_PROGRESS and historical debt queue corrected.Mixed-family/IPv6RTT/fullAUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
