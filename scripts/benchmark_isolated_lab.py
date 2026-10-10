@@ -264,6 +264,17 @@ def udp_kernel_all(fixture):
     return dict(ipv4=ipv4, ipv6=ipv6, RcvbufErrors=ipv4['RcvbufErrors'] + ipv6['RcvbufErrors'])
 
 
+def latency_probe_command(ip):
+    """Send exactly 200 probes; iputils -w would count replies instead of sends.
+
+    The external deadline bounds a stuck process without changing -c semantics.
+    Its timeout exit remains an execution error, even if ping prints a summary.
+    """
+    ipaddress.ip_address(ip)
+    return ('timeout --signal=INT --kill-after=2 15 env LC_ALL=C '
+            'ping -n -D -3 -c 200 -i .02 -W 2 ' + shlex.quote(ip))
+
+
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local, *, expected_bitrate=0):
     ipaddress.ip_address(ip)  # A literal target prevents shell interpolation.
     bidir = '--bidir' in flags.split()
@@ -278,14 +289,12 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
                    'process CPU/RSS sample', duration + 20)
                    for fixture, pid in ((server, server_pid), (client, client_pid))]
         output = client.lab.checked(client.run_in('timeout ' + str(duration + 15) +
-                 ' iperf3 -c ' + ip + ' -p 5203 -t ' + str(seconds) +
+                 ' iperf3 -c ' + shlex.quote(ip) + ' -p 5203 -t ' + str(seconds) +
                  ' -i 0 ' + flags + ' --json'), 'iperf ' + name, duration + 20)
         raw = json.loads(output)
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
     (local / (name + '-processes.json')).write_text(json.dumps(samples, indent=2) + '\n')
-    protocol = 'udp' if '-u' in flags.split() else 'tcp'
-    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate, protocol=protocol) if bidir else parse_iperf_result(raw, protocol, seconds)
     after_kernel = udp_kernel_all(receiver)
     after_app = application_stats(server)
     counters = dict(before=dict(kernel=before_kernel, application=before_app),
@@ -294,6 +303,10 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
         counters['before']['client_kernel'] = before_client_kernel
         counters['after']['client_kernel'] = udp_kernel_all(client)
     save_results(local / (name + '-counters.json'), counters)
+    # Preserve the complete diagnostic window even when strict admission rejects
+    # the iperf result. Rejection must still propagate; counters do not admit it.
+    protocol = 'udp' if '-u' in flags.split() else 'tcp'
+    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate, protocol=protocol) if bidir else parse_iperf_result(raw, protocol, seconds)
     deltas = (bidir_counter_deltas if bidir else counter_deltas)(counters['before'], counters['after'])
     return dict(**metrics, **deltas, server=samples[0], client=samples[1])
 

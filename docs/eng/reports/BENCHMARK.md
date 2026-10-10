@@ -9,10 +9,90 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json),
-69 sessions / 204 windows. It uses CLI SHA-256
+The latest supplemental measurement is [unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
+contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+## RTT under unpaced TCP bidir — 10–11 October 2026
+
+**Q36-F013:** [JSON](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json) contains three fresh sessions
+per each of 12 carriers and the direct baseline: 39 sessions, 78 ten-second
+TCP-bidir loads P=1/P=4 and 78 overlapping ping windows. Both VMs use the
+existing CLI `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`; all 916 build inputs verified,
+no rebuild. IPv4 inner/outer, TUN MTU1400, underlay1500, recordizer policy off.
+Carrier and P1/P4 order changes between repeats.
+
+Unlike Q36-F011, there is no `-b`: TCP offers maximum available load in both
+directions. This is a load profile, not proof of physical link or both vCPUs
+saturation. Actual goodput from both receivers, retransmits, CPU/RSS, VM
+load/steal and kernel/server deltas remain in JSON. The direct baseline has no
+Qeli process sampler. These values do not establish causes of differences
+between carriers or between repeats.
+
+Each window has 200 56-byte ICMP probes at 20 ms; every reply epoch is checked
+inside the conservative iperf load interval. 15,600 transmitted probes,
+15560 received, 40 lost. p50/p95/p99 use nearest-rank over received
+replies; lost probes receive no fabricated RTT. Table values are medians of
+three windows in ms, with full p99 min–max. These short populations do not
+guarantee an hours-long tail.
+
+| Carrier | P1 p50 | P1 p95 | P1 p99 [min–max] | P4 p50 | P4 p95 | P4 p99 [min–max] |
+|---|---:|---:|---:|---:|---:|---:|
+| direct | 0.490 | 1.219 | 1.668 [1.086–1.743] | 1.793 | 4.733 | 5.884 [5.029–6.058] |
+| tcp-faketls | 28.697 | 41.195 | 47.241 [46.456–64.022] | 53.236 | 69.529 | 84.177 [83.816–92.050] |
+| tcp-frag | 34.068 | 48.072 | 54.551 [51.464–60.681] | 59.862 | 84.263 | 99.938 [99.867–146.589] |
+| tcp-obfs | 32.874 | 47.057 | 52.695 [52.493–58.266] | 51.133 | 67.476 | 75.532 [75.194–89.252] |
+| tcp-obfs-awg | 31.890 | 42.319 | 48.939 [44.731–49.256] | 46.750 | 63.441 | 68.355 [65.341–69.989] |
+| tcp-padding | 26.620 | 46.046 | 50.641 [32.091–62.808] | 55.908 | 76.547 | 87.035 [75.537–117.027] |
+| tcp-plain-raw | 34.925 | 50.060 | 64.864 [54.218–70.813] | 54.527 | 75.608 | 84.038 [71.674–86.195] |
+| tcp-reality | 25.057 | 35.367 | 41.902 [41.750–57.096] | 47.367 | 75.422 | 89.632 [88.574–95.928] |
+| tcp-reality-tls | 13.806 | 20.162 | 22.390 [19.280–26.784] | 17.284 | 23.207 | 26.122 [25.420–46.445] |
+| udp-faketls | 14.367 | 20.103 | 22.849 [22.455–38.351] | 16.384 | 23.417 | 25.627 [25.290–34.800] |
+| udp-faketls-awg | 15.302 | 24.067 | 29.288 [23.387–35.524] | 17.476 | 24.282 | 30.301 [26.799–36.049] |
+| udp-padding | 15.595 | 24.277 | 30.410 [28.683–31.324] | 17.915 | 35.301 | 50.515 [36.912–53.714] |
+| udp-quic | 14.795 | 27.597 | 30.953 [27.114–40.023] | 17.070 | 29.927 | 45.756 [28.853–47.706] |
+
+Fixed diagnostic loss on strict admission refusal: shared `measure` saves
+both endpoints' final IPv4/IPv6 kernel counters and server counters before
+metric validation. Invalid iperf still raises and does not become an admitted
+measurement. Two regression tests cover a truncated TCP receiver and missing
+reverse UDP receiver. This fix cannot restore the missing final counters of
+the older refused Q36-F012 window. Also fixed ping oversend: shared
+`latency_probe_command` uses `-c 200` without `-w` and an external `timeout`;
+timeout refusal is never admitted. [iputils documentation](https://github.com/iputils/iputils/blob/master/doc/ping.xml)
+confirms that `-w` changes termination to waiting for the reply count. The first
+P4 window sent 205 probes, received 200 and was refused. After resuming, the
+first UDP-AWG RTT was 0.95 s after the rounded iperf start and failed the
+conservative 1 s bound. Synchronization now waits for an established iperf
+connection and then 2 s, rather than pausing from dispatch; raw epochs are
+still checked for every result. Both original FAILs and three windows from
+two incomplete sessions remain separate; those sessions use fresh retries.
+One fully completed direct baseline and other completed sessions are inherited
+without remeasurement.
+12 completed sessions use the original pause from dispatch; 27 new sessions
+wait for the connection. Exact first/last RTT offsets for each window remain
+in `probe_offsets`; these short windows cannot establish a regression or
+identical warm-up timing. Status
+is DIAGNOSTIC_MEASUREMENTS_ONLY even if the final host gate passes. Neither
+failed attempts nor outliers are removed. Full suite: 68 Windows and 68 Linux
+benchmark methods, 9 docs checks PASS. Host gate: final/10.66.116.10: PASS; final/10.66.116.11: PASS; attempt1/10.66.116.10: FAIL (iptables4); attempt1/10.66.116.11: PASS; attempt2/10.66.116.10: FAIL (iptables4, legacy4); attempt2/10.66.116.11: PASS; cleanup/10.66.116.11: PASS; cleanup/10.66.116.10: FAIL (iptables4, legacy4); differences retained without
+waiver. Both owned roots SHA-archived and removed; active services and original
+staged CLIs preserved.
+After measurement, ping/iperf IP arguments were additionally escaped with
+`shlex.quote`: IP validation permits scoped IPv6 with arbitrary zone text.
+A test checks one shell argument without executing such a target. Measured
+helper snapshot retained; final helper differs only in these two escapes and
+CRLF/LF normalization. Commands are identical for all three measured IPv4
+targets; both SHAs remain in `post_measurement_command_quoting`. The first
+Linux test launch refused because uploaded inputs lacked `benchmark_report.py`;
+its log/FAIL retained, dependency supplied before the new launch.
+
+Q36-F011 idle and paced100M data remain separate populations. IPv6 RTT, UDP
+payload latency, auth-rate, remaining IPv6 carrier combinations and the cause
+of observed asymmetry remain OPEN. Q36 IN_PROGRESS; overall 30/37 DONE,
+81.1 percent. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ## UDP-bidir and independent inner/outer families — 10 October 2026
 
