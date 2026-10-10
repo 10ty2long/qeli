@@ -9,11 +9,77 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [mixed-family coverage](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 new sessions /216 windows. [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+The latest supplemental measurement is [IPv6 RTT](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json),39 new sessions /78 windows. [Mixed-family coverage](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 new sessions /216 windows. [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+## IPv6 RTT under TCP bidirectional load — 11 October 2026
+
+**Q36-F017:** [JSON](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json) records all12 carriers and
+direct IPv6: three fresh sessions each, **39 sessions /78 ten-second load windows**,
+15600 ICMP probes sent, **15573 replies /27 lost**.
+Both outer carrier and inner tunnel use IPv6. Previous IPv4 RTT is SHA-verified
+and retained separately; no pooling across families or dates.
+
+CLI SHA `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71` and its916 build inputs are unchanged; no
+compilation or production change. NetworkPlan and server peer independently prove
+outer IPv6; plan address and every raw iperf endpoint prove inner IPv6. Private
+IPvlan/network and mount namespaces isolate both VMs. TUN MTU1400, underlay1500,
+recordizer off. REALITY fallback uses fixture-local IPv4; real-TLS uses the existing
+handrolled=true fixture setting, without certifying public-site camouflage.
+
+TCP bidir P1/P4 is unpaced. After an established load connection and two seconds,
+the client sends exactly200 ICMP56-byte probes at20ms intervals; external15s timeout
+limits execution. All received reply timestamps must lie within the conservative
+rounded iperf start+1..+10 interval. Lost probes have no reply timestamps.
+Nearest-rank p50/p95/p99 are computed from raw received replies in each window;
+the table shows medians of three window percentiles. These are not pooled percentiles.
+Loss is the number of missing replies out of200, median and maximum over three
+windows. Per-window values and complete reply vectors remain in JSON.
+
+| Carrier | P1 p50 / p95 / p99, ms | P1 lost, median / max | P4 p50 / p95 / p99, ms | P4 lost, median / max |
+|---|---:|---:|---:|---:|
+| direct | 0.707 / 2.245 / 3.288 | 0 / 0 | 3.550 / 7.322 / 9.483 | 0 / 0 |
+| tcp-plain-raw | 26.268 / 45.644 / 51.578 | 0 / 0 | 62.843 / 84.083 / 93.082 | 1 / 1 |
+| tcp-faketls | 31.760 / 48.226 / 52.573 | 0 / 0 | 48.975 / 72.172 / 83.577 | 0 / 0 |
+| tcp-padding | 26.867 / 41.556 / 47.840 | 0 / 0 | 45.920 / 72.038 / 86.757 | 0 / 0 |
+| tcp-frag | 25.029 / 39.792 / 45.957 | 0 / 0 | 60.279 / 83.606 / 91.412 | 1 / 3 |
+| tcp-obfs | 27.666 / 40.057 / 43.548 | 0 / 0 | 54.848 / 77.195 / 86.146 | 0 / 2 |
+| tcp-reality | 22.797 / 39.925 / 48.963 | 0 / 0 | 42.907 / 72.060 / 88.030 | 0 / 0 |
+| tcp-reality-tls | 14.442 / 19.106 / 22.409 | 2 / 5 | 29.970 / 38.198 / 43.707 | 0 / 0 |
+| udp-faketls | 17.208 / 28.249 / 32.666 | 0 / 0 | 19.601 / 28.239 / 36.217 | 0 / 1 |
+| udp-padding | 15.456 / 23.156 / 29.190 | 0 / 0 | 18.933 / 28.776 / 30.847 | 0 / 1 |
+| udp-quic | 81.593 / 118.782 / 133.726 | 1 / 1 | 114.338 / 152.670 / 185.523 | 0 / 3 |
+| tcp-obfs-awg | 32.587 / 45.809 / 54.168 | 0 / 0 | 46.941 / 77.499 / 84.777 | 0 / 2 |
+| udp-faketls-awg | 15.993 / 24.869 / 30.344 | 0 / 0 | 19.410 / 27.319 / 34.326 | 1 / 1 |
+
+QUIC P4 median window p99 is 185.523ms versus
+9.483ms for direct P4. Across its six P1/P4 windows QUIC
+loses 5 of1200 probes. This observation is scoped to the retained load
+conditions; it does not identify the implementation cause or establish a
+cross-version regression.
+
+Both TCP receiver directions, exact P/duration/endpoints, distinct iperf cookies,
+process identity, counter resets and affinity0-1/nice0 are rechecked from raw files.
+CPU100% means one logical CPU; RSS is sampled peak. Eleven-second process sampling
+surrounds each ten-second load. The second repeat reverses session and phase order,
+changing traffic history and possible adaptive UDP buffer growth. No result or
+outlier is removed to improve medians.223 raw JSON,78 ping files and78 worker logs
+are SHA-bound; prior IPv4 evidence retains its own host gates and source hashes.
+
+Measurement and post-archive host gates retain complete differences. Cleanup
+changed fields: `{"10.66.116.10": ["legacy4"], "10.66.116.11": []}`. Active services are unchanged;
+both owned roots were SHA-archived and removed. A host difference is not reported
+as restoration PASS. These short windows establish scoped measurements, without
+proving physical saturation, a universal latency threshold or a regression cause.
+
+No shared benchmark implementation changed. The sealed73 Windows/73 Linux checks
+from Q36-F014 are reused after verifying all27 exact input hashes; nine docs checks
+PASS. IPv6 RTT under TCP bidir P1/P4 is complete for these conditions. Full carrier
+AUTH/rate and TCP asymmetry cause remain OPEN; long soaks belong to Q35.
+Q36 IN_PROGRESS;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ## Mixed IPv4/IPv6 carrier coverage — 11 October 2026
 
