@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v206 -->
+<!-- normative-sync: full-system-audit-v207 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2610,3 +2610,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **10 октября,F511/Q35-F009:** [Клиентский INI и qeli:// fuzz](../reports/AUDIT-Q35-CLIENT-CONFIG-FUZZ.md): добавлены инварианты канонического повторного разбора для успешных входов и структурированные IPv4/IPv6/roaming/password-link случаи. Закреплённый ASan:18 494 запуска/61с, семь seeds, ноль новых crash artifacts;701 corpus-файл и 723 evidence-файла SHA сохранены. Ошибка первой локальной обвязки сохранена; own root очищен, служба777/845 неизменна. Один target, не полный nightly/DoS. Q35 IN_PROGRESS,30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября,F512/Q35-F010:** [Допуск release-soak](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): исходный gate давал полный PASS за0,064с с8пустыми детьми. Теперь обязательны результаты восьми фаз, финальные точки TCP10k/UDP10k+3×1k и минимум28800с по монотонным часам.7Linux contract-тестов и Bash syntax PASS; пустой ребёнок/неполная точка/8ч−1нс отклоняются. Реальный8ч VPN-soak остаётся OPEN,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, Q36-F008:** [Bidir pressure](../reports/BENCHMARK.md): 36 фаз/90 raw JSON, три окна на 100/250/unlimited для plain/TLS/QUIC и baseline. Plain TCP восстанавливает симметрию под paced-нагрузкой, но низкий unlimited uplink бывает при нулевых session drops: причина OPEN. Исправлен допуск paced raw в unlimited population;49 Windows/49 Linux PASS, прежние228 raw повторно сверены. Оба own roots SHA-архивированы/очищены, службы сохранены. Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

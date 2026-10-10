@@ -9,6 +9,63 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
+## Bidir pressure diagnostics — 10 October 2026
+
+[Pressure JSON](../../../release/benchmark_v0.8.2_2026-10-10_bidir_pressure.json): the same CLI SHA `7769f43c`,
+IPv4 inner/outer, P=1, recordizer=off, MTU 1400/1500. Plain TCP, real TLS and
+UDP QUIC were measured at 100/250 Mbps per direction and unlimited, alongside
+the direct VM namespace path. Each condition has three sequential 8-second
+windows; the rate order rotates. These are repeated windows within **one
+session per carrier**, not three independent tunnel starts. Total: 36 phases
+(27 tunnel + 9 baseline), 90 raw JSON. Median [min–max], Mbps:
+
+| Carrier | Target Mbps / direction | ↑ Mbps median [min–max] | ↓ Mbps median [min–max] | Session drops median [min–max] |
+|---|---:|---:|---:|---:|
+| direct | 100 | 100.1 [100.0–100.1] | 100.1 [100.0–100.1] | — |
+| direct | 250 | 250.1 [250.1–250.1] | 250.1 [250.1–250.1] | — |
+| direct | unlimited | 14307.8 [14135.1–15674.4] | 16153.4 [14576.6–16154.5] | — |
+| tcp-plain-raw | 100 | 100.1 [100.0–100.1] | 100.1 [100.0–100.1] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | 250 | 249.4 [249.1–249.9] | 249.7 [249.4–249.9] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | unlimited | 27.5 [21.7–39.4] | 507.2 [505.2–522.9] | 0.0 [0.0–44.0] |
+| tcp-reality-tls | 100 | 100.0 [99.8–100.0] | 99.9 [99.8–99.9] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | 250 | 249.8 [249.5–249.8] | 249.8 [249.7–249.9] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | unlimited | 398.2 [295.0–447.9] | 756.4 [717.1–816.5] | 0.0 [0.0–0.0] |
+| udp-quic | 100 | 100.0 [100.0–100.1] | 100.0 [100.0–100.1] | 0.0 [0.0–0.0] |
+| udp-quic | 250 | 250.0 [249.9–250.1] | 249.9 [249.9–250.0] | 0.0 [0.0–0.0] |
+| udp-quic | unlimited | 160.0 [84.5–182.2] | 735.1 [676.3–835.5] | 0.0 [0.0–0.0] |
+
+Plain TCP is approximately symmetric at 100/250 Mbps; unlimited uplink is
+21.7–39.4 against downlink 505.2–522.9.
+Two of its three unlimited phases have zero session drops; the third adds 44.
+All its paced phases have zero session drops. Thus asymmetry depends on load,
+but recorded server writer queue overflow alone cannot explain it. Zero values
+of these counters do not rule out queue waiting, ACK delay, retransmission or
+other loss. The cause remains OPEN; data-plane buffers and scheduling were not
+changed. The client TCP distributor can also discard packets on pool refusal
+or a Full try_send queue; server control counters do not measure those reasons.
+Raw end.streams retains RTT/retransmits/cwnd; mean_rtt with -i 0 is not
+a latency distribution and does not close p50/p95/p99. These 8-second phases
+are kept separate from the earlier 5-second unrestricted bidir population.
+
+**Q36-F008:** admission now checks both actual target_bitrate fields. Ordinary
+unlimited reports reject paced input; the diagnostic helper requires an explicit
+matching limit. [iperf3 semantics](https://software.es.net/iperf/invoking.html):
+-b limits each stream individually; P=1 is used in each direction here.
+All 49 Windows/49 Linux methods PASS without skips; the previous 78 phases/
+228 raw JSON were readmitted by the strengthened validator with original host
+FAIL states retained. New raw was separately revalidated against receivers,
+both kernel deltas, stable session identity, CPU/RSS samplers, PID/CPU policy
+and frozen helper input SHAs.
+
+Full host gate: 10.66.116.10: FAIL iptables4,legacy4; 10.66.116.11: restored. Every difference is retained in JSON; this is
+DIAGNOSTIC_MEASUREMENTS_ONLY, not a performance PASS. Both owned remote roots
+were SHA-archived and removed after inode/process/mount checks; active services
+were preserved. Owner SHAs/journal matched the known external NAT cycle.
+Snapshots are sequential: the cycle can change rules between backend reads.
+Evidence: audit-debt-20260924/q36-bidir-pressure-20261010/.
+UDP-bidir/IPv6/latency/auth-rate/the precise asymmetry cause and the full Q35
+8-hour soak remain OPEN; Q36 IN_PROGRESS, 30/37 DONE (81.1%).
+
 ## Simultaneous inner TCP — 10 October 2026
 
 [Bidir JSON](../../../release/benchmark_v0.8.2_2026-10-10_bidir_12modes.json): the same SHA `7769f43c` and unchanged

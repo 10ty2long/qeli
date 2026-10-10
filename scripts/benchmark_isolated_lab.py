@@ -235,7 +235,7 @@ def application_stats(fixture):
     return json.loads(fixture.checked('python3 ' + fixture.remote + '/control.py ' + fixture.remote + '/run/control.sock'))
 
 
-def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local):
+def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local, *, expected_bitrate=0):
     bidir = '--bidir' in flags.split()
     receiver = client if '-R' in flags.split() else server
     before_kernel = udp_kernel(receiver)
@@ -254,7 +254,7 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
     (local / (name + '-processes.json')).write_text(json.dumps(samples, indent=2) + '\n')
-    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1])) if bidir else parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
+    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate) if bidir else parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
     after_kernel = udp_kernel(receiver)
     after_app = application_stats(server)
     counters = dict(before=dict(kernel=before_kernel, application=before_app),

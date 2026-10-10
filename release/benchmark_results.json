@@ -18494,5 +18494,13 @@
     "successful_host_gates": 4,
     "failed_host_gates": 2,
     "scope": "Simultaneous inner TCP, IPv4 inner/outer, 3 repeats each P=1/P=4; no performance PASS"
+  },
+  "supplemental_bidir_pressure": {
+    "artifact": "benchmark_v0.8.2_2026-10-10_bidir_pressure.json",
+    "sha256": "45a0660c8253b72ad96fa69513f4165cbd3e8316b41ef9521f2d6f52501daa2e",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY",
+    "scope": "diagnostic pressure sweep; repeated windows within one session per carrier, no performance PASS",
+    "phases": 36,
+    "raw_json_files": 90
   }
 }

@@ -75,13 +75,20 @@ def parse_iperf_result(raw, protocol, expected_seconds):
     raise ValueError('unsupported iperf protocol')
 
 
-def parse_iperf_bidir(raw, expected_seconds, parallel):
+def parse_iperf_bidir(raw, expected_seconds, parallel, *, expected_bitrate=0):
     """Both independent receiver summaries are required for a TCP bidir phase."""
     if not isinstance(raw, dict) or 'error' in raw:
         raise ValueError('iperf error or invalid JSON result')
     start = raw.get('start')
     if not isinstance(start, dict) or not isinstance(start.get('test_start'), dict):
         raise ValueError('iperf bidir start settings missing')
+    if type(expected_bitrate) is not int or expected_bitrate < 0:
+        raise ValueError('invalid requested bidir bitrate')
+    # iperf3 reports this twice. A paced diagnostic must never silently enter
+    # the ordinary unlimited-throughput population (nor the reverse).
+    for settings in (start, start['test_start']):
+        if type(settings.get('target_bitrate')) is not int or settings['target_bitrate'] != expected_bitrate:
+            raise ValueError('iperf bidir bitrate disagrees with requested phase')
     start = start['test_start']
     if (start.get('protocol') != 'TCP' or type(start.get('bidir')) is not int or start['bidir'] != 1
             or start.get('reverse') != 0 or type(start.get('num_streams')) is not int

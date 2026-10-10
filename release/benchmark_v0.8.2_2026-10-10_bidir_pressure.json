@@ -1,0 +1,1771 @@
+{
+  "schema_version": 1,
+  "status": "DIAGNOSTIC_MEASUREMENTS_ONLY",
+  "binary_sha256": "7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e",
+  "scope": "diagnostic pressure sweep; repeated windows within one session per carrier, no performance PASS",
+  "seconds": 8,
+  "parallel": 1,
+  "phases": 36,
+  "raw_json_files": 90,
+  "host_gates": {
+    "10.66.116.10": {
+      "host_restored": false,
+      "changed_fields": [
+        "iptables4",
+        "legacy4"
+      ],
+      "differences": {
+        "iptables4": {
+          "before": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          },
+          "after": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT",
+              "-A FORWARD -i vpn0 -j ACCEPT",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          }
+        },
+        "legacy4": {
+          "before": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT",
+              "-A FORWARD -i vpn0 -j ACCEPT",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          },
+          "after": {
+            "lines": [
+              "*mangle",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*filter",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":FORWARD ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              "COMMIT",
+              "*nat",
+              ":PREROUTING ACCEPT [COUNTERS]",
+              ":INPUT ACCEPT [COUNTERS]",
+              ":OUTPUT ACCEPT [COUNTERS]",
+              ":POSTROUTING ACCEPT [COUNTERS]",
+              "COMMIT"
+            ],
+            "diagnostics": []
+          }
+        }
+      }
+    },
+    "10.66.116.11": {
+      "host_restored": true,
+      "changed_fields": [],
+      "differences": {}
+    }
+  },
+  "original_run_status": "DIAGNOSTIC_MEASUREMENTS_ONLY_HOST_GATE_FAIL",
+  "statistics": {
+    "direct": {
+      "0": {
+        "up_mbps": {
+          "n": 3,
+          "min": 14135.108526926624,
+          "max": 15674.386285673188,
+          "median": 14307.843169056927,
+          "range": 1539.2777587465644,
+          "spread_pct": 9.82033829390504
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 14576.586158666483,
+          "max": 16154.521946121284,
+          "median": 16153.399591526231,
+          "range": 1577.9357874548004,
+          "spread_pct": 9.767765290223673
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 262,
+          "max": 1342,
+          "median": 710,
+          "range": 1080,
+          "spread_pct": 80.4769001490313
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 1343744,
+          "max": 2554272,
+          "median": 1427728,
+          "range": 1210528,
+          "spread_pct": 47.39229024943311
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 52,
+          "max": 118,
+          "median": 103,
+          "range": 66,
+          "spread_pct": 55.93220338983051
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 15928,
+          "max": 15928,
+          "median": 15928,
+          "range": 0,
+          "spread_pct": 0.0
+        }
+      },
+      "100000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 100.03116190357271,
+          "max": 100.12093617102113,
+          "median": 100.11666946812493,
+          "range": 0.08977426744841921,
+          "spread_pct": 0.08966582902807385
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 100.03116190357271,
+          "max": 100.12093617102113,
+          "median": 100.11666946812493,
+          "range": 0.08977426744841921,
+          "spread_pct": 0.08966582902807385
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 220,
+          "max": 292,
+          "median": 282,
+          "range": 72,
+          "spread_pct": 24.65753424657534
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 330144,
+          "max": 477840,
+          "median": 390960,
+          "range": 147696,
+          "spread_pct": 30.909090909090907
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 57,
+          "max": 162,
+          "median": 73,
+          "range": 105,
+          "spread_pct": 64.81481481481481
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 15928,
+          "max": 15928,
+          "median": 15928,
+          "range": 0,
+          "spread_pct": 0.0
+        }
+      },
+      "250000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 250.06419016621257,
+          "max": 250.10380749769823,
+          "median": 250.0802155096471,
+          "range": 0.03961733148565827,
+          "spread_pct": 0.01584035520372229
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 250.06419016621257,
+          "max": 250.10380749769823,
+          "median": 250.0802155096471,
+          "range": 0.03961733148565827,
+          "spread_pct": 0.01584035520372229
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 250,
+          "max": 320,
+          "median": 258,
+          "range": 70,
+          "spread_pct": 21.875
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 338832,
+          "max": 457568,
+          "median": 408336,
+          "range": 118736,
+          "spread_pct": 25.9493670886076
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 77,
+          "max": 178,
+          "median": 126,
+          "range": 101,
+          "spread_pct": 56.74157303370786
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 15928,
+          "max": 15928,
+          "median": 15928,
+          "range": 0,
+          "spread_pct": 0.0
+        }
+      }
+    },
+    "tcp-plain-raw": {
+      "0": {
+        "up_mbps": {
+          "n": 3,
+          "min": 21.73808610655937,
+          "max": 39.406979607145516,
+          "median": 27.48767491484725,
+          "range": 17.668893500586147,
+          "spread_pct": 44.83696461066079
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 12,
+          "median": 0,
+          "range": 12,
+          "spread_pct": 100.0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 505.24964367290664,
+          "max": 522.8952709333528,
+          "median": 507.1783583777376,
+          "range": 17.645627260446133,
+          "spread_pct": 3.37460065931543
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 862,
+          "max": 1540,
+          "median": 1526,
+          "range": 678,
+          "spread_pct": 44.02597402597402
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 27257,
+          "max": 37604,
+          "median": 27270,
+          "range": 10347,
+          "spread_pct": 27.51568982023189
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 24264,
+          "max": 48528,
+          "median": 26960,
+          "range": 24264,
+          "spread_pct": 50.0
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 893,
+          "max": 954,
+          "median": 948,
+          "range": 61,
+          "spread_pct": 6.394129979035634
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 44,
+          "median": 0,
+          "range": 44,
+          "spread_pct": 100.0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 120.9935093178583,
+          "max": 127.32774091505867,
+          "median": 124.65815086669812,
+          "range": 6.334231597200372,
+          "spread_pct": 4.974745920785628
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 103516,
+          "max": 105612,
+          "median": 105612,
+          "range": 2096,
+          "spread_pct": 1.9846229595121723
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.11305822498586772,
+          "max": 0.17311021350259664,
+          "median": 0.11514104778353483,
+          "range": 0.060051988516728924,
+          "spread_pct": 34.690032033163746
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 138.54949912570393,
+          "max": 142.1041660686502,
+          "median": 140.54802219874063,
+          "range": 3.5546669429462554,
+          "spread_pct": 2.5014516050352875
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 50080,
+          "max": 50332,
+          "median": 50128,
+          "range": 252,
+          "spread_pct": 0.5006755145831709
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.05704506560182544,
+          "max": 0.11235955056179775,
+          "median": 0.058173356602675974,
+          "range": 0.05531448495997231,
+          "spread_pct": 49.229891614375354
+        }
+      },
+      "100000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 100.04184236060725,
+          "max": 100.07367240113109,
+          "median": 100.05672385172244,
+          "range": 0.031830040523843195,
+          "spread_pct": 0.03180660783212996
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 100.04184236060725,
+          "max": 100.07367240113109,
+          "median": 100.05672385172244,
+          "range": 0.031830040523843195,
+          "spread_pct": 0.03180660783212996
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 3013,
+          "max": 4538,
+          "median": 3049,
+          "range": 1525,
+          "spread_pct": 33.60511238431027
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 256120,
+          "max": 295212,
+          "median": 266904,
+          "range": 39092,
+          "spread_pct": 13.242009132420096
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 497,
+          "max": 1065,
+          "median": 883,
+          "range": 568,
+          "spread_pct": 53.333333333333336
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 49.88637309690447,
+          "max": 50.8865503296703,
+          "median": 50.77493984816947,
+          "range": 1.0001772327658287,
+          "spread_pct": 1.9655040993860728
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 101324,
+          "max": 103528,
+          "median": 103516,
+          "range": 2204,
+          "spread_pct": 2.128892666718185
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.056433408577878104,
+          "max": 0.05668934240362812,
+          "median": 0.05646527385657821,
+          "range": 0.00025593382575001683,
+          "spread_pct": 0.4514672686230292
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 52.10827153985343,
+          "max": 52.88629144349316,
+          "median": 52.21992373913709,
+          "range": 0.7780199036397235,
+          "spread_pct": 1.4711182849170057
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 50060,
+          "max": 50080,
+          "median": 50080,
+          "range": 20,
+          "spread_pct": 0.03993610223642641
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "median": 0.0,
+          "range": 0.0,
+          "spread_pct": 0
+        }
+      },
+      "250000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 249.05500143159438,
+          "max": 249.90696945669902,
+          "median": 249.38143455560817,
+          "range": 0.8519680251046395,
+          "spread_pct": 0.3409140717271053
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 128,
+          "median": 108,
+          "range": 128,
+          "spread_pct": 100.0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 249.38143455560817,
+          "max": 249.90696945669902,
+          "median": 249.709376106927,
+          "range": 0.5255349010908503,
+          "spread_pct": 0.21029221483233052
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 4637,
+          "max": 8092,
+          "median": 6566,
+          "range": 3455,
+          "spread_pct": 42.69649036085023
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 328912,
+          "max": 533808,
+          "median": 397660,
+          "range": 204896,
+          "spread_pct": 38.38383838383839
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 898,
+          "max": 975,
+          "median": 958,
+          "range": 77,
+          "spread_pct": 7.8974358974359005
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 122.10389384735593,
+          "max": 124.54965033795212,
+          "median": 123.32732360659543,
+          "range": 2.4457564905961817,
+          "spread_pct": 1.9636799332313548
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 103528,
+          "max": 105600,
+          "median": 105580,
+          "range": 2072,
+          "spread_pct": 1.962121212121215
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.056753688989784334,
+          "max": 0.057240984544934176,
+          "median": 0.05717552887364208,
+          "range": 0.00048729555514984146,
+          "spread_pct": 0.8513053348467747
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 128.8821072844879,
+          "max": 133.5481489751309,
+          "median": 131.4374652319114,
+          "range": 4.666041690643027,
+          "spread_pct": 3.4939021816857485
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 50080,
+          "max": 50084,
+          "median": 50080,
+          "range": 4,
+          "spread_pct": 0.007986582541330556
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.05707762557077625,
+          "max": 0.11376564277588168,
+          "median": 0.0572737686139748,
+          "range": 0.056688017205105426,
+          "spread_pct": 49.828767123287676
+        }
+      }
+    },
+    "tcp-reality-tls": {
+      "0": {
+        "up_mbps": {
+          "n": 3,
+          "min": 294.9802558434268,
+          "max": 447.88848921356777,
+          "median": 398.16935960014723,
+          "range": 152.90823337014098,
+          "spread_pct": 34.13979976101359
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 1886,
+          "max": 8670,
+          "median": 6103,
+          "range": 6784,
+          "spread_pct": 78.24682814302192
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 717.1446641889652,
+          "max": 816.4562065812524,
+          "median": 756.4433004492942,
+          "range": 99.31154239228727,
+          "spread_pct": 12.163731697029355
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 201,
+          "max": 1245,
+          "median": 673,
+          "range": 1044,
+          "spread_pct": 83.855421686747
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 9332,
+          "max": 22048,
+          "median": 10816,
+          "range": 12716,
+          "spread_pct": 57.67416545718432
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 748140,
+          "max": 1126928,
+          "median": 922032,
+          "range": 378788,
+          "spread_pct": 33.61244019138756
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 11978,
+          "max": 16514,
+          "median": 16198,
+          "range": 4536,
+          "spread_pct": 27.4676032457309
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 132.76984919008888,
+          "max": 136.54821759169468,
+          "median": 135.2131222590829,
+          "range": 3.7783684016058032,
+          "spread_pct": 2.767058016754087
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 107336,
+          "max": 109604,
+          "median": 107644,
+          "range": 2268,
+          "spread_pct": 2.0692675449801134
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "median": 0.0,
+          "range": 0.0,
+          "spread_pct": 0
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 136.43613778875468,
+          "max": 142.2136549569732,
+          "median": 141.10390265995954,
+          "range": 5.777517168218509,
+          "spread_pct": 4.062561481853832
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 57572,
+          "max": 58856,
+          "median": 58720,
+          "range": 1284,
+          "spread_pct": 2.181595759140953
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.05546311702717693,
+          "max": 0.05583472920156337,
+          "median": 0.055741360089186176,
+          "range": 0.0003716121743864431,
+          "spread_pct": 0.6655574043261225
+        }
+      },
+      "100000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 99.77144027226464,
+          "max": 99.9842448869456,
+          "median": 99.95323242338709,
+          "range": 0.21280461468096235,
+          "spread_pct": 0.2128381475717367
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 99.82240358513661,
+          "max": 99.9022023171824,
+          "median": 99.8533754564653,
+          "range": 0.0797987320457878,
+          "spread_pct": 0.07987684975395704
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 1,
+          "median": 1,
+          "range": 1,
+          "spread_pct": 100.0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 6063,
+          "max": 8711,
+          "median": 7740,
+          "range": 2648,
+          "spread_pct": 30.398346917690276
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 221072,
+          "max": 407096,
+          "median": 291168,
+          "range": 186024,
+          "spread_pct": 45.6953642384106
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 13229,
+          "max": 15170,
+          "median": 14716,
+          "range": 1941,
+          "spread_pct": 12.794990112063287
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 26.88765547725153,
+          "max": 27.553829219273393,
+          "median": 26.998629369622527,
+          "range": 0.6661737420218614,
+          "spread_pct": 2.417717467581182
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 106784,
+          "max": 109604,
+          "median": 107060,
+          "range": 2820,
+          "spread_pct": 2.572898799313894
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.05636978579481398,
+          "median": 0.0,
+          "range": 0.05636978579481398,
+          "spread_pct": 100.0
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 26.887315478922638,
+          "max": 27.665187452115678,
+          "median": 27.220602514676372,
+          "range": 0.7778719731930401,
+          "spread_pct": 2.811735776377522
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 56764,
+          "max": 58728,
+          "median": 57204,
+          "range": 1964,
+          "spread_pct": 3.3442310311946555
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "median": 0.0,
+          "range": 0.0,
+          "spread_pct": 0
+        }
+      },
+      "250000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 249.4725466890583,
+          "max": 249.82229088056317,
+          "median": 249.77683915942833,
+          "range": 0.34974419150486824,
+          "spread_pct": 0.13999719171260416
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 249.73404831032565,
+          "max": 249.90774945248884,
+          "median": 249.82229088056317,
+          "range": 0.1737011421631962,
+          "spread_pct": 0.06950610477015617
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 2355,
+          "max": 3051,
+          "median": 2836,
+          "range": 696,
+          "spread_pct": 22.812192723697144
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 277688,
+          "max": 347784,
+          "median": 299256,
+          "range": 70096,
+          "spread_pct": 20.155038759689926
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 9098,
+          "max": 13917,
+          "median": 13446,
+          "range": 4819,
+          "spread_pct": 34.62671552777179
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 64.21877046983762,
+          "max": 64.32991645013952,
+          "median": 64.21889493378728,
+          "range": 0.11114598030189882,
+          "spread_pct": 0.17277494894314405
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 106784,
+          "max": 107192,
+          "median": 106892,
+          "range": 408,
+          "spread_pct": 0.38062541980744546
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.05656108597285068,
+          "max": 0.056818181818181816,
+          "median": 0.05656108597285068,
+          "range": 0.0002570958453311373,
+          "spread_pct": 0.4524886877828038
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 63.552196278104724,
+          "max": 64.21895337036906,
+          "median": 64.10771099499209,
+          "range": 0.6667570922643407,
+          "spread_pct": 1.0382559311095663
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 58052,
+          "max": 58696,
+          "median": 58432,
+          "range": 644,
+          "spread_pct": 1.0971786833855801
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.05595970900951315,
+          "median": 0.0,
+          "range": 0.05595970900951315,
+          "spread_pct": 100.0
+        }
+      }
+    },
+    "udp-quic": {
+      "0": {
+        "up_mbps": {
+          "n": 3,
+          "min": 84.46650764940154,
+          "max": 182.20146922797502,
+          "median": 160.01842654775598,
+          "range": 97.73496157857349,
+          "spread_pct": 53.64114899440524
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 676.318241020795,
+          "max": 835.4981686871035,
+          "median": 735.1419366932096,
+          "range": 159.17992766630857,
+          "spread_pct": 19.052097734270667
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 105,
+          "max": 1267,
+          "median": 549,
+          "range": 1162,
+          "spread_pct": 91.71270718232044
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 9318,
+          "max": 17441,
+          "median": 11089,
+          "range": 8123,
+          "spread_pct": 46.57416432544006
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 124016,
+          "max": 884288,
+          "median": 318128,
+          "range": 760272,
+          "spread_pct": 85.97560975609755
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 530,
+          "max": 1447,
+          "median": 1006,
+          "range": 917,
+          "spread_pct": 63.37249481686247
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 123.77066674101111,
+          "max": 124.43779739218911,
+          "median": 123.77108636988018,
+          "range": 0.6671306511779989,
+          "spread_pct": 0.5361157663980598
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 111460,
+          "max": 114864,
+          "median": 112152,
+          "range": 3404,
+          "spread_pct": 2.9635046663880726
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.05813953488372093,
+          "max": 0.1154068090017311,
+          "median": 0.05875440658049354,
+          "range": 0.05726727411801017,
+          "spread_pct": 49.62209302325581
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 136.88142013661897,
+          "max": 138.88170867323075,
+          "median": 138.32725169925524,
+          "range": 2.0002885366117766,
+          "spread_pct": 1.440282205425758
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 57060,
+          "max": 58604,
+          "median": 58432,
+          "range": 1544,
+          "spread_pct": 2.6346324482970473
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.056657223796033995,
+          "max": 0.05707762557077625,
+          "median": 0.056657223796033995,
+          "range": 0.00042040177474225726,
+          "spread_pct": 0.7365439093484305
+        }
+      },
+      "100000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 100.03554623630511,
+          "max": 100.05853592248434,
+          "median": 100.03728258826806,
+          "range": 0.022989686179229807,
+          "spread_pct": 0.02297623682705474
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 100.03554623630511,
+          "max": 100.05853592248434,
+          "median": 100.03728258826806,
+          "range": 0.022989686179229807,
+          "spread_pct": 0.02297623682705474
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 2550,
+          "max": 3397,
+          "median": 3206,
+          "range": 847,
+          "spread_pct": 24.93376508684133
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 277688,
+          "max": 297908,
+          "median": 296560,
+          "range": 20220,
+          "spread_pct": 6.7873303167420795
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 517,
+          "max": 953,
+          "median": 946,
+          "range": 436,
+          "spread_pct": 45.750262329485835
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 37.10910526061763,
+          "max": 38.10888944304824,
+          "median": 37.77578275904938,
+          "range": 0.9997841824306093,
+          "spread_pct": 2.623493355598139
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 103860,
+          "max": 114804,
+          "median": 104396,
+          "range": 10944,
+          "spread_pct": 9.532768893069932
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "median": 0.0,
+          "range": 0.0,
+          "spread_pct": 0
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 36.33118441646624,
+          "max": 38.664435239146975,
+          "median": 37.44244041688206,
+          "range": 2.333250822680732,
+          "spread_pct": 6.0346176227562225
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 57588,
+          "max": 58488,
+          "median": 58404,
+          "range": 900,
+          "spread_pct": 1.5387771850636
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.05630630630630631,
+          "median": 0.0,
+          "range": 0.05630630630630631,
+          "spread_pct": 100.0
+        }
+      },
+      "250000000": {
+        "up_mbps": {
+          "n": 3,
+          "min": 249.9162361213592,
+          "max": 250.05514302401915,
+          "median": 249.96245490051422,
+          "range": 0.1389069026599543,
+          "spread_pct": 0.05555050817195317
+        },
+        "up_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "down_mbps": {
+          "n": 3,
+          "min": 249.9162361213592,
+          "max": 249.96245490051422,
+          "median": 249.92422410096995,
+          "range": 0.04621877915502637,
+          "spread_pct": 0.01849028854090662
+        },
+        "down_retransmits": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "up_mean_rtt": {
+          "n": 3,
+          "min": 2456,
+          "max": 2791,
+          "median": 2608,
+          "range": 335,
+          "spread_pct": 12.002866356144748
+        },
+        "up_max_snd_cwnd": {
+          "n": 3,
+          "min": 300604,
+          "max": 404400,
+          "median": 370700,
+          "range": 103796,
+          "spread_pct": 25.66666666666667
+        },
+        "down_mean_rtt": {
+          "n": 3,
+          "min": 609,
+          "max": 831,
+          "median": 617,
+          "range": 222,
+          "spread_pct": 26.714801444043324
+        },
+        "down_max_snd_cwnd": {
+          "n": 3,
+          "min": 14828,
+          "max": 14828,
+          "median": 14828,
+          "range": 0,
+          "spread_pct": 0.0
+        },
+        "server_session_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "client_kernel_rcvbuf_drops": {
+          "n": 3,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "range": 0,
+          "spread_pct": 0
+        },
+        "server_cpu_avg_pct": {
+          "n": 3,
+          "min": 86.77317778783582,
+          "max": 91.3282870697798,
+          "median": 87.77358684263392,
+          "range": 4.5551092819439845,
+          "spread_pct": 4.98762150051455
+        },
+        "server_rss_peak_kib": {
+          "n": 3,
+          "min": 103888,
+          "max": 112040,
+          "median": 104200,
+          "range": 8152,
+          "spread_pct": 7.2759728668332695
+        },
+        "server_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.05714285714285714,
+          "median": 0.05636978579481398,
+          "range": 0.05714285714285714,
+          "spread_pct": 100.0
+        },
+        "client_cpu_avg_pct": {
+          "n": 3,
+          "min": 87.43966769359908,
+          "max": 90.66221475917395,
+          "median": 88.32827835464663,
+          "range": 3.2225470655748722,
+          "spread_pct": 3.55445438227483
+        },
+        "client_rss_peak_kib": {
+          "n": 3,
+          "min": 57244,
+          "max": 58420,
+          "median": 58324,
+          "range": 1176,
+          "spread_pct": 2.0130092434097913
+        },
+        "client_host_steal_pct": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.05711022272986865,
+          "median": 0.0,
+          "range": 0.05711022272986865,
+          "spread_pct": 100.0
+        }
+      }
+    }
+  },
+  "policies": {
+    "tcp-plain-raw/server": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    },
+    "tcp-plain-raw/client": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    },
+    "tcp-reality-tls/server": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    },
+    "tcp-reality-tls/client": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    },
+    "udp-quic/server": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    },
+    "udp-quic/client": {
+      "cpu_affinity": "0-1",
+      "nice": 0
+    }
+  },
+  "rtt_scope": "iperf end stream reported mean_rtt in microseconds; -i 0, not a sampled latency distribution or p50/p95/p99",
+  "source_hashes": {
+    "benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+    "benchmark_evidence.py": "0a1e8cad47ea4cd00b9b31568ad7e25ea35426f2a2b3f5c022c022e673b6b49e",
+    "benchmark_isolated_lab.py": "a7a2c77f9c194da43c449f0b1fea2b99a33e3653bef7dbfa42a9bfc9a707cbc3",
+    "benchmark_report.py": "0ca517794ed842afb40b49c525baf02e043a0aa6472fdc59d5b381fa7a6a0d33",
+    "benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+    "bench_bonding.py": "9ebdc848a224828910853c1d416c2ec64486467e386eafa37860986e9a88ee17",
+    "native_repro.py": "23b7750a13d847fe0bac36107dca674188068bb7a9482ef003a27c7e54ca8c0c",
+    "native_lab.py": "da52f1b2c94628074b56e002c6e2e0b8c09ebab207128c5dea780928469c61b0",
+    "ssh_command.py": "ea3800d9b7f8fa4abc7027166a0a6889c59c0e8dd683549a6e006c060da05b6b",
+    "ssh_hostkey.py": "c82e9149d94b066f306f5eea265e726e72281eeb1cf9f8f084260a9ab9a00a39",
+    "test_benchmark_bidir.py": "622fa20f99e833a1d4d205f28de57aa490863a691c2185423f5a1f55f1cc528a",
+    "test_benchmark_host_state.py": "f4646cafc0d6e5e653673742ab7d7eaf0df4f03836cb0092a89b95e20a3c1c99",
+    "test_benchmark_isolated_lab.py": "969f4272e55a5c7c0861c134828452e70b93eb5f39f3d413b1cb452167619cf1",
+    "test_benchmark_legacy_guards.py": "b3d9e6aeaadb11f98b67c7490439dbd9c954e57f317ac707f6a1eefd794d7a3a",
+    "test_benchmark_report.py": "a3e763e65516e2599168a7c781c1349363277e4457fed971ab98248de1d51bcb"
+  },
+  "input_hashes": {
+    "execution.json": "31fc3f177383cb89d0a80e3adb514a336ab6ee74efedef51250afca4828b6593",
+    "direct\\r1-b0-iperf.json": "a341128f4f307af52347bdf80c50736171b02a62bb9afe7209a2524a0ecee629",
+    "direct\\r1-b100000000-iperf.json": "fa9254a8f7b359fa537e249ff99d796fc143c06e2e108a9b6e0de11850de8b0b",
+    "direct\\r1-b250000000-iperf.json": "756e6c7464c7b567e33463352071e6868107223a8bcd529f0c47ba8d728def11",
+    "direct\\r2-b100000000-iperf.json": "a75b9787b2708400bb94e17794c3f5cce04c476f128b737ea120dcf025ea9b6e",
+    "direct\\r2-b250000000-iperf.json": "043d966c0af9f15ecda6976b06d2a1508161c18e5657dff0dc36651e2fdd5968",
+    "direct\\r2-b0-iperf.json": "fc2e1483cc3701d50c97edd9156d8d47be338d74d3921a2744969953ad5253ac",
+    "direct\\r3-b250000000-iperf.json": "822e2a51bc6f9a789bef44bc9bed4c12dafbe1384790de59d4ba8da945138107",
+    "direct\\r3-b0-iperf.json": "300cfcec905ae9be82e9c47cf3781fbe6b35df481cd65b7e9350f3ff1fdaf90b",
+    "direct\\r3-b100000000-iperf.json": "a0690dd3c761f3f7c680d471b2536439efc0f8fdfb8c1ed9342bb88223dd9fab",
+    "tcp-plain-raw\\r1-b0-iperf.json": "8a112899bf4cf39d0bb7ff0d8f5619d452266de97a3ff96791c54c497b993102",
+    "tcp-plain-raw\\r1-b0-counters.json": "7b9e7ec77eecd0a196b7e511c48cd1ddc7a649c5681a09e34cb3f9991193db0d",
+    "tcp-plain-raw\\r1-b0-processes.json": "ee2311f69e3841f7203cb7b3286788cfa6edf834cfde32b66b3bda51c35f1f00",
+    "tcp-plain-raw\\r1-b100000000-iperf.json": "a9f22c7eb944ccbdf40918f55ba5c2fa0f0d87ac36e70e8e320714bdef689eb0",
+    "tcp-plain-raw\\r1-b100000000-counters.json": "002893c0d6abaed46a6c5e1ac0822aa92d97336e50a616e4a3836b42eb287ee0",
+    "tcp-plain-raw\\r1-b100000000-processes.json": "99b5617ba0a9d39719df6d825a86b30acffa2c506a83b16de465f3fd7ef3f9c1",
+    "tcp-plain-raw\\r1-b250000000-iperf.json": "9be3bc0fdba06a862d95914c236e75d4483fc9958e3b7b6305bbb73252270853",
+    "tcp-plain-raw\\r1-b250000000-counters.json": "6405620bcf761c49be2fb9f85c0e45ad2fc87c6a045550c0f50f983c2d59d5f5",
+    "tcp-plain-raw\\r1-b250000000-processes.json": "341d02a10fd1895484960b1819695d099722eb74bb12bbad7394640f9e3d674c",
+    "tcp-plain-raw\\r2-b100000000-iperf.json": "b5cc87bb20c88e5d328c10277f5d27f8e5c847bed84cf202d8cdb59ae0099769",
+    "tcp-plain-raw\\r2-b100000000-counters.json": "c30b5270a101066c2ddff798a8a8625862f24d4c1421306e42432e5bb96eee5a",
+    "tcp-plain-raw\\r2-b100000000-processes.json": "03dfb74f48143839ef5ca69621422589efa9c8eb635fda1a24a5cb6d5c988d71",
+    "tcp-plain-raw\\r2-b250000000-iperf.json": "646d1c5eaf094a032e30e96c52d0229bc6a21b4b834c9f9db9f6584b5aa25b1f",
+    "tcp-plain-raw\\r2-b250000000-counters.json": "b2b763bdbcf2e2962507ba6ee0483571ade60b56c7c763387eb11117b6ce2d0b",
+    "tcp-plain-raw\\r2-b250000000-processes.json": "52c75cc8bba23945b8f2082a979b1b5c3b85196ec6004c9349c2ba041d6b930d",
+    "tcp-plain-raw\\r2-b0-iperf.json": "d3e2057b748cb27bfa84856f68b92e01de543744813d9222ab92295562cbe547",
+    "tcp-plain-raw\\r2-b0-counters.json": "3812e1fe6b2f85767e9417254ff4bdcb917fb3d4adcf72757fb42d354a707a76",
+    "tcp-plain-raw\\r2-b0-processes.json": "896ec1b20a424834cfa594cfab5b797432a5792aa64a9a5262e1e6726594cf12",
+    "tcp-plain-raw\\r3-b250000000-iperf.json": "668468810b34634c648579a09a1692c38221f05f234061735a062afffab65228",
+    "tcp-plain-raw\\r3-b250000000-counters.json": "655c5a132702db71654cc865126426b0a78ea22c6fb1f29bd40e307c2f04dab6",
+    "tcp-plain-raw\\r3-b250000000-processes.json": "fe228f75bb8b1910113fac5241cdc68960a1785fefffade281d09f5a5c69c5e2",
+    "tcp-plain-raw\\r3-b0-iperf.json": "69c15f4125ffd5ba14c821a93cca9ebe080671e46d0d2d99682973cf248a8d98",
+    "tcp-plain-raw\\r3-b0-counters.json": "950455ac0eef604618dfb07860bb14dc9309bba9b8f093a031474221be26fac7",
+    "tcp-plain-raw\\r3-b0-processes.json": "b61b2a12b903f9f1328a8f77629b462b3aa2336b21b81ec6f4676c79f0514acb",
+    "tcp-plain-raw\\r3-b100000000-iperf.json": "9c7b654b88a12f72cb7b9600d926aa33d40f705a5134d79713fccbb20654ceb8",
+    "tcp-plain-raw\\r3-b100000000-counters.json": "9d39fa1f4b48058014a152d458045a3cc8b2a2c8cd81c5f04670ae51234e72e1",
+    "tcp-plain-raw\\r3-b100000000-processes.json": "45bda6b256111987b3e883b4be72530f6f19248039f97f0ef42bd784690defc7",
+    "tcp-reality-tls\\r1-b0-iperf.json": "aeb4dc0202d5fb8481fe0822a721b8763ad719d9765433e624dc69564c337aea",
+    "tcp-reality-tls\\r1-b0-counters.json": "c66522853a2060151a126fc39f9c6349f5317ee8eb9c43c7e8282b90e6ed23f3",
+    "tcp-reality-tls\\r1-b0-processes.json": "b4290702281abeebfc740baef26dcebf51a6ae3570b45363b882f34d5d068ed1",
+    "tcp-reality-tls\\r1-b100000000-iperf.json": "2bf5de87ccfb0d6a316bf51a3fb178e42afa0d87d5c10765837877bba8fb6016",
+    "tcp-reality-tls\\r1-b100000000-counters.json": "b92e8c30185049394bbfec7934586d8509210dcaf0de8ab21330c0284d5dc842",
+    "tcp-reality-tls\\r1-b100000000-processes.json": "87b53fff38538f9de3df0fc6e7bd3b2bba311371966e51d6aabc191b98f7d54c",
+    "tcp-reality-tls\\r1-b250000000-iperf.json": "e7b06252af38fcdae3eacb44031d201e4744bc0202b44fe3ee36eae51514897d",
+    "tcp-reality-tls\\r1-b250000000-counters.json": "4f3b0816f72957722299d1e27bac26274d3d83bdb77e360e29583e153e459304",
+    "tcp-reality-tls\\r1-b250000000-processes.json": "c67301dc26fa2dcea4551278583e27f8f9c161e28a278e5444b293305d07f7e3",
+    "tcp-reality-tls\\r2-b100000000-iperf.json": "9d8aa9a668bb9cd8201d831c642f237ac96c5a3a7fb4e62e8716e75a594e8c39",
+    "tcp-reality-tls\\r2-b100000000-counters.json": "2698af4b94b710f741a21679b179d200e0c0fede580c62d616ffcb02fd074f5d",
+    "tcp-reality-tls\\r2-b100000000-processes.json": "9c43aa60af8d5d7a3db28c259fe969762d14784d59204f13a14068e5f4b43c07",
+    "tcp-reality-tls\\r2-b250000000-iperf.json": "6c6d4489b0af9bd00c20ed4f3b12c900e14b94f30ba8a963f45199c9d5a07495",
+    "tcp-reality-tls\\r2-b250000000-counters.json": "50f43f1dd29dde00888112dfdade4f2058ef19b8faa577b3be06eea721299077",
+    "tcp-reality-tls\\r2-b250000000-processes.json": "eadeffed73cdceaf181c470ff009eb520b2080b4718dea0dea5126f0c2ba9d3f",
+    "tcp-reality-tls\\r2-b0-iperf.json": "e37f35d2b024eea00371d6e83391ba44554038ad97d41e6d974b7f88372e867d",
+    "tcp-reality-tls\\r2-b0-counters.json": "4bb43f893e2c772bafad91f06790bbce161ec717beded7d330486dcfbd3160bc",
+    "tcp-reality-tls\\r2-b0-processes.json": "e151fb0f08434c2d4be700cffafd086ad13601fe59f138685674123560533e70",
+    "tcp-reality-tls\\r3-b250000000-iperf.json": "31157916fad0e6d3e0ecce15e2f6560135a2244e8fa58865075d31ed6827464b",
+    "tcp-reality-tls\\r3-b250000000-counters.json": "47cca50326c3094f064c0d0f39e78cacb8f15825e109e606c6658843233ba5e6",
+    "tcp-reality-tls\\r3-b250000000-processes.json": "750373fb2d9d7f38a81a020bfb44a9bb977c747d58f4dd7ea6a9a1c55335e47b",
+    "tcp-reality-tls\\r3-b0-iperf.json": "fdb960b2c921e0b7b1380d98127d252e3204ba6978292499022c989c5990a4ab",
+    "tcp-reality-tls\\r3-b0-counters.json": "20e7f1f9efccdc40723c7aa9e16be2f005012423a44d1bd60aee7f3c09bfe009",
+    "tcp-reality-tls\\r3-b0-processes.json": "2c6fe7db7e3f674492a27e8918e0c2a6f82d03b1581a399aa24f91a71b243df5",
+    "tcp-reality-tls\\r3-b100000000-iperf.json": "0d6c503a84da799f0ed406c265aac79ba57d6eb2b5259d93c86d122943feb3f4",
+    "tcp-reality-tls\\r3-b100000000-counters.json": "9ad2254226f2b68b8aeaa30d8214d211eb8732de88d8929c01a52cc482dc3c5b",
+    "tcp-reality-tls\\r3-b100000000-processes.json": "435ce08bf22b0a3f2cc7b097ac1ace3551edf2fe78d3c32208d790561e6a4786",
+    "udp-quic\\r1-b0-iperf.json": "c3c3c2178bdf154046984d90705f75b27d723904c994ef38cabee507cc2a772b",
+    "udp-quic\\r1-b0-counters.json": "c6778c453f2e8afeb63418ac6fe18356d5280fcf6a6ff749d63c676d7eb53de9",
+    "udp-quic\\r1-b0-processes.json": "2c808ba19cf4a40e89c3360a7145e375bf80eb9af03ef3211028407fdc1dd2b1",
+    "udp-quic\\r1-b100000000-iperf.json": "aaa0683316107d559696874c69250b9a441758c5be32d5db4853167e6f0a54e3",
+    "udp-quic\\r1-b100000000-counters.json": "77bad3f40d68f67ed9cec54169943e6b6e1d2f6058a6048e89eb835eecb5f27f",
+    "udp-quic\\r1-b100000000-processes.json": "7f32ee22523eb2b7bc40552661cfda5991e28b81f4bab85f7fcd98453fbb2df1",
+    "udp-quic\\r1-b250000000-iperf.json": "0e71aaf3f58cffd0cefb00ea9053dc8ee59e175b23e6f4c4dd91a7c761391430",
+    "udp-quic\\r1-b250000000-counters.json": "7cf6b2c749b99d771a986624cb06bc109944caa27e610765f782f3506df66091",
+    "udp-quic\\r1-b250000000-processes.json": "39f7497f69c097f2d7164eed5206ede7eb4bbb61bdced74820794eb65ff4ea88",
+    "udp-quic\\r2-b100000000-iperf.json": "8ce90f5692e3545700999abae29006174ab4a867091b23293e644880ada43753",
+    "udp-quic\\r2-b100000000-counters.json": "3a42355123dc9cab4865b7ca13a942002cb75120e834c10c1af36a8a39fbabe2",
+    "udp-quic\\r2-b100000000-processes.json": "2aa1311d70408537eae7965e78644cae06db8bc6605fa72c7b2ca707e5a50733",
+    "udp-quic\\r2-b250000000-iperf.json": "5a3bfe7e2f62aa5c063af33c54253d142b504acff4f05f2284045547b0fd4da5",
+    "udp-quic\\r2-b250000000-counters.json": "1f8fddb58f963136a60cf0c8070fdad2080d053ffe9718810eb2905d03370173",
+    "udp-quic\\r2-b250000000-processes.json": "bcb066ac06888b5a667b1051434b81b62e2160542bf46ffa8db7095c4361a06e",
+    "udp-quic\\r2-b0-iperf.json": "75177a1a21949c3cbfa2d3c60c2dce81b2ada3ca223e0ae3c048f56a10e838cf",
+    "udp-quic\\r2-b0-counters.json": "6e23eeeedfe9694824bd3532a3e293a729c709ded2a5704e44ee7ed769c1f897",
+    "udp-quic\\r2-b0-processes.json": "64706adba6202c639205bcea413b873b9f0e35890a539caf9dff48f4b403922a",
+    "udp-quic\\r3-b250000000-iperf.json": "7f9676084c1792fec46c42cb6f504b82d0481f07a9f191fe97071683355cdcc5",
+    "udp-quic\\r3-b250000000-counters.json": "3b0b7c52021993c08945891aa26fe86fbf85d02ae73861ad24b0097deb04079e",
+    "udp-quic\\r3-b250000000-processes.json": "55f6b798e880de3864278d1837aaf55293548e08dc77922ff48504fc1ac1f5e0",
+    "udp-quic\\r3-b0-iperf.json": "372053ab855dee74a346d427fca5a365218753df99b7bae9df7366e581e22e7d",
+    "udp-quic\\r3-b0-counters.json": "07c49208978465a09fa43045a98806f209ede8e0ee59056ca878ad18557056f9",
+    "udp-quic\\r3-b0-processes.json": "516aa5e454592747810170b219cc706a9fdbd3ff0cab760eb770b2c5cd2af9f9",
+    "udp-quic\\r3-b100000000-iperf.json": "875bdbe3db196f8ba0d828df4a4a275f7880f1bde5d8385a0253d8a73655d3fd",
+    "udp-quic\\r3-b100000000-counters.json": "c0634f9c1849e2123aeb6eaa67f545701cd3167fbc2e8f9514c97f4ffb49a350",
+    "udp-quic\\r3-b100000000-processes.json": "939eac3835af81bc9bd3dc64f3814fa5f2bc6247216213634155fc4d42aaf4e0"
+  },
+  "provenance_receipt_sha256": "c5e27a57ecebaa0d0c45f681b9ff572536e2a1eaed6d0dd640d6fbd5f527c2c3",
+  "foreign_nat_owner": {
+    "source_hashes": "53899e9220b27695f0a810a40070fe98bddd02e6d12c518ea4e1d1fa765039f0  /usr/local/bin/vpn-nat.sh\n41ef9fa5269abe3569591c3bdefbee50cdbe8bbe1867e3c5f7a1b7fa32245f29  /usr/local/bin/vpn-nat-stop.sh",
+    "journal": "\u043e\u043a\u0442 10 20:34:46 debian systemd[1]: Starting vpn-nat.service - VPN NAT iptables rules...\n\u043e\u043a\u0442 10 20:34:48 debian vpn-nat.sh[3460184]: VPN NAT applied via iptables-legacy\n\u043e\u043a\u0442 10 20:34:48 debian systemd[1]: Finished vpn-nat.service - VPN NAT iptables rules.\n\u043e\u043a\u0442 10 20:34:51 debian systemd[1]: Stopping vpn-nat.service - VPN NAT iptables rules...\n\u043e\u043a\u0442 10 20:34:51 debian vpn-nat-stop.sh[3460211]: VPN NAT rules removed\n\u043e\u043a\u0442 10 20:34:51 debian systemd[1]: vpn-nat.service: Deactivated successfully.\n\u043e\u043a\u0442 10 20:34:51 debian systemd[1]: Stopped vpn-nat.service - VPN NAT iptables rules.\n\u043e\u043a\u0442 10 20:34:51 debian systemd[1]: Starting vpn-nat.service - VPN NAT iptables rules..."
+  },
+  "foreign_rule_delta": {
+    "iptables4": {
+      "added": [
+        "-A FORWARD -i vpn0 -j ACCEPT",
+        "-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT",
+        "-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE"
+      ],
+      "removed": []
+    },
+    "legacy4": {
+      "added": [],
+      "removed": [
+        "-A FORWARD -i vpn0 -j ACCEPT",
+        "-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT",
+        "-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE"
+      ]
+    }
+  },
+  "diagnosis_limits": [
+    "Server session dropped is an aggregate outbound counter, not a per-reason queue measurement.",
+    "Client TCP distributor can discard on pool refusal or full try_send queue; those reasons were not measured by server control counters.",
+    "Host snapshot commands are sequential; the external NAT cycle can change state between backend captures.",
+    "Load dependence is established; exact cause and a same-duration old/current binary regression comparison remain open."
+  ],
+  "cleanup": {
+    "status": "OWNED_ROOTS_ARCHIVED_AND_REMOVED",
+    "roots": 2,
+    "receipt_sha256": "b7c8962717774407e12b2b6f1dad71a710d68cab2828c3885bca66a4d9f2c875",
+    "hosts": {
+      "10.66.116.10": {
+        "host_restored": false,
+        "active_services_unchanged": true
+      },
+      "10.66.116.11": {
+        "host_restored": true,
+        "active_services_unchanged": true
+      }
+    }
+  },
+  "tests": {
+    "windows": 49,
+    "linux": 49,
+    "skips": 0
+  },
+  "source_qualification": {
+    "source_commit": "138bb1529a95292e15e9586675c40b684ffa6d88",
+    "qeli_tree": "be0c68873164449c9abf965e760780c499d305ff",
+    "inputs": 902,
+    "scope": "same qualified artifact; executable package unchanged; no independent reproducibility claim"
+  }
+}
