@@ -52,6 +52,11 @@ roaming_netns_private_run() {
   # places ip-netns per-namespace hosts files in private, memory-backed storage.
   mount --make-rprivate / || return 2
   mount -t tmpfs -o mode=755 tmpfs /run || return 2
+  # Unix socket addresses have a kernel length limit. Keep control paths short
+  # even when the retained WORK/TMPDIR is deeply nested. /run is private per job.
+  mkdir -m 700 /run/qeli-roaming-control || return 2
+  local ROAMING_CONTROL_SOCKET=/run/qeli-roaming-control/control.sock
+  local ROAMING_SECONDARY_CONTROL_SOCKET=/run/qeli-roaming-control/control-secondary.sock
   mkdir -p /run/qeli-roaming-etc/upper /run/qeli-roaming-etc/work || return 2
   mount -t overlay -o lowerdir=/etc,upperdir=/run/qeli-roaming-etc/upper,workdir=/run/qeli-roaming-etc/work overlay /etc || return 2
   mount -t sysfs -o ro sysfs /sys || return 2

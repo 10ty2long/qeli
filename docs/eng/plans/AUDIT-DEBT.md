@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v130 -->
+<!-- normative-sync: audit-debt-v131 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1302,3 +1302,10 @@ closed competing TCP/UDP namespace cleanup and shared family-switch hosts.
 neighboring processes/config preserved. Only live NAT counters normalized for
 structural comparison, raw retained. No new VPN soak claim;
 Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October,F509/Q35-F006:** [Short control sockets and fault matrix](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+actual deep-TMPDIR SUN_LEN fixed with private /run paths;TCP/UDP/bonding/secondary
+consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
+35Linuxscript+7kernelmethods PASS;initial familyFAIL and TCP-only observer
+failure retained. Whole Q35 IN_PROGRESS,30/37DONE81.1%,7remain.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

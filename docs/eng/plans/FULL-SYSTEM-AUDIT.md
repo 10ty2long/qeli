@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v196 -->
+<!-- normative-sync: full-system-audit-v197 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -162,23 +162,26 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 18 | IPv6 off/manual/route/nat66 and NDP | H06, H11 | PASS |
 | 19 | Server and client DNS | H01–H02, H05–H06 | PASS |
 | 20 | DHCP and lease lifecycle | H02, H05 | PASS |
-| 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | IN_PROGRESS |
-| 22 | Transport core, FFI/JNI and memory | H06, H08 | IN_PROGRESS |
-| 23 | Roaming, resume and CONTROL_V2 | H06, H08 | IN_PROGRESS |
+| 21 | TUN/TAP, IP, MTU/PMTU and fragmentation | H06, H08 | DONE/PASS |
+| 22 | Transport core, FFI/JNI and memory | H06, H08 | DONE/PASS |
+| 23 | Roaming, resume and CONTROL_V2 | H06, H08 | DONE/PASS |
 | 24 | Multipath, bonding and shared budgets | H04, H06, H08 | DONE/PASS |
 | 25 | Linux CLI and network recovery | H01, H04, H08 | DONE / PASS |
-| 26 | Shared C# and managed/native boundary | H04, H06, H08 | TODO |
+| 26 | Shared C# and managed/native boundary | H04, H06, H08 | DONE/PASS |
 | 27 | Windows GUI, service and drivers | H01, H04, H08 | DONE / PASS |
-| 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | IN_PROGRESS |
+| 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | IN_PROGRESS |
-| 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | TODO |
-| 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | TODO |
+| 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | IN_PROGRESS |
+| 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | IN_PROGRESS |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Benchmarks and measurement methodology | H07 | TODO |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | TODO |
+
+Table reconciled against section21–23,26,28 completion and open29–31 statuses
+on10October. Earlier checkpoint totals below remain historical.
 
 ## 6. Scenarios for each section
 
@@ -2163,6 +2166,14 @@ compiled ELF reused after318 compiler-input byte checks; no new compilation.
 Logs retained, exact owned root cleaned, lab service/config preserved. Bounded
 integration is complete;30–60min/8h,10k, tasks churn and other Q35 levels remain
 open. Whole section IN_PROGRESS, overall30/37(81.1%),7remain.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 October,F509/Q35-F006:** [Short control sockets and fault matrix](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+actual deep-TMPDIR SUN_LEN fixed with private /run paths;TCP/UDP/bonding/secondary
+consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
+35Linuxscript+7kernelmethods PASS;initial familyFAIL and TCP-only observer
+failure retained. Whole Q35 IN_PROGRESS,30/37DONE81.1%,7remain.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology

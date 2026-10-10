@@ -1,5 +1,5 @@
 # Роуминг клиента: план полной реализации
-<!-- normative-sync: roaming-v50-netns-isolation -->
+<!-- normative-sync: roaming-v51-private-control -->
 
 > Дополнение аудита 23 сентября 2026: Linux route adapter использует owner lease на
 > подключение; cleanup закрывает приём новых мутаций. `dev_attach=true` не предоставляет
@@ -1281,3 +1281,14 @@ CI проверяет `test_roaming_netns_isolation.py` без привилег�
 стенд и проверяет parent namespace identities до создания sentinel-процессов.
 Полная квалификация, реальные kernel проверки и границы наследования описаны в
 [отчёте Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+
+### Control socket и длинный TMPDIR
+
+Linux TCP/UDP runners автоматически размещают control socket в частном
+`/run/qeli-roaming-control/control.sock` (каталог0700); TCP secondary использует
+`control-secondary.sock` в том же каталоге. Это сохраняет короткий Unix адрес
+при длинном TMPDIR/WORK. Soak stats и bonding control API используют тот же
+путь. Изоляция обязательна: одинаковые socket names соседних запусков принадлежат
+разным mount/PID namespaces. Каталог /run и sockets исчезают с запуском; WORK
+с INI и журналами сохраняется в TMPDIR для анализа. Передавать control socket
+через WORK больше не требуется. [Проверка F509](../reports/AUDIT-Q34-RELEASE-SOAK.md).

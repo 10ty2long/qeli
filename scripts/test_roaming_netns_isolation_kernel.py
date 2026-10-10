@@ -78,6 +78,13 @@ roaming_netns_isolate "${BASH_SOURCE[0]}" "$@" || exit 2
 set -e
 mode=$1
 out=$2
+python3 -B -c 'import socket,sys,time;from pathlib import Path;s=socket.socket(socket.AF_UNIX);s.bind(sys.argv[1]);s.listen();Path(sys.argv[2]).write_text(sys.argv[1]);time.sleep(120)' "$ROAMING_CONTROL_SOCKET" "$out/socket-ready" &
+for i in $(seq 1 100); do
+  if [ -f "$out/socket-ready" ]; then break; fi
+  sleep 0.02
+done
+test -f "$out/socket-ready"
+test "$(stat -c %a /run/qeli-roaming-control)" = 700
 ip netns add qrm-cli
 ip netns add qru-cli
 ip link add qrm-a type veth peer name qrm-ar
@@ -158,6 +165,8 @@ exit 38
     def test_parallel_identical_names_have_distinct_namespaces(self):
         one, out1, first = self.start("one")
         two, out2, second = self.start("two")
+        self.assertEqual((out1 / "socket-ready").read_text(), "/run/qeli-roaming-control/control.sock")
+        self.assertEqual((out2 / "socket-ready").read_text(), (out1 / "socket-ready").read_text())
         for kind in ("mnt", "net", "pid"):
             self.assertNotEqual(first["ids"][kind], second["ids"][kind])
             self.assertNotEqual(first["ids"][kind], os.readlink("/proc/self/ns/" + kind))

@@ -26,7 +26,7 @@ run_tcp_soak_case() {
   source "$process_probe"
   tcp_roaming_stats() {
     local line
-    line=$(python3 "$stats_helper" "$WORK/control.sock" roam tcp \
+    line=$(python3 "$stats_helper" "$ROAMING_CONTROL_SOCKET" roam tcp \
       attempts_total commits_total failures_total grace_expired_total active_sessions \
       orphaned_sessions orphaned_bytes) || return
     IFS=$'\t' read -r TCP_ATTEMPTS TCP_COMMITS TCP_FAILURES TCP_GRACE TCP_SESSIONS \

@@ -1,6 +1,6 @@
 # Q34/Q25 — память при 100 release handover
 
-<!-- normative-sync: audit-q34-release-soak-v4 -->
+<!-- normative-sync: audit-q34-release-soak-v5 -->
 Исторический checkpoint24сентября; статусы долгов ниже относятся к той дате. Текущий [реестр](../plans/AUDIT-DEBT.md) учитывает последующие закрытия; новый Q35 scope приведён в конце.
 
 
@@ -215,3 +215,73 @@ source-binding отказы сохранены; они не названы ре�
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 Q35-V001 evidence: q35-runtime-isolation-20261010; SEALED 68 files / 15738597 bytes; manifest SHA256 02427686f08ea2ce22fcdfea86f3f52c5af979101d9d0a015ef93874a33722a2.
+
+## Q35: отказы, конкуренция и короткие control sockets, 10 октября 2026
+
+F509 / Q35-F006: control socket TCP/UDP runner зависел от длины WORK/TMPDIR.
+При глубоком каталоге family-switch серверный worker действительно завершался
+с `path must be shorter than SUN_LEN`; исходная сессия не устанавливалась.
+Исходный отказ и журналы respawn/client сохранены. Это ограничение адреса
+Unix socket, не дефект IPv6 handover или авторизации. Runner теперь использует
+`/run/qeli-roaming-control/control.sock` и отдельный `control-secondary.sock`.
+Каталог mode0700 создаётся после private tmpfs /run, поэтому фиксированные
+короткие имена принадлежат только своему запуску. TCP/UDP soak counters и
+bonding set-bandwidth/disable-user используют тот же путь; WORK с журналами
+сохраняется в заданном TMPDIR. Правка не меняет ядро или пользовательские INI.
+
+На настоящем release ELF SHA98335046 (318точных Cargo/src inputs, как Q35-V001)
+выполнены **14 case executions / 320 assertions**, без отказов, за**331.95с**,
+в7парах с максимум2одновременными case. Для каждой пары сохранён live /proc
+snapshot двух аутентифицированных client/worker групп с разными PID namespaces.
+Повтор использует ещё более длинные WORK-пути, включая family-switch. Native и
+SDK сборки не повторялись. Точный исходный архив переиспользован по SHA,
+новой локальной копии бинарника/14МБ TAR нет; changed scripts проверены отдельно.
+
+| Case execution | PASS assertions | FAIL |
+|---|---:|---:|
+| tcp-success-a | 20 | 0 |
+| tcp-success-b | 20 | 0 |
+| tcp-resume | 20 | 0 |
+| udp-rollback | 23 | 0 |
+| tcp-grace-expiry | 19 | 0 |
+| udp-commit-race | 28 | 0 |
+| tcp-starvation | 19 | 0 |
+| udp-supersede | 28 | 0 |
+| udp-family-switch | 35 | 0 |
+| udp-loss-replay | 21 | 0 |
+| tcp-soak-smoke | 16 | 0 |
+| udp-soak-smoke | 17 | 0 |
+| tcp-bonding | 26 | 0 |
+| tcp-multinode | 28 | 0 |
+
+Soak здесь — **3переключения/sample1** TCP и QUIC для проверки control consumers,
+без объявления нового bounded100 или полного10k endurance. Bonding проверяет
+настоящие bandwidth/revoke вызовы, multinode — вторую службу/отдельный socket.
+Другие cases проверяют TCP reset/resume, full-AUTH после истечения grace,
+carrier starvation, UDP rollback/supersede/platform commit race, потерю challenge/
+commit с retry/replay и два family commits IPv4↔IPv6. На ядре выполнены7методов
+изоляции, включая два одновременных Unix listeners с одинаковым коротким путём;
+35Linuxscriptmethods без skips. Core/native/CI evidence неизменённых inputs
+наследуется с проверкой SHA; документы проходят9проверок.
+
+Первый внешний наблюдатель принимал только TCP `connected on profile`, поэтому
+не регистрировал UDP `authenticated on profile`. Оба реальных маркера теперь
+проверяются. Первый запуск сохранил9успешных cases, SUN_LEN/timeout family-switch
+и общий exit1; он не переписан в PASS. Ранний read-only retry отказал до изменений,
+поскольку первый запуск ещё не завершился. Повтор после исправлений проверил
+все14cases и все7concurrent snapshots. Проблемы внешнего наблюдателя отделены от
+F509 в исходниках runner. Все первоначальные журналы остаются в evidence.
+
+Собственные generated files сохранены до exact-set/type/SHA/proc/fd/argv/mount
+проверок и очистки; отсутствие root подтверждено. Рабочая служба777/845/CLI75bc,
+маршруты, links, firewall rules, sysctl, mounts и hosts/resolver сохранены.
+Только builtin packet/byte counters нормализуются для структурного сравнения;
+raw snapshots/diff остаются. .10не использовалась; пакеты хоста не менялись.
+
+Q35 остаётся IN_PROGRESS: эти14case executions не закрывают полный failure
+injection каждого acquire/apply/save, длительный30–60мин/8ч,10k, непрерывные
+RSS/tasks пики или весь DoS/fuzz объём. Итог30/37DONE81,1%,7разделов остаётся;
+Q29/Q30/Q31/F459/D06/USER_EXCLUDED ограничения сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F509 evidence: q35-fault-concurrency-20261010; SEALED 486 files / 2884066 bytes; manifest SHA256 bbc5177343dd68a617e36a48929f6afd9b3dfd6d103329e4fc30ab0feb285c6a.
