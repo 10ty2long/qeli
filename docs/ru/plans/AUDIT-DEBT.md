@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v131 -->
+<!-- normative-sync: audit-debt-v132 -->
 
 Дата текущей сверки: 10 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1438,3 +1438,5 @@ TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
 7liveconcurrent snapshots,35Linuxscript+7kernelmethods PASS; первый family
 FAIL и ошибка TCP-only наблюдателя сохранены. Общий Q35 IN_PROGRESS,
 30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, Q35 fuzz фрагментов:** [отчёт](../reports/AUDIT-Q35-FRAGMENT-FUZZ.md): усилены два target, 246 813 настоящих ASan запусков PASS; исходные ошибки тестовой обвязки сохранены. Q35 IN_PROGRESS, 30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

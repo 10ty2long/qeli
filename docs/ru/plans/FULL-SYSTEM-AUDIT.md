@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v197 -->
+<!-- normative-sync: full-system-audit-v198 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2574,3 +2574,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 соседние процессы/настройки сохраняются. Только живые NAT-счётчики нормализованы
 в структурном сравнении, raw сохранён. Новый VPN-soak не заявляется;
 Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, Q35 fuzz фрагментов:** [отчёт](../reports/AUDIT-Q35-FRAGMENT-FUZZ.md): усилены два target, 246 813 настоящих ASan запусков PASS; исходные ошибки тестовой обвязки сохранены. Q35 IN_PROGRESS, 30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

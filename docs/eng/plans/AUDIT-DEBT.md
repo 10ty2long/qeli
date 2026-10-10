@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v131 -->
+<!-- normative-sync: audit-debt-v132 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1309,3 +1309,5 @@ consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
 35Linuxscript+7kernelmethods PASS;initial familyFAIL and TCP-only observer
 failure retained. Whole Q35 IN_PROGRESS,30/37DONE81.1%,7remain.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October, Q35 fragment fuzz:** [report](../reports/AUDIT-Q35-FRAGMENT-FUZZ.md): two targets strengthened, 246,813 actual ASan runs PASS; original harness failures retained. Q35 IN_PROGRESS, 30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
