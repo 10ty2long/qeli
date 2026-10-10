@@ -9,6 +9,66 @@
 сверены до/после сборки. Это квалификация происхождения конкретного CLI,
 не доказательство воспроизводимости двух независимых сборок.
 
+## Потери TCP downlink и реальный mux — 10 октября 2026
+
+**Q36-F010:** закрыт пробел наблюдаемости receive→TUN, оставленный в Q36-F009.
+Ядро считает mux pool refusal, Full и Disconnected в `stats.tcp_downlink_drops`;
+[точная семантика](../manuals/OPERATIONS.md#потери-tcp-при-передаче-в-tun).
+Raw и mux ветви используют отдельный счётчик от uplink. Сохраняются прежние
+буферы и policy: Full продолжает обработку, Disconnected завершает receive-задачу.
+Остаток записи после остановки, management, invalid/unsupported, decode errors
+и сетевые потери вне этого счётчика. OS write drops измерены существующим
+`udp_drops_tun_write`: это shared writer и для TCP, несмотря на историческое имя.
+C ABI/GUI stats не расширялись; `rx_packets/rx_bytes` до enqueue не доказывают
+доставку в устройство, а mux pool refusal не увеличивает эти rx counters.
+
+Пять новых Rust-тестов PASS: raw/mux Full и Disconnected, возврат всех слотов,
+mux pool refusal/recovery без rx overcount, исключение пустых/неподдерживаемых
+входов и сумма трёх причин. Вызвана настоящая receive-функция и SyncSender,
+не модель её поведения. Release jemalloc, rustfmt и оба Clippy gate PASS,
+включая минимальную transport-core-ffi. 916 source inputs сверены до/после
+сборки; CLI SHA `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`. Прежний staged .11 CLI восстановлен
+по SHA. Это один квалифицированный артефакт, не независимая воспроизводимость.
+Первый runtime driver отклонён до измерений из-за старой profile-метки;
+квитанция и логи сохранены, namespaces очищены до повторного запуска.
+
+[Диагностический JSON](../../../release/benchmark_v0.8.2_2026-10-10_client_downlink.json): тот же фиксированный старый
+сервер `7769f43c`, текущий клиент; IPv4 inner/outer, P=1, MTU1400/1500.
+Три новые сессии на plain raw, real TLS raw и plain mux. Для mux серверный
+INI требует `obf.recordizer.policy = required`, обе status точки подтверждают
+`packet_mux_v1`; raw точки подтверждают `legacy_packet_per_record`.
+В каждой сессии два 8-секундных bidir окна: unlimited/250 Мбит/с на направление,
+порядок лимитов меняется. 18 фаз/72 raw JSON; медиана [min–max], Мбит/с:
+
+| Carrier | Client | Target Mbps/direction | ↑ Mbps median [min–max] | ↓ Mbps median [min–max] | Downlink drops total median [min–max] |
+|---|---|---:|---:|---:|---:|
+| tcp-plain-raw | new | unlimited | 29.2 [25.4–31.7] | 526.3 [489.8–527.8] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | new | 250 | 250.0 [248.3–250.0] | 249.8 [249.8–249.8] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | unlimited | 401.3 [180.5–462.5] | 734.9 [713.6–960.8] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | 250 | 249.8 [249.8–249.9] | 249.9 [249.7–249.9] | 0.0 [0.0–0.0] |
+| tcp-plain-mux | new | unlimited | 817.6 [810.4–818.7] | 1066.4 [1062.4–1125.5] | 0.0 [0.0–0.0] |
+| tcp-plain-mux | new | 250 | 249.7 [249.6–249.7] | 249.8 [249.7–249.9] | 0.0 [0.0–0.0] |
+
+В этой серии unlimited-медианы plain raw составляют 29.2/526.3,
+а plain mux — 817.6/1066.4 Мбит/с.
+Это scoped наблюдение о зависимости от упаковки записей, а не установление
+точной причины, общего выигрыша на всех workload или основание менять defaults.
+
+Максимальные phase deltas: uplink=0,
+downlink=0, OS writer=0.
+Это достигнутые счётчики, не доказательство отсутствия всех потерь/очередных
+задержек/ACK starvation. Runtime статус семплируется раз в 2 с, before/after
+включают по 3 с стабилизации. Повторно проверены raw receiver/bitrate/cookie,
+PID/CPU policy/MTU, CPU/RSS, kernel/server deltas, generation и монотонность
+обоих клиентских счётчиков и позднего writer counter.
+
+Host gate: 10.66.116.10: FAIL iptables4,legacy4; 10.66.116.11: restored. FAIL сохраняется, статус DIAGNOSTIC_MEASUREMENTS_ONLY.
+Оба собственных roots SHA-архивированы/удалены; metadata текущих Cargo units
+сохранены и адресно инвалидированы, прежний CLI и активные службы сохранены.
+Пакет `audit-debt-20260924/q36-client-downlink-20261010/`.
+Причина асимметрии/UDP-bidir/IPv6/latency/auth-rate и полный Q35 8 ч soak OPEN;
+Q36 IN_PROGRESS,30/37 DONE (81,1%).
+
 ## Клиентские потери и сравнение TCP-клиентов — 10 октября 2026
 
 **Q36-F009:** TCP distributor молча отбрасывал пакеты при отказе пула,

@@ -9,6 +9,65 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
+## TCP downlink losses and actual mux — 10 October 2026
+
+**Q36-F010:** closes the receive-to-TUN observability gap left in Q36-F009.
+Core records mux pool refusal, Full and Disconnected in stats.tcp_downlink_drops;
+[exact semantics](../manuals/OPERATIONS.md#tcp-losses-at-tun-handoff).
+Both raw/mux branches use a separate counter from uplink. Buffers and policy
+are unchanged: Full continues processing, Disconnected ends the receive task.
+Remaining records after stop, management, invalid/unsupported packets, decode
+errors and network losses are outside this counter. Later OS write drops were
+measured through udp_drops_tun_write, a shared writer also used by TCP despite
+its historical name. C ABI/GUI stats remain unchanged; rx_packets/rx_bytes before
+enqueue do not establish device delivery, and mux pool refusal does not add rx.
+
+Five new Rust tests PASS: raw/mux Full and Disconnected with all slots returned,
+mux pool refusal/recovery without rx overcount, exclusion of empty/unsupported
+input, and the three-reason sum. Tests call the actual receive function and
+SyncSender. Release jemalloc, rustfmt and both Clippy gates PASS, including
+minimal transport-core-ffi. All 916 inputs match before/after build; CLI SHA
+`238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`. The earlier staged .11 CLI was SHA-restored.
+This qualifies one artifact, not independent build reproducibility.
+The first runtime driver refused before measurements due to a stale profile
+label; receipt/logs are retained, and namespaces were cleaned before retry.
+
+[Diagnostic JSON](../../../release/benchmark_v0.8.2_2026-10-10_client_downlink.json): fixed older server 7769f43c,
+current client, IPv4 inner/outer, P=1, MTU1400/1500. Three fresh sessions per
+plain raw, real TLS raw and plain mux. Mux server INI requires
+obf.recordizer.policy = required; both status points confirm packet_mux_v1;
+raw points confirm legacy_packet_per_record. Each session has two 8-second
+bidir windows, unlimited/250 Mbps per direction, with rotating rate order.
+18 phases/72 raw JSON; median [min–max], Mbps:
+
+| Carrier | Client | Target Mbps/direction | ↑ Mbps median [min–max] | ↓ Mbps median [min–max] | Downlink drops total median [min–max] |
+|---|---|---:|---:|---:|---:|
+| tcp-plain-raw | new | unlimited | 29.2 [25.4–31.7] | 526.3 [489.8–527.8] | 0.0 [0.0–0.0] |
+| tcp-plain-raw | new | 250 | 250.0 [248.3–250.0] | 249.8 [249.8–249.8] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | unlimited | 401.3 [180.5–462.5] | 734.9 [713.6–960.8] | 0.0 [0.0–0.0] |
+| tcp-reality-tls | new | 250 | 249.8 [249.8–249.9] | 249.9 [249.7–249.9] | 0.0 [0.0–0.0] |
+| tcp-plain-mux | new | unlimited | 817.6 [810.4–818.7] | 1066.4 [1062.4–1125.5] | 0.0 [0.0–0.0] |
+| tcp-plain-mux | new | 250 | 249.7 [249.6–249.7] | 249.8 [249.7–249.9] | 0.0 [0.0–0.0] |
+
+In this series, unlimited plain raw medians are 29.2/526.3,
+versus 817.6/1066.4 Mbps for plain mux.
+This is a scoped record-packing observation, not proof of the precise cause,
+a universal workload gain or a reason to change defaults.
+
+Maximum phase deltas: uplink=0,
+downlink=0, OS writer=0.
+These are reached counters, not proof of zero total loss, waiting or ACK
+starvation. Status samples every 2 seconds, with 3-second settling before/after.
+Raw receiver/bitrate/cookie, PID/CPU policy/MTU, CPU/RSS, kernel/server deltas,
+generation and both client counter monotonicity were revalidated.
+
+Host gate: 10.66.116.10: FAIL iptables4,legacy4; 10.66.116.11: restored. FAIL remains; status DIAGNOSTIC_MEASUREMENTS_ONLY.
+Both owned roots were SHA-archived/removed; current Cargo metadata was backed
+up and selectively invalidated. The earlier CLI and active services were
+preserved. Evidence: audit-debt-20260924/q36-client-downlink-20261010/.
+Exact asymmetry cause/UDP-bidir/IPv6/latency/auth-rate and the full Q35 8-hour
+soak remain OPEN; Q36 IN_PROGRESS,30/37 DONE (81.1%).
+
 ## Client drops and TCP client comparison — 10 October 2026
 
 **Q36-F009:** the TCP distributor silently discarded packets on pool refusal,

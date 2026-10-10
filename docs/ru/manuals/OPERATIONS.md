@@ -627,6 +627,29 @@ schema 1. Layout C ABI и GUI-статистика не расширяются. 
 `RcvbufErrors` измеряют другие места. [Проверки и границы](../reports/BENCHMARK.md).
 <!-- normative-sync: manual-tcp-uplink-drops-v1 -->
 
+## Потери TCP при передаче в TUN
+
+В Linux status `stats.tcp_downlink_drops` считает отказы handoff после получения
+и расшифровки TCP-записи: `pool_exhausted` — отказ пула для восстановленного mux
+пакета, `queue_full` — заполненная очередь TUN, `disconnected` — закрытая очередь.
+`total` вычисляется из причин одного снимка. Full учитывает один пакет и разрешает
+дальнейшую обработку; Disconnected учитывает пакет и останавливает receive-задачу.
+В raw-режиме используется уже полученный pooled buffer, поэтому отдельного
+получения слота в этой функции нет. Mux считает достигнутые попытки передачи
+по восстановленным пакетам, а не целую запись. После Disconnected оставшиеся
+пакеты записи уже не обрабатываются и в этот счётчик не входят. Пустые, management,
+неподдерживаемые пакеты и ошибки decode также не входят в handoff counters.
+
+После успешного получения буфера `rx_packets`/`rx_bytes` увеличиваются до enqueue:
+их рост не подтверждает запись в устройство. При mux pool refusal они не растут.
+Счётчики uplink/downlink независимы и сбрасываются с новой runtime generation;
+проверяйте `generation` и свежесть `updated_at_ms`, sampler имеет период две секунды.
+Layout C ABI и GUI-статистика не расширяются. Это не счётчик ACK/retransmit или
+общих сетевых потерь. Поздние OS write drops учитывает существующий shared writer
+counter `udp_drops_tun_write`: историческое имя также покрывает TCP-запись в TUN.
+[Проверки и границы](../reports/BENCHMARK.md).
+<!-- normative-sync: manual-tcp-downlink-drops-v1 -->
+
 ## Файлы идентичности Linux-клиента
 
 `/var/lib/qeli/device-id` (`QELI_DEVICE_ID_FILE`) читается один раз до подключения.
