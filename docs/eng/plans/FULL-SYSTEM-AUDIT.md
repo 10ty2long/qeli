@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v200 -->
+<!-- normative-sync: full-system-audit-v201 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2567,3 +2567,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **10 October, Q35 extended roaming:** [report](../reports/AUDIT-Q35-LONG-SOAK.md): TCP fake-TLS and UDP QUIC ran concurrently for 900 switches each, with 1850.9 seconds elapsed and 1835.9 seconds of verified simultaneous live activity across 368 full process samples. Both scenarios passed without failures; RSS/threads/fds/sockets stayed within predeclared budgets. Service and host firewall structure were preserved; the owned test root was deleted after SHA backup. Full release endurance/eight hours/other adapters remain open. Q35 IN_PROGRESS,30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October,F511/Q35-F009:** [Client INI and qeli:// fuzz](../reports/AUDIT-Q35-CLIENT-CONFIG-FUZZ.md): added canonical reparse invariants for successful inputs and structured IPv4/IPv6/roaming/password-link cases. Pinned ASan:18,494 runs/61s, seven seeds, zero new crash artifacts;701 corpus files and723 evidence files SHA preserved. Initial local harness error retained; own root cleaned, service777/845 unchanged. One target, not complete nightly/DoS. Q35 IN_PROGRESS,30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October,F512/Q35-F010:** [Release-soak admission](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): old gate falsely passed in0.064s with eight silent children. It now requires eight phase results, final TCP10k/UDP10k+3×1k checkpoints and28800s on a monotonic clock. Seven Linux contract tests and Bash syntax PASS; silent child/missing checkpoint/eight hours minus1ns refuse. Actual eight-hour VPN soak remains OPEN,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

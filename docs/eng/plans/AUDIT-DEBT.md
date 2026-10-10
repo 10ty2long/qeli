@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v134 -->
+<!-- normative-sync: audit-debt-v135 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1315,3 +1315,5 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 **10 October, Q35 extended roaming:** [report](../reports/AUDIT-Q35-LONG-SOAK.md): concurrent real TCP/UDP VPN runs of 900 cycles each; 1835.9 seconds of verified simultaneous activity, 368 full process samples, all resource budgets PASS. Complete host snapshots retained and owned root removed after SHA backup. This is local qualification; full release endurance/eight hours remain open. Q35 IN_PROGRESS;30/37 DONE,7 remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October,F511/Q35-F009:** [Client INI/qeli:// fuzz](../reports/AUDIT-Q35-CLIENT-CONFIG-FUZZ.md): stable serialization invariants;18,494 ASan runs PASS,701 final corpus files,723 SHA-verified evidence files; first local collector refusal retained. Owned root removed,service/host preserved. Whole Q35 remains open,30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October,F512/Q35-F010:** [Release-soak false PASS](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): silent children previously produced PASS in0.064s; eight verified results, final10k/10k+3×1k checkpoints and28800s now required. Seven Linux/Bash checks PASS; owned root removed,service preserved. Actual eight-hour run remains open,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
