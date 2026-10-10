@@ -1,14 +1,98 @@
 # qeli load testing
 
-The latest structured measurement is **qeli 0.8.2, 3 October 2026**:
+The latest structured measurement is **qeli 0.8.2, 10 October 2026**:
 [canonical JSON](../../../release/benchmark_results.json) and
-[dated snapshot](../../../release/benchmark_v0.8.2_2026-10-03_isolated_12modes.json).
-Tested release SHA-256: `09af8fb0412acafa05aed669bfd1e754a077e607aabc146c13e3f8e43e6add45`.
-12 modes were measured in one sweep; `recordizer=off`, TCP `P=1`.
-**This is a measurement result, not proof of no regression or certification.**
-The previous [0.8.0 run](../../../release/benchmark_v0.8.0_2026-08-26_combined_12modes.json)
-is retained; the 0.7.x sections and detailed 0.6.0 tables below are historical.
+[dated snapshot](../../../release/benchmark_v0.8.2_2026-10-10_repeated_12modes.json).
+Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e` was built from committed package
+`138bb152` (the same source tree as dev `b8019df4`), Rust 1.97.0,
+`--offline --locked --release --features jemalloc`; all 902 input files matched
+before/after compilation. This qualifies this CLI artifact's source provenance,
+not reproducibility across two independent builds.
 
+## Repeated current-candidate measurement — 10 October 2026
+
+Three separate sweeps each P=1/P=4, alternating and sequential:
+72 modes, 192 tunnel and 18 baseline phases. All 210 raw iperf phases were
+revalidated; tunnel phases also retain CPU/RSS and counter evidence. All 600
+input JSON files have SHA identities. Two 2-vCPU VMs, Linux 6.12.105, iperf 3.18,
+recordizer=off, IPv4 inner/outer. TUN MTU 1400/IPvlan 1500, affinity 0-1, nice 0;
+VM governor is explicitly `UNAVAILABLE`. No compilation overlapped measurement.
+Every process sample retains background load and steal; physical VM-host
+performance and its governor are not qualified by these measurements.
+
+Below: **median [min–max] of three repeats**, Mbps; loss is percent.
+All observations, including outliers, remain in the population. P controls inner
+TCP streams; UDP 100/500 use the same offered rate in both populations.
+
+| Mode | P1 TCP up | P1 TCP down | P4 TCP up | P4 TCP down |
+|---|---:|---:|---:|---:|
+| tcp-plain-raw | 440.7 [431.4–447.4] | 544.8 [543.7–551.5] | 493.0 [465.5–532.8] | 541.2 [532.9–553.4] |
+| tcp-faketls | 444.7 [443.4–471.3] | 528.8 [527.7–541.6] | 465.6 [457.1–490.1] | 558.7 [542.8–620.2] |
+| tcp-padding | 454.9 [373.7–464.7] | 548.6 [532.9–562.6] | 502.2 [489.9–511.9] | 540.8 [540.3–562.8] |
+| tcp-frag | 464.2 [427.3–474.6] | 552.7 [550.7–554.7] | 475.2 [456.6–521.4] | 565.3 [535.5–566.8] |
+| tcp-obfs | 409.2 [404.0–419.9] | 578.0 [569.8–595.4] | 461.4 [453.1–463.5] | 571.7 [569.7–587.2] |
+| tcp-reality | 461.7 [423.6–476.3] | 533.6 [532.2–535.7] | 451.6 [441.4–472.6] | 575.5 [552.9–576.9] |
+| tcp-reality-tls | 937.2 [932.6–949.5] | 955.4 [936.4–956.3] | 919.5 [918.4–920.7] | 1027.9 [1003.7–1044.2] |
+| udp-faketls | 546.6 [542.4–552.3] | 963.2 [960.9–1000.2] | 498.7 [482.3–505.7] | 978.8 [977.6–979.8] |
+| udp-padding | 566.1 [531.6–588.8] | 972.4 [964.4–1031.6] | 563.8 [530.3–563.9] | 967.0 [908.3–983.6] |
+| udp-quic | 543.4 [510.0–552.1] | 975.7 [949.4–985.8] | 541.1 [521.2–543.9] | 943.5 [920.0–952.2] |
+| tcp-obfs-awg | 429.1 [424.1–436.4] | 577.6 [558.9–586.6] | 466.0 [444.5–470.5] | 574.4 [542.1–595.1] |
+| udp-faketls-awg | 550.0 [522.1–558.5] | 988.5 [980.9–1021.8] | 523.2 [507.1–528.1] | 956.2 [954.5–987.5] |
+
+| Mode | P1 UDP100 | P4 UDP100 | P1 UDP500 | P4 UDP500 | P1 loss500 % | P4 loss500 % |
+|---|---:|---:|---:|---:|---:|---:|
+| udp-faketls | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 475.8 [400.5–480.6] | 453.3 [453.2–497.9] | 4.5 [3.8–19.9] | 9.0 [0.4–9.3] |
+| udp-padding | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 483.9 [477.4–485.5] | 465.3 [458.8–492.0] | 3.0 [2.7–4.5] | 6.6 [1.6–8.0] |
+| udp-quic | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 485.7 [485.5–488.2] | 478.8 [451.9–492.2] | 2.9 [2.2–2.9] | 3.9 [1.5–9.5] |
+| udp-faketls-awg | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 442.9 [420.8–467.2] | 480.0 [464.3–498.7] | 11.3 [6.4–15.7] | 3.7 [0.2–7.1] |
+
+TCP baseline medians: P1 24914.3 up / 25024.8 down Mbps;
+P4 30183.4 up / 30327.0 down. Maximum phase-average server/client CPU
+130.5/146.0%; sampled RSS peak 136.9/56.9 MiB. Maximum guest steal
+2.10/1.18%. UDP 100 loss is 0% across all repeats. Under P4 TCP download,
+server-session drops reached 4065; kernel RcvbufErrors reached 206 for
+QUIC and 1389 for fake-TLS+AWG. Goodput includes this behavior; losses
+are not declared fixed or a proven regression.
+
+`AGGREGATED` denotes a comparable measurement population. No regression threshold
+or repeated old-binary A/B was applied; the previous single
+[3 October measurement](../../../release/benchmark_v0.8.2_2026-10-03_isolated_12modes.json)
+remains historical. UDP 500 loss is not declared a loss-free PASS.
+
+The six primary sweeps retain matching core snapshots and available
+iptables compatibility dumps; they do not fully qualify opaque nft/legacy
+policies. The wrapper originally also compared timestamps, live chain
+counters and stderr-diagnostic position; its original FAIL remains retained.
+Revalidation normalizes only those metadata fields, retaining every rule.
+
+**Q36-F005:** the runner now captures IPv4/IPv6, default/legacy/nft iptables,
+complete nft JSON, resolver, namespaces, boot ID and live-service PID/SHA.
+Time headers for all save variants and live counters normalize; policies,
+rules, order, nft handles and diagnostic multiplicity remain. Empty archived
+core snapshots and missing backends refuse. 35 Windows/35 Linux methods PASS.
+Actual TCP Reality TLS + UDP QUIC, 9 phases, returned COMPLETED and matching
+snapshots of every backend before/after.
+
+The longer outer wrapper for that confirmation remains FAIL: the existing
+.10 vpn-obfuscated/vpn-nat cycle changes three legacy rules for
+vpn0/10.8.0.0/24. Both script SHA match the 3 October observation; the current
+journal confirms the cycle. This is a shared-lab limitation, not complete
+host immutability or an outer-wrapper PASS. The general runner has no rule
+exception; services were not stopped. The initial new-harness nft-save
+timestamp refusal is retained separately.
+
+All 18 owned remote roots were SHA-archived and removed after inode/file/
+process/mount-reference checks. Cleanup accounts separately for exactly those
+three known external rules after rechecking owner SHA; every other field
+matched. The old staged CLI remains; temporary-build Cargo metadata was
+archived and invalidated.
+
+Build receipt, six raw directories, tables and cleanup receipt:
+`audit-debt-20260924/q36-repeat-methodology-20261010/`. The general runner still
+records `binary_source_provenance=UNVERIFIED`: the external build receipt separately
+binds this measurement SHA to 902 committed inputs without changing retained raw.
+**Q36 IN_PROGRESS:** bidir, inner/outer IPv6, p50/p95/p99 and auth-rate remain OPEN;
+the full 8 h Q35 soak is also open. Overall 30/37 DONE (81.1%) is unchanged.
 
 ## Final D15 measurement — 3 October 2026
 
@@ -83,8 +167,8 @@ values. TCP requires `sum_sent.retransmits`; UDP requires loss percentage
 and jitter. A missing receiver summary can no longer fall back to `end.sum`,
 which may represent sender bytes. The direct baseline uses the same rule.
 Five positive/negative unit tests pass, and all 35 archived raw iperf files
-from the 3 October sweep pass the stricter admission. This change has not
-measured throughput on current dev; Q36 remains in progress.
+from the 3 October sweep pass the stricter admission. The admission fix itself does not measure throughput; the six-sweep
+current series is described above. Q36 remains in progress.
 
 ### Repeats and measurement provenance — Q36-F003/F004, 10 October
 
@@ -127,8 +211,9 @@ sampling was checked separately; test populations are synthetic throughput
 fixtures. Both VMs are accessible: the earlier refusal came from `getpass` in
 the Windows PTY; stdin delivery of the same password restored SSH. The `.11`
 services retained PID 777/845 and binary SHA; the owned test root was removed
-after SHA/inode checks. Q36 remains `IN_PROGRESS`: current build qualification,
-actual >=3 repeats, bidirectional/IPv6 and latency/auth-rate measurements remain.
+after SHA/inode checks. Current build qualification and three full sweeps
+each P=1/P=4 are described above. Q36 remains `IN_PROGRESS`: bidirectional/IPv6
+and latency/auth-rate measurements remain open.
 
 Historical [benchmark.py](../../../scripts/benchmark.py) stops services,
 uses host-wide `pkill`, replaces binaries and the resolver file. It now
@@ -139,8 +224,8 @@ no current workflow calls it, it contained embedded credentials, and it also
 changed production firewall/VPN state. Ordinary invocation of the two
 remaining host-wide scripts exits with code 2 before credentials or SSH;
 a subprocess test checks that refusal. Old results remain historical. On
-10 October, the initial SSH refusal was explained above; no new Q36
-throughput measurements have been run yet.
+10 October, the initial SSH refusal was explained above; the subsequent
+current Q36 measurement series is described at the top of this report.
 
 ## Current 0.8.2 measurement — 1 October 2026
 

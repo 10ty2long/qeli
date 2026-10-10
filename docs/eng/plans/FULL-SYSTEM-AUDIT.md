@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v204 -->
+<!-- normative-sync: full-system-audit-v205 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2200,7 +2200,8 @@ P=4/IPv6/bidirectional matrix remain open; 30/37 DONE (81.1%).
 before SSH or host-state mutation, as `benchmark.py` already did. Unused
 `perf_combined_load.py`, with embedded credentials and production firewall
 changes, was removed. One subprocess test covers the two remaining refusals;
-new measurements on `.10` are pending after SSH authentication failed.
+the initial `.10` SSH refusal was later traced to getpass/PTY credential
+delivery; stdin restored access.
 
 **Q36-F003/F004:** [repeat methodology](../reports/BENCHMARK.md): binary
 provenance is distinct from the local checkout; P=4, governor/affinity/load,
@@ -2209,9 +2210,12 @@ report requires >=3 separate windows, identical conditions and revalidation of
 raw iperf/process/counters; duplicates, incomplete populations and mismatches
 refuse admission without discarding outliers.24 Windows/24 Linux methods PASS;
 actual Linux sampler/governor PASS. Both VMs are accessible through stdin; the
-earlier getpass/PTY refusal did not imply a changed password. Actual throughput
-repeats/current build/bidirectional/IPv6/latency/auth remain OPEN; Q36 IN_PROGRESS,
+earlier getpass/PTY refusal did not imply a changed password. Throughput repeats,
+current build/bidirectional/IPv6/latency/auth were still OPEN at this methodology
+stage; subsequent build/repeat qualification follows below. Q36 IN_PROGRESS,
 overall 30/37 DONE81.1%.
+
+**10 October, current Q36 CLI:** [repeat measurement](../reports/BENCHMARK.md): SHA `7769f43c` from 902 committed inputs; three independent full sweeps each P=1/P=4, 72 modes/210 phases, 600 raw JSON SHA, median/min/max without removing outliers. Primary core/available dumps match; separate2modes/9phases with every firewall backend PASS. Outer FAIL due to the known vpn-nat cycle retained. Q36-F005 captures all backends, checks structure and refuses empty archived core snapshots;35 Windows/35 Linux methods PASS. Owned roots SHA-archived/cleaned, services preserved. Bidir/IPv6/latency/auth-rate remain OPEN, Q36 IN_PROGRESS, 30/37 DONE (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **Status: IN_PROGRESS.**
 

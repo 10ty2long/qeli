@@ -19,6 +19,7 @@ import uuid
 
 import benchmark as modes
 from benchmark_evidence import counter_deltas, parse_iperf_result
+import benchmark_host_state
 from native_lab import connect_lab
 from native_repro import atomic_write_bytes, source_digest
 
@@ -296,6 +297,7 @@ def main():
         harness_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         configuration_builder_sha256=hashlib.sha256(Path(modes.__file__).read_bytes()).hexdigest(),
         admission_sha256=hashlib.sha256((Path(__file__).parent / 'benchmark_evidence.py').read_bytes()).hexdigest(),
+        host_state_sha256=hashlib.sha256(Path(benchmark_host_state.__file__).read_bytes()).hexdigest(),
         tracked_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=repo_root, text=True).strip()),
         seconds=args.seconds, tcp_parallel=args.tcp_parallel, recordizer='off', hosts=hosts, selected_modes=selected,
         remote_artifact_root=remote,
@@ -305,7 +307,7 @@ def main():
     try:
         server_lab = connect_lab(hosts[0], 'root', password)
         client_lab = connect_lab(hosts[1], 'root', password)
-        before = [host_snapshot(lab) for lab in (server_lab, client_lab)]
+        before = [benchmark_host_state.full_host_snapshot(lab) for lab in (server_lab, client_lab)]
         output['host_before'] = before
         for index, (lab, binary) in enumerate(((server_lab, args.server_bin), (client_lab, args.client_bin))):
             sha = lab.checked('sha256sum ' + binary, 'exact binary SHA').split()[0]
@@ -403,10 +405,10 @@ def main():
                     raise
                 finally:
                     save_results(args.output / 'results.json', output)
-        after = [host_snapshot(lab) for lab in (server_lab, client_lab)]
+        after = [benchmark_host_state.full_host_snapshot(lab) for lab in (server_lab, client_lab)]
         output['host_after'] = after
-        output['host_restored'] = before == after
-        if before != after:
+        output['host_restored'] = [benchmark_host_state.structural_host_snapshot(row) for row in before] == [benchmark_host_state.structural_host_snapshot(row) for row in after]
+        if not output['host_restored']:
             raise RuntimeError('host state changed after benchmark')
         if set(output['modes']) == set(selected) and selected and all(result['status'] == 'COMPLETED' for result in output['modes'].values()):
             output['status'] = 'COMPLETED'
