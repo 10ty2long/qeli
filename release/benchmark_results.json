@@ -18538,5 +18538,10 @@
     "path": "benchmark_v0.8.2_2026-10-11_auth_bursts.json",
     "sha256": "ad5a389802da4bd7a2ceac43deb3a3ecc97b1266cc886a2660f4097cb35b81e7",
     "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
+  },
+  "supplemental_ipv6_carriers": {
+    "path": "benchmark_v0.8.2_2026-10-11_ipv6_carriers.json",
+    "sha256": "e521eda063d592da4ddceda606b4719e845427579102e6bc5d1ed202dc429417",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
   }
 }

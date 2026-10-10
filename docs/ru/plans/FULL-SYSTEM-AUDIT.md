@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v213 -->
+<!-- normative-sync: full-system-audit-v214 -->
 
-**Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -182,11 +182,11 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
-| 36 | Бенчмарки и методика измерения | H07 | TODO |
+| 36 | Бенчмарки и методика измерения | H07 | IN_PROGRESS |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | TODO |
 
-Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31
-10октября. Старые checkpoint-числа далее остаются историческими.
+Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31,35–36
+11октября. Старые checkpoint-числа далее остаются историческими.
 
 ## 6. Сценарии по каждому разделу
 
@@ -2293,8 +2293,16 @@ P2/P3 сохраняются как конкретные задачи, не ис
 неприменимые случаи обоснованы, native/source SHA согласованы, физические сценарии
 подтверждены, benchmark воспроизводим и docs отражают пределы поддержки.
 
-**Ближайшая работа:** закрывать [реестр техдолга](AUDIT-DEBT.md), не открывая новые
-разделы. В D02 остаётся durable namespace identity глобальных записей после crash;
+**Текущая очередь, 11 октября:** завершать Q36 по оставшимся ячейкам и проверкам
+[методики](../reports/BENCHMARK.md); отдельные обязательства Q35 soak и финальная
+сверка Q37 остаются открытыми. Разделы29–31 и34 закрываются по своим оставшимся
+критериям; исключённые пользователем платформы не возвращаются в очередь.
+
+**Историческая очередь на 24 сентября:** [реестр техдолга](AUDIT-DEBT.md) ниже
+завершён 3 октября:14 DONE,D06 ACCEPTED_LIMITATION. Следующий абзац сохраняет
+исходные обязательства того checkpoint, а не текущую очередь.
+
+В D02 остаётся durable namespace identity глобальных записей после crash;
 затем D04 crash recovery и оставшиеся D05/D06 network budgets/resource context.
 Проверки lock/I/O, доверия к каталогу, отдельного kill-switch и Linux route/TUN
 уже выполнены в описанных ниже границах. Runtime-контракты, полная интеграционная
@@ -2627,3 +2635,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **11 октября,Q36-F013:** [unpaced RTT](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 TCP-bidir P1/P4 нагрузок и78 окон/15600 ICMP probes;p50/p95/p99/raw tails/loss/CPU/RSS/drops retained.Конечные counters сохраняются до admission;ping oversend исправлен,original 2FAIL/3partial окна/1inherited baseline retained.68 Windows/68 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Физическое насыщение не доказано;auth-rate/остальные IPv6 сочетания OPEN.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 октября,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 свежих серверных серий,1/4/16 peers TCP/UDP/QUIC;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL и interrupted transfer retained,1partial peer отдельно;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 октября,Q36-F015:** [IPv6 carriers](../reports/BENCHMARK.md):27 новых сессий/108TCP+UDP bidir P1/P4 окон остальных9carriers outer6/inner6,324raw JSON +manifest;core3/direct inherited separately со sealed SHA,все12 теперь покрыты этой парой.916CLI inputs unchanged/no rebuild;73Windows/73Linux previous exact-input checks reused,9docs PASS.2own roots SHA-archived/removed,services preserved,all host gates retained.РеестрQ36 TODO→IN_PROGRESS и историческая debt queue исправлены.Mixed-family/IPv6RTT/fullAUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
