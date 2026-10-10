@@ -64,6 +64,18 @@ class TagTests(GitFixture):
     def test_skip_worktree_source_refused(self):
         self.tag();self.git("update-index","--skip-worktree","qeli/Cargo.toml")
         with self.assertRaisesRegex(ValueError,"Git flags"):gate.admit_tag(self.root,"v0.8.2")
+    def test_green_pr_cannot_publish_tag_outputs(self):
+        import release_ci_gate as ci
+        self.tag();out=self.root.parent/(self.root.name+'-out');self.addCleanup(lambda:out.unlink(missing_ok=True))
+        out.write_bytes(b"previous output\n")
+        real_query=ci._query
+        def query(root,command,timeout):
+            if command[0]=="gh":return json.dumps([dict(event="pull_request",headSha=self.head,status="completed",conclusion="success")])
+            return real_query(root,command,timeout)
+        with patch.object(ci,"_query",side_effect=query):
+            rc,text=self.cli(["--require-ci","--github-output",str(out)])
+        self.assertEqual(rc,1);self.assertIn("push CI",text);self.assertEqual(out.read_bytes(),b"previous output\n")
+
     def test_ci_failure_creates_no_output(self):
         self.tag();out=self.root.parent/(self.root.name+'-out');self.addCleanup(lambda:out.unlink(missing_ok=True))
         with patch.object(gate,'check_release_ci',return_value=['CI failed']):
@@ -275,7 +287,9 @@ class WorkflowTests(unittest.TestCase):
 
     def test_ci_covers_every_workflow_change(self):
         s=(Path(__file__).resolve().parent.parent/'.github/workflows/ci.yml').read_text(encoding='utf-8')
-        self.assertEqual(s.count("      - '.github/workflows/**'"),2)
+        events=s.split("\non:\n",1)[1].split("\nenv:\n",1)[0]
+        self.assertIn("  push:\n",events);self.assertIn("  pull_request:\n",events)
+        self.assertNotIn("paths:",events);self.assertNotIn("paths-ignore:",events)
         self.assertIn("'test_release_tag.py'",s)
 
 

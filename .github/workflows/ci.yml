@@ -1,59 +1,9 @@
 name: CI
 
 on:
+  # Every tracked change can affect a release; root build policy files must run CI.
   push:
-    paths:
-      - 'qeli/**'
-      # The desktop clients' SHARED crypto/protocol (PacketCodec, HKDF, ChaCha20,
-      # ObfsStream, realtls glue) lives here and is ProjectReference'd by both
-      # qeli-win and qeli-mac — without it a shared-only change shipped with no CI
-      # at all.
-      - 'qeli-shared/**'
-      - 'qeli-android/**'
-      - 'qeli-win/**'
-      - 'qeli-mac/**'
-      # Added with the ios-build / native-libs jobs — a job whose paths filter never
-      # matches is worse than no job: it shows up green having run nothing. (R-05/R-06)
-      - 'qeli-ios/**'
-      - 'native-libs/**'
-      - '.github/workflows/**'
-      # The docs job gates these, and without them a docs-only change ran NO CI at
-      # all: the gate existed but could never be triggered by the thing it guards.
-      - 'docs/**'
-      - 'scripts/**'
-      - 'conformance/**'
-      - '*.md'
-      # The `shellcheck` job lints the two root-level installer scripts — without
-      # them here it would be a gate that its own subject can never trigger.
-      # (Audit 2026-07-27, G2)
-      - '*.sh'
-      # Same reasoning, two directories that were still missing: a change confined to the
-      # OpenWrt package recipe or to the release/packaging assets ran NO ci at all, so the
-      # thing shipped to users could be edited without a single check.
-      # (Audit 2026-07-29, #3.)
-      - 'qeli-openwrt/**'
-      - 'release/**'
   pull_request:
-    paths:
-      - 'qeli/**'
-      - 'qeli-shared/**'
-      - 'qeli-android/**'
-      - 'qeli-win/**'
-      - 'qeli-mac/**'
-      # Added with the ios-build / native-libs jobs — a job whose paths filter never
-      # matches is worse than no job: it shows up green having run nothing. (R-05/R-06)
-      - 'qeli-ios/**'
-      - 'native-libs/**'
-      - '.github/workflows/**'
-      # The docs job gates these, and without them a docs-only change ran NO CI at
-      # all: the gate existed but could never be triggered by the thing it guards.
-      - 'docs/**'
-      - 'scripts/**'
-      - 'conformance/**'
-      - '*.md'
-      - 'qeli-openwrt/**'
-      - 'release/**'
-      - '*.sh'
   workflow_dispatch:
   schedule:
     # Nightly continuous fuzzing (the `fuzz-nightly` job; other jobs also run as a
