@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v191 -->
+<!-- normative-sync: full-system-audit-v192 -->
 
 **Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2540,3 +2540,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **10 октября, F499–F500/Q34-F053–F054:** [Входы и ресурсы упаковщика](../reports/AUDIT-Q34-PUBLICATION-GATES.md): закрытие SSH/SFTP на всех путях, отдельные workspace, safe TAR/core до SSH и 4 upload SHA gates.72 Windows/23 Linux методов +3 actual main trials PASS; повреждение сохраняет прежний ZIP. Controlled signer/synthetic headers, без Mac/signature PASS.48 own lab files очищены, service сохранён. NuGet/HTTP дубликаты удалены по SHA, archives/SEALED сохранены. Q34 IN_PROGRESS;30/37 DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября, F501/Q34-F055:** [Compiler CI pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён implicit stable в7jobs, compiler1.97.0 совпадает с reviewed policy; остальные matrix/nightly choices сохранены. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification без hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября,F502–F503/Q34-F056–F057:** [Событие и охват CI](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate требует push event/exact SHA; green PR merge не заменяет source CI. Paths filters удалены, все root policy inputs запускают CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh, не hosted Actions.25ownlabfiles очищены,service сохранён. Developer docs1.97/locked обновлены;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
