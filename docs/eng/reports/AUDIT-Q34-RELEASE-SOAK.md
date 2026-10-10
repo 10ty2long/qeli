@@ -1,6 +1,6 @@
 # Q34/Q25 — memory across 100 release handovers
 
-<!-- normative-sync: audit-q34-release-soak-v2 -->
+<!-- normative-sync: audit-q34-release-soak-v3 -->
 Historical24September checkpoint: debt statuses below refer to that date. The current [ledger](../plans/AUDIT-DEBT.md) includes later closures; the new Q35 scope is recorded at the end.
 
 
@@ -105,3 +105,48 @@ Q29SIGKILL/ENONET,Q30/Q31,F459,D06accepted/USER_EXCLUDED retained.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F506-F507 evidence: q35-soak-admission-20261010; SEALED 38 files / 1646848 bytes; manifest SHA256 c3feba0ad1c0e010693765f4142a3011a88ac17afa0ef13f9089b38166109f75.
+
+## Q35: concurrent netns runner isolation, 10 October 2026
+
+F508 / Q35-F005: both TCP/UDP runners used fixed namespace names and destroyed
+preexisting processes during initial cleanup. UDP family-switch also changed
+shared `/etc/netns/qru-cli/hosts`. Exact previous cleanup was executed inside an
+independently isolated outer fixture: both runners really killed preexisting
+sentinels and removed their namespaces. Host production processes were excluded
+from this reproduction.
+
+Each invocation now creates separate network/mount/PID namespaces before mktemp,
+cleanup or network actions. Shared `roaming_netns_isolation.sh` verifies namespace
+identities, breaks mount propagation, and creates private `/run`, an overlay view
+of `/etc`, and `/sys`. Fixed veth names, the namespace registry and family-switch
+hosts files belong to that run. Wrappers calling these runners inherit isolation.
+Missing helpers/supervisor, denied privileges, failed unshare or mounts refuse
+before mutable runner setup; there is no unsafe fallback or environment opt-out.
+
+`roaming_netns_supervisor.py` preserves exit status and handles SIGINT, SIGTERM,
+and supervisor death. Parent-death SIGKILL chains through unshare/private PID
+init to all descendants. The first unshare-only prototype failed the actual
+SIGTERM test; a subsequent handler reentering Popen.wait deadlocked on its lock.
+Both prototypes were corrected before commit: the signal unwinds wait, and
+kill/wait occur afterward. Failed attempts and initial incomplete upload lists
+remain in evidence.
+
+Verification: 7 actual Linux kernel methods cover parallel identical names/veth,
+private hosts, neighboring sentinels, exit37, actual EPERM, controlled overlay
+failure and SIGINT/SIGTERM/SIGKILL without descendants; 35 Linux script methods
+(7 new + 28 dependent), no skips. Kernel execution is real; fixture processes
+are controlled and no Qeli binary/VPN traffic was executed in this block. No
+new100/10k/30min/8h VPN soak claim. Unchanged core/native execution is inherited
+with SHA checks.
+
+On .11, service PID777/845/CLI SHA75bc, routes, links, firewall rule structure,
+sysctl, resolver/hosts and mounts were preserved. Only live builtin NAT-chain
+packet/byte counters differed; structural comparison normalizes only those
+counters, retaining raw snapshots/diff. Exact source/TAR readback and guarded
+owned-root cleanup passed; absence confirmed. .10 unused; no compiler/SDK caches.
+
+Q34/Q35 IN_PROGRESS,Q36TODO;30/37DONE81.1percent,7remain. Harness isolation is
+closed; wholeQ35 is not complete. Q29SIGKILL/ENONET,Q30/Q31,F459,D06 accepted
+limitation and USER_EXCLUDED remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F508 evidence: q35-isolation-20261010; SEALED 48 files / 3037712 bytes; manifest SHA256 cf6b60799473f333c870bd94b412462b9abac406cee18c6ff92c9b4710f3cd83.

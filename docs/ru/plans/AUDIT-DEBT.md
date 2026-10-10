@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v129 -->
+<!-- normative-sync: audit-debt-v130 -->
 
 Дата текущей сверки: 10 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1424,3 +1424,10 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10октября,F506–F507:** [Soak admission](../reports/AUDIT-Q34-RELEASE-SOAK.md): нулевой цикл TCP и downgraded endurance labels воспроизведены; общий decimal validator до сетевых действий, smoke/full markers и minimum10k/1k только для full endurance wrapper. Обязательный bounded100 сохранён.28Linux/57Windows methods,4workflow lint PASS; без новогоVPNsoak/native rebuild. Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября,F508/Q35-F005:** [Изоляция runner](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+закрыта конкурирующая очистка TCP/UDP namespaces и общий family-switch hosts.
+7 реальных kernel +35 Linux script methods PASS; SIGINT/TERM/KILL удаляют потомков,
+соседние процессы/настройки сохраняются. Только живые NAT-счётчики нормализованы
+в структурном сравнении, raw сохранён. Новый VPN-soak не заявляется;
+Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

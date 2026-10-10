@@ -1,5 +1,5 @@
 # Роуминг клиента: план полной реализации
-<!-- normative-sync: roaming-v49-soak-admission -->
+<!-- normative-sync: roaming-v50-netns-isolation -->
 
 > Дополнение аудита 23 сентября 2026: Linux route adapter использует owner lease на
 > подключение; cleanup закрывает приём новых мутаций. `dev_attach=true` не предоставляет
@@ -1264,3 +1264,20 @@ Feature не считается готовой, пока не пройдены �
 happy-path смены Wi-Fi/cellular уже визуально работает.
 
 Soak admission: параметры counts канонические decimal1..2147483647, без ведущих нулей; sample_every<=iterations. Standalone UDP matrix ниже10kQUIC/1kadapters выдаёт SMOKE и exit0 при успехе детей, а не endurance PASS. Полный roaming_resource_release_gate.sh отклоняет downgraded counts до первой фазы. Отдельный bounded release100 остаётся обязательным. Детали и evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+
+### Обязательная изоляция Linux TCP/UDP runner
+
+`roaming_netns_e2e.sh` и `roaming_udp_netns_e2e.sh` требуют root либо соответствующие
+namespace/mount capabilities, util-linux unshare с --kill-child, Python3 и kernel
+overlayfs/sysfs. Держите рядом `roaming_netns_isolation.sh` и
+`roaming_netns_supervisor.py`; они включаются автоматически для всех case/mode.
+Права или mount недоступны — запуск прекращается до очистки. Переменной для
+отключения изоляции нет. Аргументы, cwd, INI-настройки и пороги soak сохраняются.
+Частные mount/process namespaces освобождаются при завершении/прерывании;
+индивидуальный WORK с журналами остаётся для анализа результата.
+
+CI проверяет `test_roaming_netns_isolation.py` без привилегий. Отдельный
+`test_roaming_netns_isolation_kernel.py` требует независимый внешний лабораторный
+стенд и проверяет parent namespace identities до создания sentinel-процессов.
+Полная квалификация, реальные kernel проверки и границы наследования описаны в
+[отчёте Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).

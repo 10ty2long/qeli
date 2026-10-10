@@ -67,6 +67,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_release_ci_gate.py'
           python3 -B -m unittest discover -s scripts -p 'test_stability_gate.py'
           python3 -B -m unittest discover -s scripts -p 'test_roaming_soak_parameters.py'
+          python3 -B -m unittest discover -s scripts -p 'test_roaming_netns_isolation.py'
           python3 -B -m unittest discover -s scripts -p 'test_roaming_udp_resource_soak_netns_gate.py'
           python3 -B -m unittest discover -s scripts -p 'test_roaming_resource_release_gate.py'
           python3 -m unittest discover -s scripts -p 'test_fuzz_targets.py'
