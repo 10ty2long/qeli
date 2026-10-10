@@ -18548,5 +18548,10 @@
     "path": "benchmark_v0.8.2_2026-10-11_mixed_carriers.json",
     "sha256": "acd1657f396aa31dedfdba906cb259deda85c98448c2a87f4eb95e940461a2f7",
     "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
+  },
+  "supplemental_ipv6_latency": {
+    "path": "benchmark_v0.8.2_2026-10-11_ipv6_latency.json",
+    "sha256": "c625484b251bd6c177d4da2117ea588dbb9e31aa710ac3d073fe08b63a8336c4",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
   }
 }
