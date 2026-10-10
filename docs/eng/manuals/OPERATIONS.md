@@ -626,6 +626,29 @@ retransmissions or network loss. Server dropped and UDP RcvbufErrors measure
 other locations. [Validation and limits](../reports/BENCHMARK.md).
 <!-- normative-sync: manual-tcp-uplink-drops-v1 -->
 
+## TCP losses at TUN handoff
+
+Linux status `stats.tcp_downlink_drops` counts handoff failures after TCP record
+receive/decryption: `pool_exhausted` is pool refusal for a reassembled mux packet,
+`queue_full` is a full TUN queue, `disconnected` is a closed queue. `total` is
+derived from the reasons in one snapshot. Full counts one packet and permits
+continued processing; Disconnected counts the packet and stops the receive task.
+Raw mode retains the received pooled buffer, with no separate slot acquisition
+in this function. Mux counts reached handoff attempts per reassembled packet,
+not an entire record. After Disconnected, remaining packets in the record are
+no longer processed and are outside this counter. Empty, management, unsupported
+packets and decode errors are also outside the handoff measurement.
+
+After buffer acquisition, rx_packets/rx_bytes increase before enqueue; growth
+does not establish device delivery. Mux pool refusal does not increase them.
+Uplink/downlink counters are independent and reset with a fresh runtime generation;
+check generation and updated_at_ms freshness, with a two-second sampler period.
+C ABI layout and GUI stats are unchanged. These are not ACK/retransmission or
+total network loss counters. Later OS write drops use the existing shared writer
+counter udp_drops_tun_write; its historical name also covers TCP TUN writes.
+[Validation and limits](../reports/BENCHMARK.md).
+<!-- normative-sync: manual-tcp-downlink-drops-v1 -->
+
 ## Linux client identity files
 
 `/var/lib/qeli/device-id` (`QELI_DEVICE_ID_FILE`) is loaded once before connecting.

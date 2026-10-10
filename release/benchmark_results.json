@@ -18510,5 +18510,13 @@
     "scope": "IPv4, plain and real TLS, fresh old/new client sessions with fixed qualified old server; no performance PASS",
     "phases": 24,
     "raw_json_files": 96
+  },
+  "supplemental_client_downlink": {
+    "artifact": "benchmark_v0.8.2_2026-10-10_client_downlink.json",
+    "sha256": "7ba09804d17db132ec05b6a1a5479c8afbab5716c930a80d63855eaeaac9fc85",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY",
+    "scope": "IPv4, plain/TLS legacy records and plain required-mux; three fresh current-client sessions per carrier, fixed qualified older server; no performance PASS",
+    "phases": 18,
+    "raw_json_files": 72
   }
 }

@@ -58,6 +58,7 @@ use crate::transport_core::linux_tun::{
 use crate::transport_core::packet_tun::TunWriter;
 #[cfg(target_os = "ios")]
 type TunPacket = PooledBuffer;
+use crate::transport_core::client_downlink::DownlinkDrop;
 use crate::transport_core::client_uplink::{UplinkCounters, UplinkDrop};
 #[cfg(target_os = "linux")]
 use crate::transport_core::network::is_full_tunnel;
@@ -2022,6 +2023,7 @@ impl ClientStatusReporter {
                 "udp_buffer_grows": udp.grow_events,
                 "udp_recv_buffer_bytes": udp.granted_recv_bytes,
                 "tcp_uplink_drops": counters.tcp_uplink.snapshot(),
+                "tcp_downlink_drops": counters.tcp_downlink.snapshot(),
             },
         });
         // Keep the state lock until enqueue: an older sampled state must never be
@@ -5157,6 +5159,10 @@ fn deliver_client_tcp_plaintext(
                 continue;
             }
             let Some(mut packet) = tun.try_acquire() else {
+                metrics
+                    .runtime
+                    .tcp_downlink
+                    .note(DownlinkDrop::PoolExhausted);
                 continue;
             };
             packet.as_vec_mut().extend_from_slice(&bytes);
@@ -5171,8 +5177,16 @@ fn deliver_client_tcp_plaintext(
             trace::record(trace::Dir::Rx, "client.tcp", bytes.len(), 0);
             match tun.try_send(packet) {
                 Ok(()) => {}
-                Err(std::sync::mpsc::TrySendError::Full(_)) => {}
-                Err(std::sync::mpsc::TrySendError::Disconnected(_)) => return false,
+                Err(std::sync::mpsc::TrySendError::Full(_)) => {
+                    metrics.runtime.tcp_downlink.note(DownlinkDrop::QueueFull);
+                }
+                Err(std::sync::mpsc::TrySendError::Disconnected(_)) => {
+                    metrics
+                        .runtime
+                        .tcp_downlink
+                        .note(DownlinkDrop::Disconnected);
+                    return false;
+                }
             }
         }
         return true;
@@ -5199,8 +5213,177 @@ fn deliver_client_tcp_plaintext(
     trace::record(trace::Dir::Rx, "client.tcp", record.len(), 0);
     match tun.try_send(record) {
         Ok(()) => true,
-        Err(std::sync::mpsc::TrySendError::Full(_)) => true,
-        Err(std::sync::mpsc::TrySendError::Disconnected(_)) => false,
+        Err(std::sync::mpsc::TrySendError::Full(_)) => {
+            metrics.runtime.tcp_downlink.note(DownlinkDrop::QueueFull);
+            true
+        }
+        Err(std::sync::mpsc::TrySendError::Disconnected(_)) => {
+            metrics
+                .runtime
+                .tcp_downlink
+                .note(DownlinkDrop::Disconnected);
+            false
+        }
+    }
+}
+
+#[cfg(test)]
+mod tcp_downlink_tests {
+    use super::*;
+    use crate::protocol::recordizer::{Reassembler, Recordizer, RuntimeConfig};
+
+    fn packet() -> Vec<u8> {
+        let mut bytes = vec![0; 20];
+        bytes[0] = 0x45;
+        bytes[2..4].copy_from_slice(&20u16.to_be_bytes());
+        bytes
+    }
+
+    fn deliver(
+        bytes: &[u8],
+        muxed: bool,
+        tun: &TunWriter,
+        records: &BufferPool,
+        counters: &RuntimeCounters,
+    ) -> bool {
+        let runtime =
+            RuntimeConfig::from_config(&crate::config::RecordizerConfig::default(), 512, 128)
+                .unwrap();
+        let mut mux = muxed.then(|| Reassembler::new(runtime.clone()));
+        let payload = if muxed {
+            let mut encoder = Recordizer::new(runtime);
+            let mut ready = encoder.push(bytes, std::time::Instant::now()).unwrap();
+            ready.extend(encoder.flush());
+            assert_eq!(ready.len(), 1);
+            ready.remove(0)
+        } else {
+            bytes.to_vec()
+        };
+        let mut record = records.try_acquire().unwrap();
+        record.as_vec_mut().extend_from_slice(&payload);
+        let reassembler = std::sync::Mutex::new(crate::protocol::control_v2::Reassembler::new());
+        let (sender, _) = tokio::sync::watch::channel(None);
+        let (terminal_sender, _) = mpsc::channel(1);
+        let last_rx = AtomicU64::new(0);
+        let total_rx = AtomicU64::new(0);
+        let mut unsupported = 0;
+        deliver_client_tcp_plaintext(
+            record,
+            &mut mux,
+            tun,
+            crate::transport_core::NetworkFamilyMode::Ipv4,
+            ClientManagementRx {
+                negotiated: false,
+                reassembler: &reassembler,
+                sender: &sender,
+                terminal_sender: &terminal_sender,
+            },
+            ClientTcpRxMetrics {
+                last_rx: &last_rx,
+                base: tokio::time::Instant::now(),
+                total_rx: &total_rx,
+                runtime: counters,
+                unsupported_drops: &mut unsupported,
+            },
+        )
+    }
+
+    #[test]
+    fn raw_and_mux_full_queue_count_once_continue_and_return_buffers() {
+        for muxed in [false, true] {
+            let pool = BufferPool::new(2, 512).unwrap();
+            let records = BufferPool::new(2, 512).unwrap();
+            let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+            let tun = TunWriter::from_parts(sender, pool.clone());
+            let counters = RuntimeCounters::default();
+            assert!(deliver(&packet(), muxed, &tun, &records, &counters));
+            assert!(deliver(&packet(), muxed, &tun, &records, &counters));
+            assert_eq!(
+                (
+                    counters.tcp_downlink.snapshot().total,
+                    counters.tcp_downlink.snapshot().queue_full
+                ),
+                (1, 1)
+            );
+            assert_eq!(counters.rx_packets.load(Ordering::Relaxed), 2);
+            assert_eq!(counters.tcp_uplink.snapshot().total, 0);
+            let queued = receiver.try_recv().unwrap();
+            assert_eq!(queued.as_ref(), packet());
+            drop(queued);
+            let first = pool.try_acquire().unwrap();
+            let second = pool.try_acquire().unwrap();
+            assert!(pool.try_acquire().is_none());
+            drop((first, second));
+            let first = records.try_acquire().unwrap();
+            let second = records.try_acquire().unwrap();
+            assert!(records.try_acquire().is_none());
+            drop((first, second));
+        }
+    }
+
+    #[test]
+    fn raw_and_mux_disconnected_queue_count_once_stop_and_return_buffers() {
+        for muxed in [false, true] {
+            let pool = BufferPool::new(1, 512).unwrap();
+            let records = BufferPool::new(1, 512).unwrap();
+            let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+            drop(receiver);
+            let tun = TunWriter::from_parts(sender, pool.clone());
+            let counters = RuntimeCounters::default();
+            assert!(!deliver(&packet(), muxed, &tun, &records, &counters));
+            assert_eq!(
+                (
+                    counters.tcp_downlink.snapshot().total,
+                    counters.tcp_downlink.snapshot().disconnected
+                ),
+                (1, 1)
+            );
+            assert!(pool.try_acquire().is_some());
+            assert!(records.try_acquire().is_some());
+        }
+    }
+
+    #[test]
+    fn mux_pool_refusal_counts_one_packet_then_recovers_without_rx_overcount() {
+        let pool = BufferPool::new(1, 512).unwrap();
+        let records = BufferPool::new(1, 512).unwrap();
+        let held = pool.try_acquire().unwrap();
+        let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+        let tun = TunWriter::from_parts(sender, pool.clone());
+        let counters = RuntimeCounters::default();
+        assert!(deliver(&packet(), true, &tun, &records, &counters));
+        assert_eq!(
+            (
+                counters.tcp_downlink.snapshot().total,
+                counters.tcp_downlink.snapshot().pool_exhausted
+            ),
+            (1, 1)
+        );
+        assert_eq!(counters.rx_packets.load(Ordering::Relaxed), 0);
+        assert!(receiver.try_recv().is_err());
+        assert!(records.try_acquire().is_some());
+        drop(held);
+        assert!(deliver(&packet(), true, &tun, &records, &counters));
+        assert_eq!(receiver.try_recv().unwrap().as_ref(), packet());
+        assert_eq!(counters.rx_packets.load(Ordering::Relaxed), 1);
+        assert_eq!(counters.tcp_downlink.snapshot().total, 1);
+    }
+
+    #[test]
+    fn empty_and_unsupported_plaintext_are_not_tun_handoff_losses() {
+        let pool = BufferPool::new(1, 512).unwrap();
+        let records = BufferPool::new(1, 512).unwrap();
+        let (sender, _receiver) = std::sync::mpsc::sync_channel(1);
+        let tun = TunWriter::from_parts(sender, pool.clone());
+        let counters = RuntimeCounters::default();
+        assert!(deliver(&[], false, &tun, &records, &counters));
+        for muxed in [false, true] {
+            assert!(deliver(&[0], muxed, &tun, &records, &counters));
+        }
+        assert_eq!(counters.tcp_downlink.snapshot().total, 0);
+        assert_eq!(counters.rx_packets.load(Ordering::Relaxed), 0);
+        assert!(pool.try_acquire().is_some());
+        assert!(records.try_acquire().is_some());
     }
 }
 

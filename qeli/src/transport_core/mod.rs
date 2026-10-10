@@ -41,6 +41,12 @@ pub(crate) mod carrier;
 )]
 pub(crate) mod client_uplink;
 
+#[cfg_attr(
+    not(any(feature = "client", feature = "transport-core-ffi")),
+    allow(dead_code)
+)]
+pub(crate) mod client_downlink;
+
 // System DNS/NSS admission and cancellation are shared by all client adapters.
 pub(crate) mod resolver;
 
@@ -929,6 +935,7 @@ pub(crate) struct RuntimeCounters {
     pub rx_bytes: portable_atomic::AtomicU64,
     pub udp: Arc<udp_buffer::UdpBufferCounters>,
     pub tcp_uplink: client_uplink::UplinkCounters,
+    pub tcp_downlink: client_downlink::DownlinkCounters,
 }
 
 #[derive(Debug, Clone, Copy)]
