@@ -9,6 +9,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -197,6 +198,37 @@ def application_stats(fixture):
     return json.loads(fixture.checked('python3 ' + fixture.remote + '/control.py ' + fixture.remote + '/run/control.sock'))
 
 
+def parse_iperf_result(raw, protocol, expected_seconds):
+    """Require a completed receiver measurement, never a sender-only fallback."""
+    if not isinstance(raw, dict) or 'error' in raw:
+        raise ValueError('iperf error or invalid JSON result')
+    end = raw.get('end')
+    if not isinstance(end, dict) or not isinstance(end.get('sum_received'), dict):
+        raise ValueError('iperf receiver summary missing')
+    received = end['sum_received']
+
+    def number(source, key, minimum=0, maximum=None):
+        value = source.get(key)
+        if type(value) not in (int, float) or not math.isfinite(value) or value < minimum or (maximum is not None and value > maximum):
+            raise ValueError('invalid iperf ' + key)
+        return value
+
+    if number(received, 'seconds') < expected_seconds * .9:
+        raise ValueError('iperf receiver interval truncated')
+    number(received, 'bytes')
+    mbps = number(received, 'bits_per_second') / 1e6
+    if protocol == 'tcp':
+        sent = end.get('sum_sent')
+        if not isinstance(sent, dict) or type(sent.get('retransmits')) is not int or sent['retransmits'] < 0:
+            raise ValueError('iperf TCP retransmits missing or invalid')
+        return dict(mbps=mbps, retransmits=sent['retransmits'], lost_percent=None, jitter_ms=None)
+    if protocol == 'udp':
+        return dict(mbps=mbps, retransmits=None,
+                    lost_percent=number(received, 'lost_percent', maximum=100),
+                    jitter_ms=number(received, 'jitter_ms'))
+    raise ValueError('unsupported iperf protocol')
+
+
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local):
     receiver = client if '-R' in flags.split() else server
     before_kernel = udp_kernel(receiver)
@@ -214,16 +246,10 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
     (local / (name + '-processes.json')).write_text(json.dumps(samples, indent=2) + '\n')
-    if 'error' in raw:
-        raise RuntimeError(raw['error'])
-    end = raw['end']
-    received = end.get('sum_received') or end['sum']
+    metrics = parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
     after_kernel = udp_kernel(receiver)
     after_app = application_stats(server)
-    return dict(mbps=received['bits_per_second'] / 1e6,
-                retransmits=end.get('sum_sent', {}).get('retransmits'),
-                lost_percent=received.get('lost_percent'),
-                jitter_ms=received.get('jitter_ms'), server=samples[0], client=samples[1],
+    return dict(**metrics, server=samples[0], client=samples[1],
                 kernel_rcvbuf_drops=after_kernel['RcvbufErrors'] - before_kernel['RcvbufErrors'],
                 server_session_drops=after_app['dropped'] - before_app['dropped'])
 
@@ -285,12 +311,8 @@ def main():
                 text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json'))
                 raw = json.loads(text)
                 (direct_local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
-                if 'error' in raw:
-                    raise RuntimeError('direct baseline: ' + raw['error'])
-                end = raw['end']
-                received = end.get('sum_received') or end['sum']
-                output['baseline'][name] = dict(mbps=received['bits_per_second'] / 1e6,
-                    lost_percent=received.get('lost_percent'), retransmits=end.get('sum_sent', {}).get('retransmits'))
+                metrics = parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
+                output['baseline'][name] = {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
             print('BASELINE', output['baseline'], flush=True)
         finally:
             cleanup_fixtures(direct_client, direct_server)

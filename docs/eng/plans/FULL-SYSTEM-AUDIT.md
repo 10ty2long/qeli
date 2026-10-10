@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v201 -->
+<!-- normative-sync: full-system-audit-v202 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2190,7 +2190,13 @@ Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and backgrou
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**10 October, Q36-F001:** the [benchmark runner](../reports/BENCHMARK.md) no
+longer substitutes sender `end.sum` for a missing receiver `sum_received`,
+and rejects truncated intervals or invalid TCP/UDP metrics. Five unit tests
+and all 35 archived raw iperf files PASS. Fresh repeated measurements and the
+P=4/IPv6/bidirectional matrix remain open; 30/37 DONE (81.1%).
+
+**Status: IN_PROGRESS.**
 
 ### 37. Documentation, test harnesses and dead code
 
