@@ -115,6 +115,7 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT-Q34-LINUX-MATRIX.md](reports/AUDIT-Q34-LINUX-MATRIX.md) | Linux packet matrix and RSS soak |
 | [AUDIT-Q34-RELEASE-SOAK.md](reports/AUDIT-Q34-RELEASE-SOAK.md) | Release TCP/UDP memory across 100 handovers |
 | [AUDIT-Q35-FRAGMENT-FUZZ.md](reports/AUDIT-Q35-FRAGMENT-FUZZ.md) | ASan fuzz oracles for UDP fragmentation and limits |
+| [AUDIT-Q35-LONG-SOAK.md](reports/AUDIT-Q35-LONG-SOAK.md) | Concurrent 30-minute TCP/UDP roaming soak with 900 switches each |
 | [AUDIT-Q25-KILL-SWITCH-IDENTITY.md](reports/AUDIT-Q25-KILL-SWITCH-IDENTITY.md) | Namespace ownership, reconnect protection and exact family cleanup |
 | [AUDIT-Q25-KILL-SWITCH-BUDGET.md](reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md) | Shared kill-switch cleanup deadline, partial cleanup and verified retry |
 | [AUDIT-Q25-KILL-SWITCH-REFRESH.md](reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md) | Shared refresh deadline and refusing insertion after unknown inspection |
