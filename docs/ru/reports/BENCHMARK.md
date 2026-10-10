@@ -998,8 +998,8 @@ upload, CPU воркера сервера — delta по `/proc/<pid>/stat` (м�
 # H-1 (0.7.1): benchmark.py пиннит ключ сервера во всех режимах.
 python scripts/reboot_vms.py         # чистая лаба: гасит эмулятор/qeli/netem → ребут обеих VM → чистит СНОВА (autostart) 
 python scripts/lab_reset.py          # то же без ребута (эмулятор, qeli-юниты, iperf3, сироты TUN, tc/netem)
-python scripts/stability_gate.py     # ОБЯЗАТЕЛЬНО перед бенчем: 5 сырых замеров БЕЗ туннеля в обе стороны;
-                                     # спред >8% в любом направлении → хост шумит, цифры будут вымыслом (exit 1)
+python scripts/stability_gate.py     # Проверяет заранее подготовленную простаивающую лабу и внешний iperf3 server;
+                                     # Все5 замеров/направление обязательны; ошибка, занятость или spread>8% → exit1
 python scripts/benchmark.py --allow-host-wide-benchmark # baseline + 12 режимов × {ping, iperf, CPU/RSS} ≈ 10 мин
                                      # → release/benchmark_<версия>_<дата>.json (+ копия benchmark_results.json)
 python scripts/reality_tls_repeat.py # reality-tls ×5 → медиана/σ (release/reality_tls_5x_<версия>_<дата>.json)
@@ -1013,3 +1013,62 @@ python scripts/multicore_probe.py    # точный CPU дата-плоскос�
 python scripts/probe_060_ab.py       # CPU A/B против прошлой версии (изолированная сборка из git HEAD)
 ```
 Результаты → `release/benchmark_results.json` и `release/*_v0.7.11_*.json`.
+
+## Проверка стабильности стенда: исправления 10 октября 2026
+
+F504 / Q35-F001 / Q36-F001: прежний stability_gate.py отбрасывал failed/zero
+samples. При пяти запрошенных измерениях два одинаковых успешных и три ошибки
+давали PASS. Отрицательные скорости тоже принимались, а spread8,04% округлялся
+до8,0% и проходил лимит8%. Эти три случая воспроизведены на точном прежнем коде;
+внешние SSH imports контролировались, опасные команды не исполнялись.
+
+Теперь обязательны все запрошенные измерения в обоих направлениях: только
+положительные конечные числовые значения, без bool/строк. Порог сравнивается
+с неокруглённым spread. Отчёт сохраняет все samples, включая ошибки, и статистику;
+в incomplete direction stats=null и verdict_quiet=false. Параметры проверяются
+до подключения: QELI_GATE_RUNS2..20, QELI_GATE_MAX_SPREAD0..100 исключительно,
+QELI_GATE_PORT1..65535, два различных IP адреса.
+
+F505 / Q35-F002 / Q36-F002: gate больше не вызывает full_clean, не останавливает
+Qeli/эмулятор, не меняет DNS, интерфейсы/qdisc и не делает pkill всех iperf3.
+Администратор заранее готовит выделенную простаивающую лабу и запускает свой
+iperf3 server на выбранном порту (по умолчанию5201). Gate только читает
+ps/ip/tc/ss до и после измерений; Qeli/эмулятор, измерительные процессы, tun/tap,
+искусственный shaper или уже активное iperf соединение дают отказ. Отсутствующий
+probe tool/ошибка команды тоже дают отказ. Это не разрешение автоматически
+сбрасывать действующую лабу. Существующий server остаётся под управлением оператора.
+
+Каждый iperf client ограничен remote timeout40s и SSH timeout55s; код проверяет
+exit status и JSON. Оба SSH соединения закрываются через finally, в том числе
+при отказе второго подключения/probe/close другого соединения. Ошибка close
+отменяет допуск. Результат публикуется через приватный временный файл и atomic
+replace; неудачная запись сохраняет прежний файл, exit1. Потребитель обязан
+проверять exit текущего запуска: старый JSON сам по себе не является допуском.
+PASS относится только к измеренному сырому окну, не доказывает будущую
+стабильность гипервизора и не заменяет interleaved baseline/A-B всего sweep.
+
+89 Windows методов (19 stability,38 native recipes,11 workflows,21 CI gate) и
+19 Linux stability методов PASS; новый suite включён в CI. Все4 workflows
+приняты pinned actionlint. SSH/iperf seams unit tests контролировались; это не
+новый реальный throughput-бенчмарк. На настоящей .11 выполнен read-only probe:
+активные Qeli процессы вызвали отказ до workload; service777/845 и CLI75bc
+сохранились. Два source файла и TAR прочитаны обратно, SHA/exact-set/process/fd/
+mount guards разрешили удаление3собственных файлов. .10 не использовалась.
+
+Начальная ошибка обвязки: неверное имя test_workflow_lint.py дало NO TESTS RAN/rc5.
+Лог сохранён; выбран существующий test_check_workflows.py, прошли11 методов.
+Уже успешные19/38 suites не повторялись. Первая попытка записи через apply_patch
+отказала из-за reparse point рабочего каталога; файл записан штатным Python после
+проверки его resolved workspace root. Это не product test failure.
+
+Ядро,14 native артефактов, source digest e3fb и OpenWrt cut неизменны; прежняя
+квалификация исполнения наследуется. Q34 остаётся IN_PROGRESS: braces F459,
+current-source hosted push CI, public pinned OpenWrt revision и expected release
+publisher/поддерживаемые signature/runtime границы не закрыты этим пакетом.
+Исторические OPEN, закрытые более поздними SHA-bound отчётами, не требуют повторных
+сборок. Q35 начат, весь раздел не закрыт; Q36 TODO, данная правка покрывает только
+его prerequisite. Общий итог30/37 DONE81,1%,7 остаётся. Q29 SIGKILL/ENONET,
+Q30/Q31, D06 ACCEPTED_LIMITATION и USER_EXCLUDED сохранены.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F504-F505 evidence: q35-stability-20261010; SEALED 33 files / 1319903 bytes; manifest SHA256 e88d4e2a863bd92e0e6de19bdecd0ed91ffde66b89838b9461be4adb6422285f.

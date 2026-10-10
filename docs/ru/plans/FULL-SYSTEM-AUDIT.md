@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v192 -->
+<!-- normative-sync: full-system-audit-v193 -->
 
-**Текущий итог, 9 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -181,7 +181,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
-| 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | TODO |
+| 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Бенчмарки и методика измерения | H07 | TODO |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | TODO |
 
@@ -2162,7 +2162,9 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming с сохранени
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**Статус: IN_PROGRESS.**
+
+**10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Бенчмарки и методика измерения
 

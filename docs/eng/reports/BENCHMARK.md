@@ -1016,8 +1016,8 @@ Use the isolated runner above for an active lab.
 # H-1 (0.7.1): benchmark.py pins the server key in every mode.
 python scripts/reboot_vms.py         # clean lab: kills emulator/qeli/netem → reboots both VMs → cleans AGAIN (autostart)
 python scripts/lab_reset.py          # same without a reboot (emulator, qeli units, iperf3, orphan TUNs, tc/netem)
-python scripts/stability_gate.py     # MANDATORY before a sweep: 5 raw no-tunnel runs in BOTH directions;
-                                     # spread >8% either way → the host is noisy and the numbers are fiction (exit 1)
+python scripts/stability_gate.py     # Requires a prepared idle lab and an operator-started iperf3 server;
+                                     # All5 samples/direction required; failure, busy lab or spread>8% → exit1
 python scripts/benchmark.py --allow-host-wide-benchmark # baseline + 12 modes × {ping, iperf, CPU/RSS} ≈ 10 min
                                      # → release/benchmark_<version>_<date>.json (+ a benchmark_results.json copy)
 python scripts/reality_tls_repeat.py # reality-tls ×5 → median/σ (release/reality_tls_5x_<version>_<date>.json)
@@ -1031,3 +1031,63 @@ python scripts/multicore_probe.py    # the precise data-plane CPU (/proc delta: 
 python scripts/probe_060_ab.py       # the CPU A/B vs the previous version (isolated build from git HEAD)
 ```
 The results → `release/benchmark_results.json` and `release/*_v0.7.11_*.json`.
+
+## Lab stability admission: corrections on 10 October 2026
+
+F504 / Q35-F001 / Q36-F001: the previous stability_gate.py discarded failed/zero
+samples. Two equal successful measurements out of five requested runs produced
+PASS despite three failures. Negative rates were accepted, and an8.04percent
+spread rounded to8.0percent passed the8percent limit. These three cases were
+reproduced using the exact previous code with controlled SSH imports; dangerous
+host commands were never executed.
+
+Every requested measurement in both directions is now mandatory: only positive,
+finite numeric rates, excluding bool/strings. Admission uses the unrounded spread.
+The report preserves all samples/errors and statistics; an incomplete direction
+has stats=null and verdict_quiet=false. Settings are validated before connecting:
+QELI_GATE_RUNS2..20, QELI_GATE_MAX_SPREAD in[0,100), QELI_GATE_PORT1..65535
+and two distinct IP addresses.
+
+F505 / Q35-F002 / Q36-F002: the gate no longer calls full_clean, stops Qeli/emulators,
+rewrites DNS, removes interfaces/qdiscs or kills every iperf3 process. An operator
+prepares a dedicated idle lab and starts their own iperf3 server on the selected
+port (default5201). Read-only ps/ip/tc/ss probes before and after measurements
+refuse active Qeli/emulators, measurement processes, tun/tap interfaces, artificial
+shapers or existing iperf connections. Missing tools/probe command failures also
+refuse admission. This does not authorize automatically resetting an active lab.
+The existing server remains under operator control.
+
+Each iperf client has a remote40s timeout and SSH55s timeout; exit status and JSON
+are checked. Finally closes both SSH connections, including failures of the
+second connection/probe/other close. A close error cancels admission. Result
+publication uses a private temporary file and atomic replacement; a write failure
+preserves the previous file and exits1. Consumers must check the current exit
+code; an old JSON result alone cannot authorize a benchmark. PASS covers only
+this raw measurement window, not future hypervisor stability or the interleaved
+baseline/A-B requirements of a complete sweep.
+
+89 Windows methods (19 stability,38 native recipes,11 workflows,21 CI admission)
+and19 Linux stability methods PASS; the new suite runs in CI. Pinned actionlint
+accepts all4 workflows. Unit SSH/iperf seams are controlled: no new actual
+throughput benchmark is claimed. A real read-only .11 probe refused its active
+Qeli processes before workload; service777/845 and CLI75bc remained unchanged.
+Both source files and the TAR were read back exactly; SHA/exact-set/process/fd/
+mount guards permitted removal of3owned files. .10 was unused.
+
+Initial harness error: nonexistent test_workflow_lint.py returned NO TESTS RAN/rc5.
+Its log is retained; the existing test_check_workflows.py passed11methods.
+Previously successful19/38 suites were not repeated. Initial apply_patch writing
+refused the worktree reparse point; standard Python wrote the file after checking
+its resolved workspace root. This was not a product test failure.
+
+Core source,14native artifacts, source digest e3fb and the OpenWrt cut are unchanged;
+previous execution qualification is inherited. Q34 remains IN_PROGRESS: F459
+braces, current-source hosted push CI, public pinned OpenWrt revision and expected
+release publisher/supported signature/runtime boundaries are not closed here.
+Historical OPEN statements superseded by later SHA-bound reports do not require
+rebuilding unchanged inputs. Q35 has started but is not complete; Q36 remains TODO,
+with only this prerequisite corrected. Overall30/37DONE81.1percent,7remain.
+Q29 SIGKILL/ENONET,Q30/Q31,D06 ACCEPTED_LIMITATION and USER_EXCLUDED are preserved.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F504-F505 evidence: q35-stability-20261010; SEALED 33 files / 1319903 bytes; manifest SHA256 e88d4e2a863bd92e0e6de19bdecd0ed91ffde66b89838b9461be4adb6422285f.
