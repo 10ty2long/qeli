@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v125 -->
+<!-- normative-sync: audit-debt-v126 -->
 
 Дата текущей сверки: 9 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1417,3 +1417,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 **9 октября, F497–F498/Q34-F051–F052:** [Universal2 и retired resign](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён arm64 fallback при lipo failure/missing Intel; проверяется полный Mach-O graph и каждый output. Удалён неиспользуемый unchecked SSH-resign helper.58Windows/11Linux методов включая2actualLLVM PASS, workflow lint/docs PASS. Synthetic headers, без full payload/signature/Mac runtime; служба сохранена, own root очищён.Q34IN_PROGRESS30/37DONE81,1%,7remain; прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября, F499–F500/Q34-F053–F054:** [Входы и ресурсы упаковщика](../reports/AUDIT-Q34-PUBLICATION-GATES.md): закрытие SSH/SFTP на всех путях, отдельные workspace, safe TAR/core до SSH и 4 upload SHA gates.72 Windows/23 Linux методов +3 actual main trials PASS; повреждение сохраняет прежний ZIP. Controlled signer/synthetic headers, без Mac/signature PASS.48 own lab files очищены, service сохранён. NuGet/HTTP дубликаты удалены по SHA, archives/SEALED сохранены. Q34 IN_PROGRESS;30/37 DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября, F501/Q34-F055:** [Compiler CI pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён implicit stable в7jobs, compiler1.97.0 совпадает с reviewed policy; остальные matrix/nightly choices сохранены. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification без hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
