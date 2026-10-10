@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v197 -->
+<!-- normative-sync: full-system-audit-v198 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2561,3 +2561,5 @@ closed competing TCP/UDP namespace cleanup and shared family-switch hosts.
 neighboring processes/config preserved. Only live NAT counters normalized for
 structural comparison, raw retained. No new VPN soak claim;
 Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October, Q35 fragment fuzz:** [report](../reports/AUDIT-Q35-FRAGMENT-FUZZ.md): two targets strengthened, 246,813 actual ASan runs PASS; original harness failures retained. Q35 IN_PROGRESS, 30/37 DONE. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
