@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v203 -->
+<!-- normative-sync: full-system-audit-v204 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2201,6 +2201,17 @@ before SSH or host-state mutation, as `benchmark.py` already did. Unused
 `perf_combined_load.py`, with embedded credentials and production firewall
 changes, was removed. One subprocess test covers the two remaining refusals;
 new measurements on `.10` are pending after SSH authentication failed.
+
+**Q36-F003/F004:** [repeat methodology](../reports/BENCHMARK.md): binary
+provenance is distinct from the local checkout; P=4, governor/affinity/load,
+MTUs, raw counters and honest failure/cleanup publication are added. The offline
+report requires >=3 separate windows, identical conditions and revalidation of
+raw iperf/process/counters; duplicates, incomplete populations and mismatches
+refuse admission without discarding outliers.24 Windows/24 Linux methods PASS;
+actual Linux sampler/governor PASS. Both VMs are accessible through stdin; the
+earlier getpass/PTY refusal did not imply a changed password. Actual throughput
+repeats/current build/bidirectional/IPv6/latency/auth remain OPEN; Q36 IN_PROGRESS,
+overall 30/37 DONE81.1%.
 
 **Status: IN_PROGRESS.**
 

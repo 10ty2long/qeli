@@ -86,6 +86,50 @@ Five positive/negative unit tests pass, and all 35 archived raw iperf files
 from the 3 October sweep pass the stricter admission. This change has not
 measured throughput on current dev; Q36 remains in progress.
 
+### Repeats and measurement provenance — Q36-F003/F004, 10 October
+
+New results use `schema_version=2`, a unique `run_id`, the selected mode list,
+UTC window and monotonic duration. `--tcp-parallel` selects 1 or 4 inner TCP
+streams, not multipath channels. Both directions and the direct baseline use
+that value. Each VM records CPU/kernel/iperf, boot ID and governor; missing VM
+cpufreq is explicitly `UNAVAILABLE`. Each mode records actual TUN/IPvlan MTUs
+and a configuration-template SHA with the random public key normalized.
+Process samples include affinity/nice and host load 1/5/15; a changed PID or
+CPU policy refuses the phase. Before/after counters are retained; a changed
+session endpoint or reset counter cannot become a negative drop count.
+
+The remote binary SHA is verified separately. `harness_source_commit` and
+`local_native_source_digest` identify the local harness checkout, without
+claiming that the remote binary was built from it. `binary_source_provenance`
+remains `UNVERIFIED` until separate build qualification. A failed second SSH
+connection closes the first and publishes `FAIL`; cleanup errors retain the
+mode result and overall failure. Final `COMPLETED` requires the complete
+selected population and matching host state. Results are published atomically.
+
+[benchmark_report.py](../../../scripts/benchmark_report.py) requires at least
+three separate sequential runs with identical artifact/harness SHA, hosts,
+CPU policy, MTUs, settings and modes. It rereads raw iperf, process samples and
+counters, rechecks summaries and required phases, and refuses failed/missing
+runs, duplicate IDs/raw populations, overlapping windows or changed conditions.
+Every run remains in the statistics, including zero throughput. Output is
+`AGGREGATED`, with `n/min/median/max/range/spread_pct` and every raw file SHA.
+It imposes no performance floor and does not verify source provenance. P=1
+and P=4 populations are aggregated separately:
+
+```text
+python scripts/benchmark_isolated_lab.py --sha256 <binary-sha256> --tcp-parallel 4 --output run-P4-1
+# Repeat independently in run-P4-2 and run-P4-3.
+python scripts/benchmark_report.py run-P4-1 run-P4-2 run-P4-3 --output summary-P4.json
+```
+
+24 Windows and 24 actual Linux contract methods PASS. Linux governor/proc
+sampling was checked separately; test populations are synthetic throughput
+fixtures. Both VMs are accessible: the earlier refusal came from `getpass` in
+the Windows PTY; stdin delivery of the same password restored SSH. The `.11`
+services retained PID 777/845 and binary SHA; the owned test root was removed
+after SHA/inode checks. Q36 remains `IN_PROGRESS`: current build qualification,
+actual >=3 repeats, bidirectional/IPv6 and latency/auth-rate measurements remain.
+
 Historical [benchmark.py](../../../scripts/benchmark.py) stops services,
 uses host-wide `pkill`, replaces binaries and the resolver file. It now
 requires explicit `--allow-host-wide-benchmark` before SSH access.
@@ -95,8 +139,8 @@ no current workflow calls it, it contained embedded credentials, and it also
 changed production firewall/VPN state. Ordinary invocation of the two
 remaining host-wide scripts exits with code 2 before credentials or SSH;
 a subprocess test checks that refusal. Old results remain historical. On
-10 October, read-only qualification of `.10` stopped at SSH authentication;
-no new Q36 measurements were run.
+10 October, the initial SSH refusal was explained above; no new Q36
+throughput measurements have been run yet.
 
 ## Current 0.8.2 measurement — 1 October 2026
 
