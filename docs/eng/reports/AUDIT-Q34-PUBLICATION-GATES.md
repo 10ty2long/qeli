@@ -1,6 +1,6 @@
 # Q34: release source admission and Docker notices
 
-<!-- normative-sync: q34-publication-gates-v6 -->
+<!-- normative-sync: q34-publication-gates-v7 -->
 
 Qualification completed9October2026; packet started8October.
 
@@ -297,3 +297,60 @@ supplements preserved modulo source_digest bookkeeping; append99. Q34IN_PROGRESS
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F497-F498 evidence: q34-mac-universal-20261009; SEALED 43 files / 1267910 bytes; manifest SHA256 b9629520955cf7076a8d2d1c9db288a8b397af85a93132fe654e83844588ef5f.
+
+
+## 10 October: F499–F500 / Q34-F053–F054 — macOS packager inputs and resources
+
+Early version/upload/assembly/download failures leaked SSH/SFTP handles. Shared
+/root/mac-build and cache could mix runs; Info.plist/icon lacked SHA admission.
+Old source produced 12 expected failures and 2 positive controls in 14 methods
+using real local TAR/files and controlled SSH interfaces.
+
+Finally now closes the connection and opened SFTP, including SFTP-close failures.
+Each run receives its own mktemp workspace; old shared directories/cache are
+neither used nor removed. Before SSH, both TARs admit safe unique paths, ordinary
+files/directories, mandatory apphost/core and exact canonical dylib SHA in both
+architectures. TAR changes during admission refuse. All four inputs, including
+Info.plist.in/Qeli.icns, receive SHA checks after upload before extraction.
+Assembly/signing/ZIP receive the explicit workspace; pull retains SHA admission
+and atomic local ZIP replacement.
+
+Remote workspaces remain for diagnostics and their paths are printed. Two runs
+from one checkout share the local ZIP: the last successful result replaces the
+previous one. Separate checkout/output directories retain both. README describes
+this limit; complete managed payload trust and concurrent publication are not
+qualified by this change.
+
+72 Windows methods PASS: 14 packager, 9 assembly, 38 native-recipes, 11 workflow.
+Pinned actionlint accepts all 4 workflows; suite included in CI. Linux .11:
+23 methods PASS plus 3 genuine main trials over SSH/SFTP — two successful private
+workspaces and an icon corrupted during upload. Actual tar, LLVM19, universal2
+assembly, ZIP, SHA and atomic pull. ZIP contents/executable bit/core and distinct
+icons checked; corruption refuses before extraction and retains the prior ZIP;
+all handles close. Controlled signer and synthetic Mach-O headers: no cryptographic
+signature, full .NET payload or Mac runtime qualification.
+
+Six committed modules/source TAR SHA checked. 4 owned lab roots/48 known files
+recovered into a small ZIP and removed after exact-set/SHA/process/fd/mount guards.
+Service777/845/CLI75bc unchanged; .10 unused.
+
+First baseline failed in setUp due to ENOSPC before product checks; repeat produced
+12 substantive expected failures. Initial final shell-wildcard assertion matched
+embedded Python rglob; restrict it to the first shell line and repeat. Original
+baseline/harness failure retained. HTTP403 automatic review failed before execution
+due to a service error; later approved execution passed.
+
+Owned scratch reduction preserves 72 original NuGet archives and SHA/metadata
+sidecars (216 files/391161706 bytes) in
+audit-scratch-20261008/q34-sdk-locks/nuget-recovery-packages. After all SHA checks,
+removed 2718 extracted copies/1067432869 bytes and 72 exact HTTP duplicates/
+391142266 bytes. SEALED packets, original archives/shared caches retained.
+Recovery inputs must be restored before offline publish and are not an installed
+NuGet cache. Current checks do not rebuild SDK/native/app.
+
+Native14/digest/qeli tree/protected/OpenWrt cut unchanged; prior execution inherited.
+41 cases/99 prior supplements preserved modulo source_digest bookkeeping; append100.
+Q34 IN_PROGRESS;30/37 DONE (81.1%),7 remain; previous open/accepted/USER_EXCLUDED
+retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F499-F500 evidence: q34-mac-isolation-20261009; SEALED 42 files / 1477945 bytes; manifest SHA256 c9e0e144657b4029f2e1b01ee959154a4a1e6249a6d17a2a761a2a4d3083085d.
