@@ -393,7 +393,7 @@ if [ "$REALITY_TARGET" = true ]; then
   fi
 fi
 "$BIN" add-client roam-user -p roam-pass-1234 -c "$WORK/server.conf" >/dev/null 2>&1
-ip netns exec "$SRV_NS" env QELI_CONTROL_SOCKET="$WORK/control.sock" "$BIN" server -c "$WORK/server.conf" >"$WORK/server.log" 2>&1 &
+ip netns exec "$SRV_NS" env QELI_CONTROL_SOCKET="$ROAMING_CONTROL_SOCKET" "$BIN" server -c "$WORK/server.conf" >"$WORK/server.log" 2>&1 &
 SERVER_JOB_PID=$!
 wait_for 50 "ip netns exec $SRV_NS ss -lnt | grep -q ':4443'" || bad "server did not listen"
 wait_for 50 "ip netns exec $SRV_NS ip link show qrms0" || bad "server tunnel device did not come up"
@@ -428,7 +428,7 @@ if [ "$CASE" = multinode ]; then
     -e 's#^pool.cidr = 10\.88\.0\.0/24$#pool.cidr = 10.89.0.0/24#' \
     -e 's/^pool.exclude = 10\.88\.0\.1$/pool.exclude = 10.89.0.1/' \
     "$WORK/server.conf" >"$WORK/server-secondary.conf"
-  ip netns exec "$SECONDARY_SRV_NS" env QELI_CONTROL_SOCKET="$WORK/control-secondary.sock" \
+  ip netns exec "$SECONDARY_SRV_NS" env QELI_CONTROL_SOCKET="$ROAMING_SECONDARY_CONTROL_SOCKET" \
     "$BIN" server -c "$WORK/server-secondary.conf" >"$WORK/server-secondary.log" 2>&1 &
   SECONDARY_SERVER_JOB_PID=$!
   if wait_for 50 "ip netns exec $SECONDARY_SRV_NS ss -lnt | grep -q ':4444'"; then

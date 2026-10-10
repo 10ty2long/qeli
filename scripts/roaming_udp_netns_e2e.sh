@@ -341,7 +341,7 @@ perf.connection.new_session_rate_window_secs = 60
 EOF
 : >"$WORK/users.conf"
 "$BIN" add-client roam-user -p roam-pass-1234 -c "$WORK/server.conf" >/dev/null 2>&1
-ip netns exec "$SRV_NS" env QELI_CONTROL_SOCKET="$WORK/control.sock" "$BIN" server -c "$WORK/server.conf" >"$WORK/server.log" 2>&1 &
+ip netns exec "$SRV_NS" env QELI_CONTROL_SOCKET="$ROAMING_CONTROL_SOCKET" "$BIN" server -c "$WORK/server.conf" >"$WORK/server.log" 2>&1 &
 SERVER_JOB_PID=$!
 wait_for 50 "ip netns exec $SRV_NS ss -lnu | grep -q ':4444'" || bad "server did not listen"
 wait_for 50 "ip netns exec $SRV_NS ip link show qrus0" || bad "server tunnel device did not come up"

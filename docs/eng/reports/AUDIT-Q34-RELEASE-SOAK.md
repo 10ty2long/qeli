@@ -1,6 +1,6 @@
 # Q34/Q25 — memory across 100 release handovers
 
-<!-- normative-sync: audit-q34-release-soak-v4 -->
+<!-- normative-sync: audit-q34-release-soak-v5 -->
 Historical24September checkpoint: debt statuses below refer to that date. The current [ledger](../plans/AUDIT-DEBT.md) includes later closures; the new Q35 scope is recorded at the end.
 
 
@@ -210,3 +210,72 @@ USER_EXCLUDED limitations remain. No product implementation changes in this
 block.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 Q35-V001 evidence: q35-runtime-isolation-20261010; SEALED 68 files / 15738597 bytes; manifest SHA256 02427686f08ea2ce22fcdfea86f3f52c5af979101d9d0a015ef93874a33722a2.
+
+## Q35: faults, concurrency and short control sockets, 10 October 2026
+
+F509 / Q35-F006: TCP/UDP runner control sockets depended on WORK/TMPDIR length.
+With a deep directory, the family-switch server worker actually exited with
+`path must be shorter than SUN_LEN`; the initial session never authenticated.
+Original failure and respawn/client logs are retained. This is a Unix address
+length limit, not an IPv6 handover or authentication defect. The runner now uses
+`/run/qeli-roaming-control/control.sock` and separate `control-secondary.sock`.
+The mode0700 directory is created after mounting private /run tmpfs, so fixed
+short names belong to one run. TCP/UDP soak counters and bonding bandwidth/revoke
+consumers share the same path. Logs remain under requested TMPDIR; no core or
+user INI changes.
+
+Actual release ELF SHA98335046 (318exact Cargo/src compiler inputs, as Q35-V001)
+executed **14 cases / 320 assertions**, zero failures, over**331.95s**,
+in7pairs with max2concurrent cases. Each pair has a live /proc snapshot of two
+authenticated client/worker groups in different PID namespaces. The repeat uses
+even deeper WORK paths, including family-switch. No native/SDK builds. Original
+input archive is reused with SHA verification; no new local binary/14MB TAR copy.
+Changed script bytes were separately qualified.
+
+| Case execution | PASS assertions | FAIL |
+|---|---:|---:|
+| tcp-success-a | 20 | 0 |
+| tcp-success-b | 20 | 0 |
+| tcp-resume | 20 | 0 |
+| udp-rollback | 23 | 0 |
+| tcp-grace-expiry | 19 | 0 |
+| udp-commit-race | 28 | 0 |
+| tcp-starvation | 19 | 0 |
+| udp-supersede | 28 | 0 |
+| udp-family-switch | 35 | 0 |
+| udp-loss-replay | 21 | 0 |
+| tcp-soak-smoke | 16 | 0 |
+| udp-soak-smoke | 17 | 0 |
+| tcp-bonding | 26 | 0 |
+| tcp-multinode | 28 | 0 |
+
+Soak here is **3flips/sample1** each for TCP/QUIC control consumers; no new
+bounded100 or full10k endorsement. Bonding exercises real bandwidth/revoke API;
+multinode exercises the secondary service/socket. Other cases exercise TCP
+reset/resume, full AUTH after grace expiry, carrier starvation, UDP rollback/
+supersede/platform commit race, lost challenge/commit retry/replay and two
+IPv4↔IPv6 family commits. Seven real kernel methods cover isolation and two
+simultaneous Unix listeners sharing a short path;35Linux script methods, no
+skips. Unchanged core/native/CI execution is inherited with SHA checks;
+documentation passes9checks.
+
+The initial external observer only recognized TCP `connected on profile`,
+missing UDP `authenticated on profile`. Both actual markers are now recognized.
+Initial execution retains9successful cases, family-switch SUN_LEN/timeout and
+exit1; it is not rewritten as PASS. An early read-only retry refused before any
+changes because the first job was unfinished. After fixes, all14cases and
+7concurrent snapshots passed. External observer issues remain distinct from
+F509 in the runner sources. All original logs are retained.
+
+Generated owned files were retained before exact-set/type/SHA/proc/fd/argv/mount
+checks and cleanup; root absence confirmed. Production service777/845/CLI75bc,
+routes, links, firewall rules, sysctl, mounts and hosts/resolver preserved.
+Only builtin packet/byte counters normalized for structural comparison;
+raw snapshots/diff retained. .10unused; host packages unchanged.
+
+Q35 remains IN_PROGRESS:14executions do not qualify failure injection at every
+acquire/apply/save,30–60min/8h,10k, unsampled RSS/tasks peaks or whole DoS/fuzz
+coverage. Overall30/37DONE81.1%,7sections remain;Q29/Q30/Q31/F459/D06 and
+USER_EXCLUDED limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F509 evidence: q35-fault-concurrency-20261010; SEALED 486 files / 2884066 bytes; manifest SHA256 bbc5177343dd68a617e36a48929f6afd9b3dfd6d103329e4fc30ab0feb285c6a.

@@ -26,7 +26,7 @@ run_udp_soak_case() {
   source "$process_probe"
   udp_roaming_stats() {
     local line
-    line=$(python3 "$stats_helper" "$WORK/control.sock" roam udp \
+    line=$(python3 "$stats_helper" "$ROAMING_CONTROL_SOCKET" roam udp \
       attempts_total commits_total failures_total active_sessions active_candidates cid_aliases) \
       || return
     IFS=$'\t' read -r UDP_ATTEMPTS UDP_COMMITS UDP_FAILURES UDP_SESSIONS UDP_CANDIDATES \

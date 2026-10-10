@@ -65,7 +65,7 @@ run_tcp_bonding_case() {
     fi
   fi
   check "the private control socket sets the shared session limit" \
-    "'$BIN' set-bandwidth roam-user 8 --socket '$WORK/control.sock' >'$WORK/bandwidth-control.log' && ! grep -q '^Error:' '$WORK/bandwidth-control.log'"
+    "'$BIN' set-bandwidth roam-user 8 --socket '$ROAMING_CONTROL_SOCKET' >'$WORK/bandwidth-control.log' && ! grep -q '^Error:' '$WORK/bandwidth-control.log'"
   bonding_rate_probe upload || return 1
   bonding_rate_probe download || return 1
   # Make one carrier lossy; delay the reverse link to model asymmetric RTT.
@@ -101,8 +101,8 @@ run_tcp_bonding_case() {
   check "one logical AUTH owns every bonded carrier" \
     "test \"\$(grep -c 'bandwidth_limit: .*streams<=' $WORK/server.log)\" -eq 1 && ! grep -q 'Reconnecting in' $WORK/client.log"
   check "administrative revocation disables the private test user" \
-    "'$BIN' disable-user roam-user --socket '$WORK/control.sock' >'$WORK/revoke-control.log' && ! grep -q '^Error:' '$WORK/revoke-control.log'"
-  if wait_for 100 "test \"\$(python3 '$SCRIPT_DIR/roaming_control_stats.py' '$WORK/control.sock' roam tcp active_sessions)\" = 0"; then
+    "'$BIN' disable-user roam-user --socket '$ROAMING_CONTROL_SOCKET' >'$WORK/revoke-control.log' && ! grep -q '^Error:' '$WORK/revoke-control.log'"
+  if wait_for 100 "test \"\$(python3 '$SCRIPT_DIR/roaming_control_stats.py' '$ROAMING_CONTROL_SOCKET' roam tcp active_sessions)\" = 0"; then
     ok "revocation removed the entire session rather than one stream"
   else
     bad "revocation retained a bonded session"

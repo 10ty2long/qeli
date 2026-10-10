@@ -1,5 +1,5 @@
 # Client roaming (seamless network change) — implementation plan
-<!-- normative-sync: roaming-v50-netns-isolation -->
+<!-- normative-sync: roaming-v51-private-control -->
 
 > Audit update, 23 September 2026: the Linux route adapter uses a connection owner lease;
 > cleanup closes admission for new mutations. `dev_attach=true` does not supply
@@ -974,3 +974,14 @@ CI executes unprivileged `test_roaming_netns_isolation.py`. Separate
 verifies parent namespace identities before creating sentinels. Qualification,
 real kernel execution and inherited boundaries are in the
 [Q35 report](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+
+### Control sockets and deep TMPDIR
+
+Linux TCP/UDP runners automatically place control sockets at private
+`/run/qeli-roaming-control/control.sock` (directory0700);TCP secondary uses
+`control-secondary.sock` beside it. Unix addresses stay short for deep TMPDIR/
+WORK paths. Soak statistics and bonding control API use that same path.
+Mandatory isolation gives simultaneous socket names separate mount/PID namespaces.
+Private /run/sockets disappear with the job;WORK with INI/logs remains under
+TMPDIR for inspection. Control sockets no longer depend on WORK.
+[F509 qualification](../reports/AUDIT-Q34-RELEASE-SOAK.md).

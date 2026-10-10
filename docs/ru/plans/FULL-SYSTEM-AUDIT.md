@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v196 -->
+<!-- normative-sync: full-system-audit-v197 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -167,23 +167,26 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 18 | IPv6 off/manual/route/nat66 и NDP | H06, H11 | PASS |
 | 19 | DNS сервера и клиентов | H01–H02, H05–H06 | PASS |
 | 20 | DHCP и lease lifecycle | H02, H05 | PASS |
-| 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | IN_PROGRESS |
-| 22 | Transport core, FFI/JNI и память | H06, H08 | IN_PROGRESS |
-| 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | IN_PROGRESS |
+| 21 | TUN/TAP, IP, MTU/PMTU и фрагментация | H06, H08 | DONE/PASS |
+| 22 | Transport core, FFI/JNI и память | H06, H08 | DONE/PASS |
+| 23 | Роуминг, resume и CONTROL_V2 | H06, H08 | DONE/PASS |
 | 24 | Multipath, bonding и общий бюджет | H04, H06, H08 | DONE/PASS |
 | 25 | Linux CLI и восстановление сети | H01, H04, H08 | DONE / PASS |
-| 26 | Общий C# и managed/native граница | H04, H06, H08 | TODO |
+| 26 | Общий C# и managed/native граница | H04, H06, H08 | DONE/PASS |
 | 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | DONE / PASS |
-| 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | IN_PROGRESS |
+| 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | IN_PROGRESS |
-| 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | TODO |
-| 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | TODO |
+| 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | IN_PROGRESS |
+| 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | IN_PROGRESS |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Бенчмарки и методика измерения | H07 | TODO |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | TODO |
+
+Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31
+10октября. Старые checkpoint-числа далее остаются историческими.
 
 ## 6. Сценарии по каждому разделу
 
@@ -2175,6 +2178,14 @@ inputs; новая компиляция не нужна. Журналы сохр
 служба и настройки лабы сохранены. Короткая интеграционная проверка выполнена;
 30–60мин/8ч,10k, tasks churn и остальные уровни Q35 открыты. Полный статус
 IN_PROGRESS, общий итог30/37(81,1%),7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**10 октября,F509/Q35-F006:** [Короткие control sockets и матрица отказов](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+реальный SUN_LEN при длинном TMPDIR исправлен private /run path; все consumers
+TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
+7liveconcurrent snapshots,35Linuxscript+7kernelmethods PASS; первый family
+FAIL и ошибка TCP-only наблюдателя сохранены. Общий Q35 IN_PROGRESS,
+30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Бенчмарки и методика измерения
 

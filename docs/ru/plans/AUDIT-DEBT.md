@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v130 -->
+<!-- normative-sync: audit-debt-v131 -->
 
 Дата текущей сверки: 10 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1431,3 +1431,10 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 соседние процессы/настройки сохраняются. Только живые NAT-счётчики нормализованы
 в структурном сравнении, raw сохранён. Новый VPN-soak не заявляется;
 Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 октября,F509/Q35-F006:** [Короткие control sockets и матрица отказов](../reports/AUDIT-Q34-RELEASE-SOAK.md):
+реальный SUN_LEN при длинном TMPDIR исправлен private /run path; все consumers
+TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
+7liveconcurrent snapshots,35Linuxscript+7kernelmethods PASS; первый family
+FAIL и ошибка TCP-only наблюдателя сохранены. Общий Q35 IN_PROGRESS,
+30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
