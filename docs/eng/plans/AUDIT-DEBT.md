@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v125 -->
+<!-- normative-sync: audit-debt-v126 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1288,3 +1288,5 @@ physical exclusions are not PASS.
 **9 October, F497–F498/Q34-F051–F052:** [Universal2 and retired resign](../reports/AUDIT-Q34-PUBLICATION-GATES.md): removed arm64 fallback on lipo failure/missing Intel; full Mach-O graph and every output admitted. Retired unused unchecked SSH-resign helper.58Windows/11Linux methods including2actualLLVM PASS,workflow lint/docs PASS. Synthetic headers,no full payload/signature/Mac runtime; originalservice retained,ownroot cleaned.Q34IN_PROGRESS30/37DONE81.1%,7remain;previous limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October, F499–F500/Q34-F053–F054:** [Packager inputs/resources](../reports/AUDIT-Q34-PUBLICATION-GATES.md): all SSH/SFTP exit paths closed, private workspaces, safe TAR/core before SSH and 4 upload SHA gates.72 Windows/23 Linux methods +3 actual main trials PASS; corruption retains prior ZIP. Controlled signer/synthetic headers,no Mac/signature PASS.48 owned lab files cleaned,service unchanged. NuGet/HTTP duplicates removed after SHA,archives/SEALED retained. Q34 IN_PROGRESS;30/37 DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10 October, F501/Q34-F055:** [CI compiler pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): removed implicit stable in7jobs,compiler1.97.0 matches reviewed policy; other matrix/nightly choices retained. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification without hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

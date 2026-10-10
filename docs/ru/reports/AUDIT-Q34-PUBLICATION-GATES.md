@@ -1,6 +1,6 @@
 # Q34: допуск release source и Docker notices
 
-<!-- normative-sync: q34-publication-gates-v7 -->
+<!-- normative-sync: q34-publication-gates-v8 -->
 
 Дата завершения проверок: 9 октября 2026. Packet начал собираться 8 октября.
 
@@ -363,3 +363,37 @@ Native14/digest/qeli tree/protected/OpenWrt cut неизменны, prior execut
 прежние open/accepted/USER_EXCLUDED сохранены. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F499-F500 evidence: q34-mac-isolation-20261009; SEALED 42 files / 1477945 bytes; manifest SHA256 c9e0e144657b4029f2e1b01ee959154a4a1e6249a6d17a2a761a2a4d3083085d.
+
+
+## 10 октября: F501 / Q34-F055 — версии компилятора во всех CI-задачах
+
+Семь jobs (build-test, deb-package, android-build, android-instrumented,
+windows-build, macos-build, ios-build) указывали SHA Rust action, но не toolchain.
+Проверен исходник exact pinned action: default input равен stable. Это подвижная
+версия, а не reviewed Rust1.97.0. Pin самого action закрепляет installer-код,
+но без input не закрепляет compiler. См. [исходник action](https://raw.githubusercontent.com/dtolnay/rust-toolchain/4cda84d5c5c54efe2404f9d843567869ab1699d4/action.yml).
+
+В этих семи jobs явно добавлен toolchain1.97.0, совпадающий с
+DEFAULT_RUST_TOOLCHAIN и reviewed toolchain notices. Теперь все 12 Rust install
+steps имеют explicit input; прежние format/security pins, четыре router matrix
+варианта (включая compatibility/nightly) и два fuzz nightly steps сохранены.
+
+Baseline и final разобраны настоящим SHA-сверенным PyYAML6.0.3 BaseLoader.
+Exact pinned action/default сохранён в raw. Подтверждены семь implicit stable
+выборов до изменения, семь1.97.0 после, остальные choices неизменны. После удаления
+только семи добавленных inputs semantic YAML полностью совпадает с baseline —
+jobs, triggers, matrix, components и остальные steps не изменены.
+
+65 связанных методов PASS:38 native-recipes,11 workflow,16 toolchain notices.
+Pinned actionlint принял все4workflow, check_toolchain notices и docs PASS.
+Это source/config qualification: hosted Actions, compiler install и сборка
+клиентов не выполнялись. Лаба не использовалась; повтор SDK/native/app не нужен
+для изменения только installer inputs. CI security audit внешних registry/CVE
+и full final-source Actions остаются отдельными проверками.
+
+Native14/source digest/qeli tree/protected/OpenWrt cut неизменны, execution
+qualification наследуется.41cases/100prior supplements сохранены кроме
+source_digest bookkeeping, добавляется101. Q34IN_PROGRESS,30/37DONE81,1%,7remain;
+предыдущие open/accepted/USER_EXCLUDED сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F501 evidence: q34-ci-toolchain-20261010; SEALED 22 files / 1183992 bytes; manifest SHA256 3a2362b4f92fadd4dffee764d264748923aa941115c528d20a1f9376f528be8d.
