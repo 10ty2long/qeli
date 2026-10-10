@@ -14,7 +14,6 @@ import argparse
 import os
 import sys, io, os, json, time, socket, re
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-import paramiko
 import ssh_hostkey
 
 # Lab test-VM creds — override via env (QELI_LAB_SERVER / QELI_LAB_CLIENT /
@@ -38,6 +37,7 @@ HASH = "$argon2id$v=19$m=16384,t=2,p=1$cWVsaVNhbHRWYWw$CCYuTv8pvqQrvhrBQW3KjPpEN
 PASS = "testpass123"
 
 def conn(h):
+    import paramiko
     c = paramiko.SSHClient(); ssh_hostkey.harden(c)
     c.connect(h[0], username=h[1], password=h[2], timeout=20, look_for_keys=False, allow_agent=False)
     return c

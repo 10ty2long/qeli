@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v203 -->
+<!-- normative-sync: full-system-audit-v204 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2213,6 +2213,16 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 изменениями производственного firewall удалён. Subprocess-тест проверил
 оба оставшихся отказа; доступ к `.10` для новых замеров пока отклонён
 на SSH-аутентификации.
+
+**Q36-F003/F004:** [методика повторов](../reports/BENCHMARK.md): происхождение
+бинарника отделено от локального checkout; добавлены P=4, governor/affinity/load,
+MTU, raw counters и честная публикация отказов/cleanup. Offline report требует
+≥3 отдельных окон, одинаковых условий и повторной сверки raw iperf/process/counters;
+дубликаты, неполная популяция и mismatch отказывают без исключения outliers.
+24 Windows/24 Linux метода PASS; реальные Linux sampler/governor PASS. SSH обеих
+VM восстановлен через stdin; прежний getpass/PTTY отказ не означает смену пароля.
+Настоящие throughput повторы/current-build/bidir/IPv6/latency/auth остаются OPEN;
+Q36 IN_PROGRESS, общий итог 30/37 DONE81,1%.
 
 **Статус: IN_PROGRESS.**
 

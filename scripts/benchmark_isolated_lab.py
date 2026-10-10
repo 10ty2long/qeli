@@ -9,17 +9,18 @@ import argparse
 import datetime as dt
 import hashlib
 import json
-import math
 import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
 import time
+import uuid
 
 import benchmark as modes
+from benchmark_evidence import counter_deltas, parse_iperf_result
 from native_lab import connect_lab
-from native_repro import source_digest
+from native_repro import atomic_write_bytes, source_digest
 
 SAMPLER = r'''
 import json,os,sys,time
@@ -28,18 +29,22 @@ pid,seconds=int(sys.argv[1]),float(sys.argv[2])
 proc=Path('/proc')/str(pid)
 def read():
     fields=(proc/'stat').read_text().rsplit(')',1)[1].split()
-    rss=next(x for x in (proc/'status').read_text().splitlines() if x.startswith('VmRSS:'))
+    status=dict(x.split(':',1) for x in (proc/'status').read_text().splitlines())
     cpu=[int(x) for x in Path('/proc/stat').read_text().splitlines()[0].split()[1:9]]
     return dict(t=time.monotonic(),ticks=int(fields[11])+int(fields[12]),
-                start=fields[19],rss_kib=int(rss.split()[1]),host_total=sum(cpu),host_steal=cpu[7])
+                start=fields[19],rss_kib=int(status['VmRSS'].split()[0]),
+                cpu_affinity=status['Cpus_allowed_list'].strip(),nice=int(fields[16]),
+                host_load=[float(x) for x in Path('/proc/loadavg').read_text().split()[:3]],
+                host_total=sum(cpu),host_steal=cpu[7])
 first=read();samples=[first]
 while time.monotonic()-first['t']<seconds:
     time.sleep(min(.5,max(.01,seconds-(time.monotonic()-first['t']))))
     value=read()
     if value['start']!=first['start']:raise RuntimeError('sampled PID identity changed')
+    if (value['cpu_affinity'],value['nice'])!=(first['cpu_affinity'],first['nice']):raise RuntimeError('sampled process CPU policy changed')
     samples.append(value)
 last=samples[-1];elapsed=last['t']-first['t']
-print(json.dumps(dict(pid=pid,cpu_avg_pct=100*(last['ticks']-first['ticks'])/os.sysconf('SC_CLK_TCK')/elapsed,
+print(json.dumps(dict(pid=pid,clock_ticks=os.sysconf('SC_CLK_TCK'),cpu_avg_pct=100*(last['ticks']-first['ticks'])/os.sysconf('SC_CLK_TCK')/elapsed,
     rss_peak_kib=max(x['rss_kib'] for x in samples),elapsed=elapsed,
     host_steal_pct=100*(last['host_steal']-first['host_steal'])/max(1,last['host_total']-first['host_total']),samples=samples)))
 '''
@@ -64,6 +69,9 @@ client=clients[0]
 if client.get('username')!='bench' or client.get('profile')!='bench':raise RuntimeError('wrong benchmark session')
 result={key:client[key] for key in ('dropped','bytes_sent','bytes_recv','connected_secs')}
 if not all(type(value) is int and value>=0 for value in result.values()):raise RuntimeError('invalid counter')
+for key in ('ip','peer'):
+    if not isinstance(client.get(key),str) or not client[key]:raise RuntimeError('session identity missing')
+    result[key]=client[key]
 print(json.dumps(result))
 '''
 
@@ -170,6 +178,34 @@ def host_snapshot(lab):
     }.items()}
 
 
+def host_metadata(lab, binary):
+    governor = ('from pathlib import Path; import json; '
+                'p=sorted(Path("/sys/devices/system/cpu").glob("cpufreq/policy*/scaling_governor")); '
+                'print(json.dumps(dict(availability="AVAILABLE" if p else "UNAVAILABLE", '
+                'policies={str(x.parent.name):x.read_text().strip() for x in p})))')
+    result = {label: lab.checked(command, label) for label, command in {
+        'kernel': 'uname -srmo', 'cpu': 'lscpu',
+        'iperf': 'iperf3 --version | head -1', 'version': binary + ' --version',
+        'boot_id': 'cat /proc/sys/kernel/random/boot_id',
+        'load_at_start': 'cat /proc/loadavg',
+        'cpu_governor': 'python3 -c ' + shlex.quote(governor),
+    }.items()}
+    result['cpu_governor'] = json.loads(result['cpu_governor'])
+    return result
+
+
+def fixture_mtus(fixture):
+    links = json.loads(fixture.checked(fixture.run_in('ip -j link show')))
+    found = {link['ifname']: link['mtu'] for link in links if link.get('ifname') in {'qbench0', 'qd14v'}}
+    if set(found) != {'qbench0', 'qd14v'} or any(type(value) is not int or value <= 0 for value in found.values()):
+        raise RuntimeError('benchmark interface MTUs missing or invalid')
+    return found
+
+
+def save_results(path, output):
+    atomic_write_bytes(path, (json.dumps(output, indent=2, allow_nan=False) + '\n').encode('utf-8'))
+
+
 def configs(mode, key):
     server = modes.server_ini(mode)
     server = server.replace('[auth]\n', '[auth]\nusers_file = /etc/qeli/users.conf\n')
@@ -198,37 +234,6 @@ def application_stats(fixture):
     return json.loads(fixture.checked('python3 ' + fixture.remote + '/control.py ' + fixture.remote + '/run/control.sock'))
 
 
-def parse_iperf_result(raw, protocol, expected_seconds):
-    """Require a completed receiver measurement, never a sender-only fallback."""
-    if not isinstance(raw, dict) or 'error' in raw:
-        raise ValueError('iperf error or invalid JSON result')
-    end = raw.get('end')
-    if not isinstance(end, dict) or not isinstance(end.get('sum_received'), dict):
-        raise ValueError('iperf receiver summary missing')
-    received = end['sum_received']
-
-    def number(source, key, minimum=0, maximum=None):
-        value = source.get(key)
-        if type(value) not in (int, float) or not math.isfinite(value) or value < minimum or (maximum is not None and value > maximum):
-            raise ValueError('invalid iperf ' + key)
-        return value
-
-    if number(received, 'seconds') < expected_seconds * .9:
-        raise ValueError('iperf receiver interval truncated')
-    number(received, 'bytes')
-    mbps = number(received, 'bits_per_second') / 1e6
-    if protocol == 'tcp':
-        sent = end.get('sum_sent')
-        if not isinstance(sent, dict) or type(sent.get('retransmits')) is not int or sent['retransmits'] < 0:
-            raise ValueError('iperf TCP retransmits missing or invalid')
-        return dict(mbps=mbps, retransmits=sent['retransmits'], lost_percent=None, jitter_ms=None)
-    if protocol == 'udp':
-        return dict(mbps=mbps, retransmits=None,
-                    lost_percent=number(received, 'lost_percent', maximum=100),
-                    jitter_ms=number(received, 'jitter_ms'))
-    raise ValueError('unsupported iperf protocol')
-
-
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local):
     receiver = client if '-R' in flags.split() else server
     before_kernel = udp_kernel(receiver)
@@ -249,9 +254,10 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
     metrics = parse_iperf_result(raw, 'udp' if '-u' in flags.split() else 'tcp', seconds)
     after_kernel = udp_kernel(receiver)
     after_app = application_stats(server)
-    return dict(**metrics, server=samples[0], client=samples[1],
-                kernel_rcvbuf_drops=after_kernel['RcvbufErrors'] - before_kernel['RcvbufErrors'],
-                server_session_drops=after_app['dropped'] - before_app['dropped'])
+    counters = dict(before=dict(kernel=before_kernel, application=before_app),
+                    after=dict(kernel=after_kernel, application=after_app))
+    save_results(local / (name + '-counters.json'), counters)
+    return dict(**metrics, **counter_deltas(counters['before'], counters['after']), server=samples[0], client=samples[1])
 
 
 def main():
@@ -261,6 +267,7 @@ def main():
     parser.add_argument('--sha256', required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seconds', type=int, default=8)
+    parser.add_argument('--tcp-parallel', type=int, choices=(1, 4), default=1)
     parser.add_argument('--modes', nargs='+', choices=[mode['name'] for mode in modes.MODES])
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{64}', args.sha256) or not 5 <= args.seconds <= 30:
@@ -273,30 +280,38 @@ def main():
         parser.error('QELI_LAB_PASS is required')
     args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
     modes.RECORDIZER_POLICY = 'off'
-    server_lab = connect_lab(os.environ.get('QELI_LAB_SERVER', '10.66.116.10'), 'root', password)
-    client_lab = connect_lab(os.environ.get('QELI_LAB_CLIENT', '10.66.116.11'), 'root', password)
+    hosts = [os.environ.get('QELI_LAB_SERVER', '10.66.116.10'), os.environ.get('QELI_LAB_CLIENT', '10.66.116.11')]
+    if hosts[0] == hosts[1]:
+        parser.error('benchmark needs two different lab addresses')
+    server_lab = client_lab = None
     remote = '/var/tmp/qeli-benchmark-' + dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    output = dict(meta=dict(date=dt.datetime.now(dt.timezone.utc).isoformat(),
-        binary_sha256=args.sha256, source_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-        native_source_digest=source_digest(Path(__file__).resolve().parent.parent),
+    started = time.monotonic()
+    repo_root = Path(__file__).resolve().parent.parent
+    selected = [mode['name'] for mode in modes.MODES if not args.modes or mode['name'] in args.modes]
+    output = dict(schema_version=2, status='RUNNING', host_restored=False, errors=[],
+        meta=dict(date=dt.datetime.now(dt.timezone.utc).isoformat(), run_id=str(uuid.uuid4()),
+        binary_sha256=args.sha256, binary_source_provenance='UNVERIFIED',
+        harness_source_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo_root, text=True).strip(),
+        local_native_source_digest=source_digest(repo_root),
         harness_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        tracked_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], text=True).strip()),
-        seconds=args.seconds, tcp_parallel=1, recordizer='off',
+        configuration_builder_sha256=hashlib.sha256(Path(modes.__file__).read_bytes()).hexdigest(),
+        admission_sha256=hashlib.sha256((Path(__file__).parent / 'benchmark_evidence.py').read_bytes()).hexdigest(),
+        tracked_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=repo_root, text=True).strip()),
+        seconds=args.seconds, tcp_parallel=args.tcp_parallel, recordizer='off', hosts=hosts, selected_modes=selected,
+        remote_artifact_root=remote,
         throughput='receiver bits_per_second; UDP offered rates 100/500 Mbps',
         topology='two VM, isolated IPvlan network and private mount namespaces, local TLS target'), modes={})
     before = None
     try:
+        server_lab = connect_lab(hosts[0], 'root', password)
+        client_lab = connect_lab(hosts[1], 'root', password)
         before = [host_snapshot(lab) for lab in (server_lab, client_lab)]
         output['host_before'] = before
         for index, (lab, binary) in enumerate(((server_lab, args.server_bin), (client_lab, args.client_bin))):
             sha = lab.checked('sha256sum ' + binary, 'exact binary SHA').split()[0]
             if sha != args.sha256:
                 raise RuntimeError('binary SHA mismatch')
-            output['meta']['server' if index == 0 else 'client'] = {
-                label: lab.checked(command, label) for label, command in {
-                    'kernel': 'uname -srmo', 'cpu': 'lscpu',
-                    'iperf': 'iperf3 --version | head -1', 'version': binary + ' --version',
-                }.items()}
+            output['meta']['server' if index == 0 else 'client'] = host_metadata(lab, binary)
             lab.checked('mkdir -m 700 ' + remote, 'unique remote artifact directory')
         direct_server = Fixture(server_lab, 'qeli-bench-s', '10.255.42.1/30', args.server_bin, remote + '/direct')
         direct_client = Fixture(client_lab, 'qeli-bench-c', '10.255.42.2/30', args.client_bin, remote + '/direct')
@@ -307,7 +322,7 @@ def main():
             direct_server.create(); direct_client.create()
             direct_server.start('iperf3 -s -B 10.255.42.1 -p 5203', 'iperf.log')
             direct_server.wait(direct_server.run_in("ss -lnt | grep -q ':5203'"))
-            for name, flags, seconds in (('tcp_up', '', args.seconds), ('tcp_down', '-R', args.seconds), ('udp_500', '-u -b 500M -l 1200', 5)):
+            for name, flags, seconds in (('tcp_up', '-P ' + str(args.tcp_parallel), args.seconds), ('tcp_down', '-P ' + str(args.tcp_parallel) + ' -R', args.seconds), ('udp_500', '-u -b 500M -l 1200', 5)):
                 text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json'))
                 raw = json.loads(text)
                 (direct_local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
@@ -341,6 +356,9 @@ def main():
                     raise RuntimeError('public identity key missing')
                 _, client_ini = configs(mode, match.group(0))
                 client.put('client.conf', client_ini)
+                template = '\n'.join(configs(mode, '0' * 64))
+                result['configuration_template_sha256'] = hashlib.sha256(template.encode()).hexdigest()
+                result['transport'] = mode['transport']
                 if mode.get('reality'):
                     server.checked('openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=www.cloudflare.com -keyout ' + server.remote + '/target.key -out ' + server.remote + '/target.crt >/dev/null 2>&1')
                     server.start('openssl s_server -4 -accept 10.255.42.1:9443 -cert ' + server.remote + '/target.crt -key ' + server.remote + '/target.key -www -quiet', 'target.log')
@@ -354,9 +372,10 @@ def main():
                 result['ping'] = client.checked(client.run_in('ping -n -c 10 -i .2 -W 2 ' + ip))
                 server_pid, client_pid = server.process(), client.process()
                 result['pids'] = dict(server=server_pid, client=client_pid)
+                result['mtus'] = dict(server=fixture_mtus(server), client=fixture_mtus(client))
                 server.start('iperf3 -s -B ' + ip + ' -p 5203', 'iperf.log')
                 server.wait(server.run_in("ss -lnt | grep -q ':5203'"))
-                for direction, flags in (('up', ''), ('down', '-R')):
+                for direction, flags in (('up', '-P ' + str(args.tcp_parallel)), ('down', '-P ' + str(args.tcp_parallel) + ' -R')):
                     result['tcp_' + direction] = measure(server, client, server_pid, client_pid,
                         ip, 'tcp_' + direction, flags, args.seconds, local)
                 if mode['transport'] == 'udp':
@@ -371,20 +390,44 @@ def main():
                 print('FAIL', name, str(error)[:500], flush=True)
             finally:
                 for fixture, log in ((server, 'server.log'), (client, 'client.log')):
-                    text, _ = fixture.lab.run('cat ' + fixture.remote + '/' + log + ' 2>/dev/null || true')
-                    (local / log).write_text(text, encoding='utf-8')
-                cleanup_fixtures(client, server)
+                    try:
+                        text, _ = fixture.lab.run('cat ' + fixture.remote + '/' + log + ' 2>/dev/null || true')
+                        (local / log).write_text(text, encoding='utf-8')
+                    except Exception as error:
+                        result.update(status='FAIL', log_error=str(error))
                 output['modes'][name] = result
-                (args.output / 'results.json').write_text(json.dumps(output, indent=2) + '\n', encoding='utf-8')
+                try:
+                    cleanup_fixtures(client, server)
+                except Exception as error:
+                    result.update(status='FAIL', cleanup_error=str(error))
+                    raise
+                finally:
+                    save_results(args.output / 'results.json', output)
         after = [host_snapshot(lab) for lab in (server_lab, client_lab)]
         output['host_after'] = after
         output['host_restored'] = before == after
         if before != after:
             raise RuntimeError('host state changed after benchmark')
+        if set(output['modes']) == set(selected) and selected and all(result['status'] == 'COMPLETED' for result in output['modes'].values()):
+            output['status'] = 'COMPLETED'
+        else:
+            output['status'] = 'FAIL'
+    except Exception as error:
+        output['status'] = 'FAIL'
+        output['errors'].append(str(error))
+        print('FAIL', str(error)[:500], flush=True)
     finally:
-        (args.output / 'results.json').write_text(json.dumps(output, indent=2) + '\n', encoding='utf-8')
-        server_lab.close(); client_lab.close()
-    return 0 if all(result['status'] == 'COMPLETED' for result in output['modes'].values()) else 1
+        for lab in (client_lab, server_lab):
+            if lab is not None:
+                try:
+                    lab.close()
+                except Exception as error:
+                    output['status'] = 'FAIL'
+                    output['errors'].append('SSH close failed: ' + str(error))
+        output['meta']['finished_at'] = dt.datetime.now(dt.timezone.utc).isoformat()
+        output['meta']['elapsed_seconds'] = time.monotonic() - started
+        save_results(args.output / 'results.json', output)
+    return 0 if output['status'] == 'COMPLETED' else 1
 
 
 if __name__ == '__main__':
