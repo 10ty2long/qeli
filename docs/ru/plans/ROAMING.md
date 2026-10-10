@@ -1,5 +1,5 @@
 # Роуминг клиента: план полной реализации
-<!-- normative-sync: roaming-v48-linux-route-owner -->
+<!-- normative-sync: roaming-v49-soak-admission -->
 
 > Дополнение аудита 23 сентября 2026: Linux route adapter использует owner lease на
 > подключение; cleanup закрывает приём новых мутаций. `dev_attach=true` не предоставляет
@@ -1262,3 +1262,5 @@ Release запрещён, если хотя бы одна поддерживае
 
 Feature не считается готовой, пока не пройдены все обязательные release gates, даже если
 happy-path смены Wi-Fi/cellular уже визуально работает.
+
+Soak admission: параметры counts канонические decimal1..2147483647, без ведущих нулей; sample_every<=iterations. Standalone UDP matrix ниже10kQUIC/1kadapters выдаёт SMOKE и exit0 при успехе детей, а не endurance PASS. Полный roaming_resource_release_gate.sh отклоняет downgraded counts до первой фазы. Отдельный bounded release100 остаётся обязательным. Детали и evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).

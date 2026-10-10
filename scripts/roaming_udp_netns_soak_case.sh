@@ -6,12 +6,12 @@
 run_udp_soak_case() {
   local iterations=${QELI_ROAMING_SOAK_ITERATIONS:-10000}
   local sample_every=${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}
-  case "$iterations:$sample_every" in
-    *[!0-9:]*|0:*|*:0)
-      echo "QELI_ROAMING_SOAK_ITERATIONS and QELI_ROAMING_SOAK_SAMPLE_EVERY must be positive integers" >&2
-      return 2
-      ;;
-  esac
+  if [ ! -r "$SCRIPT_DIR/roaming_soak_parameters.sh" ]; then
+    echo "required roaming soak parameter helper is missing" >&2
+    return 2
+  fi
+  source "$SCRIPT_DIR/roaming_soak_parameters.sh" || return 2
+  roaming_soak_counts "$iterations" "$sample_every" || return 2
   local stats_helper="$SCRIPT_DIR/roaming_control_stats.py"
   if ! command -v python3 >/dev/null 2>&1 || [ ! -r "$stats_helper" ]; then
     echo "UDP roaming soak requires python3 and $stats_helper" >&2

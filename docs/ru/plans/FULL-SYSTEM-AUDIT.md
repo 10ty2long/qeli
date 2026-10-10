@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v193 -->
+<!-- normative-sync: full-system-audit-v194 -->
 
 **Текущий итог, 10 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2544,3 +2544,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 **10 октября, F501/Q34-F055:** [Compiler CI pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): устранён implicit stable в7jobs, compiler1.97.0 совпадает с reviewed policy; остальные matrix/nightly choices сохранены. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification без hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 октября,F502–F503/Q34-F056–F057:** [Событие и охват CI](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate требует push event/exact SHA; green PR merge не заменяет source CI. Paths filters удалены, все root policy inputs запускают CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh, не hosted Actions.25ownlabfiles очищены,service сохранён. Developer docs1.97/locked обновлены;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10октября,F506–F507:** [Soak admission](../reports/AUDIT-Q34-RELEASE-SOAK.md): нулевой цикл TCP и downgraded endurance labels воспроизведены; общий decimal validator до сетевых действий, smoke/full markers и minimum10k/1k только для full endurance wrapper. Обязательный bounded100 сохранён.28Linux/57Windows methods,4workflow lint PASS; без новогоVPNsoak/native rebuild. Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

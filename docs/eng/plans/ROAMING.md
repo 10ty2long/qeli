@@ -1,5 +1,5 @@
 # Client roaming (seamless network change) — implementation plan
-<!-- normative-sync: roaming-v48-linux-route-owner -->
+<!-- normative-sync: roaming-v49-soak-admission -->
 
 > Audit update, 23 September 2026: the Linux route adapter uses a connection owner lease;
 > cleanup closes admission for new mutations. `dev_attach=true` does not supply
@@ -955,3 +955,5 @@ documentation, and lab is approximately **20–30 engineering weeks**.
 
 Primary risks are cross-worker UDP state, TCP orphan/JOIN/reaper races, nonce reuse,
 platform binding rollback, outer-family PMTU changes, iOS behavior, and interactions
+
+Soak admission: canonical decimal counts1..2147483647 without leading zeros;sample_every<=iterations. Standalone UDP below10kQUIC/1kadapters emits SMOKE and exits0 when children succeed, not endurance PASS. Full roaming_resource_release_gate.sh refuses downgraded counts before its first phase. Separate mandatory bounded release100 is retained. Details/evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).

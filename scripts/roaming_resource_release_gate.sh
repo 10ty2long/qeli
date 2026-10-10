@@ -28,6 +28,16 @@ if ! command -v sha256sum >/dev/null 2>&1; then
   exit 2
 fi
 
+if [ ! -r "$SCRIPT_DIR/roaming_soak_parameters.sh" ]; then
+  echo "required roaming soak parameter helper is missing" >&2
+  exit 2
+fi
+source "$SCRIPT_DIR/roaming_soak_parameters.sh" || exit 2
+# This is the full endurance gate; bounded 100-flip certification has its own wrapper.
+roaming_soak_counts "${QELI_ROAMING_SOAK_ITERATIONS:-10000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" 10000 || exit 2
+roaming_soak_counts "${QELI_ROAMING_UDP_REPRESENTATIVE_SOAK_ITERATIONS:-10000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" 10000 || exit 2
+roaming_soak_counts "${QELI_ROAMING_UDP_ADAPTER_SOAK_ITERATIONS:-1000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" 1000 || exit 2
+
 actual_sha256=$(sha256sum "$BIN" | awk '{print $1}')
 if [ -n "$EXPECTED_SHA256" ] && [ "$actual_sha256" != "$EXPECTED_SHA256" ]; then
   echo "qeli binary hash mismatch: expected $EXPECTED_SHA256, got $actual_sha256" >&2

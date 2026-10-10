@@ -42,6 +42,15 @@ if [ "$CASE" = grace-expiry ]; then
 fi
 SERVER_ROAMING_GRACE_SECS=${QELI_ROAMING_SERVER_GRACE_SECS:-$DEFAULT_SERVER_ROAMING_GRACE_SECS}
 CLIENT_ROAMING_POLICY=${QELI_ROAMING_CLIENT_POLICY:-$DEFAULT_CLIENT_ROAMING_POLICY}
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 2
+if [ "$CASE" = soak ]; then
+  if [ ! -r "$SCRIPT_DIR/roaming_soak_parameters.sh" ]; then
+    echo "required roaming soak parameter helper is missing" >&2
+    exit 2
+  fi
+  source "$SCRIPT_DIR/roaming_soak_parameters.sh" || exit 2
+  roaming_soak_counts "${QELI_ROAMING_SOAK_ITERATIONS:-10000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" || exit 2
+fi
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-roaming-netns-XXXXXX") || exit 2
 # Each test creates new namespaces; never reuse the host or another case's journal.
 export STATE_DIRECTORY="$WORK/state"
@@ -510,7 +519,6 @@ elif [ "$MULTIPATH_MODE" = adaptive ]; then
   fi
 fi
 
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 if [ "$CASE" = soak ]; then
   # shellcheck source=roaming_tcp_netns_soak_case.sh
   run_case_helper "$SCRIPT_DIR/roaming_tcp_netns_soak_case.sh" run_tcp_soak_case || exit $?

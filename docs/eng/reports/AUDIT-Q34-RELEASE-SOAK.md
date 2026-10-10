@@ -1,6 +1,8 @@
 # Q34/Q25 — memory across 100 release handovers
 
-<!-- normative-sync: audit-q34-release-soak-v1 -->
+<!-- normative-sync: audit-q34-release-soak-v2 -->
+Historical24September checkpoint: debt statuses below refer to that date. The current [ledger](../plans/AUDIT-DEBT.md) includes later closures; the new Q35 scope is recorded at the end.
+
 
 24 September 2026. Rust 1.97.0, Linux x86_64, `release --features jemalloc`;
 core sources match `ea87fd49`. This is developer integration, not final 0.8.2
@@ -47,3 +49,59 @@ D13 stays IN_PROGRESS: stop/reconnect, failure/multiprofile cases, before/after
 threads/tasks, routes/firewall/journals and final-source measurements remain.
 D11/D12/D14 are also open. Windows VM/Mac/iOS/router runtime is skipped by user
 decision. [Register](../plans/AUDIT-DEBT.md).
+
+## Q35: soak admission, 10 October 2026
+
+F506 / Q35-F003: positive-integer validation accepted00/000/08/0100 and arbitrarily
+large digit strings. Bash treats these differently in test and arithmetic. The
+exact prior TCP helper with iterations=00 skipped its loop and passed8final
+resource checks. The fixture used the current Bash process's actual /proc and
+controlled ip/control-counter/worker-selector replies; it claims no real VPN
+migration. The zero-loop false admission was reproduced by executing the original
+helper, not by copying its condition.
+
+The common scripts/roaming_soak_parameters.sh now requires canonical decimal
+integers1..2147483647, without leading zeros, signs, whitespace or overflow;
+sample_every cannot exceed iterations. TCP/UDP helpers and three wrappers share
+the validation. Both primary netns runners validate soak parameters before
+mktemp, cleanup or any network command. Standalone case helpers also validate;
+a missing common helper returns/exits2. Defaults are unchanged.
+
+F507 / Q35-F004: the old UDP matrix reported full
+ROAMING_UDP_RESOURCE_SOAK_MATRIX_PASS after17QUIC/3adapter switches; the overall
+endurance wrapper reported TCP_10K_PASS with100TCP. Actual previous Bash wrappers
+with controlled successful child receipts reproduced this; no complete VPN run
+is claimed. Standalone UDP now reports qualification and actual iteration/sample
+counts and emits *_SMOKE if QUIC<10000 or adapters<1000. Successful standalone
+smoke still exits0 but cannot emit *_PASS. Sufficient counts and successful
+children retain the existing endurance PASS markers. Child failure stops later
+modes.
+
+roaming_resource_release_gate.sh is the full endurance gate: before its first
+phase, it refuses TCP/QUIC<10000, adapters<1000 and invalid sampling intervals.
+The separate mandatory linux_roaming_release_soak.sh retains minimum100 for
+TCP/UDP QUIC, sample_every=iterations/10 and existing strict assertions. Extra
+CLI arguments are refused; executable paths with spaces are quoted for version
+probing. This correction does not substitute a10k requirement for the agreed
+bounded release gate.
+
+28Linux methods without skips:14new admission,4UDP wrapper,4endurance wrapper,
+4worker identity and2control stats. Actual Bash/Python/proc/filesystems with
+controlled network/child/counter seams. Cases cover minimum/boundary/overflow,
+pre-network parent/helper refusal, missing helper, smoke/full labels, bounded100
+dispatch, child failures and existing SHA/order guards.57Windows methods:
+8IPv6 matrix contracts,38native recipes,11workflow checks; shell suites are not
+claimed as Windows PASS. Pinned actionlint accepts4workflows; the three admission
+suites now run in CI. All transferred Bash scripts pass syntax checks.
+
+Lab.11 used an owned temporary root; source TAR and20inputs read back exact/SHA;
+21known files removed after exact-set/SHA/process/fd/mount guards. Service777/845
+and CLI75bc preserved; .10unused. Initial patch generator had an IndentationError
+before writing/connecting; corrected. No new100/10k,30–60min/8h VPN-soak, peak
+between samples, task churn or current hosted CI was executed. Prior core/native/
+runtime results retain their scope; core,14native,e3fb digest,protected/OpenWrt
+cut unchanged. Q34/Q35IN_PROGRESS,Q36TODO;30/37DONE81.1percent,7remain.
+Q29SIGKILL/ENONET,Q30/Q31,F459,D06accepted/USER_EXCLUDED retained.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+F506-F507 evidence: q35-soak-admission-20261010; SEALED 38 files / 1646848 bytes; manifest SHA256 c3feba0ad1c0e010693765f4142a3011a88ac17afa0ef13f9089b38166109f75.

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v193 -->
+<!-- normative-sync: full-system-audit-v194 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2531,3 +2531,5 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 **10 October, F501/Q34-F055:** [CI compiler pins](../reports/AUDIT-Q34-PUBLICATION-GATES.md): removed implicit stable in7jobs,compiler1.97.0 matches reviewed policy; other matrix/nightly choices retained. Actual YAML/exactaction default proof,65methods/actionlint4/docs PASS. Source qualification without hosted Actions/rebuild; native/qeli execution inherited. Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October,F502–F503/Q34-F056–F057:** [CI event/coverage](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate requires push event/exact SHA; green PR merge cannot replace source CI. Paths filters removed, all root policy changes run CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh,not hosted Actions.25ownedlabfiles cleaned,service unchanged. Developer docs1.97/locked updated;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10October,F506–F507:** [Soak admission](../reports/AUDIT-Q34-RELEASE-SOAK.md): reproduced zero-loop TCP and downgraded endurance labels; common decimal validation before network actions, smoke/full markers and10k/1k minimum only for full endurance wrapper. Mandatory bounded100 unchanged.28Linux/57Windows methods,4workflow lint PASS;no newVPNsoak/native rebuild.Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
