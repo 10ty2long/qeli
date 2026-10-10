@@ -1,6 +1,6 @@
 # Q34/Q25 — память при 100 release handover
 
-<!-- normative-sync: audit-q34-release-soak-v3 -->
+<!-- normative-sync: audit-q34-release-soak-v4 -->
 Исторический checkpoint24сентября; статусы долгов ниже относятся к той дате. Текущий [реестр](../plans/AUDIT-DEBT.md) учитывает последующие закрытия; новый Q35 scope приведён в конце.
 
 
@@ -155,3 +155,63 @@ Q30/Q31,F459,D06 ACCEPTED_LIMITATION и USER_EXCLUDED сохраняются.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F508 evidence: q35-isolation-20261010; SEALED 48 files / 3037712 bytes; manifest SHA256 cf6b60799473f333c870bd94b412462b9abac406cee18c6ff92c9b4710f3cd83.
+
+## Q35: реальный bounded soak после изоляции runner, 10 октября 2026
+
+Q35-V001 закрывает проверку обновлённых runner на настоящем VPN: выполнен
+`linux_roaming_release_soak.sh` с 100 переключениями TCP fake-tls и 100 QUIC,
+при sample_every=10. Весь прогон занял **440,95 секунды**, завершился exit0;
+TCP **16/16**, QUIC **17/17** утверждений PASS. Использованы текущие скрипты из
+`5d9e792ce4d6e6d2c2635e3cb5c0cdd3ed5c99f1`, включая обязательную изоляцию
+F508. Независимая внешняя изоляция и timeout480s ограничивали сам тест.
+
+Исполнен ранее действительно собранный Linux x86_64 release0.8.2 с default
+server/client и jemalloc: SHA256
+`98335046d0c16b2126b22334102011ecfaff8390e0a3b09be5e6c7df87104bc2`.
+Все **318 эффективных compiler inputs Cargo/src** побайтно совпадают с текущим
+Git. Архив прежней сборки имеет SHA256
+`4e9718ca2bec0434796e1b97eb67eecbdde386f02af381ad281676bab3bd955c`.
+Различия более широкого дерева qeli ограничены отдельными fuzz Cargo.lock/README,
+не включёнными Docker COPY в эту компиляцию. Это повторное использование
+подтверждённого executable; новая сборка текущего Docker recipe не заявляется.
+Новые native/SDK кэши не создавались.
+
+| Процесс | RSS baseline → final, KiB | Прирост final / sampled peak, KiB | fd baseline → final | socket fd baseline → final |
+|---|---:|---:|---:|---:|
+| TCP client | 50192 → 52556 | 2364 / 2660 | 18 → 18 | 6 → 6 |
+| TCP server | 58520 → 63184 | 4664 / 4664 | 21 → 21 | 7 → 7 |
+| QUIC client | 56324 → 56932 | 608 / 3232 | 18 → 19 | 6 → 7 |
+| QUIC server | 66560 → 73932 | 7372 / 8924 | 21 → 21 | 7 → 7 |
+
+Порог RSS32768KiB сохранён. Дополнительный клиентский QUIC socket стабилен
+от первого sample. Сохранились одна авторизация, исходные client/server workers
+и TUN, туннельная связность и точный carrier bypass; каждый клиент/сервер
+выполнил ровно100COMMIT. TCP orphan/grace/failure=0; QUIC candidates=0,
+CID aliases=3. Проверены восстановление rp_filter и освобождение sysctl leases.
+
+На .11 первоначальный SSH launcher потерял канал по таймауту чтения, потому что
+фоновая shell-группа удерживала descriptors канала. Сам тест продолжал работать
+под собственным deadline, что подтвердили отдельные read-only polls. Повторного
+запуска не было. Ошибка коллектора в ожидаемом TCP label (пропущен /single)
+исправлена по сохранённому журналу до очистки. Оба отказа и первоначальные
+source-binding отказы сохранены; они не названы результатом отказа VPN.
+
+Перед удалением 64точных regular files проверены по SHA; исходные inputs
+покрыты локальным TAR, все generated regular files сохранены отдельно.
+Один оставшийся Unix socket классифицирован через lstat; его удалили только
+после проверки отсутствия process/cwd/exe/root/fd/argv владельцев и mounts.
+Каталог удалён, отсутствие независимо подтверждено. PID777/845, CLI SHA75bc,
+маршруты, links, firewall rules, sysctl, hosts/resolver и mounts сохранились.
+Изменились только счётчики встроенной NAT-цепочки; raw snapshots/diff сохранены,
+структурное сравнение нормализует только builtin packet/byte counters. .10 не
+использовалась; служба и пакеты хоста не менялись.
+
+**Границы:** это200 реальных handover и33 проверки за7мин21с, с измерением
+каждых10переключений. Непрерывные пики между samples, tasks/threads churn,
+10k endurance,30–60мин/8ч, другие adapters и throughput benchmark этим
+не закрыты. Q35 остаётся IN_PROGRESS; общий итог30/37DONE(81,1%),7разделов
+осталось. Прежние Q29/Q30/Q31/F459/D06/USER_EXCLUDED ограничения сохранены.
+Реализации продукта в этом блоке не изменялись.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+Q35-V001 evidence: q35-runtime-isolation-20261010; SEALED 68 files / 15738597 bytes; manifest SHA256 02427686f08ea2ce22fcdfea86f3f52c5af979101d9d0a015ef93874a33722a2.
