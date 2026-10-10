@@ -9,11 +9,80 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+The latest supplemental measurement is [prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+## Prepared-peer AUTH bursts — 11 October 2026
+
+**Q36-F014:** [JSON](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json) contains 27 fresh-server bursts:
+TCP fake-TLS, UDP fake-TLS and QUIC-shaped UDP, 1/4/16 simultaneous peers,
+three independent repeats of every condition. All 189/189 requested peers
+verified the pinned server proof, decrypted AuthOK, appeared in the fixture
+session registry with distinct pool addresses, and were revoked before teardown.
+Transport and concurrency order changes on the second repeat. No warm-up,
+failed-login substitution or sample filtering.
+
+Server and peers share VM .11 (2 vCPU), private IPv4 loopback. The existing CLI
+`238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71` was reused; all 916 original build inputs match.
+The timed test peer adds one generated example to that exact source snapshot,
+links the production crypto/protocol core and builds with Rust 1.97.0,
+`--offline --locked --release --features jemalloc`, one job. Peer SHA
+`b740a246a4737ba5881568e6c2bb04b901f59061544ef56c29bae40e31bcd9ca` is retained. The shipping CLI was not rebuilt;
+active services and the staged CLI were preserved. The peer uses its default
+allocator; the measured server uses the qualified jemalloc CLI.
+
+The existing `audit_auth_contracts.rs` supplies the wire/crypto implementation;
+`scripts/benchmark_auth.py` adds only timing and barriers, failing on source drift.
+`scripts/benchmark_auth_lab.py` holds prepared peers at a barrier after socket
+connect and client key/ClientHello generation. Its full timer runs from immediately
+before ClientHello send to decrypted AuthOK; server TUN setup and process startup
+are excluded. AUTH runs from immediately before AUTH encryption/send to verified
+reply and includes queueing, credential/proof checks, Argon2, address admission
+and protocol I/O. It is not an isolated hash benchmark.
+
+Every password PHC uses Argon2id v19, **m=19456 KiB, t=2, p=1**, matching current
+`crypto::password_hasher()`. The server's unchanged Argon2 gate allows two jobs
+on this two-vCPU VM. Rate is requested peers divided by the interval from earliest
+ClientHello to latest verified AuthOK on the shared monotonic clock; release
+scheduling spread remains in JSON. These finite bursts do not measure sustained
+arrival capacity or maximum server capacity.
+
+| Carrier | Concurrent peers | Admissions/s median [min–max] | AUTH p95, ms* | Full p95, ms* |
+|---|---:|---:|---:|---:|
+| tcp | 1 | 29.75 [26.04–29.80] | 19.919 | 33.614 |
+| tcp | 4 | 67.76 [60.57–70.73] | 43.074 | 58.984 |
+| tcp | 16 | 73.89 [72.57–74.29] | 195.449 | 216.441 |
+| udp | 1 | 49.02 [45.92–49.62] | 19.550 | 20.398 |
+| udp | 4 | 73.40 [67.30–77.38] | 52.527 | 54.086 |
+| udp | 16 | 81.15 [74.91–83.28] | 190.252 | 196.532 |
+| quic | 1 | 49.19 [48.63–51.38] | 19.306 | 20.328 |
+| quic | 4 | 84.20 [67.15–85.60] | 44.997 | 46.620 |
+| quic | 16 | 77.49 [74.17–79.40] | 197.363 | 202.929 |
+
+*p95 columns are medians of three per-burst nearest-rank p95 values. A one-peer
+burst has only one latency value; it cannot establish a statistical tail.
+All individual timings, per-burst maxima and median/min/max populations remain
+in JSON. Server CPU/RSS/load/steal samples enclose each burst; 100% CPU is one
+logical CPU, RSS is a sampled maximum. Affinity0-1/nice0 are observed, not newly
+pinned. Client crypto also competes for these same CPUs.
+
+The initial source-manifest argument overflow, one accepted TCP peer followed by
+test cleanup failure, and an intentionally interrupted slow per-file SFTP transfer
+are retained. Cleanup now revokes sessions while peers remain alive, then releases
+them; the final complete matrix uses the same qualified peer. The separately
+retained partial peer is not included in the 189-peer matrix. A SHA-verified bulk
+archive carries all 892 measurement files; no successful burst was rerun for
+transfer. Full host gates and cleanup differences remain in JSON, without waiver.
+
+73 Windows/73 Linux benchmark methods PASS; nine docs checks PASS. The owned
+root was SHA-archived and removed; private-source Cargo metadata and the owned
+cached peer were removed while preserving the staged CLI. Status remains
+**DIAGNOSTIC_MEASUREMENTS_ONLY**. Other carriers, IPv6 AUTH and sustained or
+rejected-login rate remain OPEN. Q36 IN_PROGRESS; 30/37 DONE (81.1%).
+LOCAL_DEV_COMMIT; NO_PUSH_DEPLOY_RELEASE.
 
 ## RTT under unpaced TCP bidir — 10–11 October 2026
 

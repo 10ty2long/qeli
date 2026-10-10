@@ -18533,5 +18533,10 @@
     "path": "benchmark_v0.8.2_2026-10-10_unpaced_latency.json",
     "sha256": "e375bb75f69a9d14678fcd9e59fa6a6d55753d5ac1e2b222e5d870032cfc16d6",
     "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
+  },
+  "supplemental_auth_bursts": {
+    "path": "benchmark_v0.8.2_2026-10-11_auth_bursts.json",
+    "sha256": "ad5a389802da4bd7a2ceac43deb3a3ecc97b1266cc886a2660f4097cb35b81e7",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
   }
 }
