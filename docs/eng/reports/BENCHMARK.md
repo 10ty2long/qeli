@@ -9,6 +9,72 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
+## Simultaneous inner TCP — 10 October 2026
+
+[Bidir JSON](../../../release/benchmark_v0.8.2_2026-10-10_bidir_12modes.json): the same SHA `7769f43c` and unchanged
+qeli package tree, three separate P=1/P=4 sweeps of all 12 carriers, 72 tunnel
+and 6 baseline phases. IPv4 inner/outer, recordizer=off, MTU 1400/1500, affinity
+0-1, nice 0, two 2-vCPU VMs; governor UNAVAILABLE. Each iperf session used
+`--bidir`, 5 seconds, P streams **per direction**. This is inner TCP over
+TCP/UDP carriers; UDP-bidir was not tested. All 228 raw JSON files were
+revalidated against both receiver summaries, samplers and both namespace
+counters. No failure or outlier was discarded. Below: median [min–max], Mbps.
+
+| Mode | P1 up/down Mbps median [min–max] | P4 up/down Mbps median [min–max] |
+|---|---|---|
+| tcp-plain-raw | 54.5 [50.7–59.7] / 491.9 [463.5–503.8] | 41.3 [34.8–46.3] / 503.6 [489.6–520.3] |
+| tcp-faketls | 54.5 [50.0–84.4] / 497.1 [443.0–514.0] | 46.7 [43.6–48.4] / 510.6 [495.7–518.0] |
+| tcp-padding | 43.8 [37.3–45.0] / 500.6 [497.2–508.4] | 40.8 [33.3–47.8] / 503.5 [493.9–509.3] |
+| tcp-frag | 48.8 [32.9–54.3] / 499.4 [474.4–523.5] | 44.4 [31.0–44.6] / 547.1 [524.0–561.3] |
+| tcp-obfs | 39.6 [34.8–54.1] / 544.1 [517.9–552.7] | 43.2 [41.9–44.3] / 515.3 [514.9–520.3] |
+| tcp-reality | 51.5 [40.0–81.7] / 483.5 [455.1–521.1] | 46.9 [45.2–53.4] / 507.9 [482.2–530.4] |
+| tcp-reality-tls | 429.4 [196.9–452.3] / 736.4 [733.1–957.4] | 264.0 [182.9–301.9] / 823.9 [796.6–929.9] |
+| udp-faketls | 131.1 [126.7–167.7] / 796.5 [741.7–803.7] | 79.8 [79.4–95.1] / 828.8 [826.7–853.6] |
+| udp-padding | 222.6 [167.3–280.6] / 699.2 [563.5–702.1] | 84.4 [82.8–117.6] / 805.2 [762.1–830.3] |
+| udp-quic | 169.8 [150.7–174.2] / 709.1 [695.6–722.2] | 93.8 [86.1–101.8] / 775.2 [775.1–807.9] |
+| tcp-obfs-awg | 53.9 [44.4–62.6] / 503.7 [493.1–516.5] | 36.6 [36.0–41.7] / 526.7 [515.3–554.9] |
+| udp-faketls-awg | 166.8 [140.1–239.9] / 668.3 [615.1–733.5] | 102.9 [100.6–106.2] / 787.7 [730.9–797.0] |
+
+Pronounced uplink/downlink asymmetry repeats. Baseline P1 uplink also varied
+from 9371.2 to 14501.1 Mbps, P4 from 6253.0 to 7142.0: this limits conclusions
+from this VM lab. Sequential measurements above lasted 8 seconds, bidir 5.
+There is no same-duration A/B with an older CLI and no proven regression.
+Maximum phase CPU server/client: 129.3/139.0%;
+sampled peak RSS 114.2/59.0 MiB.
+Maximum session drops: 2635; UDP RcvbufErrors server/client:
+0/345.
+The aggregate dropped counter includes pool refusal, writer queues and other
+reasons. The specific throughput constraint remains OPEN; buffer sizes were
+not changed.
+
+**Q36-F006:** the runner adds `--measurement tcp-bidir`; the standard
+up/down/UDP profile remains available. Admission verifies actual TCP/P/duration/
+bidir, both receiver roles, nonzero progress, complete intervals, retransmits,
+CPU/RSS and independent kernel drop deltas. Missing reverse measurements,
+wrong settings, counter resets and mixed profiles are rejected.
+
+**Q36-F007:** the ordinary offline gate requires restored host state.
+Explicit `--measurements-only` retains host gate FAIL beside measurements and
+never emits AGGREGATED. Only an explicitly recorded restoration failure with
+fully revalidated raw measurements is admitted; other failures, missing
+snapshots, falsely asserted host changes and incorrect phases are rejected.
+47 Windows/47 Linux methods PASS without skips; Linux input SHAs matched.
+
+Four sweeps reached COMPLETED with matching full host snapshots; P1/R1 and
+P4/R3 retain FAIL. Only the three known legacy rules on `.10` changed in both;
+owner SHAs and current journal confirmed the existing vpn-nat cycle. The
+whole population is MEASUREMENTS_ONLY, not a host or performance PASS.
+The initial harness mistake about the bidir field name is retained separately;
+the [iperf3 3.18 contract](https://github.com/esnet/iperf/blob/3.18/src/iperf_api.c)
+was checked against real JSON. Measured runner source bytes were SHA-saved
+before subsequent offline-report changes; raw results were not rewritten.
+
+All 14 owned remote roots were SHA-archived and removed after inode/file/
+process/mount checks; active Qeli PID/SHA identities were preserved.
+Evidence: `audit-debt-20260924/q36-bidir-20261010/`.
+TCP-bidir IPv4 is measured; UDP-bidir, IPv6, p50/p95/p99, auth-rate, drop
+diagnosis and the full 8-hour Q35 soak remain OPEN. Q36 IN_PROGRESS; 30/37 (81.1%).
+
 ## Repeated current-candidate measurement — 10 October 2026
 
 Three separate sweeps each P=1/P=4, alternating and sequential:

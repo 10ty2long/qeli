@@ -18485,5 +18485,14 @@
     "status": "PASS",
     "receipt_sha256": "19b1bdfb242cc23d456d3b02b80c60837d3e1b2931f727ea2dd574608a3f094e",
     "cache_invalidation_sha256": "a7aaf31f4d8d81446b921c2b2a40cc2b387fb685643cc0dac5d7dd9559320c8d"
+  },
+  "supplemental_bidir": {
+    "artifact": "benchmark_v0.8.2_2026-10-10_bidir_12modes.json",
+    "sha256": "caaf5764e0446bef0950be32bb7d4e30965aa913ea5ba4c776758cb4db740ca0",
+    "status": "MEASUREMENTS_ONLY",
+    "phases": 78,
+    "successful_host_gates": 4,
+    "failed_host_gates": 2,
+    "scope": "Simultaneous inner TCP, IPv4 inner/outer, 3 repeats each P=1/P=4; no performance PASS"
   }
 }

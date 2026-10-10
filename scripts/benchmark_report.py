@@ -13,7 +13,7 @@ import math
 from pathlib import Path
 import re
 
-from benchmark_evidence import counter_deltas, parse_iperf_result
+from benchmark_evidence import bidir_counter_deltas, counter_deltas, measurement_phases, parse_iperf_bidir, parse_iperf_result
 from benchmark_host_state import SCHEMA, structural_host_snapshot
 from native_repro import atomic_write_bytes
 
@@ -82,17 +82,25 @@ def sample_policy(sample):
     return dict(cpu_affinity=policy[1], nice=policy[2])
 
 
-def validate_run(directory):
+def validate_run(directory, *, measurements_only=False):
     root = Path(directory).resolve(strict=True)
     hashes = {}
     run = read_json(root / 'results.json', root, hashes)
-    if run.get('schema_version') != 2 or run.get('status') != 'COMPLETED' or run.get('host_restored') is not True or run.get('errors') != []:
+    if not isinstance(run, dict) or run.get('schema_version') != 2:
         raise ValueError('run incomplete, failed, or host restoration unverified')
-    for row in run.get('host_before', []) + run.get('host_after', []):
+    before, after = run.get('host_before'), run.get('host_after')
+    if not isinstance(before, list) or len(before) != 2 or not isinstance(after, list) or len(after) != 2:
+        raise ValueError('host state snapshots incomplete')
+    for row in before + after:
         if isinstance(row, dict) and 'snapshot_schema' not in row and (set(row) != {'addresses', 'routes', 'qeli_listener'} or any(not isinstance(value, str) or not value.strip() for value in row.values())):
             raise ValueError('archived host core snapshot incomplete')
-    if not isinstance(run.get('host_before'), list) or len(run['host_before']) != 2 or not isinstance(run.get('host_after'), list) or len(run['host_after']) != 2 or [structural_host_snapshot(row) for row in run['host_before']] != [structural_host_snapshot(row) for row in run['host_after']]:
+    restored = [structural_host_snapshot(row) for row in before] == [structural_host_snapshot(row) for row in after]
+    if type(run.get('host_restored')) is not bool or run['host_restored'] != restored:
         raise ValueError('host state restoration disagrees with raw snapshots')
+    completed = run.get('status') == 'COMPLETED' and run.get('errors') == [] and restored
+    host_failure = run.get('status') == 'FAIL' and run.get('errors') == ['host state changed after benchmark'] and not restored
+    if not completed and not (measurements_only and host_failure):
+        raise ValueError('run incomplete, failed, or host restoration unverified')
     meta = run['meta']
     for key in ('binary_sha256', 'harness_sha256', 'configuration_builder_sha256', 'admission_sha256', 'local_native_source_digest'):
         if not re.fullmatch('[0-9a-f]{64}', meta[key]):
@@ -114,6 +122,8 @@ def validate_run(directory):
     number(meta['elapsed_seconds'], 'monotonic run duration', positive=True)
     comparison = {key: meta[key] for key in ('binary_sha256', 'harness_sha256', 'configuration_builder_sha256',
         'admission_sha256', 'seconds', 'tcp_parallel', 'recordizer', 'topology', 'hosts', 'selected_modes')}
+    profile = meta.get('measurement', 'standard')
+    comparison['measurement'] = profile
     coverage = [row.get('snapshot_schema', 'archived-core-only') for row in run['host_before']]
     if coverage[0] != coverage[1]:
         raise ValueError('host snapshot coverage differs across hosts')
@@ -128,7 +138,7 @@ def validate_run(directory):
             raise ValueError('CPU governor availability missing')
     comparison['modes'] = {}
     phase_metrics = {}
-    groups = [('direct', run['baseline'], ('tcp_up', 'tcp_down', 'udp_500'))]
+    groups = [('direct', run['baseline'], measurement_phases(profile, 'direct'))]
     for name in selected:
         if not re.fullmatch('[a-z0-9][a-z0-9-]{0,63}', name):
             raise ValueError('invalid mode name')
@@ -143,7 +153,7 @@ def validate_run(directory):
                 raise ValueError('interface MTUs missing')
         comparison['modes'][name] = {key: mode[key] for key in ('transport', 'configuration_template_sha256', 'mtus',
             'qeli-bench-s_rmem_max', 'qeli-bench-c_rmem_max')}
-        phases = ('tcp_up', 'tcp_down', 'udp_100', 'udp_500') if mode['transport'] == 'udp' else ('tcp_up', 'tcp_down')
+        phases = measurement_phases(profile, mode['transport'])
         groups.append((name, mode, phases))
     for name, summary, phases in groups:
         actual_phases = {key for key in summary if key.startswith(('tcp_', 'udp_'))}
@@ -151,9 +161,10 @@ def validate_run(directory):
             raise ValueError('phase population missing or unexpected: ' + name)
         for phase in phases:
             raw = read_json(root / name / (phase + '-iperf.json'), root, hashes)
-            metrics = parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
+            metrics = parse_iperf_bidir(raw, meta['seconds'], meta['tcp_parallel']) if phase == 'tcp_bidir' else parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
             expected = summary[phase]
-            for key in ('mbps', 'retransmits', 'lost_percent') + (() if name == 'direct' else ('jitter_ms',)):
+            keys = tuple(metrics) if phase == 'tcp_bidir' else ('mbps', 'retransmits', 'lost_percent') + (() if name == 'direct' else ('jitter_ms',))
+            for key in keys:
                 if metrics[key] is None:
                     equal = expected[key] is None
                 else:
@@ -177,8 +188,8 @@ def validate_run(directory):
                         values[host + '_' + key] = sample[key]
                     values[host + '_load1_max'] = max(row['host_load'][0] for row in sample['samples'])
                 counters = read_json(root / name / (phase + '-counters.json'), root, hashes)
-                deltas = counter_deltas(counters['before'], counters['after'])
-                for key in ('kernel_rcvbuf_drops', 'server_session_drops'):
+                deltas = (bidir_counter_deltas if phase == 'tcp_bidir' else counter_deltas)(counters['before'], counters['after'])
+                for key in deltas:
                     if type(expected[key]) is not int or expected[key] != deltas[key]:
                         raise ValueError('drop summary disagrees with raw counters')
                     values[key] = expected[key]
@@ -187,13 +198,14 @@ def validate_run(directory):
     if meta['elapsed_seconds'] < phase_seconds or (ended - started).total_seconds() < phase_seconds * .9:
         raise ValueError('run window shorter than mandatory sequential phases')
     return dict(directory=str(root), run_id=meta['run_id'], started=started, ended=ended,
-                comparison=comparison, metrics=phase_metrics, hashes=hashes)
+                comparison=comparison, metrics=phase_metrics, hashes=hashes,
+                run_status=run['status'], host_restored=restored, host_gate_errors=run['errors'])
 
 
-def aggregate(directories):
+def aggregate(directories, *, measurements_only=False):
     if len(directories) < 3:
         raise ValueError('at least three independent run directories required')
-    runs = [validate_run(directory) for directory in directories]
+    runs = [validate_run(directory, measurements_only=measurements_only) for directory in directories]
     if len({run['directory'] for run in runs}) != len(runs) or len({run['run_id'] for run in runs}) != len(runs):
         raise ValueError('duplicate run directory or identity')
     if any(run['comparison'] != runs[0]['comparison'] for run in runs[1:]):
@@ -206,25 +218,30 @@ def aggregate(directories):
         raise ValueError('duplicated raw iperf population')
     metrics = {phase: {key: population([run['metrics'][phase][key] for run in runs])
                for key in values} for phase, values in runs[0]['metrics'].items()}
-    return dict(schema_version=1, status='AGGREGATED', runs=len(runs),
-        scope='Same binary artifact and comparable measurement settings; binary source provenance UNVERIFIED; no performance PASS',
+    scope = 'Same binary artifact and comparable measurement settings; binary source provenance UNVERIFIED; no performance PASS'
+    if measurements_only:
+        scope += '; MEASUREMENTS ONLY: host restoration is not admitted by this report; original per-run host gate results retained'
+    return dict(schema_version=1, status='MEASUREMENTS_ONLY' if measurements_only else 'AGGREGATED', runs=len(runs),
+        scope=scope,
         comparison=runs[0]['comparison'], statistics=metrics,
-        inputs=[{key: run[key] for key in ('directory', 'run_id', 'hashes')} for run in runs])
+        inputs=[{key: run[key] for key in ('directory', 'run_id', 'hashes', 'run_status', 'host_restored', 'host_gate_errors')} for run in runs])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('runs', nargs='+', type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--measurements-only', action='store_true',
+                        help='Retain failed host restoration explicitly; never emit AGGREGATED in this mode')
     args = parser.parse_args()
     if args.output.exists():
         parser.error('output already exists')
     try:
-        report = aggregate(args.runs)
+        report = aggregate(args.runs, measurements_only=args.measurements_only)
         atomic_write_bytes(args.output, (json.dumps(report, indent=2, allow_nan=False) + '\n').encode())
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))
-    print('AGGREGATED', report['runs'], 'runs; raw evidence revalidated')
+    print(report['status'], report['runs'], 'runs; raw evidence revalidated')
 
 
 if __name__ == '__main__':

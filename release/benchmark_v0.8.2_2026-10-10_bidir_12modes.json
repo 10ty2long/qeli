@@ -1,0 +1,4240 @@
+{
+  "schema_version": 1,
+  "kind": "qeli-repeated-cli-bidir-benchmark",
+  "status": "MEASUREMENTS_ONLY",
+  "binary_sha256": "7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e",
+  "source_qualification": {
+    "source_commit": "138bb1529a95292e15e9586675c40b684ffa6d88",
+    "qeli_tree": "be0c68873164449c9abf965e760780c499d305ff",
+    "build_receipt_sha256": "c5e27a57ecebaa0d0c45f681b9ff572536e2a1eaed6d0dd640d6fbd5f527c2c3",
+    "inputs": 902,
+    "scope": "same qualified CLI artifact; unchanged qeli package inputs; no independent reproducible build claim"
+  },
+  "measurement": {
+    "profile": "tcp-bidir",
+    "seconds": 5,
+    "inner": "IPv4",
+    "outer": "IPv4",
+    "phases": 78,
+    "tunnel_phases": 72,
+    "baseline_phases": 6,
+    "repeats_per_parallel": 3
+  },
+  "scope": "All raw receiver measurements retained. No performance PASS; host restoration gates remain separate and strict.",
+  "offline_report_sha256": "0ca517794ed842afb40b49c525baf02e043a0aa6472fdc59d5b381fa7a6a0d33",
+  "offline_admission_sha256": "a48ae46bddf8b4a15f33118525367b77ed9ffe6917c56ec2e61025816c459f8e",
+  "populations": {
+    "P1": {
+      "schema_version": 1,
+      "status": "MEASUREMENTS_ONLY",
+      "runs": 3,
+      "scope": "Same binary artifact and comparable measurement settings; binary source provenance UNVERIFIED; no performance PASS; MEASUREMENTS ONLY: host restoration is not admitted by this report; original per-run host gate results retained",
+      "comparison": {
+        "binary_sha256": "7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e",
+        "harness_sha256": "b51d14d44996a64bc4844e1d44267812f1f5701e6f8b9b21039d88f356571377",
+        "configuration_builder_sha256": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+        "admission_sha256": "a47849a14dd9e02079de3bf415f8af0f9bbaeb6b9525fc38f8fa23bd4a57622f",
+        "seconds": 5,
+        "tcp_parallel": 1,
+        "recordizer": "off",
+        "topology": "two VM, isolated IPvlan network and private mount namespaces, local TLS target",
+        "hosts": [
+          "10.66.116.10",
+          "10.66.116.11"
+        ],
+        "selected_modes": [
+          "tcp-plain-raw",
+          "tcp-faketls",
+          "tcp-padding",
+          "tcp-frag",
+          "tcp-obfs",
+          "tcp-reality",
+          "tcp-reality-tls",
+          "udp-faketls",
+          "udp-padding",
+          "udp-quic",
+          "tcp-obfs-awg",
+          "udp-faketls-awg"
+        ],
+        "measurement": "tcp-bidir",
+        "host_snapshot_coverage": "all-firewall-v1",
+        "host_state_sha256": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+        "server": {
+          "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+          "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+          "iperf": "iperf 3.18 (cJSON 1.7.15)",
+          "version": "qeli 0.8.2",
+          "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+          "cpu_governor": {
+            "availability": "UNAVAILABLE",
+            "policies": {}
+          }
+        },
+        "client": {
+          "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+          "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+          "iperf": "iperf 3.18 (cJSON 1.7.15)",
+          "version": "qeli 0.8.2",
+          "boot_id": "cf76e1b8-67e1-4b9e-982b-7682921396a0",
+          "cpu_governor": {
+            "availability": "UNAVAILABLE",
+            "policies": {}
+          }
+        },
+        "modes": {
+          "tcp-plain-raw": {
+            "transport": "tcp",
+            "configuration_template_sha256": "a0ce378af26bc66ec1f14bbdef6b1684bd8aa54f6ae078144ecdd425d208b30f",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-faketls": {
+            "transport": "tcp",
+            "configuration_template_sha256": "a120430f793b66ab205273582e83f6b0f95bc094a04598a2d30989cb0622b536",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-padding": {
+            "transport": "tcp",
+            "configuration_template_sha256": "2b123a43ec8718b27cd1aa2322537b712645040f862f8ffbe2caa31f98f36ea5",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-frag": {
+            "transport": "tcp",
+            "configuration_template_sha256": "1d4d1a7d16c9f22b6a60c19599759f57ff8793a10c3bf55e9aa1f39dff4137c9",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-obfs": {
+            "transport": "tcp",
+            "configuration_template_sha256": "b024632c9250961bb71785d55da25b259bbfcf89de3cdb93ff8e7f9b8452a9d3",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-reality": {
+            "transport": "tcp",
+            "configuration_template_sha256": "550b34f00b59dc480e032e4345601f9164bdd18f1eb08d20e16f69f24dd7f11f",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-reality-tls": {
+            "transport": "tcp",
+            "configuration_template_sha256": "da75df2054a7ea868dab4fe58a9c9af98973516eedc5c6900f65f44b8db827a7",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-faketls": {
+            "transport": "udp",
+            "configuration_template_sha256": "2af4cbc6e1d34d7c0a90ae7faf324313ebff1092fb255b0e1cd5a8e71c2aa9bb",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-padding": {
+            "transport": "udp",
+            "configuration_template_sha256": "4c58aa94ed940498a748a1fa0330aae6ace9d06aca29de89faddbe5abd56e061",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-quic": {
+            "transport": "udp",
+            "configuration_template_sha256": "00785b68c130066bd439e0d126c02111d069d377b174fec260a582a2c686d806",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-obfs-awg": {
+            "transport": "tcp",
+            "configuration_template_sha256": "325e5803e4cf7d2a74d29acb12dcb2c16358a5435f00a65bb8309f4c0a1a2d3b",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-faketls-awg": {
+            "transport": "udp",
+            "configuration_template_sha256": "454212dd0d901e0951a8e487368e5bd2d0be395aa9ac5a51a5580ed0cd8438fb",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          }
+        }
+      },
+      "statistics": {
+        "direct/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 9371.162614110826,
+            "max": 14501.142628372887,
+            "median": 14408.45883220673,
+            "range": 5129.980014262061,
+            "spread_pct": 35.37638478380841
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 1,
+            "median": 0,
+            "range": 1,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 15849.974082097595,
+            "max": 21475.62464244358,
+            "median": 15936.82549266703,
+            "range": 5625.650560345986,
+            "spread_pct": 26.19551539948073
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-plain-raw/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 50.70267762394018,
+            "max": 59.69464349706185,
+            "median": 54.4683898056534,
+            "range": 8.991965873121664,
+            "spread_pct": 15.063270917371751
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 463.5236703824487,
+            "max": 503.83260570229385,
+            "median": 491.9416820702957,
+            "range": 40.30893531984515,
+            "spread_pct": 8.000461832687144
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 929,
+            "max": 1657,
+            "median": 1087,
+            "range": 728,
+            "spread_pct": 43.93482196741098
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 116.32414779725157,
+            "max": 120.82306375653584,
+            "median": 116.65730633816138,
+            "range": 4.498915959284275,
+            "spread_pct": 3.7235572575363585
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 95420,
+            "max": 99436,
+            "median": 99376,
+            "range": 4016,
+            "spread_pct": 4.03877871193532
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08438818565400844,
+            "max": 0.08688097306689835,
+            "median": 0.08488964346349745,
+            "range": 0.002492787412889913,
+            "spread_pct": 2.8691983122362874
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.19,
+            "max": 0.63,
+            "median": 0.24,
+            "range": 0.44,
+            "spread_pct": 69.84126984126983
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 127.98953150154856,
+            "max": 133.4895279257971,
+            "median": 129.82272859206785,
+            "range": 5.499996424248536,
+            "spread_pct": 4.120170705304926
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50012,
+            "max": 50392,
+            "median": 50264,
+            "range": 380,
+            "spread_pct": 0.7540879504683295
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08561643835616438,
+            "median": 0.08539709649871904,
+            "range": 0.08561643835616438,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.44,
+            "max": 0.81,
+            "median": 0.7,
+            "range": 0.37000000000000005,
+            "spread_pct": 45.67901234567901
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 182,
+            "median": 0,
+            "range": 182,
+            "spread_pct": 100.0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-faketls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 50.04816180949281,
+            "max": 84.40949426748055,
+            "median": 54.461284670582145,
+            "range": 34.36133245798774,
+            "spread_pct": 40.70789993019272
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 109,
+            "max": 188,
+            "median": 117,
+            "range": 79,
+            "spread_pct": 42.02127659574468
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 442.9927552747429,
+            "max": 514.0307406984946,
+            "median": 497.131113538644,
+            "range": 71.0379854237517,
+            "spread_pct": 13.819793214550014
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 16,
+            "max": 1028,
+            "median": 1002,
+            "range": 1012,
+            "spread_pct": 98.44357976653697
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 115.82408821747501,
+            "max": 123.15695028112648,
+            "median": 123.1568393475177,
+            "range": 7.332862063651476,
+            "spread_pct": 5.95407895933846
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 97660,
+            "max": 101892,
+            "median": 99996,
+            "range": 4232,
+            "spread_pct": 4.153417343854282
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0855431993156544,
+            "max": 0.16750418760469013,
+            "median": 0.08605851979345955,
+            "range": 0.08196098828903572,
+            "spread_pct": 48.93071000855432
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.38,
+            "max": 0.58,
+            "median": 0.48,
+            "range": 0.19999999999999996,
+            "spread_pct": 34.482758620689644
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 128.48762375297616,
+            "max": 133.32149147256885,
+            "median": 130.48928793784287,
+            "range": 4.833867719592689,
+            "spread_pct": 3.625722804479181
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50104,
+            "max": 50292,
+            "median": 50144,
+            "range": 188,
+            "spread_pct": 0.3738169092499799
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08340283569641367,
+            "median": 0.0,
+            "range": 0.08340283569641367,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.69,
+            "max": 1.21,
+            "median": 0.77,
+            "range": 0.52,
+            "spread_pct": 42.97520661157025
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-padding/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 37.29862375210152,
+            "max": 45.04430026677664,
+            "median": 43.77977106914771,
+            "range": 7.745676514675118,
+            "spread_pct": 17.195686177387692
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 31,
+            "median": 20,
+            "range": 31,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 497.1633699212138,
+            "max": 508.3899731331172,
+            "median": 500.5978210324187,
+            "range": 11.22660321190341,
+            "spread_pct": 2.2082660566092316
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 877,
+            "max": 1624,
+            "median": 958,
+            "range": 747,
+            "spread_pct": 45.99753694581281
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 116.82466406804332,
+            "max": 123.49103844060241,
+            "median": 120.82385176291935,
+            "range": 6.6663743725590905,
+            "spread_pct": 5.398265701495031
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 91420,
+            "max": 97956,
+            "median": 95488,
+            "range": 6536,
+            "spread_pct": 6.672383519131042
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0847457627118644,
+            "max": 0.08643042350907519,
+            "median": 0.08576329331046312,
+            "range": 0.001684660797210788,
+            "spread_pct": 1.9491525423728784
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.46,
+            "max": 0.56,
+            "median": 0.49,
+            "range": 0.10000000000000003,
+            "spread_pct": 17.85714285714286
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 131.3226727125113,
+            "max": 133.9895494842847,
+            "median": 133.1548064798117,
+            "range": 2.666876771773417,
+            "spread_pct": 1.9903617722710543
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50136,
+            "max": 50572,
+            "median": 50380,
+            "range": 436,
+            "spread_pct": 0.8621371509926479
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08620689655172414,
+            "median": 0.08438818565400844,
+            "range": 0.08620689655172414,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.91,
+            "max": 1.03,
+            "median": 0.91,
+            "range": 0.12,
+            "spread_pct": 11.650485436893199
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 96,
+            "median": 0,
+            "range": 96,
+            "spread_pct": 100.0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-frag/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 32.886552618326135,
+            "max": 54.266702154273574,
+            "median": 48.81361740488347,
+            "range": 21.38014953594744,
+            "spread_pct": 39.39828419122706
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 112,
+            "median": 0,
+            "range": 112,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 474.3622149701752,
+            "max": 523.4617515490256,
+            "median": 499.4492012585502,
+            "range": 49.099536578850405,
+            "spread_pct": 9.379775395920575
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 2,
+            "max": 1456,
+            "median": 1167,
+            "range": 1454,
+            "spread_pct": 99.86263736263736
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 115.99234313274069,
+            "max": 119.98903664116472,
+            "median": 117.82390253257695,
+            "range": 3.9966935084240305,
+            "spread_pct": 3.3308822374967573
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 95956,
+            "max": 98288,
+            "median": 97428,
+            "range": 2332,
+            "spread_pct": 2.3726192414129876
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08453085376162299,
+            "max": 0.17271157167530224,
+            "median": 0.08488964346349745,
+            "range": 0.08818071791367925,
+            "spread_pct": 51.05663567202029
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.38,
+            "max": 0.61,
+            "median": 0.4,
+            "range": 0.22999999999999998,
+            "spread_pct": 37.704918032786885
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 129.98805951211378,
+            "max": 132.9891946050085,
+            "median": 130.48944292618708,
+            "range": 3.001135092894714,
+            "spread_pct": 2.2566758914574936
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50064,
+            "max": 50340,
+            "median": 50308,
+            "range": 276,
+            "spread_pct": 0.548271752085816
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08547008547008547,
+            "median": 0.08319467554076539,
+            "range": 0.08547008547008547,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.76,
+            "max": 1.08,
+            "median": 0.92,
+            "range": 0.32000000000000006,
+            "spread_pct": 29.629629629629626
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-obfs/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 34.780530341116254,
+            "max": 54.05614127633046,
+            "median": 39.59830889703266,
+            "range": 19.275610935214203,
+            "spread_pct": 35.65850332653028
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 38,
+            "median": 0,
+            "range": 38,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 517.9207385897604,
+            "max": 552.7135685541075,
+            "median": 544.126730698066,
+            "range": 34.792829964347106,
+            "spread_pct": 6.294911495544564
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 807,
+            "max": 1212,
+            "median": 979,
+            "range": 405,
+            "spread_pct": 33.415841584158414
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 118.15547903659485,
+            "max": 118.32415384363212,
+            "median": 118.32345640159465,
+            "range": 0.168674807037263,
+            "spread_pct": 0.14255314875115666
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 91448,
+            "max": 97784,
+            "median": 95840,
+            "range": 6336,
+            "spread_pct": 6.479587662603292
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08481764206955046,
+            "median": 0.0847457627118644,
+            "range": 0.08481764206955046,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.34,
+            "max": 0.56,
+            "median": 0.48,
+            "range": 0.22000000000000003,
+            "spread_pct": 39.28571428571429
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 130.82266868919987,
+            "max": 137.82159313855544,
+            "median": 132.15587384965946,
+            "range": 6.99892444935557,
+            "spread_pct": 5.078249561604897
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50056,
+            "max": 52280,
+            "median": 50356,
+            "range": 2224,
+            "spread_pct": 4.2540168324406995
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08598452278589853,
+            "median": 0.0,
+            "range": 0.08598452278589853,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.66,
+            "max": 0.87,
+            "median": 0.85,
+            "range": 0.20999999999999996,
+            "spread_pct": 24.13793103448275
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-reality/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 40.00582794886602,
+            "max": 81.67949381418775,
+            "median": 51.529361282875854,
+            "range": 41.67366586532173,
+            "spread_pct": 51.02096489496486
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 77,
+            "median": 14,
+            "range": 77,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 455.1013847646922,
+            "max": 521.1230363182128,
+            "median": 483.45433268649373,
+            "range": 66.0216515535206,
+            "spread_pct": 12.669110162538633
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 164,
+            "max": 1144,
+            "median": 1055,
+            "range": 980,
+            "spread_pct": 85.66433566433567
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 115.65632980460302,
+            "max": 120.32059575583814,
+            "median": 117.49211539835328,
+            "range": 4.664265951235123,
+            "spread_pct": 3.8765316294644525
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 99468,
+            "max": 103916,
+            "median": 99784,
+            "range": 4448,
+            "spread_pct": 4.280380307171172
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08403361344537816,
+            "max": 0.08665511265164645,
+            "median": 0.08453085376162299,
+            "range": 0.0026214992062682935,
+            "spread_pct": 3.025210084033614
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.47,
+            "max": 0.55,
+            "median": 0.53,
+            "range": 0.08000000000000007,
+            "spread_pct": 14.545454545454561
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 124.98907691429275,
+            "max": 133.8240754280672,
+            "median": 129.488244171757,
+            "range": 8.834998513774451,
+            "spread_pct": 6.601949974631749
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50260,
+            "max": 52344,
+            "median": 50336,
+            "range": 2084,
+            "spread_pct": 3.9813541189057
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.1692047377326565,
+            "median": 0.08628127696289906,
+            "range": 0.1692047377326565,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.81,
+            "max": 0.88,
+            "median": 0.84,
+            "range": 0.06999999999999995,
+            "spread_pct": 7.954545454545448
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-reality-tls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 196.92518124335618,
+            "max": 452.26189814496615,
+            "median": 429.387849885963,
+            "range": 255.33671690160998,
+            "spread_pct": 56.45771132808659
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 247,
+            "max": 9054,
+            "median": 3448,
+            "range": 8807,
+            "spread_pct": 97.27192401148663
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 733.1368985151278,
+            "max": 957.4493950048527,
+            "median": 736.3617510212498,
+            "range": 224.31249648972494,
+            "spread_pct": 23.42813078790321
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 117,
+            "max": 679,
+            "median": 279,
+            "range": 562,
+            "spread_pct": 82.76877761413843
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 124.8245975043047,
+            "max": 129.3232279508967,
+            "median": 125.82623889372748,
+            "range": 4.498630446591989,
+            "spread_pct": 3.478594308131633
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 103376,
+            "max": 114392,
+            "median": 109456,
+            "range": 11016,
+            "spread_pct": 9.630044059025112
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0,
+            "median": 0.0,
+            "range": 0.0,
+            "spread_pct": 0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.47,
+            "max": 0.73,
+            "median": 0.59,
+            "range": 0.26,
+            "spread_pct": 35.61643835616438
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 128.1578702950315,
+            "max": 136.15514038319102,
+            "median": 131.82331364166498,
+            "range": 7.9972700881595244,
+            "spread_pct": 5.873645361939506
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 55088,
+            "max": 59584,
+            "median": 57388,
+            "range": 4496,
+            "spread_pct": 7.545649838882918
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0,
+            "median": 0.0,
+            "range": 0.0,
+            "spread_pct": 0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.79,
+            "max": 0.93,
+            "median": 0.82,
+            "range": 0.14,
+            "spread_pct": 15.053763440860212
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "udp-faketls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 126.74899507040551,
+            "max": 167.7212363986365,
+            "median": 131.14176071296714,
+            "range": 40.97224132823099,
+            "spread_pct": 24.428773724782815
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 165,
+            "median": 65,
+            "range": 165,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 741.6587007789894,
+            "max": 803.651479487728,
+            "median": 796.48717928227,
+            "range": 61.99277870873857,
+            "spread_pct": 7.713888456754248
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 243,
+            "max": 1112,
+            "median": 748,
+            "range": 869,
+            "spread_pct": 78.14748201438849
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 114.6582722668578,
+            "max": 117.99062200694101,
+            "median": 116.98963762182593,
+            "range": 3.3323497400832167,
+            "spread_pct": 2.824249659339184
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 110124,
+            "max": 114176,
+            "median": 111668,
+            "range": 4052,
+            "spread_pct": 3.548906950672648
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08583690987124463,
+            "median": 0.08576329331046312,
+            "range": 0.08583690987124463,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.55,
+            "max": 0.56,
+            "median": 0.55,
+            "range": 0.010000000000000009,
+            "spread_pct": 1.7857142857142905
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 128.1561687738762,
+            "max": 130.32188918146045,
+            "median": 128.98933969821013,
+            "range": 2.1657204075842458,
+            "spread_pct": 1.6618239815175628
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 55144,
+            "max": 56324,
+            "median": 55656,
+            "range": 1180,
+            "spread_pct": 2.095021660393437
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0847457627118644,
+            "median": 0.08417508417508418,
+            "range": 0.0847457627118644,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.6,
+            "max": 0.86,
+            "median": 0.7,
+            "range": 0.26,
+            "spread_pct": 30.23255813953488
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 21,
+            "median": 0,
+            "range": 21,
+            "spread_pct": 100.0
+          }
+        },
+        "udp-padding/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 167.31658980294355,
+            "max": 280.5801018808621,
+            "median": 222.57438255713924,
+            "range": 113.26351207791856,
+            "spread_pct": 40.36762098190829
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 563.463473254776,
+            "max": 702.1433361818144,
+            "median": 699.1602073546295,
+            "range": 138.67986292703847,
+            "spread_pct": 19.750933432077524
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 179,
+            "max": 718,
+            "median": 511,
+            "range": 539,
+            "spread_pct": 75.06963788300835
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 113.65767891990116,
+            "max": 119.49163005068075,
+            "median": 118.49130887909476,
+            "range": 5.833951130779596,
+            "spread_pct": 4.882309437326448
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 109320,
+            "max": 112120,
+            "median": 111904,
+            "range": 2800,
+            "spread_pct": 2.4973242953977848
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08688097306689835,
+            "median": 0.08525149190110827,
+            "range": 0.08688097306689835,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.52,
+            "max": 0.61,
+            "median": 0.52,
+            "range": 0.08999999999999997,
+            "spread_pct": 14.754098360655732
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 129.48939069565736,
+            "max": 131.82165347248218,
+            "median": 129.98937785501388,
+            "range": 2.3322627768248196,
+            "spread_pct": 1.7692561998637668
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 54120,
+            "max": 56132,
+            "median": 55068,
+            "range": 2012,
+            "spread_pct": 3.5844081807168804
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08517887563884156,
+            "median": 0.0851063829787234,
+            "range": 0.08517887563884156,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.71,
+            "max": 0.78,
+            "median": 0.78,
+            "range": 0.07000000000000006,
+            "spread_pct": 8.974358974358987
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "udp-quic/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 150.67175308962277,
+            "max": 174.23932043857053,
+            "median": 169.82574907782535,
+            "range": 23.56756734894776,
+            "spread_pct": 13.52597524463871
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 6,
+            "max": 384,
+            "median": 45,
+            "range": 378,
+            "spread_pct": 98.4375
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 695.6364222398715,
+            "max": 722.1780832115114,
+            "median": 709.103772842548,
+            "range": 26.541660971639885,
+            "spread_pct": 3.6752238247953595
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 65,
+            "max": 665,
+            "median": 473,
+            "range": 600,
+            "spread_pct": 90.22556390977444
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 115.8261209000294,
+            "max": 118.32148556630248,
+            "median": 116.49001315647342,
+            "range": 2.4953646662730904,
+            "spread_pct": 2.1089700271509804
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 110608,
+            "max": 115788,
+            "median": 112596,
+            "range": 5180,
+            "spread_pct": 4.473693301551107
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08576329331046312,
+            "max": 0.1724137931034483,
+            "median": 0.0876424189307625,
+            "range": 0.08665049979298517,
+            "spread_pct": 50.25728987993139
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.45,
+            "max": 0.8,
+            "median": 0.5,
+            "range": 0.35000000000000003,
+            "spread_pct": 43.75
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 129.1572346359387,
+            "max": 130.98934855839403,
+            "median": 130.15678288583618,
+            "range": 1.8321139224553349,
+            "spread_pct": 1.3986739705317275
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 55000,
+            "max": 57076,
+            "median": 56044,
+            "range": 2076,
+            "spread_pct": 3.637255589039179
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0,
+            "median": 0.0,
+            "range": 0.0,
+            "spread_pct": 0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.63,
+            "max": 0.99,
+            "median": 0.73,
+            "range": 0.36,
+            "spread_pct": 36.36363636363637
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-obfs-awg/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 44.41859738345664,
+            "max": 62.62578600774382,
+            "median": 53.8526687526903,
+            "range": 18.207188624287177,
+            "spread_pct": 29.072990192946747
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 361,
+            "median": 3,
+            "range": 361,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 493.0557571014796,
+            "max": 516.470955425569,
+            "median": 503.72914832315683,
+            "range": 23.415198324089317,
+            "spread_pct": 4.53369121305095
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 424,
+            "max": 1143,
+            "median": 1040,
+            "range": 719,
+            "spread_pct": 62.904636920384945
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 116.32563722790057,
+            "max": 120.32284771962715,
+            "median": 119.82353444391794,
+            "range": 3.9972104917265767,
+            "spread_pct": 3.3220710509119233
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 91672,
+            "max": 93892,
+            "median": 93628,
+            "range": 2220,
+            "spread_pct": 2.3644186938184264
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08382229673093043,
+            "max": 0.1710863986313088,
+            "median": 0.08539709649871904,
+            "range": 0.08726410190037838,
+            "spread_pct": 51.005867560771165
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.35,
+            "max": 0.88,
+            "median": 0.61,
+            "range": 0.53,
+            "spread_pct": 60.22727272727273
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 133.48903997167227,
+            "max": 137.48750703612333,
+            "median": 134.31842394250774,
+            "range": 3.998467064451063,
+            "spread_pct": 2.908240283533914
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50296,
+            "max": 51288,
+            "median": 50472,
+            "range": 992,
+            "spread_pct": 1.9341756356262674
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08539709649871904,
+            "median": 0.08396305625524769,
+            "range": 0.08539709649871904,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.52,
+            "max": 0.89,
+            "median": 0.65,
+            "range": 0.37,
+            "spread_pct": 41.57303370786517
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "udp-faketls-awg/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 140.07389380142217,
+            "max": 239.8890046866109,
+            "median": 166.75050729390443,
+            "range": 99.81511088518872,
+            "spread_pct": 41.60887282665847
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 23,
+            "max": 460,
+            "median": 116,
+            "range": 437,
+            "spread_pct": 95.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 615.1215002269779,
+            "max": 733.4511957942929,
+            "median": 668.2589425471798,
+            "range": 118.32969556731496,
+            "spread_pct": 16.1332746126577
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 416,
+            "max": 934,
+            "median": 846,
+            "range": 518,
+            "spread_pct": 55.46038543897216
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 114.99000788569845,
+            "max": 117.31969419587939,
+            "median": 115.32437854867287,
+            "range": 2.3296863101809464,
+            "spread_pct": 1.9857589351462646
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 108180,
+            "max": 109760,
+            "median": 109644,
+            "range": 1580,
+            "spread_pct": 1.4395043731778467
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08488964346349745,
+            "max": 0.08787346221441125,
+            "median": 0.08605851979345955,
+            "range": 0.0029838187509138026,
+            "spread_pct": 3.395585738539908
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.45,
+            "max": 0.74,
+            "median": 0.61,
+            "range": 0.29,
+            "spread_pct": 39.189189189189186
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 127.82177161973146,
+            "max": 130.48847458228363,
+            "median": 130.15686199226718,
+            "range": 2.666702962552165,
+            "spread_pct": 2.043631034149751
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 54800,
+            "max": 55828,
+            "median": 55040,
+            "range": 1028,
+            "spread_pct": 1.841369921902991
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0,
+            "median": 0.0,
+            "range": 0.0,
+            "spread_pct": 0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.59,
+            "max": 0.8,
+            "median": 0.72,
+            "range": 0.21000000000000008,
+            "spread_pct": 26.250000000000007
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 36,
+            "median": 0,
+            "range": 36,
+            "spread_pct": 100.0
+          }
+        }
+      },
+      "inputs": [
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-1",
+          "run_id": "86e663a1-b748-40fc-8c1a-b7dc54fdd156",
+          "hashes": {
+            "results.json": "a860d4e8dfcda931394e9fc0ff6f7c803763b37a29483b236b7508b4dba38c78",
+            "direct/tcp_bidir-iperf.json": "cbafa15b86c59376ae740b15ae1536fb1719510b21992d645e198f4b19e10a47",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "b356359cba34b38f979e3888594a2cb30ff7a80bd01ccd70b2f28c80f0131db3",
+            "tcp-plain-raw/tcp_bidir-processes.json": "5a52fa57da92f5af4e0906b8629b2cf064dcc0dc99066ebb3962066ba4b30f60",
+            "tcp-plain-raw/tcp_bidir-counters.json": "7be827d6464feac770b83e7fa764a47892a4c802870dfe80cd06d0317346c40b",
+            "tcp-faketls/tcp_bidir-iperf.json": "d60b3c1f45f120d0d58be82f2ab389989c5e29c74c8b629ecefe7d3426dfca7a",
+            "tcp-faketls/tcp_bidir-processes.json": "a067c136dc8e61be02e6eef79f81ef0e9c6f669073cbdcf70717f6234367ee44",
+            "tcp-faketls/tcp_bidir-counters.json": "30a85a576999b0d95bd56a7cabe0ac667217890351848805ec38ff1abc85e40e",
+            "tcp-padding/tcp_bidir-iperf.json": "373494f772f818612875e04fe800d7d02e9116c2fe5fb55812373ac5c554743c",
+            "tcp-padding/tcp_bidir-processes.json": "3e423a579d35d5dbd2398e045f6cd92b6f8c881ad95547a5181843e5e1a85efe",
+            "tcp-padding/tcp_bidir-counters.json": "9b306eedc11cd656cc8cfc008f302239dd83a9acf60e67450df8347a81f11447",
+            "tcp-frag/tcp_bidir-iperf.json": "1c2bd6cd491483eaa026d0bf8d98ef8191856476c1742c6a30a767401d0878e3",
+            "tcp-frag/tcp_bidir-processes.json": "c1121c55d5c360c46e569dab4bfb53ca7fb6817e59eeba57c84bc629b94409cf",
+            "tcp-frag/tcp_bidir-counters.json": "fc58bd5e6741d7113a01bf169f1efd94b443ad9598eaecc40ffa00d1cf89a2a4",
+            "tcp-obfs/tcp_bidir-iperf.json": "df31cc940cf0962f6785bc099c83898369cb5aca1f0ccd1af3c61fa0ec342080",
+            "tcp-obfs/tcp_bidir-processes.json": "1d44f790722261ff8c5345acb9832fd16aec4fcc2d04ee887fb38d0a0ea4d65a",
+            "tcp-obfs/tcp_bidir-counters.json": "ac848ea56210119fdbc3f9f7a23fa0f87fb6677b48ddaf83a0fd85084915a3fe",
+            "tcp-reality/tcp_bidir-iperf.json": "8322902f39b094ac94dc67af81fdddda80744b4871470fefc22ca5224c9bb8d8",
+            "tcp-reality/tcp_bidir-processes.json": "708bc2d5fc767cf5f9f694e2f5fa7780f7bea493084bc063abd1e034dc0e6cea",
+            "tcp-reality/tcp_bidir-counters.json": "5f86bb85a015df09a7d060a46517cd2e74c47bea60d0ad309083471845a8f5dd",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "61f6bc7e7fc99a44d2a7ff0d710b94b427c56933e139c7749688d7e96c1fbf1a",
+            "tcp-reality-tls/tcp_bidir-processes.json": "5921addbc4bde984ecaed0a85f187f70f976f2a6e60319ecbe894dac612603e1",
+            "tcp-reality-tls/tcp_bidir-counters.json": "7722a537fb43a0bb3615fe377b97ce90e49369391f60d7b33ecacb22b59e3924",
+            "udp-faketls/tcp_bidir-iperf.json": "9fd41cd267f0b28735fece0bf5cf765e3aa1119c774854211179ff49f65b99fe",
+            "udp-faketls/tcp_bidir-processes.json": "6536b5f568ddc0f4ba2f6e3f4385fdf9f00db3a9ed333a876146d66b91d511e9",
+            "udp-faketls/tcp_bidir-counters.json": "103061a1e2f335a2f171234927ac51eccaf975c9debc9e098329c67987fd4599",
+            "udp-padding/tcp_bidir-iperf.json": "c8a97c9bcdc65bb965ee0e4fc74e2890c437ce85b65474025164366b92f4d855",
+            "udp-padding/tcp_bidir-processes.json": "611337872205ad33a0aaf689df9fb1effc7e42730ad392102259a3a060c3e835",
+            "udp-padding/tcp_bidir-counters.json": "9b004102f5c82739da90081a9affd5a2436d986386090059206d401d29b84935",
+            "udp-quic/tcp_bidir-iperf.json": "26453c2e916c3a29e329cbabbb00a50423eda12888223774c5ad74bff4160e80",
+            "udp-quic/tcp_bidir-processes.json": "2745075425fee8ef1090f9da94ae8a3c9512d5e369d4639261840534b69fe860",
+            "udp-quic/tcp_bidir-counters.json": "d42bb0d2efb4b8fdeea56bf27b85a29001a082710a2c0ffcd3298c00573f3fc2",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "cfa2de37c315f5275d2b99cdc7bca0c12bbe4eff1f63e1b4c5c64a0d60958eef",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "15609f812067329de0fd75a7e486aa5545f6aac34c61783e3c38c9f4c003d7fe",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "1d58bf44ae723c0ad6426568a3d0b1867e07fb136835fac25eb3a8e40d9bdb0b",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "783a5fc03503b2545324ce664f396c5292accf2ca8b0b987148c7074a3de2fa2",
+            "udp-faketls-awg/tcp_bidir-processes.json": "cc7198d86576af8fa4076722e3dc1885581b97d6c15a29798b020f72a0fc18dd",
+            "udp-faketls-awg/tcp_bidir-counters.json": "7f081339220c00708b3109883ac2326472922ec4b0220a48f63729a05971f268"
+          },
+          "run_status": "FAIL",
+          "host_restored": false,
+          "host_gate_errors": [
+            "host state changed after benchmark"
+          ]
+        },
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-2",
+          "run_id": "f47d1adc-c096-43f5-b607-cb03f77628e3",
+          "hashes": {
+            "results.json": "5780cdce136ee9e1bbfe1b6c4fb7a0ebdd0739cd9622ad70634876abc0543ccb",
+            "direct/tcp_bidir-iperf.json": "4fad9dc036084e1333209f207df5c1cc69082c9c66b0d99988770fb6dec305e6",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "099a3a0c85b381f9415ce4452d7463e002bcedfa4ff63d70f4903792598678e5",
+            "tcp-plain-raw/tcp_bidir-processes.json": "fc32dee14e3408f129a64164adf2d5be63d51372e7afc0ece1a2652d923e20e4",
+            "tcp-plain-raw/tcp_bidir-counters.json": "560251cf987b53e9bcffcddd6349cf832dccba28296e3f91ccab570d1a02f863",
+            "tcp-faketls/tcp_bidir-iperf.json": "59057b744bd66681c9486f46ab4e0dfaf807ffbb6e0f8994a962fa04470adaa1",
+            "tcp-faketls/tcp_bidir-processes.json": "7799c61d9f9f505d6c8f677dd122fb50dc3e665e16ca74c19ec75ff902378494",
+            "tcp-faketls/tcp_bidir-counters.json": "4e89c10103acf72f6a1f5ea7f81dafeb7c14db2fe3a8a765c1ca538ce3fc533e",
+            "tcp-padding/tcp_bidir-iperf.json": "6c342dcc12a39bd00d7375f487886837d71fe4dcd1ca74c2da7a10ae700c79da",
+            "tcp-padding/tcp_bidir-processes.json": "5811b424945b8ff80d1c8abfaa821209d685374ae5f91d0d5d7620d1e87c0334",
+            "tcp-padding/tcp_bidir-counters.json": "cfb67b3f564b7585d0f4ac1f98cac61d8b2d19930510c6a8083b4be7c15990ba",
+            "tcp-frag/tcp_bidir-iperf.json": "da705e998c1a92070b30adb0cba4bae281c2609f7fa8bc47bc5c54a3a8617e6c",
+            "tcp-frag/tcp_bidir-processes.json": "5185e984801885a95e87fa850994288b2674d788c7c2662fb69070ad73e4b6c3",
+            "tcp-frag/tcp_bidir-counters.json": "9dfa01ec4b309a11b5398f9f50ecd6c71a96dbbbddbb0c6ebdcb70917985030a",
+            "tcp-obfs/tcp_bidir-iperf.json": "8a0bc71c539816b0382fdcd9608582022f854eab996e9f9e1f0424e324675df3",
+            "tcp-obfs/tcp_bidir-processes.json": "9f0a0bebcaaf9d5db14c07d12688e1c0d6b1ffcf6a49950bd75ecbc7f6e95426",
+            "tcp-obfs/tcp_bidir-counters.json": "11b70673afd10ff96ffb23e510cec30ff0dd2ceaf68f0ba8a2092c3ed3fafc41",
+            "tcp-reality/tcp_bidir-iperf.json": "45470dd172f4bbb1562a1ca8fd4db21e6ae4cb983bb23799281109f0c7ea4ea9",
+            "tcp-reality/tcp_bidir-processes.json": "968efbb55f08381ffc5af15e2d38e7049610a94a2201848369e09a399183f5ad",
+            "tcp-reality/tcp_bidir-counters.json": "73aba9802d3b78359cd82380b0ef833bab675476c7aa8cd67eee41650c45b1fc",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "8f7ffccfbba47ca66889670b9a8fa7d89c4314460506a578e92a6826d696e48b",
+            "tcp-reality-tls/tcp_bidir-processes.json": "db5f801ac889be7f8a299858b0703b6725c6035d1501d9ad2079092ae089c5fc",
+            "tcp-reality-tls/tcp_bidir-counters.json": "ea78775a6b5f7160983a4d4a4cbc76960afd15f3c221a22231ec99738795f48e",
+            "udp-faketls/tcp_bidir-iperf.json": "3b638a7b3bcb1e45419eade75a318eae7943f960a94b5c0c5fb8479f27999429",
+            "udp-faketls/tcp_bidir-processes.json": "d30a28a0476129bc81cac23e33283f86ed425025296fcac2cf729c120576714e",
+            "udp-faketls/tcp_bidir-counters.json": "8424c5deeab254d4fd5692a5f37e8d4720563fcc3553aa9ecc6af8c01b5a84f1",
+            "udp-padding/tcp_bidir-iperf.json": "03ebec10e0e28cb3dbb6ede2a92147a8b0f29431485839064a0a7bd3eb995d6b",
+            "udp-padding/tcp_bidir-processes.json": "7e49ee4daf8da21064a3bbeaba9b29be9556570618628448ec0249124ad8d8a0",
+            "udp-padding/tcp_bidir-counters.json": "62a0612f76746dc8c95287b079b05590589bc7de8a29a54a4a50b6b739a01180",
+            "udp-quic/tcp_bidir-iperf.json": "2d5834e29c383910d18846ea87f82e3223211aa4372a614086649200e03e9cf0",
+            "udp-quic/tcp_bidir-processes.json": "b097ef08a386252b929816b0c2ac34ca3c937221bbefedd9a2db84af0b029def",
+            "udp-quic/tcp_bidir-counters.json": "6a9c099aabf54c0af9ee7799524a71cb56a0a6685a85f1b1cfb107d2ac78f7a8",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "dc50e69153c5b3e45b91dd44b8ecdbf66d062f7e839f9996abb4815cf01d7970",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "460488312cd3d010016ab303fca31ae858478e7bdddd02655cd38ce83c059ae5",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "7f0b3fc745ddd17d8d0153e85bd28ee0e21295c39a494164e3ab2344e71a357b",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "e69375610ec8fe6046faec63db7f6620d359a37b60b54ebb5edcac4054928ba1",
+            "udp-faketls-awg/tcp_bidir-processes.json": "5f5053866c4cc99b72ce02030021a3b8ea655e3ce3e1b8e8d630a3a6a8e35e81",
+            "udp-faketls-awg/tcp_bidir-counters.json": "e59a4c47ba44572ebde2449ea229b4ea7475032697207d4654f1be1616634f4d"
+          },
+          "run_status": "COMPLETED",
+          "host_restored": true,
+          "host_gate_errors": []
+        },
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-3",
+          "run_id": "01caad9c-09ac-443c-8eb0-f35ede24ced9",
+          "hashes": {
+            "results.json": "f6f59464578e73526d6797a80bffa951c96264cf0b121a6df9017251bce4eec4",
+            "direct/tcp_bidir-iperf.json": "9207f20fcb7cbc3781e52a2ea0b58698b738d7f8ef730e2a247e34a1237f9605",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "0ac53f5a9af86acf18682ff82169d46e0edd381daf9ded68585b20b0fb1b43b9",
+            "tcp-plain-raw/tcp_bidir-processes.json": "a4fdce79c727d071ac4e2f99005da778182b554d6ffd17d849b73a919ada17bb",
+            "tcp-plain-raw/tcp_bidir-counters.json": "4bcf8a242e2ba6517f004faf7c7380ef0fb446bc065f460dd8a3453f9bc26fa3",
+            "tcp-faketls/tcp_bidir-iperf.json": "a1b6d7ea4a2c32861d55ebed17f73e71a877c9cd0b7b27da788bf17180570159",
+            "tcp-faketls/tcp_bidir-processes.json": "7a6f0ee4ea6f4b78ecb55c289a2d7cfb6fac877ed3b8388246d7e00eca59295d",
+            "tcp-faketls/tcp_bidir-counters.json": "2e6214eba5d60c988f69d0d9bc51fd2ff633d25cd07033c2f58548125320dd7d",
+            "tcp-padding/tcp_bidir-iperf.json": "7abf4df0eb9965cde6e186b0e05e01fbfd6be544452ab8787be550c58dfa1fad",
+            "tcp-padding/tcp_bidir-processes.json": "f48e13d606e9a9fa7f3d53acb3a785ad622e0fdc0d0a34374ee2da8a71df589b",
+            "tcp-padding/tcp_bidir-counters.json": "8ea67f2e6df80fe340be4b1b0b11474b58fbb3c642ae1753fb2392267ac55ca8",
+            "tcp-frag/tcp_bidir-iperf.json": "9d434185a24b92dfc60033f7127a5fee39c92d1b32e7b6e28eef85bf1cb4c36c",
+            "tcp-frag/tcp_bidir-processes.json": "11f92830c01cf72040fc5b1afbebb342117788798f1d24c27d62b0758adc853d",
+            "tcp-frag/tcp_bidir-counters.json": "8b29ed035c9c8a2e665cdc3f15251324a94eb9cdf8f45bc1829992c31459ba14",
+            "tcp-obfs/tcp_bidir-iperf.json": "b386f72c9a6b03838f8ba7c2a0cc3b9c87c03251e2fbb3a45876a2eecbc6565e",
+            "tcp-obfs/tcp_bidir-processes.json": "818bc9865601232becdcb5ddc551a8f848434111bdcbff8c8f4ed3b33bd58c7e",
+            "tcp-obfs/tcp_bidir-counters.json": "2455e51bba33d6d9b3f580271098bc7dd1468fbec6f70d1c28cc62a8c5e3492a",
+            "tcp-reality/tcp_bidir-iperf.json": "c7971e519341284709f0ef34c336f3ec28da3a52f24bcabd0605a70dba287bde",
+            "tcp-reality/tcp_bidir-processes.json": "98bb18df2c1b1e9b38266ccaf1c56dfb40100bc164ee2b2b509a3280ff69f05d",
+            "tcp-reality/tcp_bidir-counters.json": "a3bf5213bdea1932a9f1cc09b7edb252b353742f135114c9968fc2bf74a47922",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "f7ce0f4afe8da86ce7cf018aae9b05a97244cbefbbb051a22bcea9d136b7cd3f",
+            "tcp-reality-tls/tcp_bidir-processes.json": "93ac84610c5650d6749bbed5d97143cc33d226ff6c3e37773e5f25265a70d4dd",
+            "tcp-reality-tls/tcp_bidir-counters.json": "54e00fc1b83113245e84e0a82fd36509de0a7aea5599117b42b700baa58ec4a5",
+            "udp-faketls/tcp_bidir-iperf.json": "f6ff52b9a14771b2e2bb6cdef7621c99b7262ba59f77dab15b0338a506bc498b",
+            "udp-faketls/tcp_bidir-processes.json": "5af5fd643c4395600eb0b37653abdb6d118b63db208fa73050c007649ee54955",
+            "udp-faketls/tcp_bidir-counters.json": "8cf635c2d39bcc5f76e12e40fb9a5c8e873f04a6f234243b6d3a82e280865e57",
+            "udp-padding/tcp_bidir-iperf.json": "f84fb6d679277d0b8e6b28033053d6c8bc13462d2ac7b7286221e9bbe1843a0d",
+            "udp-padding/tcp_bidir-processes.json": "f4f6350d2cf1db2be5c62190dfe692726cf48ef7e1e1dfda60ab4541e7c89452",
+            "udp-padding/tcp_bidir-counters.json": "b7e69b8651bf397658b4b0be22aea4066c30c1a1adba3e32d47c6ffa2c40ebe2",
+            "udp-quic/tcp_bidir-iperf.json": "6c775fba04b24cf6a07dbce0948afa2ea7684695d49edd11c7af3b6a0648cdf1",
+            "udp-quic/tcp_bidir-processes.json": "5f835c792021029eaf9996c232d489aa8d9d97a1c8bcaeb303baa2b82366aed1",
+            "udp-quic/tcp_bidir-counters.json": "ff98534f1502f885098bfd6be6d12ad0aa734a9ee05909b047c9f2d69b327aa1",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "f60b55dfaea01e9f0b87992ba00c774850ff9af14be72ce1a4626ee824e479be",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "a5cabec6c560ed21bce5a85764209d77df15b8fbd3dac5922d79828b72d487ef",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "2bbc4038ad95c9b0e1db626ddac45e6c783e3717327178796703fd6c3db87aa1",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "969b2f9911c4ef246a22b8ef134551255ef140521bee324b39b2fd331a5f9ff4",
+            "udp-faketls-awg/tcp_bidir-processes.json": "04b5c49484010c3db2efab50304be25cf86f41d1de6b20fc508b66d583c5af89",
+            "udp-faketls-awg/tcp_bidir-counters.json": "acbe58d1f0cab3b9422ee47b218daff5aa6366288966f0915cff35f083a07ee5"
+          },
+          "run_status": "COMPLETED",
+          "host_restored": true,
+          "host_gate_errors": []
+        }
+      ]
+    },
+    "P4": {
+      "schema_version": 1,
+      "status": "MEASUREMENTS_ONLY",
+      "runs": 3,
+      "scope": "Same binary artifact and comparable measurement settings; binary source provenance UNVERIFIED; no performance PASS; MEASUREMENTS ONLY: host restoration is not admitted by this report; original per-run host gate results retained",
+      "comparison": {
+        "binary_sha256": "7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e",
+        "harness_sha256": "b51d14d44996a64bc4844e1d44267812f1f5701e6f8b9b21039d88f356571377",
+        "configuration_builder_sha256": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+        "admission_sha256": "a47849a14dd9e02079de3bf415f8af0f9bbaeb6b9525fc38f8fa23bd4a57622f",
+        "seconds": 5,
+        "tcp_parallel": 4,
+        "recordizer": "off",
+        "topology": "two VM, isolated IPvlan network and private mount namespaces, local TLS target",
+        "hosts": [
+          "10.66.116.10",
+          "10.66.116.11"
+        ],
+        "selected_modes": [
+          "tcp-plain-raw",
+          "tcp-faketls",
+          "tcp-padding",
+          "tcp-frag",
+          "tcp-obfs",
+          "tcp-reality",
+          "tcp-reality-tls",
+          "udp-faketls",
+          "udp-padding",
+          "udp-quic",
+          "tcp-obfs-awg",
+          "udp-faketls-awg"
+        ],
+        "measurement": "tcp-bidir",
+        "host_snapshot_coverage": "all-firewall-v1",
+        "host_state_sha256": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+        "server": {
+          "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+          "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+          "iperf": "iperf 3.18 (cJSON 1.7.15)",
+          "version": "qeli 0.8.2",
+          "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+          "cpu_governor": {
+            "availability": "UNAVAILABLE",
+            "policies": {}
+          }
+        },
+        "client": {
+          "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+          "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+          "iperf": "iperf 3.18 (cJSON 1.7.15)",
+          "version": "qeli 0.8.2",
+          "boot_id": "cf76e1b8-67e1-4b9e-982b-7682921396a0",
+          "cpu_governor": {
+            "availability": "UNAVAILABLE",
+            "policies": {}
+          }
+        },
+        "modes": {
+          "tcp-plain-raw": {
+            "transport": "tcp",
+            "configuration_template_sha256": "a0ce378af26bc66ec1f14bbdef6b1684bd8aa54f6ae078144ecdd425d208b30f",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-faketls": {
+            "transport": "tcp",
+            "configuration_template_sha256": "a120430f793b66ab205273582e83f6b0f95bc094a04598a2d30989cb0622b536",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-padding": {
+            "transport": "tcp",
+            "configuration_template_sha256": "2b123a43ec8718b27cd1aa2322537b712645040f862f8ffbe2caa31f98f36ea5",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-frag": {
+            "transport": "tcp",
+            "configuration_template_sha256": "1d4d1a7d16c9f22b6a60c19599759f57ff8793a10c3bf55e9aa1f39dff4137c9",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-obfs": {
+            "transport": "tcp",
+            "configuration_template_sha256": "b024632c9250961bb71785d55da25b259bbfcf89de3cdb93ff8e7f9b8452a9d3",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-reality": {
+            "transport": "tcp",
+            "configuration_template_sha256": "550b34f00b59dc480e032e4345601f9164bdd18f1eb08d20e16f69f24dd7f11f",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-reality-tls": {
+            "transport": "tcp",
+            "configuration_template_sha256": "da75df2054a7ea868dab4fe58a9c9af98973516eedc5c6900f65f44b8db827a7",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-faketls": {
+            "transport": "udp",
+            "configuration_template_sha256": "2af4cbc6e1d34d7c0a90ae7faf324313ebff1092fb255b0e1cd5a8e71c2aa9bb",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-padding": {
+            "transport": "udp",
+            "configuration_template_sha256": "4c58aa94ed940498a748a1fa0330aae6ace9d06aca29de89faddbe5abd56e061",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-quic": {
+            "transport": "udp",
+            "configuration_template_sha256": "00785b68c130066bd439e0d126c02111d069d377b174fec260a582a2c686d806",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "tcp-obfs-awg": {
+            "transport": "tcp",
+            "configuration_template_sha256": "325e5803e4cf7d2a74d29acb12dcb2c16358a5435f00a65bb8309f4c0a1a2d3b",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          },
+          "udp-faketls-awg": {
+            "transport": "udp",
+            "configuration_template_sha256": "454212dd0d901e0951a8e487368e5bd2d0be395aa9ac5a51a5580ed0cd8438fb",
+            "mtus": {
+              "server": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              },
+              "client": {
+                "qbench0": 1400,
+                "qd14v": 1500
+              }
+            },
+            "qeli-bench-s_rmem_max": 16777216,
+            "qeli-bench-c_rmem_max": 16777216,
+            "tcp_bidir_server_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            },
+            "tcp_bidir_client_policy": {
+              "cpu_affinity": "0-1",
+              "nice": 0
+            }
+          }
+        }
+      },
+      "statistics": {
+        "direct/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 6252.976915960857,
+            "max": 7142.0107102220745,
+            "median": 6540.192406528214,
+            "range": 889.0337942612177,
+            "spread_pct": 12.447948208601522
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 19944.031958686577,
+            "max": 21184.204635677397,
+            "median": 20724.088028310427,
+            "range": 1240.17267699082,
+            "spread_pct": 5.854232898138556
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 15,
+            "median": 0,
+            "range": 15,
+            "spread_pct": 100.0
+          }
+        },
+        "tcp-plain-raw/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 34.77256783865992,
+            "max": 46.31043690649434,
+            "median": 41.27523601394933,
+            "range": 11.537869067834421,
+            "spread_pct": 24.91418746735341
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 246,
+            "max": 421,
+            "median": 327,
+            "range": 175,
+            "spread_pct": 41.567695961995256
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 489.645820124871,
+            "max": 520.3113793612011,
+            "median": 503.5738137598701,
+            "range": 30.665559236330125,
+            "spread_pct": 5.893693748151152
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 667,
+            "max": 1531,
+            "median": 713,
+            "range": 864,
+            "spread_pct": 56.43370346178968
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 118.49018287105957,
+            "max": 121.82423986460131,
+            "median": 118.82400012351098,
+            "range": 3.3340569935417363,
+            "spread_pct": 2.7367763568623915
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 97972,
+            "max": 109572,
+            "median": 99500,
+            "range": 11600,
+            "spread_pct": 10.586646223487751
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0847457627118644,
+            "max": 0.1697792869269949,
+            "median": 0.08517887563884156,
+            "range": 0.0850335242151305,
+            "spread_pct": 50.08474576271187
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.42,
+            "max": 0.77,
+            "median": 0.52,
+            "range": 0.35000000000000003,
+            "spread_pct": 45.45454545454546
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 129.99151181500284,
+            "max": 130.6544425703043,
+            "median": 130.1559348972987,
+            "range": 0.6629307553014598,
+            "spread_pct": 0.5073924332460011
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50168,
+            "max": 50424,
+            "median": 50212,
+            "range": 256,
+            "spread_pct": 0.5076947485324501
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08481764206955046,
+            "median": 0.0846740050804403,
+            "range": 0.08481764206955046,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.52,
+            "max": 0.78,
+            "median": 0.67,
+            "range": 0.26,
+            "spread_pct": 33.333333333333336
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 673,
+            "max": 715,
+            "median": 694,
+            "range": 42,
+            "spread_pct": 5.8741258741258795
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-faketls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 43.55701155788388,
+            "max": 48.38775237053406,
+            "median": 46.7071714922049,
+            "range": 4.830740812650177,
+            "spread_pct": 9.98339574787086
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 210,
+            "median": 51,
+            "range": 210,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 495.670415180342,
+            "max": 518.0212623910421,
+            "median": 510.63714842150466,
+            "range": 22.350847210700124,
+            "spread_pct": 4.31465826470806
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 984,
+            "max": 2204,
+            "median": 1132,
+            "range": 1220,
+            "spread_pct": 55.35390199637023
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 118.9905749350563,
+            "max": 121.65639209476869,
+            "median": 120.32291665819515,
+            "range": 2.6658171597123896,
+            "spread_pct": 2.191267646368922
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 97360,
+            "max": 103444,
+            "median": 101680,
+            "range": 6084,
+            "spread_pct": 5.88144309964812
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.16820857863751051,
+            "median": 0.16778523489932887,
+            "range": 0.16820857863751051,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.43,
+            "max": 0.67,
+            "median": 0.66,
+            "range": 0.24000000000000005,
+            "spread_pct": 35.820895522388064
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 128.82282454514967,
+            "max": 132.49174620778305,
+            "median": 130.82277464933935,
+            "range": 3.6689216626333803,
+            "spread_pct": 2.769169980505437
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50204,
+            "max": 51224,
+            "median": 50296,
+            "range": 1020,
+            "spread_pct": 1.9912540996407935
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.1713796058269066,
+            "median": 0.0855431993156544,
+            "range": 0.1713796058269066,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.68,
+            "max": 1.0,
+            "median": 0.74,
+            "range": 0.31999999999999995,
+            "spread_pct": 31.999999999999996
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 344,
+            "max": 2214,
+            "median": 949,
+            "range": 1870,
+            "spread_pct": 84.46251129177959
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-padding/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 33.29884431207569,
+            "max": 47.7529199499771,
+            "median": 40.8236105415441,
+            "range": 14.454075637901411,
+            "spread_pct": 30.268464531682206
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 49,
+            "max": 314,
+            "median": 266,
+            "range": 265,
+            "spread_pct": 84.39490445859873
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 493.86101162821814,
+            "max": 509.3257192891073,
+            "median": 503.50008578835497,
+            "range": 15.46470766088919,
+            "spread_pct": 3.0363099830250317
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 1233,
+            "max": 1619,
+            "median": 1446,
+            "range": 386,
+            "spread_pct": 23.841877702285363
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 119.99037783221617,
+            "max": 122.82415014209631,
+            "median": 121.32516473309738,
+            "range": 2.833772309880146,
+            "spread_pct": 2.307178438932189
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 97956,
+            "max": 106016,
+            "median": 99716,
+            "range": 8060,
+            "spread_pct": 7.602626018714154
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.16891891891891891,
+            "median": 0.08525149190110827,
+            "range": 0.16891891891891891,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.55,
+            "max": 0.68,
+            "median": 0.67,
+            "range": 0.13,
+            "spread_pct": 19.11764705882353
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 130.65475914132833,
+            "max": 133.32259506588287,
+            "median": 132.9886995075584,
+            "range": 2.667835924554538,
+            "spread_pct": 2.0010381010332146
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50104,
+            "max": 50400,
+            "median": 50356,
+            "range": 296,
+            "spread_pct": 0.5873015873015919
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.17167381974248927,
+            "median": 0.0846740050804403,
+            "range": 0.17167381974248927,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.61,
+            "max": 1.14,
+            "median": 0.77,
+            "range": 0.5299999999999999,
+            "spread_pct": 46.49122807017544
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 1236,
+            "max": 1630,
+            "median": 1462,
+            "range": 394,
+            "spread_pct": 24.1717791411043
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-frag/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 30.998462952971956,
+            "max": 44.59610188149021,
+            "median": 44.368941158061155,
+            "range": 13.597638928518258,
+            "spread_pct": 30.490644596365524
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 0,
+            "max": 151,
+            "median": 99,
+            "range": 151,
+            "spread_pct": 100.0
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 524.0415831644312,
+            "max": 561.308963141132,
+            "median": 547.0873906870138,
+            "range": 37.267379976700795,
+            "spread_pct": 6.6393701907322855
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 1456,
+            "max": 3270,
+            "median": 2346,
+            "range": 1814,
+            "spread_pct": 55.47400611620795
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 121.9880489949875,
+            "max": 125.32437153180737,
+            "median": 124.15884550562268,
+            "range": 3.3363225368198783,
+            "spread_pct": 2.6621498245240516
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 98036,
+            "max": 103816,
+            "median": 101460,
+            "range": 5780,
+            "spread_pct": 5.567542575325579
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08389261744966443,
+            "max": 0.08503401360544217,
+            "median": 0.08396305625524769,
+            "range": 0.0011413961557777408,
+            "spread_pct": 1.3422818791946178
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.53,
+            "max": 0.68,
+            "median": 0.66,
+            "range": 0.15000000000000002,
+            "spread_pct": 22.058823529411764
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 133.32139753439756,
+            "max": 134.65478089074563,
+            "median": 133.65566355283275,
+            "range": 1.3333833563480653,
+            "spread_pct": 0.9902235535401704
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50152,
+            "max": 52044,
+            "median": 50620,
+            "range": 1892,
+            "spread_pct": 3.635385443086614
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0847457627118644,
+            "median": 0.0,
+            "range": 0.0847457627118644,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.48,
+            "max": 0.99,
+            "median": 0.98,
+            "range": 0.51,
+            "spread_pct": 51.515151515151516
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 693,
+            "max": 2635,
+            "median": 1192,
+            "range": 1942,
+            "spread_pct": 73.70018975332069
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-obfs/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 41.90755268438686,
+            "max": 44.33175189483454,
+            "median": 43.16945487452065,
+            "range": 2.424199210447682,
+            "spread_pct": 5.468313583001317
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 98,
+            "max": 285,
+            "median": 220,
+            "range": 187,
+            "spread_pct": 65.6140350877193
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 514.890051585909,
+            "max": 520.2822665766629,
+            "median": 515.2520597588317,
+            "range": 5.392214990753928,
+            "spread_pct": 1.0364018412992393
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 518,
+            "max": 1295,
+            "median": 542,
+            "range": 777,
+            "spread_pct": 60.0
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 121.48979113087354,
+            "max": 126.1574021487228,
+            "median": 122.82434120047375,
+            "range": 4.667611017849254,
+            "spread_pct": 3.6998312729575433
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 93708,
+            "max": 98712,
+            "median": 95224,
+            "range": 5004,
+            "spread_pct": 5.069292487235599
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08532423208191127,
+            "median": 0.0846740050804403,
+            "range": 0.08532423208191127,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.59,
+            "max": 0.77,
+            "median": 0.6,
+            "range": 0.18000000000000005,
+            "spread_pct": 23.376623376623385
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 135.322149339883,
+            "max": 136.82112893374511,
+            "median": 135.82340081707014,
+            "range": 1.498979593862117,
+            "spread_pct": 1.0955761040299494
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 49792,
+            "max": 50580,
+            "median": 50216,
+            "range": 788,
+            "spread_pct": 1.557928034796363
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08517887563884156,
+            "median": 0.0,
+            "range": 0.08517887563884156,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.64,
+            "max": 0.81,
+            "median": 0.73,
+            "range": 0.17000000000000004,
+            "spread_pct": 20.98765432098766
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 519,
+            "max": 551,
+            "median": 543,
+            "range": 32,
+            "spread_pct": 5.807622504537202
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-reality/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 45.247335611824404,
+            "max": 53.43033593224526,
+            "median": 46.92236607716306,
+            "range": 8.183000320420852,
+            "spread_pct": 15.31527020679352
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 225,
+            "max": 269,
+            "median": 257,
+            "range": 44,
+            "spread_pct": 16.356877323420072
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 482.2192897149062,
+            "max": 530.3903165507896,
+            "median": 507.90248745004897,
+            "range": 48.171026835883424,
+            "spread_pct": 9.082184446568908
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 510,
+            "max": 2593,
+            "median": 1148,
+            "range": 2083,
+            "spread_pct": 80.3316621673737
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 117.15771650138537,
+            "max": 124.48921587169045,
+            "median": 121.8236020636489,
+            "range": 7.331499370305082,
+            "spread_pct": 5.88926463948618
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 99320,
+            "max": 102160,
+            "median": 102008,
+            "range": 2840,
+            "spread_pct": 2.7799530148786222
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.0855431993156544,
+            "median": 0.08396305625524769,
+            "range": 0.0855431993156544,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.55,
+            "max": 0.75,
+            "median": 0.55,
+            "range": 0.19999999999999996,
+            "spread_pct": 26.66666666666666
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 127.32289973267284,
+            "max": 133.98913265507548,
+            "median": 132.82351094444448,
+            "range": 6.666232922402642,
+            "spread_pct": 4.975204175373937
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50448,
+            "max": 52588,
+            "median": 51368,
+            "range": 2140,
+            "spread_pct": 4.069369437894577
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08628127696289906,
+            "median": 0.08481764206955046,
+            "range": 0.08628127696289906,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.72,
+            "max": 0.91,
+            "median": 0.82,
+            "range": 0.19000000000000006,
+            "spread_pct": 20.879120879120883
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 515,
+            "max": 2135,
+            "median": 1160,
+            "range": 1620,
+            "spread_pct": 75.87822014051523
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "tcp-reality-tls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 182.92508828336264,
+            "max": 301.8562115737137,
+            "median": 264.0267070816384,
+            "range": 118.93112329035108,
+            "spread_pct": 39.39992576939498
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 2642,
+            "max": 5647,
+            "median": 4045,
+            "range": 3005,
+            "spread_pct": 53.21409598016646
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 796.6406471997456,
+            "max": 929.9040815137073,
+            "median": 823.8804853308177,
+            "range": 133.26343431396174,
+            "spread_pct": 14.330879599650126
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 647,
+            "max": 1226,
+            "median": 691,
+            "range": 579,
+            "spread_pct": 47.22675367047309
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 125.99015468913599,
+            "max": 127.49061607500616,
+            "median": 126.9906212548034,
+            "range": 1.5004613858701674,
+            "spread_pct": 1.1769190800579477
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 106012,
+            "max": 116992,
+            "median": 109396,
+            "range": 10980,
+            "spread_pct": 9.385257111597378
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08438818565400844,
+            "max": 0.08488964346349745,
+            "median": 0.08445945945945946,
+            "range": 0.0005014578094890143,
+            "spread_pct": 0.5907172995780585
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.6,
+            "max": 0.87,
+            "median": 0.75,
+            "range": 0.27,
+            "spread_pct": 31.034482758620697
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 127.32349642642299,
+            "max": 129.98852092996967,
+            "median": 129.49201323410526,
+            "range": 2.6650245035466753,
+            "spread_pct": 2.050199882636128
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 57320,
+            "max": 60444,
+            "median": 57816,
+            "range": 3124,
+            "spread_pct": 5.168420356032033
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08389261744966443,
+            "median": 0.0,
+            "range": 0.08389261744966443,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.62,
+            "max": 1.0,
+            "median": 0.79,
+            "range": 0.38,
+            "spread_pct": 38.0
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "udp-faketls/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 79.4009923867731,
+            "max": 95.0857011372849,
+            "median": 79.82500288223824,
+            "range": 15.684708750511803,
+            "spread_pct": 16.495339007771726
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 10,
+            "max": 420,
+            "median": 185,
+            "range": 410,
+            "spread_pct": 97.61904761904762
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 826.6591682574087,
+            "max": 853.561841843146,
+            "median": 828.7871395305393,
+            "range": 26.90267358573726,
+            "spread_pct": 3.1518130575805436
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 619,
+            "max": 1959,
+            "median": 1317,
+            "range": 1340,
+            "spread_pct": 68.40224604389995
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 116.15803649381414,
+            "max": 118.99000692195432,
+            "median": 117.1557364646754,
+            "range": 2.831970428140181,
+            "spread_pct": 2.380006944614832
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 110888,
+            "max": 111888,
+            "median": 111612,
+            "range": 1000,
+            "spread_pct": 0.8937508937508887
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.08539709649871904,
+            "max": 0.08673026886383348,
+            "median": 0.08665511265164645,
+            "range": 0.0013331723651144323,
+            "spread_pct": 1.5371477369769404
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.57,
+            "max": 0.73,
+            "median": 0.63,
+            "range": 0.16000000000000003,
+            "spread_pct": 21.91780821917809
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 130.65590375520807,
+            "max": 132.48809819812752,
+            "median": 131.82220835197944,
+            "range": 1.8321944429194446,
+            "spread_pct": 1.382912478809617
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 57164,
+            "max": 60008,
+            "median": 58100,
+            "range": 2844,
+            "spread_pct": 4.739368084255435
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08389261744966443,
+            "median": 0.0,
+            "range": 0.08389261744966443,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.49,
+            "max": 0.9,
+            "median": 0.76,
+            "range": 0.41000000000000003,
+            "spread_pct": 45.55555555555556
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 257,
+            "median": 0,
+            "range": 257,
+            "spread_pct": 100.0
+          }
+        },
+        "udp-padding/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 82.77793699653729,
+            "max": 117.63929813242284,
+            "median": 84.36903094318167,
+            "range": 34.861361135885545,
+            "spread_pct": 29.634111805600217
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 211,
+            "max": 251,
+            "median": 224,
+            "range": 40,
+            "spread_pct": 15.936254980079678
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 762.1435667262483,
+            "max": 830.2941427348879,
+            "median": 805.169461557014,
+            "range": 68.15057600863963,
+            "spread_pct": 8.208003947150576
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 1276,
+            "max": 3873,
+            "median": 1807,
+            "range": 2597,
+            "spread_pct": 67.05396333591531
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 115.98863117995079,
+            "max": 118.99242708558037,
+            "median": 118.32452196233507,
+            "range": 3.0037959056295875,
+            "spread_pct": 2.524358885014788
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 108968,
+            "max": 115720,
+            "median": 112004,
+            "range": 6752,
+            "spread_pct": 5.834773591427589
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08695652173913043,
+            "median": 0.08680555555555555,
+            "range": 0.08695652173913043,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.52,
+            "max": 0.6,
+            "median": 0.52,
+            "range": 0.07999999999999996,
+            "spread_pct": 13.33333333333333
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 130.9874800201765,
+            "max": 133.82123143462715,
+            "median": 131.3224371622552,
+            "range": 2.83375141445066,
+            "spread_pct": 2.1175648916629264
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 55060,
+            "max": 56068,
+            "median": 55468,
+            "range": 1008,
+            "spread_pct": 1.7978169365770125
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08424599831508003,
+            "median": 0.0,
+            "range": 0.08424599831508003,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.72,
+            "max": 0.99,
+            "median": 0.74,
+            "range": 0.27,
+            "spread_pct": 27.27272727272727
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 345,
+            "median": 0,
+            "range": 345,
+            "spread_pct": 100.0
+          }
+        },
+        "udp-quic/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 86.1145657222796,
+            "max": 101.79607264243187,
+            "median": 93.82165973499332,
+            "range": 15.681506920152273,
+            "spread_pct": 15.40482507142984
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 17,
+            "max": 392,
+            "median": 67,
+            "range": 375,
+            "spread_pct": 95.66326530612244
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 775.0758095518086,
+            "max": 807.8754160120569,
+            "median": 775.2406159913247,
+            "range": 32.799606460248356,
+            "spread_pct": 4.059983236296283
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 757,
+            "max": 2058,
+            "median": 823,
+            "range": 1301,
+            "spread_pct": 63.21671525753159
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 114.99098037482396,
+            "max": 115.82202292779104,
+            "median": 115.49095488300496,
+            "range": 0.8310425529670766,
+            "spread_pct": 0.7175168693825951
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 110112,
+            "max": 111672,
+            "median": 111520,
+            "range": 1560,
+            "spread_pct": 1.3969482054588478
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08665511265164645,
+            "median": 0.08453085376162299,
+            "range": 0.08665511265164645,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.4,
+            "max": 0.55,
+            "median": 0.47,
+            "range": 0.15000000000000002,
+            "spread_pct": 27.27272727272727
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 130.15670571126336,
+            "max": 132.81960191106086,
+            "median": 130.82248998020432,
+            "range": 2.662896199797501,
+            "spread_pct": 2.0048969892114576
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 53644,
+            "max": 56544,
+            "median": 55516,
+            "range": 2900,
+            "spread_pct": 5.12874929258631
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08410428931875526,
+            "median": 0.0,
+            "range": 0.08410428931875526,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.73,
+            "max": 1.13,
+            "median": 0.95,
+            "range": 0.3999999999999999,
+            "spread_pct": 35.39823008849557
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 30,
+            "median": 0,
+            "range": 30,
+            "spread_pct": 100.0
+          }
+        },
+        "tcp-obfs-awg/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 36.0469638657088,
+            "max": 41.6707852854436,
+            "median": 36.6276153450476,
+            "range": 5.623821419734803,
+            "spread_pct": 13.495837386341048
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 268,
+            "max": 438,
+            "median": 377,
+            "range": 170,
+            "spread_pct": 38.81278538812786
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 515.3356913943553,
+            "max": 554.8560473126925,
+            "median": 526.6629081077106,
+            "range": 39.520355918337145,
+            "spread_pct": 7.122632277280594
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 319,
+            "max": 1440,
+            "median": 612,
+            "range": 1121,
+            "spread_pct": 77.84722222222223
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 118.82064683419306,
+            "max": 128.32353337172492,
+            "median": 124.65464998058246,
+            "range": 9.502886537531865,
+            "spread_pct": 7.40541215460776
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 97164,
+            "max": 97760,
+            "median": 97508,
+            "range": 596,
+            "spread_pct": 0.6096563011456668
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0835421888053467,
+            "max": 0.4269854824935952,
+            "median": 0.08438818565400844,
+            "range": 0.3434432936882485,
+            "spread_pct": 80.4344193817878
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.34,
+            "max": 0.69,
+            "median": 0.39,
+            "range": 0.3499999999999999,
+            "spread_pct": 50.724637681159415
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 133.15754839254555,
+            "max": 138.98432993141432,
+            "median": 136.8221084008469,
+            "range": 5.826781538868772,
+            "spread_pct": 4.19240179216186
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 50172,
+            "max": 50348,
+            "median": 50288,
+            "range": 176,
+            "spread_pct": 0.34956701358545006
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.08368200836820083,
+            "max": 0.34572169403630076,
+            "median": 0.08481764206955046,
+            "range": 0.26203968566809993,
+            "spread_pct": 75.7949790794979
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.87,
+            "max": 0.99,
+            "median": 0.88,
+            "range": 0.12,
+            "spread_pct": 12.121212121212121
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 180,
+            "max": 612,
+            "median": 502,
+            "range": 432,
+            "spread_pct": 70.58823529411764
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          }
+        },
+        "udp-faketls-awg/tcp_bidir": {
+          "up_mbps": {
+            "n": 3,
+            "min": 100.56379817808262,
+            "max": 106.24931938867893,
+            "median": 102.8525204870669,
+            "range": 5.685521210596306,
+            "spread_pct": 5.351113064355417
+          },
+          "up_retransmits": {
+            "n": 3,
+            "min": 68,
+            "max": 493,
+            "median": 86,
+            "range": 425,
+            "spread_pct": 86.20689655172413
+          },
+          "down_mbps": {
+            "n": 3,
+            "min": 730.8603747034142,
+            "max": 796.974677781353,
+            "median": 787.7497523949804,
+            "range": 66.11430307793876,
+            "spread_pct": 8.295659187314474
+          },
+          "down_retransmits": {
+            "n": 3,
+            "min": 721,
+            "max": 1715,
+            "median": 1093,
+            "range": 994,
+            "spread_pct": 57.9591836734694
+          },
+          "server_cpu_avg_pct": {
+            "n": 3,
+            "min": 113.49101761961538,
+            "max": 119.3239219959516,
+            "median": 114.82218961016977,
+            "range": 5.8329043763362165,
+            "spread_pct": 4.888294215248901
+          },
+          "server_rss_peak_kib": {
+            "n": 3,
+            "min": 108252,
+            "max": 114328,
+            "median": 111468,
+            "range": 6076,
+            "spread_pct": 5.314533622559658
+          },
+          "server_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08673026886383348,
+            "median": 0.0851063829787234,
+            "range": 0.08673026886383348,
+            "spread_pct": 100.0
+          },
+          "server_load1_max": {
+            "n": 3,
+            "min": 0.34,
+            "max": 0.77,
+            "median": 0.38,
+            "range": 0.43,
+            "spread_pct": 55.84415584415584
+          },
+          "client_cpu_avg_pct": {
+            "n": 3,
+            "min": 129.48839950220673,
+            "max": 132.49059957128455,
+            "median": 130.82525696471816,
+            "range": 3.0022000690778157,
+            "spread_pct": 2.2659721359797547
+          },
+          "client_rss_peak_kib": {
+            "n": 3,
+            "min": 55084,
+            "max": 56204,
+            "median": 55456,
+            "range": 1120,
+            "spread_pct": 1.99274073019714
+          },
+          "client_host_steal_pct": {
+            "n": 3,
+            "min": 0.0,
+            "max": 0.08539709649871904,
+            "median": 0.0,
+            "range": 0.08539709649871904,
+            "spread_pct": 100.0
+          },
+          "client_load1_max": {
+            "n": 3,
+            "min": 0.66,
+            "max": 0.81,
+            "median": 0.73,
+            "range": 0.15000000000000002,
+            "spread_pct": 18.518518518518523
+          },
+          "server_session_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "server_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 0,
+            "median": 0,
+            "range": 0,
+            "spread_pct": 0
+          },
+          "client_kernel_rcvbuf_drops": {
+            "n": 3,
+            "min": 0,
+            "max": 181,
+            "median": 0,
+            "range": 181,
+            "spread_pct": 100.0
+          }
+        }
+      },
+      "inputs": [
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-1",
+          "run_id": "0ebf6e13-1ec9-48eb-b8b7-8afa852abf00",
+          "hashes": {
+            "results.json": "8eafea139fafe4eb648fafd26fc791ddd9c04fd0b16b69239d87a581b1ddb48e",
+            "direct/tcp_bidir-iperf.json": "8f22560bdb663e80ebe0f0e93aa94e1745279eae53a91910db13c21922985733",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "ddcff9d297fb372d0d98ce886b48f582adf88555f13b06301a8b2bf7e0845e20",
+            "tcp-plain-raw/tcp_bidir-processes.json": "b60ae1118539317a0b2139787c45636b44e22e0de1c97e404271a15b39599afc",
+            "tcp-plain-raw/tcp_bidir-counters.json": "91cd140ce09f25852facc2f2cc769fc2d74d8cbc169becc09a712b584686299c",
+            "tcp-faketls/tcp_bidir-iperf.json": "653f3fbbc3c5d756dfbbca90012660fafdb4407f7755e01ddc9bfbfc21555540",
+            "tcp-faketls/tcp_bidir-processes.json": "080e3c6258043d495f962644c341b1a771ea48380985afb38c0b5977e5bce417",
+            "tcp-faketls/tcp_bidir-counters.json": "22d861f2a819f90e6186c39bc0335fa8cbad47ef2a9165211acf7e1066eb80e1",
+            "tcp-padding/tcp_bidir-iperf.json": "249ff7c0be4fc2b659b1928641aa3863aa3a570a4dd73162d1b386b909f71272",
+            "tcp-padding/tcp_bidir-processes.json": "46b23470fd7602e85ab2a2c43f7e5d8781859de34580de2c41118f2248b09589",
+            "tcp-padding/tcp_bidir-counters.json": "359fbb2a789c384886a26272012cab0c8a74d40d48fe0ba02556c96de6b58586",
+            "tcp-frag/tcp_bidir-iperf.json": "33ee7de93b0e144f34481a1c0fe59f1a4b08722095aa5cb4ac62ba3a9774754f",
+            "tcp-frag/tcp_bidir-processes.json": "473f0b7677f624810d5303fecb56debfe43533501c8c8ef043f75accd945a838",
+            "tcp-frag/tcp_bidir-counters.json": "0aa8b80af16f82112c34449e4e2fc6db6db21a8efa02f5d59feedefea9964500",
+            "tcp-obfs/tcp_bidir-iperf.json": "c8a037b73c177a9859cc048bff31d9235e3327b4893e4253951f5b09512adb38",
+            "tcp-obfs/tcp_bidir-processes.json": "3be526c72d90d43cdcbec6ed1939e6845f36a47465f0792f6241a7710ff94b57",
+            "tcp-obfs/tcp_bidir-counters.json": "3f24309dd9233d208ffcee760eace7650f75f9aba0c965448c2010f0884abf9c",
+            "tcp-reality/tcp_bidir-iperf.json": "5eb0919f20917a62a68e3dd138627704f4dcca3fbf115744e969ef105bf4fdb7",
+            "tcp-reality/tcp_bidir-processes.json": "412a84c7fe1cdd0890c32b795965d98b90d4ac0988de66c820e941d51780a24f",
+            "tcp-reality/tcp_bidir-counters.json": "9ffc454b97714ae6aea2ed34ff1dc75f0b5ec8a8ee2c831dca6c080dcde6fa48",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "5205d107131b07bd8e347f91cf8ab65f3abd6d10fe6befaadbe10c0792f1ba91",
+            "tcp-reality-tls/tcp_bidir-processes.json": "36a88c0518c14c97b918efd06d1b1d2a60f979b2b85a707f603f13b625b652d6",
+            "tcp-reality-tls/tcp_bidir-counters.json": "1e164d421784aedaf62422cc32c5cdc9ccd12b2758d68a8bc49b18c7a1bf3734",
+            "udp-faketls/tcp_bidir-iperf.json": "8d6ee8f39e15ce137446eacedd8348bd3b229a769539282e3a91f9fe56b944af",
+            "udp-faketls/tcp_bidir-processes.json": "2051e860a8541f2920eb5669141538773deb4e31760a6d73e6aa2fb04d22be90",
+            "udp-faketls/tcp_bidir-counters.json": "d74a819b3d8c5f57dbcc8831256876a0542bed974d193fcc98623e5f1e85f4e1",
+            "udp-padding/tcp_bidir-iperf.json": "f573eeebb24f52dfe1af05bf425098bf4dcc554778ad4f134fd75cb6927175ce",
+            "udp-padding/tcp_bidir-processes.json": "1cd71f045ae665109601cbac77186fdd792890e4a63e113eca34020d6b3834c1",
+            "udp-padding/tcp_bidir-counters.json": "ad986a49e3ca6104cbe339e8ce2804b882c366fc6bfe8dd9bc24f1f6ec82ad28",
+            "udp-quic/tcp_bidir-iperf.json": "ea2f0e5a6a282f7bb0824d63d6bc7a2ee656c3701df666a8fb86124b106fc191",
+            "udp-quic/tcp_bidir-processes.json": "eb065c4598dc30f572bbe8970697e0c6e67d1ec0acffd2959e52da9e698cebb3",
+            "udp-quic/tcp_bidir-counters.json": "6f3a50ce44132113f96db578af3dfd91e68fb9301c382df999e5570d57ff94a9",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "12520cca823bd866f1e3e725af1a4361e2adec6f46d71917cd70a64d45976264",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "77e6b66cfda935eb2f6b4911e668e9f753f7af41427351e28badaec94692a931",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "15b462a2ccfda1fcc7763f615bbe078ea77fbd1dfb6e334b15395d5db9d5f75a",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "bb222d74d995806a8f3580aa562b0223c308259b9609178aace08bebfd5ebea8",
+            "udp-faketls-awg/tcp_bidir-processes.json": "2eca63a09d72fa19d99d85ac38579dc5f3d9b26298339bc76cb3bfca44859d3a",
+            "udp-faketls-awg/tcp_bidir-counters.json": "e7628a000b63a3c4ad253e80283b96261f8770d85da3daa8a29e87d954664687"
+          },
+          "run_status": "COMPLETED",
+          "host_restored": true,
+          "host_gate_errors": []
+        },
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-2",
+          "run_id": "99bd85fa-2fcf-4bb1-8967-8e6efcd2855c",
+          "hashes": {
+            "results.json": "cc3fc173f61e31986e684376d25afeffe80e3074fd0fe96facf61b0ff10a6849",
+            "direct/tcp_bidir-iperf.json": "402da3d330a1c1666a85405d9c89b6167983e6431b68ef03987fc4c56886de91",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "a7823c7496ece2bebed6a0282192a251445be8ed28796d9ded0bbe0bba0c12b7",
+            "tcp-plain-raw/tcp_bidir-processes.json": "f5b31b31db9a1058ca10c91e45839539221c3ca686d15406953a262db034897a",
+            "tcp-plain-raw/tcp_bidir-counters.json": "107a8e40d4fedf8ac5a6840fc763937c662fcee7a3aa82710da5c006951e8cf1",
+            "tcp-faketls/tcp_bidir-iperf.json": "d95ff114c361c63bc1dee75b9bd5ea61189e694d861ffffd0a9a510f0a7e6b8f",
+            "tcp-faketls/tcp_bidir-processes.json": "ec6569ab26943f00921b2302ebd7d6b361bd3c2fb7b0ec37bbdab2ab8224a5de",
+            "tcp-faketls/tcp_bidir-counters.json": "71035ebd2bf40faae75011d5d529c0db9c5a8ae7430e47fc5f1050042ad4d699",
+            "tcp-padding/tcp_bidir-iperf.json": "eb340edb46040d90c4f92a94bfc0cae3a5f90947da10371e3a05fb9db41bcd9b",
+            "tcp-padding/tcp_bidir-processes.json": "779075b1fa587b06c570647eee2f8a04997782f582aa7ab56b920fff7c560ffa",
+            "tcp-padding/tcp_bidir-counters.json": "794a87d8933cc51efd6b2886634fd90faa6b13a4dd0f3cf4f0a4e6f85c8f0b24",
+            "tcp-frag/tcp_bidir-iperf.json": "44682d8d3d3eb33a636f29c9a016147a00b69194f6f6085b562752493326315b",
+            "tcp-frag/tcp_bidir-processes.json": "070ec1a15a0b2d2b433b592a4921c04045dbaf2efd50bbc6d67806ad42409a8f",
+            "tcp-frag/tcp_bidir-counters.json": "15119b6e65935da59081fc9bef7847ecb2168c8db41f71914502192ed8aadb33",
+            "tcp-obfs/tcp_bidir-iperf.json": "20502f0f891b64c3b9d68cd6c307b673b35eaf9608e177199fcc7423a308d8a9",
+            "tcp-obfs/tcp_bidir-processes.json": "8a4e9194ef8a6179ec9c0bde3d5fe76f384439d2a8717e047f50b341b1b18cc9",
+            "tcp-obfs/tcp_bidir-counters.json": "d4646e1f9cb7609645f4d3d6bdbe33da3a4e220e183d266556350815fa00215d",
+            "tcp-reality/tcp_bidir-iperf.json": "5cfdf67ceb57d670528991c2c6f4644a9024015a00afeb6c2bb2175b6e02d707",
+            "tcp-reality/tcp_bidir-processes.json": "aae8fec553292bd8373bc3dffabde3f2dd6b6e6f92e834d187c185679c0683e4",
+            "tcp-reality/tcp_bidir-counters.json": "31520f55801f92bdd7200ece145de6a9e27852b35c74a972e81ba99c5bc932f0",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "d0ed4237d9ef31497fb0045bd3619c168cbba4b96f091a418ff0f76f5e1dc2d6",
+            "tcp-reality-tls/tcp_bidir-processes.json": "5ae7026154576c8a97af364ad4846806e21eda80d7d23997a3edc7c4a78b3246",
+            "tcp-reality-tls/tcp_bidir-counters.json": "0df267289ee5f4eb7ede664d72f65455577426c09859b646025fb1f827317144",
+            "udp-faketls/tcp_bidir-iperf.json": "f6916a1852b3cb3f35c9cdc8425a16a5fac3791a5ff9f5044b7f5c69f8ad6e80",
+            "udp-faketls/tcp_bidir-processes.json": "6f5e664372af50f6034a2b5fcf0fa7bb02f8d2d7c1a8e2d8c9667ace779ca460",
+            "udp-faketls/tcp_bidir-counters.json": "d18ce9ab4e004b6d9cd7256687d6a9c109bff3f198369b05240723d718b239a4",
+            "udp-padding/tcp_bidir-iperf.json": "65a35499793a5cf1a20e4d2f5a400f3080e140ad7238352c1f7dc6e415826514",
+            "udp-padding/tcp_bidir-processes.json": "a9783dbdb1978272ec933210da20577b23ea61a21bc4331d7906a212912e45e5",
+            "udp-padding/tcp_bidir-counters.json": "b2969cc84e8ff9fe4fe4175096bb32b94343084532289700f8ffc82ff9b688bf",
+            "udp-quic/tcp_bidir-iperf.json": "90cf5ae1f3a6267b2dbd8da94fc5bce20fbfe72bd37778c70ee76adabe0c59b9",
+            "udp-quic/tcp_bidir-processes.json": "8e1d2635570cbd72d2da298652d71d1730053e4b4e54a0bf3ab93dacfea8c91c",
+            "udp-quic/tcp_bidir-counters.json": "8fda0d412ed775fe1c1af56b2578179858c7e40408b1d00ec743fb90cdd65475",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "da04da4589e47009caffd8ad8604633fd03cff6637b945b8de4c4ecbdebd6927",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "3cb419ce4db67e5cc5cce5679033ce0ff1b61563899aaeabd1c9a3cbb32e4ab5",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "cd9fcb20533d51c05f7af723b007674b145543b8dbba9df93d8b6ed2c71645a0",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "ad9e224cc6068ea1f5645a5b036c76fe95185b9692ba18f9b2ba561758851715",
+            "udp-faketls-awg/tcp_bidir-processes.json": "95e72e5ecb90be0ecc5384b6c5eff2c2c838ec9c5cca9a5551b25bcc8fa35e48",
+            "udp-faketls-awg/tcp_bidir-counters.json": "e54d601c57f9496ad2b51bb5323bcfb5f0ad47bd3b63c9581150685b13c0d59d"
+          },
+          "run_status": "COMPLETED",
+          "host_restored": true,
+          "host_gate_errors": []
+        },
+        {
+          "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-3",
+          "run_id": "309925f0-5051-441f-ad84-937429930f9c",
+          "hashes": {
+            "results.json": "f7b05e198198cd0c0569ba19fac2160bfa19f98f90145cc98e2721d0e2f0d07c",
+            "direct/tcp_bidir-iperf.json": "85b892bc32b585aee585149157c867fe36de5310856c2dfbffe483cc4cb45b85",
+            "tcp-plain-raw/tcp_bidir-iperf.json": "2e1af33c38527571c7d921732a5c963e9d499606b8c3286e9da326bbc2f6f204",
+            "tcp-plain-raw/tcp_bidir-processes.json": "a8aeb7998a51a170ede7fd76d4b3ecaad6e17d7728eee01eecbe5e2f3e119dec",
+            "tcp-plain-raw/tcp_bidir-counters.json": "2f4ccc8697d01839697a09742830300cbffc76661005edd997170a2dcde86e7f",
+            "tcp-faketls/tcp_bidir-iperf.json": "830339543c46b02f72769fe0d682a67ddf9575e5b2061f72e0dae938648713be",
+            "tcp-faketls/tcp_bidir-processes.json": "9f94b164fe7db2432942e0e1cc4b317703d53627d95851ea0564c1dcb2a3c917",
+            "tcp-faketls/tcp_bidir-counters.json": "b355678c11d19927dceb770b448ed75bc138797431c6c502c5c9f97711f10929",
+            "tcp-padding/tcp_bidir-iperf.json": "eedb25866e6f213e2805cb54227a56af69a3ae5f956efcc8cca9553c4fee8ac0",
+            "tcp-padding/tcp_bidir-processes.json": "979717f8cf3066cd11b41e38c2accfcaa47155127502cd6fbaf46cb0796f461a",
+            "tcp-padding/tcp_bidir-counters.json": "49ea880862e857ac5cfb188541fa6a828b8f59da027b5918d38fc7dc405bc71b",
+            "tcp-frag/tcp_bidir-iperf.json": "b3c3211b200f88468f887b34818b338621efd533cc426e0ce61d8103defc8195",
+            "tcp-frag/tcp_bidir-processes.json": "c5f30e7bfd39178d6d5ad26274b26855b02086427abe0afb6e808d63f4e69c15",
+            "tcp-frag/tcp_bidir-counters.json": "9b2a137c3598690e845a7f6ee03fad55f4f9f38d15daeac274a71c0c49b4ae3b",
+            "tcp-obfs/tcp_bidir-iperf.json": "987215c6050fe20db4c6ef4c422ee6031d4c366d2f0566faad20851a837ec46c",
+            "tcp-obfs/tcp_bidir-processes.json": "a6b02713a225336d9f7e9aa8549b3f8bab735a135c488b28d1ecea7b69fbacdb",
+            "tcp-obfs/tcp_bidir-counters.json": "32f3f1c372bebbcf049265dbd0b30b4b5a3f5a0f3b4f189019e682f1f0ffb251",
+            "tcp-reality/tcp_bidir-iperf.json": "6dda465fee5df890c402450ec5a5e8c3008098e029fe31236b77e2fcfd1e4e15",
+            "tcp-reality/tcp_bidir-processes.json": "856a9a4580e29f326ba6f2ab9f6a8fd7facba151942319a664c857776e1c8c19",
+            "tcp-reality/tcp_bidir-counters.json": "5bf5f19e23e5d865cb6ce6192913983244604dbfc431732d0ef7ae4c97c931c3",
+            "tcp-reality-tls/tcp_bidir-iperf.json": "988e5408b0e1af747b5db12cd092684166d7cd027b29ad6b38c8f857a32644e3",
+            "tcp-reality-tls/tcp_bidir-processes.json": "27f31b0a7b7886875649167579dd1b4e7f61453daa3b765b44d4a21cd9be6c71",
+            "tcp-reality-tls/tcp_bidir-counters.json": "d607148f048e3971b545c3d0e533ab516ebda8698854e78d1c9578739ccedd06",
+            "udp-faketls/tcp_bidir-iperf.json": "617618e5627ae40993c2d715d1da8ff6b6cb87fd9cec60552b19d3e402b38495",
+            "udp-faketls/tcp_bidir-processes.json": "ba05e2680c417fbaa5b19057f51d379395ae9487a8ad883485c8a291b7839a03",
+            "udp-faketls/tcp_bidir-counters.json": "e7327ddfdfc464d5418349b0989c6719ca2d47fd1e58a68b31e4f54cebb6a72d",
+            "udp-padding/tcp_bidir-iperf.json": "02e537c7a31e3aaf3082835031f6fd15817452697aa000f1289327349e0f4a73",
+            "udp-padding/tcp_bidir-processes.json": "ae99faed564e058383c989d58b01770a7c83730569011c89fb13bf4e6de6f973",
+            "udp-padding/tcp_bidir-counters.json": "b45c8848a9f7722b2ba056848b1cce59ddd59b34fb84c24562838791e01401ce",
+            "udp-quic/tcp_bidir-iperf.json": "602ec1b611da892ce49a21fdbefac79dc71e1400b1a0d986586cc13d5e65cc70",
+            "udp-quic/tcp_bidir-processes.json": "9a743786fb1e0ba13cd38f85a9d3de5624d548487cdf8e8633df6399d43905aa",
+            "udp-quic/tcp_bidir-counters.json": "90cdff8166cc5da9771f56ac53095e7baa27d7c436730a38b94f7f7beeef5faf",
+            "tcp-obfs-awg/tcp_bidir-iperf.json": "9ca9a73df0bd8cab5febc0e0938790b468abc85aad14ef712fe99efef09b2923",
+            "tcp-obfs-awg/tcp_bidir-processes.json": "ece1c1d44860a0b1f98709deda29da87c4e594cc019ebd866755c910a8e74618",
+            "tcp-obfs-awg/tcp_bidir-counters.json": "89232c5091b43e6e39a340ff315acee838e4463bd002393e907df6ff9e7407fb",
+            "udp-faketls-awg/tcp_bidir-iperf.json": "ea174c00dda281880b46de1b23b6f55f58859c78a7ab246127742cb2cf1e56f5",
+            "udp-faketls-awg/tcp_bidir-processes.json": "3938a17bd6a033b2f86943eda24f67a8d43813cae86c82c23377976560b72903",
+            "udp-faketls-awg/tcp_bidir-counters.json": "46d82d85554d10d7d04efadc13c38b967db919ebe48d40fb47827cdd70a0ce27"
+          },
+          "run_status": "FAIL",
+          "host_restored": false,
+          "host_gate_errors": [
+            "host state changed after benchmark"
+          ]
+        }
+      ]
+    }
+  },
+  "original_execution": {
+    "status": "RAW_MEASUREMENTS_COMPLETE_HOST_GATE_FAIL",
+    "binary_sha256": "7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e",
+    "inputs": {
+      "benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+      "benchmark_evidence.py": "a47849a14dd9e02079de3bf415f8af0f9bbaeb6b9525fc38f8fa23bd4a57622f",
+      "benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+      "benchmark_isolated_lab.py": "b51d14d44996a64bc4844e1d44267812f1f5701e6f8b9b21039d88f356571377",
+      "benchmark_report.py": "2d63a4865a20f929dae4a5c66443b0a73930c59eb75ba13f25571466f05ed22b"
+    },
+    "runs": [
+      {
+        "parallel": 1,
+        "repeat": 1,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-1",
+        "exit_code": 1,
+        "status": "FAIL",
+        "errors": [
+          "host state changed after benchmark"
+        ],
+        "host_restored": false,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T163458334555Z"
+      },
+      {
+        "parallel": 4,
+        "repeat": 1,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-1",
+        "exit_code": 0,
+        "status": "COMPLETED",
+        "errors": [],
+        "host_restored": true,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T164035152618Z"
+      },
+      {
+        "parallel": 1,
+        "repeat": 2,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-2",
+        "exit_code": 0,
+        "status": "COMPLETED",
+        "errors": [],
+        "host_restored": true,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T164611270167Z"
+      },
+      {
+        "parallel": 4,
+        "repeat": 2,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-2",
+        "exit_code": 0,
+        "status": "COMPLETED",
+        "errors": [],
+        "host_restored": true,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T165146789022Z"
+      },
+      {
+        "parallel": 1,
+        "repeat": 3,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P1\\run-3",
+        "exit_code": 0,
+        "status": "COMPLETED",
+        "errors": [],
+        "host_restored": true,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T165723215375Z"
+      },
+      {
+        "parallel": 4,
+        "repeat": 3,
+        "directory": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-bidir-20261010\\P4\\run-3",
+        "exit_code": 1,
+        "status": "FAIL",
+        "errors": [
+          "host state changed after benchmark"
+        ],
+        "host_restored": false,
+        "remote_root": "/var/tmp/qeli-benchmark-20261010T170300305211Z"
+      }
+    ],
+    "aggregation": {
+      "1": "REFUSED: run incomplete, failed, or host restoration unverified",
+      "4": "REFUSED: run incomplete, failed, or host restoration unverified"
+    }
+  },
+  "iperf_contract_source": "https://github.com/esnet/iperf/blob/3.18/src/iperf_api.c",
+  "remaining": [
+    "UDP bidir",
+    "inner/outer IPv6",
+    "p50/p95/p99",
+    "auth-rate",
+    "queue-drop diagnosis",
+    "Q35 full 8-hour soak"
+  ],
+  "host_gate_differences": [
+    {
+      "run": "P1/run-1/results.json",
+      "status": "FAIL",
+      "differences": {
+        "10.66.116.10": {
+          "iptables4": [
+            "--- ",
+            "+++ ",
+            "@@ -11,12 +11,15 @@",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":FORWARD ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "+    \"-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\",",
+            "+    \"-A FORWARD -i vpn0 -j ACCEPT\",",
+            "     \"COMMIT\",",
+            "     \"*nat\",",
+            "     \":PREROUTING ACCEPT [COUNTERS]\",",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "     \":POSTROUTING ACCEPT [COUNTERS]\",",
+            "+    \"-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\",",
+            "     \"COMMIT\"",
+            "   ],",
+            "   \"diagnostics\": []"
+          ],
+          "legacy4": [
+            "--- ",
+            "+++ ",
+            "@@ -11,12 +11,15 @@",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":FORWARD ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "+    \"-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\",",
+            "+    \"-A FORWARD -i vpn0 -j ACCEPT\",",
+            "     \"COMMIT\",",
+            "     \"*nat\",",
+            "     \":PREROUTING ACCEPT [COUNTERS]\",",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "     \":POSTROUTING ACCEPT [COUNTERS]\",",
+            "+    \"-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\",",
+            "     \"COMMIT\"",
+            "   ],",
+            "   \"diagnostics\": []"
+          ]
+        }
+      }
+    },
+    {
+      "run": "P1/run-2/results.json",
+      "status": "COMPLETED",
+      "differences": {}
+    },
+    {
+      "run": "P1/run-3/results.json",
+      "status": "COMPLETED",
+      "differences": {}
+    },
+    {
+      "run": "P4/run-1/results.json",
+      "status": "COMPLETED",
+      "differences": {}
+    },
+    {
+      "run": "P4/run-2/results.json",
+      "status": "COMPLETED",
+      "differences": {}
+    },
+    {
+      "run": "P4/run-3/results.json",
+      "status": "FAIL",
+      "differences": {
+        "10.66.116.10": {
+          "iptables4": [
+            "--- ",
+            "+++ ",
+            "@@ -11,12 +11,15 @@",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":FORWARD ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "+    \"-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\",",
+            "+    \"-A FORWARD -i vpn0 -j ACCEPT\",",
+            "     \"COMMIT\",",
+            "     \"*nat\",",
+            "     \":PREROUTING ACCEPT [COUNTERS]\",",
+            "     \":INPUT ACCEPT [COUNTERS]\",",
+            "     \":OUTPUT ACCEPT [COUNTERS]\",",
+            "     \":POSTROUTING ACCEPT [COUNTERS]\",",
+            "+    \"-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\",",
+            "     \"COMMIT\"",
+            "   ],",
+            "   \"diagnostics\": []"
+          ]
+        }
+      }
+    }
+  ],
+  "foreign_nat_owner": {
+    "source_hashes": "53899e9220b27695f0a810a40070fe98bddd02e6d12c518ea4e1d1fa765039f0  /usr/local/bin/vpn-nat.sh\n41ef9fa5269abe3569591c3bdefbee50cdbe8bbe1867e3c5f7a1b7fa32245f29  /usr/local/bin/vpn-nat-stop.sh",
+    "units": "# /etc/systemd/system/vpn-nat.service\n[Unit]\nDescription=VPN NAT iptables rules\nAfter=network.target vpn-obfuscated.service\nRequires=vpn-obfuscated.service\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/local/bin/vpn-nat.sh\nExecStop=/usr/local/bin/vpn-nat-stop.sh\n\n[Install]\nWantedBy=multi-user.target\n\n# /etc/systemd/system/vpn-obfuscated.service\n[Unit]\nDescription=Obfuscated VPN Server\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nExecStart=/usr/bin/vpn-obfuscated server --config /etc/vpn-obfuscated/interfaces/office.json\nRestart=on-failure\nRestartSec=5\nStateDirectory=vpn-obfuscated\nRuntimeDirectory=vpn-obfuscated\n\nNoNewPrivileges=false\nProtectSystem=full\nProtectHome=read-only\nReadWritePaths=/etc/vpn-obfuscated /var/log/vpn-obfuscated /var/lib/vpn-obfuscated\n\n[Install]\nWantedBy=multi-user.target",
+    "journal": "\u043e\u043a\u0442 10 20:11:19 debian systemd[1]: Stopping vpn-nat.service - VPN NAT iptables rules...\n\u043e\u043a\u0442 10 20:11:19 debian vpn-nat-stop.sh[3454251]: VPN NAT rules removed\n\u043e\u043a\u0442 10 20:11:19 debian systemd[1]: vpn-nat.service: Deactivated successfully.\n\u043e\u043a\u0442 10 20:11:19 debian systemd[1]: Stopped vpn-nat.service - VPN NAT iptables rules.\n\u043e\u043a\u0442 10 20:11:19 debian systemd[1]: Starting vpn-nat.service - VPN NAT iptables rules...\n\u043e\u043a\u0442 10 20:11:21 debian vpn-nat.sh[3454257]: VPN NAT applied via iptables-legacy\n\u043e\u043a\u0442 10 20:11:21 debian systemd[1]: Finished vpn-nat.service - VPN NAT iptables rules.\n\u043e\u043a\u0442 10 20:11:24 debian systemd[1]: Stopping vpn-nat.service - VPN NAT iptables rules...\n\u043e\u043a\u0442 10 20:11:24 debian vpn-nat-stop.sh[3454273]: VPN NAT rules removed\n\u043e\u043a\u0442 10 20:11:24 debian systemd[1]: vpn-nat.service: Deactivated successfully.\n\u043e\u043a\u0442 10 20:11:24 debian systemd[1]: Stopped vpn-nat.service - VPN NAT iptables rules.\n\u043e\u043a\u0442 10 20:11:24 debian systemd[1]: Starting vpn-nat.service - VPN NAT iptables rules..."
+  },
+  "tests": {
+    "windows": 47,
+    "linux": 47,
+    "skips": 0
+  },
+  "cleanup": {
+    "status": "OWNED_ROOTS_ARCHIVED_AND_REMOVED",
+    "roots": 14,
+    "receipt_sha256": "a217b10a5a5b40fdb30487fa837e092b9bb0037c61680fbd043f563b004df5f8",
+    "hosts": {
+      "10.66.116.10": {
+        "host_restored": true,
+        "active_services_unchanged": true
+      },
+      "10.66.116.11": {
+        "host_restored": true,
+        "active_services_unchanged": true
+      }
+    }
+  },
+  "observed_maxima": {
+    "server_cpu_avg_pct": 129.3232279508967,
+    "client_cpu_avg_pct": 138.98432993141432,
+    "server_rss_peak_kib": 116992,
+    "client_rss_peak_kib": 60444,
+    "server_host_steal_pct": 0.4269854824935952,
+    "client_host_steal_pct": 0.34572169403630076,
+    "server_session_drops": 2635,
+    "server_kernel_rcvbuf_drops": 0,
+    "client_kernel_rcvbuf_drops": 345
+  }
+}
