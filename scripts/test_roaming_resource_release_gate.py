@@ -38,6 +38,7 @@ class RoamingResourceReleaseGateTests(unittest.TestCase):
         self.tempdir = tempfile.TemporaryDirectory()
         self.work = Path(self.tempdir.name)
         shutil.copy2(SCRIPT, self.work / SCRIPT.name)
+        shutil.copy2(SCRIPT.with_name("roaming_soak_parameters.sh"), self.work / "roaming_soak_parameters.sh")
         for name in CHILDREN:
             child = self.work / name
             child.write_text(STUB, encoding="utf-8", newline="\n")

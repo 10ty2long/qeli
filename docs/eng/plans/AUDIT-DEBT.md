@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v128 -->
+<!-- normative-sync: audit-debt-v129 -->
 
 Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
 are paused until this register is closed. These are **15 groups of obligations**,
@@ -1293,3 +1293,5 @@ physical exclusions are not PASS.
 
 **10 October,F502–F503/Q34-F056–F057:** [CI event/coverage](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate requires push event/exact SHA; green PR merge cannot replace source CI. Paths filters removed, all root policy changes run CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh,not hosted Actions.25ownedlabfiles cleaned,service unchanged. Developer docs1.97/locked updated;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81.1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 **10 October,F504–F505:** [Stability gate](../reports/BENCHMARK.md): fixed false admission from incomplete/rounded/invalid measurements and removed host-wide cleanup.89Windows/19Linux methods,4workflow lint and actual read-only .11 refusal PASS;service777/845/CLI75bc preserved. No new throughput/soak or wholeQ34/Q35/Q36 completion.30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10October,F506–F507:** [Soak admission](../reports/AUDIT-Q34-RELEASE-SOAK.md): reproduced zero-loop TCP and downgraded endurance labels; common decimal validation before network actions, smoke/full markers and10k/1k minimum only for full endurance wrapper. Mandatory bounded100 unchanged.28Linux/57Windows methods,4workflow lint PASS;no newVPNsoak/native rebuild.Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

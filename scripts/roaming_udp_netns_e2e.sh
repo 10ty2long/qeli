@@ -26,6 +26,15 @@ BIN=${1:-${BIN:-/opt/qeli-src/target/release/qeli}}
 CASE=${2:-${CASE:-success}}
 WIRE_MODE=${QELI_ROAMING_UDP_WIRE_MODE:-quic}
 DEVICE_TYPE=${QELI_ROAMING_DEVICE_TYPE:-tun}
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 2
+if [ "$CASE" = soak ]; then
+  if [ ! -r "$SCRIPT_DIR/roaming_soak_parameters.sh" ]; then
+    echo "required roaming soak parameter helper is missing" >&2
+    exit 2
+  fi
+  source "$SCRIPT_DIR/roaming_soak_parameters.sh" || exit 2
+  roaming_soak_counts "${QELI_ROAMING_SOAK_ITERATIONS:-10000}" "${QELI_ROAMING_SOAK_SAMPLE_EVERY:-100}" || exit 2
+fi
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/qeli-roaming-udp-netns-XXXXXX") || exit 2
 # Each test creates new namespaces; never reuse the host or another case's journal.
 export STATE_DIRECTORY="$WORK/state"
@@ -407,7 +416,6 @@ check "initial carrier bypass uses path A" \
 check "tunnel works before route change" \
   "ip netns exec $CLI_NS ping -c3 -W1 10.89.0.1"
 
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 if [ "$CASE" = drain-reorder ]; then
   # shellcheck source=roaming_udp_netns_drain_case.sh
   run_case_helper "$SCRIPT_DIR/roaming_udp_netns_drain_case.sh" run_drain_reorder_case || exit $?

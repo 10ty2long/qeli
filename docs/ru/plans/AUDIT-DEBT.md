@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v128 -->
+<!-- normative-sync: audit-debt-v129 -->
 
 Дата текущей сверки: 10 октября 2026. Итог 3 октября сохранён ниже как исторический checkpoint. По запросу пользователя новые разделы полного аудита
 приостановлены до закрытия этого реестра. Это **15 групп обязательств**, а не 15 найденных
@@ -1422,3 +1422,5 @@ process-local лимита 4096: 2257 PASS, 0 failed, 60 штатно ignored. �
 
 **10 октября,F502–F503/Q34-F056–F057:** [Событие и охват CI](../reports/AUDIT-Q34-PUBLICATION-GATES.md): release gate требует push event/exact SHA; green PR merge не заменяет source CI. Paths filters удалены, все root policy inputs запускают CI.132Windows/67Linux methods/actionlint4/docs PASS. Actual Git/controlled gh, не hosted Actions.25ownlabfiles очищены,service сохранён. Developer docs1.97/locked обновлены;F459 latest3.0.3/no patch OPEN.Q34IN_PROGRESS30/37DONE81,1%,7remain;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 **10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**10октября,F506–F507:** [Soak admission](../reports/AUDIT-Q34-RELEASE-SOAK.md): нулевой цикл TCP и downgraded endurance labels воспроизведены; общий decimal validator до сетевых действий, smoke/full markers и minimum10k/1k только для full endurance wrapper. Обязательный bounded100 сохранён.28Linux/57Windows methods,4workflow lint PASS; без новогоVPNsoak/native rebuild. Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
