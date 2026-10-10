@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v202 -->
+<!-- normative-sync: full-system-audit-v203 -->
 
 **Current result, 10 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2182,7 +2182,7 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and background load. P=1/P=4, up/down/bidirectional, inner/outer v4/v6, TCP/UDP goodput, latency percentiles, loss/jitter, CPU/RSS/auth rate. ≥3 independent runs, median/spread/raw results; 0.8.0 numbers do not represent current development.
 
-**Existing harness/fixtures:** `scripts/perf_combined_load.py`, `scripts/bench_bonding.py`.
+**Existing harness/fixtures:** `scripts/bench_bonding.py` (historical, explicitly guarded).
 
 - [ ] Review and dead code.
 - [ ] Positive, boundary and negative scenarios.
@@ -2195,6 +2195,12 @@ longer substitutes sender `end.sum` for a missing receiver `sum_received`,
 and rejects truncated intervals or invalid TCP/UDP metrics. Five unit tests
 and all 35 archived raw iperf files PASS. Fresh repeated measurements and the
 P=4/IPv6/bidirectional matrix remain open; 30/37 DONE (81.1%).
+
+**Q36-F002:** historical `bench_bonding.py` now refuses ordinary invocation
+before SSH or host-state mutation, as `benchmark.py` already did. Unused
+`perf_combined_load.py`, with embedded credentials and production firewall
+changes, was removed. One subprocess test covers the two remaining refusals;
+new measurements on `.10` are pending after SSH authentication failed.
 
 **Status: IN_PROGRESS.**
 
