@@ -77,6 +77,14 @@ CPU is process-tick delta over the interval (100% means one CPU;
 two vCPUs can reach 200%); RSS peaks are sampled. `COMPLETED` means a
 measurement was obtained correctly, without an automatic performance
 threshold or a no-regression claim.
+As of 10 October 2026, `COMPLETED` requires a real `end.sum_received`
+summary, at least 90% of the requested interval, and finite nonnegative
+values. TCP requires `sum_sent.retransmits`; UDP requires loss percentage
+and jitter. A missing receiver summary can no longer fall back to `end.sum`,
+which may represent sender bytes. The direct baseline uses the same rule.
+Five positive/negative unit tests pass, and all 35 archived raw iperf files
+from the 3 October sweep pass the stricter admission. This change has not
+measured throughput on current dev; Q36 remains in progress.
 
 Historical [benchmark.py](../../../scripts/benchmark.py) stops services,
 uses host-wide `pkill`, replaces binaries and the resolver file. It now
