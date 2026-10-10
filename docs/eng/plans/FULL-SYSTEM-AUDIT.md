@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v214 -->
+<!-- normative-sync: full-system-audit-v215 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2178,6 +2178,8 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 
+**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Remaining: IPv6 RTT, full carrier AUTH/rate and TCP asymmetry cause; long soaks belong to Q35. Historical OPEN entries below describe their original checkpoints.
+
 **Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
 Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and background load. P=1/P=4, up/down/bidirectional, inner/outer v4/v6, TCP/UDP goodput, latency percentiles, loss/jitter, CPU/RSS/auth rate. ≥3 independent runs, median/spread/raw results; 0.8.0 numbers do not represent current development.
@@ -2625,3 +2627,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 fresh-server bursts,1/4/16 TCP/UDP/QUIC peers;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL and interrupted transfer retained,1partial peer separately;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October,Q36-F015:** [IPv6 carriers](../reports/BENCHMARK.md):27new sessions/108TCP+UDP bidir P1/P4 windows remaining9carriers outer6/inner6,324raw JSON +manifest;core3/direct inherited separately with sealed SHA,all12 now covered for this pair.916CLI inputs unchanged/no rebuild;73Windows/73Linux previous exact-input checks reused,9docs PASS.2owned roots SHA-archived/removed,services preserved,all host gates retained.Q36 registry TODO→IN_PROGRESS and historical debt queue corrected.Mixed-family/IPv6RTT/fullAUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October, Q36-F016:** [Mixed families](../reports/BENCHMARK.md):54 new sessions /216 TCP+UDP bidir P1/P4 windows remaining nine carriers outer4/inner6 and outer6/inner4;648 raw JSON +manifest. Prior core3/direct preserved separately with sealed SHA; with F015 all12 cover the three non-default pairs.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 owned roots SHA-archived/removed,services preserved; all host gates and final differences retained. IPv6 RTT/full AUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
