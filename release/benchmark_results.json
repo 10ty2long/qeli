@@ -18518,5 +18518,10 @@
     "scope": "IPv4, plain/TLS legacy records and plain required-mux; three fresh current-client sessions per carrier, fixed qualified older server; no performance PASS",
     "phases": 18,
     "raw_json_files": 72
+  },
+  "supplemental_latency": {
+    "path": "benchmark_v0.8.2_2026-10-10_latency.json",
+    "sha256": "85ec7e369538a20132d48ae1982c05c1181b1cf9e08d61520e4c38d56e40bcaa",
+    "status": "DIAGNOSTIC_MEASUREMENTS_ONLY"
   }
 }
