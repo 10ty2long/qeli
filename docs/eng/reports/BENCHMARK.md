@@ -9,11 +9,125 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+The latest supplemental measurement is [mixed-family coverage](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 new sessions /216 windows. [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+## Mixed IPv4/IPv6 carrier coverage — 11 October 2026
+
+**Q36-F016:** [JSON](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json) completes the remaining nine
+carriers for **outer4/inner6 and outer6/inner4**: three fresh sessions per cell,
+54 new sessions / 216 five-second TCP+UDP bidir P1/P4 windows / 648 raw JSON
+files plus the execution manifest and 108 SHA-bound worker logs. Previously sealed core3 and direct IPv4/IPv6
+baselines retain their original source hashes, conditions and host gates; they
+were not repeated or pooled with new measurements. With Q36-F015, all 12 carriers
+now have each of the three non-default inner/outer family pairs measured.
+
+The CLI SHA `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71` and its 916 source inputs are unchanged.
+No compiler, new binary or production change. Both VMs use private IPvlan/network
+and mount namespaces. Carrier family is verified from NetworkPlan and server
+peer; tunnel family from the only plan address and every raw iperf endpoint.
+TUN MTU1400, underlay1500, recordizer off. REALITY fallback target remains
+fixture-local IPv4, independently of the carrier and payload family.
+The real-TLS REALITY fixture explicitly sets handrolled=true, as in the previous
+family measurements; this is not a certification of public-site camouflage.
+
+TCP bidir is unpaced. UDP 100Mbit/s is per stream per direction with 1200-byte
+datagrams: P1=100+100, P4=400+400Mbit/s. Values below are medians of three
+independent windows, Mbit/s except loss. The direct row is the matching inner-family
+underlay baseline, with no Qeli outer connection. The second repeat reverses cell
+and phase order. Full median/min/max, retransmits, jitter, drops, CPU/RSS/load/steal
+and individual runs remain in JSON.
+Automatic UDP buffer policy is unchanged; reversing phases deliberately changes
+prior traffic and possible buffer-growth history. Per-phase capacity is not assumed
+identical. CPU/RSS uses a six-second observation around each five-second iperf window.
+
+### Outer IPv4 / inner IPv6
+
+| Carrier | Source | TCP P1 up / down | TCP P4 up / down | UDP P4 up / down | UDP P4 loss %, up / down |
+|---|---|---:|---:|---:|---:|
+| direct | inherited | 12950.1 / 16385.3 | 5430.1 / 20863.5 | 400.0 / 400.0 | 0.00 / 0.00 |
+| tcp-plain-raw | new | 49.8 / 499.2 | 33.3 / 501.7 | 301.7 / 312.8 | 23.76 / 18.28 |
+| tcp-padding | new | 47.2 / 470.2 | 41.1 / 484.9 | 251.0 / 314.5 | 34.52 / 15.88 |
+| tcp-frag | new | 52.4 / 493.8 | 37.5 / 495.3 | 269.6 / 267.6 | 32.42 / 28.13 |
+| tcp-obfs | new | 41.7 / 496.3 | 34.2 / 490.4 | 245.2 / 330.5 | 38.51 / 14.45 |
+| tcp-reality | new | 76.7 / 461.6 | 30.4 / 512.9 | 283.1 / 314.1 | 29.01 / 14.56 |
+| tcp-reality-tls | new | 138.1 / 872.9 | 127.7 / 893.7 | 378.1 / 398.3 | 5.28 / 0.01 |
+| udp-padding | new | 161.8 / 614.1 | 101.8 / 699.6 | 360.2 / 99.2 | 9.82 / 57.34 |
+| tcp-obfs-awg | new | 53.6 / 470.2 | 39.5 / 484.1 | 179.3 / 337.0 | 55.01 / 14.00 |
+| udp-faketls-awg | new | 118.3 / 723.7 | 94.0 / 736.8 | 350.3 / 139.8 | 12.24 / 41.55 |
+| tcp-faketls | inherited | 61.0 / 485.5 | 39.4 / 476.6 | 295.9 / 348.4 | 24.54 / 10.18 |
+| udp-faketls | inherited | 134.1 / 754.8 | 100.7 / 777.5 | 354.3 / 77.8 | 10.70 / 50.90 |
+| udp-quic | inherited | 177.4 / 630.4 | 81.3 / 777.1 | 349.2 / 150.1 | 12.48 / 51.49 |
+
+### Outer IPv6 / inner IPv4
+
+| Carrier | Source | TCP P1 up / down | TCP P4 up / down | UDP P4 up / down | UDP P4 loss %, up / down |
+|---|---|---:|---:|---:|---:|
+| direct | inherited | 14480.2 / 15323.9 | 6114.2 / 20810.4 | 400.0 / 400.0 | 0.00 / 0.00 |
+| tcp-plain-raw | new | 41.1 / 444.7 | 45.4 / 490.6 | 255.9 / 299.2 | 35.30 / 22.46 |
+| tcp-padding | new | 61.2 / 431.7 | 39.6 / 505.1 | 245.1 / 312.5 | 38.46 / 17.79 |
+| tcp-frag | new | 43.2 / 440.2 | 43.6 / 458.9 | 285.7 / 291.4 | 28.11 / 25.26 |
+| tcp-obfs | new | 54.7 / 489.2 | 46.7 / 485.0 | 210.6 / 338.3 | 45.16 / 13.06 |
+| tcp-reality | new | 59.5 / 427.8 | 42.1 / 532.6 | 283.5 / 306.3 | 26.15 / 18.24 |
+| tcp-reality-tls | new | 415.8 / 739.6 | 122.5 / 902.2 | 355.9 / 397.7 | 10.73 / 0.00 |
+| udp-padding | new | 151.1 / 662.9 | 84.0 / 718.1 | 353.5 / 133.6 | 11.56 / 49.98 |
+| tcp-obfs-awg | new | 37.5 / 516.5 | 52.6 / 539.0 | 212.9 / 278.1 | 44.55 / 27.77 |
+| udp-faketls-awg | new | 134.2 / 664.5 | 90.7 / 710.0 | 341.0 / 111.7 | 14.26 / 40.17 |
+| tcp-faketls | inherited | 63.3 / 440.0 | 44.5 / 521.5 | 313.6 / 358.2 | 21.10 / 7.82 |
+| udp-faketls | inherited | 168.0 / 644.8 | 91.8 / 779.9 | 347.4 / 107.7 | 12.84 / 44.67 |
+| udp-quic | inherited | 48.6 / 255.7 | 32.7 / 260.1 | 345.9 / 90.6 | 12.85 / 55.44 |
+
+Both receivers are checked against exact protocol/P/duration/rate and endpoints.
+Process identity and affinity0-1/nice0 are observed throughout sampling; CPU100%
+is one logical CPU and RSS is sampled peak. Application and both-family kernel
+counter deltas are recomputed; resets refuse admission. Kernel counters include
+iperf and carrier sockets, so they cannot independently locate a Qeli client defect.
+Client status/UDP receive capacity is observed before the first phase only.
+
+### UDP P4 receive-buffer errors by family
+
+| UDP carrier | Outer / inner | Source | Client outer-family RcvbufErrors | Client inner-family RcvbufErrors | Client CPU %, median |
+|---|---|---|---:|---:|---:|
+| udp-padding | IPv4 / IPv6 | new | 132261 | 3563 | 106.8 |
+| udp-faketls-awg | IPv4 / IPv6 | new | 125936 | 2788 | 103.3 |
+| udp-faketls | IPv4 / IPv6 | inherited | 156840 | 3915 | 104.2 |
+| udp-quic | IPv4 / IPv6 | inherited | 119948 | 4524 | 106.2 |
+| udp-padding | IPv6 / IPv4 | new | 123170 | 2902 | 106.2 |
+| udp-faketls-awg | IPv6 / IPv4 | new | 139916 | 2998 | 105.2 |
+| udp-faketls | IPv6 / IPv4 | inherited | 138336 | 4796 | 105.0 |
+| udp-quic | IPv6 / IPv4 | inherited | 151224 | 3525 | 108.0 |
+
+Unlike same-family windows, these mixed-family counters distinguish the two
+address families used by carrier and payload. They are still namespace counters,
+not per-socket ownership measurements; packet loss and receive-buffer errors
+need not have identical counts. The table retains median counts and process CPU,
+without attributing all loss to one code path or increasing buffers without evidence.
+
+Native UDP log events are also extracted with exact line numbers and source SHA.
+For the first outer4/inner6 UDP-padding session, the client's granted buffer grows
+to 16384 KiB and the native socket counter reaches 125313 drops.
+The production controller reads the socket inode's drops from /proc/net/udp or udp6;
+this log provides separate socket evidence, rather than treating namespace counts
+as socket ownership. Auto-growth is active; its absence does not explain this case.
+These logs span the complete session, not per-phase client status snapshots.
+
+Host measurement gates and post-archive differences are retained separately;
+cleanup changed fields: `{"10.66.116.10": ["iptables4"], "10.66.116.11": []}`.
+Both VM gates passed immediately after measurement. After archiving, the .10
+iptables4 snapshot lacks two pre-existing vpn0 FORWARD rules and MASQUERADE for
+10.8.0.0/24; the complete diff is retained, and restoration of that snapshot is not PASS.
+Both owned roots are SHA-archived and removed; active services are preserved.
+No result is discarded to improve medians. Loss/asymmetry remains diagnostic;
+short windows do not prove stable throughput, regression cause or saturation.
+
+No benchmark implementation changed. The sealed 73 Windows/73 Linux checks from
+Q36-F014 are reused after exact input hashes are verified; nine docs checks PASS.
+All-carrier mixed-family coverage is complete for these conditions. IPv6 RTT,
+full carrier AUTH/rate, exact TCP asymmetry cause and Q35 long soaks remain OPEN.
+Q36 IN_PROGRESS;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ## IPv6 carrier coverage — 11 October 2026
 
