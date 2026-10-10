@@ -7,8 +7,8 @@
   "product_source_commit": "bfcb3f65daf5728f408d69faf0f2d496707e6129",
   "native_source_digest": "e3fb04a80fc8c2e7334fa5187dacb497ca47b2a79954fcddae45b5d5a533052c",
   "findings_closed": [
-    "F497/Q34-F051",
-    "F498/Q34-F052"
+    "F499/Q34-F053",
+    "F500/Q34-F054"
   ],
   "verification": {
     "baseline": {
