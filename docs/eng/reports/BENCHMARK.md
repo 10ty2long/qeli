@@ -2116,3 +2116,44 @@ Full differences remain. Owned namespaces/root were removed after verifying the
 SHA archive; services and staged CLI were preserved, with no new build cache.
 Q36 cause/release AUTH-rate and
 .11 cleanup remain OPEN; Q35 soak is separate. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Downlink-load effect on uplink — 11 October 2026
+
+<!-- normative-sync: q36-downlink-load-v1 -->
+
+**Q36-F022:** [paired experiment](../../../release/audit_q36_downlink_load_2026-10-11.json): three fresh
+plain TCP raw sessions, six eight-second windows on two-vCPU .10.
+Two simultaneous unidirectional iperf3 P1 flows: uplink always unlimited,
+downlink 100 Mbps or unlimited. This differs from --bidir; prior populations
+stay separate. Window order alternates. Binary, INI, CPU policy 0–1 and TCP
+sampler are identical; only the downlink target bitrate changes.
+
+Median [min–max] across three sessions, Mbps:
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps |
+|---|---:|---:|
+| unlimited | 147.1 [125.9–166.7] | 534.4 [513.2–568.1] |
+| 100 | 315.1 [263.8–341.9] | 99.9 [99.9–100.1] |
+
+Pacing downlink increased uplink by **2.05–2.14 times** in all three pairs.
+The dependency reproduces under these conditions; the mechanism remains OPEN.
+Four uplink and three downlink client drop-cause counters did not increase;
+generation, plan and reconnects stayed unchanged, state=running, no last_error.
+These are observed Qeli counters, not a claim of zero TCP losses; retransmits
+and server/kernel deltas remain separate. Sampled TCP_INFO does not provide
+per-packet ACK timing or prove ACK starvation or a specific implementation bug.
+
+Raw receiver summaries, both target bitrates/reverse/ports, exit0, concurrent
+child launch and all six TCP roles coexisting >6s, PID/CPU identity, complete
+before/after client status and SHA were checked. Process-lifetime overlap is
+separate from exact payload timing. Qualified F010 release CLI SHA238153ab is
+reused; this does not test the current UDP fix or claim overall performance PASS.
+The 100 Mbps target is a diagnostic intervention, not a fix or recommended
+product limit. Defaults are unchanged.
+
+Measurement host gate: **FAIL** ['legacy4'];
+cleanup host gate: **PASS** [].
+Differences remain; owned namespaces/root were SHA-archived and removed, INI
+verified, services and staged CLI preserved. No new builds/build cache.
+Q36 mechanism/release AUTH-rate and .11 cleanup remain OPEN; Q35 soak separate.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

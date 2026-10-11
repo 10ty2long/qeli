@@ -2108,3 +2108,44 @@ cleanup host gate: **FAIL** ['iptables4', 'legacy4'].
 SHA-архива; службы и staged CLI сохранены, нового build cache нет.
 Q36 cause/release AUTH-rate и очистка .11
 OPEN; Q35 soak отдельно. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Влияние downlink-нагрузки на uplink — 11 октября 2026
+
+<!-- normative-sync: q36-downlink-load-v1 -->
+
+**Q36-F022:** [парный эксперимент](../../../release/audit_q36_downlink_load_2026-10-11.json): три свежие
+plain TCP raw сессии, шесть восьмисекундных окон на одной двух-vCPU .10.
+Два одновременных однонаправленных iperf3 P1 потока: uplink всегда unlimited,
+downlink 100 Мбит/с или unlimited. Это другой workload, чем --bidir; прежние
+популяции отдельно. Порядок окон чередуется. Бинарник, INI, CPU policy 0–1
+и TCP sampler одинаковы; изменяется только target bitrate downlink.
+
+Медиана [min–max] трёх сессий, Мбит/с:
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps |
+|---|---:|---:|
+| unlimited | 147.1 [125.9–166.7] | 534.4 [513.2–568.1] |
+| 100 | 315.1 [263.8–341.9] | 99.9 [99.9–100.1] |
+
+При ограничении downlink uplink вырос в **2.05–2.14 раза** во всех трёх парах.
+Зависимость воспроизводится в этих условиях, механизм остаётся OPEN.
+Счётчики четырёх причин uplink drops и трёх downlink drops клиента не выросли;
+поколение, plan и reconnects сохранились, state=running, last_error отсутствует.
+Это наблюдаемые счётчики Qeli, не утверждение об отсутствии потерь TCP;
+retransmits и server/kernel deltas сохранены отдельно. Снимки TCP_INFO не дают
+per-packet ACK timing и не доказывают ACK starvation или конкретную ошибку кода.
+
+Проверены raw receiver summaries, оба target bitrate/reverse/ports, exit0,
+синхронный запуск children и присутствие всех шести TCP ролей совместно >6 с,
+PID/CPU identity, полный status клиента до/после и SHA. Перекрытие времени
+процессов отделено от точного времени передачи payload. F010 release CLI
+SHA238153ab повторно использован; текущий UDP fix и общий performance PASS
+не заявлены. Ограничение до 100 Мбит/с — диагностический фактор, не исправление
+и не рекомендуемый лимит продукта. Defaults не менялись.
+
+Measurement host gate: **FAIL** ['legacy4'];
+cleanup host gate: **PASS** [].
+Отличия сохранены; собственные namespace/root SHA-архивированы и удалены,
+INI сверены, службы и staged CLI сохранены. Новых сборок/build cache нет.
+Q36 mechanism/release AUTH-rate и очистка .11 OPEN; Q35 soak отдельно.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
