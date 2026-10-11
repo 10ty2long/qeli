@@ -397,6 +397,18 @@ Keepalive, graceful-FIN при отключении, жёлтый индикат
 «использовать дефолт» и отвергаются. Для ручной настройки используются только плоские
 ключи `perf.*` внутри `[profile:<name>]`. Пример профиля:
 
+| Ключ | Умолч. | Назначение |
+|---|---|---|
+| `bind.address` | `0.0.0.0` | адрес listener внешнего транспорта |
+| `bind.port` | `443` | порт listener; `1..65535`, нулевой порт отклоняется |
+| `bind.transport` | `tcp` | внешний транспорт |
+| `tun.name` | `vpn0` | имя серверного интерфейса |
+| `tun.mtu` | `1400` | серверный потолок; клиентский auto MTU принимает аутентифицированный push |
+| `tun.queues` | `0` | `0` выбирает доступное число CPU при старте |
+| `obf.mode` | `fake-tls` | wire-режим до аутентифицированного согласования |
+| `obf.obfs_key` | — | общий секрет, обязательный для obfs |
+| `obf.obfs_fronting` | `websocket` | fronting для obfs; должен совпадать с клиентом |
+
 ```ini
 [auth]
 users_file = /etc/qeli/users.conf
@@ -946,6 +958,12 @@ Multipath открывает несколько TCP-соединений к од
 
 **Настройки — per-profile** (как `tun.mtu`/`padding`), сервер пушит их клиенту:
 
+| Ключ | Умолч. | Назначение |
+|---|---|---|
+| `obf.multipath.enabled` | `false` | включить согласованный stream bonding |
+| `obf.multipath.max_streams` | `4` | потолок потоков на сессию |
+| `obf.multipath.adaptive` | `false` | адаптивно увеличивать число потоков |
+
 ```ini
 [profile:reality-tls]
 # включить бондинг на этом профиле
@@ -1032,6 +1050,18 @@ heartbeat — нет ни «мёртвой тишины», ни метроном
 добавленной латентности); наполняется только idle, в пределах байт-бюджета. Когда
 шейпинг включён, он **заменяет** heartbeat (тот выключается, чтобы не было двойного маяка).
 
+| Ключ | Умолч. | Назначение |
+|---|---|---|
+| `obf.traffic_shaping.enabled` | `false` | включить cover-трафик |
+| `obf.traffic_shaping.idle_gap_mean_ms` | `700` | средний idle-интервал, мс |
+| `obf.traffic_shaping.idle_gap_min_ms` | `40` | минимальный idle-интервал, мс |
+| `obf.traffic_shaping.idle_gap_max_ms` | `6000` | максимальный idle-интервал, мс |
+| `obf.traffic_shaping.budget_bytes_per_sec` | `16384` | бюджет cover; при включении не меньше max_size |
+| `obf.traffic_shaping.min_size` | `64` | минимальный размер cover-записи, байты |
+| `obf.traffic_shaping.max_size` | `1024` | максимальный размер cover-записи, байты |
+| `obf.traffic_shaping.stealth` | `false` | включить ограничение скорости stealth |
+| `obf.traffic_shaping.stealth_rate_mbps` | `2` | ограничение скорости при stealth, Мбит/с |
+
 ```ini
 # вкл (по умолчанию false)
 obf.traffic_shaping.enabled = true
@@ -1041,7 +1071,7 @@ obf.traffic_shaping.idle_gap_mean_ms = 700
 obf.traffic_shaping.idle_gap_min_ms = 40
 # потолок паузы (не «умирать» на длинном хвосте)
 obf.traffic_shaping.idle_gap_max_ms = 6000
-# лимит cover-трафика, Б/с (0 = не слать)
+# лимит cover-трафика, Б/с; при enabled должен быть не меньше max_size
 obf.traffic_shaping.budget_bytes_per_sec = 16384
 # диапазон размера cover-пакета
 obf.traffic_shaping.min_size = 64
@@ -1198,13 +1228,13 @@ peers. TCP дополнительно может использовать `obfs_
 
 «REALITY» в qeli — два уровня, оба в профиле сервера:
 
-| ключ (сервер) | значение |
-|---|---|
-| `obf.tls.reality_proxy.enabled` | включить REALITY-обработку входящих соединений |
-| `obf.tls.reality_proxy.target` / `target_port` | реальный сайт, куда прозрачно проксируются «не-наши»/пробинг-соединения (напр. `www.microsoft.com:443`) |
-| `obf.tls.reality_proxy.short_ids` | allow-лист 8-байтовых (16 hex) ID «своих» — криптографический дискриминатор (токен в `session_id`). **Обязателен при `reality_proxy.enabled`**: с пустым списком сервер не стартует. (Раньше пустой список давал legacy-фоллбэк «нет ALPN»; он тривиально пробивается активным пробером, поэтому теперь отвергается на старте.) |
-| `obf.tls.reality_proxy.real_tls` | `true` → терминировать настоящий TLS 1.3 и автоматически запускать настоящий H2 carrier (клиент `mode=reality-tls`); `false` → legacy fake-TLS wire только с REALITY bridge/token |
-| `obf.tls.reality_proxy.handrolled` | `true` → hand-rolled TLS-терминатор: **одалживает цепочку серта target'а** (захватывается при старте; **авто-refresh раз в 12ч**) и зеркалит форму JA3S/ServerHello. `false` → rustls: **self-signed** серт + свой JA3S (маскировка слабее). По умолчанию `true`; совпадают только эти измерения сертификата/ServerHello, а не всё browser/Xray/H2-поведение. Требует `real_tls = true` |
+| Ключ | Умолч. | Назначение |
+|---|---|---|
+| `obf.tls.reality_proxy.enabled` | `false` | включить REALITY-обработку входящих соединений |
+| `obf.tls.reality_proxy.target` / `target_port` | `www.cloudflare.com` / `443` | реальный сайт, куда прозрачно проксируются «не-наши»/пробинг-соединения (напр. `www.microsoft.com:443`) |
+| `obf.tls.reality_proxy.short_ids` | `[]` | allow-лист 8-байтовых (16 hex) ID «своих» — криптографический дискриминатор (токен в `session_id`). **Обязателен при `reality_proxy.enabled`**: с пустым списком сервер не стартует. (Раньше пустой список давал legacy-фоллбэк «нет ALPN»; он тривиально пробивается активным пробером, поэтому теперь отвергается на старте.) |
+| `obf.tls.reality_proxy.real_tls` | `false` | `true` → терминировать настоящий TLS 1.3 и автоматически запускать настоящий H2 carrier (клиент `mode=reality-tls`); `false` → legacy fake-TLS wire только с REALITY bridge/token |
+| `obf.tls.reality_proxy.handrolled` | `true` | `true` → hand-rolled TLS-терминатор: **одалживает цепочку серта target'а** (захватывается при старте; **авто-refresh раз в 12ч**) и зеркалит форму JA3S/ServerHello. `false` → rustls: **self-signed** серт + свой JA3S (маскировка слабее). По умолчанию `true`; совпадают только эти измерения сертификата/ServerHello, а не всё browser/Xray/H2-поведение. Требует `real_tls = true` |
 
 - **proxy-bridge (`real_tls=false`):** клиент шлёт `mode=fake-tls`; на проводе fake-TLS,
   но «чужие» хендшейки уходят на `target` (активный пробер видит настоящий сайт).
@@ -1331,8 +1361,13 @@ MITM мог бы перехватить креды. Поэтому «отпра�
 и приватный static-ключ сервера.
 ```ini
 # server.conf — секция [auth] (дефолт true):
+[auth]
 bind_static_to_session = true
+```
+
+```ini
 # клиент — секция [qeli] (дефолт true; требует реального запиненного `key`):
+[qeli]
 bind_static = true
 ```
 **WIRE-BREAKING**: сервер с H-1 принимает только клиентов, которые тоже на H-1 и
@@ -2364,19 +2399,24 @@ exit_node = true
 выдать нужные семейства выхода только тем потребителям, кому они положены:
 ```ini
 [profile:tcp]
-routing.client_to_client = true   # без этого сервер не переложит пакет из сессии в сессию
+# без этого сервер не переложит пакет из сессии в сессию
+routing.client_to_client = true
 
 # Узел, ЧЕРЕЗ который выходят
 [user:exit]
 password_hash = $argon2id$...
-client_subnet = 0.0.0.0/0         # «за этим клиентом — весь интернет» (inbound iroute)
-client_subnet = ::/0               # IPv6-интернет находится за тем же exit-узлом
+# «за этим клиентом — весь интернет» (inbound iroute)
+client_subnet = 0.0.0.0/0
+# IPv6-интернет находится за тем же exit-узлом
+client_subnet = ::/0
 
 # Потребитель выхода — /0 служит серверным маркером права на exit
 [user:alice]
 password_hash = $argon2id$...
-route = 0.0.0.0/0                 # CIDR ПЕРВЫМ; см. «Маршруты (route) — подробно»
-route = ::/0                       # разрешить этому потребителю также IPv6-выход
+# CIDR ПЕРВЫМ; см. «Маршруты (route) — подробно»
+route = 0.0.0.0/0
+# разрешить этому потребителю также IPv6-выход
+route = ::/0
 
 # Обычный пользователь без этой строки выходом НЕ пользуется — он ходит через сервер
 [user:bob]
@@ -2643,7 +2683,8 @@ server-originated OUTPUT, так и FORWARD от сторонних хостов
 
 ```ini
 [profile:main]
-bind.address = 0.0.0.0
+; конкретный основной адрес; wildcard пересечётся с дополнительным слушателем
+bind.address = 203.0.113.4
 bind.port = 443
 bind.transport = tcp
 ; запасной порт
@@ -3069,6 +3110,8 @@ routing.post_down = ip route del 192.168.254.0/24 via 10.9.0.2
 
 | Ключ | Дефолт | Назначение |
 |---|---|---|
+| `require_client_key_proof` | `false` | требовать доказательство pinned key; шаблоны могут включать |
+| `bind_static_to_session` | `true` | привязать ключи сессии к статической личности сервера |
 | `users_file` | `/etc/qeli/users.conf` | путь к standalone-базе; загружается вместе с инлайн `[user:*]` и побеждает при совпадении имени |
 | `brute_force.enabled` | `true` | главный выключатель ограничения для **VPN-аутентификации**; `false` = полностью выкл |
 | `brute_force.max_attempts` | `5` | порог неудачных попыток до локаута (по source-IP); допустимо `1..=10000` |
@@ -3491,8 +3534,10 @@ username = admin
 password_hash = $argon2id$...
 # встроенный HTTPS (rustls); пустые cert/key = self-signed авто
 tls = true
-tls_cert =                    # (опц.) свой PEM cert; пусто = self-signed
-tls_key =                     # (опц.) свой PEM key
+# (опц.) свой PEM cert; пусто = self-signed
+tls_cert =
+# (опц.) свой PEM key
+tls_key =
 # (опц.) белый список source-IP/CIDR; пусто = любой
 allowed_ips = 203.0.113.4, 10.0.0.0/8
 # (опц.) дефолтный хост для share-ссылок
@@ -3505,7 +3550,8 @@ trusted_proxies = 10.0.0.0/8
 secure_cookie = false
 # логины в панель переживают перезапуск; эмитится только при false
 persist_session_key = true
-base_path =                   # (опц.) сабпас за reverse-proxy, напр. /qeli; пусто = в корне
+# (опц.) сабпас за reverse-proxy, напр. /qeli; пусто = в корне
+base_path =
 # CSRF-защита (default true); false — ТОЛЬКО на loopback-bind
 csrf = true
 # (опц.) время жизни сессии панели (сек); эмитится только если ≠ 86400

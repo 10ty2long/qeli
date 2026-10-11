@@ -400,6 +400,18 @@ Explicit zeroes for `perf.connection.handshake_timeout_secs` and
 `perf.connection.max_clients` do not mean "use the default" and are rejected. Manual
 tuning uses only flat `perf.*` keys inside `[profile:<name>]`. Example profile:
 
+| Key | Default | Purpose |
+|---|---|---|
+| `bind.address` | `0.0.0.0` | carrier listen address |
+| `bind.port` | `443` | carrier listen port; `1..65535`, zero is rejected |
+| `bind.transport` | `tcp` | outer transport |
+| `tun.name` | `vpn0` | server interface name |
+| `tun.mtu` | `1400` | server ceiling; client auto MTU adopts the authenticated push |
+| `tun.queues` | `0` | `0` selects the available CPU count at startup |
+| `obf.mode` | `fake-tls` | wire mode before authenticated negotiation |
+| `obf.obfs_key` | — | shared secret required for obfs |
+| `obf.obfs_fronting` | `websocket` | obfs fronting; must match the client |
+
 ```ini
 [auth]
 users_file = /etc/qeli/users.conf
@@ -954,6 +966,12 @@ drops the packet without spilling it onto another carrier or blocking other flow
 **Settings — per-profile** (like `tun.mtu`/`padding`), the server pushes them to
 the client:
 
+| Key | Default | Purpose |
+|---|---|---|
+| `obf.multipath.enabled` | `false` | enable negotiated stream bonding |
+| `obf.multipath.max_streams` | `4` | per-session stream ceiling |
+| `obf.multipath.adaptive` | `false` | grow the stream count adaptively |
+
 ```ini
 [profile:reality-tls]
 # enable bonding on this profile
@@ -1042,6 +1060,18 @@ old clients stay compatible. Real packets are **never delayed** (Phase 1 = zero
 added latency); only idle is filled, within a byte budget. When shaping is on it
 **replaces** the heartbeat (which is disabled, so there is no double beacon).
 
+| Key | Default | Purpose |
+|---|---|---|
+| `obf.traffic_shaping.enabled` | `false` | enable cover traffic |
+| `obf.traffic_shaping.idle_gap_mean_ms` | `700` | mean idle gap, milliseconds |
+| `obf.traffic_shaping.idle_gap_min_ms` | `40` | minimum idle gap, milliseconds |
+| `obf.traffic_shaping.idle_gap_max_ms` | `6000` | maximum idle gap, milliseconds |
+| `obf.traffic_shaping.budget_bytes_per_sec` | `16384` | cover budget; when enabled, at least max_size |
+| `obf.traffic_shaping.min_size` | `64` | minimum cover-record size, bytes |
+| `obf.traffic_shaping.max_size` | `1024` | maximum cover-record size, bytes |
+| `obf.traffic_shaping.stealth` | `false` | enable the stealth rate limit |
+| `obf.traffic_shaping.stealth_rate_mbps` | `2` | rate limit under stealth, Mbps |
+
 ```ini
 # on (default false)
 obf.traffic_shaping.enabled = true
@@ -1051,7 +1081,7 @@ obf.traffic_shaping.idle_gap_mean_ms = 700
 obf.traffic_shaping.idle_gap_min_ms = 40
 # gap cap (don't go dead on a long tail)
 obf.traffic_shaping.idle_gap_max_ms = 6000
-# cover-traffic ceiling, B/s (0 = none)
+# cover-traffic ceiling, B/s; when enabled, must be at least max_size
 obf.traffic_shaping.budget_bytes_per_sec = 16384
 # cover packet size range
 obf.traffic_shaping.min_size = 64
@@ -1209,13 +1239,13 @@ implementation of `udp-obfs`.
 
 "REALITY" in qeli has two layers, both in the server profile:
 
-| key (server) | value |
-|---|---|
-| `obf.tls.reality_proxy.enabled` | enable REALITY handling of incoming connections |
-| `obf.tls.reality_proxy.target` / `target_port` | the real site to which "non-ours"/probing connections are transparently proxied (e.g. `www.microsoft.com:443`) |
-| `obf.tls.reality_proxy.short_ids` | allow-list of 8-byte (16 hex) "our" IDs — the cryptographic discriminator (a token in `session_id`). **Required when `reality_proxy.enabled`**: with an empty list the server refuses to start. (An empty list used to fall back to a legacy "no ALPN" heuristic; it is trivially defeated by an active prober, so it is now rejected at startup.) |
-| `obf.tls.reality_proxy.real_tls` | `true` → terminate real TLS 1.3 and run the automatic genuine H2 carrier (client `mode=reality-tls`); `false` → legacy fake-TLS wire with only the REALITY bridge/token |
-| `obf.tls.reality_proxy.handrolled` | `true` → the hand-rolled TLS terminator: **borrows the target's real cert chain** (cert-borrowing — captured at profile start; **auto-refresh every 12h**) and mirrors its JA3S/ServerHello shape. `false` → rustls: a **self-signed** cert + its own JA3S (weaker camouflage). The default is `true`; this matches those certificate/ServerHello dimensions only, not complete browser/Xray/H2 behaviour. Requires `real_tls = true` |
+| Key | Default | Purpose |
+|---|---|---|
+| `obf.tls.reality_proxy.enabled` | `false` | enable REALITY handling of incoming connections |
+| `obf.tls.reality_proxy.target` / `target_port` | `www.cloudflare.com` / `443` | the real site to which "non-ours"/probing connections are transparently proxied (e.g. `www.microsoft.com:443`) |
+| `obf.tls.reality_proxy.short_ids` | `[]` | allow-list of 8-byte (16 hex) "our" IDs — the cryptographic discriminator (a token in `session_id`). **Required when `reality_proxy.enabled`**: with an empty list the server refuses to start. (An empty list used to fall back to a legacy "no ALPN" heuristic; it is trivially defeated by an active prober, so it is now rejected at startup.) |
+| `obf.tls.reality_proxy.real_tls` | `false` | `true` → terminate real TLS 1.3 and run the automatic genuine H2 carrier (client `mode=reality-tls`); `false` → legacy fake-TLS wire with only the REALITY bridge/token |
+| `obf.tls.reality_proxy.handrolled` | `true` | `true` → the hand-rolled TLS terminator: **borrows the target's real cert chain** (cert-borrowing — captured at profile start; **auto-refresh every 12h**) and mirrors its JA3S/ServerHello shape. `false` → rustls: a **self-signed** cert + its own JA3S (weaker camouflage). The default is `true`; this matches those certificate/ServerHello dimensions only, not complete browser/Xray/H2 behaviour. Requires `real_tls = true` |
 
 - **proxy-bridge (`real_tls=false`):** the client sends `mode=fake-tls`; fake-TLS on
   the wire, but "foreign" handshakes go to `target` (an active prober sees the real
@@ -1353,8 +1383,13 @@ no longer enough to expose the tunnel — the attacker also needs the server's p
 static key.
 ```ini
 # server.conf — the [auth] section (default true):
+[auth]
 bind_static_to_session = true
+```
+
+```ini
 # client — the [qeli] section (default true; requires a real pinned `key`):
+[qeli]
 bind_static = true
 ```
 **WIRE-BREAKING**: a server with H-1 only admits clients that also run H-1 and have
@@ -2404,19 +2439,24 @@ exit_node = true
 exit families to the consumers entitled to use them:
 ```ini
 [profile:tcp]
-routing.client_to_client = true   # without this the server won't move a packet session-to-session
+# without this the server won't move a packet session-to-session
+routing.client_to_client = true
 
 # The node traffic exits THROUGH
 [user:exit]
 password_hash = $argon2id$...
-client_subnet = 0.0.0.0/0         # "the whole internet is behind this client" (inbound iroute)
-client_subnet = ::/0               # IPv6 internet is behind the same exit
+# "the whole internet is behind this client" (inbound iroute)
+client_subnet = 0.0.0.0/0
+# IPv6 internet is behind the same exit
+client_subnet = ::/0
 
 # A consumer of the exit — /0 is the server-side exit authorization marker
 [user:alice]
 password_hash = $argon2id$...
-route = 0.0.0.0/0                 # CIDR FIRST; see "Routes (route) — in detail"
-route = ::/0                       # authorize IPv6 exit use for this consumer too
+# CIDR FIRST; see "Routes (route) — in detail"
+route = 0.0.0.0/0
+# authorize IPv6 exit use for this consumer too
+route = ::/0
 
 # A plain user without that line does NOT use the exit — it egresses via the server
 [user:bob]
@@ -2679,7 +2719,8 @@ users) on more ports/addresses, add `listen` (repeatable) instead of cloning the
 
 ```ini
 [profile:main]
-bind.address = 0.0.0.0
+; specific primary address; a wildcard would overlap the extra listener
+bind.address = 203.0.113.4
 bind.port = 443
 bind.transport = tcp
 ; fallback port
@@ -3092,6 +3133,8 @@ Beyond pinning / H-1 (above), the `[auth]` section carries:
 
 | Key | Default | Purpose |
 |---|---|---|
+| `require_client_key_proof` | `false` | require a pinned-key proof; templates can opt in |
+| `bind_static_to_session` | `true` | bind session keys to the static server identity |
 | `users_file` | `/etc/qeli/users.conf` | standalone user database; merged with inline `[user:*]` and wins duplicate names |
 | `brute_force.enabled` | `true` | master switch for **VPN-auth** rate-limiting; `false` = off entirely |
 | `brute_force.max_attempts` | `5` | failed-attempt threshold before lockout (per source IP); allowed `1..=10000` |
@@ -3517,8 +3560,10 @@ username = admin
 password_hash = $argon2id$...
 # native HTTPS (rustls); empty cert/key = self-signed auto
 tls = true
-tls_cert =                    # (opt.) your PEM cert; empty = self-signed
-tls_key =                     # (opt.) your PEM key
+# (opt.) your PEM cert; empty = self-signed
+tls_cert =
+# (opt.) your PEM key
+tls_key =
 # (opt.) source-IP/CIDR allowlist; empty = any
 allowed_ips = 203.0.113.4, 10.0.0.0/8
 # (opt.) default host for share links
@@ -3529,10 +3574,12 @@ allowed_origins = panel.example.com
 secure_cookie = false
 # keep panel logins across a process restart; emitted only when false
 persist_session_key = true
-base_path =                   # (opt.) reverse-proxy sub-path, e.g. /qeli; empty = served at root
+# (opt.) reverse-proxy sub-path, e.g. /qeli; empty = served at root
+base_path =
 # CSRF protection (default true); false = ONLY on a loopback bind
 csrf = true
-trusted_proxies =             # (opt.) reverse-proxy IPs/CIDRs whose X-Forwarded-For is trusted; empty = none
+# (opt.) reverse-proxy IPs/CIDRs whose X-Forwarded-For is trusted; empty = none
+trusted_proxies =
 # (opt.) panel login-session lifetime (seconds); emitted only when != 86400
 session_ttl_secs = 86400
 # PANEL-LOGIN lockout switch (independent of [auth] brute_force)
