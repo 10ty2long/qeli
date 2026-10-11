@@ -1,12 +1,34 @@
 from pathlib import Path
+import sys
+import tempfile
 import unittest
+from unittest import mock
 
-from benchmark_auth_native import admit_native_burst, instrument_sources, validate_control_path
+from benchmark_auth_native import admit_native_burst, instrument_sources, validate_control_path, validate_instrumented_peer
 from benchmark import MODES
 from test_benchmark_auth import row
 
 
 class NativeAuthTests(unittest.TestCase):
+    def test_stale_peer_refused_before_output_or_network_setup(self):
+        import benchmark_auth_native_lab as runner
+        with tempfile.TemporaryDirectory() as temp:
+            peer = Path(temp) / 'stale-peer'
+            peer.write_bytes(b'ordinary compiled CLI without private observer')
+            output = Path(temp) / 'measurements'
+            args = ['runner', '--qeli', str(peer), '--peer', str(peer), '--output', str(output)]
+            with mock.patch.object(sys, 'argv', args), mock.patch.object(runner.subprocess, 'run') as run:
+                with self.assertRaisesRegex(ValueError, 'lacks instrumentation marker'):
+                    runner.main()
+                run.assert_not_called()
+            self.assertFalse(output.exists())
+
+    def test_instrumentation_marker_across_read_boundary_is_accepted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            peer = Path(temp) / 'peer'
+            peer.write_bytes(b'\0' * (1024 * 1024 - 5) + b'QELI_AUTH_BARRIER' + b'\0')
+            validate_instrumented_peer(peer)
+
     def test_control_path_limit_counts_utf8_bytes_and_refuses_before_start(self):
         validate_control_path(Path('/' + 'x' * 93))
         with self.assertRaises(ValueError): validate_control_path(Path('/' + 'x' * 94))

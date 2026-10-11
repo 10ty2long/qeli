@@ -8,6 +8,23 @@ transport establishment. Successful peers park before NetworkPlan application.
 from benchmark_auth import admit_burst
 
 
+def validate_instrumented_peer(path):
+    """Refuse a stock/stale peer before the benchmark creates any fixtures.
+
+    This marker is only an early artifact sanity check. Successful measurements
+    still require each real peer's barrier, proof, AUTH result and registry entry.
+    """
+    marker = b'QELI_AUTH_BARRIER'
+    overlap = b''
+    with open(path, 'rb') as source:
+        while chunk := source.read(1024 * 1024):
+            data = overlap + chunk
+            if marker in data:
+                return
+            overlap = data[-(len(marker) - 1):]
+    raise ValueError('native AUTH peer lacks instrumentation marker; rebuild the instrumented library')
+
+
 def validate_control_path(root):
     # sockaddr_un.sun_path is 108 bytes on this Linux fixture, including NUL.
     if len(str(root / 'control.sock').encode('utf-8')) >= 108:
