@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v219 -->
+<!-- normative-sync: full-system-audit-v220 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2178,7 +2178,7 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 
-**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Q36-F019 completes functional native AUTH across all12 carriers (108 bursts/756 peers), using lto=false/codegen16. Remaining: standard release AUTH/rate and TCP asymmetry cause; .11 state/cleanup are unverified, and long soaks belong to Q35. Historical OPEN entries below describe their original checkpoints.
+**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Q36-F019 completes functional native AUTH across all12 carriers (108 bursts/756 peers), using lto=false/codegen16. Remaining: standard release AUTH/rate and TCP asymmetry cause; .11 state/cleanup are unverified, and long soaks belong to Q35. Q36-F020/F021 reproduce asymmetry on one VM and test paired CPU placement: disjoint affinity did not eliminate it; these diagnostic series use the prior F010 CLI and do not test the current UDP fix. Historical OPEN entries below describe their original checkpoints.
 
 **Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
@@ -2637,3 +2637,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October, Q36-F019:** [Functional native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 fresh bursts /756 peers across all12 carriers, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Current sources/features/jemalloc; private lto=false/codegen16 profile is not a release benchmark. Three capped release OOM failures retained; owned cache/fixture archived and removed, all host differences retained. Release AUTH/rate, TCP asymmetry and .11 state/cleanup OPEN; Q35 soaks separate. Q36 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October, Q36-F020:** [TCP state](../reports/BENCHMARK.md):6 fresh raw/mux sessions/12 windows in two namespaces on .10, prior F010 release; sampled inner/outer TCP_INFO and both endpoints checked by PID/ports/mode, raw/counters/CPU/SHA. Asymmetry reproduces; queues/RTT observable, cause OPEN, defaults unchanged. Separate two-vCPU diagnosis, not overall performance PASS. Owned root SHA-archived/removed, services preserved, host FAIL and first pre-load harness refusal retained. Q36/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October, Q36-F021:** [CPU affinity](../reports/BENCHMARK.md):6 fresh raw/mux sessions/12 paired shared0–1/split server0 client1 windows, unlimited TCP bidir P1 on .10. All TID/PID/CPU policy, raw/counters/TCP/SHA and archived INI verified; order alternates. Specific placement effect separate from causal proof; defaults unchanged. Owned root SHA-archived/removed, services and staged CLI preserved, all host gates/differences retained. Q36 cause/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

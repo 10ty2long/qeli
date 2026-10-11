@@ -2076,3 +2076,43 @@ before load started; trace/log/receipt remain, and namespaces were cleaned befor
 retrying. At last check .11 accepted TCP22 without an SSH banner. Q36 cause/release
 AUTH-rate and .11 cleanup remain OPEN; Q35 soak is separate.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## CPU affinity probe — 11 October 2026
+
+<!-- normative-sync: q36-tcp-affinity-v1 -->
+
+**Q36-F021:** [paired experiment](../../../release/audit_q36_tcp_affinity_2026-10-11.json): six fresh
+raw/mux sessions, two eight-second unlimited TCP bidir P1 windows each; three
+repeats with varying order. Shared: both Qeli processes use affinity 0–1; split:
+server 0, client 1. All TIDs before/after, PID identity and sampled CPU policy
+were checked. Binary, INI, load and TCP sampler are identical within each pair;
+final INI hashes match the archived configuration. Only Qeli CPU placement changes.
+This also reduces each Qeli process from two available CPUs to one. CPUs are not
+reserved; iperf/sampler/background services continue sharing both vCPUs.
+
+Median [min–max] rates across three sessions, Mbps:
+
+| Mode | Placement | ↑ Mbps | ↓ Mbps |
+|---|---|---:|---:|
+| raw | shared | 149.0 [103.4–152.5] | 462.4 [452.2–499.5] |
+| raw | split | 130.5 [125.4–140.5] | 450.2 [430.2–502.9] |
+| mux | shared | 342.7 [336.8–358.9] | 870.3 [868.1–903.2] |
+| mux | split | 309.7 [270.8–325.3] | 816.7 [809.7–955.2] |
+
+Paired split/shared ratios, median [min–max]: raw ↑0.92 [0.84–1.26],
+↓1.00 [0.86–1.09]; mux ↑0.86 [0.80–0.95],
+↓0.93 [0.90–1.10]. These describe this affinity
+intervention on this VM, not proof of a scheduler bug or ACK starvation causality.
+Pinning did not eliminate raw asymmetry: uplink is
+27.9–30.3% of downlink in all three split windows.
+Queue/RTT observations are sampled TCP_INFO, not continuous ACK timing. The cause
+remains OPEN and product settings are unchanged. Qualified F010 release CLI SHA
+238153ab is identical at both endpoints; this does not test the current UDP fix.
+Populations are not pooled with F020, earlier VM pairs or functional AUTH.
+
+Measurement host gate: **PASS** [];
+cleanup host gate: **FAIL** ['iptables4', 'legacy4'].
+Full differences remain. Owned namespaces/root were removed after verifying the
+SHA archive; services and staged CLI were preserved, with no new build cache.
+Q36 cause/release AUTH-rate and
+.11 cleanup remain OPEN; Q35 soak is separate. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
