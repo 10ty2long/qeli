@@ -64,7 +64,7 @@ not have a `:<name>` suffix. Unknown sections are rejected, including empty ones
 Duplicate scalar keys, unknown keys, and malformed values are rejected at startup,
 on reload, and when saving through the panel/CLI. A rejected reload keeps the running
 configuration; rewriting must not silently remove an invalid entry.
-Known retired keys remain exempt only within their documented section scopes.
+Known retired keys remain exempt only within their documented section scopes. Legacy profile `tun.netmask` is read only to warn and is ignored; `pool.cidr` defines the subnet prefix.
 
 A `route` requires a valid CIDR; `gateway` must be an IP of the same address family,
 and `metric` an integer in `0..=4294967295`. Unknown or duplicate options and malformed
@@ -73,6 +73,10 @@ description text; user routes do not support `desc`. Invalid members of the nume
 `obf.traffic_normalization.round_sizes` list are also rejected instead of being dropped.
 INI comments occupy a separate line starting with `#` or `;`; comments after a value
 are not supported.
+
+For list keys, omission keeps the baseline list; an explicit empty value (`key =` or `key = ""`) replaces it with an empty list. Repeated lines append comma-separated entries in source order; blank members are discarded, without generic deduplication. Consumers can reject duplicates (for example DNS upstreams and IPv6 pool exclusions). Quotes apply to the whole INI value, not separately to each comma-separated member. `listen` and `route` use one complete specification per line, rather than comma splitting.
+
+Numeric `parse_or` fields use their baseline when empty (for example `max_sessions =` means zero/inheritance). Optional numeric fields such as user `expire_at` and group `max_sessions` reject an empty value; remove the key to express absence. Empty boolean values are invalid. These parsing rules still apply when a profile, account or panel is disabled.
 
 Control characters in INI are rejected with a line number instead of being removed on save.
 LF/CRLF line endings, tabs between record components and tabs inside values are supported;
@@ -411,6 +415,10 @@ tuning uses only flat `perf.*` keys inside `[profile:<name>]`. Example profile:
 | `obf.mode` | `fake-tls` | wire mode before authenticated negotiation |
 | `obf.obfs_key` | — | shared secret required for obfs |
 | `obf.obfs_fronting` | `websocket` | obfs fronting; must match the client |
+| `identity_key` | — | optional identity-key path; omitted = generated per-profile path |
+| `listen` | `[]` | extra address:port listeners, one per repeated line; the primary bind is separate |
+| `pool.exclude` | `[]` | extra IPv4 addresses excluded from allocation; the server address is always reserved |
+| `pool.reservation.<user>` | `{}` | fixed IPv4 leases; one unique full key per user |
 
 ```ini
 [auth]
@@ -1243,7 +1251,7 @@ implementation of `udp-obfs`.
 |---|---|---|
 | `obf.tls.reality_proxy.enabled` | `false` | enable REALITY handling of incoming connections |
 | `obf.tls.reality_proxy.target` / `target_port` | `www.cloudflare.com` / `443` | the real site to which "non-ours"/probing connections are transparently proxied (e.g. `www.microsoft.com:443`) |
-| `obf.tls.reality_proxy.short_ids` | `[]` | allow-list of 8-byte (16 hex) "our" IDs — the cryptographic discriminator (a token in `session_id`). **Required when `reality_proxy.enabled`**: with an empty list the server refuses to start. (An empty list used to fall back to a legacy "no ALPN" heuristic; it is trivially defeated by an active prober, so it is now rejected at startup.) |
+| `obf.tls.reality_proxy.short_ids` | `[]` | allow-list of "our" IDs decoded into 8 bytes; use 16 hex digits with a nonzero decoded value (shorter values are zero-padded, `:`/`-`/spaces are accepted) — the cryptographic discriminator (a token in `session_id`). **Required when `reality_proxy.enabled`**: with an empty list the server refuses to start. (An empty list used to fall back to a legacy "no ALPN" heuristic; it is trivially defeated by an active prober, so it is now rejected at startup.) |
 | `obf.tls.reality_proxy.real_tls` | `false` | `true` → terminate real TLS 1.3 and run the automatic genuine H2 carrier (client `mode=reality-tls`); `false` → legacy fake-TLS wire with only the REALITY bridge/token |
 | `obf.tls.reality_proxy.handrolled` | `true` | `true` → the hand-rolled TLS terminator: **borrows the target's real cert chain** (cert-borrowing — captured at profile start; **auto-refresh every 12h**) and mirrors its JA3S/ServerHello shape. `false` → rustls: a **self-signed** cert + its own JA3S (weaker camouflage). The default is `true`; this matches those certificate/ServerHello dimensions only, not complete browser/Xray/H2 behaviour. Requires `real_tls = true` |
 
@@ -1582,7 +1590,7 @@ The file is flat-INI, written atomically by `add-client` and the web panel. Full
 | `group` | — | name of a `[group:<name>]` to inherit `bandwidth`/`max_sessions`/`allowed_networks` from |
 | `route` | — | repeatable per-user route pushed to the client, `<cidr> [gateway=<ip>] [metric=<n>]`; **overrides** the profile's global `route`/`advertised_routes` when present; maximum 256 |
 | `client_subnet` | `[]` | repeatable (or comma-separated) subnet/address **behind** this client that the server routes INBOUND into this client's tunnel (OpenVPN `iroute`); server-side inbound registration only — see §"Routing networks behind nodes WITHOUT NAT" |
-| `allowed_networks` | `[]` (any) | destination ACL — CIDRs/IPs the user is allowed to reach; empty = anywhere |
+| `allowed_networks` | `[]` | destination ACL — a nonempty list overrides the group; empty inherits its ACL, or allows any destination when the group has no ACL |
 | `bandwidth.limit_mbps` | `0` | per-user rate cap in Mbit/s (`0` = unlimited or from the group), applied independently to concurrent upload and download; multipath streams share their direction's cap |
 | `bandwidth.burst_mbps` | `0` | legacy compatibility field: stored in INI; no separate burst limit is enforced |
 | `data_limit_gb` | `0` | lifetime data cap in GB (`0` = unlimited), counted on **download only** (server→client, `used_down`); upload is tracked separately (`used_up`) but does NOT count against the cap. Enforced at auth and by the usage sweep (over-quota live sessions are disconnected). Consumption is tracked in the `usage.json` sidecar |
@@ -1598,7 +1606,7 @@ between checks. A crash/SIGKILL can lose changes since the last successful write
 `usage.json` is internal accounting state, not a configuration format; configuration
 files remain INI. See [worker/accounting audit](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md).
 
-**`[group:<name>]` keys** — a template inherited by members via the user's `group` key (a user's own value always wins when set):
+**`[group:<name>]` keys** — a template inherited by members via the user's `group` key (positive user limits and a nonempty user ACL override the group):
 
 | Key | Default | Purpose |
 |---|---|---|
@@ -2731,8 +2739,8 @@ listen = 203.0.113.5:443
 
 Each `listen` is a bare `addr:port` on the SAME transport as the profile (`bind.transport`). A
 profile is ONE transport — use a separate profile for the other (a per-listener transport is not
-supported; a `addr:port udp` suffix is ignored as malformed). Panel: profile → "Extra listeners". A
-malformed spec is logged. A profile is ready only after **every** listener binds,
+supported; an `addr:port udp` suffix is rejected as malformed). Panel: profile → "Extra listeners". A
+malformed spec is rejected at admission. A profile is ready only after **every** listener binds,
 including every UDP `SO_REUSEPORT` socket. An occupied primary or extra port stops that
 generation; after successful rollback the server retries, while other profiles continue.
 Setup until readiness has one 120-second budget; that timer does not limit a ready profile.
@@ -3458,7 +3466,7 @@ On Linux the socket receives standard broadcast `DISCOVER`/`REQUEST` traffic on
 |---|---|---|
 | `dhcp.enabled` | `false` | enable the DHCP server |
 | `dhcp.listen` | empty (`tun.address:67`) | logical DHCP address and port; empty is recommended. Explicit `0.0.0.0` is rejected as unsafe |
-| `dhcp.pool_start` / `pool_end` | (none) | lease range (optional; else from `pool.cidr`) |
+| `dhcp.pool_start` / `pool_end` | — | lease range (optional; else from `pool.cidr`) |
 | `dhcp.lease_time_secs` | `86400` | lease time |
 | `dhcp.domain_name` | `vpn` | domain name advertised to clients |
 
@@ -3606,7 +3614,7 @@ brute_force.lockout_secs = 900
 
 | Key | Default | Purpose |
 |---|---|---|
-| `enabled` | `false` | enable the web panel. While disabled, the entire hidden `[web]` subtree is preserved without blocking unrelated saves; it is validated when enabled |
+| `enabled` | `false` | enable the web panel. While disabled, dormant operational values are preserved; INI syntax, key names, duplicates and scalar types are still checked. Operational validation applies when enabled |
 | `bind` | `127.0.0.1` | bare IPv4/IPv6 listen address or `localhost` (a public IP for public access); configure the port separately |
 | `port` | `8080` | panel HTTP/HTTPS port, `1..=65535` while enabled |
 | `username` | `admin` | admin login |

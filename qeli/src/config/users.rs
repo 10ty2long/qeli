@@ -7,6 +7,13 @@ use std::path::Path;
 /// config from serially blocking every authentication for minutes.
 pub const MAX_CLIENT_SUBNETS_PER_USER: usize = 16;
 
+/// Preserve parser/IO causes when a users-load error crosses a string boundary
+/// (CLI, panel response, reload log or control reply). Normal Display shows only
+/// the outer context, hiding the key or limit that actually needs fixing.
+pub fn users_error_message(error: &anyhow::Error) -> String {
+    format!("{error:#}")
+}
+
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct UsersDb {
     #[serde(default)]
@@ -592,6 +599,36 @@ impl UserEntry {
 #[cfg(test)]
 mod load_tests {
     use super::*;
+
+    #[test]
+    fn users_error_message_preserves_nested_parser_cause() {
+        let error = anyhow::anyhow!("client_subnet has 17 entries; maximum is 16")
+            .context("users database")
+            .context("users file exists but could not be loaded");
+        let message = users_error_message(&error);
+        assert!(message.contains("users file exists"), "{message}");
+        assert!(message.contains("users database"), "{message}");
+        assert!(
+            message.contains("client_subnet has 17 entries; maximum is 16"),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn users_error_message_preserves_io_cause_and_error_type() {
+        let error = anyhow::Error::new(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "users file permission denied",
+        ))
+        .context("cannot load users file");
+        let message = users_error_message(&error);
+        assert!(message.contains("cannot load users file"), "{message}");
+        assert!(message.contains("users file permission denied"), "{message}");
+        assert_eq!(
+            error.downcast_ref::<std::io::Error>().unwrap().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+    }
 
     #[test]
     fn ipv4_and_ipv6_user_network_policy_validates_together() {
