@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v2 -->
+<!-- normative-sync: q37-documentation-baseline-v3 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -15,8 +15,14 @@ Q37-F003: [unreachable legacy implementation removal](../../../release/audit_q37
 
 42 actual Python refusal stubs (exit1/RETIRED, no stdout), three shell guards and current generated client bindings checked. The existing retirement test now rejects a body after refusal. That actual test failed when reading original source from the preceding commit;38 current recipe methods PASS. No historical SSH/deploy bodies were executed. INI/parser/runtime/native/benchmark inputs are unchanged; API/internal-model/test/evidence JSON remains permitted. Full feature-aware dead-code review across all modules remains open.
 
+Q37-F004: [configuration/documentation parity](../../../release/audit_q37_config_parity_2026-10-11.json). Dedicated client tables now cover all84 schema fields:81 `[qeli]` plus3 `[logging]`. Added three REALITY fields and complete AWG/shaping defaults; corrected gateway/TOFU/Android exclude/QUIC descriptions. The template explicitly retains `gateway=false`; the shared parser default is `true`. Exit-node comments moved to separate lines. Eight contract methods PASS; four actual methods with original RU/EN documents refused. Generated projections, versions and9 docs checks PASS.
+
+Current factory CLI35da83fd in private network namespaces checked39 cases:16 corrected client INI examples,16 original examples and7 standalone templates; the real users.conf was loaded by four server checks.37 admissions succeeded and two original exit-node examples correctly refused. Endpoint/pin placeholders and three partial fragments per language were explicitly materialized. Inputs/commands/exits/SHA retained; admission proves no connectivity, hook execution or data plane. The first erroneous harness verdict is retained; fixed a regex crossing newlines and materialization of a documented pin placeholder.
+
+**Full host gate FAIL retained:** three previously observed legacy FORWARD/MASQUERADE rules appeared in .10 iptables4/legacy4; other structural fields unchanged. No PASS conversion or exception. Only the owned inactive fixture was removed after full SHA inventory/identity checks; no VPN was started or existing rules/services modified. Native digest7d42e38f unchanged; Q35 continues on .11. Full Q37 and overall30/37 DONE81.1% unchanged.
+
 **Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current 7d42e38f). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Lab compilation waits for measurement completion to preserve run conditions.
 
 Release certification reports 21 problems: its overall digest and all 20 automated Linux cases belong to another tree. The gate hashes the entire committed tree except its own evidence; new documentation/report commits also change that digest. Freeze final release inputs first, then execute and bind the matrix to that tree. Relabeling historical PASS under a new digest is prohibited. User-skipped physical platforms are not reported as tested.
 
-Full Q35 endurance and the Q36 current data-plane matrix run separately; this report does not label their intermediate states PASS. Remaining full Q37 work includes key/default/example parity, OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Remaining full Q37 work includes server default/example parity, OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
