@@ -1,0 +1,45 @@
+{
+  "status": "OLD_LAB11_AUTH_RESOURCES_ARCHIVED_AND_REMOVED",
+  "scope": "inactive old .11 native AUTH resources only; no new compilation or runtime test completion claimed",
+  "compiler_inactive": true,
+  "namespace_absent": true,
+  "root_removed": {
+    "root_absent": true,
+    "archive_absent": true
+  },
+  "cache_removed": {
+    "files_absent": true,
+    "units_absent": true,
+    "archive_absent": true
+  },
+  "active_services_unchanged": true,
+  "staged_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+  "host_gate": {
+    "status": "PASS",
+    "changed_fields": []
+  },
+  "released_unique_content_bytes": 243044280,
+  "logical_bytes": 271897768,
+  "cache_files": 26,
+  "cache_fingerprint_units": 4,
+  "root_inventory_digest": "7fefd9017629116e7ee1e526d02bf12e9273094ee457b207d44bc3aa37d8b395",
+  "root_entries": 3307,
+  "archives": {
+    "lab11-root-backup.tar.gz": {
+      "bytes": 24629965,
+      "sha256": "200683397d6021b5945828d43c56791b52e105c7c4baa01e61957f9a1325f0d0"
+    },
+    "lab11-cache-backup.tar.gz": {
+      "bytes": 73599751,
+      "sha256": "02a76344c3e972fdb12b33f7ed9bb74b7db9ef38943087f27c87113a4a7b0b18"
+    }
+  },
+  "inspection_receipt_sha256": "ad3c6d9047e0f400729439252f8281bbb5459e0891e976f0ee5990ac7b6c6783",
+  "cleanup_receipt_sha256": "8e0c4d5c5b08a75fbd6e5b78914675290396d08e0e66887b873ca995c8a68657",
+  "driver_sha256": "0f798a53a2310b9cba6c8a79003cda9cd3087a02d966ceb3858bac1e87d10d32",
+  "preserved_harness_failure": "first archive invocation exceeded OS argv length; no remote mutation; raw failure retained before a bounded metadata-only retry",
+  "raw_packet": "q36-ack-path-20261011",
+  "current_udp_source_fix_integration_claimed": false,
+  "factory_release_auth_rate_claimed": false,
+  "push_deploy_release": false
+}
