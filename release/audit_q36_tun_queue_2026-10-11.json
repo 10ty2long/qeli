@@ -1,0 +1,3848 @@
+{
+  "status": "SERVER_TUN_QUEUE_INTERVENTION_QUALIFIED_MECHANISM_OPEN",
+  "sessions": 3,
+  "windows": 6,
+  "records": [
+    {
+      "label": "r1-raw",
+      "repeat": 1,
+      "server_txqlen": 1000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 1000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 161158790,
+              "packets": 159668,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 536491054,
+              "packets": 404936,
+              "errors": 0,
+              "dropped": 337,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 536954766,
+                "packets": 405273,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 168,
+                "packets": 3,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 536954598,
+                "packets": 405270,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 536491006,
+              "packets": 404935,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 161158838,
+              "packets": 159669,
+              "errors": 0,
+              "dropped": 818,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 161905030,
+                "packets": 160487,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 22274,
+        "unmatched_source": 6,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 15.220174,
+          "p95": 27.461059,
+          "p99": 32.054912,
+          "max": 42.402894,
+          "min": 0.036745
+        }
+      },
+      "server_drop_delta": 0,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 152.27013344024968,
+        "up_retransmits": 522,
+        "down_mbps": 513.4214949472245,
+        "down_retransmits": 331
+      }
+    },
+    {
+      "label": "r1-raw",
+      "repeat": 1,
+      "server_txqlen": 4000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 4000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 107801014,
+              "packets": 124908,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 561099982,
+              "packets": 413034,
+              "errors": 0,
+              "dropped": 0,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 561099982,
+                "packets": 413034,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 60,
+                "packets": 1,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 561099922,
+                "packets": 413033,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 561099982,
+              "packets": 413034,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 107801014,
+              "packets": 124908,
+              "errors": 0,
+              "dropped": 445,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 107895598,
+                "packets": 125353,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 12188,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 34.38468,
+          "p95": 50.732444,
+          "p99": 56.095623,
+          "max": 67.191652,
+          "min": 0.029247
+        }
+      },
+      "server_drop_delta": 0,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 100.589626672166,
+        "up_retransmits": 53,
+        "down_mbps": 535.4575742862111,
+        "down_retransmits": 1
+      }
+    },
+    {
+      "label": "r2-raw",
+      "repeat": 2,
+      "server_txqlen": 4000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 4000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 93122889,
+              "packets": 129040,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 589696054,
+              "packets": 433799,
+              "errors": 0,
+              "dropped": 0,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 589696054,
+                "packets": 433799,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 48,
+                "packets": 1,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 589696006,
+                "packets": 433798,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 589436382,
+              "packets": 433612,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 93122937,
+              "packets": 129041,
+              "errors": 0,
+              "dropped": 294,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 93248761,
+                "packets": 129335,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 12589,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 35.875266,
+          "p95": 49.82815,
+          "p99": 56.328079,
+          "max": 61.84999,
+          "min": 0.044021
+        }
+      },
+      "server_drop_delta": 186,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 85.76233467472007,
+        "up_retransmits": 82,
+        "down_mbps": 562.5661337792884,
+        "down_retransmits": 187
+      }
+    },
+    {
+      "label": "r2-raw",
+      "repeat": 2,
+      "server_txqlen": 1000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 1000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 179429152,
+              "packets": 179298,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 523419923,
+              "packets": 395792,
+              "errors": 0,
+              "dropped": 476,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 524060711,
+                "packets": 396268,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 120,
+                "packets": 2,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 524060591,
+                "packets": 396266,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 523419923,
+              "packets": 395792,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 179429152,
+              "packets": 179298,
+              "errors": 0,
+              "dropped": 430,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 179812776,
+                "packets": 179728,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 22432,
+        "unmatched_source": 19,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 10.452105,
+          "p95": 20.321018,
+          "p99": 26.619122,
+          "max": 36.217579,
+          "min": 0.030535
+        }
+      },
+      "server_drop_delta": 0,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 169.14095210813298,
+        "up_retransmits": 268,
+        "down_mbps": 501.16525401079537,
+        "down_retransmits": 457
+      }
+    },
+    {
+      "label": "r3-raw",
+      "repeat": 3,
+      "server_txqlen": 1000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 1000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 163282918,
+              "packets": 173402,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 594088278,
+              "packets": 445146,
+              "errors": 0,
+              "dropped": 406,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 594646034,
+                "packets": 445552,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 594645866,
+                "packets": 445549,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 168,
+                "packets": 3,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 594088230,
+              "packets": 445145,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 163282966,
+              "packets": 173403,
+              "errors": 0,
+              "dropped": 631,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 163832602,
+                "packets": 174034,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 21258,
+        "unmatched_source": 8,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 14.275831,
+          "p95": 24.874512,
+          "p99": 29.017124,
+          "max": 40.119763,
+          "min": 0.037344
+        }
+      },
+      "server_drop_delta": 0,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 153.5965282114662,
+        "up_retransmits": 383,
+        "down_mbps": 569.1489915608211,
+        "down_retransmits": 398
+      }
+    },
+    {
+      "label": "r3-raw",
+      "repeat": 3,
+      "server_txqlen": 4000,
+      "client_txqlen": 500,
+      "kernel": {
+        "server": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 4000,
+            "qdisc": "mq",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": true,
+                "numqueues": 2,
+                "numdisabled": 0,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 256,
+            "num_rx_queues": 256
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 103794146,
+              "packets": 129480,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 598305248,
+              "packets": 440304,
+              "errors": 0,
+              "dropped": 0,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "mq",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {},
+              "counters": {
+                "bytes": 598305248,
+                "packets": 440304,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":2",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 598305128,
+                "packets": 440302,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            },
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": ":1",
+              "root": false,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 120,
+                "packets": 2,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        },
+        "client": {
+          "identity": {
+            "ifindex": 2,
+            "ifname": "qbench0",
+            "mtu": 1400,
+            "txqlen": 500,
+            "qdisc": "fq_codel",
+            "linkinfo": {
+              "info_kind": "tun",
+              "info_data": {
+                "type": "tun",
+                "pi": false,
+                "vnet_hdr": false,
+                "multi_queue": false,
+                "persist": false
+              }
+            },
+            "num_tx_queues": 1,
+            "num_rx_queues": 1
+          },
+          "link_delta": {
+            "rx": {
+              "bytes": 598305248,
+              "packets": 440304,
+              "errors": 0,
+              "dropped": 0,
+              "over_errors": 0,
+              "multicast": 0,
+              "length_errors": 0,
+              "crc_errors": 0,
+              "frame_errors": 0,
+              "fifo_errors": 0,
+              "missed_errors": 0
+            },
+            "tx": {
+              "bytes": 103794146,
+              "packets": 129480,
+              "errors": 0,
+              "dropped": 511,
+              "carrier_errors": 0,
+              "collisions": 0,
+              "aborted_errors": 0,
+              "fifo_errors": 0,
+              "window_errors": 0,
+              "heartbeat_errors": 0,
+              "carrier_changes": 0
+            }
+          },
+          "qdisc_delta": [
+            {
+              "kind": "fq_codel",
+              "handle": "0:",
+              "parent": "",
+              "root": true,
+              "options": {
+                "limit": 10240,
+                "flows": 1024,
+                "quantum": 1400,
+                "target": 4999,
+                "interval": 99999,
+                "memory_limit": 33554432,
+                "ecn": true,
+                "drop_batch": 64
+              },
+              "counters": {
+                "bytes": 104087622,
+                "packets": 129991,
+                "drops": 0,
+                "overlimits": 0,
+                "requeues": 0
+              },
+              "boundary_gauges": {
+                "before": {
+                  "backlog": 0,
+                  "qlen": 0
+                },
+                "after": {
+                  "backlog": 0,
+                  "qlen": 0
+                }
+              }
+            }
+          ],
+          "root_qdisc_drops": 0
+        }
+      },
+      "ack": {
+        "matched": 12987,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "delay_ms": {
+          "p50": 32.396483,
+          "p95": 46.809629,
+          "p99": 50.543985,
+          "max": 58.383353,
+          "min": 0.031393
+        }
+      },
+      "server_drop_delta": 0,
+      "client_drop_deltas": {
+        "uplink": {
+          "no_carrier": 0,
+          "oversize": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        },
+        "downlink": {
+          "disconnected": 0,
+          "pool_exhausted": 0,
+          "queue_full": 0,
+          "total": 0
+        }
+      },
+      "metrics": {
+        "up_mbps": 96.43852946314921,
+        "up_retransmits": 198,
+        "down_mbps": 571.9448529205077,
+        "down_retransmits": 2
+      }
+    }
+  ],
+  "paired": [
+    {
+      "repeat": 1,
+      "server_drops": {
+        "1000": 337,
+        "4000": 0
+      },
+      "up_ratio_queue4000_to1000": 0.6605998458104527,
+      "down_ratio_queue4000_to1000": 1.0429200560472283,
+      "ack_p50_ratio_queue4000_to1000": 2.25915157080333
+    },
+    {
+      "repeat": 2,
+      "server_drops": {
+        "1000": 476,
+        "4000": 0
+      },
+      "up_ratio_queue4000_to1000": 0.5070465408039776,
+      "down_ratio_queue4000_to1000": 1.1225162344697792,
+      "ack_p50_ratio_queue4000_to1000": 3.4323484121141155
+    },
+    {
+      "repeat": 3,
+      "server_drops": {
+        "1000": 406,
+        "4000": 0
+      },
+      "up_ratio_queue4000_to1000": 0.6278692011213698,
+      "down_ratio_queue4000_to1000": 1.0049123540604357,
+      "ack_p50_ratio_queue4000_to1000": 2.269323796281982
+    }
+  ],
+  "window_medians": {
+    "1000": {
+      "server": {
+        "tx_dropped": 406,
+        "rx_dropped": 0,
+        "tx_errors": 0,
+        "rx_errors": 0
+      },
+      "client": {
+        "tx_dropped": 631,
+        "rx_dropped": 0,
+        "tx_errors": 0,
+        "rx_errors": 0
+      }
+    },
+    "4000": {
+      "server": {
+        "tx_dropped": 0,
+        "rx_dropped": 0,
+        "tx_errors": 0,
+        "rx_errors": 0
+      },
+      "client": {
+        "tx_dropped": 445,
+        "rx_dropped": 0,
+        "tx_errors": 0,
+        "rx_errors": 0
+      }
+    }
+  },
+  "ack_receipt_sha256": "d0a9d218fd13ab2190bf4a26584d84ed25646a8fd41f00a11d41821d713c5116",
+  "ack": {
+    "status": "INNER_UPLINK_ACK_PATH_MATCHED_SUBSET_QUALIFIED_MECHANISM_OPEN",
+    "scope": "TUN/qdisc counters and ACK-only paired same-VM raw TCP with two simultaneous unidirectional iperf connections; both directions unlimited, server txqueuelen1000 versus4000 and client500 unchanged; no pooling or current UDP-fix integration",
+    "workload": {
+      "status": "SERVER_TUN_QUEUE_WORKLOAD_QUALIFIED_MECHANISM_OPEN",
+      "windows": 6,
+      "sessions": 3,
+      "scope": "TUN/qdisc counters and ACK-only paired same-VM raw TCP with two simultaneous unidirectional iperf connections; both directions unlimited, server txqueuelen1000 versus4000 and client500 unchanged; no pooling or current UDP-fix integration",
+      "binary_sha256": "238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71",
+      "helper_inputs": {
+        "benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+        "benchmark_isolated_lab.py": "fe52b1c82e3f06afab4a702407066549b49ff4bafe4e900193881ed2a4909084",
+        "benchmark_evidence.py": "1c93529bc6e2a085cb54fff7407af52c81d595066416b36647b2c0443da8474f",
+        "benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+        "native_lab.py": "da52f1b2c94628074b56e002c6e2e0b8c09ebab207128c5dea780928469c61b0",
+        "native_repro.py": "23b7750a13d847fe0bac36107dca674188068bb7a9482ef003a27c7e54ca8c0c",
+        "ssh_command.py": "ea3800d9b7f8fa4abc7027166a0a6889c59c0e8dd683549a6e006c060da05b6b",
+        "ssh_hostkey.py": "c82e9149d94b066f306f5eea265e726e72281eeb1cf9f8f084260a9ab9a00a39"
+      },
+      "host_gate": {
+        "status": "PASS",
+        "changed_fields": [],
+        "active_services_unchanged": true
+      },
+      "results": [
+        {
+          "label": "r1-raw",
+          "mux": false,
+          "repeat": 1,
+          "server_txqlen": 1000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 152.27013344024968,
+            "up_retransmits": 522,
+            "down_mbps": 513.4214949472245,
+            "down_retransmits": 331
+          },
+          "tcp": {
+            "inner-up/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 144236
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.609,
+                  "median": 0.609,
+                  "max": 0.609
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "outer/server": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 135358
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 312940
+                },
+                "rtt": {
+                  "min": 0.006,
+                  "median": 0.15300000000000002,
+                  "max": 0.476
+                },
+                "cwnd": {
+                  "min": 132,
+                  "median": 255.0,
+                  "max": 267
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 17.5,
+                  "max": 226
+                }
+              }
+            },
+            "inner-down/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 212984,
+                  "median": 3246658.0,
+                  "max": 4161276
+                },
+                "rtt": {
+                  "min": 3.622,
+                  "median": 20.8035,
+                  "max": 40.225
+                },
+                "cwnd": {
+                  "min": 101,
+                  "median": 1052.0,
+                  "max": 1449
+                },
+                "unacked": {
+                  "min": 90,
+                  "median": 1052.0,
+                  "max": 1442
+                },
+                "notsent": {
+                  "min": 91664,
+                  "median": 1972798.0,
+                  "max": 3031652
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 159064,
+                  "median": 2167584.0,
+                  "max": 2585464
+                },
+                "rtt": {
+                  "min": 6.08,
+                  "median": 22.183999999999997,
+                  "max": 40.971
+                },
+                "cwnd": {
+                  "min": 22,
+                  "median": 291.5,
+                  "max": 427
+                },
+                "unacked": {
+                  "min": 22,
+                  "median": 291.5,
+                  "max": 442
+                },
+                "notsent": {
+                  "min": 129408,
+                  "median": 1800254.0,
+                  "max": 2198588
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 605076
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 93600
+                },
+                "rtt": {
+                  "min": 0.019,
+                  "median": 0.1965,
+                  "max": 5.255
+                },
+                "cwnd": {
+                  "min": 136,
+                  "median": 215.5,
+                  "max": 232
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 52.0,
+                  "max": 65
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 496668
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.628,
+                  "median": 0.628,
+                  "max": 0.628
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.050544632,
+          "cpu": {
+            "server": 76.10773545384444,
+            "client": 74.44160314829531
+          }
+        },
+        {
+          "label": "r1-raw",
+          "mux": false,
+          "repeat": 1,
+          "server_txqlen": 4000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 100.589626672166,
+            "up_retransmits": 53,
+            "down_mbps": 535.4575742862111,
+            "down_retransmits": 1
+          },
+          "tcp": {
+            "outer/server": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 142560
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 296640
+                },
+                "rtt": {
+                  "min": 0.014,
+                  "median": 0.11,
+                  "max": 5.538
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 284,
+                  "max": 284
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 70,
+                  "max": 206
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 99752,
+                  "median": 2226222.0,
+                  "max": 2679824
+                },
+                "rtt": {
+                  "min": 1.983,
+                  "median": 42.671499999999995,
+                  "max": 54.78
+                },
+                "cwnd": {
+                  "min": 20,
+                  "median": 365.5,
+                  "max": 511
+                },
+                "unacked": {
+                  "min": 20,
+                  "median": 365.0,
+                  "max": 511
+                },
+                "notsent": {
+                  "min": 72792,
+                  "median": 1800254.0,
+                  "max": 2190500
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 1071838
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 740596
+                },
+                "rtt": {
+                  "min": 0.004,
+                  "median": 0.433,
+                  "max": 5.292
+                },
+                "cwnd": {
+                  "min": 80,
+                  "median": 179,
+                  "max": 207
+                },
+                "unacked": {
+                  "min": 2,
+                  "median": 13.0,
+                  "max": 103
+                },
+                "notsent": {
+                  "min": 510984,
+                  "median": 608638.0,
+                  "max": 706292
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 834412
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 2.27,
+                  "median": 2.27,
+                  "max": 2.27
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "inner-down/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 1180848,
+                  "median": 3520608,
+                  "max": 4143752
+                },
+                "rtt": {
+                  "min": 16.339,
+                  "median": 45.398,
+                  "max": 59.806
+                },
+                "cwnd": {
+                  "min": 373,
+                  "median": 2869,
+                  "max": 2869
+                },
+                "unacked": {
+                  "min": 373,
+                  "median": 2531,
+                  "max": 2717
+                },
+                "notsent": {
+                  "min": 67400,
+                  "median": 434056,
+                  "max": 2615120
+                }
+              }
+            },
+            "inner-up/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 106492
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 1.215,
+                  "median": 1.215,
+                  "max": 1.215
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10,
+                  "max": 10
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.065989832,
+          "cpu": {
+            "server": 71.44077954058703,
+            "client": 72.55222190150558
+          }
+        },
+        {
+          "label": "r2-raw",
+          "mux": false,
+          "repeat": 2,
+          "server_txqlen": 4000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 85.76233467472007,
+            "up_retransmits": 82,
+            "down_mbps": 562.5661337792884,
+            "down_retransmits": 187
+          },
+          "tcp": {
+            "outer/server": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 155612
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 266708
+                },
+                "rtt": {
+                  "min": 0.012,
+                  "median": 0.157,
+                  "max": 6.448
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 270.0,
+                  "max": 270
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 42.0,
+                  "max": 203
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 351828
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.221,
+                  "median": 0.221,
+                  "max": 0.221
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 1168392
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 1104
+                },
+                "rtt": {
+                  "min": 0.006,
+                  "median": 0.32699999999999996,
+                  "max": 5.221
+                },
+                "cwnd": {
+                  "min": 36,
+                  "median": 170.0,
+                  "max": 175
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 2.5,
+                  "max": 12
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 64704,
+                  "median": 2119056.0,
+                  "max": 2470884
+                },
+                "rtt": {
+                  "min": 1.667,
+                  "median": 44.0165,
+                  "max": 195.191
+                },
+                "cwnd": {
+                  "min": 17,
+                  "median": 334.0,
+                  "max": 457
+                },
+                "unacked": {
+                  "min": 17,
+                  "median": 323.0,
+                  "max": 449
+                },
+                "notsent": {
+                  "min": 41788,
+                  "median": 1679608.0,
+                  "max": 2059744
+                }
+              }
+            },
+            "inner-down/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 2448384,
+                  "median": 3643456,
+                  "max": 4157760
+                },
+                "rtt": {
+                  "min": 10.785,
+                  "median": 40.12,
+                  "max": 67.486
+                },
+                "cwnd": {
+                  "min": 726,
+                  "median": 2461,
+                  "max": 2834
+                },
+                "unacked": {
+                  "min": 684,
+                  "median": 2254,
+                  "max": 2716
+                },
+                "notsent": {
+                  "min": 880,
+                  "median": 654454.0,
+                  "max": 2327996
+                }
+              }
+            },
+            "inner-up/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 60660
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.229,
+                  "median": 0.229,
+                  "max": 0.229
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10,
+                  "max": 10
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.070529269,
+          "cpu": {
+            "server": 73.44106955793679,
+            "client": 74.66336052355096
+          }
+        },
+        {
+          "label": "r2-raw",
+          "mux": false,
+          "repeat": 2,
+          "server_txqlen": 1000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 169.14095210813298,
+            "up_retransmits": 268,
+            "down_mbps": 501.16525401079537,
+            "down_retransmits": 457
+          },
+          "tcp": {
+            "inner-down/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 83576,
+                  "median": 3171170.0,
+                  "max": 4077700
+                },
+                "rtt": {
+                  "min": 0.86,
+                  "median": 15.736,
+                  "max": 29.207
+                },
+                "cwnd": {
+                  "min": 17,
+                  "median": 847.0,
+                  "max": 1441
+                },
+                "unacked": {
+                  "min": 16,
+                  "median": 844.0,
+                  "max": 1412
+                },
+                "notsent": {
+                  "min": 62008,
+                  "median": 2005824.0,
+                  "max": 2849672
+                }
+              }
+            },
+            "outer/server": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 250752
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 309600
+                },
+                "rtt": {
+                  "min": 0.006,
+                  "median": 0.135,
+                  "max": 0.434
+                },
+                "cwnd": {
+                  "min": 29,
+                  "median": 273.0,
+                  "max": 273
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 22.0,
+                  "max": 215
+                }
+              }
+            },
+            "inner-up/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 173892
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.216,
+                  "median": 0.216,
+                  "max": 0.216
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 46,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 630812
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 175528
+                },
+                "rtt": {
+                  "min": 0.012,
+                  "median": 0.269,
+                  "max": 5.526
+                },
+                "cwnd": {
+                  "min": 51,
+                  "median": 245.0,
+                  "max": 258
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 39.5,
+                  "max": 135
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 84924,
+                  "median": 2063788.0,
+                  "max": 2302384
+                },
+                "rtt": {
+                  "min": 1.259,
+                  "median": 17.4165,
+                  "max": 38.474
+                },
+                "cwnd": {
+                  "min": 20,
+                  "median": 277.5,
+                  "max": 376
+                },
+                "unacked": {
+                  "min": 20,
+                  "median": 270.5,
+                  "max": 376
+                },
+                "notsent": {
+                  "min": 57964,
+                  "median": 1700502.0,
+                  "max": 1995040
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 316780
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.465,
+                  "median": 0.465,
+                  "max": 0.465
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.045005506,
+          "cpu": {
+            "server": 75.43997667955509,
+            "client": 76.55170680725142
+          }
+        },
+        {
+          "label": "r3-raw",
+          "mux": false,
+          "repeat": 3,
+          "server_txqlen": 1000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 153.5965282114662,
+            "up_retransmits": 383,
+            "down_mbps": 569.1489915608211,
+            "down_retransmits": 398
+          },
+          "tcp": {
+            "outer/server": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 157144
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 315360
+                },
+                "rtt": {
+                  "min": 0.013,
+                  "median": 0.332,
+                  "max": 5.575
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 272,
+                  "max": 272
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 37.5,
+                  "max": 219
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 93012,
+                  "median": 2461448.0,
+                  "max": 2895504
+                },
+                "rtt": {
+                  "min": 0.732,
+                  "median": 19.3425,
+                  "max": 31.513
+                },
+                "cwnd": {
+                  "min": 17,
+                  "median": 275.5,
+                  "max": 499
+                },
+                "unacked": {
+                  "min": 17,
+                  "median": 275.5,
+                  "max": 617
+                },
+                "notsent": {
+                  "min": 70096,
+                  "median": 2081986.0,
+                  "max": 2524804
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 605168
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 273696
+                },
+                "rtt": {
+                  "min": 0.008,
+                  "median": 0.115,
+                  "max": 0.52
+                },
+                "cwnd": {
+                  "min": 20,
+                  "median": 213,
+                  "max": 272
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 13.0,
+                  "max": 167
+                },
+                "notsent": {
+                  "min": 72308,
+                  "median": 72308,
+                  "max": 72308
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 393616
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 3.607,
+                  "median": 3.607,
+                  "max": 3.607
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "inner-up/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 4044
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.643,
+                  "median": 0.643,
+                  "max": 0.643
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10,
+                  "max": 10
+                }
+              }
+            },
+            "inner-down/server": {
+              "observations": 27,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 1854848,
+                  "median": 3659820,
+                  "max": 4143752
+                },
+                "rtt": {
+                  "min": 6.307,
+                  "median": 20.229,
+                  "max": 29.726
+                },
+                "cwnd": {
+                  "min": 631,
+                  "median": 1095,
+                  "max": 1474
+                },
+                "unacked": {
+                  "min": 626,
+                  "median": 1095,
+                  "max": 1472
+                },
+                "notsent": {
+                  "min": 571552,
+                  "median": 2198588,
+                  "max": 2976384
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.050471935,
+          "cpu": {
+            "server": 76.77405844107004,
+            "client": 76.10827162090688
+          }
+        },
+        {
+          "label": "r3-raw",
+          "mux": false,
+          "repeat": 3,
+          "server_txqlen": 4000,
+          "down_rate": 0,
+          "metrics": {
+            "up_mbps": 96.43852946314921,
+            "up_retransmits": 198,
+            "down_mbps": 571.9448529205077,
+            "down_retransmits": 2
+          },
+          "tcp": {
+            "inner-down/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 953436,
+                  "median": 3156956.0,
+                  "max": 4168128
+                },
+                "rtt": {
+                  "min": 12.122,
+                  "median": 42.965,
+                  "max": 227.778
+                },
+                "cwnd": {
+                  "min": 221,
+                  "median": 2827.0,
+                  "max": 2827
+                },
+                "unacked": {
+                  "min": 182,
+                  "median": 2291.5,
+                  "max": 2718
+                },
+                "notsent": {
+                  "min": 167152,
+                  "median": 708100,
+                  "max": 2069580
+                }
+              }
+            },
+            "outer/server": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 208902
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 315360
+                },
+                "rtt": {
+                  "min": 0.01,
+                  "median": 0.28,
+                  "max": 5.48
+                },
+                "cwnd": {
+                  "min": 204,
+                  "median": 273,
+                  "max": 273
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 190,
+                  "max": 236
+                }
+              }
+            },
+            "inner-up/server": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 86272
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.593,
+                  "median": 0.593,
+                  "max": 0.593
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "inner-down/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 606276
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "rtt": {
+                  "min": 0.482,
+                  "median": 0.482,
+                  "max": 0.482
+                },
+                "cwnd": {
+                  "min": 10,
+                  "median": 10.0,
+                  "max": 10
+                }
+              }
+            },
+            "outer/client": {
+              "observations": 47,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 527038
+                },
+                "send_q": {
+                  "min": 0,
+                  "median": 0,
+                  "max": 507976
+                },
+                "rtt": {
+                  "min": 0.015,
+                  "median": 0.072,
+                  "max": 0.598
+                },
+                "cwnd": {
+                  "min": 99,
+                  "median": 105,
+                  "max": 229
+                },
+                "unacked": {
+                  "min": 1,
+                  "median": 22.5,
+                  "max": 102
+                },
+                "notsent": {
+                  "min": 5760,
+                  "median": 238248.0,
+                  "max": 470736
+                }
+              }
+            },
+            "inner-up/client": {
+              "observations": 28,
+              "metrics": {
+                "recv_q": {
+                  "min": 0,
+                  "median": 0.0,
+                  "max": 0
+                },
+                "send_q": {
+                  "min": 833064,
+                  "median": 2270032.0,
+                  "max": 2690608
+                },
+                "rtt": {
+                  "min": 8.51,
+                  "median": 41.93,
+                  "max": 191.192
+                },
+                "cwnd": {
+                  "min": 171,
+                  "median": 353.0,
+                  "max": 585
+                },
+                "unacked": {
+                  "min": 171,
+                  "median": 344.0,
+                  "max": 544
+                },
+                "notsent": {
+                  "min": 602556,
+                  "median": 1788122.0,
+                  "max": 2264640
+                }
+              }
+            }
+          },
+          "client_drop_deltas": {
+            "uplink": {
+              "no_carrier": 0,
+              "oversize": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            },
+            "downlink": {
+              "disconnected": 0,
+              "pool_exhausted": 0,
+              "queue_full": 0,
+              "total": 0
+            }
+          },
+          "process_lifetime_overlap_seconds": 8.054683301,
+          "cpu": {
+            "server": 70.55234430341712,
+            "client": 70.99714294062426
+          }
+        }
+      ],
+      "summary": {
+        "raw/q1000": {
+          "up_mbps": {
+            "median": 153.5965282114662,
+            "min": 152.27013344024968,
+            "max": 169.14095210813298
+          },
+          "down_mbps": {
+            "median": 513.4214949472245,
+            "min": 501.16525401079537,
+            "max": 569.1489915608211
+          },
+          "up_retransmits": {
+            "median": 383,
+            "min": 268,
+            "max": 522
+          },
+          "down_retransmits": {
+            "median": 398,
+            "min": 331,
+            "max": 457
+          }
+        },
+        "raw/q4000": {
+          "up_mbps": {
+            "median": 96.43852946314921,
+            "min": 85.76233467472007,
+            "max": 100.589626672166
+          },
+          "down_mbps": {
+            "median": 562.5661337792884,
+            "min": 535.4575742862111,
+            "max": 571.9448529205077
+          },
+          "up_retransmits": {
+            "median": 82,
+            "min": 53,
+            "max": 198
+          },
+          "down_retransmits": {
+            "median": 2,
+            "min": 1,
+            "max": 187
+          }
+        }
+      },
+      "input_hashes": {
+        "execution.json": "d348fba6a5a15ef07532caec48bcb0cce2a58db0917eab1d075b743f37b967ee",
+        "r1-raw/q1000-up-iperf.json": "f687230f70807eec18345be5b2a72f7aa6f80408849a7d10a7d7943b6de6e8c7",
+        "r1-raw/q1000-down-iperf.json": "64f7c6d8064f5164e2bde2c52831a90779f4256e7d139b846335b3a2bf122f06",
+        "r1-raw/q1000-duplex.json": "90060078cac9a66afc3a3188e8267e8fa03651be586a9b784891737e4e9ab3f8",
+        "r1-raw/q1000-client-status.json": "04a0db4d6d562321e514ddc10de5e1e7f3b68f59b091c2faf21d9fefcca868e6",
+        "r1-raw/q1000-counters.json": "bf29d8ccd021f70555dd98b51d32e654283539a64fd4eb75393eda20a4d9bb6d",
+        "r1-raw/q1000-processes.json": "dd494dae31c91053d062d5cb1f7b3c12d2d102dc06fb00a1ea90a404dd1e0f42",
+        "r1-raw/q1000-tcp-state.json": "5b05b2b29aa3b05d6252b7688d56744b1e45de2e6bd8a7c583da292152177a54",
+        "r1-raw/q4000-up-iperf.json": "eccf3f875cb76f521cbb6959f0957131666d9cc44335c4154341573f86d00518",
+        "r1-raw/q4000-down-iperf.json": "82edfcc9bf4f1f2cd5a8f6d6955e774724075227f02a5a92397914c579e548c8",
+        "r1-raw/q4000-duplex.json": "2cd42b8a51858926736712cbcbcfa17e4803ca97ba2b4a7dcc006c59092fe2f6",
+        "r1-raw/q4000-client-status.json": "5a7becacfd57ea8f399d0468c36724a3ccd40c06076989fbb394778f22d2fd8e",
+        "r1-raw/q4000-counters.json": "526150af67263e58cb416026ec26c3d4a4a988d45ad9bc2d15770c3f1c95e4f0",
+        "r1-raw/q4000-processes.json": "125784c5ab1846458882a9a1efafff6374fad765c5bb67c7659dff3e1d8e2dc7",
+        "r1-raw/q4000-tcp-state.json": "224b402364e13724db56fc323e6519898cc9951c49828bfa119642389d399821",
+        "r2-raw/q4000-up-iperf.json": "f26e0a63b989a78760be10336e1660f935484ae1a2aa6660501bc1d87948eacb",
+        "r2-raw/q4000-down-iperf.json": "429b076aec9dc58a6f5b18aff620f0c11ba148cda47dc13ddb025aaba8b3a7e9",
+        "r2-raw/q4000-duplex.json": "401baaa4c0b81302a73f6d4e2414e8288c6ff42a3d098b4011c7974a67ed16b6",
+        "r2-raw/q4000-client-status.json": "a3a39b33ec9b0c552336a7efcf0c23737b461292502896f4b5a3dbccb6eb7040",
+        "r2-raw/q4000-counters.json": "222130d7d7e55c94961a567fb492e619c4e91ecc22a77a50597062b93454820e",
+        "r2-raw/q4000-processes.json": "6b479559f2df5f105a45b3e90b88f6f68b6f4d1f1b506527dea88de9ec02b2f0",
+        "r2-raw/q4000-tcp-state.json": "60bf68deeea170f2bda3cd03ffd90583bd848b7955e31321f251f60cd27da7a5",
+        "r2-raw/q1000-up-iperf.json": "31e546df1df2cd74ffb604fb8902031c6c6fc0547950ff64e50596d7a144cabf",
+        "r2-raw/q1000-down-iperf.json": "756a6820046253aeeeefcece3050f0626ba6e9c791a53a0678c964dc945d555c",
+        "r2-raw/q1000-duplex.json": "1277d982796618bae4bbe2fa28f673329f96a061706f223c7f7fb1470cd115cd",
+        "r2-raw/q1000-client-status.json": "747de4814e24b8effa82e309d7833cf81d6dcc860b701bb41cfd1da640b95785",
+        "r2-raw/q1000-counters.json": "8f61b36d65e6e92645c282d0c389a07ffee3f690e0223b5ed01b32b8d10560f0",
+        "r2-raw/q1000-processes.json": "882982b40f66c65231da5f926d3eb02f2fa4c2e96d71bab2868d2c49380292ce",
+        "r2-raw/q1000-tcp-state.json": "a0c9b301eeaf50e55e2680fafb275b1daf427702ba1536e89e6a57a2feee3aac",
+        "r3-raw/q1000-up-iperf.json": "b884db94ceda085ee3cbb9c597808c8ce22a818db45bce88356cdceccbe80c90",
+        "r3-raw/q1000-down-iperf.json": "9c7f7fdec61318d9e67e7be14a6feee9f357bdf912d471919dffcd6c7dbaf281",
+        "r3-raw/q1000-duplex.json": "79a846edd0d13e0f167400e0fdf298ec92ba4c03f52d5018e6ab7477c7e06802",
+        "r3-raw/q1000-client-status.json": "d2375e3625650099d7106a9989f4d1b12f2e768b2711520f03b4b9ed626f5cf1",
+        "r3-raw/q1000-counters.json": "60553d5810dbfe0eb014a2d4d6bf9fc1ea496c5f05cd65753b9894f10526597d",
+        "r3-raw/q1000-processes.json": "c040af0903161ea7dadbaf437e61a68fb37e8bc55cd59a2a49a2de2ec2a3cd9c",
+        "r3-raw/q1000-tcp-state.json": "c0b6eb63c0de3e683b3dbbc138dee00c63c58e8f1bbff04829030c8fc5e79512",
+        "r3-raw/q4000-up-iperf.json": "613930508b5440d15700828482f3212ff3242ee20a95a1fbd7058b5fb66a4fd9",
+        "r3-raw/q4000-down-iperf.json": "88152e27591d70a77299944dc918e96e078dd8ede8fe732b4e792e385f3c4f80",
+        "r3-raw/q4000-duplex.json": "5856286ec451e1da684ae1c628e94d2a2cda577f6db1f120f89fc3fe20d3f7dd",
+        "r3-raw/q4000-client-status.json": "2ad6ebe91826dafcbcb6c1a62213518c4fc22421a86cf7b0cb333a72ab4bd344",
+        "r3-raw/q4000-counters.json": "11c5e3fa7095b466ab788c2b57b358586bd3937dc7fd326b1642f43706f9e6be",
+        "r3-raw/q4000-processes.json": "a9c8baf3abf41da442df9699f2c51834a7bf84e96359fde49aafcb1cc965748a",
+        "r3-raw/q4000-tcp-state.json": "43b12794d78d64eac7fb5c41e36ded67ce1c7c05e7880f86d4e645a14c919b3c"
+      },
+      "limitation": "two simultaneous unidirectional iperf connections, not --bidir; server kernel TUN queue capacity intervention on shared two-vCPU VM; sampled TCP states, no per-packet ACK timing or general causal/performance closure",
+      "paired": {
+        "pairs": [
+          {
+            "repeat": 1,
+            "up_ratio_queue4000_to1000": 0.6605998458104527
+          },
+          {
+            "repeat": 2,
+            "up_ratio_queue4000_to1000": 0.5070465408039776
+          },
+          {
+            "repeat": 3,
+            "up_ratio_queue4000_to1000": 0.6278692011213698
+          }
+        ],
+        "up_ratio_queue4000_to1000": {
+          "min": 0.5070465408039776,
+          "median": 0.6278692011213698,
+          "max": 0.6605998458104527
+        }
+      }
+    },
+    "windows": [
+      {
+        "label": "r1-raw",
+        "repeat": 1,
+        "server_txqlen": 1000,
+        "down_rate": 0,
+        "flow_peer_port": 51792,
+        "clock_delta_error_seconds": 4.24e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 22283,
+              "received": 22283,
+              "dropped": 0
+            },
+            "bytes": 1526996,
+            "data_ack_packets": 22280,
+            "excluded_control_or_other_port": 3,
+            "sha256": "79ca036e82d07694ad112aba565e66438b21dd53c7e2e18fae7e40216582f98b"
+          },
+          "client": {
+            "counts": {
+              "captured": 22277,
+              "received": 22277,
+              "dropped": 0
+            },
+            "bytes": 1526588,
+            "data_ack_packets": 22274,
+            "excluded_control_or_other_port": 3,
+            "sha256": "6286bee6ffd0d2b977f7862241d2b71e27c33e276ff724c0753c5f69316ef8f2"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 22274,
+        "unmatched_source": 6,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 15.220174,
+          "p95": 27.461059,
+          "p99": 32.054912,
+          "max": 42.402894,
+          "min": 0.036745
+        }
+      },
+      {
+        "label": "r1-raw",
+        "repeat": 1,
+        "server_txqlen": 4000,
+        "down_rate": 0,
+        "flow_peer_port": 37932,
+        "clock_delta_error_seconds": 4.749e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 12192,
+              "received": 12192,
+              "dropped": 0
+            },
+            "bytes": 830376,
+            "data_ack_packets": 12188,
+            "excluded_control_or_other_port": 4,
+            "sha256": "7f7c2753039b05ffb2abbbd47fd701c68d2658c9514f9cffb192f63cb43248b0"
+          },
+          "client": {
+            "counts": {
+              "captured": 12192,
+              "received": 12192,
+              "dropped": 0
+            },
+            "bytes": 830376,
+            "data_ack_packets": 12188,
+            "excluded_control_or_other_port": 4,
+            "sha256": "1770158301d311b34ea1c76fd1096e4a9c5b3c172e725635048dd5d94ee21d4a"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 12188,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 34.38468,
+          "p95": 50.732444,
+          "p99": 56.095623,
+          "max": 67.191652,
+          "min": 0.029247
+        }
+      },
+      {
+        "label": "r2-raw",
+        "repeat": 2,
+        "server_txqlen": 4000,
+        "down_rate": 0,
+        "flow_peer_port": 58302,
+        "clock_delta_error_seconds": 4.438e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 12593,
+              "received": 12593,
+              "dropped": 0
+            },
+            "bytes": 857860,
+            "data_ack_packets": 12589,
+            "excluded_control_or_other_port": 4,
+            "sha256": "33949a65cc1b3cfbec3acd19182f7f513dc3917b39ba17eaf163ecdc96b9a014"
+          },
+          "client": {
+            "counts": {
+              "captured": 12593,
+              "received": 12593,
+              "dropped": 0
+            },
+            "bytes": 857860,
+            "data_ack_packets": 12589,
+            "excluded_control_or_other_port": 4,
+            "sha256": "eb4f8704f4197da7f86280e57f136206ebc24732517834a00fec62ebfec4d957"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 12589,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 35.875266,
+          "p95": 49.82815,
+          "p99": 56.328079,
+          "max": 61.84999,
+          "min": 0.044021
+        }
+      },
+      {
+        "label": "r2-raw",
+        "repeat": 2,
+        "server_txqlen": 1000,
+        "down_rate": 0,
+        "flow_peer_port": 48126,
+        "clock_delta_error_seconds": 4.373e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 22455,
+              "received": 22455,
+              "dropped": 0
+            },
+            "bytes": 1534224,
+            "data_ack_packets": 22451,
+            "excluded_control_or_other_port": 4,
+            "sha256": "142d434f4cb54db0baad9a509a7511390984237f571778f3c2d11fe8a87ae0d4"
+          },
+          "client": {
+            "counts": {
+              "captured": 22436,
+              "received": 22436,
+              "dropped": 0
+            },
+            "bytes": 1532932,
+            "data_ack_packets": 22432,
+            "excluded_control_or_other_port": 4,
+            "sha256": "a071e6d3ec928a2a01cea7ba17ea446d2c0b7986a1ce16fd852dea0a16266876"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 22432,
+        "unmatched_source": 19,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 10.452105,
+          "p95": 20.321018,
+          "p99": 26.619122,
+          "max": 36.217579,
+          "min": 0.030535
+        }
+      },
+      {
+        "label": "r3-raw",
+        "repeat": 3,
+        "server_txqlen": 1000,
+        "down_rate": 0,
+        "flow_peer_port": 36138,
+        "clock_delta_error_seconds": 3.908e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 21270,
+              "received": 21270,
+              "dropped": 0
+            },
+            "bytes": 1458168,
+            "data_ack_packets": 21266,
+            "excluded_control_or_other_port": 4,
+            "sha256": "0451f87576de1bbefa5668ef18ac20a50bacda4bb32160398695f0d03274fa26"
+          },
+          "client": {
+            "counts": {
+              "captured": 21262,
+              "received": 21262,
+              "dropped": 0
+            },
+            "bytes": 1457484,
+            "data_ack_packets": 21258,
+            "excluded_control_or_other_port": 4,
+            "sha256": "6efdfdccaa4ebc2d17887f20b2c647a42f34b1ba130579289fff61a621f80f10"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 21258,
+        "unmatched_source": 8,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 14.275831,
+          "p95": 24.874512,
+          "p99": 29.017124,
+          "max": 40.119763,
+          "min": 0.037344
+        }
+      },
+      {
+        "label": "r3-raw",
+        "repeat": 3,
+        "server_txqlen": 4000,
+        "down_rate": 0,
+        "flow_peer_port": 42756,
+        "clock_delta_error_seconds": 4.708e-06,
+        "population": {
+          "server": {
+            "counts": {
+              "captured": 12991,
+              "received": 12991,
+              "dropped": 0
+            },
+            "bytes": 886832,
+            "data_ack_packets": 12987,
+            "excluded_control_or_other_port": 4,
+            "sha256": "0b8b2ddfaf6a447065ef8b608b415fc77ff42a29880a362d6a5e5712104b1e20"
+          },
+          "client": {
+            "counts": {
+              "captured": 12991,
+              "received": 12991,
+              "dropped": 0
+            },
+            "bytes": 886832,
+            "data_ack_packets": 12987,
+            "excluded_control_or_other_port": 4,
+            "sha256": "0019ce6a625a733f2a7a8930d248e5e5231a0c0069014c57836547b9cd63efa8"
+          }
+        },
+        "timing_population": "matched identical headers only",
+        "missing_header_cause": "unresolved; no kernel capture drops reported",
+        "matched": 12987,
+        "unmatched_source": 0,
+        "unmatched_destination": 0,
+        "repeated_header_records": 0,
+        "delay_ms": {
+          "p50": 32.396483,
+          "p95": 46.809629,
+          "p99": 50.543985,
+          "max": 58.383353,
+          "min": 0.031393
+        }
+      }
+    ],
+    "input_hashes": {
+      "ack_pcap.py": "01c8d57fb379cb87e29cb7aa6071de3d9d28cf3049c0a6ff6cd66f73e42df63c",
+      "capture_ack.py": "0bc8e3d87e1f7ee89cbb47ef314a6c02145a1e6e3afac6eea35202eab1f3fb5f",
+      "checks.py": "ce89f79fb454a626d3c9f4aebb68f3161161826559eeea9cbcf1ac4976d6e7bb",
+      "cleanup.py": "12c3166e165ab578a3f56b3f7a233b5f4c281f8287cb830d2ad2831ed75f15ef",
+      "duplex.py": "571b7fb9d6dd7e1f7e45bc04450742acc57d2a0f81d8b6d9d4789dc9269de71a",
+      "execution-sandbox-attempt.json": "95e2d13675141d827aa3b26668fabb4ba8c1db6a702a96e5ed4a4f9419d41cf8",
+      "execution.json": "d348fba6a5a15ef07532caec48bcb0cce2a58db0917eab1d075b743f37b967ee",
+      "prepare.py": "8fb4f7ac5ada2ce24f2d865225cc1110baa41d0e3fb8188e6815c56531cf8dc2",
+      "publish.py": "701f2a519eed88ead39d713d4df66b0e3d4e30087f0acf7fea151e88d52b6bc4",
+      "qualify.py": "e9ace63a43bf581e9e4b1fda7d645aacec178faca0efe85f6f89b6616f930867",
+      "qualify_ack.py": "0d74407c63132d29247f54494215283be305fd691bc1193d7118e2cdbf7a3cd7",
+      "qualify_workload.py": "8ecf69be576e16e0b4f20f2e13163c137e016d77b2e6964901daecefa4a5ca83",
+      "run.py": "29f45cdfdc20856cd0dc907fa9eeaf495480eccc5291bf1f4c12fe01ba645748",
+      "sandbox-refusal.json": "45a9abb988394df0230044d56607c0050a938ec9ca0e2e51024a0355cc67055e",
+      "seal.py": "9fd7007839a29d74817f9c05b294c767cb64dd3d4aa4291c3c207e63458f5102",
+      "tcp_sample.py": "357e20c0a5e2092920a3f284950dc0a929f6e8db8388daa00b8a84cbd6e9fa4d",
+      "test_tun_counters.py": "ed479bc35260353fc8755fd189e39e955d503830ff682d787c29c6d09449a6fd",
+      "tun-counter-tests.log": "de465ce082f7546a698796a8e72684c318eba3a7223f9b858d1ea441d2f45172",
+      "tun_counters.py": "2be1dfa97c5327b71b89fb6fbfc9df090d016bbc06bdb595672cfd87082d562c",
+      "workload-qualification.log": "6c290eb3ffea0220feb268ffa3d28b5cbd8592deff65dc394a7541992f868d3d",
+      "workload-qualified.json": "1d5a8b95a97da2a7190625382d15c298fe6d9fd29d0cbf599bafa265380b8b5d",
+      "r1-raw/client.log": "788198627afbaa7ccd5bd214bde05da5035d8755b80926ff91ab8adf7ca2325d",
+      "r1-raw/q1000-capture-ready.json": "d412961b895ff570a59dba253f8c5d602f1b5816d02e616621770422e36d5b37",
+      "r1-raw/q1000-capture.json": "cca2adb3e75fc356a3d52bae5cfc10b1998d1fc6bd15a72df9a9927f7eacd9b1",
+      "r1-raw/q1000-client-ack.pcap": "6286bee6ffd0d2b977f7862241d2b71e27c33e276ff724c0753c5f69316ef8f2",
+      "r1-raw/q1000-client-capture.log": "52e393375a1b517330d5f98ede2a7fa7ff83d0516fc3e2b73596ee67b4cfc73b",
+      "r1-raw/q1000-client-status.json": "04a0db4d6d562321e514ddc10de5e1e7f3b68f59b091c2faf21d9fefcca868e6",
+      "r1-raw/q1000-counters.json": "bf29d8ccd021f70555dd98b51d32e654283539a64fd4eb75393eda20a4d9bb6d",
+      "r1-raw/q1000-down-iperf.json": "64f7c6d8064f5164e2bde2c52831a90779f4256e7d139b846335b3a2bf122f06",
+      "r1-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r1-raw/q1000-duplex.json": "90060078cac9a66afc3a3188e8267e8fa03651be586a9b784891737e4e9ab3f8",
+      "r1-raw/q1000-processes.json": "dd494dae31c91053d062d5cb1f7b3c12d2d102dc06fb00a1ea90a404dd1e0f42",
+      "r1-raw/q1000-server-ack.pcap": "79ca036e82d07694ad112aba565e66438b21dd53c7e2e18fae7e40216582f98b",
+      "r1-raw/q1000-server-capture.log": "715304a4779741d3b55318060824ca261116a3c5cf9db053c0f678866dcf83aa",
+      "r1-raw/q1000-tcp-state.json": "5b05b2b29aa3b05d6252b7688d56744b1e45de2e6bd8a7c583da292152177a54",
+      "r1-raw/q1000-unmatched-server-headers.json": "b53510d85efa4012a00a18f6cd76e42e12e277a7ef1c302d49236e84b3ef1255",
+      "r1-raw/q1000-up-iperf.json": "f687230f70807eec18345be5b2a72f7aa6f80408849a7d10a7d7943b6de6e8c7",
+      "r1-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r1-raw/q4000-capture-ready.json": "722001767b9e7946b02b55ceb7a827b4e8f2c93fe34e2a8f1d761f7e13a9ff66",
+      "r1-raw/q4000-capture.json": "ba410d446e893a6c7b0349546330ad83a92e716af97e6d275c7a6b2392131298",
+      "r1-raw/q4000-client-ack.pcap": "1770158301d311b34ea1c76fd1096e4a9c5b3c172e725635048dd5d94ee21d4a",
+      "r1-raw/q4000-client-capture.log": "d3c362ca2073485a3c99e16f126b1882dcbb32fd4d1c581cab53d027f62283ad",
+      "r1-raw/q4000-client-status.json": "5a7becacfd57ea8f399d0468c36724a3ccd40c06076989fbb394778f22d2fd8e",
+      "r1-raw/q4000-counters.json": "526150af67263e58cb416026ec26c3d4a4a988d45ad9bc2d15770c3f1c95e4f0",
+      "r1-raw/q4000-down-iperf.json": "82edfcc9bf4f1f2cd5a8f6d6955e774724075227f02a5a92397914c579e548c8",
+      "r1-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r1-raw/q4000-duplex.json": "2cd42b8a51858926736712cbcbcfa17e4803ca97ba2b4a7dcc006c59092fe2f6",
+      "r1-raw/q4000-processes.json": "125784c5ab1846458882a9a1efafff6374fad765c5bb67c7659dff3e1d8e2dc7",
+      "r1-raw/q4000-server-ack.pcap": "7f7c2753039b05ffb2abbbd47fd701c68d2658c9514f9cffb192f63cb43248b0",
+      "r1-raw/q4000-server-capture.log": "d3c362ca2073485a3c99e16f126b1882dcbb32fd4d1c581cab53d027f62283ad",
+      "r1-raw/q4000-tcp-state.json": "224b402364e13724db56fc323e6519898cc9951c49828bfa119642389d399821",
+      "r1-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+      "r1-raw/q4000-up-iperf.json": "eccf3f875cb76f521cbb6959f0957131666d9cc44335c4154341573f86d00518",
+      "r1-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r1-raw/server.log": "4626fb72e9f853985da9458e57a2c7b6360b1bb5e6f052ca74852f7f04f2f4b5",
+      "r2-raw/client.log": "3d12bfa09c48bb0a6d45cc3f887c7da8ef8ad75a761fecc9c7372049bef808cb",
+      "r2-raw/q1000-capture-ready.json": "34c95468e0474fc7e014d419e94b4e5ea8bc2890ffa15621d7b250a8d2d1d260",
+      "r2-raw/q1000-capture.json": "9e7a320a46a85653aff6329d3b0d97ce42a331c9800360a75fc7d3c88878136a",
+      "r2-raw/q1000-client-ack.pcap": "a071e6d3ec928a2a01cea7ba17ea446d2c0b7986a1ce16fd852dea0a16266876",
+      "r2-raw/q1000-client-capture.log": "f5882b0a83bdcf98332f7b65ae9d7cf4c2bcff14ef5e0449baff3b7bf8d0235c",
+      "r2-raw/q1000-client-status.json": "747de4814e24b8effa82e309d7833cf81d6dcc860b701bb41cfd1da640b95785",
+      "r2-raw/q1000-counters.json": "8f61b36d65e6e92645c282d0c389a07ffee3f690e0223b5ed01b32b8d10560f0",
+      "r2-raw/q1000-down-iperf.json": "756a6820046253aeeeefcece3050f0626ba6e9c791a53a0678c964dc945d555c",
+      "r2-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r2-raw/q1000-duplex.json": "1277d982796618bae4bbe2fa28f673329f96a061706f223c7f7fb1470cd115cd",
+      "r2-raw/q1000-processes.json": "882982b40f66c65231da5f926d3eb02f2fa4c2e96d71bab2868d2c49380292ce",
+      "r2-raw/q1000-server-ack.pcap": "142d434f4cb54db0baad9a509a7511390984237f571778f3c2d11fe8a87ae0d4",
+      "r2-raw/q1000-server-capture.log": "8f9b4a8a258386294c4529b8d1e4d43f4b32a8c52f741d2457daaeb15d2055cc",
+      "r2-raw/q1000-tcp-state.json": "a0c9b301eeaf50e55e2680fafb275b1daf427702ba1536e89e6a57a2feee3aac",
+      "r2-raw/q1000-unmatched-server-headers.json": "cc6fa44d7d5a5e9e089fad52ec08a8043a2d2deb78901a7f11edc1957f8f741b",
+      "r2-raw/q1000-up-iperf.json": "31e546df1df2cd74ffb604fb8902031c6c6fc0547950ff64e50596d7a144cabf",
+      "r2-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r2-raw/q4000-capture-ready.json": "435e1f13fd8aba955fe8458503cdc7d9bda4c264fe118d1df54a41a68af5fb85",
+      "r2-raw/q4000-capture.json": "eb73bd8ad3b0ff06bc862b5f1da22d39886c5029245dc195136e39a2009cdf4d",
+      "r2-raw/q4000-client-ack.pcap": "eb4f8704f4197da7f86280e57f136206ebc24732517834a00fec62ebfec4d957",
+      "r2-raw/q4000-client-capture.log": "a16ea3b4918e11f8969d5496ff7d96a4207d4027e53a438c8a7993e5a9cdbbc5",
+      "r2-raw/q4000-client-status.json": "a3a39b33ec9b0c552336a7efcf0c23737b461292502896f4b5a3dbccb6eb7040",
+      "r2-raw/q4000-counters.json": "222130d7d7e55c94961a567fb492e619c4e91ecc22a77a50597062b93454820e",
+      "r2-raw/q4000-down-iperf.json": "429b076aec9dc58a6f5b18aff620f0c11ba148cda47dc13ddb025aaba8b3a7e9",
+      "r2-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r2-raw/q4000-duplex.json": "401baaa4c0b81302a73f6d4e2414e8288c6ff42a3d098b4011c7974a67ed16b6",
+      "r2-raw/q4000-processes.json": "6b479559f2df5f105a45b3e90b88f6f68b6f4d1f1b506527dea88de9ec02b2f0",
+      "r2-raw/q4000-server-ack.pcap": "33949a65cc1b3cfbec3acd19182f7f513dc3917b39ba17eaf163ecdc96b9a014",
+      "r2-raw/q4000-server-capture.log": "a16ea3b4918e11f8969d5496ff7d96a4207d4027e53a438c8a7993e5a9cdbbc5",
+      "r2-raw/q4000-tcp-state.json": "60bf68deeea170f2bda3cd03ffd90583bd848b7955e31321f251f60cd27da7a5",
+      "r2-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+      "r2-raw/q4000-up-iperf.json": "f26e0a63b989a78760be10336e1660f935484ae1a2aa6660501bc1d87948eacb",
+      "r2-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r2-raw/server.log": "d539c6535ec8a737a99dd8184b48e9fe2547c49b72f87b9a7cdeec36efbe8ee9",
+      "r3-raw/client.log": "863b01865c512c2edb1bb078a851e1bf048c86bc7a9380d99f432b3af83ae972",
+      "r3-raw/q1000-capture-ready.json": "01143930d5d32b083d9e82f3c6e4f5f1cc44582fe6af1936673e1859e9376660",
+      "r3-raw/q1000-capture.json": "012742783c7c9147297b720088761760f66210e7434e103fe30601c3ae03c6eb",
+      "r3-raw/q1000-client-ack.pcap": "6efdfdccaa4ebc2d17887f20b2c647a42f34b1ba130579289fff61a621f80f10",
+      "r3-raw/q1000-client-capture.log": "5ccaa00a98be46397f6f574ec00e67377b954210a69ce26ac6ce859d46805b38",
+      "r3-raw/q1000-client-status.json": "d2375e3625650099d7106a9989f4d1b12f2e768b2711520f03b4b9ed626f5cf1",
+      "r3-raw/q1000-counters.json": "60553d5810dbfe0eb014a2d4d6bf9fc1ea496c5f05cd65753b9894f10526597d",
+      "r3-raw/q1000-down-iperf.json": "9c7f7fdec61318d9e67e7be14a6feee9f357bdf912d471919dffcd6c7dbaf281",
+      "r3-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r3-raw/q1000-duplex.json": "79a846edd0d13e0f167400e0fdf298ec92ba4c03f52d5018e6ab7477c7e06802",
+      "r3-raw/q1000-processes.json": "c040af0903161ea7dadbaf437e61a68fb37e8bc55cd59a2a49a2de2ec2a3cd9c",
+      "r3-raw/q1000-server-ack.pcap": "0451f87576de1bbefa5668ef18ac20a50bacda4bb32160398695f0d03274fa26",
+      "r3-raw/q1000-server-capture.log": "d42002d2f9bb95dfe0e32a8eaa36aee45ea17be9581b2ae37fbbb781057c5843",
+      "r3-raw/q1000-tcp-state.json": "c0b6eb63c0de3e683b3dbbc138dee00c63c58e8f1bbff04829030c8fc5e79512",
+      "r3-raw/q1000-unmatched-server-headers.json": "f4c262798243b3a32ce6c05e2e9af382e266c9f9ab148c1567daabe17dc47405",
+      "r3-raw/q1000-up-iperf.json": "b884db94ceda085ee3cbb9c597808c8ce22a818db45bce88356cdceccbe80c90",
+      "r3-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r3-raw/q4000-capture-ready.json": "3bc8de1a5b07bb9a3f2c6ed58e9690d19b2838896da01bad5aeaf297bb5623b0",
+      "r3-raw/q4000-capture.json": "c59509edd856fc87c66906f3e25d04b20094aa46915ee8f1286167601835182b",
+      "r3-raw/q4000-client-ack.pcap": "0019ce6a625a733f2a7a8930d248e5e5231a0c0069014c57836547b9cd63efa8",
+      "r3-raw/q4000-client-capture.log": "af079f32517cc10f1fce2652953d191eb680778d86f1fa289e3991497214a0ab",
+      "r3-raw/q4000-client-status.json": "2ad6ebe91826dafcbcb6c1a62213518c4fc22421a86cf7b0cb333a72ab4bd344",
+      "r3-raw/q4000-counters.json": "11c5e3fa7095b466ab788c2b57b358586bd3937dc7fd326b1642f43706f9e6be",
+      "r3-raw/q4000-down-iperf.json": "88152e27591d70a77299944dc918e96e078dd8ede8fe732b4e792e385f3c4f80",
+      "r3-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r3-raw/q4000-duplex.json": "5856286ec451e1da684ae1c628e94d2a2cda577f6db1f120f89fc3fe20d3f7dd",
+      "r3-raw/q4000-processes.json": "a9c8baf3abf41da442df9699f2c51834a7bf84e96359fde49aafcb1cc965748a",
+      "r3-raw/q4000-server-ack.pcap": "0b8b2ddfaf6a447065ef8b608b415fc77ff42a29880a362d6a5e5712104b1e20",
+      "r3-raw/q4000-server-capture.log": "af079f32517cc10f1fce2652953d191eb680778d86f1fa289e3991497214a0ab",
+      "r3-raw/q4000-tcp-state.json": "43b12794d78d64eac7fb5c41e36ded67ce1c7c05e7880f86d4e645a14c919b3c",
+      "r3-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+      "r3-raw/q4000-up-iperf.json": "613930508b5440d15700828482f3212ff3242ee20a95a1fbd7058b5fb66a4fd9",
+      "r3-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "r3-raw/server.log": "904608f17f45fad30d29e416b8f3ceda4ce2c2412e6c81d0ddfa3715b68f0742"
+    },
+    "window_medians": {
+      "1000": {
+        "p50": 14.275831,
+        "p95": 24.874512,
+        "p99": 29.017124,
+        "max": 40.119763
+      },
+      "4000": {
+        "p50": 34.38468,
+        "p95": 49.82815,
+        "p99": 56.095623,
+        "max": 61.84999
+      }
+    },
+    "paired": [
+      {
+        "repeat": 1,
+        "p50_queue4000_to1000": 2.25915157080333
+      },
+      {
+        "repeat": 2,
+        "p50_queue4000_to1000": 3.4323484121141155
+      },
+      {
+        "repeat": 3,
+        "p50_queue4000_to1000": 2.269323796281982
+      }
+    ],
+    "timing_boundary": "server qbench0 outgoing ACK to client qbench0 incoming identical ACK header on the same VM clock; includes both Qeli endpoints and outer TCP transport",
+    "limitation": "Latency distribution covers only matched identical headers; unmatched source/destination counts remain explicit and unresolved. Observer-present six-window population remains separate from prior throughput results; does not measure ACK generation delay, isolate server/client scheduling, or establish a product bug/overall performance PASS; F010 binary predates F018 UDP fix"
+  },
+  "tc_version": "tc utility, iproute2-6.15.0, libbpf 1.5.0",
+  "counter_parser_tests": {
+    "methods": 5,
+    "reused_from": "q36-tun-counters-20261011",
+    "sealed_manifest_sha256": "de7224c7fc45278cda2b9504a617b13aaf565235d26779a1630f25a5b82b8af8",
+    "log_sha256": "de465ce082f7546a698796a8e72684c318eba3a7223f9b858d1ea441d2f45172"
+  },
+  "limitation": "Server txqueuelen1000 versus4000, client500 unchanged; unlimited simultaneous up/down TCP. Kernel counters cover all traffic; ACK timing covers identical headers observed at both endpoints. Only kernel interface queue capacity was changed, not product defaults. This does not identify a driver drop reason or individual delay stage. Shared two-vCPU VM; F010 binary predates F018; no general capacity/current-fix performance PASS.",
+  "input_hashes": {
+    "ack-qualification.log": "2dc5a42de9ffcc2e787e5f54d42f7f973b8d4c6447122bc5c76e5113b1eebf5f",
+    "ack-qualified.json": "d0a9d218fd13ab2190bf4a26584d84ed25646a8fd41f00a11d41821d713c5116",
+    "ack_pcap.py": "01c8d57fb379cb87e29cb7aa6071de3d9d28cf3049c0a6ff6cd66f73e42df63c",
+    "capture_ack.py": "0bc8e3d87e1f7ee89cbb47ef314a6c02145a1e6e3afac6eea35202eab1f3fb5f",
+    "checks.py": "ce89f79fb454a626d3c9f4aebb68f3161161826559eeea9cbcf1ac4976d6e7bb",
+    "cleanup.py": "12c3166e165ab578a3f56b3f7a233b5f4c281f8287cb830d2ad2831ed75f15ef",
+    "duplex.py": "571b7fb9d6dd7e1f7e45bc04450742acc57d2a0f81d8b6d9d4789dc9269de71a",
+    "execution-sandbox-attempt.json": "95e2d13675141d827aa3b26668fabb4ba8c1db6a702a96e5ed4a4f9419d41cf8",
+    "execution.json": "d348fba6a5a15ef07532caec48bcb0cce2a58db0917eab1d075b743f37b967ee",
+    "prepare.py": "8fb4f7ac5ada2ce24f2d865225cc1110baa41d0e3fb8188e6815c56531cf8dc2",
+    "publish.py": "701f2a519eed88ead39d713d4df66b0e3d4e30087f0acf7fea151e88d52b6bc4",
+    "qualify.py": "e9ace63a43bf581e9e4b1fda7d645aacec178faca0efe85f6f89b6616f930867",
+    "qualify_ack.py": "0d74407c63132d29247f54494215283be305fd691bc1193d7118e2cdbf7a3cd7",
+    "qualify_workload.py": "8ecf69be576e16e0b4f20f2e13163c137e016d77b2e6964901daecefa4a5ca83",
+    "run.py": "29f45cdfdc20856cd0dc907fa9eeaf495480eccc5291bf1f4c12fe01ba645748",
+    "sandbox-refusal.json": "45a9abb988394df0230044d56607c0050a938ec9ca0e2e51024a0355cc67055e",
+    "seal.py": "9fd7007839a29d74817f9c05b294c767cb64dd3d4aa4291c3c207e63458f5102",
+    "tcp_sample.py": "357e20c0a5e2092920a3f284950dc0a929f6e8db8388daa00b8a84cbd6e9fa4d",
+    "test_tun_counters.py": "ed479bc35260353fc8755fd189e39e955d503830ff682d787c29c6d09449a6fd",
+    "tun-counter-tests.log": "de465ce082f7546a698796a8e72684c318eba3a7223f9b858d1ea441d2f45172",
+    "tun_counters.py": "2be1dfa97c5327b71b89fb6fbfc9df090d016bbc06bdb595672cfd87082d562c",
+    "workload-qualification.log": "6c290eb3ffea0220feb268ffa3d28b5cbd8592deff65dc394a7541992f868d3d",
+    "workload-qualified.json": "1d5a8b95a97da2a7190625382d15c298fe6d9fd29d0cbf599bafa265380b8b5d",
+    "r1-raw/client.log": "788198627afbaa7ccd5bd214bde05da5035d8755b80926ff91ab8adf7ca2325d",
+    "r1-raw/q1000-capture-ready.json": "d412961b895ff570a59dba253f8c5d602f1b5816d02e616621770422e36d5b37",
+    "r1-raw/q1000-capture.json": "cca2adb3e75fc356a3d52bae5cfc10b1998d1fc6bd15a72df9a9927f7eacd9b1",
+    "r1-raw/q1000-client-ack.pcap": "6286bee6ffd0d2b977f7862241d2b71e27c33e276ff724c0753c5f69316ef8f2",
+    "r1-raw/q1000-client-capture.log": "52e393375a1b517330d5f98ede2a7fa7ff83d0516fc3e2b73596ee67b4cfc73b",
+    "r1-raw/q1000-client-status.json": "04a0db4d6d562321e514ddc10de5e1e7f3b68f59b091c2faf21d9fefcca868e6",
+    "r1-raw/q1000-counters.json": "bf29d8ccd021f70555dd98b51d32e654283539a64fd4eb75393eda20a4d9bb6d",
+    "r1-raw/q1000-down-iperf.json": "64f7c6d8064f5164e2bde2c52831a90779f4256e7d139b846335b3a2bf122f06",
+    "r1-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-raw/q1000-duplex.json": "90060078cac9a66afc3a3188e8267e8fa03651be586a9b784891737e4e9ab3f8",
+    "r1-raw/q1000-processes.json": "dd494dae31c91053d062d5cb1f7b3c12d2d102dc06fb00a1ea90a404dd1e0f42",
+    "r1-raw/q1000-server-ack.pcap": "79ca036e82d07694ad112aba565e66438b21dd53c7e2e18fae7e40216582f98b",
+    "r1-raw/q1000-server-capture.log": "715304a4779741d3b55318060824ca261116a3c5cf9db053c0f678866dcf83aa",
+    "r1-raw/q1000-tcp-state.json": "5b05b2b29aa3b05d6252b7688d56744b1e45de2e6bd8a7c583da292152177a54",
+    "r1-raw/q1000-unmatched-server-headers.json": "b53510d85efa4012a00a18f6cd76e42e12e277a7ef1c302d49236e84b3ef1255",
+    "r1-raw/q1000-up-iperf.json": "f687230f70807eec18345be5b2a72f7aa6f80408849a7d10a7d7943b6de6e8c7",
+    "r1-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-raw/q4000-capture-ready.json": "722001767b9e7946b02b55ceb7a827b4e8f2c93fe34e2a8f1d761f7e13a9ff66",
+    "r1-raw/q4000-capture.json": "ba410d446e893a6c7b0349546330ad83a92e716af97e6d275c7a6b2392131298",
+    "r1-raw/q4000-client-ack.pcap": "1770158301d311b34ea1c76fd1096e4a9c5b3c172e725635048dd5d94ee21d4a",
+    "r1-raw/q4000-client-capture.log": "d3c362ca2073485a3c99e16f126b1882dcbb32fd4d1c581cab53d027f62283ad",
+    "r1-raw/q4000-client-status.json": "5a7becacfd57ea8f399d0468c36724a3ccd40c06076989fbb394778f22d2fd8e",
+    "r1-raw/q4000-counters.json": "526150af67263e58cb416026ec26c3d4a4a988d45ad9bc2d15770c3f1c95e4f0",
+    "r1-raw/q4000-down-iperf.json": "82edfcc9bf4f1f2cd5a8f6d6955e774724075227f02a5a92397914c579e548c8",
+    "r1-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-raw/q4000-duplex.json": "2cd42b8a51858926736712cbcbcfa17e4803ca97ba2b4a7dcc006c59092fe2f6",
+    "r1-raw/q4000-processes.json": "125784c5ab1846458882a9a1efafff6374fad765c5bb67c7659dff3e1d8e2dc7",
+    "r1-raw/q4000-server-ack.pcap": "7f7c2753039b05ffb2abbbd47fd701c68d2658c9514f9cffb192f63cb43248b0",
+    "r1-raw/q4000-server-capture.log": "d3c362ca2073485a3c99e16f126b1882dcbb32fd4d1c581cab53d027f62283ad",
+    "r1-raw/q4000-tcp-state.json": "224b402364e13724db56fc323e6519898cc9951c49828bfa119642389d399821",
+    "r1-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+    "r1-raw/q4000-up-iperf.json": "eccf3f875cb76f521cbb6959f0957131666d9cc44335c4154341573f86d00518",
+    "r1-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-raw/server.log": "4626fb72e9f853985da9458e57a2c7b6360b1bb5e6f052ca74852f7f04f2f4b5",
+    "r2-raw/client.log": "3d12bfa09c48bb0a6d45cc3f887c7da8ef8ad75a761fecc9c7372049bef808cb",
+    "r2-raw/q1000-capture-ready.json": "34c95468e0474fc7e014d419e94b4e5ea8bc2890ffa15621d7b250a8d2d1d260",
+    "r2-raw/q1000-capture.json": "9e7a320a46a85653aff6329d3b0d97ce42a331c9800360a75fc7d3c88878136a",
+    "r2-raw/q1000-client-ack.pcap": "a071e6d3ec928a2a01cea7ba17ea446d2c0b7986a1ce16fd852dea0a16266876",
+    "r2-raw/q1000-client-capture.log": "f5882b0a83bdcf98332f7b65ae9d7cf4c2bcff14ef5e0449baff3b7bf8d0235c",
+    "r2-raw/q1000-client-status.json": "747de4814e24b8effa82e309d7833cf81d6dcc860b701bb41cfd1da640b95785",
+    "r2-raw/q1000-counters.json": "8f61b36d65e6e92645c282d0c389a07ffee3f690e0223b5ed01b32b8d10560f0",
+    "r2-raw/q1000-down-iperf.json": "756a6820046253aeeeefcece3050f0626ba6e9c791a53a0678c964dc945d555c",
+    "r2-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-raw/q1000-duplex.json": "1277d982796618bae4bbe2fa28f673329f96a061706f223c7f7fb1470cd115cd",
+    "r2-raw/q1000-processes.json": "882982b40f66c65231da5f926d3eb02f2fa4c2e96d71bab2868d2c49380292ce",
+    "r2-raw/q1000-server-ack.pcap": "142d434f4cb54db0baad9a509a7511390984237f571778f3c2d11fe8a87ae0d4",
+    "r2-raw/q1000-server-capture.log": "8f9b4a8a258386294c4529b8d1e4d43f4b32a8c52f741d2457daaeb15d2055cc",
+    "r2-raw/q1000-tcp-state.json": "a0c9b301eeaf50e55e2680fafb275b1daf427702ba1536e89e6a57a2feee3aac",
+    "r2-raw/q1000-unmatched-server-headers.json": "cc6fa44d7d5a5e9e089fad52ec08a8043a2d2deb78901a7f11edc1957f8f741b",
+    "r2-raw/q1000-up-iperf.json": "31e546df1df2cd74ffb604fb8902031c6c6fc0547950ff64e50596d7a144cabf",
+    "r2-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-raw/q4000-capture-ready.json": "435e1f13fd8aba955fe8458503cdc7d9bda4c264fe118d1df54a41a68af5fb85",
+    "r2-raw/q4000-capture.json": "eb73bd8ad3b0ff06bc862b5f1da22d39886c5029245dc195136e39a2009cdf4d",
+    "r2-raw/q4000-client-ack.pcap": "eb4f8704f4197da7f86280e57f136206ebc24732517834a00fec62ebfec4d957",
+    "r2-raw/q4000-client-capture.log": "a16ea3b4918e11f8969d5496ff7d96a4207d4027e53a438c8a7993e5a9cdbbc5",
+    "r2-raw/q4000-client-status.json": "a3a39b33ec9b0c552336a7efcf0c23737b461292502896f4b5a3dbccb6eb7040",
+    "r2-raw/q4000-counters.json": "222130d7d7e55c94961a567fb492e619c4e91ecc22a77a50597062b93454820e",
+    "r2-raw/q4000-down-iperf.json": "429b076aec9dc58a6f5b18aff620f0c11ba148cda47dc13ddb025aaba8b3a7e9",
+    "r2-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-raw/q4000-duplex.json": "401baaa4c0b81302a73f6d4e2414e8288c6ff42a3d098b4011c7974a67ed16b6",
+    "r2-raw/q4000-processes.json": "6b479559f2df5f105a45b3e90b88f6f68b6f4d1f1b506527dea88de9ec02b2f0",
+    "r2-raw/q4000-server-ack.pcap": "33949a65cc1b3cfbec3acd19182f7f513dc3917b39ba17eaf163ecdc96b9a014",
+    "r2-raw/q4000-server-capture.log": "a16ea3b4918e11f8969d5496ff7d96a4207d4027e53a438c8a7993e5a9cdbbc5",
+    "r2-raw/q4000-tcp-state.json": "60bf68deeea170f2bda3cd03ffd90583bd848b7955e31321f251f60cd27da7a5",
+    "r2-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+    "r2-raw/q4000-up-iperf.json": "f26e0a63b989a78760be10336e1660f935484ae1a2aa6660501bc1d87948eacb",
+    "r2-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-raw/server.log": "d539c6535ec8a737a99dd8184b48e9fe2547c49b72f87b9a7cdeec36efbe8ee9",
+    "r3-raw/client.log": "863b01865c512c2edb1bb078a851e1bf048c86bc7a9380d99f432b3af83ae972",
+    "r3-raw/q1000-capture-ready.json": "01143930d5d32b083d9e82f3c6e4f5f1cc44582fe6af1936673e1859e9376660",
+    "r3-raw/q1000-capture.json": "012742783c7c9147297b720088761760f66210e7434e103fe30601c3ae03c6eb",
+    "r3-raw/q1000-client-ack.pcap": "6efdfdccaa4ebc2d17887f20b2c647a42f34b1ba130579289fff61a621f80f10",
+    "r3-raw/q1000-client-capture.log": "5ccaa00a98be46397f6f574ec00e67377b954210a69ce26ac6ce859d46805b38",
+    "r3-raw/q1000-client-status.json": "d2375e3625650099d7106a9989f4d1b12f2e768b2711520f03b4b9ed626f5cf1",
+    "r3-raw/q1000-counters.json": "60553d5810dbfe0eb014a2d4d6bf9fc1ea496c5f05cd65753b9894f10526597d",
+    "r3-raw/q1000-down-iperf.json": "9c7f7fdec61318d9e67e7be14a6feee9f357bdf912d471919dffcd6c7dbaf281",
+    "r3-raw/q1000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r3-raw/q1000-duplex.json": "79a846edd0d13e0f167400e0fdf298ec92ba4c03f52d5018e6ab7477c7e06802",
+    "r3-raw/q1000-processes.json": "c040af0903161ea7dadbaf437e61a68fb37e8bc55cd59a2a49a2de2ec2a3cd9c",
+    "r3-raw/q1000-server-ack.pcap": "0451f87576de1bbefa5668ef18ac20a50bacda4bb32160398695f0d03274fa26",
+    "r3-raw/q1000-server-capture.log": "d42002d2f9bb95dfe0e32a8eaa36aee45ea17be9581b2ae37fbbb781057c5843",
+    "r3-raw/q1000-tcp-state.json": "c0b6eb63c0de3e683b3dbbc138dee00c63c58e8f1bbff04829030c8fc5e79512",
+    "r3-raw/q1000-unmatched-server-headers.json": "f4c262798243b3a32ce6c05e2e9af382e266c9f9ab148c1567daabe17dc47405",
+    "r3-raw/q1000-up-iperf.json": "b884db94ceda085ee3cbb9c597808c8ce22a818db45bce88356cdceccbe80c90",
+    "r3-raw/q1000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r3-raw/q4000-capture-ready.json": "3bc8de1a5b07bb9a3f2c6ed58e9690d19b2838896da01bad5aeaf297bb5623b0",
+    "r3-raw/q4000-capture.json": "c59509edd856fc87c66906f3e25d04b20094aa46915ee8f1286167601835182b",
+    "r3-raw/q4000-client-ack.pcap": "0019ce6a625a733f2a7a8930d248e5e5231a0c0069014c57836547b9cd63efa8",
+    "r3-raw/q4000-client-capture.log": "af079f32517cc10f1fce2652953d191eb680778d86f1fa289e3991497214a0ab",
+    "r3-raw/q4000-client-status.json": "2ad6ebe91826dafcbcb6c1a62213518c4fc22421a86cf7b0cb333a72ab4bd344",
+    "r3-raw/q4000-counters.json": "11c5e3fa7095b466ab788c2b57b358586bd3937dc7fd326b1642f43706f9e6be",
+    "r3-raw/q4000-down-iperf.json": "88152e27591d70a77299944dc918e96e078dd8ede8fe732b4e792e385f3c4f80",
+    "r3-raw/q4000-down-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r3-raw/q4000-duplex.json": "5856286ec451e1da684ae1c628e94d2a2cda577f6db1f120f89fc3fe20d3f7dd",
+    "r3-raw/q4000-processes.json": "a9c8baf3abf41da442df9699f2c51834a7bf84e96359fde49aafcb1cc965748a",
+    "r3-raw/q4000-server-ack.pcap": "0b8b2ddfaf6a447065ef8b608b415fc77ff42a29880a362d6a5e5712104b1e20",
+    "r3-raw/q4000-server-capture.log": "af079f32517cc10f1fce2652953d191eb680778d86f1fa289e3991497214a0ab",
+    "r3-raw/q4000-tcp-state.json": "43b12794d78d64eac7fb5c41e36ded67ce1c7c05e7880f86d4e645a14c919b3c",
+    "r3-raw/q4000-unmatched-server-headers.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+    "r3-raw/q4000-up-iperf.json": "613930508b5440d15700828482f3212ff3242ee20a95a1fbd7058b5fb66a4fd9",
+    "r3-raw/q4000-up-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r3-raw/server.log": "904608f17f45fad30d29e416b8f3ceda4ce2c2412e6c81d0ddfa3715b68f0742"
+  },
+  "source_cut": "qualified F010 factory release CLI, earlier than F018; no production source/default changes in this packet",
+  "binary_sha256": "238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71",
+  "binary_build_receipt_sha256": "1e924e4a46b424316276e0bad75c6c06e700d1a9a4242566d17eeb8055867c42",
+  "current_udp_source_fix_integration_claimed": false,
+  "host_before": {
+    "snapshot_schema": "all-firewall-v1",
+    "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+    "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+    "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+    "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+    "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+    "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+    "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+    "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+    "namespaces": "",
+    "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*mangle\n:PREROUTING ACCEPT [5844003:7346542700]\n:INPUT ACCEPT [5843967:7346540448]\n:FORWARD ACCEPT [36:2252]\n:OUTPUT ACCEPT [4681801:8837648736]\n:POSTROUTING ACCEPT [4681933:8837663054]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*filter\n:INPUT ACCEPT [5843967:7346540448]\n:FORWARD ACCEPT [21:1260]\n:OUTPUT ACCEPT [4681801:8837648736]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*nat\n:PREROUTING ACCEPT [9033:1210508]\n:INPUT ACCEPT [9007:1208900]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5206:333134]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026",
+    "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\n:POSTROUTING ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026",
+    "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*mangle\n:PREROUTING ACCEPT [5844011:7346543532]\n:INPUT ACCEPT [5843975:7346541280]\n:FORWARD ACCEPT [36:2252]\n:OUTPUT ACCEPT [4681814:8837651512]\n:POSTROUTING ACCEPT [4681946:8837665830]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*filter\n:INPUT ACCEPT [5843975:7346541280]\n:FORWARD ACCEPT [21:1260]\n:OUTPUT ACCEPT [4681814:8837651512]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*nat\n:PREROUTING ACCEPT [9033:1210508]\n:INPUT ACCEPT [9007:1208900]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5206:333134]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026",
+    "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\n:POSTROUTING ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:53:00 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:53:00 2026",
+    "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:53:01 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:53:01 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+    "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:53:01 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:53:01 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+    "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5829598, \"bytes\": 7344743635}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9438, \"bytes\": 1447653}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 628, \"bytes\": 32656}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+  },
+  "host_after": {
+    "snapshot_schema": "all-firewall-v1",
+    "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+    "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+    "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+    "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+    "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+    "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+    "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+    "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+    "namespaces": "",
+    "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*mangle\n:PREROUTING ACCEPT [5859157:7361928130]\n:INPUT ACCEPT [5859118:7361925698]\n:FORWARD ACCEPT [39:2432]\n:OUTPUT ACCEPT [4695055:8855384228]\n:POSTROUTING ACCEPT [4695190:8855398726]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*filter\n:INPUT ACCEPT [5859118:7361925698]\n:FORWARD ACCEPT [24:1440]\n:OUTPUT ACCEPT [4695055:8855384228]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*nat\n:PREROUTING ACCEPT [9038:1210942]\n:INPUT ACCEPT [9009:1209154]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5209:333314]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026",
+    "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\n:POSTROUTING ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026",
+    "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*mangle\n:PREROUTING ACCEPT [5859166:7361929002]\n:INPUT ACCEPT [5859127:7361926570]\n:FORWARD ACCEPT [39:2432]\n:OUTPUT ACCEPT [4695068:8855387004]\n:POSTROUTING ACCEPT [4695203:8855401502]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*filter\n:INPUT ACCEPT [5859127:7361926570]\n:FORWARD ACCEPT [24:1440]\n:OUTPUT ACCEPT [4695068:8855387004]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:57:07 2026\n*nat\n:PREROUTING ACCEPT [9038:1210942]\n:INPUT ACCEPT [9009:1209154]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5209:333314]\nCOMMIT\n# Completed on Sun Oct 11 12:57:07 2026",
+    "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:08 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\n:POSTROUTING ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:57:08 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:08 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7956:899846]\nCOMMIT\n# Completed on Sun Oct 11 12:57:08 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:57:08 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:57:08 2026",
+    "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:57:08 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:57:08 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+    "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:57:08 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:57:08 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+    "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5844747, \"bytes\": 7360128631}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9440, \"bytes\": 1447907}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 628, \"bytes\": 32656}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+  },
+  "host_gate": {
+    "status": "PASS",
+    "changed_fields": [],
+    "active_services_unchanged": true
+  },
+  "cleanup": {
+    "status": "OWNED_DIAGNOSTIC_ROOT_ARCHIVED_AND_REMOVED",
+    "root": "/var/tmp/qeli-q36-tunqueues-516000571dd642d99f5662a91fbd13ab",
+    "host": "10.66.116.10",
+    "archive": {
+      "sha256": "cb44ebb525b78e3ed49acbb302e4a1cd9d1b9f7c7eaf13b01ef7e3f0d01fcbb8",
+      "cookie": "2049:313721"
+    },
+    "removed": {
+      "root_absent": true,
+      "archive_absent": true
+    },
+    "after": {
+      "snapshot_schema": "all-firewall-v1",
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+      "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+      "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+      "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+      "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+      "namespaces": "",
+      "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*mangle\n:PREROUTING ACCEPT [5863978:7362201870]\n:INPUT ACCEPT [5863939:7362199438]\n:FORWARD ACCEPT [39:2432]\n:OUTPUT ACCEPT [4697715:8865882001]\n:POSTROUTING ACCEPT [4697850:8865896499]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*filter\n:INPUT ACCEPT [5863939:7362199438]\n:FORWARD ACCEPT [24:1440]\n:OUTPUT ACCEPT [4697715:8865882001]\n-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\n-A FORWARD -i vpn0 -j ACCEPT\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*nat\n:PREROUTING ACCEPT [9039:1210994]\n:INPUT ACCEPT [9010:1209206]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5209:333314]\n-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026",
+      "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7957:899894]\n:POSTROUTING ACCEPT [7957:899894]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7957:899894]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026",
+      "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*mangle\n:PREROUTING ACCEPT [5863986:7362202702]\n:INPUT ACCEPT [5863947:7362200270]\n:FORWARD ACCEPT [39:2432]\n:OUTPUT ACCEPT [4697727:8865884881]\n:POSTROUTING ACCEPT [4697862:8865899379]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*filter\n:INPUT ACCEPT [5863947:7362200270]\n:FORWARD ACCEPT [24:1440]\n:OUTPUT ACCEPT [4697727:8865884881]\n-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\n-A FORWARD -i vpn0 -j ACCEPT\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*nat\n:PREROUTING ACCEPT [9039:1210994]\n:INPUT ACCEPT [9010:1209206]\n:OUTPUT ACCEPT [5180:331526]\n:POSTROUTING ACCEPT [5209:333314]\n-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026",
+      "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*mangle\n:PREROUTING ACCEPT [13602:1516240]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7957:899894]\n:POSTROUTING ACCEPT [7957:899894]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7957:899894]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 12:58:12 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:58:12 2026",
+      "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:58:13 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:58:13 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+      "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 12:58:13 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 12:58:13 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+      "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5849566, \"bytes\": 7360402279}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9440, \"bytes\": 1447907}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 629, \"bytes\": 32708}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+    },
+    "changed_fields": [
+      "iptables4",
+      "legacy4"
+    ],
+    "active_services_unchanged": true,
+    "staged_cli_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0"
+  },
+  "cleanup_receipt_sha256": "2598b02ab3d2ea410d4081d269bebd785c6009065b06a821496df02caad70ee6",
+  "cleanup_inventory": {
+    "cookie": "2049:300051",
+    "digest": "9d1bd84bdca29ed42e1e836c0e8ac4d542771db8e94dca88ed82f5c5fc481046",
+    "entries": 169
+  },
+  "raw_packet": "q36-tun-queue-20261011",
+  "archive_sha256": "cb44ebb525b78e3ed49acbb302e4a1cd9d1b9f7c7eaf13b01ef7e3f0d01fcbb8",
+  "kernel_tx_drop_totals": {
+    "server": 1219,
+    "client": 3129
+  },
+  "header_totals": {
+    "matched": 103728,
+    "unmatched_source": 33,
+    "unmatched_destination": 0
+  },
+  "drivers": {
+    "prepare.py": "8fb4f7ac5ada2ce24f2d865225cc1110baa41d0e3fb8188e6815c56531cf8dc2",
+    "run.py": "29f45cdfdc20856cd0dc907fa9eeaf495480eccc5291bf1f4c12fe01ba645748",
+    "capture_ack.py": "0bc8e3d87e1f7ee89cbb47ef314a6c02145a1e6e3afac6eea35202eab1f3fb5f",
+    "ack_pcap.py": "01c8d57fb379cb87e29cb7aa6071de3d9d28cf3049c0a6ff6cd66f73e42df63c",
+    "tun_counters.py": "2be1dfa97c5327b71b89fb6fbfc9df090d016bbc06bdb595672cfd87082d562c",
+    "qualify_workload.py": "8ecf69be576e16e0b4f20f2e13163c137e016d77b2e6964901daecefa4a5ca83",
+    "qualify_ack.py": "0d74407c63132d29247f54494215283be305fd691bc1193d7118e2cdbf7a3cd7",
+    "qualify.py": "e9ace63a43bf581e9e4b1fda7d645aacec178faca0efe85f6f89b6616f930867",
+    "cleanup.py": "12c3166e165ab578a3f56b3f7a233b5f4c281f8287cb830d2ad2831ed75f15ef",
+    "publish.py": "701f2a519eed88ead39d713d4df66b0e3d4e30087f0acf7fea151e88d52b6bc4",
+    "describe_result.py": "6dd6d5d128b3194f5448ef8e59354a8d00860c12d6b5e00cb76672441a2e3321"
+  },
+  "push_deploy_release": false,
+  "observed_effect": {
+    "server_kernel_tx_drops_1000": [
+      337,
+      476,
+      406
+    ],
+    "server_kernel_tx_drops_4000": [
+      0,
+      0,
+      0
+    ],
+    "server_application_drops_4000": [
+      0,
+      186,
+      0
+    ],
+    "client_application_drop_deltas_all_zero": true,
+    "qdisc_drop_deltas_all_zero": true,
+    "up_median_mbps": {
+      "queue1000": 153.5965282114662,
+      "queue4000": 96.43852946314921
+    },
+    "matched_ack_p50_window_median_ms": {
+      "queue1000": 14.275831,
+      "queue4000": 34.38468
+    },
+    "conclusion": "Queue4000 removes observed server kernel TX drops but lowers uplink in all three pairs and increases matched ACK latency. It does not eliminate client kernel TX drops; one queue4000 window has186 server application drops. Not a fix; product default1000 preserved; precise driver/queue/processing-stage attribution remains OPEN."
+  }
+}

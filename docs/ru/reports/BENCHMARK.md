@@ -2242,3 +2242,52 @@ cleanup gate **PASS** [].
 выполняет recordization/encryption. Defaults и runtime поведение не менялись.
 Q36 ACK delay stage/driver drop reason/factory AUTH-rate и Q35 soak OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Влияние размера серверной очереди TUN — 11 октября 2026
+
+<!-- normative-sync: q36-tun-queue-v1 -->
+
+**Q36-F026:** [queue intervention](../../../release/audit_q36_tun_queue_2026-10-11.json), 3 свежие
+raw TCP сессии / 6 парных восьмисекундных окон. Один F010 release CLI SHA238153ab;
+обе стороны iperf unlimited, две одновременные unidirectional connections P1.
+Только серверный qbench0 в собственном namespace переключён между txqueuelen
+1000 и 4000; client500 неизменен. Порядок обратный во втором повторе. INI/defaults
+продукта не менялись. Снимки link/qdisc и ACK-only capture одинаковы в обоих
+условиях; эта популяция отдельно от F023/F025 и прежних throughput тестов.
+
+Медианы трёх окон; ACK latency только для идентичных headers, наблюдённых на
+обоих TUN. Drops указаны по повтору 1/2/3 и относятся ко всему трафику интерфейса.
+
+| Server txqueuelen | ↑ Mbps | ↓ Mbps | ACK p50 ms | ACK p99 ms | Server TX drops | Client TX drops | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 153.6 | 513.4 | 14.276 | 29.017 | 337/476/406 | 818/430/631 | 33 |
+| 4000 | 96.4 | 562.6 | 34.385 | 56.096 | 0/0/0 | 445/294/511 | 0 |
+
+В каждой паре сверены TUN ifindex/MTU/linkinfo/queues, qdisc identity/options,
+фактический txqlen до и после нагрузки, PID/CPU, клиентский plan/generation и
+перекрытие обоих потоков. Все root/child qdisc counters сохранены отдельно;
+нулевой граничный backlog не характеризует пик во время передачи. Неизменённый
+counter parser использует пять ранее прошедших F025 методов с SHA и sealed
+manifest, без повторного заявления о новом прогоне этих тестов.
+
+При4000 server TUN TX drops исчезли во всех трёх парах (337/476/406 →
+0/0/0), но uplink снизился на34–49%, matched ACK p50 вырос в2.26/3.43/2.27 раза.
+Медианы uplink153.6→96.4Mbps, ACK p5014.276→34.385ms. Server-only ACK33→0;
+это наблюдение согласуется с чувствительностью к очереди, без адресной причины
+каждой потери. Client kernel TX drops сохраняются. Прикладной server dropped
+в одном4000 окне вырос на186 (повтор2); в остальных окнах0. Client application
+и все qdisc drop deltas0. Поэтому отсутствие kernel drops не равно отсутствию
+потерь вообще, а увеличение очереди **не является исправлением асимметрии**.
+
+Результат характеризует чувствительность к ёмкости серверной очереди. Он не
+устанавливает конкретный driver drop reason, принадлежность потерь к ACK или
+стадию задержки. Размер очереди не следует менять по одному throughput: сравнение
+latency обязательно. Default1000 сохранён. Shared two-vCPU VM и старый F010
+binary ограничивают вывод: текущий F018 UDP fix/factory AUTH-rate не проверены.
+
+Measurement full host gate **PASS** [];
+cleanup full gate **FAIL** ['iptables4', 'legacy4'].
+Отличия не исключены из gate; службы и staged CLI SHA сохранены, собственные
+namespaces/root SHA-архивированы и удалены. Новых сборок/кэша нет. Q36 механизм
+ACK delay/driver drops/factory AUTH-rate и Q35 soak остаются OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

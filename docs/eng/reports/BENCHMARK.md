@@ -2249,3 +2249,51 @@ corrected: forwarder hands off plaintext, selected stream writer owns
 recordization/encryption. Defaults/runtime unchanged. Q36 ACK delayed stage /
 driver drop reason / factory AUTH-rate and Q35 soak remain OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Server TUN queue capacity intervention — 11 October 2026
+
+<!-- normative-sync: q36-tun-queue-v1 -->
+
+**Q36-F026:** [queue intervention](../../../release/audit_q36_tun_queue_2026-10-11.json), 3 fresh
+raw TCP sessions / 6 paired eight-second windows. Same F010 release CLI
+SHA238153ab; both iperf directions unlimited, two simultaneous unidirectional
+P1 connections. Only server qbench0 in the owned namespace changes txqueuelen
+1000/4000; client500 unchanged. Order reversed in repeat2. Product INI/defaults
+unchanged. Identical link/qdisc snapshots and ACK-only capture in both settings;
+this population remains separate from F023/F025 and prior throughput tests.
+
+Medians of three windows; ACK latency covers identical headers observed at both
+TUN endpoints only. Drops listed in repeat order1/2/3 cover all interface traffic.
+
+| Server txqueuelen | ↑ Mbps | ↓ Mbps | ACK p50 ms | ACK p99 ms | Server TX drops | Client TX drops | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1000 | 153.6 | 513.4 | 14.276 | 29.017 | 337/476/406 | 818/430/631 | 33 |
+| 4000 | 96.4 | 562.6 | 34.385 | 56.096 | 0/0/0 | 445/294/511 | 0 |
+
+Each pair verifies TUN ifindex/MTU/linkinfo/queues, qdisc identity/options, actual
+txqlen before/after load, PID/CPU, client plan/generation and both flow lifetimes.
+Root/child qdisc counters remain separate; zero boundary backlog does not bound
+the peak during load. The unchanged counter parser reuses five previously passed
+F025 methods with pinned SHA/sealed manifest; no claim of a new test run.
+
+At4000, server TUN TX drops disappear in all three pairs (337/476/406 →
+0/0/0), but uplink falls34–49% and matched ACK p50 increases2.26/3.43/2.27 times.
+Window medians: uplink153.6→96.4Mbps, ACK p5014.276→34.385ms. Server-only
+ACK33→0; this is consistent with queue sensitivity without attributing every
+loss. Client kernel TX drops persist. Server application dropped rises by186
+in one4000 window (repeat2), zero in the other windows. Client application and
+all qdisc drop deltas0. Thus zero kernel drops does not mean zero loss overall,
+and increasing the queue **does not fix the asymmetry**.
+
+This measures sensitivity to server queue capacity, without identifying a driver
+drop reason, attributing losses to individual ACKs, or isolating a delay stage.
+Throughput alone cannot justify increasing queues: latency must also be compared.
+Default1000 preserved. Shared two-vCPU VM and old F010 binary limit conclusions:
+current F018 UDP fix/factory AUTH-rate not tested by this experiment.
+
+Measurement full host gate **PASS** [];
+cleanup full gate **FAIL** ['iptables4', 'legacy4'].
+Differences remain in the gate; services/staged CLI SHA preserved, owned
+namespaces/root SHA-archived/removed. No new build/cache. Q36 ACK delay/driver
+drop mechanism/factory AUTH-rate and Q35 soak remain OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
