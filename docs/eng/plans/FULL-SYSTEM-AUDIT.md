@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v218 -->
+<!-- normative-sync: full-system-audit-v219 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2635,3 +2635,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): reproduced false failure on normal receive-pump cancellation and lost completed worker failures. Both paths fixed;38 exact-source Rust tests and77 benchmark methods on each Windows/Linux PASS. Small Linux fixture archived/removed;.10 service preserved,full host gate FAIL from three legacy rules. .11 issues no SSH banner;current CLI integration build/108 fresh AUTH/.11 cleanup OPEN. Q36 IN_PROGRESS,30/37 DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October, Q36-F019:** [Functional native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 fresh bursts /756 peers across all12 carriers, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Current sources/features/jemalloc; private lto=false/codegen16 profile is not a release benchmark. Three capped release OOM failures retained; owned cache/fixture archived and removed, all host differences retained. Release AUTH/rate, TCP asymmetry and .11 state/cleanup OPEN; Q35 soaks separate. Q36 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October, Q36-F020:** [TCP state](../reports/BENCHMARK.md):6 fresh raw/mux sessions/12 windows in two namespaces on .10, prior F010 release; sampled inner/outer TCP_INFO and both endpoints checked by PID/ports/mode, raw/counters/CPU/SHA. Asymmetry reproduces; queues/RTT observable, cause OPEN, defaults unchanged. Separate two-vCPU diagnosis, not overall performance PASS. Owned root SHA-archived/removed, services preserved, host FAIL and first pre-load harness refusal retained. Q36/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

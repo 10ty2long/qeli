@@ -1,0 +1,2678 @@
+{
+  "status": "TCP_STATE_DIAGNOSIS_QUALIFIED_CAUSE_OPEN",
+  "windows": 12,
+  "sessions": 6,
+  "scope": "same-VM two namespace diagnostic with shared two vCPUs; not two-VM performance, no pooling, not current UDP-fix integration",
+  "binary_sha256": "238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71",
+  "helper_inputs": {
+    "benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+    "benchmark_isolated_lab.py": "fe52b1c82e3f06afab4a702407066549b49ff4bafe4e900193881ed2a4909084",
+    "benchmark_evidence.py": "1c93529bc6e2a085cb54fff7407af52c81d595066416b36647b2c0443da8474f",
+    "benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+    "native_lab.py": "da52f1b2c94628074b56e002c6e2e0b8c09ebab207128c5dea780928469c61b0",
+    "native_repro.py": "23b7750a13d847fe0bac36107dca674188068bb7a9482ef003a27c7e54ca8c0c",
+    "ssh_command.py": "ea3800d9b7f8fa4abc7027166a0a6889c59c0e8dd683549a6e006c060da05b6b",
+    "ssh_hostkey.py": "c82e9149d94b066f306f5eea265e726e72281eeb1cf9f8f084260a9ab9a00a39"
+  },
+  "host_gate": {
+    "status": "FAIL",
+    "changed_fields": [
+      "iptables4",
+      "legacy4"
+    ],
+    "active_services_unchanged": true
+  },
+  "results": [
+    {
+      "label": "a2-r1-raw",
+      "mux": false,
+      "repeat": 1,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 93.86583246905936,
+        "up_retransmits": 315,
+        "down_mbps": 482.2897166192674,
+        "down_retransmits": 701
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 195384
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 292412
+            },
+            "rtt": {
+              "min": 0.014,
+              "median": 0.0545,
+              "max": 6.862
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 260.0,
+              "max": 260
+            },
+            "unacked": {
+              "min": 1,
+              "median": 13,
+              "max": 204
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 842248
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 672904
+            },
+            "rtt": {
+              "min": 0.009,
+              "median": 0.3845,
+              "max": 5.17
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 192.5,
+              "max": 217
+            },
+            "unacked": {
+              "min": 1,
+              "median": 30,
+              "max": 207
+            },
+            "notsent": {
+              "min": 31956,
+              "median": 330670.0,
+              "max": 629384
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 84924
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 1.096,
+              "median": 1.096,
+              "max": 1.096
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 368004,
+              "median": 3615728,
+              "max": 4168016
+            },
+            "rtt": {
+              "min": 4.236,
+              "median": 26.838,
+              "max": 56.116
+            },
+            "cwnd": {
+              "min": 113,
+              "median": 1225,
+              "max": 2871
+            },
+            "unacked": {
+              "min": 113,
+              "median": 1225,
+              "max": 2716
+            },
+            "notsent": {
+              "min": 82228,
+              "median": 1795536.0,
+              "max": 2807884
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 293864
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.389,
+              "median": 0.389,
+              "max": 0.389
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 549984,
+              "median": 2384612,
+              "max": 2737788
+            },
+            "rtt": {
+              "min": 3.344,
+              "median": 29.792,
+              "max": 53.826
+            },
+            "cwnd": {
+              "min": 158,
+              "median": 222,
+              "max": 461
+            },
+            "unacked": {
+              "min": 131,
+              "median": 215,
+              "max": 860
+            },
+            "notsent": {
+              "min": 373396,
+              "median": 1999084,
+              "max": 2410224
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 73.88517164417512,
+        "client": 74.77313473117172
+      }
+    },
+    {
+      "label": "a2-r1-raw",
+      "mux": false,
+      "repeat": 1,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 248.72283479995502,
+        "up_retransmits": 77,
+        "down_mbps": 249.2456363444636,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 238560
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 138240
+            },
+            "rtt": {
+              "min": 0.012,
+              "median": 0.108,
+              "max": 0.552
+            },
+            "cwnd": {
+              "min": 199,
+              "median": 230.0,
+              "max": 260
+            },
+            "unacked": {
+              "min": 1,
+              "median": 51,
+              "max": 96
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 405618
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 139680
+            },
+            "rtt": {
+              "min": 0.008,
+              "median": 0.3785,
+              "max": 5.723
+            },
+            "cwnd": {
+              "min": 163,
+              "median": 218.0,
+              "max": 252
+            },
+            "unacked": {
+              "min": 1,
+              "median": 25,
+              "max": 97
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 28,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 18872
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.172,
+              "median": 0.172,
+              "max": 0.172
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 28,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 64704,
+              "median": 261312.0,
+              "max": 582884
+            },
+            "rtt": {
+              "min": 2.573,
+              "median": 5.9895,
+              "max": 15.079
+            },
+            "cwnd": {
+              "min": 120,
+              "median": 593.0,
+              "max": 687
+            },
+            "unacked": {
+              "min": 98,
+              "median": 192.5,
+              "max": 432
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316,
+              "max": 948
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 28,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 109188
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.281,
+              "median": 0.281,
+              "max": 0.281
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 28,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 11100,
+              "median": 379736.0,
+              "max": 822408
+            },
+            "rtt": {
+              "min": 3.469,
+              "median": 9.5805,
+              "max": 20.308
+            },
+            "cwnd": {
+              "min": 71,
+              "median": 401.0,
+              "max": 462
+            },
+            "unacked": {
+              "min": 9,
+              "median": 271.5,
+              "max": 403
+            },
+            "notsent": {
+              "min": 316,
+              "median": 632,
+              "max": 381612
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 64.32958171855718,
+        "client": 69.42506075163804
+      }
+    },
+    {
+      "label": "a2-r1-mux",
+      "mux": true,
+      "repeat": 1,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 273.0099803586542,
+        "up_retransmits": 366,
+        "down_mbps": 862.1987448700958,
+        "down_retransmits": 351
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 243806
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 360849
+            },
+            "rtt": {
+              "min": 0.014,
+              "median": 0.43,
+              "max": 7.277
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 413,
+              "max": 413
+            },
+            "unacked": {
+              "min": 36,
+              "median": 55.5,
+              "max": 261
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 575880
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 197706
+            },
+            "rtt": {
+              "min": 0.024,
+              "median": 0.476,
+              "max": 6.981
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 259,
+              "max": 271
+            },
+            "unacked": {
+              "min": 1,
+              "median": 51.0,
+              "max": 144
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 526036,
+              "median": 3460990.0,
+              "max": 4186888
+            },
+            "rtt": {
+              "min": 5.307,
+              "median": 11.969999999999999,
+              "max": 22.256
+            },
+            "cwnd": {
+              "min": 269,
+              "median": 922.0,
+              "max": 1551
+            },
+            "unacked": {
+              "min": 269,
+              "median": 922.0,
+              "max": 1536
+            },
+            "notsent": {
+              "min": 861372,
+              "median": 2106250.0,
+              "max": 3041088
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 203548
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 14.966,
+              "median": 14.966,
+              "max": 14.966
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 266904,
+              "median": 2152082.0,
+              "max": 2563896
+            },
+            "rtt": {
+              "min": 6.548,
+              "median": 11.6355,
+              "max": 23.597
+            },
+            "cwnd": {
+              "min": 84,
+              "median": 288.0,
+              "max": 403
+            },
+            "unacked": {
+              "min": 85,
+              "median": 284.0,
+              "max": 401
+            },
+            "notsent": {
+              "min": 141540,
+              "median": 1808342.0,
+              "max": 2259248
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 343740
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 15.922,
+              "median": 15.922,
+              "max": 15.922
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 70.5520424012152,
+        "client": 74.32994442451304
+      }
+    },
+    {
+      "label": "a2-r1-mux",
+      "mux": true,
+      "repeat": 1,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 249.71751241020445,
+        "up_retransmits": 0,
+        "down_mbps": 249.58670176986382,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 95878
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 132465
+            },
+            "rtt": {
+              "min": 0.053,
+              "median": 0.27,
+              "max": 1.869
+            },
+            "cwnd": {
+              "min": 180,
+              "median": 317,
+              "max": 413
+            },
+            "unacked": {
+              "min": 1,
+              "median": 12,
+              "max": 96
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 118677
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 96364
+            },
+            "rtt": {
+              "min": 0.03,
+              "median": 0.216,
+              "max": 6.483
+            },
+            "cwnd": {
+              "min": 204,
+              "median": 204,
+              "max": 271
+            },
+            "unacked": {
+              "min": 1,
+              "median": 9.5,
+              "max": 70
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 13796,
+              "median": 136780,
+              "max": 454276
+            },
+            "rtt": {
+              "min": 2.319,
+              "median": 4.947,
+              "max": 8.566
+            },
+            "cwnd": {
+              "min": 100,
+              "median": 241,
+              "max": 338
+            },
+            "unacked": {
+              "min": 11,
+              "median": 102,
+              "max": 228
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316,
+              "max": 322172
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 74456
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 9.252,
+              "median": 9.252,
+              "max": 9.252
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 316,
+              "median": 134084,
+              "max": 332852
+            },
+            "rtt": {
+              "min": 2.263,
+              "median": 3.98,
+              "max": 5.931
+            },
+            "cwnd": {
+              "min": 136,
+              "median": 252,
+              "max": 343
+            },
+            "unacked": {
+              "min": 1,
+              "median": 101,
+              "max": 195
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316,
+              "max": 188616
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 87936
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 9.681,
+              "median": 9.681,
+              "max": 9.681
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 37.44278365715359,
+        "client": 35.664801837271774
+      }
+    },
+    {
+      "label": "a2-r2-mux",
+      "mux": true,
+      "repeat": 2,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 249.942176275625,
+        "up_retransmits": 0,
+        "down_mbps": 249.81131649747022,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 40993
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 74846
+            },
+            "rtt": {
+              "min": 0.033,
+              "median": 0.185,
+              "max": 7.208
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 161.0,
+              "max": 161
+            },
+            "unacked": {
+              "min": 9,
+              "median": 44,
+              "max": 54
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 106341
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 80351
+            },
+            "rtt": {
+              "min": 0.024,
+              "median": 0.168,
+              "max": 7.424
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 139.0,
+              "max": 139
+            },
+            "unacked": {
+              "min": 1,
+              "median": 6.5,
+              "max": 58
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 12448,
+              "median": 134400,
+              "max": 275940
+            },
+            "rtt": {
+              "min": 1.159,
+              "median": 4.351,
+              "max": 7.304
+            },
+            "cwnd": {
+              "min": 24,
+              "median": 269,
+              "max": 269
+            },
+            "unacked": {
+              "min": 10,
+              "median": 100,
+              "max": 205
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316.0,
+              "max": 70096
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 30,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 87620
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 17.227,
+              "median": 17.227,
+              "max": 17.227
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 129408
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 11.402,
+              "median": 11.402,
+              "max": 11.402
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 30,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 0,
+              "median": 131072.0,
+              "max": 257468
+            },
+            "rtt": {
+              "min": 1.455,
+              "median": 3.7345,
+              "max": 8.805
+            },
+            "cwnd": {
+              "min": 47,
+              "median": 282.0,
+              "max": 297
+            },
+            "unacked": {
+              "min": 2,
+              "median": 98.0,
+              "max": 185
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316.0,
+              "max": 194112
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 34.109491687239164,
+        "client": 32.55392017285827
+      }
+    },
+    {
+      "label": "a2-r2-mux",
+      "mux": true,
+      "repeat": 2,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 337.2013099716565,
+        "up_retransmits": 130,
+        "down_mbps": 951.6977235662423,
+        "down_retransmits": 152
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 182986
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 499455
+            },
+            "rtt": {
+              "min": 0.022,
+              "median": 0.473,
+              "max": 4.301
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 410.0,
+              "max": 410
+            },
+            "unacked": {
+              "min": 1,
+              "median": 77.0,
+              "max": 361
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 482166
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 16642
+            },
+            "rtt": {
+              "min": 0.019,
+              "median": 0.354,
+              "max": 7.424
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 247.0,
+              "max": 273
+            },
+            "unacked": {
+              "min": 5,
+              "median": 5,
+              "max": 5
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 78184
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 16.434,
+              "median": 16.434,
+              "max": 16.434
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 45832,
+              "median": 1388440,
+              "max": 1788796
+            },
+            "rtt": {
+              "min": 5.164,
+              "median": 10.222,
+              "max": 13.885
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 303,
+              "max": 379
+            },
+            "unacked": {
+              "min": 10,
+              "median": 302,
+              "max": 379
+            },
+            "notsent": {
+              "min": 32352,
+              "median": 994824,
+              "max": 1353392
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 1098620
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 18.729,
+              "median": 18.729,
+              "max": 18.729
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 2782272,
+              "median": 3669930.0,
+              "max": 4173408
+            },
+            "rtt": {
+              "min": 3.751,
+              "median": 10.577,
+              "max": 18.213
+            },
+            "cwnd": {
+              "min": 712,
+              "median": 896.5,
+              "max": 1210
+            },
+            "unacked": {
+              "min": 688,
+              "median": 896.0,
+              "max": 1210
+            },
+            "notsent": {
+              "min": 1558288,
+              "median": 2484364.0,
+              "max": 3050524
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 70.66199653670536,
+        "client": 73.44052529911022
+      }
+    },
+    {
+      "label": "a2-r2-raw",
+      "mux": false,
+      "repeat": 2,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 241.41446456111805,
+        "up_retransmits": 155,
+        "down_mbps": 244.66102809744297,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 353050
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 138240
+            },
+            "rtt": {
+              "min": 0.016,
+              "median": 0.159,
+              "max": 6.478
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 226,
+              "max": 237
+            },
+            "unacked": {
+              "min": 1,
+              "median": 11,
+              "max": 96
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 281840
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 170104
+            },
+            "rtt": {
+              "min": 0.013,
+              "median": 0.348,
+              "max": 5.606
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 131,
+              "max": 249
+            },
+            "unacked": {
+              "min": 1,
+              "median": 12.0,
+              "max": 128
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 131072,
+              "median": 434288,
+              "max": 4012996
+            },
+            "rtt": {
+              "min": 3.703,
+              "median": 11.258,
+              "max": 145.102
+            },
+            "cwnd": {
+              "min": 173,
+              "median": 1279,
+              "max": 1413
+            },
+            "unacked": {
+              "min": 98,
+              "median": 322,
+              "max": 1413
+            },
+            "notsent": {
+              "min": 232,
+              "median": 632.0,
+              "max": 2108272
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.181,
+              "median": 0.181,
+              "max": 0.181
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 222020,
+              "median": 1451122.0,
+              "max": 2086704
+            },
+            "rtt": {
+              "min": 4.021,
+              "median": 12.8515,
+              "max": 27.606
+            },
+            "cwnd": {
+              "min": 96,
+              "median": 363.5,
+              "max": 422
+            },
+            "unacked": {
+              "min": 82,
+              "median": 344.0,
+              "max": 459
+            },
+            "notsent": {
+              "min": 316,
+              "median": 1058180.0,
+              "max": 1596032
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.401,
+              "median": 0.401,
+              "max": 0.401
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 67.7741283362869,
+        "client": 74.88453298875042
+      }
+    },
+    {
+      "label": "a2-r2-raw",
+      "mux": false,
+      "repeat": 2,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 136.8376771103373,
+        "up_retransmits": 318,
+        "down_mbps": 460.6170756266707,
+        "down_retransmits": 1314
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 73624
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 299520
+            },
+            "rtt": {
+              "min": 0.012,
+              "median": 0.1685,
+              "max": 0.816
+            },
+            "cwnd": {
+              "min": 178,
+              "median": 263.0,
+              "max": 263
+            },
+            "unacked": {
+              "min": 3,
+              "median": 75,
+              "max": 148
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 2317194
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 460
+            },
+            "rtt": {
+              "min": 0.015,
+              "median": 0.305,
+              "max": 5.606
+            },
+            "cwnd": {
+              "min": 128,
+              "median": 208.0,
+              "max": 230
+            },
+            "unacked": {
+              "min": 1,
+              "median": 4,
+              "max": 19
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 86272
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.945,
+              "median": 0.945,
+              "max": 0.945
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 365308,
+              "median": 3296324,
+              "max": 4144216
+            },
+            "rtt": {
+              "min": 4.508,
+              "median": 24.165,
+              "max": 68.031
+            },
+            "cwnd": {
+              "min": 115,
+              "median": 1146,
+              "max": 2873
+            },
+            "unacked": {
+              "min": 87,
+              "median": 1134,
+              "max": 2707
+            },
+            "notsent": {
+              "min": 248032,
+              "median": 1599192,
+              "max": 2716684
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 676696
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 1.277,
+              "median": 1.277,
+              "max": 1.277
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 361264,
+              "median": 1872372,
+              "max": 2396744
+            },
+            "rtt": {
+              "min": 6.792,
+              "median": 28.269,
+              "max": 58.289
+            },
+            "cwnd": {
+              "min": 75,
+              "median": 330,
+              "max": 408
+            },
+            "unacked": {
+              "min": 69,
+              "median": 335,
+              "max": 690
+            },
+            "notsent": {
+              "min": 268252,
+              "median": 1450448,
+              "max": 2022000
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 76.44098921818654,
+        "client": 77.66280133721004
+      }
+    },
+    {
+      "label": "a2-r3-raw",
+      "mux": false,
+      "repeat": 3,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 115.52277222929662,
+        "up_retransmits": 296,
+        "down_mbps": 478.70648197847834,
+        "down_retransmits": 1294
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 31100
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 198112
+            },
+            "rtt": {
+              "min": 0.013,
+              "median": 0.122,
+              "max": 5.958
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 245.0,
+              "max": 245
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1.0,
+              "max": 191
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 92.0,
+              "max": 1130860
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 142560
+            },
+            "rtt": {
+              "min": 0.028,
+              "median": 0.199,
+              "max": 5.409
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 174.0,
+              "max": 174
+            },
+            "unacked": {
+              "min": 1,
+              "median": 14,
+              "max": 118
+            },
+            "notsent": {
+              "min": 2116,
+              "median": 2116,
+              "max": 2116
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 28,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 296560,
+              "median": 3733464.0,
+              "max": 4168016
+            },
+            "rtt": {
+              "min": 4.428,
+              "median": 23.962,
+              "max": 48.27
+            },
+            "cwnd": {
+              "min": 76,
+              "median": 1016.0,
+              "max": 2843
+            },
+            "unacked": {
+              "min": 76,
+              "median": 1016.0,
+              "max": 2717
+            },
+            "notsent": {
+              "min": 91664,
+              "median": 2081986.0,
+              "max": 2958860
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 47180
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 1.096,
+              "median": 1.096,
+              "max": 1.096
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 451580,
+              "median": 1996388,
+              "max": 2323952
+            },
+            "rtt": {
+              "min": 8.299,
+              "median": 22.177,
+              "max": 48.332
+            },
+            "cwnd": {
+              "min": 103,
+              "median": 238,
+              "max": 484
+            },
+            "unacked": {
+              "min": 103,
+              "median": 232,
+              "max": 484
+            },
+            "notsent": {
+              "min": 312736,
+              "median": 1617600,
+              "max": 2020652
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 447536
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.553,
+              "median": 0.553,
+              "max": 0.553
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 76.6632498792929,
+        "client": 74.66281593182802
+      }
+    },
+    {
+      "label": "a2-r3-raw",
+      "mux": false,
+      "repeat": 3,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 249.7869393577743,
+        "up_retransmits": 70,
+        "down_mbps": 249.65609234920552,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 291232
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 54720
+            },
+            "rtt": {
+              "min": 0.009,
+              "median": 0.099,
+              "max": 0.248
+            },
+            "cwnd": {
+              "min": 47,
+              "median": 183,
+              "max": 245
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1.0,
+              "max": 38
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 45,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 237128
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 111612
+            },
+            "rtt": {
+              "min": 0.014,
+              "median": 0.418,
+              "max": 5.534
+            },
+            "cwnd": {
+              "min": 137,
+              "median": 174,
+              "max": 223
+            },
+            "unacked": {
+              "min": 1,
+              "median": 12,
+              "max": 79
+            },
+            "notsent": {
+              "min": 31200,
+              "median": 31200,
+              "max": 31200
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 131388,
+              "median": 427232.0,
+              "max": 1050872
+            },
+            "rtt": {
+              "min": 3.297,
+              "median": 9.08,
+              "max": 28.795
+            },
+            "cwnd": {
+              "min": 153,
+              "median": 813.0,
+              "max": 857
+            },
+            "unacked": {
+              "min": 84,
+              "median": 296.5,
+              "max": 754
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316,
+              "max": 506848
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 319476
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 0.951,
+              "median": 0.951,
+              "max": 0.951
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 63672,
+              "median": 497644.0,
+              "max": 1694652
+            },
+            "rtt": {
+              "min": 4.013,
+              "median": 11.266,
+              "max": 48.595
+            },
+            "cwnd": {
+              "min": 231,
+              "median": 379.0,
+              "max": 615
+            },
+            "unacked": {
+              "min": 48,
+              "median": 332.5,
+              "max": 470
+            },
+            "notsent": {
+              "min": 316,
+              "median": 34448.0,
+              "max": 1222852
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 26,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 47812
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 1.04,
+              "median": 1.04,
+              "max": 1.04
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10.0,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 68.10721618031657,
+        "client": 71.10699667866467
+      }
+    },
+    {
+      "label": "a2-r3-mux",
+      "mux": true,
+      "repeat": 3,
+      "rate": 0,
+      "metrics": {
+        "up_mbps": 402.3321966287793,
+        "up_retransmits": 252,
+        "down_mbps": 896.5550801419095,
+        "down_retransmits": 611
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 474035
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 443629
+            },
+            "rtt": {
+              "min": 0.01,
+              "median": 0.275,
+              "max": 6.855
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 559.0,
+              "max": 559
+            },
+            "unacked": {
+              "min": 1,
+              "median": 22.5,
+              "max": 322
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 430476
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 285830
+            },
+            "rtt": {
+              "min": 0.023,
+              "median": 0.3615,
+              "max": 6.274
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 375.0,
+              "max": 375
+            },
+            "unacked": {
+              "min": 1,
+              "median": 46,
+              "max": 209
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 177936
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 8.312,
+              "median": 8.312,
+              "max": 8.312
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 198156,
+              "median": 3784276,
+              "max": 4169804
+            },
+            "rtt": {
+              "min": 3.211,
+              "median": 9.617,
+              "max": 17.637
+            },
+            "cwnd": {
+              "min": 50,
+              "median": 790,
+              "max": 1351
+            },
+            "unacked": {
+              "min": 47,
+              "median": 790,
+              "max": 1351
+            },
+            "notsent": {
+              "min": 134800,
+              "median": 2619604,
+              "max": 3249120
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 1098620,
+              "median": 2600292,
+              "max": 3128708
+            },
+            "rtt": {
+              "min": 4.292,
+              "median": 11.156,
+              "max": 17.858
+            },
+            "cwnd": {
+              "min": 232,
+              "median": 346,
+              "max": 458
+            },
+            "unacked": {
+              "min": 193,
+              "median": 345,
+              "max": 442
+            },
+            "notsent": {
+              "min": 838456,
+              "median": 2123100,
+              "max": 2733744
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 27,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 417880
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 14.338,
+              "median": 14.338,
+              "max": 14.338
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 70.7747211983526,
+        "client": 73.44067650532001
+      }
+    },
+    {
+      "label": "a2-r3-mux",
+      "mux": true,
+      "repeat": 3,
+      "rate": 250000000,
+      "metrics": {
+        "up_mbps": 249.874756959832,
+        "up_retransmits": 0,
+        "down_mbps": 249.7439324797483,
+        "down_retransmits": 0
+      },
+      "tcp": {
+        "outer/server": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 84677
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 65825
+            },
+            "rtt": {
+              "min": 0.052,
+              "median": 0.3265,
+              "max": 2.761
+            },
+            "cwnd": {
+              "min": 134,
+              "median": 403.0,
+              "max": 559
+            },
+            "unacked": {
+              "min": 1,
+              "median": 12.5,
+              "max": 48
+            }
+          }
+        },
+        "outer/client": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 125277
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 84728
+            },
+            "rtt": {
+              "min": 0.022,
+              "median": 0.2365,
+              "max": 6.51
+            },
+            "cwnd": {
+              "min": 223,
+              "median": 346.0,
+              "max": 375
+            },
+            "unacked": {
+              "min": 1,
+              "median": 31.5,
+              "max": 62
+            }
+          }
+        },
+        "inner-up/server": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 105144
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 10.436,
+              "median": 10.436,
+              "max": 10.436
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-down/server": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 12764,
+              "median": 132736,
+              "max": 270548
+            },
+            "rtt": {
+              "min": 2.187,
+              "median": 4.415,
+              "max": 6.044
+            },
+            "cwnd": {
+              "min": 198,
+              "median": 260,
+              "max": 295
+            },
+            "unacked": {
+              "min": 10,
+              "median": 99,
+              "max": 200
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316,
+              "max": 1980
+            }
+          }
+        },
+        "inner-down/client": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 98404
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "rtt": {
+              "min": 12.713,
+              "median": 12.713,
+              "max": 12.713
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 10,
+              "max": 10
+            }
+          }
+        },
+        "inner-up/client": {
+          "observations": 29,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 0
+            },
+            "send_q": {
+              "min": 316,
+              "median": 132736,
+              "max": 262460
+            },
+            "rtt": {
+              "min": 1.835,
+              "median": 3.97,
+              "max": 6.096
+            },
+            "cwnd": {
+              "min": 173,
+              "median": 273,
+              "max": 307
+            },
+            "unacked": {
+              "min": 1,
+              "median": 99,
+              "max": 195
+            },
+            "notsent": {
+              "min": 316,
+              "median": 316.0,
+              "max": 316
+            }
+          }
+        }
+      },
+      "cpu": {
+        "server": 32.99845825342461,
+        "client": 32.77604120459178
+      }
+    }
+  ],
+  "summary": {
+    "raw/b0": {
+      "up_mbps": {
+        "median": 115.52277222929662,
+        "min": 93.86583246905936,
+        "max": 136.8376771103373
+      },
+      "down_mbps": {
+        "median": 478.70648197847834,
+        "min": 460.6170756266707,
+        "max": 482.2897166192674
+      },
+      "up_retransmits": {
+        "median": 315,
+        "min": 296,
+        "max": 318
+      },
+      "down_retransmits": {
+        "median": 1294,
+        "min": 701,
+        "max": 1314
+      }
+    },
+    "raw/b250000000": {
+      "up_mbps": {
+        "median": 248.72283479995502,
+        "min": 241.41446456111805,
+        "max": 249.7869393577743
+      },
+      "down_mbps": {
+        "median": 249.2456363444636,
+        "min": 244.66102809744297,
+        "max": 249.65609234920552
+      },
+      "up_retransmits": {
+        "median": 77,
+        "min": 70,
+        "max": 155
+      },
+      "down_retransmits": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "mux/b0": {
+      "up_mbps": {
+        "median": 337.2013099716565,
+        "min": 273.0099803586542,
+        "max": 402.3321966287793
+      },
+      "down_mbps": {
+        "median": 896.5550801419095,
+        "min": 862.1987448700958,
+        "max": 951.6977235662423
+      },
+      "up_retransmits": {
+        "median": 252,
+        "min": 130,
+        "max": 366
+      },
+      "down_retransmits": {
+        "median": 351,
+        "min": 152,
+        "max": 611
+      }
+    },
+    "mux/b250000000": {
+      "up_mbps": {
+        "median": 249.874756959832,
+        "min": 249.71751241020445,
+        "max": 249.942176275625
+      },
+      "down_mbps": {
+        "median": 249.7439324797483,
+        "min": 249.58670176986382,
+        "max": 249.81131649747022
+      },
+      "up_retransmits": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "down_retransmits": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      }
+    }
+  },
+  "input_hashes": {
+    "execution.json": "90add33b6b7031abc44a4fedb1e5c584ea423a9b7960cf9eeaeb39b8603893cd",
+    "a2-r1-raw/b0-iperf.json": "cbb8e5de46fd94cc37a5dba08f556f6cdc057b83ac58018052643282ed31aca5",
+    "a2-r1-raw/b0-counters.json": "c6f3395aea923c18c4f55d9c6fefc54021442a9792812b7c1800d88d42d917a2",
+    "a2-r1-raw/b0-processes.json": "fd37aa5328f1d9136fa52411c7870c58def73b46bd79388a7bfc0d06b6537ec6",
+    "a2-r1-raw/b0-tcp-state.json": "18e07f74a4552fd2b736eb3e4037a14562dd246def331cb15996d40fc411a061",
+    "a2-r1-raw/b250000000-iperf.json": "1b1107918f52b95015537fbb7f8d3eb19179334dca38f4c71fc4ff667be77e26",
+    "a2-r1-raw/b250000000-counters.json": "47d4037629849db86e36e90417bbb4e553850b2cfd5910c1cf11874ba599ecd7",
+    "a2-r1-raw/b250000000-processes.json": "fccc03121308a5216f9f83a1d253da1bc96d130f681630d9b399a942f1e11cff",
+    "a2-r1-raw/b250000000-tcp-state.json": "4a859266d47cf9e0cd707da562098d8f2e61fa67e45a4d2cf2b91012bbb2c959",
+    "a2-r1-mux/b0-iperf.json": "d25ae3ff20a4aa96727114a00f14a00222ed43426a8e23ea1a3669d3762b2261",
+    "a2-r1-mux/b0-counters.json": "9bd9aee5f5ea821c38b49acb884636fdeb75320691a45c76b5d98fe5cd177c5f",
+    "a2-r1-mux/b0-processes.json": "d1a0038bd1412f6fde356bc41c8e726f38242013d1c786b5dfcbf9c47a67e45a",
+    "a2-r1-mux/b0-tcp-state.json": "f15d71ad9d288031712a8854e07c220f313baf03c0dea1c171021090e546b399",
+    "a2-r1-mux/b250000000-iperf.json": "012eb5b1c25949d5ddb70072c995f869ff6fd1b398329aa6dd2b3130d405c03d",
+    "a2-r1-mux/b250000000-counters.json": "29ca577615dda07743c7615c9889af2a7930b0fcea0b90e64205fa3260e0a143",
+    "a2-r1-mux/b250000000-processes.json": "2a3502038c3e0fe964e01c49534550586f8f502cd951fa1b0f5ca5e01d11d238",
+    "a2-r1-mux/b250000000-tcp-state.json": "f5e2673de02ac473db55ee8911a16c3363361d17eefe78cf89474f341fcb045b",
+    "a2-r2-mux/b250000000-iperf.json": "7e0afbf33eb8190bc429c0b2f466ed9852a1c79b3a902a60ae8fd44d547bcacf",
+    "a2-r2-mux/b250000000-counters.json": "8eecccd1acabc92226d55b5c14b98696e7a546e8fffdf2e433871c708cb7a47f",
+    "a2-r2-mux/b250000000-processes.json": "1bad8aff10964b6fb7634be66206415eab3f570dd14dcefc0a725e4750dab260",
+    "a2-r2-mux/b250000000-tcp-state.json": "265cba87e6f1dc89565ae78f8908b494a8409637c014e1ede20cfd24f0230752",
+    "a2-r2-mux/b0-iperf.json": "e64e1743b434229b517ad32b2937313b5f49fd8451d2fc53380989ed35c5c7da",
+    "a2-r2-mux/b0-counters.json": "adbb7e196a7a289cab4403519c3766392a9f0ac0483ae5d54eaafb299e7200f5",
+    "a2-r2-mux/b0-processes.json": "27cb5b856ea76049d9a6aaaae5ec2bbe855b7d6e8e5968e64791b808b4fa3289",
+    "a2-r2-mux/b0-tcp-state.json": "132de0f8ee5f48d8a243c97fe9c2a08f67e321642b7824e3973e85a8385e0c33",
+    "a2-r2-raw/b250000000-iperf.json": "8e1dfbe8d96b5491e04ab4a7d369a64656f8440406f38ee562bc039590c0e7e3",
+    "a2-r2-raw/b250000000-counters.json": "e01a151629c57aece5fb05c2943400e6944f64f4dd78b1848c19d8ec5664ee53",
+    "a2-r2-raw/b250000000-processes.json": "9c2e07e5f87617a58795da2f02d684294fc4215608f58616fc99ad35593c4509",
+    "a2-r2-raw/b250000000-tcp-state.json": "24dbdd1b8065bc741cb4c5c6ffc6f9d6e06d8da4eba69fff529abd276be91efa",
+    "a2-r2-raw/b0-iperf.json": "3f7fede0b84da2de6d18ca5ff39487aa29104184e59d6a36f4accb066259ec86",
+    "a2-r2-raw/b0-counters.json": "31362e6a82747f76cbc8795f937d720d372730bda2fe4bea76f6d92971156188",
+    "a2-r2-raw/b0-processes.json": "8037420d492b755f5f5de331132ba278b6cef77a7a2a178e7168526a355e4bba",
+    "a2-r2-raw/b0-tcp-state.json": "391fb4a066b799cc73bcc3030138092b70e131c58226921b4534e02fba2178f4",
+    "a2-r3-raw/b0-iperf.json": "d605423d6a9a65a525b7e9fa848249d95f06fd7cd189df377e9a8598adfedcd7",
+    "a2-r3-raw/b0-counters.json": "abe47b622ab695eaa977d964404d2caf5038563f7116b4addf432b27abb0b356",
+    "a2-r3-raw/b0-processes.json": "c1baf597192697aedce552a0c5d4b7c7147812573018f0e5bf17363a5195ae7b",
+    "a2-r3-raw/b0-tcp-state.json": "3bc309810e54ec51effe77b07896994f0eab1ce7cf1a9f05c7fa3595baaec921",
+    "a2-r3-raw/b250000000-iperf.json": "d2efb9d44cd45bb43618a87b6116fa09e673c29532d6c6f0650d3c0eb6d9c3e0",
+    "a2-r3-raw/b250000000-counters.json": "95ba4b3b8442e9bcb31035e7e9d4b30c1a696ef2e17860e7e5a4a383d49c1393",
+    "a2-r3-raw/b250000000-processes.json": "3796a55ba04ef20ab39f1f4a48716da7719fc0bb593a915efc6d04826167087e",
+    "a2-r3-raw/b250000000-tcp-state.json": "0525f66458b556b976ab138d8d23ff9cefcb221c022bff197ad0748b6bfde40b",
+    "a2-r3-mux/b0-iperf.json": "9bc9e724307e26d228442409b1a1214576498e3ce4391c31001227aebce7e578",
+    "a2-r3-mux/b0-counters.json": "65bcea167ed46f86438d8676dabf53539966401ae6cc414f64dcac5a1270243c",
+    "a2-r3-mux/b0-processes.json": "3893e91f36d9782dc0da09b4fd6b903bd7904858f39a6d067b92f047be10315b",
+    "a2-r3-mux/b0-tcp-state.json": "ce864936472bebc36ab7b0c48ecd6e53cf2642abf8cf15996d6af54ba27f4c33",
+    "a2-r3-mux/b250000000-iperf.json": "5811d83a24477ccbfb0e200b42d77702b46c4244088ca525dd53895e8acdfc2e",
+    "a2-r3-mux/b250000000-counters.json": "d08b520b847b9fcf0ace2a9d4cac60233026a84ea9ea640c39712fb4302cbbd8",
+    "a2-r3-mux/b250000000-processes.json": "2c55006c33a9bdaf903980f64e2bfb9191e8b9ce2d9a4dfff3349141b563c56a",
+    "a2-r3-mux/b250000000-tcp-state.json": "6ef4fd30f08529f2a9652023b15d57c9adea24ecd678d2b1f3f4b406687230ec"
+  },
+  "limitation": "sampled TCP states, not per-packet ACK timestamps or a complete RTT distribution; shared two vCPUs; no factory performance gate or causal closure",
+  "metadata": {
+    "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+    "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+    "iperf": "iperf 3.18 (cJSON 1.7.15)",
+    "version": "qeli 0.8.2",
+    "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+    "load_at_start": "0.13 0.13 0.39 1/121 3668510",
+    "cpu_governor": {
+      "availability": "UNAVAILABLE",
+      "policies": {}
+    }
+  },
+  "source_build_receipt_sha256": "1e924e4a46b424316276e0bad75c6c06e700d1a9a4242566d17eeb8055867c42",
+  "current_udp_source_fix_integration_claimed": false,
+  "source_cut": "qualified F010 release binary; earlier than F018",
+  "host_before": {
+    "snapshot_schema": "all-firewall-v1",
+    "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+    "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+    "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+    "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+    "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+    "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+    "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+    "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+    "namespaces": "",
+    "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*mangle\n:PREROUTING ACCEPT [5752716:7268663760]\n:INPUT ACCEPT [5752701:7268662768]\n:FORWARD ACCEPT [15:992]\n:OUTPUT ACCEPT [4610299:8732000221]\n:POSTROUTING ACCEPT [4610410:8732013279]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*filter\n:INPUT ACCEPT [5752701:7268662768]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [4610299:8732000221]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*nat\n:PREROUTING ACCEPT [8757:1177688]\n:INPUT ACCEPT [8752:1177340]\n:OUTPUT ACCEPT [5165:330386]\n:POSTROUTING ACCEPT [5170:330734]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026",
+    "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:14 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:40:14 2026",
+    "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*mangle\n:PREROUTING ACCEPT [5752725:7268664632]\n:INPUT ACCEPT [5752710:7268663640]\n:FORWARD ACCEPT [15:992]\n:OUTPUT ACCEPT [4610311:8732002957]\n:POSTROUTING ACCEPT [4610422:8732016015]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*filter\n:INPUT ACCEPT [5752710:7268663640]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [4610311:8732002957]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*nat\n:PREROUTING ACCEPT [8757:1177688]\n:INPUT ACCEPT [8752:1177340]\n:OUTPUT ACCEPT [5165:330386]\n:POSTROUTING ACCEPT [5170:330734]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026",
+    "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:40:15 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026",
+    "nft4": "# Warning: iptables-legacy tables present, use iptables-legacy-save to see them\n# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:40:15 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026",
+    "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:40:15 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:40:15 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+    "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5738588, \"bytes\": 7266897555}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9194, \"bytes\": 1416665}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 617, \"bytes\": 32084}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+  },
+  "host_after": {
+    "snapshot_schema": "all-firewall-v1",
+    "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+    "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+    "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+    "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+    "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+    "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+    "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+    "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+    "namespaces": "",
+    "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*mangle\n:PREROUTING ACCEPT [5764117:7283882338]\n:INPUT ACCEPT [5764096:7283880986]\n:FORWARD ACCEPT [21:1352]\n:OUTPUT ACCEPT [4620057:8735510833]\n:POSTROUTING ACCEPT [4620174:8735524251]\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*filter\n:INPUT ACCEPT [5764096:7283880986]\n:FORWARD ACCEPT [6:360]\n:OUTPUT ACCEPT [4620057:8735510833]\n-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\n-A FORWARD -i vpn0 -j ACCEPT\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*nat\n:PREROUTING ACCEPT [8765:1178302]\n:INPUT ACCEPT [8754:1177594]\n:OUTPUT ACCEPT [5166:330462]\n:POSTROUTING ACCEPT [5177:331170]\n-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026",
+    "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026",
+    "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*mangle\n:PREROUTING ACCEPT [5764125:7283883170]\n:INPUT ACCEPT [5764104:7283881818]\n:FORWARD ACCEPT [21:1352]\n:OUTPUT ACCEPT [4620069:8735513713]\n:POSTROUTING ACCEPT [4620186:8735527131]\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*filter\n:INPUT ACCEPT [5764104:7283881818]\n:FORWARD ACCEPT [6:360]\n:OUTPUT ACCEPT [4620069:8735513713]\n-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\n-A FORWARD -i vpn0 -j ACCEPT\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:45:27 2026\n*nat\n:PREROUTING ACCEPT [8765:1178302]\n:INPUT ACCEPT [8754:1177594]\n:OUTPUT ACCEPT [5166:330462]\n:POSTROUTING ACCEPT [5177:331170]\n-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\nCOMMIT\n# Completed on Sun Oct 11 04:45:27 2026",
+    "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:28 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:45:28 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:28 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:45:28 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:45:28 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:45:28 2026",
+    "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:45:28 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:45:28 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+    "nft6": "# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them\n# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:45:28 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:45:28 2026",
+    "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5749979, \"bytes\": 7282115439}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9196, \"bytes\": 1416919}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 617, \"bytes\": 32084}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+  },
+  "cleanup": {
+    "status": "OWNED_DIAGNOSTIC_ROOT_ARCHIVED_AND_REMOVED",
+    "root": "/var/tmp/qeli-q36-tcpstate-4beddbbe4d214d06b8a8104c189d56d2",
+    "host": "10.66.116.10",
+    "archive": {
+      "sha256": "e7afecd7d367ee86c7fe0be301e13857ae97740179a2d911f3141f8d1a1c6cf7",
+      "cookie": "2049:313806"
+    },
+    "removed": {
+      "root_absent": true,
+      "archive_absent": true
+    },
+    "after": {
+      "snapshot_schema": "all-firewall-v1",
+      "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+      "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+      "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+      "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+      "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+      "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+      "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+      "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+      "namespaces": "",
+      "iptables4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:56 2026\n*mangle\n:PREROUTING ACCEPT [5767582:7284090409]\n:INPUT ACCEPT [5767561:7284089057]\n:FORWARD ACCEPT [21:1352]\n:OUTPUT ACCEPT [4622196:8742294622]\n:POSTROUTING ACCEPT [4622313:8742308040]\nCOMMIT\n# Completed on Sun Oct 11 04:47:56 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:56 2026\n*filter\n:INPUT ACCEPT [5767561:7284089057]\n:FORWARD ACCEPT [6:360]\n:OUTPUT ACCEPT [4622196:8742294622]\nCOMMIT\n# Completed on Sun Oct 11 04:47:56 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:56 2026\n*nat\n:PREROUTING ACCEPT [8767:1178481]\n:INPUT ACCEPT [8756:1177773]\n:OUTPUT ACCEPT [5166:330462]\n:POSTROUTING ACCEPT [5177:331170]\nCOMMIT\n# Completed on Sun Oct 11 04:47:56 2026",
+      "iptables6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026",
+      "legacy4": "# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*mangle\n:PREROUTING ACCEPT [5767590:7284091241]\n:INPUT ACCEPT [5767569:7284089889]\n:FORWARD ACCEPT [21:1352]\n:OUTPUT ACCEPT [4622208:8742297358]\n:POSTROUTING ACCEPT [4622325:8742310776]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*filter\n:INPUT ACCEPT [5767569:7284089889]\n:FORWARD ACCEPT [6:360]\n:OUTPUT ACCEPT [4622208:8742297358]\n-A FORWARD -o vpn0 -m state --state RELATED,ESTABLISHED -j ACCEPT\n-A FORWARD -i vpn0 -j ACCEPT\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by iptables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*nat\n:PREROUTING ACCEPT [8767:1178481]\n:INPUT ACCEPT [8756:1177773]\n:OUTPUT ACCEPT [5166:330462]\n:POSTROUTING ACCEPT [5177:331170]\n-A POSTROUTING -s 10.8.0.0/24 -o ens18 -j MASQUERADE\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026",
+      "legacy6": "# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*mangle\n:PREROUTING ACCEPT [13586:1515344]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\n:POSTROUTING ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [7940:899014]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Generated by ip6tables-save v1.8.11 on Sun Oct 11 04:47:57 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026",
+      "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:47:57 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:47:57 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+      "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Sun Oct 11 04:47:58 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Sun Oct 11 04:47:58 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+      "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 5753444, \"bytes\": 7282323411}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 9197, \"bytes\": 1417046}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 618, \"bytes\": 32136}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+    },
+    "changed_fields": [
+      "legacy4"
+    ],
+    "active_services_unchanged": true,
+    "staged_cli_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0"
+  },
+  "cleanup_inventory": {
+    "cookie": "2049:300083",
+    "digest": "dddf43bcd46843e04896d8e08fd45fe5fa7c2045cffb8744036bf562c808979d",
+    "entries": 225
+  },
+  "cleanup_host_gate": {
+    "status": "FAIL",
+    "changed_fields": [
+      "legacy4"
+    ]
+  },
+  "raw_cleanup_receipt_sha256": "39090e705836e76a88cde7b1e19b49c1800ca6071d31241379ad43e6e6fa69b4",
+  "raw_packet": "q36-tcp-state-20261011",
+  "remote_backup_sha256": "e7afecd7d367ee86c7fe0be301e13857ae97740179a2d911f3141f8d1a1c6cf7",
+  "prior_harness_failure": {
+    "receipt_sha256": "47aac642702adbd1608abb9c4b4ee359e44b312537395f8e00129bca09f6aa00",
+    "error": [
+      "measure() got an unexpected keyword argument 'bidir'"
+    ],
+    "measurement_started": false
+  },
+  "drivers": {
+    "run.py": "f908bc80a6dfb72ecf2c35e4ae6475a0c29409d1985b0cfea35e12b3632d1458",
+    "tcp_sample.py": "357e20c0a5e2092920a3f284950dc0a929f6e8db8388daa00b8a84cbd6e9fa4d",
+    "qualify.py": "c2e4fc3463c5ae4d47e4054b49e837a65773fd0598acfbca9393213faea11090",
+    "cleanup.py": "66a87df7ad475c5435bb11e4d30288c14e85a862689c185d89243f5e9135d0fd",
+    "publish.py": "7e3491ba3e4324bc1b744bdefe96e3adf9de6f32eb06a2f0434da9a8012e5290"
+  }
+}
