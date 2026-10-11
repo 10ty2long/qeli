@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v227 -->
+<!-- normative-sync: full-system-audit-v228 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2220,6 +2220,8 @@ overall 30/37 DONE81.1%.
 **10 October, current Q36 CLI:** [repeat measurement](../reports/BENCHMARK.md): SHA `7769f43c` from 902 committed inputs; three independent full sweeps each P=1/P=4, 72 modes/210 phases, 600 raw JSON SHA, median/min/max without removing outliers. Primary core/available dumps match; separate2modes/9phases with every firewall backend PASS. Outer FAIL due to the known vpn-nat cycle retained. Q36-F005 captures all backends, checks structure and refuses empty archived core snapshots;35 Windows/35 Linux methods PASS. Owned roots SHA-archived/cleaned, services preserved. Bidir/IPv6/latency/auth-rate remain OPEN, Q36 IN_PROGRESS, 30/37 DONE (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **10 October, Q36-F006/F007:** [TCP bidir](../reports/BENCHMARK.md): three full P=1/P=4 sweeps of all 12 carriers, 78 phases/228 raw JSON. Both receiver and kernel-counter populations revalidated; uplink asymmetry retained. Four host gates COMPLETED, two FAIL from the known external NAT cycle; explicit MEASUREMENTS_ONLY never emits AGGREGATED or hides failures. 47 Windows/47 Linux methods PASS; 14 owned roots SHA-archived/cleaned, services preserved. TCP-bidir IPv4 measured; UDP-bidir/IPv6/latency/auth-rate/drop diagnosis/8-hour soak OPEN. Q36 IN_PROGRESS, 30/37 (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October, Q36-F029:** [current stock data plane](../reports/BENCHMARK.md): CLI 35da83fd,36 fresh sessions/144 windows all12 outer4/inner4 TCP+UDP bidir P1/P4×3;433 raw JSON/72 logs, independent receiver/counters/process/admission, no F010 pooling. Measurement host gate PASS, cleanup PASS; all differences retained. Owned root SHA-archived/removed, services/staged CLI preserved. Finite2vCPU same-VM scope, not sustained capacity. Exact TCP asymmetry stage and Q35 full endurance OPEN; overall30/37 DONE81.1%.
 
 **Status: IN_PROGRESS.**
 

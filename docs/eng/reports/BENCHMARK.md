@@ -2358,3 +2358,96 @@ staged CLI/services preserved. Native-libs/deploy/release unchanged. Current
 factory AUTH block complete within this finite-burst scope; Q36 precise TCP
 asymmetry stage/current steady data-plane and Q35 endurance remain OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Current standard release CLI: data plane — 11 October 2026
+
+<!-- normative-sync: q36-current-data-plane-v1 -->
+
+**Q36-F029:** [source/raw/counters/resource evidence](../../../release/audit_q36_current_data_plane_2026-10-11.json).
+Stock CLI SHA 35da83fd0a727a31a93c4527f8c814777aabcc7ef48dd92e0a0de65f5cbc7050,916 exact source inputs, unchanged factory
+Cargo.toml/features/release profile from separately sealed Q36-F027/F028.
+No new builds or profile overrides.
+
+**36 fresh sessions/144 eight-second windows:** all12 modes outer4/inner4,
+TCP/UDP bidirectional P1/P4, three independent repeats. Repeat2 reverses
+mode and phase order. Endpoints are sibling namespaces on one2vCPU VM;
+concurrent endurance uses the other host. NIC MTU1500/TUN1400, affinity0–1/
+nice0, receive-buffer sysctl, CPU/RSS/steal/load are retained. UDP offer
+100Mbps per stream per direction: P1=100+100,P4=400+400;1200-byte datagrams.
+These finite same-VM windows are **not sustained capacity** or a physical
+cross-server benchmark. Old F010 measurements are not pooled with this
+population and are not a direct speed comparison.
+
+Actual AuthOK/IPv4 peers/plans, configs/MTUs/source/helpers, unique iperf
+cookies, receiver stats, kernel/application counters and unchanged client
+generation/plan are independently checked per window.433 raw JSON and72
+worker logs are SHA-bound;48 populations have exactly3 repeats each.
+All outliers and UDP loss remain; zero exit alone is not admission.
+Native UDP buffer/growth/drop events are parsed from actual worker logs.
+
+Mbps: median [min–max] of three repeats; UDP loss% up/down likewise.
+
+| Mode | Phase | Upload Mbps | Download Mbps | UDP loss% up / down |
+|---|---|---:|---:|---:|
+| tcp-plain-raw | tcp_p1 | 172.8 [147.6–220.8] | 541.0 [503.2–564.1] | — |
+| tcp-plain-raw | tcp_p4 | 145.1 [125.3–153.8] | 513.1 [506.0–604.8] | — |
+| tcp-plain-raw | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-plain-raw | udp_p4 | 191.0 [187.3–210.7] | 278.8 [269.2–286.0] | 49.4 [47.1–53.0] / 28.5 [25.1–30.7] |
+| tcp-faketls | tcp_p1 | 175.7 [153.9–184.8] | 546.2 [530.8–559.7] | — |
+| tcp-faketls | tcp_p4 | 134.3 [133.0–164.7] | 523.8 [517.1–550.9] | — |
+| tcp-faketls | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-faketls | udp_p4 | 189.0 [180.1–191.8] | 265.7 [233.5–274.5] | 51.5 [50.8–54.8] / 30.0 [29.5–37.8] |
+| tcp-padding | tcp_p1 | 163.4 [163.4–178.3] | 513.0 [496.9–566.1] | — |
+| tcp-padding | tcp_p4 | 148.0 [112.1–164.2] | 573.6 [566.1–588.6] | — |
+| tcp-padding | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-padding | udp_p4 | 194.9 [180.2–208.8] | 253.3 [239.1–256.6] | 51.1 [47.7–51.6] / 34.4 [33.2–38.2] |
+| tcp-frag | tcp_p1 | 174.1 [145.2–176.4] | 559.9 [489.0–576.2] | — |
+| tcp-frag | tcp_p4 | 137.4 [127.7–167.2] | 535.3 [476.7–576.6] | — |
+| tcp-frag | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-frag | udp_p4 | 209.0 [192.8–211.2] | 276.9 [259.2–289.3] | 47.6 [45.8–51.6] / 29.1 [26.1–31.4] |
+| tcp-obfs | tcp_p1 | 138.4 [79.6–144.3] | 533.4 [493.3–589.7] | — |
+| tcp-obfs | tcp_p4 | 132.1 [97.5–145.1] | 541.2 [491.9–564.3] | — |
+| tcp-obfs | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-obfs | udp_p4 | 162.3 [160.5–175.1] | 238.3 [217.2–256.1] | 59.3 [56.1–59.7] / 38.5 [34.2–43.3] |
+| tcp-reality | tcp_p1 | 173.9 [157.1–176.8] | 490.6 [484.2–555.5] | — |
+| tcp-reality | tcp_p4 | 149.0 [112.5–165.5] | 532.3 [499.0–536.2] | — |
+| tcp-reality | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-reality | udp_p4 | 197.5 [188.5–215.8] | 257.0 [240.3–263.4] | 50.4 [44.3–52.7] / 33.9 [30.2–38.0] |
+| tcp-reality-tls | tcp_p1 | 258.9 [238.4–287.0] | 626.3 [548.8–646.2] | — |
+| tcp-reality-tls | tcp_p4 | 222.4 [184.0–227.0] | 645.3 [609.1–656.6] | — |
+| tcp-reality-tls | udp_p1 | 99.9 [99.9–100.0] | 99.9 [99.9–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-reality-tls | udp_p4 | 238.1 [207.9–259.3] | 349.9 [344.6–356.5] | 40.2 [34.9–47.9] / 11.1 [9.3–12.3] |
+| udp-faketls | tcp_p1 | 215.5 [164.8–222.1] | 552.6 [452.7–552.9] | — |
+| udp-faketls | tcp_p4 | 197.2 [195.2–206.4] | 532.3 [504.9–533.4] | — |
+| udp-faketls | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| udp-faketls | udp_p4 | 200.1 [195.3–238.6] | 158.5 [122.6–191.7] | 49.8 [40.2–51.0] / 44.4 [43.3–53.1] |
+| udp-padding | tcp_p1 | 197.7 [186.7–264.5] | 531.4 [492.5–601.1] | — |
+| udp-padding | tcp_p4 | 198.3 [164.3–214.8] | 500.2 [463.8–530.6] | — |
+| udp-padding | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| udp-padding | udp_p4 | 213.4 [200.7–234.4] | 137.1 [127.0–168.5] | 46.5 [41.2–48.5] / 51.1 [46.2–56.7] |
+| udp-quic | tcp_p1 | 177.2 [171.3–245.2] | 559.4 [517.2–577.5] | — |
+| udp-quic | tcp_p4 | 187.1 [176.4–194.7] | 534.0 [441.8–542.8] | — |
+| udp-quic | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| udp-quic | udp_p4 | 228.6 [207.8–230.8] | 151.4 [142.2–154.3] | 41.5 [41.4–47.9] / 49.2 [47.3–50.9] |
+| tcp-obfs-awg | tcp_p1 | 157.8 [122.9–173.6] | 517.0 [500.9–548.7] | — |
+| tcp-obfs-awg | tcp_p4 | 127.7 [90.2–127.9] | 547.0 [543.5–570.2] | — |
+| tcp-obfs-awg | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| tcp-obfs-awg | udp_p4 | 163.2 [149.6–175.4] | 243.2 [242.9–258.0] | 58.1 [55.0–62.5] / 34.9 [33.5–35.4] |
+| udp-faketls-awg | tcp_p1 | 206.3 [199.8–223.9] | 562.8 [557.1–580.1] | — |
+| udp-faketls-awg | tcp_p4 | 195.7 [181.3–201.6] | 577.8 [550.6–581.9] | — |
+| udp-faketls-awg | udp_p1 | 100.0 [100.0–100.0] | 100.0 [100.0–100.0] | 0.0 [0.0–0.0] / 0.0 [0.0–0.0] |
+| udp-faketls-awg | udp_p4 | 226.8 [218.8–228.4] | 153.3 [133.7–180.7] | 43.1 [42.7–45.1] / 52.1 [42.1–55.3] |
+
+Measurement full-host gate **PASS**; cleanup full-host gate
+**PASS**. All backend changes remain in the artifact; legacy
+rules were neither exempted nor deleted. Admitted measurements stay separate
+from the external host gate. Services/staged CLI were preserved; the exact
+owned inactive cookie-checked root was SHA-archived and every file verified
+before removal of only that root/archive.
+
+Current stock IPv4 data plane is qualified within this finite-window scope.
+UDP P4 loss under shared load remains measured evidence, not lossless
+capacity or an automatic regression claim. Exact TCP asymmetry stage is
+still OPEN; no extra queue/CPU/BPF series were launched. Full Q35 endurance
+and full Q36 remain OPEN, overall30/37 DONE81.1%.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
