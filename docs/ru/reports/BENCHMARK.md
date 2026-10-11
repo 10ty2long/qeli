@@ -2068,3 +2068,43 @@ cleanup host gate: **FAIL** ['legacy4'].
 его trace/лог/квитанция сохранены, namespace очищены перед повтором.
 .11 по последней проверке принимает TCP22 без SSH banner. Q36 cause/release
 AUTH-rate и очистка .11 OPEN; Q35 soak отдельно. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Проверка CPU affinity — 11 октября 2026
+
+<!-- normative-sync: q36-tcp-affinity-v1 -->
+
+**Q36-F021:** [парный эксперимент](../../../release/audit_q36_tcp_affinity_2026-10-11.json): шесть свежих
+raw/mux сессий, по два восьмисекундных TCP bidir P1 unlimited окна; три повтора
+с чередованием порядка. Shared: оба Qeli имеют affinity 0–1; split: сервер 0,
+клиент 1. Проверены все TID до/после окна, идентичность PID и CPU policy в
+каждом замере. Бинарник, INI, нагрузка и TCP sampler одинаковы внутри пары;
+конечные INI сверены по SHA в архиве. Меняется только размещение Qeli на CPU.
+Это также сокращает доступные каждому Qeli CPU с двух до одного; CPU не
+резервируются, iperf/sampler/фоновые службы продолжают разделять оба vCPU.
+
+Медиана [min–max] скорости трёх сессий, Мбит/с:
+
+| Mode | Placement | ↑ Mbps | ↓ Mbps |
+|---|---|---:|---:|
+| raw | shared | 149.0 [103.4–152.5] | 462.4 [452.2–499.5] |
+| raw | split | 130.5 [125.4–140.5] | 450.2 [430.2–502.9] |
+| mux | shared | 342.7 [336.8–358.9] | 870.3 [868.1–903.2] |
+| mux | split | 309.7 [270.8–325.3] | 816.7 [809.7–955.2] |
+
+Парное отношение split/shared, медиана [min–max]: raw ↑0.92 [0.84–1.26],
+↓1.00 [0.86–1.09]; mux ↑0.86 [0.80–0.95],
+↓0.93 [0.90–1.10]. Это эффект конкретной affinity
+на этой VM, а не доказательство ошибки scheduler или причинности ACK starvation.
+Закрепление не устранило raw-асимметрию: во всех трёх split-окнах uplink составляет
+27.9–30.3% downlink.
+RTT/очереди — sampled TCP_INFO, не непрерывная трасса ACK. Причина остаётся OPEN;
+настройки продукта не изменены. Ранее квалифицированный F010 release CLI SHA
+238153ab одинаков на обоих endpoint; текущее UDP-исправление этим не проверяется.
+Популяции не объединены с F020, прежними VM-парами или функциональным AUTH.
+
+Measurement host gate: **PASS** [];
+cleanup host gate: **FAIL** ['iptables4', 'legacy4'].
+Полные отличия сохранены. Собственные namespace/root удалены после проверки
+SHA-архива; службы и staged CLI сохранены, нового build cache нет.
+Q36 cause/release AUTH-rate и очистка .11
+OPEN; Q35 soak отдельно. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
