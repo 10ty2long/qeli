@@ -530,3 +530,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Permanent Actions lint](reports/AUDIT-Q34-WORKFLOW-LINT.md) — Q34/F488, 9 October 2026.
 
 - [MicroCom source identity and compatibility](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
+
+- [Q37: documentation and test harnesses](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.

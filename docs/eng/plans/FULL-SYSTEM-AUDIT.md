@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v225 -->
+<!-- normative-sync: full-system-audit-v226 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -178,7 +178,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Benchmarks and measurement methodology | H07 | IN_PROGRESS |
-| 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | TODO |
+| 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | IN_PROGRESS |
 
 Table reconciled against section21–23,26,28 completion and open29–31,35–36 statuses
 on11October. Earlier checkpoint totals below remain historical.
@@ -2237,7 +2237,9 @@ Compare keys/defaults/errors with runtime, execute complete examples, verify RU/
 - [ ] Integration and target platform.
 - [ ] Fixes, retesting and evidence.
 
-**Status: TODO.**
+**11 October, Q37-F001/F002:** [baseline and fixes](../reports/AUDIT-Q37-DOCUMENTATION.md): restored RU/EN versioned attestation examples; private website selected explicitly with `--site-root PATH`, missing inputs still refuse. Actual website, five negative site scenarios, five RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE and release certification 21 problems remain OPEN; actual current builds and final Linux matrix required. Full Q37 remains open, overall 30/37 DONE81.1%.
+
+**Status: IN_PROGRESS.**
 
 ## 7. Baseline and subsequent commands
 
@@ -2249,12 +2251,13 @@ mentioned earlier.
 python scripts/check_docs.py
 python scripts/check_panel.py
 node scripts/test_panel_editors.cjs
-node scripts/test_site_docs.js
 python -m unittest discover -s scripts -p "test_native_*.py"
 python scripts/sync_version.py
 python native-libs/provenance.py --check
 python scripts/release_certification.py --quiet
 ```
+
+`site/` is intentionally absent from Git. With the private website available, separately run `node scripts/test_site_docs.js --site-root PATH` and retain hashes of all five checked inputs plus its log. If inputs are unavailable, the website check remains OPEN; other baseline checks run independently.
 
 Run the complete server suite **on Linux**. The same command on Windows has different
 cfg coverage. Record the exact target and features:

@@ -1,11 +1,22 @@
-/* Run: node scripts/test_site_docs.js. No browser or external packages required. */
+/* Run: node scripts/test_site_docs.js [--site-root PATH]. No external packages required. */
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const root = path.resolve(__dirname, '..');
-const source = fs.readFileSync(path.join(root, 'site/js/docs.js'), 'utf8');
+const {parseArgs} = require('node:util');
+const {values} = parseArgs({options: {'site-root': {type: 'string'}}, allowPositionals: false});
+// site/ is intentionally private and absent from Git worktrees. Never turn missing
+// inputs into a skipped success or test an invented replacement for the real site.
+const siteRoot = path.resolve(values['site-root'] ?? path.join(__dirname, '../site'));
+for (const rel of ['js/docs.js', 'docs/index.html', 'install/debian/index.html',
+  'en/docs/index.html', 'en/install/debian/index.html']) {
+  if (!fs.statSync(path.join(siteRoot, rel), {throwIfNoEntry: false})?.isFile()) {
+    throw new Error(`Missing site input: ${path.join(siteRoot, rel)}. ` +
+      'Use --site-root PATH for the private website directory.');
+  }
+}
+const source = fs.readFileSync(path.join(siteRoot, 'js/docs.js'), 'utf8');
 const decode = s => s.replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, x => ({
   '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&nbsp;': '\u00a0'
 })[x]);
@@ -80,8 +91,8 @@ for (const [html, expected] of [
 ]) assert.equal(run(html).copied, expected);
 
 for (const locale of ['ru', 'en']) {
-  const base = locale === 'en' ? 'site/en' : 'site';
-  const hub = fs.readFileSync(path.join(root, base, 'docs/index.html'), 'utf8');
+  const base = locale === 'en' ? 'en' : '';
+  const hub = fs.readFileSync(path.join(siteRoot, base, 'docs/index.html'), 'utf8');
   const cards = [...hub.matchAll(/<a class="doc-card[^>]*href="([^"]*)"[^>]*data-search="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map(m => ({
     href: m[1], getAttribute: () => m[2], textContent: preNode(m[3]).textContent
   }));
@@ -93,7 +104,7 @@ for (const locale of ['ru', 'en']) {
   }
   assert.equal(ui.search('no_such_qeli_parameter').length, 0);
   assert.equal(ui.search('').length, cards.length);
-  const install = fs.readFileSync(path.join(root, base, 'install/debian/index.html'), 'utf8');
+  const install = fs.readFileSync(path.join(siteRoot, base, 'install/debian/index.html'), 'utf8');
   const html = /<pre><code>([\s\S]*?)<\/code><\/pre>/.exec(install)[1];
   assert(run(html, locale).copied.startsWith('curl -fsSLO '));
   assert(!/^\$ /m.test(run(html, locale).copied));

@@ -530,3 +530,5 @@
 - [Постоянный Actions lint](reports/AUDIT-Q34-WORKFLOW-LINT.md) — Q34/F488, 9 October 2026.
 
 - [Источник и совместимость MicroCom](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
+
+- [Q37: документация и тестовая обвязка](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
