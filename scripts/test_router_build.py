@@ -47,9 +47,27 @@ class RouterBuildTests(unittest.TestCase):
         if module is KEEN:
             changes['pull'] = Mock()
         changes.update(overrides)
-        with patch.multiple(module, **changes), patch.object(sys, 'argv', [module.__file__, *argv]), contextlib.redirect_stdout(io.StringIO()):
+        with tempfile.TemporaryDirectory(prefix='qeli-router-model-') as output, \
+                patch.object(module, 'LOCAL_OUT', Path(output)), \
+                patch.multiple(module, **changes), \
+                patch.object(sys, 'argv', [module.__file__, *argv]), \
+                contextlib.redirect_stdout(io.StringIO()):
             module.main()
         return client, changes
+
+    def test_model_build_publishes_legal_sidecar_only_in_temporary_output(self):
+        destinations = []
+        def check_output(_repo, destination):
+            destination = Path(destination)
+            self.assertFalse(destination.is_relative_to(ROOT), destination)
+            self.assertTrue(destination.parent.name.startswith('qeli-router-model-'))
+            self.assertTrue(destination.parent.is_dir())
+            destinations.append(destination)
+            return {'zip_sha256': 'fixture'}
+        with patch.object(KEEN, 'export_bundle_zip', side_effect=check_output):
+            self.invoke_main(KEEN, ['aarch64'])
+        self.assertEqual(len(destinations), 1)
+        self.assertFalse(destinations[0].parent.exists())
 
     def test_invalid_arch_and_extra_arguments_never_connect(self):
         for module in MODULES:

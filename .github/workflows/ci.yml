@@ -61,6 +61,14 @@ jobs:
         run: python3 scripts/native_licenses.py
       - name: Test native reproducibility contract
         run: python3 -m unittest discover -s scripts -p 'test_native_*.py'
+      - name: Test audit suite admission and portable regressions
+        run: |
+          python3 -B -m unittest discover -s scripts -p 'test_audit_test_suite.py'
+          python3 -B scripts/audit_test_suite.py --group portable
+      - name: Test self-contained Linux audit fixtures
+        run: python3 -B scripts/audit_test_suite.py --group linux
+      - name: Test LuCI source with isolated RPC and UCI models
+        run: node scripts/test_openwrt_luci.js
       - name: Test router release and diagnostic gates
         run: |
           python3 -m unittest discover -s scripts -p 'test_router_release_gate.py'

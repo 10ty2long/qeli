@@ -19,8 +19,8 @@ fn check_ini_round_trip(source: &str) {
 fn check_link_round_trip(uri: &str) {
     if let Ok(parsed) = ClientLink::from_uri(uri) {
         let canonical = parsed.to_uri();
-        let reparsed = ClientLink::from_uri(&canonical)
-            .expect("serialized valid share link must parse");
+        let reparsed =
+            ClientLink::from_uri(&canonical).expect("serialized valid share link must parse");
         assert_eq!(reparsed.to_uri(), canonical);
     }
 }
@@ -34,7 +34,11 @@ fuzz_target!(|data: &[u8]| {
 
         // Reach successful branches on every run, even with an initially empty corpus.
         let byte = |index| data.get(index).copied().unwrap_or_default();
-        let host = if byte(0) & 1 == 0 { "vpn.example.com" } else { "[2001:db8::1]" };
+        let host = if byte(0) & 1 == 0 {
+            "vpn.example.com"
+        } else {
+            "[2001:db8::1]"
+        };
         let port = 1024 + u16::from(byte(1));
         let proto = if byte(2) & 1 == 0 { "tcp" } else { "udp" };
         let roaming = ["off", "auto", "required"][usize::from(byte(3) % 3)];
