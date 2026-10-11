@@ -2729,3 +2729,19 @@ for TCP/UDP/QUIC: [strict DoT](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md).
 `systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
 
 Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+
+### Linux: TCP works but simultaneous upload/download reduces throughput
+
+<!-- normative-sync: q36-tun-counter-boundary-v1 -->
+
+Zero client tcp_uplink_drops/tcp_downlink_drops and server dropped do not exclude
+kernel TUN losses: these are Qeli application counters. Capture before/after
+`ip -s -s link show dev vpn0` and `tc -s qdisc show dev vpn0` over the same interval
+on server/client. Replace vpn0 with the actual TUN name; run commands in the
+process namespace. Compare RX/TX errors/dropped deltas for the same ifindex,
+and qdisc drops separately. With mq, do not sum root/children: root aggregates
+them already. Zero backlog after a test does not show peak queueing during load.
+Increasing TUN tx_dropped with zero qdisc drops identifies TUN device loss,
+without establishing the driver drop reason or the lost TCP flow. Compare
+latency before increasing queues: larger buffers may increase delay.
+[Scoped experiment and evidence limits](../reports/BENCHMARK.md).

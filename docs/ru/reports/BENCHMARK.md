@@ -2199,3 +2199,46 @@ Cargo / четыре fingerprint unit архивированы с проверк
 Следующий шаг: установить стадию задержки и проверить kernel TUN/qdisc counters
 для отсутствующих ACK. Q36 release AUTH-rate и Q35 soak OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Потери TUN при двунаправленной TCP-нагрузке — 11 октября 2026
+
+<!-- normative-sync: q36-tun-counters-v1 -->
+
+**Q36-F025:** [kernel counters](../../../release/audit_q36_tun_counters_2026-10-11.json), 3 свежие raw
+TCP сессии / 6 парных окон, прежний F010 CLI SHA238153ab, uplink unlimited,
+downlink100M/unlimited. ACK-only capture и снимки ip stats64, /proc/net/dev,
+tc qdisc до/после одинаковы в обеих настройках. Популяция отдельно от F023.
+
+Медианы трёх окон throughput и оконного matched-ACK p50; drops перечислены
+по повтору 1/2/3. Kernel TX counters относятся ко всем пакетам TUN, не только ACK.
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps | ACK p50 ms | Server TUN tx_dropped | Client TUN tx_dropped | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|
+| 100 | 289.4 | 99.9 | 0.773 | 0/0/0 | 136/424/234 | 0 |
+| unlimited | 157.4 | 553.2 | 13.804 | 546/198/229 | 396/171/261 | 10 |
+
+Server TUN TX drops растут во всех unlimited окнах, ноль при downlink100M.
+Client TUN TX drops растут во всех окнах при unlimited uplink. Всего server973 /
+client1622; RX drops/errors и TX errors нулевые. Потери каждой qdisc, включая
+mq root и fq_codel children, нулевые; root/children не суммируются. При этом
+server dropped и четыре/три причины client uplink/downlink drops не выросли.
+Это **kernel TUN TX loss вне прикладных счётчиков**, не доказанное переполнение
+конкретной очереди: код ошибки/причина driver drop здесь не наблюдаются.
+
+10 server-only data-ACK headers (1/0/9, unlimited), reverse omissions=0,
+tcpdump kernel drops=0. Latency только для совпавших headers. TX drops включают
+весь трафик, поэтому ими нельзя адресно объяснить эти 10 ACK. Нулевой backlog
+в граничных снимках не означает нулевой backlog во время передачи. Поколение,
+TUN ifindex/MTU/txqlen/queues, qdisc policy и PID/CPU сверены; ip и proc независимо
+подтвердили drop/error counters, monotonic deltas/clock boundaries проверены.
+Пять counter-parser методов PASS. Первая ошибка offline-обвязки (замена имени
+выходного файла) сохранена; runtime данные не менялись, cleanup отказал до SSH.
+
+Measurement full host gate **FAIL** ['iptables4', 'legacy4'];
+cleanup gate **PASS** [].
+Все отличия сохранены, службы/staged SHA неизменны, собственные namespaces/root
+архивированы и удалены. Новых сборок нет. Исправлены только устаревшие комментарии
+в server TUN/config: forwarder передаёт plaintext, выбранный stream writer
+выполняет recordization/encryption. Defaults и runtime поведение не менялись.
+Q36 ACK delay stage/driver drop reason/factory AUTH-rate и Q35 soak OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

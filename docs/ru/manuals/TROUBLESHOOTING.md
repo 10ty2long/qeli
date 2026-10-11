@@ -2742,3 +2742,19 @@ provider доступен и вне VPN, и внутри него. `Automatic` �
 `systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
 
 Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+
+### Linux: TCP работает, но скорость падает при одновременном upload/download
+
+<!-- normative-sync: q36-tun-counter-boundary-v1 -->
+
+Нулевые client tcp_uplink_drops/tcp_downlink_drops и server dropped не исключают
+потерь в TUN ядра: это прикладные счётчики Qeli. Снимите до/после одинакового
+интервала `ip -s -s link show dev vpn0` и `tc -s qdisc show dev vpn0` на сервере
+и клиенте. Замените vpn0 фактическим TUN именем; команды выполняются в namespace
+процесса. Сравнивайте дельты RX/TX errors/dropped для того же ifindex и отдельно
+qdisc drops. При mq не складывайте root и children — root уже агрегирует их.
+Нулевой backlog после теста не показывает пиковую очередь во время нагрузки.
+Рост TUN tx_dropped при нулевых qdisc drops указывает на потери устройства TUN,
+но сам по себе не устанавливает причину driver drop или потерянный TCP flow.
+Не увеличивайте очереди без сравнения задержки: больший буфер может её увеличить.
+[Ограниченный эксперимент и границы доказательства](../reports/BENCHMARK.md).

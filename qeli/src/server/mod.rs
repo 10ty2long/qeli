@@ -5678,8 +5678,8 @@ fn setup_profile_tun(pcfg: &ProfileConfig) -> anyhow::Result<ProfileTunSetup> {
     let name = pcfg.name.clone();
     // Setup TUN interface(s). With tun.queues>1 we open several IFF_MULTI_QUEUE fds
     // attached to ONE device; the kernel RSS-spreads packets across them so the data
-    // plane reads/writes the interface — and runs the per-queue encrypt — on multiple
-    // cores instead of funnelling everything through one reader/writer/forwarder.
+    // plane reads/writes the interface and forwards plaintext on multiple cores.
+    // The selected stream's writer owns recordization and encryption.
     // Never delete a pre-existing device here: there is no ownership marker proving it is
     // ours, and qeli-created devices are non-persistent and disappear with their last fd.
     // It can therefore be another qeli process, another application, or an operator-owned
@@ -6332,8 +6332,8 @@ async fn run_profile_generation(
         .flatten();
 
     // Per-queue data-plane pump. Each queue gets: a blocking reader (TUN -> forwarder),
-    // an async forwarder (lookup + ENCRYPT + send to client — encrypt now runs N-way in
-    // parallel, serialized only per-session by the codec lock), and a blocking writer that
+    // an async forwarder (route lookup + bounded plaintext handoff to the selected stream),
+    // and a blocking writer that
     // drains the bounded inbound channel directly into TUN. The kernel RSS-distributes
     // outbound TUN packets across the queues by flow.
     // Shared with `ProfileTeardown`: the flag the readers check when a signal interrupts their

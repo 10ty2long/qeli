@@ -273,8 +273,8 @@ pub struct TunConfig {
     pub device_type: String,
     /// Number of TUN queues (Linux `IFF_MULTI_QUEUE`) for the data-plane pump.
     /// `0` = auto (= CPU count). `>1` lets the kernel RSS-spread packets so the
-    /// server reads/writes the interface — and runs the per-queue encrypt — on
-    /// multiple cores. `1` = single queue (legacy single-pump behaviour).
+    /// server reads/writes the interface and forwards plaintext on multiple cores.
+    /// The selected stream writer encrypts it. `1` = single TUN queue.
     #[serde(default = "default_tun_queues")]
     pub queues: usize,
 }
