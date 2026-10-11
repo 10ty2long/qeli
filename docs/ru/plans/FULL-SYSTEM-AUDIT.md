@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v225 -->
+<!-- normative-sync: full-system-audit-v226 -->
 
 **Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -183,7 +183,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Бенчмарки и методика измерения | H07 | IN_PROGRESS |
-| 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | TODO |
+| 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | IN_PROGRESS |
 
 Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31,35–36
 11октября. Старые checkpoint-числа далее остаются историческими.
@@ -2247,7 +2247,9 @@ Keys/defaults/errors против runtime, полные examples через chec
 - [ ] Интеграция и целевая платформа.
 - [ ] Исправления, повторная проверка и evidence.
 
-**Статус: TODO.**
+**11 октября, Q37-F001/F002:** [исходная точка и исправления](../reports/AUDIT-Q37-DOCUMENTATION.md): версия RU/EN attestation examples восстановлена; private site передаётся явно через `--site-root PATH`, отсутствие входов остаётся отказом. Реальный сайт, пять отрицательных site-сценариев, пять RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE и release certification 21 problems остаются OPEN; нужны реальные текущие сборки и финальная Linux-матрица. Полный Q37 не закрыт, общий итог 30/37 DONE81,1%.
+
+**Статус: IN_PROGRESS.**
 
 ## 7. Команды исходной точки и последующих прогонов
 
@@ -2259,12 +2261,13 @@ Keys/defaults/errors против runtime, полные examples через chec
 python scripts/check_docs.py
 python scripts/check_panel.py
 node scripts/test_panel_editors.cjs
-node scripts/test_site_docs.js
 python -m unittest discover -s scripts -p "test_native_*.py"
 python scripts/sync_version.py
 python native-libs/provenance.py --check
 python scripts/release_certification.py --quiet
 ```
+
+`site/` намеренно не входит в Git. При доступном private-каталоге отдельно выполнить `node scripts/test_site_docs.js --site-root PATH`, сохранить SHA пяти проверяемых входов и лог. Если входов нет, site-проверка остаётся OPEN; остальные baseline checks выполняются независимо.
 
 Полный серверный набор — **на Linux**; запуск той же команды на Windows имеет другое
 cfg-покрытие. Зафиксировать точный target и features:

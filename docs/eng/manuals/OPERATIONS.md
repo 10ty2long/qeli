@@ -124,6 +124,12 @@ The local path must exist; a typo refuses instead of downloading. Local input sk
 
 SHA256SUMS from the same release establish integrity against its metadata, not independent provenance. Set `QELI_VERIFY_ATTESTATION=1` to require `gh attestation verify` for a remote package; missing gh or failed verification aborts. Keep separate backups of configs/users/identity/client links before major upgrades: the updater preserves them but does not back them up. See [§4](#4-what-to-back-up) and [the scoped updater audit](../reports/AUDIT-Q33-SERVER-UPDATER.md).
 
+To verify a downloaded amd64 package before manual installation, use GitHub CLI against this repository. The filename below follows the latest published release in this guide; failed verification means the package has not passed this provenance check.
+
+```bash
+gh attestation verify qeli_0.8.1_amd64.deb --repo litvinovtd/qeli
+```
+
 For manual package rollback, keep a trusted old .deb and install it with `apt-get install --allow-downgrades`, then restart/check the service and inspect dpkg's installed version. Binary restoration alone is emergency recovery, with the metadata limitation above.
 
 > **The package does not touch your configs.** The `.deb` only installs `*.conf.example`;
