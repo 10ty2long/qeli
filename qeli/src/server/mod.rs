@@ -3835,10 +3835,11 @@ async fn run_worker_inner(
         .is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound);
     let users_db = load_users_db_for_runtime(&config).map_err(|error| {
         anyhow::anyhow!(
-            "users configuration using '{}' could not be loaded or validated: {error}. Refusing \
+            "users configuration using '{}' could not be loaded or validated: {}. Refusing \
              to start with an empty user database — every client would be rejected. Fix the \
              file, or move it aside to start fresh.",
-            config.auth.users_file
+            config.auth.users_file,
+            crate::config::users::users_error_message(&error)
         )
     })?;
     if users_file_missing && config.auth.users.is_empty() && config.auth.groups.is_empty() {
@@ -4893,7 +4894,7 @@ async fn reload_on_sighup(state: &Arc<ServerState>) {
             log::error!(
                 "SIGHUP: failed to reload users from '{}': {} — keeping current auth state",
                 new_config.auth.users_file,
-                error
+                crate::config::users::users_error_message(&error)
             );
             return;
         }

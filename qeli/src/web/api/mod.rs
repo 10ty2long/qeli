@@ -215,8 +215,9 @@ pub(super) fn effective_users(
 ) -> Result<crate::config::users::UsersDb, String> {
     crate::server::load_users_db_for_runtime(config).map_err(|error| {
         format!(
-            "cannot load users configuration '{}': {error}",
-            config.auth.users_file
+            "cannot load users configuration '{}': {}",
+            config.auth.users_file,
+            crate::config::users::users_error_message(&error)
         )
     })
 }

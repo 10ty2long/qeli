@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v230 -->
+<!-- normative-sync: full-system-audit-v231 -->
 
 **Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2256,6 +2256,8 @@ Keys/defaults/errors против runtime, полные examples через chec
 **11 октября,Q37-F004:** [client config parity](../reports/AUDIT-Q37-DOCUMENTATION.md):84 defaults/81 profile keys+3 logging, REALITY/AWG/shaping/gateway/TOFU/Android docs исправлены;8 contract methods/4 old-source negatives/9docs PASS. Factory CLI39 actual admissions:37 accepted+2 expected original refusals. Первый harness FAIL и full host firewall delta FAIL сохранены; own fixture SHA/inactive cleanup выполнен. Native inputs unchanged/Q35 RUNNING; full Q37 и30/37 DONE81,1% неизменны.
 
 **11 октября,Q37-F005:** серверные134 скалярных defaults /268 RU+EN сравнений;68 исправленных+66 исходных INI,126admission+8отказов. Исправлены inline-комментарии/смешение секций/пересечение слушателей;11methods/исходные doc negatives/docs/workflows PASS. Первый/третий/четвёртый host FAIL сохранены; повторено только девять затронутых случаев, owned SHA/inactive cleanup завершён. Native inputs прежние/Q35 RUNNING; полный Q37 IN_PROGRESS,30/37 DONE81.1%.
+
+**11 октября,Q37-F006:** все176 читаемых INI-ключей сверены с документацией:134+41 defaults,1 obsolete. Исправлены списки/options/группы/listen/REALITY;82 реальных решения допуска (30accepted/52refused),11 прежних diagnostic FAIL сохранены. Общий вывод ошибки users.conf сохраняет причину; source Rust probe0/3 before→3/3 after, полный CLI rebuild ещё нужен. Host gates PASS/FAIL/FAIL, архив и очистка собственных roots проверены. [Отчёт](../reports/AUDIT-Q37-DOCUMENTATION.md). Native digest317e722b stale, Q35 frozen/RUNNING; Q37 IN_PROGRESS,30/37 DONE81.1%.
 
 **Статус: IN_PROGRESS.**
 

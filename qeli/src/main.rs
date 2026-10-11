@@ -567,7 +567,12 @@ async fn main() -> anyhow::Result<()> {
                 // unreadable or malformed files still fail.
                 #[cfg(target_os = "linux")]
                 server::load_users_db_for_runtime(&cfg).map_err(|e| {
-                    anyhow::anyhow!("{}: users database '{}': {}", path, cfg.auth.users_file, e)
+                    anyhow::anyhow!(
+                        "{}: users database '{}': {}",
+                        path,
+                        cfg.auth.users_file,
+                        config::users::users_error_message(&e)
+                    )
                 })?;
                 // Pre-flight the addressing against THIS host, so `check-config` on the
                 // server answers the question that matters before a first start: would

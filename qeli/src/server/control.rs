@@ -63,14 +63,17 @@ fn users_write_failure(
     users: &mut UsersDb,
     error: &anyhow::Error,
 ) -> String {
-    let mut message = error.to_string();
+    let mut message = crate::config::users::users_error_message(error);
     if crate::util::atomic_write_was_published(error) {
         match crate::server::load_users_db_for_runtime(config) {
             Ok(fresh) => {
                 *users = fresh;
                 message.push_str("; published users read back into live auth");
             }
-            Err(readback) => message.push_str(&format!("; readback failed: {readback}")),
+            Err(readback) => message.push_str(&format!(
+                "; readback failed: {}",
+                crate::config::users::users_error_message(&readback)
+            )),
         }
     } else {
         message.push_str("; users file change NOT applied");

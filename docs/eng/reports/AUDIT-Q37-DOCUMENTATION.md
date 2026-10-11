@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v4 -->
+<!-- normative-sync: q37-documentation-baseline-v5 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -29,8 +29,17 @@ The current factory CLI35da83fd checked134 final cases:66 original and68 correct
 
 All11 relevant contract methods, generated bindings, versions, nine docs checks and four-workflow actionlint PASS. First, third and fourth full host gates FAIL retained for .10 iptables4/legacy4 changes; the second gate PASS does not erase them. Every owned fixture was SHA/inactive-identity verified and removed; running services/firewall were untouched. Product/native/factory inputs unchanged. Full Q37 remains IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-**Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current 7d42e38f). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Lab compilation waits for measurement completion to preserve run conditions.
+
+Q37-F006: [optional/list/user/group defaults and boundaries](../../../release/audit_q37_collection_parity_2026-10-11.json). Source coverage now inventories all176 consumed keys:123 profile,7 auth,23 web,4 logging,16 user and3 group. In addition to134 scalar defaults, the guard checks41 remaining defaults/82 RU+EN comparisons; the sole obsolete `tun.netmask` only warns and is ignored. This is source/table review, not execution of all Rust defaults. The new guard uses the existing CI glob. The actual method reading original documents found6 RU and4 EN mismatches; current12 contract methods, generated bindings, versions and9 documentation checks PASS.
+
+Clarified empty/repeated lists, optional numerics, scalar types in disabled blocks, group ACL/positive-limit inheritance, strict malformed-listener refusal and nonzero REALITY short IDs padded to8 bytes. INI examples are unchanged. Factory CLI35da83fd checked74 scenarios plus8 REALITY boundaries:30 admissions/52 refusals. After correcting the erroneous refusal expectation for14 hex digits, all82 admission decisions match the contract. Original FAIL is retained. Cases include16/17 client_subnet,256/257 user routes,10000/10001 DNS blocklist, types, duplicates, metadata, routes, IPv4/IPv6 and groups; admission does not qualify connections or runtime inheritance.
+
+In11 refusals the CLI lost the actual users.conf cause when converting `anyhow::Error` into a string. A shared formatter now preserves the cause chain in CLI, panel response, worker startup, SIGHUP and control/write/readback. Two Rust tests cover a nested parser cause and preservation of the IO error type. A bounded offline Rust probe with the exact helper/tests and four consumer formatting expressions reproduced0/3 PASS before and3/3 PASS after the fix. This is not a whole CLI build or qualification of corrected diagnostics in a new package: full rebuild/release qualification remains required. The old11 diagnostic FAIL results are not relabeled PASS.
+
+**Host snapshots:** the original74-case matrix PASS; the Rust probe and extra REALITY matrix FAIL for iptables4/legacy4 changes, with other structural fields unchanged. No exceptions, rule removal or service modification. The first archive qualifier refused one tar hardlink; target membership and extracted-content SHA were verified without recompilation, preserving the original failure. The6138272-byte/64-file archive was fully verified; all three owned inactive roots were removed after SHA/cookie/process guards. Native source digest changed to317e722b; running Q35 and Q36 factory evidence still belongs to the old35da binary. Full Q37 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current 317e722b). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Lab compilation waits for measurement completion to preserve run conditions.
 
 Release certification reports 21 problems: its overall digest and all 20 automated Linux cases belong to another tree. The gate hashes the entire committed tree except its own evidence; new documentation/report commits also change that digest. Freeze final release inputs first, then execute and bind the matrix to that tree. Relabeling historical PASS under a new digest is prohibited. User-skipped physical platforms are not reported as tested.
 
-Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Remaining full Q37 work includes option/list/user/group and error parity, OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Remaining full Q37 work includes OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
