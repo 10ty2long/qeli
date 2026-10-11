@@ -2206,3 +2206,46 @@ Old incomplete runs/errors remain incomplete; initial harness argv-limit failure
 retained, no mutation from that attempt. Next: identify the delayed stage and
 check kernel TUN/qdisc counters for missing ACKs. Q36 release AUTH-rate and Q35
 soak remain OPEN. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## TUN losses under bidirectional TCP load — 11 October 2026
+
+<!-- normative-sync: q36-tun-counters-v1 -->
+
+**Q36-F025:** [kernel counters](../../../release/audit_q36_tun_counters_2026-10-11.json), 3 fresh raw TCP
+sessions / 6 paired windows, same F010 CLI SHA238153ab, unlimited uplink,
+downlink100M/unlimited. Identical ACK-only capture and ip stats64, /proc/net/dev,
+tc qdisc boundary snapshots in both settings. Population separate from F023.
+
+Medians of three window throughput values and matched-ACK window p50s; drops
+listed in repeat order 1/2/3. Kernel TX counters cover all TUN traffic, not just ACK.
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps | ACK p50 ms | Server TUN tx_dropped | Client TUN tx_dropped | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|
+| 100 | 289.4 | 99.9 | 0.773 | 0/0/0 | 136/424/234 | 0 |
+| unlimited | 157.4 | 553.2 | 13.804 | 546/198/229 | 396/171/261 | 10 |
+
+Server TUN TX drops increase in every unlimited window, zero at downlink100M.
+Client TUN TX drops increase in all unlimited-uplink windows. Totals server973 /
+client1622; RX drops/errors and TX errors remain zero. Every qdisc drop counter,
+including mq root/fq_codel children, remains zero; root/children are not summed.
+Server dropped and four/three client uplink/downlink drop-cause counters do not
+increase. This is **kernel TUN TX loss outside application counters**, without
+proving a specific full queue: the driver drop error/reason is not observed here.
+
+10 server-only data-ACK headers (1/0/9, unlimited), no reverse omissions or tcpdump
+kernel drops. Latency covers matched headers only. TX drop totals cover all
+traffic and cannot identify those 10 ACKs. Zero boundary backlog does not bound
+backlog during transmission. Generation, TUN ifindex/MTU/txqlen/queues, qdisc
+policy and PID/CPU verified; ip/proc independently confirm drop/error counters,
+monotonic deltas/clock boundaries checked. Five counter-parser methods PASS.
+Initial offline harness output-name substitution failure retained; runtime data
+unchanged, cleanup refused before SSH.
+
+Measurement full host gate **FAIL** ['iptables4', 'legacy4'];
+cleanup gate **PASS** [].
+Differences retained, services/staged SHA preserved, owned namespaces/root
+archived and removed. No new compilation. Only stale server TUN/config comments
+corrected: forwarder hands off plaintext, selected stream writer owns
+recordization/encryption. Defaults/runtime unchanged. Q36 ACK delayed stage /
+driver drop reason / factory AUTH-rate and Q35 soak remain OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
