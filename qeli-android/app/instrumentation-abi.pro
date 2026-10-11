@@ -1,5 +1,11 @@
 # Generated from pre-R8 AndroidTest/runner references; instrumented Release only.
 # Regenerate after AndroidTest/dependency changes; see qeli-android/README.md.
+-keep,allowaccessmodification class androidx.activity.ComponentActivity {
+  public androidx.activity.result.ActivityResultRegistry getActivityResultRegistry();
+}
+-keep,allowaccessmodification class androidx.activity.result.ActivityResultRegistry {
+  public boolean dispatchResult(int,java.lang.Object);
+}
 -keep,allowaccessmodification @interface androidx.annotation.ChecksSdkIntAtLeast {
   public int api();
   public int extension();
@@ -72,6 +78,10 @@
 }
 -keep,allowaccessmodification @interface com.google.errorprone.annotations.MustBeClosed {
 }
+-keep,allowaccessmodification class com.qeli.BoundedInput {
+  public static byte[] read$default(com.qeli.BoundedInput,java.io.InputStream,int,java.lang.String,int,java.lang.Object);
+  com.qeli.BoundedInput INSTANCE;
+}
 -keep,allowaccessmodification class com.qeli.DiagnosticLogEntry {
   public <init>(long,java.lang.String,java.lang.String,java.lang.String);
   public java.lang.String getMessage();
@@ -81,6 +91,12 @@
   public void clear$app(java.io.File);
   public static java.util.List read$app$default(com.qeli.DiagnosticLogStore,java.io.File,int,long,int,java.lang.Object);
   com.qeli.DiagnosticLogStore INSTANCE;
+}
+-keep,allowaccessmodification class com.qeli.MainActivity {
+  com.qeli.MainActivity$Companion Companion;
+}
+-keep,allowaccessmodification class com.qeli.MainActivity$Companion {
+  public boolean getUiVisible$app();
 }
 -keep,allowaccessmodification class com.qeli.ProfileStore {
   public java.lang.String activeProfileConfigText(android.content.Context);
@@ -103,6 +119,13 @@
 }
 -keep,allowaccessmodification class com.qeli.ProfileStore$SecureStore$Version {
   public boolean getPresent();
+}
+-keep,allowaccessmodification class com.qeli.R$string {
+  int allow_lan;
+  int loading_apps;
+}
+-keep,allowaccessmodification class com.qeli.StrictUtf8Kt {
+  public static java.lang.String decodeUtf8Strict(byte[]);
 }
 -keep,allowaccessmodification class com.qeli.TransportCore {
   public void close();
@@ -129,6 +152,21 @@
 -keep,allowaccessmodification class com.qeli.TransportCoreNetworkPlan {
   public long getGeneration();
 }
+-keep,allowaccessmodification class com.qeli.TrustedWifiPolicy {
+  public java.lang.String normalizeObservedSsid(java.lang.String);
+  com.qeli.TrustedWifiPolicy INSTANCE;
+}
+-keep,allowaccessmodification class com.qeli.VpnConnectRequest {
+  public void awaitPermission(com.qeli.VpnConnectRequest$Permission);
+  public boolean begin(com.qeli.model.VpnConfig);
+  public boolean finishPermission(com.qeli.VpnConnectRequest$Permission,boolean);
+  public boolean getHasOutstandingResult();
+  public boolean isActive();
+  public com.qeli.model.VpnConfig takeConfiguration();
+}
+-keep,allowaccessmodification enum com.qeli.VpnConnectRequest$Permission {
+  com.qeli.VpnConnectRequest$Permission NOTIFICATION;
+}
 -keep,allowaccessmodification class com.qeli.VpnServiceImpl {
   public <init>();
   com.qeli.VpnServiceImpl$Companion Companion;
@@ -136,16 +174,23 @@
   java.lang.String liveIp;
   boolean liveLockdown;
   java.lang.String liveStatus;
+  java.lang.String liveTrustedSsid;
 }
 -keep,allowaccessmodification class com.qeli.VpnServiceImpl$Companion {
   public java.lang.String getDebugTunSelfTestResult$app();
   public void setDebugTunSelfTestResult$app(java.lang.String);
+}
+-keep,allowaccessmodification class com.qeli.crypto.BackupCrypto {
+  public java.lang.String decrypt(byte[],java.lang.String);
+  com.qeli.crypto.BackupCrypto INSTANCE;
 }
 -keep,allowaccessmodification class com.qeli.model.LiveConnectionProperties {
 }
 -keep,allowaccessmodification class com.qeli.model.VpnConfig {
   public <init>(java.lang.String,int,java.lang.String,long,boolean,int,long,long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,boolean,java.lang.String,boolean,java.lang.String,java.lang.String,boolean,java.util.List,java.util.List,boolean,boolean,boolean,boolean,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,int,int,boolean,java.lang.String,java.lang.String,boolean,int,int,boolean,long,int,long,boolean,long,long,long,int,int,int,boolean,int,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.util.List,java.util.Map,java.util.List,java.util.List,java.util.List,java.lang.String,java.util.List,int,int,int,kotlin.jvm.internal.DefaultConstructorMarker);
   public static com.qeli.model.VpnConfig copy$default(com.qeli.model.VpnConfig,java.lang.String,int,java.lang.String,long,boolean,int,long,long,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,int,boolean,java.lang.String,boolean,java.lang.String,java.lang.String,boolean,java.util.List,java.util.List,boolean,boolean,boolean,boolean,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,int,int,boolean,java.lang.String,java.lang.String,boolean,int,int,boolean,long,int,long,boolean,long,long,long,int,int,int,boolean,int,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.util.List,java.util.Map,java.util.List,java.util.List,java.util.List,java.lang.String,java.util.List,int,int,int,java.lang.Object);
+  public java.util.List getApps();
+  public java.lang.String getAppsMode();
   public boolean getMtuProbe();
   public int getPort();
   public java.lang.String getServerAddress();
@@ -158,6 +203,7 @@
 -keep,allowaccessmodification class com.qeli.model.VpnConfig$Companion {
   public com.qeli.model.VpnConfig fromIni(java.lang.String);
   public com.qeli.model.VpnConfig fromQeliUri(java.lang.String);
+  public com.qeli.model.VpnConfig parse(java.lang.String);
 }
 -keep,allowaccessmodification @interface kotlin.Deprecated {
   public java.lang.String message();
@@ -224,9 +270,17 @@
 -keep,allowaccessmodification class kotlin.collections.CollectionsKt__IterablesKt {
   public static int collectionSizeOrDefault(java.lang.Iterable,int);
 }
+-keep,allowaccessmodification class kotlin.collections.CollectionsKt__MutableCollectionsKt {
+  public static boolean addAll(java.util.Collection,java.lang.Iterable);
+}
 -keep,allowaccessmodification class kotlin.collections.CollectionsKt___CollectionsKt {
   public static boolean contains(java.lang.Iterable,java.lang.Object);
+  public static java.util.List plus(java.util.Collection,java.lang.Iterable);
+  public static java.lang.Object single(java.util.List);
   public static java.util.Set toSet(java.lang.Iterable);
+}
+-keep,allowaccessmodification class kotlin.collections.IntIterator {
+  public int nextInt();
 }
 -keep,allowaccessmodification class kotlin.collections.MapsKt {
 }
@@ -290,6 +344,9 @@
 }
 -keep,allowaccessmodification class kotlin.io.FilesKt {
 }
+-keep,allowaccessmodification class kotlin.io.FilesKt__FileReadWriteKt {
+  public static byte[] readBytes(java.io.File);
+}
 -keep,allowaccessmodification class kotlin.io.FilesKt__UtilsKt {
   public static boolean deleteRecursively(java.io.File);
 }
@@ -324,9 +381,14 @@
   public static void checkNotNull(java.lang.Object,java.lang.String);
   public static void checkNotNullExpressionValue(java.lang.Object,java.lang.String);
   public static void checkNotNullParameter(java.lang.Object,java.lang.String);
+  public static void throwUninitializedPropertyAccessException(java.lang.String);
 }
 -keep,allowaccessmodification class kotlin.jvm.internal.Lambda {
   public <init>(int);
+}
+-keep,allowaccessmodification class kotlin.jvm.internal.Ref$BooleanRef {
+  public <init>();
+  boolean element;
 }
 -keep,allowaccessmodification class kotlin.jvm.internal.Ref$IntRef {
   public <init>();
@@ -341,6 +403,16 @@
 }
 -keep,allowaccessmodification class kotlin.jvm.internal.StringCompanionObject {
   kotlin.jvm.internal.StringCompanionObject INSTANCE;
+}
+-keep,allowaccessmodification class kotlin.jvm.internal.TypeIntrinsics {
+  public static java.util.List asMutableList(java.lang.Object);
+}
+-keep,allowaccessmodification class kotlin.ranges.IntRange {
+}
+-keep,allowaccessmodification class kotlin.ranges.RangesKt {
+}
+-keep,allowaccessmodification class kotlin.ranges.RangesKt___RangesKt {
+  public static kotlin.ranges.IntRange until(int,int);
 }
 -keep,allowaccessmodification interface kotlin.sequences.Sequence {
   public java.util.Iterator iterator();
