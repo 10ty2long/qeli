@@ -1,5 +1,6 @@
 //! TCP receive-to-TUN handoff losses, separate from later device write errors.
 use portable_atomic::{AtomicU64, Ordering};
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 use serde::Serialize;
 
 #[derive(Clone, Copy)]
@@ -16,6 +17,8 @@ pub(crate) struct DownlinkCounters {
     disconnected: AtomicU64,
 }
 
+// The Linux client's status writer consumes snapshots; native adapters only note losses.
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 #[derive(Debug, Default, PartialEq, Eq, Serialize)]
 pub(crate) struct DownlinkSnapshot {
     pub total: u64,
@@ -34,6 +37,7 @@ impl DownlinkCounters {
         .fetch_add(1, Ordering::Relaxed);
     }
 
+    #[cfg(any(test, all(target_os = "linux", feature = "client")))]
     pub(crate) fn snapshot(&self) -> DownlinkSnapshot {
         let pool_exhausted = self.pool_exhausted.load(Ordering::Relaxed);
         let queue_full = self.queue_full.load(Ordering::Relaxed);
