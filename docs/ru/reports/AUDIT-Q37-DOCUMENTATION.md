@@ -1,6 +1,6 @@
 # Q37: документация и тестовая обвязка — 11 октября 2026
 
-<!-- normative-sync: q37-documentation-baseline-v3 -->
+<!-- normative-sync: q37-documentation-baseline-v4 -->
 
 **Статус: IN_PROGRESS.** [Результаты и hashes](../../../release/audit_q37_documentation_2026-10-11.json). Полный Q37 ещё не завершён. Общий итог остаётся 30/37 DONE (81,1%).
 
@@ -21,8 +21,16 @@ Q37-F004: [сверка конфигов и документации](../../../r
 
 **Full host gate FAIL сохранён:** на .10 появились три ранее наблюдавшихся legacy FORWARD/MASQUERADE правила в iptables4/legacy4; остальные structural fields без изменений. Это не превращено в PASS и не исключено из сверки. После полного SHA inventory и проверки неактивности удалён только собственный fixture root; VPN не запускался и существующие правила/службы не менялись. Native input digest7d42e38f остался прежним; Q35 на .11 продолжается. Полный Q37 и общий итог30/37 DONE81,1% не изменены.
 
+Q37-F005: [серверные defaults и все INI-примеры CONFIG](../../../release/audit_q37_server_parity_2026-10-11.json). Обе справки явно описывают все134 скалярных присваивания default, извлечённые из INI-reader профиля/auth/web/logging. Source guard разрешает serde default-функции/литералы/константы и отличает sparse roaming=false от true в новом шаблоне, пустой DHCP listen от runtime-подстановки. Это не полная проверка optional/list/user/group и не подтверждение всех Rust defaults в runtime. Настоящий guard отвергает оба исходных мануала; новые проверки включены в CI.
+
+Исправлены inline-комментарии серверного exit-node и панели, настройки auth/client binding разделены на секции, устранено пересечение слушателей на нескольких адресах: основной адрес должен быть конкретным, если другой адрес использует тот же порт. Дополнены таблицы bind/TUN/obfs, бондинга, шейпинга, REALITY и глобального auth; уточнён бюджет включённого шейпинга. Контракт84 клиентских полей продолжает проходить.
+
+Текущий factory CLI35da83fd проверил134 итоговых случая:66 исходных и68 исправленных примеров/фрагментов на двух языках. Все ожидаемые результаты квалифицированы:126 admission и8 отказов исходных примеров. Четыре sysctl-входа (до/после на каждом языке) явно исключены. Фрагментам добавлен записанный контекст секции/минимального baseline; endpoint/pin/PHC placeholders материализованы инертными fixture. Соединение, NetworkPlan, hooks, запуск панели и sysctl не проверялись. Первый134-case прогон сохранён с шестью неуспешными verdict, включая ошибочную вставку endpoint в комментарий тестовым сценарием. Повторены только затронутые/изменённые случаи, всего девять дополнительных вызовов. SHA всех финальных материализованных случаев сопоставлены с настоящими upload/results.
+
+Все11 затронутых contract methods, generated bindings, версии, девять docs checks и actionlint четырёх workflows PASS. Первый, третий и четвёртый полные host gates FAIL сохранены из-за изменений iptables4/legacy4 на .10; PASS второго прогона их не отменяет. Каждый собственный fixture удалён после проверки SHA/неактивности/принадлежности; работающие сервисы/firewall не изменялись. Product/native/factory inputs прежние. Полный Q37 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
 **Открытый долг:** `native-libs/provenance.py --check` обнаружил изменение native inputs (recorded e3fb04a8, current 7d42e38f). Нужны реальные независимые A/B пересборки текущих desktop/Android recipes, сверка бинарных inventories и лишь затем обновление provenance. Штатная CLI-сборка для Q35/Q36 не обновляет библиотеки клиентов. Компиляция на лабе ждёт завершения измерений, чтобы не менять условия прогона.
 
 Release certification дала 21 проблему: общий digest и 20 автоматизированных Linux cases относятся к другому дереву. Gate сверяет всё committed tree, кроме собственных evidence; даже новые docs/report commits меняют этот digest. Поэтому сначала фиксируется окончательное дерево release inputs, затем выполняется матрица на нём и обновляется evidence. Повторная запись старых PASS под новый digest запрещена. Пропущенные пользователем физические платформы не объявляются протестированными.
 
-Q35 полный endurance выполняется отдельно; Q36-F029 уже квалифицировал текущую конечную data-plane матрицу в BENCHMARK. Здесь промежуточный Q35 не объявлен PASS. Для полного Q37 ещё нужны server defaults/examples parity, dead-code review с учётом OS/features/FFI и integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+Q35 полный endurance выполняется отдельно; Q36-F029 уже квалифицировал текущую конечную data-plane матрицу в BENCHMARK. Здесь промежуточный Q35 не объявлен PASS. Для полного Q37 ещё нужны optional/list/user/group defaults и ошибки, dead-code review с учётом OS/features/FFI и integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

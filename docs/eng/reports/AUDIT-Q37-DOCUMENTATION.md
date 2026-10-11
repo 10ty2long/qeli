@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v3 -->
+<!-- normative-sync: q37-documentation-baseline-v4 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -21,8 +21,16 @@ Current factory CLI35da83fd in private network namespaces checked39 cases:16 cor
 
 **Full host gate FAIL retained:** three previously observed legacy FORWARD/MASQUERADE rules appeared in .10 iptables4/legacy4; other structural fields unchanged. No PASS conversion or exception. Only the owned inactive fixture was removed after full SHA inventory/identity checks; no VPN was started or existing rules/services modified. Native digest7d42e38f unchanged; Q35 continues on .11. Full Q37 and overall30/37 DONE81.1% unchanged.
 
+Q37-F005: [server defaults and all CONFIG INI examples](../../../release/audit_q37_server_parity_2026-10-11.json). Both references now explicitly document all134 scalar default assignments extracted from the profile/auth/web/logging INI readers. This source guard resolves serde default functions/literals/constants and distinguishes sparse roaming=false from new-template=true, and empty DHCP listen from its runtime fallback. It does not claim complete option/list/user/group coverage or Rust runtime default qualification. The actual guard refuses both original manuals; new checks run in CI.
+
+Fixed server exit-node and panel inline comments, split auth/client binding settings into separate sections, and fixed overlapping multi-address listeners: the primary address must be specific when another address uses the same port. Completed default tables for bind/TUN/obfs, bonding, shaping, REALITY and global auth; clarified the enabled shaping budget. Client84-field contract remains PASS.
+
+The current factory CLI35da83fd checked134 final cases:66 original and68 corrected examples/fragments across both languages. All expected outcomes were qualified:126 admissions and8 original refusals. Four sysctl inputs (before/after in each language) were excluded explicitly. Fragments received recorded section/minimal baseline context; documented endpoint/pin/PHC placeholders were materialized with inert fixtures. No connection, network plan, hook, panel startup or sysctl execution was tested. The first134-case attempt retained six failed verdicts (including a harness endpoint insertion into a comment); only changed/affected cases were rerun, nine extra invocations in total. All final materialized case hashes were reconciled with actual uploads/results.
+
+All11 relevant contract methods, generated bindings, versions, nine docs checks and four-workflow actionlint PASS. First, third and fourth full host gates FAIL retained for .10 iptables4/legacy4 changes; the second gate PASS does not erase them. Every owned fixture was SHA/inactive-identity verified and removed; running services/firewall were untouched. Product/native/factory inputs unchanged. Full Q37 remains IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
 **Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current 7d42e38f). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Lab compilation waits for measurement completion to preserve run conditions.
 
 Release certification reports 21 problems: its overall digest and all 20 automated Linux cases belong to another tree. The gate hashes the entire committed tree except its own evidence; new documentation/report commits also change that digest. Freeze final release inputs first, then execute and bind the matrix to that tree. Relabeling historical PASS under a new digest is prohibited. User-skipped physical platforms are not reported as tested.
 
-Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Remaining full Q37 work includes server default/example parity, OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Remaining full Q37 work includes option/list/user/group and error parity, OS/features/FFI-aware dead-code review and integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
