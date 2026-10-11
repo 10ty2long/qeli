@@ -2149,3 +2149,53 @@ cleanup host gate: **PASS** [].
 INI сверены, службы и staged CLI сохранены. Новых сборок/build cache нет.
 Q36 mechanism/release AUTH-rate и очистка .11 OPEN; Q35 soak отдельно.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Прохождение uplink ACK и очистка лабы — 11 октября 2026
+
+<!-- normative-sync: q36-ack-path-v1 -->
+
+**Q36-F023:** [ACK headers](../../../release/audit_q36_ack_path_2026-10-11.json), три свежие raw TCP
+сессии / шесть парных окон: два одновременных unidirectional iperf P1 потока,
+uplink unlimited, downlink100M/unlimited. Один F010 release CLI SHA238153ab,
+INI и CPU0–1; два одинаковых ACK-only tcpdump observer в собственных namespace.
+Это отдельная популяция с observer; прежние throughput результаты не объединены.
+
+Время: исходящий ACK на серверном qbench0 → входящий идентичный IP/TCP header на
+клиентском qbench0, одна VM / общий clock. Для каждого окна рассчитаны nearest-rank
+p50/p95/p99; ниже **медиана трёх оконных перцентилей**, а не общий перцентиль.
+Задержки относятся только к headers, наблюдавшимся на обоих концах.
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps | ACK p50 ms | p95 ms | p99 ms | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|
+| 100 | 321.6 | 99.9 | 0.760 | 4.174 | 8.921 | 0 |
+| unlimited | 140.9 | 529.8 | 15.934 | 30.980 | 36.569 | 15 |
+
+Во всех трёх парах median ACK path delay при unlimited downlink выше в
+**14.1–27.8 раза**. Из 169903 серверных data-ACK headers 169888 сопоставлены;
+15 отсутствуют в клиентском захвате (8/1/6, только unlimited), обратных пропусков
+нет. Headers и времена пропусков сохранены, причина **OPEN**; tcpdump reported
+kernel drops=0 на обоих концах, наблюдаемые client drop counters/server dropped
+не выросли. Отсутствующие headers не включены в latency distribution и не объявлены
+доказанными потерями Qeli. Контрольный TCP socket исключён по raw iperf data port;
+каждый packet проверен: complete RAW IPv4 TCP ACK, zero payload, exact headers,
+FIFO multiplicity, nanosecond timestamps, без отрицательных интервалов/clock jump.
+Exit/settings/status/PID/CPU/TCP roles/SHA проверены; пять parser test методов PASS.
+
+Измеренный участок включает оба процесса Qeli и внешний TCP. ACK generation
+и отдельные стадии очередей/шифрования/планировщика не измерены. Это сужает
+поиск причины асимметрии, но не доказывает конкретный баг и не закрывает Q36.
+F010 предшествует F018 UDP fix; текущий fix/release AUTH-rate здесь не проверяются.
+Defaults не менялись. Measurement и cleanup full host gates PASS; namespace/root
+архивированы, SHA/INI сверены, удалены; службы/staged CLI сохранены. Новых сборок нет.
+
+**Q36-F024:** [старый долг .11](../../../release/audit_q36_lab11_cleanup_2026-10-11.json) закрыт:
+SSH восстановился, cargo/rustc отсутствуют, прежний namespace уже удалён;
+исходный inode/boot/staged SHA сверены. Неактивный source root и 26 файлов
+Cargo / четыре fingerprint unit архивированы с проверкой каждого SHA и удалены;
+освобождено 243044280 байт уникального содержимого. Это размер содержимого,
+не обещание точного изменения свободного места FS. Общие зависимости/службы
+сохранены, полный host gate PASS. Старый незавершённый прогон и ошибки не
+превращены в PASS; первая ошибка обвязки argv limit сохранена, изменений от неё нет.
+Следующий шаг: установить стадию задержки и проверить kernel TUN/qdisc counters
+для отсутствующих ACK. Q36 release AUTH-rate и Q35 soak OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

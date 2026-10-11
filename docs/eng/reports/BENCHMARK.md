@@ -2157,3 +2157,52 @@ Differences remain; owned namespaces/root were SHA-archived and removed, INI
 verified, services and staged CLI preserved. No new builds/build cache.
 Q36 mechanism/release AUTH-rate and .11 cleanup remain OPEN; Q35 soak separate.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Uplink ACK path and lab cleanup — 11 October 2026
+
+<!-- normative-sync: q36-ack-path-v1 -->
+
+**Q36-F023:** [ACK headers](../../../release/audit_q36_ack_path_2026-10-11.json), three fresh raw TCP
+sessions / six paired windows: two simultaneous unidirectional iperf P1 flows,
+uplink unlimited, downlink100M/unlimited. Identical F010 release CLI SHA238153ab,
+INI, CPU0–1 and two ACK-only tcpdump observers in owned namespaces.
+This observer-present population is separate from prior throughput results.
+
+Timing: server qbench0 outgoing ACK → client qbench0 incoming identical IP/TCP
+header, same VM clock. Nearest-rank p50/p95/p99 per window; table reports the
+**median of three window percentiles**, not pooled percentiles. Latency includes
+only headers observed at both endpoints.
+
+| Downlink target Mbps | ↑ Mbps | ↓ Mbps | ACK p50 ms | p95 ms | p99 ms | Server-only ACK |
+|---|---:|---:|---:|---:|---:|---:|
+| 100 | 321.6 | 99.9 | 0.760 | 4.174 | 8.921 | 0 |
+| unlimited | 140.9 | 529.8 | 15.934 | 30.980 | 36.569 | 15 |
+
+Unlimited downlink raises median ACK path delay by **14.1–27.8 times** in all three
+pairs. Of 169903 server data-ACK headers, 169888 match; 15 are absent from client
+captures (8/1/6, unlimited only), no reverse omissions. Missing headers/times are
+retained and their cause is **OPEN**; both tcpdump observers report zero kernel
+drops, observed client drop counters/server dropped do not increase. Missing
+headers are excluded from latency distribution and are not proven Qeli losses.
+Control sockets excluded by raw iperf data port. Each packet verified: complete
+RAW IPv4 TCP ACK, zero payload, exact headers, FIFO multiplicity, nanosecond
+timestamps, no negative delays/clock jump. Exit/settings/status/PID/CPU/TCP
+roles/SHA verified; five parser test methods PASS.
+
+The boundary includes both Qeli processes and outer TCP. ACK generation and
+individual queue/crypto/scheduler stages are not measured. This narrows the
+asymmetry search, without proving a specific bug or closing Q36. F010 predates
+F018 UDP fix; current fix/release AUTH-rate are not tested here. Defaults unchanged.
+Measurement and cleanup full host gates PASS; namespaces/root SHA-archived and
+removed, INI verified, services/staged CLI preserved. No new builds.
+
+**Q36-F024:** [old .11 resource debt](../../../release/audit_q36_lab11_cleanup_2026-10-11.json)
+closed: SSH recovered, no cargo/rustc, old namespace already absent; original
+inode/boot/staged SHA verified. Inactive source root and 26 Cargo files / four
+fingerprint units archived with every SHA verified and removed; 243044280 bytes
+of unique file contents retired. Content bytes are separate from exact filesystem
+free-space changes. Shared dependencies/services preserved, full host gate PASS.
+Old incomplete runs/errors remain incomplete; initial harness argv-limit failure
+retained, no mutation from that attempt. Next: identify the delayed stage and
+check kernel TUN/qdisc counters for missing ACKs. Q36 release AUTH-rate and Q35
+soak remain OPEN. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
