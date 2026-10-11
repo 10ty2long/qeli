@@ -2297,3 +2297,64 @@ Differences remain in the gate; services/staged CLI SHA preserved, owned
 namespaces/root SHA-archived/removed. No new build/cache. Q36 ACK delay/driver
 drop mechanism/factory AUTH-rate and Q35 soak remain OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Current standard release CLI: AUTH — 11 October 2026
+
+<!-- normative-sync: q36-release-auth-v1 -->
+
+**Q36-F027/F028:** [source/build/raw proof](../../../release/audit_q36_release_auth_2026-10-11.json).
+Stock CLI SHA `35da83fd0a727a31a93c4527f8c814777aabcc7ef48dd92e0a0de65f5cbc7050` built from916 exact current inputs,
+unchanged Cargo.toml/all three crate types, fat LTO/codegen1/opt3/panicabort/strip
+and default+jemalloc. No lto=false/codegen16 overrides. .11 build capped at
+RAM1536MiB/high1100/swap1536/CPU1/1800s; working CLI/services preserved. Server
+build322s, resident peak1101MiB/swap peak1404.6MiB (separate peaks, not concurrent
+memory sum). Prior capped OOM failures remain failures.
+
+Observer peer uses actual main.rs with private proof/AUTH clocks/barrier and
+exit before NetworkPlan; same release profile/features/Cargo.toml. **108 fresh
+bursts/756 peers**, all12 carriers × c1/4/16 ×3. Identity proof, AuthOK, unique
+pool IPs/registry verified;108 server shutdown exit0/756 peer exit0. Stock release
+CLI includes F018 UDP shutdown fix. This new release-server AUTH/rate population
+remains separate from the functional lto=false F019 population.
+
+Finite prepared-burst admissions/s: median [min–max] of three repeats.
+Startup/keygen/TCP wrapper establishment excluded, UDP AWG junk included;
+Argon2id PHC m19456/t2/p1. Server/peers share a two-vCPU VM; CPU/RSS/steal/load
+and raw tails retained. **Not sustained/physical server capacity**, steady
+data-plane throughput or full client E2E.
+
+| Transport | c1 admissions/s | c4 admissions/s | c16 admissions/s |
+|---|---:|---:|---:|
+| tcp-plain-raw | 49.9 [31.0–51.7] | 82.0 [52.9–89.3] | 61.4 [48.6–64.4] |
+| tcp-faketls | 47.8 [47.2–49.1] | 72.2 [42.1–84.4] | 61.9 [51.6–66.0] |
+| tcp-padding | 49.5 [36.5–51.7] | 76.8 [74.4–84.2] | 60.4 [55.1–64.4] |
+| tcp-frag | 29.5 [24.8–30.2] | 62.7 [52.7–68.5] | 59.5 [51.3–61.1] |
+| tcp-obfs | 47.9 [43.8–50.0] | 84.6 [76.2–86.2] | 63.8 [54.7–65.3] |
+| tcp-reality | 46.9 [45.0–49.7] | 83.3 [73.6–88.0] | 61.4 [57.9–63.6] |
+| tcp-reality-tls | 22.5 [21.7–27.2] | 56.6 [55.6–59.4] | 57.7 [52.9–59.6] |
+| udp-faketls | 48.2 [37.1–49.1] | 86.9 [59.5–87.1] | 50.6 [49.2–60.6] |
+| udp-padding | 47.9 [47.9–50.3] | 64.2 [63.2–66.1] | 62.0 [44.4–63.9] |
+| udp-quic | 47.1 [44.7–49.9] | 85.4 [75.6–86.2] | 63.2 [57.3–63.9] |
+| tcp-obfs-awg | 49.1 [48.3–50.0] | 84.5 [70.8–85.5] | 58.4 [58.1–59.7] |
+| udp-faketls-awg | 48.3 [47.7–48.8] | 80.8 [49.5–84.2] | 61.7 [59.8–62.9] |
+
+F028: the first peer build linked successfully against the stock library without
+observer. Modified tar entries had mtime0, library fingerprint newer; first
+runtime refused on READY timeout,0 completed bursts. Original ELF/log/inputs/
+fingerprint/runtime failure retained. Instrumented input times are now forced
+fresh before Cargo. Runner additionally refuses peers without QELI_AUTH_BARRIER
+**before** mkdir/network setup; marker is an early sanity check only, actual
+barrier/proof/AuthOK/registry remain mandatory. Real stock/stale ELF refused;
+new peer verified through756 actual barriers/results.6Windows+6Linux targeted
+methods PASS, including pre-setup refusal/read-chunk boundary. Initial Linux
+fixture lacked two source inputs; error retained and repaired without changing
+production source/binary.
+
+Measurement full host gate **PASS** [];
+cleanup full gate **PASS** [].
+Own private Cargo cache inventoried/removed; actual binaries/source/runtime
+evidence SHA-archived/verified, own root/namespaces removed. Original cache/
+staged CLI/services preserved. Native-libs/deploy/release unchanged. Current
+factory AUTH block complete within this finite-burst scope; Q36 precise TCP
+asymmetry stage/current steady data-plane and Q35 endurance remain OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

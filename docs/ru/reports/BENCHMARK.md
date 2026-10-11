@@ -2291,3 +2291,64 @@ cleanup full gate **FAIL** ['iptables4', 'legacy4'].
 namespaces/root SHA-архивированы и удалены. Новых сборок/кэша нет. Q36 механизм
 ACK delay/driver drops/factory AUTH-rate и Q35 soak остаются OPEN.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Текущая штатная release-сборка: AUTH — 11 октября 2026
+
+<!-- normative-sync: q36-release-auth-v1 -->
+
+**Q36-F027/F028:** [source/build/raw proof](../../../release/audit_q36_release_auth_2026-10-11.json).
+Штатный CLI SHA `35da83fd0a727a31a93c4527f8c814777aabcc7ef48dd92e0a0de65f5cbc7050` собран из916 точных текущих входов,
+неизменённый Cargo.toml, все три crate types, fat LTO/codegen1/opt3/panicabort/
+strip и default+jemalloc. Никаких lto=false/codegen16 overrides. Новая сборка
+на .11 ограничена RAM1536MiB/high1100/swap1536/CPU1/1800с; рабочий CLI/службы
+сохранены. Server build322с, resident peak1101MiB/swap peak1404.6MiB (раздельные
+пики, не сумма одновременной памяти). Предыдущие capped OOM не превращены в PASS.
+
+Измерительный peer — actual main.rs с private proof/AUTH clocks/barrier и exit
+до NetworkPlan; тот же release-профиль/features/Cargo.toml. **108 свежих серий /
+756 клиентов**, все12 транспортов × c1/4/16 ×3. Identity proof, AuthOK, уникальные
+pool IP и registry сверены;108 server shutdown exit0/756 peers exit0. В stock
+release CLI присутствует F018 UDP shutdown fix. Это новый release-серверный
+AUTH/rate результат, отдельно от функциональной lto=false F019 популяции.
+
+Скорость конечной подготовленной серии, admissions/s: median [min–max] трёх
+повторов. Startup/keygen/TCP wrapper establishment исключены, UDP AWG junk
+включён; PHC Argon2id m19456/t2/p1. Server/peers делят2vCPU одной VM, CPU/RSS/
+steal/load и raw tails сохранены. Это **не sustained/physical server capacity**,
+не steady data-plane throughput и не полный клиентский E2E.
+
+| Transport | c1 admissions/s | c4 admissions/s | c16 admissions/s |
+|---|---:|---:|---:|
+| tcp-plain-raw | 49.9 [31.0–51.7] | 82.0 [52.9–89.3] | 61.4 [48.6–64.4] |
+| tcp-faketls | 47.8 [47.2–49.1] | 72.2 [42.1–84.4] | 61.9 [51.6–66.0] |
+| tcp-padding | 49.5 [36.5–51.7] | 76.8 [74.4–84.2] | 60.4 [55.1–64.4] |
+| tcp-frag | 29.5 [24.8–30.2] | 62.7 [52.7–68.5] | 59.5 [51.3–61.1] |
+| tcp-obfs | 47.9 [43.8–50.0] | 84.6 [76.2–86.2] | 63.8 [54.7–65.3] |
+| tcp-reality | 46.9 [45.0–49.7] | 83.3 [73.6–88.0] | 61.4 [57.9–63.6] |
+| tcp-reality-tls | 22.5 [21.7–27.2] | 56.6 [55.6–59.4] | 57.7 [52.9–59.6] |
+| udp-faketls | 48.2 [37.1–49.1] | 86.9 [59.5–87.1] | 50.6 [49.2–60.6] |
+| udp-padding | 47.9 [47.9–50.3] | 64.2 [63.2–66.1] | 62.0 [44.4–63.9] |
+| udp-quic | 47.1 [44.7–49.9] | 85.4 [75.6–86.2] | 63.2 [57.3–63.9] |
+| tcp-obfs-awg | 49.1 [48.3–50.0] | 84.5 [70.8–85.5] | 58.4 [58.1–59.7] |
+| udp-faketls-awg | 48.3 [47.7–48.8] | 80.8 [49.5–84.2] | 61.7 [59.8–62.9] |
+
+F028: первый peer build успешно линковался со stock-библиотекой без observer.
+У изменённых tar entries mtime0, библиотечный fingerprint новее; первый runtime
+отказал по READY timeout,0 успешных серий. Исходный ELF/log/inputs/fingerprint/
+runtime отказ сохранены. Времена instrumentation-входов теперь принудительно
+обновляются перед Cargo. Runner также отвергает peer без QELI_AUTH_BARRIER
+**до** mkdir/сетевых действий; marker — только ранняя sanity check, реальная
+barrier/proof/AuthOK/registry по-прежнему обязательны. Stock/stale настоящие ELF
+отказали, новый peer проверен реальными756 barrier/results.6Windows+6Linux
+targeted methods PASS, включая отказ до setup и marker на границе read chunk.
+Первая Linux fixture не имела двух source-входов; ошибка сохранена, исправлена
+без изменения production исходников/бинарника.
+
+Measurement full host gate **PASS** [];
+cleanup full gate **PASS** [].
+Own private Cargo cache inventoried/removed; исходные/измеренные бинарники,
+source/runtime evidence SHA-архивированы/проверены, own root/namespaces удалены.
+Общий cache/staged CLI/службы сохранены. Native-libs/deploy/release не менялись.
+Текущий factory AUTH-блок закрыт в указанном finite-burst scope; Q36 точная
+стадия TCP асимметрии/steady текущий data-plane и Q35 endurance остаются OPEN.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

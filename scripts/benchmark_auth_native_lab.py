@@ -13,7 +13,7 @@ import threading
 import time
 
 from audit_udp_handshake_contracts import control, stop, wait_for
-from benchmark_auth_native import admit_native_burst, validate_control_path
+from benchmark_auth_native import admit_native_burst, validate_control_path, validate_instrumented_peer
 from benchmark_isolated_lab import configs
 from benchmark import MODES
 import re
@@ -152,7 +152,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--qeli', required=True); parser.add_argument('--peer', required=True)
     parser.add_argument('--output', type=Path, required=True)
-    args = parser.parse_args(); args.output.mkdir(mode=0o700)
+    args = parser.parse_args()
+    validate_instrumented_peer(args.peer)
+    args.output.mkdir(mode=0o700)
     subprocess.run(['ip', 'link', 'set', 'lo', 'up'], check=True)
     result = dict(status='RUNNING', runs=[], errors=[], topology='native server and prepared native CLI peers on private loopback on one VM',
         phc=dict(algorithm='argon2id', version=19, memory_kib=19456, iterations=2, parallelism=1),
