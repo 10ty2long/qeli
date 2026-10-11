@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v9 -->
+<!-- normative-sync: q37-documentation-baseline-v10 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -70,3 +70,9 @@ Actual Rust 1.97.0 offline/locked/jobs1 results: all-target Clippy PASS, exact p
 After completion: all ten phases passed, including INI editor/examples/server-ini, conformance and the stock jemalloc release CLI with fat LTO/codegen1. The new CLI passed all eleven users.conf refusal cases, retaining the specific causes lost by the old binary. CLI SHA `886e525ed909037fafe8ea494094c7eb0c0a4f2a0e0f0e44f1cd68a3e966cff5` binds source `c69f9c9493412aede854cffe308a9a5b22a77c36`. This qualifies the build and those diagnostics, not full release integration or rebuilt native libraries.
 
 The result packet is sealed. The 653036246-byte archive and all 17930 files passed SHA verification; the owned compiler directory and remote archive copy were removed. Temporary 2 GiB swap was disabled and removed; pre-existing swap was preserved. Host gates: collection PASS, cleanup FAIL; all deltas ['legacy4'] remain recorded. Rules and production services were not changed to obtain PASS. Original OOM and test failures remain archived. Native A/B and final certification remain pending. Q37 IN_PROGRESS;30/37 DONE81.1%.
+
+Q37-F010: [current Windows/macOS native libraries](../../../release/audit_q37_native_current_2026-10-11.json). The stock Windows FFI build with `-D warnings` exposed four dead-code errors: TCP counter snapshots compiled without a consumer. Their types, snapshot methods and Serialize import now compile for Linux/client and tests; loss counting remains in the shared core. The fix is bound to `de087865cf65609223a0a0e3970badd47e7116ed`.
+
+Windows x64 and macOS universal x64/arm64 were built twice in independent Cargo/Zig target directories with Rust1.97.0, offline/locked/jobs1 and stock fat LTO/codegen1/panic=unwind. Both pairs are byte-identical. Exact 33 C ABI exports were checked for Windows and each macOS slice; the new DLL passed 22 C ABI/localhost checks without Wintun or route changes. Both TCP counter tests PASS. Initial harness refusals are retained: 12 missing test files, an empty linker placeholder and mistakenly treating the DLL name as an export. After adding files from the same commit, only the two tests were repeated; A/B was not rebuilt. The macOS cross-build retains Xcode SDK lookup warnings; physical macOS execution was excluded by the user and is not qualified.
+
+Canonical and consumed Windows/macOS copies were updated with identical files; desktop evidence binds the current native digest. The 20981357-byte/407-file archive was fully checked; rebuildable caches were retained as a SHA inventory. Owned build roots and temporary swap were removed; original lab resources were preserved. Collection and cleanup retain host FAIL for legacy4. Android A/B/JNI, global PROVENANCE and final certification remain open; old evidence was not restamped. Q37 IN_PROGRESS, 30/37 DONE81.1%.
