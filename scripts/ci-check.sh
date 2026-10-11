@@ -40,6 +40,10 @@ echo "== server library and standalone client feature boundaries =="
 "${CARGO[@]}" check --locked --no-default-features --features client-bin --bin qeli-client || rc=1
 echo "== test =="
 "${CARGO[@]}" test --locked --workspace -- --test-threads=1 || rc=1
+echo "== minimal feature library tests =="
+for feature in server client-bin transport-core-ffi; do
+    "${CARGO[@]}" test --locked --no-default-features --features "$feature" --lib -- --test-threads=1 || rc=1
+done
 echo "== configuration and transport-core ABI tests =="
 "${CARGO[@]}" test --locked --features transport-core-ffi --test config_editor || rc=1
 CARGO_PROFILE_RELEASE_PANIC=unwind "${CARGO[@]}" test --locked --features transport-core-ffi transport_core -- --test-threads=1 || rc=1

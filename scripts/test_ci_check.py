@@ -82,6 +82,8 @@ if os.environ.get("FAIL_TOOL") == selector:
         profiles = {tuple(call["args"]) for call in cargo}
         for feature in ("server", "client-bin", "transport-core-ffi"):
             self.assertTrue(any("--no-default-features" in args and feature in args for args in profiles), feature)
+            self.assertIn(("test", "--locked", "--no-default-features", "--features",
+                           feature, "--lib", "--", "--test-threads=1"), profiles)
         self.assertTrue(any("config_editor" in args for args in profiles))
         self.assertTrue(any("conformance-gen" in args for args in profiles))
         self.assertTrue(any("fuzz/Cargo.toml" in args for args in profiles))

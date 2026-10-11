@@ -1,6 +1,6 @@
 # Q37: документация и тестовая обвязка — 11 октября 2026
 
-<!-- normative-sync: q37-documentation-baseline-v7 -->
+<!-- normative-sync: q37-documentation-baseline-v8 -->
 
 **Статус: IN_PROGRESS.** [Результаты и hashes](../../../release/audit_q37_documentation_2026-10-11.json). Полный Q37 ещё не завершён. Общий итог остаётся 30/37 DONE (81,1%).
 
@@ -57,8 +57,14 @@ Q37-F008: [локальный CI runner](../../../release/audit_q37_ci_runner_20
 
 Оба .10 прогона заняли около 4 секунд, пиковая память 20,4 / 21,3 МиБ, swap 0. Начальный host gate PASS, окончательный FAIL сохранён: изменилось поле iptables4. Оба собственных неактивных каталога SHA-архивированы и удалены: 50 672 / 51 111 байт, по 9 entries. Actionlint для 4 workflows и 4 admission guard methods PASS. Native inputs остаются 3538e06c STALE; Q35 по последнему read-only checkpoint дошёл до TCP 5300/10000 и продолжает RUNNING. Полные сборки и certification остаются открыты. Q37 IN_PROGRESS; 30/37 DONE (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-**Открытый долг:** `native-libs/provenance.py --check` обнаружил изменение native inputs (recorded e3fb04a8, current 3538e06c). Нужны реальные независимые A/B пересборки текущих desktop/Android recipes, сверка бинарных inventories и лишь затем обновление provenance. Штатная CLI-сборка для Q35/Q36 не обновляет библиотеки клиентов. Компиляция на лабе ждёт завершения измерений, чтобы не менять условия прогона.
+**Открытый долг:** `native-libs/provenance.py --check` обнаружил изменение native inputs (recorded e3fb04a8, current abcc1494). Нужны реальные независимые A/B пересборки текущих desktop/Android recipes, сверка бинарных inventories и лишь затем обновление provenance. Штатная CLI-сборка для Q35/Q36 не обновляет библиотеки клиентов. Android-компиляция на .11 ждёт завершения Q35; отдельная .10 проверяется независимо, без общей машины или тестовой сети.
 
 Release certification дала 21 проблему: общий digest и 20 автоматизированных Linux cases относятся к другому дереву. Gate сверяет всё committed tree, кроме собственных evidence; даже новые docs/report commits меняют этот digest. Поэтому сначала фиксируется окончательное дерево release inputs, затем выполняется матрица на нём и обновляется evidence. Повторная запись старых PASS под новый digest запрещена. Пропущенные пользователем физические платформы не объявляются протестированными.
 
 Q35 полный endurance выполняется отдельно; Q36-F029 уже квалифицировал текущую конечную data-plane матрицу в BENCHMARK. Здесь промежуточный Q35 не объявлен PASS. Для полного Q37 остаются компиляторная проверка использования кода и feature targets, а также integration на актуальных сборках. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+Q37-F009: [реальные тесты минимальных feature-профилей](../../../release/audit_q37_current_units_2026-10-11.json). Исправлены два дефекта обвязки: метка libtest `--nocapture` склеивалась с первой строкой маршрута preflight; переносимый тест usage вызывал helper ошибки directory fsync, доступный только при Linux/server. Helper теперь ограничен только `cfg(test)`. Рабочая логика атомарной записи и сетевые таймауты не менялись. CI и локальный runner запускают библиотечные тесты раздельно с server, client-bin и transport-core-ffi, без default features.
+
+Rust 1.97.0, offline/locked/jobs1: фактический Clippy all-targets PASS, точный preflight regression PASS; server — 2310 PASS/56 ignored, client — 1933 PASS/49 ignored, FFI — 1951 PASS/49 ignored. Ни один ignored-тест не объявлен проверенным. Все полные логи сохранены с SHA; тестировались 920 замороженных входов. Пять Linux shell-policy методов PASS; новый тест отверг прежний runner без минимальных тестов. Проверка CI-стенда сохраняет FAIL для изменения iptables4.
+
+Первоначальные OOM, серверные 10 FAIL, клиентский E0425 и отрицательная DNS-проверка при soft FD1024 сохранены. Для собственного изолированного задания используется короткий private `/tmp`, FD8192 и временный swap 2 ГиБ; число одновременных DNS-запросов и deadline не увеличены. Первый OOM-каталог архивирован и удалён; текущий пакет ещё не запечатан, временный swap надо удалить после завершения задания. Полная сборка CLI, его 11 диагностик, native A/B и final certification остаются открытыми. Native digest abcc1494 STALE; полный Q37 IN_PROGRESS, 30/37 DONE81,1%.

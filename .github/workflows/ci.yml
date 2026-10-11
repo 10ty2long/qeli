@@ -159,6 +159,11 @@ jobs:
         run: python3 ../scripts/gen_roundtrip_fixture.py --check
       - name: Test
         run: cargo test --locked --workspace -- --test-threads=1
+      - name: Minimal feature library tests
+        run: |
+          for feature in server client-bin transport-core-ffi; do
+            cargo test --locked --no-default-features --features "$feature" --lib -- --test-threads=1
+          done
       # The whole-client ABI is opt-in while clients migrate. Test its state machine with
       # the normal feature set (some older realtls unit tests require `server`), then build
       # the actual minimal cdylib configuration separately. The release profile is the

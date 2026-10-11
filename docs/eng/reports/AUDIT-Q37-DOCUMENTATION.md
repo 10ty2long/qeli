@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v7 -->
+<!-- normative-sync: q37-documentation-baseline-v8 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -57,8 +57,14 @@ The new test_ci_check is connected to the workflow and local runner. Five method
 
 Both .10 runs took about 4 seconds with peak memory 20.4 / 21.3 MiB and zero swap. The initial host gate passed; the final FAIL remains in the artifact: iptables4 changed. Both owned inactive roots were SHA-archived and removed: 50,672 / 51,111 bytes with 9 entries each. Actionlint for 4 workflows and 4 admission guard methods passed. Native inputs remain 3538e06c STALE; the last read-only Q35 checkpoint reached TCP 5300/10000 and is still RUNNING. Full builds and certification remain open. Q37 is IN_PROGRESS; 30/37 DONE (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-**Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current 3538e06c). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Lab compilation waits for measurement completion to preserve run conditions.
+**Open debt:** `native-libs/provenance.py --check` detects changed native inputs (recorded e3fb04a8, current abcc1494). Real independent A/B builds of current desktop/Android recipes, binary inventories and subsequent provenance update are required. The stock CLI used for Q35/Q36 does not refresh client libraries. Android compilation on .11 waits for Q35 completion; the independent .10 compiler does not share its machine or test network.
 
 Release certification reports 21 problems: its overall digest and all 20 automated Linux cases belong to another tree. The gate hashes the entire committed tree except its own evidence; new documentation/report commits also change that digest. Freeze final release inputs first, then execute and bind the matrix to that tree. Relabeling historical PASS under a new digest is prohibited. User-skipped physical platforms are not reported as tested.
 
 Full Q35 endurance runs separately; Q36-F029 already qualified the finite current data-plane matrix in BENCHMARK. Intermediate Q35 is not declared PASS here. Full Q37 still needs compiler checks of code usage and feature targets, plus integration on current builds. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+Q37-F009: [actual minimal-feature unit suites](../../../release/audit_q37_current_units_2026-10-11.json). Fixed two test harness defects: libtest's `--nocapture` label joined the first simulated preflight route line; the portable usage test called a directory-fsync failure helper restricted to Linux/server. The helper is now gated only by `cfg(test)`. Atomic-write production behavior and network deadlines are unchanged. CI and the local runner execute separate server, client-bin and transport-core-ffi library tests without default features.
+
+Actual Rust 1.97.0 offline/locked/jobs1 results: all-target Clippy PASS, exact preflight regression PASS; server 2310 passed/56 ignored, client 1933 passed/49 ignored, FFI 1951 passed/49 ignored. Ignored fixtures are not qualified. Complete logs and their SHA bind 920 frozen inputs. Five Linux shell-policy methods passed; the new test rejected the previous runner missing minimal-profile tests. The CI fixture host gate retains an iptables4 delta FAIL.
+
+The original OOMs, ten server failures, client E0425 and low-FD1024 DNS negative control remain recorded. The owned isolated job uses short private `/tmp`, FD8192 and temporary 2 GiB swap; DNS capacity and deadlines are unchanged. The initial OOM directory was archived and removed. The current packet is unsealed; temporary swap must be removed after the job finishes. Full CLI build, its eleven diagnostics, native A/B and final certification remain pending. Native digest abcc1494 is STALE. Full Q37 IN_PROGRESS;30/37 DONE81.1%.
