@@ -109,6 +109,13 @@ impl ProfileTasks {
         inner.tasks.abort_all();
     }
 
+    pub(crate) fn is_stopping(&self) -> bool {
+        self.inner
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .stopping
+    }
+
     pub(crate) async fn shutdown(&self) -> anyhow::Result<()> {
         self.abort_all();
         let _waiter = self.shutdown_lock.lock().await;
@@ -133,6 +140,28 @@ impl ProfileTasks {
             .failures
             .result()
     }
+}
+
+/// A UDP listener joins every worker before returning. During owner shutdown a
+/// successful worker exit is expected, but completed failures must survive abort.
+pub(crate) async fn supervise_udp_workers(
+    workers: &mut JoinSet<anyhow::Result<()>>,
+    tasks: &ProfileTasks,
+) -> anyhow::Result<()> {
+    let first = match workers.join_next().await {
+        Some(Ok(Err(error))) => Err(anyhow::anyhow!("UDP worker failed: {error}")),
+        Some(Ok(Ok(()))) if tasks.is_stopping() => Ok(()),
+        Some(Ok(Ok(()))) => Err(anyhow::anyhow!("UDP worker stopped unexpectedly")),
+        Some(Err(error)) => Err(anyhow::anyhow!("UDP worker task panicked: {error}")),
+        None => Err(anyhow::anyhow!("no UDP workers were started")),
+    };
+    let mut failures = Failures::default();
+    failures.record("UDP listener", first);
+    workers.abort_all();
+    while let Some(result) = workers.join_next().await {
+        failures.record_aborted_task("UDP worker", result);
+    }
+    failures.result()
 }
 
 /// Critical services and ingress listeners remain owned by the outer profile wrapper.
@@ -273,6 +302,78 @@ pub(crate) async fn worker_tick(
 
 #[cfg(test)]
 mod tests {
+    #[tokio::test]
+    async fn udp_owner_stop_allows_normal_exit_and_drains_pending_workers() {
+        let tasks = super::ProfileTasks::new("udp-stop");
+        let mut workers = tokio::task::JoinSet::new();
+        workers.spawn(async { Ok(()) });
+        workers.spawn(std::future::pending());
+        tasks.abort_all();
+        tokio::time::timeout(
+            std::time::Duration::from_secs(1),
+            super::supervise_udp_workers(&mut workers, &tasks),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert!(workers.is_empty());
+    }
+
+    #[tokio::test]
+    async fn udp_worker_normal_exit_in_live_profile_is_fatal() {
+        let tasks = super::ProfileTasks::new("udp-live");
+        let mut workers = tokio::task::JoinSet::new();
+        workers.spawn(async { Ok(()) });
+        let error = super::supervise_udp_workers(&mut workers, &tasks)
+            .await
+            .unwrap_err();
+        assert!(error.to_string().contains("stopped unexpectedly"));
+        assert!(workers.is_empty());
+    }
+
+    #[tokio::test]
+    async fn udp_owner_stop_preserves_completed_worker_errors_and_panics() {
+        let tasks = super::ProfileTasks::new("udp-failures");
+        let mut workers = tokio::task::JoinSet::new();
+        let mut completions = Vec::new();
+        for index in 0..3 {
+            let (done, completed) = tokio::sync::oneshot::channel();
+            completions.push(completed);
+            workers.spawn(async move {
+                done.send(()).unwrap();
+                // No await follows the signal: this poll completes or panics
+                // before the single-thread test can request cancellation.
+                match index {
+                    0 => Ok(()),
+                    1 => anyhow::bail!("completed UDP error"),
+                    _ => panic!("completed UDP panic"),
+                }
+            });
+        }
+        for completed in completions {
+            completed.await.unwrap();
+        }
+        tasks.abort_all();
+        let error = super::supervise_udp_workers(&mut workers, &tasks)
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("completed UDP error"), "{error}");
+        assert!(error.contains("completed UDP panic"), "{error}");
+        assert!(workers.is_empty());
+    }
+
+    #[tokio::test]
+    async fn udp_listener_without_workers_is_fatal_even_during_stop() {
+        let tasks = super::ProfileTasks::new("udp-empty");
+        let mut workers = tokio::task::JoinSet::new();
+        tasks.abort_all();
+        let error = super::supervise_udp_workers(&mut workers, &tasks)
+            .await
+            .unwrap_err();
+        assert!(error.to_string().contains("no UDP workers"));
+    }
+
     use super::*;
     use std::future::Future;
 

@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v216 -->
+<!-- normative-sync: full-system-audit-v217 -->
 
 **Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2643,3 +2643,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **11 октября, Q36-F016:** [Смешанные семейства](../reports/BENCHMARK.md):54 новые сессии /216 окон TCP+UDP bidir P1/P4 остальных девяти транспортов outer4/inner6 и outer6/inner4;648 raw JSON +manifest. Прежние core3/direct сохранены отдельно с sealed SHA; вместе с F015 все12 покрыты тремя недефолтными парами.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 собственных каталога SHA-архивированы/удалены,службы сохранены; все host gates и отличия финальной сверки retained. IPv6 RTT/full AUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 октября, Q36-F017:** [RTT IPv6](../reports/BENCHMARK.md):39 свежих сессий /78 десятисекундных окон TCP bidir P1/P4 всех12 транспортов+direct outer6/inner6;15600 проб,15573 ответов/27 потерь. Оконные p50/p95/p99,потери и median/spread трёх сессий пересчитаны независимо из379 SHA-проверенных исходных файлов; прежний IPv4 отдельно.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 собственных каталога SHA-архивированы/удалены,службы неизменны,полные отличия host gates сохранены. Полный carrier AUTH/rate и причина асимметрии OPEN;Q35 soaks отдельно;Q36 IN_PROGRESS;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 октября, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): воспроизведён ложный аварийный выход при штатной отмене receive pump и потеря завершённых ошибок других workers. Исправлены оба пути; 38 точных Rust-тестов и 77 benchmark methods на каждой Windows/Linux PASS. Малый Linux fixture архивирован/удалён; служба .10 сохранена, полный host gate FAIL из-за трёх legacy-правил. .11 без SSH banner; текущая CLI integration build/108 fresh AUTH/очистка .11 OPEN. Q36 IN_PROGRESS,30/37 DONE81,1%,7осталось. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
