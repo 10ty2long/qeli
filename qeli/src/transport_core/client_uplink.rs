@@ -1,6 +1,7 @@
 //! Reason counters for bounded TCP client hand-offs, separate from UDP socket loss.
 
 use portable_atomic::{AtomicU64, Ordering};
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 use serde::Serialize;
 
 #[derive(Clone, Copy)]
@@ -19,6 +20,8 @@ pub(crate) struct UplinkCounters {
     no_carrier: AtomicU64,
 }
 
+// The Linux client's status writer consumes snapshots; native adapters only note losses.
+#[cfg(any(test, all(target_os = "linux", feature = "client")))]
 #[derive(Debug, Default, PartialEq, Eq, Serialize)]
 pub(crate) struct UplinkSnapshot {
     pub total: u64,
@@ -39,6 +42,7 @@ impl UplinkCounters {
         .fetch_add(1, Ordering::Relaxed);
     }
 
+    #[cfg(any(test, all(target_os = "linux", feature = "client")))]
     pub(crate) fn snapshot(&self) -> UplinkSnapshot {
         let pool_exhausted = self.pool_exhausted.load(Ordering::Relaxed);
         let queue_full = self.queue_full.load(Ordering::Relaxed);
