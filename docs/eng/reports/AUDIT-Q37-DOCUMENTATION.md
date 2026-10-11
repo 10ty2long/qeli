@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v10 -->
+<!-- normative-sync: q37-documentation-baseline-v11 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -76,3 +76,9 @@ Q37-F010: [current Windows/macOS native libraries](../../../release/audit_q37_na
 Windows x64 and macOS universal x64/arm64 were built twice in independent Cargo/Zig target directories with Rust1.97.0, offline/locked/jobs1 and stock fat LTO/codegen1/panic=unwind. Both pairs are byte-identical. Exact 33 C ABI exports were checked for Windows and each macOS slice; the new DLL passed 22 C ABI/localhost checks without Wintun or route changes. Both TCP counter tests PASS. Initial harness refusals are retained: 12 missing test files, an empty linker placeholder and mistakenly treating the DLL name as an export. After adding files from the same commit, only the two tests were repeated; A/B was not rebuilt. The macOS cross-build retains Xcode SDK lookup warnings; physical macOS execution was excluded by the user and is not qualified.
 
 Canonical and consumed Windows/macOS copies were updated with identical files; desktop evidence binds the current native digest. The 20981357-byte/407-file archive was fully checked; rebuildable caches were retained as a SHA inventory. Owned build roots and temporary swap were removed; original lab resources were preserved. Collection and cleanup retain host FAIL for legacy4. Android A/B/JNI, global PROVENANCE and final certification remain open; old evidence was not restamped. Q37 IN_PROGRESS, 30/37 DONE81.1%.
+
+Q37-F011: [current Android native libraries and global provenance](../../../release/audit_q37_android_native_current_2026-10-11.json). Android arm64-v8a and x86_64 were built twice from 327 frozen inputs at commit `b0b156c5625f2e10599065a63dd8e014b33f83ae` using Rust1.97.0, NDK26.3.11579264 and cargo-ndk4.1.2. Each A/B pair is byte-identical; stock offline/locked/jobs1, fat LTO/codegen1/panic=unwind and `-D warnings` were preserved. ELF64/architecture and exact names of all 55 exports per ABI were independently checked: 33 C API, 21 TransportCore JNI and one ConfigCore JNI.
+
+Canonical libraries and consumed jniLibs copies were updated with identical files. Both desktop/android groups now have valid A/B evidence for the current native digest; global PROVENANCE was updated only after that validation. SHA256SUMS and every canonical/consumed pair check PASS. The source/log/result archive was fully SHA-verified; rebuildable caches were not duplicated. Owned directories, remote archive and temporary swap were removed, and the prior swap table was restored; actual host gates and changes remain in the evidence without exceptions.
+
+This qualifies compilation and the exported API, not Android JNI/VPN execution. Android runtime/integration after Q35 and final release certification remain open. Previously described failures and historical evidence were not restamped. Q37 IN_PROGRESS, 30/37 DONE81.1%.

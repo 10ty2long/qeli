@@ -7,10 +7,10 @@ the GUI clients silently carried an older realtls/FFI core than the repository d
 Nothing in review or CI could have caught that. This file records what the current
 binaries were actually built from, so the question has an answer.
 
-source-digest : e3fb04a80fc8c2e7334fa5187dacb497ca47b2a79954fcddae45b5d5a533052c
-base-commit   : 1751a44f686dc2212284b72180bf74a2b9ec06de
+source-digest : c414d270a7fa9f474afbf83ad20848d462b2bc691c773616f0811a6877befb42
+base-commit   : b0b156c5625f2e10599065a63dd8e014b33f83ae
 dirty-sources : 0 file(s) modified vs base-commit at build time
-built-on      : lab .10 (win/mac), lab .11 (android)
+built-on      : lab .10 (win/mac/android; isolated current A/B jobs)
 toolchain     : pinned inventories in native-libs/reproducibility/{desktop,android}.json
 panic         : CARGO_PROFILE_RELEASE_PANIC=unwind  (REQUIRED — the catch_unwind guards in
                 protocol/realtls/{ffi,jni}.rs are inert under panic=abort)
