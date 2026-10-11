@@ -1662,14 +1662,17 @@ failed roam.
 | `obfs_key` | — | ✓ | ✓ | ✓ | ✓ | ✓ | PSK for `mode = obfs` |
 | `front` | `websocket` | ✓ | ✓ | ✓ | ✓ | ✓ | anti-FET fronting for obfs: `websocket`/`none` |
 | `reality_sid` | — | ✓ | ✓ | ✓ | ✓ | ✓ | REALITY short_id for `reality-tls` |
-| `quic` | `false` | ✓ | ✓ | ✓ | ✓\* | ✓ | QUIC masking for UDP (Android — via `mode = udp-quic`) |
-| `awg` `jc` `jmin` `jmax` | off/0 | ✓ | ✓ | ✓ | ✓ | ✓ | AmneziaWG junk preamble (`jc` must match the server) |
+| `reality_compact` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | compact outer ClientHello for REALITY |
+| `reality_split` | — | ✓ | ✓ | ✓ | ✓ | ✓ | explicit REALITY ClientHello TCP split plan |
+| `reality_split_delay` | `100` | ✓ | ✓ | ✓ | ✓ | ✓ | delay between REALITY split writes, milliseconds |
+| `quic` | `false` | ✓ | ✓ | ✓ | ✓\* | ✓ | QUIC masking for UDP: `proto=udp`, `mode=fake-tls`, `quic=true`; `mode=udp-quic` remains an import alias |
+| `awg` `jc` `jmin` `jmax` | `false` / `0` / `40` / `300` | ✓ | ✓ | ✓ | ✓ | ✓ | AmneziaWG junk preamble (`jc` must match the server on TCP; sender-only on UDP) |
 
 **TUN & routing**
 
 | Key | Default | CLI | Win | mac | And | iOS | Purpose |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
-| `dev` | CLI: `vpn0`; Win: profile name | ✓ | ✓ | — | — | — | explicit interface name; Linux reserves it for the entire client session, including `dev_attach`; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
+| `dev` | CLI: `vpn0`; Win: generated interface name | ✓ | ✓ | — | — | — | explicit interface name; Linux reserves it for the entire client session, including `dev_attach`; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
 | `device_type` | `tun` | ✓ | — | — | — | — | Linux interface kind: `tun` (L3) or `tap` (local L2 emulation); non-Linux clients preserve the key but reject TAP at connect time |
 | `dev_attach` | `false` | ✓ | — | — | — | — | attach to a pre-existing interface (don't create one) |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
@@ -1677,7 +1680,7 @@ failed roam.
 | `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel; common CLI/GUI default `true`; `gateway=false` explicitly selects split tunnel |
 | `route_local` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | pull IPv4 RFC1918 into the tunnel; does not alter IPv6 policy |
 | `include` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list forced **into** the tunnel (Android — split-tunnel only) |
-| `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list carved **out** of the tunnel (Android — API 33+ only) |
+| `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list carved **out** of the tunnel (Android: API 33+ uses `excludeRoute`; earlier versions subtract CIDRs) |
 | `route_file` | — | — | ✓ | ✓ | — | — | split routes from a file (on the CLI use `include`/`exclude`) |
 | `dns` | `tunnel` | ✓ | ✓ | ✓ | ✓ | ✓ | DNS mode: `tunnel` / `off` / `system`. `system` is an accepted spelling of `off`: both mean “leave the device resolver alone”. Android/iOS still import legacy `dns = 1.1.1.1, 8.8.8.8`, but save it canonically as `dns_servers` |
 | `dns_servers` | — | ✓ | ✓ | ✓ | ✓ | ✓ | comma-separated IPv4/IPv6 resolvers under `dns = tunnel`. **Override the server push**. Each address must be reachable in the negotiated inner family. At most 8 resolvers, each with a protected tunnel host route. With no resolver, split mode keeps host DNS; full mode refuses connection |
@@ -1697,9 +1700,9 @@ failed roam.
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
 | `persist_tun` | `false` | — | ✓ | ✓ | — | — | keep the TUN + routes across reconnects (fail-closed in the window) |
 | `local` | — | ✓ | ✓ | ✓ | — | — | bind the carrier socket's source address (matters when the server is on-link) |
-| `lport` | — | ✓ | ✓ | ✓ | — | — | fixed local source port on the primary carrier |
+| `lport` | `0` | ✓ | ✓ | ✓ | — | — | fixed local source port on the primary carrier |
 | `dev_node` | — | — | ✓ | —\* | — | — | Wintun adapter name (**Windows**; mac parses but never applies) |
-| `metric` | — | — | ✓ | —\* | — | — | interface metric (**Windows**; mac parses but never applies) |
+| `metric` | `0` | — | ✓ | —\* | — | — | interface metric (**Windows**; mac parses but never applies) |
 
 **Misc & platform-specific**
 
@@ -1753,8 +1756,8 @@ first A record as authoritative for an IPv6-only profile.
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
 | `padding` · `padding_min` · `padding_max` | on / `0` / `255` | ✓ | ✓ | ✓ | ✓ | ✓ | record padding; the maximum is strictly bounded by the wire format |
 | `heartbeat` · `heartbeat_interval` · `heartbeat_size` · `heartbeat_jitter` | on / `15000` / `16` / `2000` | ✓ | ✓ | ✓ | ✓ | ✓ | cover heartbeat and its interval/size/jitter |
-| `shaping` · `shaping_gap_mean` · `shaping_gap_min` · `shaping_gap_max` · `shaping_budget` | off / profile defaults | ✓ | ✓ | ✓ | ✓ | ✓ | shaping enablement and timing/budget envelope |
-| `shaping_min_size` · `shaping_max_size` · `shaping_stealth` · `shaping_stealth_mbps` | profile defaults | ✓ | ✓ | ✓ | ✓ | ✓ | cover-record sizes and stealth rate |
+| `shaping` · `shaping_gap_mean` · `shaping_gap_min` · `shaping_gap_max` · `shaping_budget` | `false` / `700` / `40` / `6000` / `16384` | ✓ | ✓ | ✓ | ✓ | ✓ | shaping enablement and timing/budget envelope |
+| `shaping_min_size` · `shaping_max_size` · `shaping_stealth` · `shaping_stealth_mbps` | `64` / `1024` / `false` / `2` | ✓ | ✓ | ✓ | ✓ | ✓ | cover-record sizes and stealth rate |
 
 Local values apply when the server did not push the corresponding setting. An authenticated
 server push still wins and is reported in every client's complete `NetworkPlan` log.
@@ -1764,6 +1767,14 @@ parser and preserved by every editor. The CLI applies all three fields. Windows/
 `level` for service/daemon profiles; the GUI can supply its application log preference.
 Desktop preserves `file` and `time_format` without applying them. Android/iOS preserve
 the section while their own application preferences control logging.
+
+| Key | Default | CLI | Win | mac | And | iOS | Purpose |
+|---|---|:-:|:-:|:-:|:-:|:-:|---|
+| `logging.level` | `info` | ✓ | ✓* | ✓* | — | — | `level` in `[logging]`; desktop service/daemon can use app settings |
+| `logging.file` | — | ✓ | — | — | — | — | `file` in `[logging]`; empty uses stderr |
+| `logging.time_format` | `datetime` | ✓ | — | — | — | — | `time_format` in `[logging]`; timestamp format |
+
+Qualified names identify schema fields; write the unqualified key under `[logging]`.
 
 **Footnotes.** `mtu_probe` applies only to UDP with `mtu=0`. `gateway` defaults to `true` on all clients; use `false` for split tunnel. On Android: `include` is honored only
 in split tunnel; `exclude` works before API 33 through CIDR subtraction and on API 33+
@@ -1891,14 +1902,14 @@ route = 192.168.50.0/24 gateway=10.9.0.1 metric=50
 Verified: the client gets `192.168.50.0/24 via <tun_gw> dev <tun>` in the table.
 
 Client-side routing keys in flat-INI (`[qeli]`, file-only — not carried in a
-`qeli://` link; the booleans default `false`, `dns` defaults to `tunnel`):
+`qeli://` link; `gateway` defaults to `true`, the other booleans below to `false`, and `dns` to `tunnel`):
 
 | Key | Purpose |
 |---|---|
 | `route_local` | pull the **IPv4 RFC1918 ranges** (10/8, 172.16/12, 192.168/16) into the tunnel. On desktop system-TUN clients, `true` also installs more-specific overrides for directly connected RFC1918 prefixes, so a physical `/24` cannot win over the broad tunnel route; desktop per-app mode applies the same decision policy. Explicit `exclude` CIDRs still win. This flag does not affect IPv6 ULA or multicast. Default `false` avoids hijacking a directly connected LAN; remote RFC1918 destinations still follow the ordinary full/split-tunnel policy. **Routes the server explicitly advertises (`route = …`) are applied ALWAYS and do not depend on this flag** (since 0.7.12; before that they sat behind it and were silently dropped) |
 | `gateway` | full-tunnel: all client traffic into the VPN (default route via tun) |
 | `exclude` | comma-separated strict IPv4/IPv6 CIDRs to **exclude** from the tunnel — they go directly via the physical path of the same address family. Windows/macOS resolve that path before capture routes, iOS uses `NEIPv4Route`/`NEIPv6Route`, and Android uses `VpnService.excludeRoute` on API 33+ (a computed complement on older versions). Use `/32` for one IPv4 host or `/128` for one IPv6 host. Example: `exclude = 192.168.50.0/24, 2001:db8::7/128` |
-| `include` | comma-separated IPv4/IPv6 CIDRs to route **into** the tunnel (split-tunnel — relevant when `gateway` is not set). A route is accepted only when that family was negotiated in the authenticated NetworkPlan |
+| `include` | comma-separated IPv4/IPv6 CIDRs to route **into** the tunnel (split-tunnel — relevant when `gateway=false`). A route is accepted only when that family was negotiated in the authenticated NetworkPlan |
 | `allow_lan` (Android/iOS, default `false`) | full-tunnel-only shortcut over `exclude`: carve **all** private ranges out of the default capture (RFC1918 + link-local `169.254/16` + link-local multicast `224.0.0.0/24` + SSDP `239.255.255.250/32`) so home Wi-Fi/LAN devices stay reachable without disconnecting. It never subtracts authenticated pushed/include routes in split-tunnel mode. Also exposed as an "Allow local network access" toggle in app Settings. Android 13+ uses `excludeRoute`; older versions compute the exact complement of the same exclusions against `0.0.0.0/0`; iOS applies equivalent Network Extension exclusions |
 | `ipv6` (default `auto`) | authenticated inner-family policy. `auto` uses IPv6 only when server, Rust core and platform adapter all advertise the complete capability set; `required` refuses an IPv4 downgrade; `off` requests the IPv4 side of a dual profile and refuses IPv6-only |
 | `allow_ipv6_leak` / `allow_ipv4_leak` (default `false`) | symmetric full-tunnel escape hatches. When the negotiated plan lacks one family, qeli blocks that family's native egress by default; the matching `true` deliberately lets it bypass the VPN. `allow_ipv4_leak` and `allow_ipv6_leak` also permit an unavailable Linux kill-switch leg when the matching leak is explicitly accepted |
@@ -2382,8 +2393,10 @@ lets traffic that arrived FROM the tunnel out the client's own physical WAN.
 server    = <public-IP-of-server>:443
 user      = exit
 pass      = ...
-gateway   = false     # keep this host's own internet on the WAN — it is the exit
-ipv6      = required  # use auto/off for an IPv4-only exit
+# keep this host's own internet on the WAN — it is the exit
+gateway   = false
+# use auto/off for an IPv4-only exit
+ipv6      = required
 exit_node = true
 ```
 

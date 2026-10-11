@@ -1,6 +1,6 @@
 # Q37: документация и тестовая обвязка — 11 октября 2026
 
-<!-- normative-sync: q37-documentation-baseline-v2 -->
+<!-- normative-sync: q37-documentation-baseline-v3 -->
 
 **Статус: IN_PROGRESS.** [Результаты и hashes](../../../release/audit_q37_documentation_2026-10-11.json). Полный Q37 ещё не завершён. Общий итог остаётся 30/37 DONE (81,1%).
 
@@ -15,8 +15,14 @@ Q37-F003: [удаление недостижимых legacy реализаций
 
 Проверены42 настоящих Python refusal stubs (exit1/RETIRED, без stdout), три shell guards и актуальность generated client bindings. Существующий retirement test усилен: возврат тела после отказа теперь ломает проверку. Этот настоящий test отказал при подстановке оригинального source предыдущего commit;38 текущих recipe methods PASS. Никакие старые SSH/deploy тела не выполнялись. INI/parser/runtime/native/benchmark inputs не менялись; JSON для API, внутренней модели и test/evidence остаётся допустимым. Полный feature-aware dead-code review всех модулей ещё открыт.
 
+Q37-F004: [сверка конфигов и документации](../../../release/audit_q37_config_parity_2026-10-11.json). Dedicated client tables теперь покрывают все84 поля общей схемы:81 `[qeli]` и3 `[logging]`. Добавлены три REALITY поля, полные AWG/shaping defaults; исправлены gateway/TOFU/Android exclude/QUIC. Split tunnel шаблона остаётся явным `gateway=false`, default парсера `true`. Комментарии exit-node перенесены на отдельные строки. Восемь методов contract PASS; четыре настоящих метода с оригинальными RU/EN документами отказали. Generated projections, versions и9 docs checks PASS.
+
+Текущий factory CLI35da83fd в отдельном network namespace проверил39 случаев:16 исправленных client INI examples,16 оригинальных examples и7 самостоятельных templates; users.conf реально загружен четырьмя server checks.37 admission PASS и2 ожидаемых отказа старого exit-node; нужные endpoint/pin placeholders и три partial fragments на язык материализованы явно. Входы/команды/exit/SHA сохранены; parse admission не подтверждает подключение, выполнение hooks или data plane. Первый ошибочный harness verdict сохранён; исправлен regex, пересекавший newline, и подстановка документированного pin placeholder.
+
+**Full host gate FAIL сохранён:** на .10 появились три ранее наблюдавшихся legacy FORWARD/MASQUERADE правила в iptables4/legacy4; остальные structural fields без изменений. Это не превращено в PASS и не исключено из сверки. После полного SHA inventory и проверки неактивности удалён только собственный fixture root; VPN не запускался и существующие правила/службы не менялись. Native input digest7d42e38f остался прежним; Q35 на .11 продолжается. Полный Q37 и общий итог30/37 DONE81,1% не изменены.
+
 **Открытый долг:** `native-libs/provenance.py --check` обнаружил изменение native inputs (recorded e3fb04a8, current 7d42e38f). Нужны реальные независимые A/B пересборки текущих desktop/Android recipes, сверка бинарных inventories и лишь затем обновление provenance. Штатная CLI-сборка для Q35/Q36 не обновляет библиотеки клиентов. Компиляция на лабе ждёт завершения измерений, чтобы не менять условия прогона.
 
 Release certification дала 21 проблему: общий digest и 20 автоматизированных Linux cases относятся к другому дереву. Gate сверяет всё committed tree, кроме собственных evidence; даже новые docs/report commits меняют этот digest. Поэтому сначала фиксируется окончательное дерево release inputs, затем выполняется матрица на нём и обновляется evidence. Повторная запись старых PASS под новый digest запрещена. Пропущенные пользователем физические платформы не объявляются протестированными.
 
-Q35 полный endurance и Q36 текущая data-plane матрица выполняются отдельно; здесь их промежуточные состояния не объявлены PASS. Для полного Q37 ещё нужны keys/defaults/examples parity, dead-code review с учётом OS/features/FFI и integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+Q35 полный endurance выполняется отдельно; Q36-F029 уже квалифицировал текущую конечную data-plane матрицу в BENCHMARK. Здесь промежуточный Q35 не объявлен PASS. Для полного Q37 ещё нужны server defaults/examples parity, dead-code review с учётом OS/features/FFI и integration. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

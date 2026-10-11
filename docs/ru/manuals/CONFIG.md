@@ -1622,14 +1622,17 @@ UDP/QUIC-настройки нет. Возможность активна тол
 | `obfs_key` | — | ✓ | ✓ | ✓ | ✓ | ✓ | PSK для `mode = obfs` |
 | `front` | `websocket` | ✓ | ✓ | ✓ | ✓ | ✓ | anti-FET фронтинг obfs: `websocket`/`none` |
 | `reality_sid` | — | ✓ | ✓ | ✓ | ✓ | ✓ | REALITY short_id для `reality-tls` |
-| `quic` | `false` | ✓ | ✓ | ✓ | ✓\* | ✓ | QUIC-маскировка UDP (Android — через `mode = udp-quic`) |
-| `awg` `jc` `jmin` `jmax` | off/0 | ✓ | ✓ | ✓ | ✓ | ✓ | AmneziaWG junk-преамбула (`jc` должен совпасть с сервером) |
+| `reality_compact` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | компактный внешний ClientHello для REALITY |
+| `reality_split` | — | ✓ | ✓ | ✓ | ✓ | ✓ | явный план разделения REALITY ClientHello по TCP |
+| `reality_split_delay` | `100` | ✓ | ✓ | ✓ | ✓ | ✓ | задержка между частями REALITY, миллисекунды |
+| `quic` | `false` | ✓ | ✓ | ✓ | ✓\* | ✓ | QUIC-маскировка UDP: `proto=udp`, `mode=fake-tls`, `quic=true`; `mode=udp-quic` остаётся импортным alias |
+| `awg` `jc` `jmin` `jmax` | `false` / `0` / `40` / `300` | ✓ | ✓ | ✓ | ✓ | ✓ | AmneziaWG junk-преамбула; `jc` совпадает с сервером на TCP, на UDP действует только у отправителя |
 
 **TUN и маршрутизация**
 
 | Ключ | Умолч. | CLI | Win | mac | And | iOS | Назначение |
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
-| `dev` | CLI: `vpn0`; Win: имя профиля | ✓ | ✓ | — | — | — | явное имя интерфейса; Linux резервирует его на всю клиентскую сессию, включая `dev_attach`; Windows: `dev_node` имеет приоритет, без явного имени используется уникальное `Qeli-…`; mac/iOS/Android используют системное имя |
+| `dev` | CLI: `vpn0`; Win: генерируемое имя интерфейса | ✓ | ✓ | — | — | — | явное имя интерфейса; Linux резервирует его на всю клиентскую сессию, включая `dev_attach`; Windows: `dev_node` имеет приоритет, без явного имени используется уникальное `Qeli-…`; mac/iOS/Android используют системное имя |
 | `device_type` | `tun` | ✓ | — | — | — | — | тип Linux-интерфейса: `tun` (L3) или `tap` (локальная L2-эмуляция); остальные клиенты сохраняют ключ, но отклоняют TAP при подключении |
 | `dev_attach` | `false` | ✓ | — | — | — | — | подключиться к уже существующему интерфейсу (не создавать) |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | MTU туннеля; `0` = принять пуш сервера |
@@ -1637,7 +1640,7 @@ UDP/QUIC-настройки нет. Возможность активна тол
 | `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full-tunnel; общий дефолт CLI/GUI `true`; `gateway=false` явно выбирает split-tunnel |
 | `route_local` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | завернуть IPv4 RFC1918 в туннель; не меняет IPv6-политику |
 | `include` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR-список **в** туннель (Android — только в split-tunnel) |
-| `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR-список **мимо** туннеля (Android — только API 33+) |
+| `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR-список вне туннеля; Android: до API 33 вычитание CIDR, API 33+ `excludeRoute` |
 | `route_file` | — | — | ✓ | ✓ | — | — | split-маршруты из файла (в CLI используйте `include`/`exclude`) |
 | `dns` | `tunnel` | ✓ | ✓ | ✓ | ✓ | ✓ | режим DNS: `tunnel` / `off` / `system`. `system` — принимаемое написание `off`: оба значат «не трогать резолвер устройства». Android/iOS для совместимости импортируют старый список `dns = 1.1.1.1, 8.8.8.8`, но сохраняют его канонически как `dns_servers` |
 | `dns_servers` | — | ✓ | ✓ | ✓ | ✓ | ✓ | IPv4/IPv6-резолверы при `dns = tunnel`; перекрывают push сервера. До 8 адресов активных семейств туннеля, каждый с защищённым host-маршрутом. Без резолвера split сохраняет DNS хоста, full отказывается подключаться |
@@ -1657,9 +1660,9 @@ UDP/QUIC-настройки нет. Возможность активна тол
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
 | `persist_tun` | `false` | — | ✓ | ✓ | — | — | держать TUN + маршруты между реконнектами (fail-closed в окне) |
 | `local` | — | ✓ | ✓ | ✓ | — | — | привязать источник несущего сокета (важно, когда сервер on-link) |
-| `lport` | — | ✓ | ✓ | ✓ | — | — | фиксированный локальный исходный порт первичного carrier |
+| `lport` | `0` | ✓ | ✓ | ✓ | — | — | фиксированный локальный исходный порт первичного carrier |
 | `dev_node` | — | — | ✓ | —\* | — | — | имя Wintun-адаптера (**Windows**; mac парсит, но не применяет) |
-| `metric` | — | — | ✓ | —\* | — | — | метрика интерфейса (**Windows**; mac парсит, но не применяет) |
+| `metric` | `0` | — | ✓ | —\* | — | — | метрика интерфейса (**Windows**; mac парсит, но не применяет) |
 
 **Прочее и платформенное**
 
@@ -1712,8 +1715,8 @@ fail-closed во время reconnect. Неизвестный владелец �
 |---|---|:-:|:-:|:-:|:-:|:-:|---|
 | `padding` · `padding_min` · `padding_max` | on / `0` / `255` | ✓ | ✓ | ✓ | ✓ | ✓ | padding записей; максимум строго ограничен форматом wire |
 | `heartbeat` · `heartbeat_interval` · `heartbeat_size` · `heartbeat_jitter` | on / `15000` / `16` / `2000` | ✓ | ✓ | ✓ | ✓ | ✓ | cover heartbeat и его интервал/размер/jitter |
-| `shaping` · `shaping_gap_mean` · `shaping_gap_min` · `shaping_gap_max` · `shaping_budget` | off / профильные | ✓ | ✓ | ✓ | ✓ | ✓ | включение и временной/бюджетный контур shaping |
-| `shaping_min_size` · `shaping_max_size` · `shaping_stealth` · `shaping_stealth_mbps` | профильные | ✓ | ✓ | ✓ | ✓ | ✓ | размеры cover-записей и stealth-rate |
+| `shaping` · `shaping_gap_mean` · `shaping_gap_min` · `shaping_gap_max` · `shaping_budget` | `false` / `700` / `40` / `6000` / `16384` | ✓ | ✓ | ✓ | ✓ | ✓ | включение и временной/бюджетный контур shaping |
+| `shaping_min_size` · `shaping_max_size` · `shaping_stealth` · `shaping_stealth_mbps` | `64` / `1024` / `false` / `2` | ✓ | ✓ | ✓ | ✓ | ✓ | размеры cover-записей и stealth-rate |
 
 Локальные значения применяются, когда сервер не прислал соответствующий параметр.
 Аутентифицированный server push остаётся старше локального значения и отражается в полном
@@ -1724,6 +1727,14 @@ fail-closed во время reconnect. Неизвестный владелец �
 `level` для службы/демона; GUI может подставить уровень из настроек приложения.
 `file` и `time_format` desktop сохраняет, но не применяет. Android/iOS сохраняют секцию,
 а журналом управляют собственные настройки приложения.
+
+| Ключ | Умолч. | CLI | Win | mac | And | iOS | Назначение |
+|---|---|:-:|:-:|:-:|:-:|:-:|---|
+| `logging.level` | `info` | ✓ | ✓* | ✓* | — | — | `level` в `[logging]`; desktop служба/демон может использовать настройки приложения |
+| `logging.file` | — | ✓ | — | — | — | — | `file` в `[logging]`; пустое значение использует stderr |
+| `logging.time_format` | `datetime` | ✓ | — | — | — | — | `time_format` в `[logging]`; формат времени |
+
+Полные имена обозначают поля схемы; в секции `[logging]` пишите ключ без префикса.
 
 **Сноски.** `mtu_probe` — действует только на UDP при `mtu=0`. `gateway` — дефолт
 одинаков: `true` (full tunnel); для split tunnel явно задайте `gateway=false`. `include`/`exclude`
@@ -1850,14 +1861,14 @@ route = 192.168.50.0/24 gateway=10.9.0.1 metric=50
 ```
 Проверено: клиент получает `192.168.50.0/24 via <tun_gw> dev <tun>` в таблице.
 Клиентские routing-ключи flat-INI (`[qeli]`, только в файле — в `qeli://`-ссылку
-не входят; булевы — дефолт `false`):
+не входят; `gateway` по умолчанию `true`, остальные булевы поля ниже — `false`, `dns` — `tunnel`):
 
 | Ключ | Назначение |
 |---|---|
 | `route_local` | завернуть в туннель **IPv4-диапазоны RFC1918** (10/8, 172.16/12, 192.168/16). Desktop system-TUN при `true` дополнительно ставит более специфичные маршруты поверх напрямую подключённых RFC1918-префиксов, поэтому физический `/24` больше не выигрывает у широкого tunnel-route; desktop per-app применяет ту же политику. Явные CIDR из `exclude` по-прежнему имеют приоритет. Флаг не влияет на IPv6 ULA и multicast. Дефолт `false` не угоняет напрямую подключённую LAN; удалённые RFC1918-адреса следуют обычной full/split-tunnel политике. **Маршруты, которые явно раздаёт сервер (`route = …`), применяются ВСЕГДА и от этого флага не зависят** (с 0.7.12; раньше были под ним и молча терялись) |
 | `gateway` | full-tunnel: весь трафик клиента в VPN (default-маршрут через tun) |
 | `exclude` | список строгих IPv4/IPv6 CIDR, которые **исключить** из туннеля — ходят напрямую по физическому пути той же семьи. Windows/macOS определяют этот путь до capture-маршрутов, iOS использует `NEIPv4Route`/`NEIPv6Route`, Android — `VpnService.excludeRoute` на API 33+ (на старых версиях вычисляется дополнение). Для одного хоста укажите `/32` у IPv4 или `/128` у IPv6. Пример: `exclude = 192.168.50.0/24, 2001:db8::7/128` |
-| `include` | список IPv4/IPv6 CIDR, которые **завернуть** в туннель (split-tunnel — актуально, когда `gateway` не задан). Маршрут принимается только для семейства, согласованного в аутентифицированном NetworkPlan |
+| `include` | список IPv4/IPv6 CIDR, которые **завернуть** в туннель (split-tunnel — актуально при `gateway=false`). Маршрут принимается только для семейства, согласованного в аутентифицированном NetworkPlan |
 | `allow_lan` (Android/iOS, дефолт `false`) | работающий только в full-tunnel ярлык поверх `exclude`: вырезать из default capture **все** приватные диапазоны (RFC1918 + link-local `169.254/16` + link-local multicast `224.0.0.0/24` + SSDP `239.255.255.250/32`) — доступ к устройствам домашней Wi-Fi-сети без отключения VPN. В split-tunnel он не вычитает аутентифицированные pushed/include routes. Есть и глобальный тумблер «Allow local network access» в Настройках приложения. Android 13+ — `excludeRoute`, старее — точное дополнение тех же исключений к `0.0.0.0/0`; iOS применяет эквивалентные исключения Network Extension |
 | `ipv6` (дефолт `auto`) | аутентифицированная политика inner family. `auto` включает IPv6, только когда сервер, Rust-ядро и platform adapter объявили полный набор capabilities; `required` запрещает IPv4 downgrade; `off` запрашивает IPv4-часть dual-профиля и отказывается от IPv6-only |
 | `allow_ipv6_leak` / `allow_ipv4_leak` (дефолт `false`) | симметричные escape-hatch для full-tunnel. Если в согласованном плане нет одной семьи, qeli по умолчанию блокирует её native egress; соответствующий `true` осознанно разрешает обход VPN. `allow_ipv4_leak` и `allow_ipv6_leak` также допускают отсутствие соответствующего плеча Linux kill-switch при явном согласии на утечку |
@@ -2342,8 +2353,10 @@ full-tunnel запускается только после того, как `Vpn
 server    = <белый-IP-сервера>:443
 user      = exit
 pass      = ...
-gateway   = false     # свой интернет НЕ заворачивать — он и есть выход
-ipv6      = required  # для IPv4-only выхода можно auto/off
+# свой интернет НЕ заворачивать — он и есть выход
+gateway   = false
+# для IPv4-only выхода можно auto/off
+ipv6      = required
 exit_node = true
 ```
 

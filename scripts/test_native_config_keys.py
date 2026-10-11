@@ -67,6 +67,44 @@ def editor_contract() -> set[str]:
     return {row[0] for row in fields if "." not in row[0]}
 
 
+def documented_defaults(text: str) -> dict[str, str]:
+    """Read only the dedicated client tables, including qualified logging fields.
+
+    A grouped row must state each default in key order; a single common default
+    is allowed only when all fields have the same value. Opaque 'profile defaults'
+    cannot hide drift. Descriptions and unrelated server tables are not scanned.
+    """
+    headers = ("| Key | Default | CLI |", "| Ключ | Умолч. | CLI |")
+    lines = text.splitlines()
+    start = next((i for i, line in enumerate(lines) if line.startswith(headers)), -1)
+    if start < 0:
+        raise AssertionError("missing dedicated client default table")
+    result: dict[str, str] = {}
+    for line in lines[start:]:
+        if line.startswith("### "):
+            break
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) != 8:
+            raise AssertionError(f"malformed client table: {line}")
+        keys = re.findall(r"`([a-z][a-z0-9_.]*)`", cells[0])
+        if not keys:
+            continue
+        tokens = re.findall(r"`[^`]+`|\b(?:on|off)\b|—", cells[1])
+        values = [{"on": "true", "off": "false", "—": ""}.get(token, token.strip('`'))
+                  for token in tokens]
+        if len(values) == 1:
+            values *= len(keys)
+        if len(values) != len(keys):
+            raise AssertionError(f"incomplete defaults for {keys}: {cells[1]}")
+        for key, value in zip(keys, values):
+            if key in result:
+                raise AssertionError(f"duplicate client default {key}")
+            result[key] = value
+    return result
+
+
 def generated_contract(relative: str) -> set[str]:
     # The generator check below proves every schema-to-model projection is up to date.
     return quoted_keys(source(relative)) & editor_contract() | {"server"}
@@ -121,6 +159,33 @@ def documented_client_matrix(relative: str) -> dict[str, tuple[str, ...]]:
 
 
 class ClientConfigKeyContractTests(unittest.TestCase):
+    def test_documented_defaults_cover_the_complete_authoritative_schema(self):
+        import json
+        fields = [json.loads("[" + row + "]") for row in re.findall(
+            r'field!\(([^\n]+)\)', source("qeli/src/config/editor/schema.rs"))
+            if row.startswith('"')]
+        expected = {row[0]: row[2] for row in fields}
+        self.assertEqual(len(expected), 84)
+        for lang in ("ru", "eng"):
+            self.assertEqual(documented_defaults(source(f"docs/{lang}/manuals/CONFIG.md")),
+                             expected, lang)
+
+    def test_client_ini_examples_do_not_advertise_unsupported_inline_comments(self):
+        for lang in ("ru", "eng"):
+            text = source(f"docs/{lang}/manuals/CONFIG.md")
+            examples = [m[1] for m in re.finditer(r"^```[^\n]*\n(.*?)^```\s*$", text,
+                                                re.MULTILINE | re.DOTALL)
+                        if re.search(r"^\[qeli\]", m[1], re.MULTILINE)]
+            self.assertEqual(len(examples), 8, lang)
+            for example in examples:
+                for line in example.splitlines():
+                    if line.lstrip().startswith(("#", ";")):
+                        continue
+                    # This is a documentation-style guard; native parsing remains
+                    # authoritative. Do not rewrite secret/command values containing '#'.
+                    self.assertIsNone(re.match(r"[^=]+?=\s*(?:false|true|required|auto|off)\s+[#;]",
+                                               line), f"{lang}: {line}")
+
     def test_native_schema_and_generated_adapters_are_current(self):
         import gen_config_bindings
         self.assertEqual(editor_contract(), rust_contract())
