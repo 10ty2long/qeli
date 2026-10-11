@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import os
 import subprocess
 import sys
@@ -798,6 +799,16 @@ class NativeRecipeTests(unittest.TestCase):
             )
             self.assertGreaterEqual(guard, 0, f"{relative} has no retirement guard")
             self.assertLess(guard, dangerous, f"{relative} can act before its retirement guard")
+            statements = ast.parse(source).body
+            self.assertIsInstance(statements[-1], ast.Raise, f"{relative} retains a dead legacy body")
+            for statement in statements[:-1]:
+                documentation = (isinstance(statement, ast.Expr)
+                                 and isinstance(statement.value, ast.Constant)
+                                 and isinstance(statement.value.value, str))
+                annotations = (isinstance(statement, ast.ImportFrom)
+                               and statement.module == "__future__"
+                               and all(alias.name == "annotations" for alias in statement.names))
+                self.assertTrue(documentation or annotations, f"{relative} is not a refusal-only stub")
 
         for path in (root / "test").glob("*.sh"):
             source = path.read_text(encoding="utf-8")
@@ -808,6 +819,8 @@ class NativeRecipeTests(unittest.TestCase):
                 default=len(source),
             )
             self.assertLess(source.find("exit 1"), dangerous, path.name)
+            self.assertEqual(source.strip().splitlines()[-1], "exit 1", f"{path.name} retains dead code")
+            self.assertEqual(len(source.strip().splitlines()), 3, f"{path.name} is not a refusal-only stub")
 
     def test_tracked_python_scenarios_never_silently_trust_a_new_ssh_host(self):
         root = Path(__file__).resolve().parents[1]

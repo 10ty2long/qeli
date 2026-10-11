@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v226 -->
+<!-- normative-sync: full-system-audit-v227 -->
 
 **Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2248,6 +2248,8 @@ Keys/defaults/errors против runtime, полные examples через chec
 - [ ] Исправления, повторная проверка и evidence.
 
 **11 октября, Q37-F001/F002:** [исходная точка и исправления](../reports/AUDIT-Q37-DOCUMENTATION.md): версия RU/EN attestation examples восстановлена; private site передаётся явно через `--site-root PATH`, отсутствие входов остаётся отказом. Реальный сайт, пять отрицательных site-сценариев, пять RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE и release certification 21 problems остаются OPEN; нужны реальные текущие сборки и финальная Linux-матрица. Полный Q37 не закрыт, общий итог 30/37 DONE81,1%.
+
+**11 октября, Q37-F003:** убраны6320 недостижимых строк из41 retired Python/shell файла и неиспользуемый legacy JSON config. Refusal stubs сохранены;42 реальные Python отказы/3 shell guards, generated bindings и38 recipe methods PASS. Усиленный существующий regression test отказал на оригинальном dead body. [Evidence](../reports/AUDIT-Q37-DOCUMENTATION.md). Runtime/native/benchmark inputs сохранены; полный Q37 IN_PROGRESS, итог30/37 DONE81,1%.
 
 **Статус: IN_PROGRESS.**
 

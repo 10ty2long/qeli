@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v226 -->
+<!-- normative-sync: full-system-audit-v227 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2238,6 +2238,8 @@ Compare keys/defaults/errors with runtime, execute complete examples, verify RU/
 - [ ] Fixes, retesting and evidence.
 
 **11 October, Q37-F001/F002:** [baseline and fixes](../reports/AUDIT-Q37-DOCUMENTATION.md): restored RU/EN versioned attestation examples; private website selected explicitly with `--site-root PATH`, missing inputs still refuse. Actual website, five negative site scenarios, five RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE and release certification 21 problems remain OPEN; actual current builds and final Linux matrix required. Full Q37 remains open, overall 30/37 DONE81.1%.
+
+**11 October, Q37-F003:** removed6320 unreachable lines from41 retired Python/shell files and an unused legacy JSON config. Refusal stubs retained;42 actual Python refusals/3 shell guards, generated bindings and38 recipe methods PASS. Strengthened existing regression test refused the original dead body. [Evidence](../reports/AUDIT-Q37-DOCUMENTATION.md). Runtime/native/benchmark inputs preserved; full Q37 IN_PROGRESS, overall30/37 DONE81.1%.
 
 **Status: IN_PROGRESS.**
 
