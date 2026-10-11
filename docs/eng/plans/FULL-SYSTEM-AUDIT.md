@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v217 -->
+<!-- normative-sync: full-system-audit-v218 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2178,7 +2178,7 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 
-**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Remaining: full carrier AUTH/rate and TCP asymmetry cause; long soaks belong to Q35. Historical OPEN entries below describe their original checkpoints.
+**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Q36-F019 completes functional native AUTH across all12 carriers (108 bursts/756 peers), using lto=false/codegen16. Remaining: standard release AUTH/rate and TCP asymmetry cause; .11 state/cleanup are unverified, and long soaks belong to Q35. Historical OPEN entries below describe their original checkpoints.
 
 **Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
@@ -2633,3 +2633,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October, Q36-F017:** [IPv6 RTT](../reports/BENCHMARK.md):39 fresh sessions /78 TCP bidir P1/P4 ten-second windows all12 carriers+direct outer6/inner6;15600 probes,15573 received/27 lost. Per-window p50/p95/p99,loss and three-session median/spread independently recomputed from379 SHA-bound raw inputs; prior IPv4 retained separately.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 owned roots SHA-archived/removed,services unchanged,full host differences retained. Full carrier AUTH/rate and asymmetry cause OPEN;Q35 soaks separate;Q36 IN_PROGRESS;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): reproduced false failure on normal receive-pump cancellation and lost completed worker failures. Both paths fixed;38 exact-source Rust tests and77 benchmark methods on each Windows/Linux PASS. Small Linux fixture archived/removed;.10 service preserved,full host gate FAIL from three legacy rules. .11 issues no SSH banner;current CLI integration build/108 fresh AUTH/.11 cleanup OPEN. Q36 IN_PROGRESS,30/37 DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 October, Q36-F019:** [Functional native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 fresh bursts /756 peers across all12 carriers, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Current sources/features/jemalloc; private lto=false/codegen16 profile is not a release benchmark. Three capped release OOM failures retained; owned cache/fixture archived and removed, all host differences retained. Release AUTH/rate, TCP asymmetry and .11 state/cleanup OPEN; Q35 soaks separate. Q36 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

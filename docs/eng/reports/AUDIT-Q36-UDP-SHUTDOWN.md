@@ -1,9 +1,9 @@
 # Q36-F018: UDP shutdown and retained task failures
 
-<!-- normative-sync: q36-udp-shutdown-v1 -->
+<!-- normative-sync: q36-udp-shutdown-v2 -->
 
 11 October 2026. Baseline: `2c5fcd5e`. Status: **source fix and regression tests
-PASS; full Linux runtime verification OPEN**. Q36 remains IN_PROGRESS.
+PASS; functional native AUTH PASS; standard release AUTH/rate OPEN**. Q36 remains IN_PROGRESS.
 
 A private UDP server returned exit 1 on normal SIGTERM during the expanded AUTH
 matrix: `UDP receive pump stopped`. ProfileTasks cancels the child receiver first;
@@ -40,7 +40,9 @@ contains source/log/archive SHA values, both original-code controls, and complet
 before/after host snapshots. Raw evidence remains in
 `audit-debt-20260924/q36-native-auth-20261011`.
 
-## Remaining work
+## Remaining work at the original F018 checkpoint
+
+See the F019 update below; the .11 obligations remain open.
 
 The pre-fix AUTH attempt retained 23 successful bursts /152 peers. The next UDP
 burst admitted 16 peers but failed shutdown. These measurements will not be pooled
@@ -56,3 +58,40 @@ Once access returns: inspect resources and only this packet's processes/cache,
 build the current native CLI, run 108 fresh AUTH bursts, and verify cleanup/host state.
 TCP asymmetry and Q35 soaks remain separate obligations. No completed full AUTH
 result or Q36 closure is claimed. LOCAL_DEV_COMMIT; NO_PUSH_DEPLOY_RELEASE.
+
+## Functional native AUTH — 11 October 2026
+
+**Q36-F019:** [evidence](../../../release/audit_q36_native_auth_functional_2026-10-11.json):
+108 fresh bursts, all 12 carriers × 1/4/16 peers × three independent repeats.
+756 peers were admitted; pinned-key proof, real AuthOK and unique registry IPs
+were checked. All 108 private servers and 756 peers exited with code 0.
+The previous 23 bursts were not reused.
+
+Both CLIs use the current 916 source inputs, with private examples including
+the actual main.rs. Client instrumentation only supplies the AUTH barrier and
+exits before NetworkPlan. Features and jemalloc are unchanged. This functional
+build privately selects rlib and lto=false instead of fat LTO, with codegen-units=16; optimization=3,
+panic=abort and strip are retained. It is **not the standard release benchmark**:
+its speed/capacity values are not published in benchmark_results.
+Cargo permits thin local LTO across codegen units under lto=false.
+The matrix confirms F018 integration under these conditions; it does not replace
+standard release performance measurements.
+
+Three release compilations on .10 were cgroup OOM-killed:
+1400 MiB RAM + 128/768/768 MiB swap; the final one emitted only rlib.
+Unused output-library types alone therefore do not explain the failure.
+Logs and refusals are retained; the initial unsupported systemd-property
+attempt did not start compilation. Full host gate: **PASS**;
+changed fields: [];
+Final cleanup host gate: **FAIL**,
+changed fields: ['iptables4'].
+Firewall differences were neither hidden nor removed; active services and the
+staged CLI were preserved. The owned Cargo cache was inventoried and removed.
+The complete remaining fixture was SHA-archived and removed after verifying
+the downloaded copy.
+
+The .11 local fat-LTO test-build driver timed out; remote compiler termination
+and cleanup are unverified. An OOM on that guest remains a hypothesis.
+Q36 still requires release AUTH/rate and TCP-asymmetry diagnosis; Q35 soaks
+remain separate. Plan status stays 30/37 DONE (81.1%), Q36 IN_PROGRESS.
+LOCAL_DEV_COMMIT; NO_PUSH_DEPLOY_RELEASE.

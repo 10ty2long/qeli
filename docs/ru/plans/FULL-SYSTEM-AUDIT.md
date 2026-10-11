@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v217 -->
+<!-- normative-sync: full-system-audit-v218 -->
 
 **Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2189,7 +2189,7 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 
 ### 36. Бенчмарки и методика измерения
 
-**Текущее покрытие, 11 октября:** Q36-F012/F015/F016 завершили TCP/UDP bidir P1/P4 для всех 12 транспортов в трёх недефолтных парах внешнего/внутреннего IPv4/IPv6. Каждое условие имеет три независимых повтора, median/spread и исходные файлы; старые успешные ячейки сохранены отдельно. Матрица семейств закрыта в этих условиях. Q36-F017 завершил RTT outer6/inner6 при TCP bidir P1/P4 для всех12 транспортов и direct, по три сессии. Остаток: полный carrier AUTH/rate и причина TCP-асимметрии; длительные soaks относятся к Q35. Исторические OPEN ниже отражают состояние своих checkpoint.
+**Текущее покрытие, 11 октября:** Q36-F012/F015/F016 завершили TCP/UDP bidir P1/P4 для всех 12 транспортов в трёх недефолтных парах внешнего/внутреннего IPv4/IPv6. Каждое условие имеет три независимых повтора, median/spread и исходные файлы; старые успешные ячейки сохранены отдельно. Матрица семейств закрыта в этих условиях. Q36-F017 завершил RTT outer6/inner6 при TCP bidir P1/P4 для всех12 транспортов и direct, по три сессии. Q36-F019 завершил функциональную native AUTH-матрицу всех12 транспортов (108 серий/756 клиентов) с lto=false/codegen16. Остаток: AUTH/rate штатной release-сборки и причина TCP-асимметрии; состояние/очистка .11 не подтверждены, длительные soaks относятся к Q35. Исторические OPEN ниже отражают состояние своих checkpoint.
 
 **Код:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
@@ -2645,3 +2645,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **11 октября, Q36-F017:** [RTT IPv6](../reports/BENCHMARK.md):39 свежих сессий /78 десятисекундных окон TCP bidir P1/P4 всех12 транспортов+direct outer6/inner6;15600 проб,15573 ответов/27 потерь. Оконные p50/p95/p99,потери и median/spread трёх сессий пересчитаны независимо из379 SHA-проверенных исходных файлов; прежний IPv4 отдельно.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 собственных каталога SHA-архивированы/удалены,службы неизменны,полные отличия host gates сохранены. Полный carrier AUTH/rate и причина асимметрии OPEN;Q35 soaks отдельно;Q36 IN_PROGRESS;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 октября, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): воспроизведён ложный аварийный выход при штатной отмене receive pump и потеря завершённых ошибок других workers. Исправлены оба пути; 38 точных Rust-тестов и 77 benchmark methods на каждой Windows/Linux PASS. Малый Linux fixture архивирован/удалён; служба .10 сохранена, полный host gate FAIL из-за трёх legacy-правил. .11 без SSH banner; текущая CLI integration build/108 fresh AUTH/очистка .11 OPEN. Q36 IN_PROGRESS,30/37 DONE81,1%,7осталось. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**11 октября, Q36-F019:** [Функциональный native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 свежих серий /756 клиентов всех12 транспортов, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Текущие исходники/features/jemalloc; частный профиль lto=false/codegen16: это не release-бенчмарк. Три capped release OOM сохранены; собственный кэш/fixture архивированы и удалены, все host differences сохранены. Release AUTH/rate, TCP-асимметрия и состояние/очистка .11 OPEN; Q35 soaks отдельно. Q36 IN_PROGRESS;30/37 DONE81,1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
