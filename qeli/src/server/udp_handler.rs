@@ -1595,6 +1595,17 @@ fn udp_reap_window(
     }
 }
 
+fn receive_pump_stopped(profile: &str, tasks: &super::ProfileTasks) -> anyhow::Result<()> {
+    // Profile teardown aborts the receive child before joining the listener. Its
+    // channel can close on another runtime thread before listener cancellation
+    // takes effect. Preserve unexpected closures while the generation is live.
+    if tasks.is_stopping() {
+        Ok(())
+    } else {
+        anyhow::bail!("UDP receive pump stopped on profile '{profile}'")
+    }
+}
+
 #[allow(clippy::too_many_arguments)] // worker runtime carries profile, socket, routing, TUN and task owners
 pub(crate) async fn run_udp_server(
     server_state: Arc<ServerState>,
@@ -1834,10 +1845,7 @@ pub(crate) async fn run_udp_server(
                 }
             } => {
                 let Some((recv_buf, addr, socket)) = received else {
-                    return Err(anyhow::anyhow!(
-                        "UDP receive pump stopped on profile '{}'",
-                        profile.name
-                    ));
+                    return receive_pump_stopped(&profile.name, &tasks);
                 };
                 let n = recv_buf.len();
                 udp_buffer.note_receive(n);
@@ -5722,6 +5730,41 @@ async fn handle_new_udp_client(
 
 #[cfg(test)]
 mod tests {
+    #[tokio::test]
+    async fn receive_pump_cancelled_by_owner_is_normal_shutdown() {
+        let tasks = crate::profile_tasks::ProfileTasks::new("shutdown-race");
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<()>(1);
+        let (ready, started) = tokio::sync::oneshot::channel();
+        assert!(tasks.spawn(async move {
+            let _sender = sender;
+            let _ = ready.send(());
+            std::future::pending::<()>().await;
+        }));
+        started.await.unwrap();
+        // Reproduce the ordering where child cancellation closes the channel
+        // before the listener has been polled for its own cancellation.
+        tasks.abort_all();
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_secs(1), receiver.recv())
+                .await
+                .unwrap()
+                .is_none()
+        );
+        super::receive_pump_stopped("shutdown-race", &tasks).unwrap();
+        tasks.shutdown().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn receive_pump_lost_in_live_generation_remains_fatal() {
+        let tasks = crate::profile_tasks::ProfileTasks::new("live-pump");
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<()>(1);
+        drop(sender);
+        assert!(receiver.recv().await.is_none());
+        let error = super::receive_pump_stopped("live-pump", &tasks).unwrap_err();
+        assert!(error.to_string().contains("UDP receive pump stopped"));
+        tasks.shutdown().await.unwrap();
+    }
+
     use super::{
         build_auth_error_datagrams, build_auth_ok_datagrams, build_downlink_mtu_probe,
         max_useful_udp_payload_budget, sanitized_udp_payload_budget, udp_reap_window,

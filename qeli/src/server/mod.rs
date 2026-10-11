@@ -7501,15 +7501,11 @@ async fn run_profile_generation(
                         bind_addr,
                         workers
                     );
-                    let why = match worker_set.join_next().await {
-                        Some(Ok(Err(error))) => format!("UDP worker failed: {error}"),
-                        Some(Ok(Ok(()))) => "UDP worker stopped unexpectedly".to_string(),
-                        Some(Err(error)) => format!("UDP worker task panicked: {error}"),
-                        None => "no UDP workers were started".to_string(),
-                    };
-                    worker_set.abort_all();
-                    while worker_set.join_next().await.is_some() {}
-                    Err(anyhow::anyhow!(why))
+                    crate::profile_tasks::supervise_udp_workers(
+                        &mut worker_set,
+                        &profile_tasks,
+                    )
+                    .await
                 }
             }
         });
