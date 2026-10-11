@@ -67,6 +67,8 @@ jobs:
           python3 -B scripts/audit_test_suite.py --group portable
       - name: Test self-contained Linux audit fixtures
         run: python3 -B scripts/audit_test_suite.py --group linux
+      - name: Test local CI runner locks and child failure propagation
+        run: python3 -B -m unittest discover -s scripts -p 'test_ci_check.py'
       - name: Test LuCI source with isolated RPC and UCI models
         run: node scripts/test_openwrt_luci.js
       - name: Test router release and diagnostic gates
