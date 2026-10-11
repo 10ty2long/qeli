@@ -1,6 +1,6 @@
 # Q37: документация и тестовая обвязка — 11 октября 2026
 
-<!-- normative-sync: q37-documentation-baseline-v6 -->
+<!-- normative-sync: q37-documentation-baseline-v7 -->
 
 **Статус: IN_PROGRESS.** [Результаты и hashes](../../../release/audit_q37_documentation_2026-10-11.json). Полный Q37 ещё не завершён. Общий итог остаётся 30/37 DONE (81,1%).
 
@@ -50,6 +50,12 @@ Router model теперь публикует legal sidecar во временны
 Rustfmt исправил оформление одного users-теста и 7 fuzz-target; main/fuzz fmt --check PASS. Первоначальные lock/cache/format FAIL сохранены. Недостающие закреплённые Linux fuzz crates загружены Cargo с проверкой checksum; старый и новый locked fuzz graph затем проверены offline. 38 native-recipe, 17 legal и 4 suite methods, а также actionlint для 4 workflows PASS. Это проверки инструментов и fixtures, а не настоящие native-сборки.
 
 Три внешних host gates FAIL сохранены: legacy4, затем iptables4/legacy4 и ещё раз iptables4/legacy4; прочие structural поля неизменны. Рабочие службы, правила и бинарники не изменялись. Архивы размером 9 298 152 / 9 255 680 / 89 099 байт проверены по SHA, включая все 1712 / 1693 / 29 entries; три собственных неактивных каталога удалены. После первого прогона повторены только исправление lock/format и два изменённых import methods, 149 Linux fixtures не повторялись. Native digest 3538e06c STALE: актуальные сборки и финальная certification обязательны. Q35 продолжает работать на frozen35da. Q37 IN_PROGRESS; общий итог 30/37 DONE (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+Q37-F008: [локальный CI runner](../../../release/audit_q37_ci_runner_2026-10-11.json). В ci-check.sh тесты и Clippy выполнялись без --locked и без закреплённого Rust; минимальные server/client/FFI профили не проверялись. Runner теперь берёт 1.97.0 из общего native_repro и передаёт Cargo явный +toolchain: системный Cargo без rustup должен отказать. Все команды, разрешающие зависимости, используют --locked. Добавлены server-only/client-only, config_editor, transport-core tests и release build с panic=unwind, C header syntax, conformance freshness, fuzz formatting, минимальный FFI Clippy и уже проверенные самостоятельные audit suites. Это локальное зеркало основных checks; оно не заменяет package/platform qualification.
+
+Новый test_ci_check подключён к workflow и локальному runner. Пять методов действительно исполняют shell с изолированными подставными cargo/python/node/cc: проверяют запуск из другого каталога и paths с пробелами, pin/lock/feature/panic policy, сохранение отказа Cargo при продолжении независимых checks, отказ Node и ранний отказ отсутствующему либо некорректному pin. На Linux все 5 PASS без skips; один новый метод отказал на точном старом runner, исходные UNPINNED_RUST_REFUSED/UNLOCKED_CARGO_REFUSED сохранены. Явный выбор Cargo был уточнён после первого fixture-прогона; оба результата сохранены. Настоящий общий pin также прочитан отдельным Python-вызовом. Rust-компилятор не запускался: это проверка runner, а не успешная компиляция актуального Qeli.
+
+Оба .10 прогона заняли около 4 секунд, пиковая память 20,4 / 21,3 МиБ, swap 0. Начальный host gate PASS, окончательный FAIL сохранён: изменилось поле iptables4. Оба собственных неактивных каталога SHA-архивированы и удалены: 50 672 / 51 111 байт, по 9 entries. Actionlint для 4 workflows и 4 admission guard methods PASS. Native inputs остаются 3538e06c STALE; Q35 по последнему read-only checkpoint дошёл до TCP 5300/10000 и продолжает RUNNING. Полные сборки и certification остаются открыты. Q37 IN_PROGRESS; 30/37 DONE (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **Открытый долг:** `native-libs/provenance.py --check` обнаружил изменение native inputs (recorded e3fb04a8, current 3538e06c). Нужны реальные независимые A/B пересборки текущих desktop/Android recipes, сверка бинарных inventories и лишь затем обновление provenance. Штатная CLI-сборка для Q35/Q36 не обновляет библиотеки клиентов. Компиляция на лабе ждёт завершения измерений, чтобы не менять условия прогона.
 
