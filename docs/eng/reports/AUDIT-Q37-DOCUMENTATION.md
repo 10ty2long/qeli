@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v8 -->
+<!-- normative-sync: q37-documentation-baseline-v9 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -67,4 +67,6 @@ Q37-F009: [actual minimal-feature unit suites](../../../release/audit_q37_curren
 
 Actual Rust 1.97.0 offline/locked/jobs1 results: all-target Clippy PASS, exact preflight regression PASS; server 2310 passed/56 ignored, client 1933 passed/49 ignored, FFI 1951 passed/49 ignored. Ignored fixtures are not qualified. Complete logs and their SHA bind 920 frozen inputs. Five Linux shell-policy methods passed; the new test rejected the previous runner missing minimal-profile tests. The CI fixture host gate retains an iptables4 delta FAIL.
 
-The original OOMs, ten server failures, client E0425 and low-FD1024 DNS negative control remain recorded. The owned isolated job uses short private `/tmp`, FD8192 and temporary 2 GiB swap; DNS capacity and deadlines are unchanged. The initial OOM directory was archived and removed. The current packet is unsealed; temporary swap must be removed after the job finishes. Full CLI build, its eleven diagnostics, native A/B and final certification remain pending. Native digest abcc1494 is STALE. Full Q37 IN_PROGRESS;30/37 DONE81.1%.
+After completion: all ten phases passed, including INI editor/examples/server-ini, conformance and the stock jemalloc release CLI with fat LTO/codegen1. The new CLI passed all eleven users.conf refusal cases, retaining the specific causes lost by the old binary. CLI SHA `886e525ed909037fafe8ea494094c7eb0c0a4f2a0e0f0e44f1cd68a3e966cff5` binds source `c69f9c9493412aede854cffe308a9a5b22a77c36`. This qualifies the build and those diagnostics, not full release integration or rebuilt native libraries.
+
+The result packet is sealed. The 653036246-byte archive and all 17930 files passed SHA verification; the owned compiler directory and remote archive copy were removed. Temporary 2 GiB swap was disabled and removed; pre-existing swap was preserved. Host gates: collection PASS, cleanup FAIL; all deltas ['legacy4'] remain recorded. Rules and production services were not changed to obtain PASS. Original OOM and test failures remain archived. Native A/B and final certification remain pending. Q37 IN_PROGRESS;30/37 DONE81.1%.

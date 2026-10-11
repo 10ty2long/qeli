@@ -1,6 +1,6 @@
 # Q37: документация и тестовая обвязка — 11 октября 2026
 
-<!-- normative-sync: q37-documentation-baseline-v8 -->
+<!-- normative-sync: q37-documentation-baseline-v9 -->
 
 **Статус: IN_PROGRESS.** [Результаты и hashes](../../../release/audit_q37_documentation_2026-10-11.json). Полный Q37 ещё не завершён. Общий итог остаётся 30/37 DONE (81,1%).
 
@@ -67,4 +67,6 @@ Q37-F009: [реальные тесты минимальных feature-профи
 
 Rust 1.97.0, offline/locked/jobs1: фактический Clippy all-targets PASS, точный preflight regression PASS; server — 2310 PASS/56 ignored, client — 1933 PASS/49 ignored, FFI — 1951 PASS/49 ignored. Ни один ignored-тест не объявлен проверенным. Все полные логи сохранены с SHA; тестировались 920 замороженных входов. Пять Linux shell-policy методов PASS; новый тест отверг прежний runner без минимальных тестов. Проверка CI-стенда сохраняет FAIL для изменения iptables4.
 
-Первоначальные OOM, серверные 10 FAIL, клиентский E0425 и отрицательная DNS-проверка при soft FD1024 сохранены. Для собственного изолированного задания используется короткий private `/tmp`, FD8192 и временный swap 2 ГиБ; число одновременных DNS-запросов и deadline не увеличены. Первый OOM-каталог архивирован и удалён; текущий пакет ещё не запечатан, временный swap надо удалить после завершения задания. Полная сборка CLI, его 11 диагностик, native A/B и final certification остаются открытыми. Native digest abcc1494 STALE; полный Q37 IN_PROGRESS, 30/37 DONE81,1%.
+После завершения прогона: все десять фаз PASS, включая INI-editor/examples/server-ini, conformance и штатную release-сборку CLI с jemalloc, fat LTO и codegen1. Новая CLI проверила все 11 отказов users.conf; каждое сообщение содержит конкретную причину, которую старый бинарник терял. SHA новой CLI `886e525ed909037fafe8ea494094c7eb0c0a4f2a0e0f0e44f1cd68a3e966cff5` привязан к исходникам `c69f9c9493412aede854cffe308a9a5b22a77c36`. Это квалификация сборки и указанных диагностик, не полная release integration и не пересборка native libraries.
+
+Пакет результатов запечатан. Архив 653036246 байт и все 17930 файлов проверены по SHA; собственный сборочный каталог и удалённая копия архива удалены. Временный swap 2 ГиБ отключён и удалён; исходный swap сохранён. Host gates: сбор PASS, очистка FAIL; все изменения ['legacy4'] сохранены, правила и рабочие службы не исправлялись ради PASS. Исходные OOM/тестовые отказы остаются в архиве. Native A/B и final certification остаются открытыми; Q37 IN_PROGRESS, 30/37 DONE81,1%.
