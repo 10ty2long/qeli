@@ -2023,3 +2023,48 @@ Q30/Q31, D06 ACCEPTED_LIMITATION и USER_EXCLUDED сохранены.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F504-F505 evidence: q35-stability-20261010; SEALED 33 files / 1319903 bytes; manifest SHA256 e88d4e2a863bd92e0e6de19bdecd0ed91ffde66b89838b9461be4adb6422285f.
+
+## TCP-состояния raw/mux — 11 октября 2026
+
+<!-- normative-sync: q36-tcp-state-v1 -->
+
+**Q36-F020:** [диагностика](../../../release/audit_q36_tcp_state_2026-10-11.json): шесть свежих
+сессий, 12 восьмисекундных окон plain TCP raw/mux, P=1, unlimited/250 Мбит/с
+на направление; три повтора с изменением порядка. Два изолированных IPvlan
+namespace на одной .10 разделяют два vCPU. Оба используют ранее квалифицированный
+release CLI F010 SHA 238153ab, default features+jemalloc; это не проверка
+текущего UDP-исправления и не повтор прежнего двухсерверного бенчмарка.
+
+Во время каждого окна отдельный ограниченный 13-секундный sampler вызывает
+ss -tinpO примерно раз в 250 мс. Внутренние data-соединения сопоставлены с
+socket/port из iperf JSON, контрольное соединение исключено; внешний carrier
+привязан к PID Qeli. Для всех шести ролей inner up/down и outer × server/client
+проверены реальные снимки, PID/CPU policy, режим recordizer, receiver/bitrate,
+kernel/server deltas и SHA. Это sampled TCP_INFO; не per-packet ACK timestamps
+и не полное распределение RTT. Итоговые iperf RTT/cwnd при -i 0 не используются
+как временная трасса. Сбор снимков также добавляет нагрузку к двум общим vCPU.
+
+Медиана [min–max] скорости трёх сессий. Последние два столбца — медианы
+наблюдавшихся максимумов в каждой сессии, не непрерывные максимумы:
+
+| Mode | Target Mbps/direction | ↑ Mbps | ↓ Mbps | Client outer Recv-Q peak KiB | Inner-up sender RTT peak ms |
+|---|---:|---:|---:|---:|---:|
+| raw | unlimited | 115.5 [93.9–136.8] | 478.7 [460.6–482.3] | 1104.4 | 53.826 |
+| raw | 250 | 248.7 [241.4–249.8] | 249.2 [244.7–249.7] | 275.2 | 27.606 |
+| mux | unlimited | 337.2 [273.0–402.3] | 896.6 [862.2–951.7] | 470.9 | 17.858 |
+| mux | 250 | 249.9 [249.7–249.9] | 249.7 [249.6–249.8] | 115.9 | 6.096 |
+
+Асимметрия воспроизводится на одной VM; paced-нагрузка и mux меняют результат.
+Снимки уточняют очереди и RTT, но сами по себе не устанавливают ACK starvation,
+ошибку планировщика или причинность со стороны buffer size. Defaults и data plane
+не изменены; причина остаётся OPEN. Популяции не объединяются с прежними VM-парами
+или диагностической AUTH-сборкой F019. Общий performance PASS не заявлен.
+
+Measurement host gate: **FAIL** ['iptables4', 'legacy4'];
+cleanup host gate: **FAIL** ['legacy4'].
+Полные отличия сохранены. Собственные namespace удалены, root SHA-архивирован и
+удалён после проверки скачанной копии; службы и staged CLI сохранены.
+Первый harness отказал из-за неверной сигнатуры measure до старта нагрузки;
+его trace/лог/квитанция сохранены, namespace очищены перед повтором.
+.11 по последней проверке принимает TCP22 без SSH banner. Q36 cause/release
+AUTH-rate и очистка .11 OPEN; Q35 soak отдельно. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.

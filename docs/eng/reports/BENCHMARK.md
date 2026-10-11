@@ -2030,3 +2030,49 @@ Q29 SIGKILL/ENONET,Q30/Q31,D06 ACCEPTED_LIMITATION and USER_EXCLUDED are preserv
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F504-F505 evidence: q35-stability-20261010; SEALED 33 files / 1319903 bytes; manifest SHA256 e88d4e2a863bd92e0e6de19bdecd0ed91ffde66b89838b9461be4adb6422285f.
+
+## TCP states for raw/mux — 11 October 2026
+
+<!-- normative-sync: q36-tcp-state-v1 -->
+
+**Q36-F020:** [diagnostics](../../../release/audit_q36_tcp_state_2026-10-11.json): six fresh
+sessions, twelve eight-second plain TCP raw/mux windows, P=1, unlimited/250 Mbps
+per direction; three repeats with varying order. Two isolated IPvlan namespaces
+on .10 share two vCPUs. Both use qualified F010 release CLI SHA 238153ab,
+default features+jemalloc. This does not test the current UDP fix and is not
+a repeat of the previous two-VM benchmark.
+
+A bounded thirteen-second sampler invokes ss -tinpO roughly every250ms.
+Inner data connections match iperf JSON socket/port identities, excluding the
+control connection; outer carrier identities match Qeli PIDs. Actual observations
+for six roles (inner up/down and outer × server/client), PID/CPU policy,
+recordizer mode, receiver/bitrate, kernel/server deltas and SHA were checked.
+These are sampled TCP_INFO values, not per-packet ACK timestamps or a complete
+RTT distribution. Final iperf RTT/cwnd fields under -i 0 are not treated as
+a temporal trace. Sampling also adds load to the two shared vCPUs.
+
+Median [min–max] rates across three sessions. The last two columns are medians
+of observed per-session peaks, not continuous maxima:
+
+| Mode | Target Mbps/direction | ↑ Mbps | ↓ Mbps | Client outer Recv-Q peak KiB | Inner-up sender RTT peak ms |
+|---|---:|---:|---:|---:|---:|
+| raw | unlimited | 115.5 [93.9–136.8] | 478.7 [460.6–482.3] | 1104.4 | 53.826 |
+| raw | 250 | 248.7 [241.4–249.8] | 249.2 [244.7–249.7] | 275.2 | 27.606 |
+| mux | unlimited | 337.2 [273.0–402.3] | 896.6 [862.2–951.7] | 470.9 | 17.858 |
+| mux | 250 | 249.9 [249.7–249.9] | 249.7 [249.6–249.8] | 115.9 | 6.096 |
+
+Asymmetry reproduces on one VM; pacing and mux change the outcome.
+Snapshots clarify queue/RTT behavior, but do not establish ACK starvation,
+a scheduler bug or buffer-size causality. Defaults and the data plane are unchanged;
+the cause remains OPEN. These populations are not pooled with previous VM pairs
+or the F019 functional AUTH build. No overall performance PASS is claimed.
+
+Measurement host gate: **FAIL** ['iptables4', 'legacy4'];
+cleanup host gate: **FAIL** ['legacy4'].
+All differences remain visible. Owned namespaces were removed; the root was
+SHA-archived and removed after checking the downloaded copy. Services and the
+staged CLI were preserved. The first harness failed on a wrong measure signature
+before load started; trace/log/receipt remain, and namespaces were cleaned before
+retrying. At last check .11 accepted TCP22 without an SSH banner. Q36 cause/release
+AUTH-rate and .11 cleanup remain OPEN; Q35 soak is separate.
+LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
