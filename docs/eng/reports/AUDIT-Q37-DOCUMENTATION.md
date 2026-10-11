@@ -1,6 +1,6 @@
 # Q37: documentation and test harnesses — 11 October 2026
 
-<!-- normative-sync: q37-documentation-baseline-v11 -->
+<!-- normative-sync: q37-documentation-baseline-v12 -->
 
 **Status: IN_PROGRESS.** [Results and hashes](../../../release/audit_q37_documentation_2026-10-11.json). Full Q37 is incomplete. Overall result remains 30/37 DONE (81.1%).
 
@@ -82,3 +82,10 @@ Q37-F011: [current Android native libraries and global provenance](../../../rele
 Canonical libraries and consumed jniLibs copies were updated with identical files. Both desktop/android groups now have valid A/B evidence for the current native digest; global PROVENANCE was updated only after that validation. SHA256SUMS and every canonical/consumed pair check PASS. The source/log/result archive was fully SHA-verified; rebuildable caches were not duplicated. Owned directories, remote archive and temporary swap were removed, and the prior swap table was restored; actual host gates and changes remain in the evidence without exceptions.
 
 This qualifies compilation and the exported API, not Android JNI/VPN execution. Android runtime/integration after Q35 and final release certification remain open. Previously described failures and historical evidence were not restamped. Q37 IN_PROGRESS, 30/37 DONE81.1%.
+
+
+Q37-F012/F013: [current Android package and R8 rules](../../../release/certification/evidence/current-android-package-20261011.json). Exact current Android inputs passed201 JVM tests through the current Windows ConfigCore JNI, failures/errors/skipped0. Lint:0fatal/0errors/55warnings; warnings retained. Instrumented Release/test APKs and a separate ordinary unsigned production Release contain the current arm64/x86_64 native hashes. Ordinary production ProGuard rules are unchanged.
+
+Independent TraceReferences --check refused stale433-line instrumented ABI rules:18 of19 newly required types lacked their expected names in actual packaged DEX. Regenerated505-line rules and only the two affected APKs were rebuilt; all19 types are present, inferred rules and packaged Trace/superclass ABI PASS. This reproduces a build/packaging defect, not an Android runtime exception. Original refusal and stale APKs retained. Offline AGP cache miss and local qualifier minSdkVersion mismatch retained; dependencies resolved with normal strict locks/checksums.
+
+The JNI Java/DEX harness compiled separately. Android APK/JNI execution remains pending while .11 runs genuine Q35 endurance. No new Linux execution claimed:922 frozen CLI inputs and453 helper inputs match; prior20/409 current checks remain applicable with original artifact/time/source/raw. Native inputs unchanged. Strict automated certification is checked separately after commit; whole preflight/current push CI/OpenWrt source cut remain OPEN. Q37 IN_PROGRESS,30/37 DONE81.1%; NO_PUSH_DEPLOY_RELEASE.

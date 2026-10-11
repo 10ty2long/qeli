@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+  "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -27,13 +27,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -53,13 +54,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -79,13 +81,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -105,13 +108,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -131,13 +135,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -157,13 +162,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -183,13 +189,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -209,13 +216,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -235,13 +243,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -261,13 +270,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -287,13 +297,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -313,13 +324,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -339,13 +351,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -365,13 +378,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:43:37.281311+00:00",
@@ -391,13 +405,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:43:37.281311+00:00",
@@ -417,13 +432,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:43:37.281311+00:00",
@@ -451,13 +467,14 @@
         "source_commit": "101f05fe147223b9d86ab2473f187ef06171e704",
         "release_source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
         "cli_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5"
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:33:27.758800+00:00",
@@ -477,13 +494,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:43:37.281311+00:00",
@@ -503,13 +521,14 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "21cb45c3ef8fbf71e490096cd7d610ad77dd1e1b9d28d235b516255f55ec5859",
+      "source_digest": "46015a6e2a8c84792f6ed1ffe7b383161468fa788ee7fb902a3eb0853d7efb3f",
       "artifact_sha256": "a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5",
       "environment": "Debian 13.5 amd64; lab 10.66.116.10; fresh private mount/network/PID namespaces",
       "executed_at": "2026-10-11T18:43:37.281311+00:00",
@@ -529,7 +548,8 @@
           "net": "net:[4026532327]",
           "pid": "pid:[4026532326]"
         }
-      }
+      },
+      "source_applicability_evidence": "release/certification/evidence/linux-applicability-android-r8-20261011.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -692,7 +712,8 @@
       "whole_audit_complete": false,
       "release_preflight_qualified": false,
       "ambient_host_firewall_differences_retained": true
-    }
+    },
+    "current_automated_matrix": "20 cases /409 checks; actual original times and artifacts retained; R8-only source applicability proved independently"
   },
   "source_qualification_supplements": [
     {
@@ -1138,6 +1159,10 @@
     {
       "evidence": "release/certification/evidence/q35-release-soak-admission-20261010.json",
       "scope": "F512/Q35-F010 release-soak admission false PASS reproduced in0.064s with8silent children; gate now requires each child result, final TCP10k/UDP10k+3x1k checkpoints and monotonic >=28800s. Actual Bash syntax and7 Linux contract methods PASS including no-op, missing checkpoint and 8h-minus-1ns refusal; binary SHA checks/order retained. Private lab fixture SHA backed up then guarded cleanup, .11 service777/845 and CLI SHA preserved. No actual8h VPN run, new compiler build, full Q35, hosted CI or release claim. Q35 IN_PROGRESS,30/37 DONE; historical F459/D06/USER_EXCLUDED retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE."
+    },
+    {
+      "evidence": "release/certification/evidence/current-android-package-20261011.json",
+      "scope": "Q37-F013 generated instrumented-only R8 repair;201 JVM/zero-error lint/current two-ABI APKs and ordinary production rules qualified. Android runtime/Q35/whole release gates pending. Linux20/409 reused only after exact922 CLI and453 helper input identity; original executions unchanged. release/certification/evidence/linux-applicability-android-r8-20261011.json"
     }
   ]
 }
