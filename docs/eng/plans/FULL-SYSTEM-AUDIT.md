@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v231 -->
+<!-- normative-sync: full-system-audit-v232 -->
 
 **Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2248,6 +2248,8 @@ Compare keys/defaults/errors with runtime, execute complete examples, verify RU/
 **11 October,Q37-F005:** server134 scalar defaults /268 RU+EN comparisons;68 corrected+66 original INI admissions,126accepted+8refused. Inline comments/section mixing/overlapping listeners fixed;11methods/old-doc negatives/docs/workflows PASS. First/third/fourth host FAIL retained; only nine affected-case invocations repeated, owned SHA/inactive cleanup complete. Native inputs unchanged/Q35 RUNNING; full Q37 IN_PROGRESS,30/37 DONE81.1%.
 
 **11 October,Q37-F006:** all176 consumed INI keys reconciled:134+41 defaults,1 obsolete. Fixed list/option/group/listen/REALITY descriptions;82 actual admission decisions (30accepted/52refused),11 original diagnostic FAIL retained. Shared users.conf error formatting preserves the cause; source Rust probe0/3 before→3/3 after, full CLI rebuild still required. Host gates PASS/FAIL/FAIL, archive and owned-root cleanup verified. [Report](../reports/AUDIT-Q37-DOCUMENTATION.md). Native digest317e722b stale, Q35 frozen/RUNNING; Q37 IN_PROGRESS,30/37 DONE81.1%.
+
+**11 October, Q37-F007:** reviewed 297 Rust files and 306 edges; OS/features/FFI API retained. Removed direct mio and production tower; actual Cargo locks, 4 Linux graphs and 235 legal packages checked. CI includes 24 Python modules and 14 LuCI scenarios; portable 104 on Windows, Linux 149 and changed import methods PASS without skips. Added suite admission guard and made 23 manual scripts import-inert with unchanged body/literal AST. Router tests use temporary output. Main/fuzz fmt checked. Three host FAIL retained; owned roots SHA-archived and removed. [Report](../reports/AUDIT-Q37-DOCUMENTATION.md). Native 3538e06c STALE, Q35 frozen RUNNING; Q37 IN_PROGRESS, 30/37 DONE (81.1%).
 
 **Status: IN_PROGRESS.**
 

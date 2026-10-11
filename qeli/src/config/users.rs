@@ -623,7 +623,10 @@ mod load_tests {
         .context("cannot load users file");
         let message = users_error_message(&error);
         assert!(message.contains("cannot load users file"), "{message}");
-        assert!(message.contains("users file permission denied"), "{message}");
+        assert!(
+            message.contains("users file permission denied"),
+            "{message}"
+        );
         assert_eq!(
             error.downcast_ref::<std::io::Error>().unwrap().kind(),
             std::io::ErrorKind::PermissionDenied

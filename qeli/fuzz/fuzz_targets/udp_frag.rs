@@ -2,8 +2,8 @@
 //! Raw rejection plus bounded, valid handshake fragments and exact assembly oracles.
 use libfuzzer_sys::fuzz_target;
 use qeli_core::protocol::udp_frag::{
-    fragment, is_fragment, Reassembler, MAX_CHUNK, MAX_CHUNK_ACCEPT, MAX_FRAGS,
-    MSG_CLIENT_HELLO, FRAG_HDR_LEN, FRAG_MAGIC,
+    fragment, is_fragment, Reassembler, FRAG_HDR_LEN, FRAG_MAGIC, MAX_CHUNK, MAX_CHUNK_ACCEPT,
+    MAX_FRAGS, MSG_CLIENT_HELLO,
 };
 
 fuzz_target!(|data: &[u8]| {
@@ -11,15 +11,22 @@ fuzz_target!(|data: &[u8]| {
     let mut raw = Reassembler::new();
     let _ = raw.push(data);
     let _ = raw.push(data);
-    if data.is_empty() { return; }
+    if data.is_empty() {
+        return;
+    }
     let selector = usize::from(data[0]);
     let len = (selector % (usize::from(MAX_FRAGS) + 1) * MAX_CHUNK
-        + usize::from(*data.get(1).unwrap_or(&0))).min(usize::from(MAX_FRAGS) * MAX_CHUNK);
+        + usize::from(*data.get(1).unwrap_or(&0)))
+    .min(usize::from(MAX_FRAGS) * MAX_CHUNK);
     let message: Vec<u8> = (0..len).map(|i| data[i % data.len()]).collect();
     let fragments = fragment(MSG_CLIENT_HELLO, &message).unwrap();
     let mut r = Reassembler::new();
     for position in 0..fragments.len() {
-        let index = if selector & 1 == 0 { fragments.len() - 1 - position } else { position };
+        let index = if selector & 1 == 0 {
+            fragments.len() - 1 - position
+        } else {
+            position
+        };
         let result = r.push(&fragments[index]).unwrap();
         if position + 1 == fragments.len() {
             assert_eq!(result.as_deref(), Some(message.as_slice()));
@@ -47,8 +54,11 @@ fuzz_target!(|data: &[u8]| {
         wire.extend_from_slice(&[MSG_CLIENT_HELLO, index as u8, count as u8]);
         wire.extend_from_slice(&chunk);
         let result = legacy.push(&wire).unwrap();
-        if index + 1 == count { assert_eq!(result.unwrap(), chunk.repeat(count)); }
-        else { assert_eq!(result, None); }
+        if index + 1 == count {
+            assert_eq!(result.unwrap(), chunk.repeat(count));
+        } else {
+            assert_eq!(result, None);
+        }
     }
     let mut oversized = FRAG_MAGIC.to_vec();
     oversized.extend_from_slice(&[MSG_CLIENT_HELLO, 0, 1]);
@@ -58,7 +68,10 @@ fuzz_target!(|data: &[u8]| {
     // Rejecting an oversized first fragment must leave a fresh assembler usable.
     for (index, wire) in fragments.iter().enumerate() {
         let result = fresh.push(wire).unwrap();
-        if index + 1 == fragments.len() { assert_eq!(result.as_deref(), Some(message.as_slice())); }
-        else { assert_eq!(result, None); }
+        if index + 1 == fragments.len() {
+            assert_eq!(result.as_deref(), Some(message.as_slice()));
+        } else {
+            assert_eq!(result, None);
+        }
     }
 });

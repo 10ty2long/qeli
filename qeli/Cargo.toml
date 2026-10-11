@@ -55,7 +55,7 @@ default = ["server", "client"]
 # the web stack. A client-only build (`--no-default-features --features client-bin`)
 # excludes all of these and cross-compiles to mipsel/aarch64.
 # Every server build includes session roaming: shipped profiles and Quick Start enable it.
-server = ["dep:rustls", "dep:tokio-rustls", "dep:webpki-roots", "dep:rcgen", "dep:axum", "dep:axum-server", "dep:tower", "dep:qrcode", "experimental-roaming"]
+server = ["dep:rustls", "dep:tokio-rustls", "dep:webpki-roots", "dep:rcgen", "dep:axum", "dep:axum-server", "dep:qrcode", "experimental-roaming"]
 client = []
 # Standard standalone and FFI clients carry the same roaming state machine. Runtime
 # capability negotiation still falls back safely on unsupported platforms and peers.
@@ -138,9 +138,8 @@ portable-atomic = "1"
 # decay, keeping RSS bounded (~40-60 MB). Optional so non-server targets never build
 # jemalloc-sys (no Windows/MSVC backend). Linux-only in practice (the binary is too).
 tikv-jemallocator = { version = "0.7", optional = true }
-mio = { version = "1", features = ["os-poll", "os-ext"] }
 # SO_REUSEPORT UDP sockets for the multi-worker UDP data plane (safe sockaddr
-# handling vs hand-rolled libc). Already in the dep tree via tokio/mio.
+# handling vs hand-rolled libc). Already in the dep tree via tokio.
 socket2 = { version = "0.6", features = ["all"] }
 
 # Web admin stack — server-only (feature = "server"). `ring` (pulled via rcgen/
@@ -150,7 +149,6 @@ axum = { version = "0.8", features = ["macros"], optional = true }
 # so it does NOT pull aws-lc-rs (needs cmake — the lab has none); we supply the
 # `ring` provider ourselves via the existing rustls `ring` feature.
 axum-server = { version = "0.8", features = ["tls-rustls-no-provider"], optional = true }
-tower = { version = "0.5", optional = true }
 # CIDR parsing is part of the base config validation surface: even no-feature parser/fuzz
 # builds validate client LAN CIDRs, while server builds also use it for panel allowlists.
 ipnet = "2"
