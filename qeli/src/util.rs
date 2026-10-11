@@ -599,7 +599,7 @@ pub fn write_atomic(path: impl AsRef<Path>, bytes: &[u8]) -> anyhow::Result<()> 
 }
 
 /// Exercise the real publication path, failing only its final directory-sync step.
-#[cfg(all(test, target_os = "linux", feature = "server"))]
+#[cfg(test)]
 pub(crate) fn write_atomic_test_sync_failure(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
     write_atomic_with_sync(path, bytes, false, |_| {
         Err(std::io::Error::other("injected directory I/O failure"))

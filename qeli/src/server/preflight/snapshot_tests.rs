@@ -199,6 +199,9 @@ fn probe_fixture() {
         peer.write_all(b"ready").unwrap();
         let _ = peer.read(&mut [0]);
     }
+    // libtest's --nocapture label has no newline. Keep the observations on
+    // separate lines, as they are in the real ip command's stdout.
+    std::io::stdout().write_all(b"\n").unwrap();
     std::io::stdout()
         .write_all(OBSERVATIONS[index].as_bytes())
         .unwrap();
