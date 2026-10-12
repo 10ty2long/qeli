@@ -77,3 +77,44 @@ preserved. The owned root, remote archive and transient unit were cleaned.
 Full structural comparison across all host backends passed.
 Q35 remains IN_PROGRESS; the ledger remains 31/37 (83.8%), six sections open.
 Full release and hosted CI are not certified. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: Q35 performance measurement order
+
+<!-- normative-sync: q35-performance-order-20261012 -->
+
+[Raw results and independent qualification](../../../release/certification/evidence/q35-performance-order-20261012.json).
+Lab .11 executed four predeclared measurements on previous CLI `35da83fd`,
+ordered off → required → required → off. Each policy retains three 20-second
+rounds, the unchanged 5% budget and CPUQuota 200%. All four functional cases
+passed (44 assertions). These are order diagnostics, not a new full release gate.
+
+| Order | Policy | Upload Mbps | Download Mbps | CPU % | Host steal % |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 1 | off | 511 | 633 | 159.861 | 0.004 |
+| 2 | required | 513 | 635 | 159.519 | 0.008 |
+| 3 | required | 527 | 630 | 161.851 | 0.008 |
+| 4 | off | 524 | 632 | 161.849 | 0.004 |
+
+- off-first / required-second: upload -0.3914%, download -0.3160%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+- off-last / required-third: upload -0.5725%, download 0.3165%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+
+All 24 iperf3 receiver results were independently checked, and medians and both
+comparisons recalculated. Observations retain host CPU steal, PSI, memory and
+cgroup with available raw counters. The private sysfs mount does not expose a
+cgroup filesystem: all cgroup observations are empty. Quota throttling and memory
+cgroup events were not measured. Every input and retained file was SHA-verified;
+private namespaces were confirmed. Full host comparisons passed before/after/after
+cleanup; production services and staged CLI remained intact. The owned root,
+remote archive and transient unit were removed.
+
+In the original 13-hour run, both performance policies used fresh process pairs;
+their PID/start ticks do not overlap the resource prefix in 9395 snapshots.
+The performance helpers are unchanged. Thus the 6.8627% FAIL does not demonstrate
+degradation of the same long-lived VPN session. The original observer retained no
+host CPU steal/PSI/cgroup telemetry; this short diagnostic cannot reconstruct those
+conditions. Even different forward/reverse comparisons cannot establish the
+historical failure's cause. The budget and original failure remain intact;
+root cause is NOT_ESTABLISHED. The 13-hour resource prefix was not replayed.
+
+Q35 remains IN_PROGRESS; the current CLI's full eight-hour gate is not certified.
+The ledger stays 31/37 (83.8%), with six sections open. `NO_PUSH_DEPLOY_RELEASE`.

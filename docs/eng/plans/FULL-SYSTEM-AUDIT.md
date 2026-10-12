@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v237 -->
+<!-- normative-sync: full-system-audit-v238 -->
 
 **Current result, 12 October: 31/37 sections complete within agreed scope (83.8%), 6 remain. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2779,3 +2779,44 @@ The bounded 100+100 soak does not replace the eight-hour Q35 release gate.
 The old Q35 performance FAIL, Android SIGKILL/ENONET, full Android VPN data plane,
 hosted CI and other open criteria remain outside this PASS. The ledger remains
 31/37 (83.8%), with Q29/Q31/Q34/Q35/Q36/Q37 open. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: Q35 performance measurement order
+
+<!-- normative-sync: q35-performance-order-20261012 -->
+
+[Raw results and independent qualification](../../../release/certification/evidence/q35-performance-order-20261012.json).
+Lab .11 executed four predeclared measurements on previous CLI `35da83fd`,
+ordered off → required → required → off. Each policy retains three 20-second
+rounds, the unchanged 5% budget and CPUQuota 200%. All four functional cases
+passed (44 assertions). These are order diagnostics, not a new full release gate.
+
+| Order | Policy | Upload Mbps | Download Mbps | CPU % | Host steal % |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 1 | off | 511 | 633 | 159.861 | 0.004 |
+| 2 | required | 513 | 635 | 159.519 | 0.008 |
+| 3 | required | 527 | 630 | 161.851 | 0.008 |
+| 4 | off | 524 | 632 | 161.849 | 0.004 |
+
+- off-first / required-second: upload -0.3914%, download -0.3160%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+- off-last / required-third: upload -0.5725%, download 0.3165%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+
+All 24 iperf3 receiver results were independently checked, and medians and both
+comparisons recalculated. Observations retain host CPU steal, PSI, memory and
+cgroup with available raw counters. The private sysfs mount does not expose a
+cgroup filesystem: all cgroup observations are empty. Quota throttling and memory
+cgroup events were not measured. Every input and retained file was SHA-verified;
+private namespaces were confirmed. Full host comparisons passed before/after/after
+cleanup; production services and staged CLI remained intact. The owned root,
+remote archive and transient unit were removed.
+
+In the original 13-hour run, both performance policies used fresh process pairs;
+their PID/start ticks do not overlap the resource prefix in 9395 snapshots.
+The performance helpers are unchanged. Thus the 6.8627% FAIL does not demonstrate
+degradation of the same long-lived VPN session. The original observer retained no
+host CPU steal/PSI/cgroup telemetry; this short diagnostic cannot reconstruct those
+conditions. Even different forward/reverse comparisons cannot establish the
+historical failure's cause. The budget and original failure remain intact;
+root cause is NOT_ESTABLISHED. The 13-hour resource prefix was not replayed.
+
+Q35 remains IN_PROGRESS; the current CLI's full eight-hour gate is not certified.
+The ledger stays 31/37 (83.8%), with six sections open. `NO_PUSH_DEPLOY_RELEASE`.

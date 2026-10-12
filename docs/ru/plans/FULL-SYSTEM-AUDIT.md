@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v237 -->
+<!-- normative-sync: full-system-audit-v238 -->
 
 **Текущий итог, 12 октября: 31/37 разделов завершено в согласованном объёме (83,8%), осталось 6. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2791,3 +2791,45 @@ DNS-инструменты, зависимости и passwd/group сохран�
 Старый Q35 performance FAIL, Android SIGKILL/ENONET, полный Android VPN data plane,
 hosted CI и остальные открытые критерии остаются за пределами этого PASS.
 План: 31/37 (83,8%), Q29/Q31/Q34/Q35/Q36/Q37 открыты. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 октября: порядок performance-замеров Q35
+
+<!-- normative-sync: q35-performance-order-20261012 -->
+
+[Исходные результаты и независимая проверка](../../../release/certification/evidence/q35-performance-order-20261012.json).
+На .11 выполнены четыре заранее зафиксированных замера на прежнем CLI
+`35da83fd`, в порядке off → required → required → off. В каждом режиме
+остались три повтора по 20 секунд и прежний порог 5%; CPUQuota — 200%.
+Все четыре функциональных сценария прошли (44 утверждений).
+Это диагностические сравнения порядка, а не новый общий release gate.
+
+| Order | Policy | Upload Mbps | Download Mbps | CPU % | Host steal % |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 1 | off | 511 | 633 | 159.861 | 0.004 |
+| 2 | required | 513 | 635 | 159.519 | 0.008 |
+| 3 | required | 527 | 630 | 161.851 | 0.008 |
+| 4 | off | 524 | 632 | 161.849 | 0.004 |
+
+- off-first / required-second: upload -0.3914%, download -0.3160%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+- off-last / required-third: upload -0.5725%, download 0.3165%; gates {"upload": true, "download": true, "cpu": true}; PASS.
+
+Из receiver-строк iperf3 независимо проверены все 24 результата; медианы и
+оба сравнения пересчитаны. Наблюдение сохранило CPU steal, PSI, memory и cgroup
+с доступными исходными счётчиками; новые результаты не заменяют старый отказ.
+В private sysfs нет смонтированного cgroup filesystem: все cgroup-наблюдения
+пусты. Throttling квоты и события memory cgroup этим прогоном не измерены.
+Файлы и входы проверены по SHA, private namespaces подтверждены,
+host gate до/после/после очистки PASS. Рабочие службы и staged CLI сохранены;
+собственный каталог, удалённый архив и transient unit удалены.
+
+В исходном 13-часовом прогоне оба performance-режима использовали новые пары
+процессов; их PID/start ticks не пересекаются с ресурсным префиксом по 9395
+снимкам. Performance helper не менялся. Поэтому FAIL 6,8627% не доказывает
+замедление той же долгоживущей VPN-сессии. Старый сборщик не сохранял host CPU
+steal/PSI/cgroup telemetry, и новый короткий тест не восстанавливает те условия.
+Даже различие прямого и обратного порядка не устанавливает причину старого FAIL.
+Порог не изменён; причина NOT_ESTABLISHED, оригинальный отказ сохранён.
+Ресурсный 13-часовой префикс не повторяли.
+
+Q35 IN_PROGRESS; полный 8-часовой gate на текущем CLI не подтверждён.
+План остаётся 31/37 (83,8%), шесть разделов открыты. `NO_PUSH_DEPLOY_RELEASE`.
