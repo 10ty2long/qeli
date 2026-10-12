@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v245 -->
+<!-- normative-sync: full-system-audit-v246 -->
 
 **Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2895,3 +2895,8 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 октября:** Q29: причина generic/null ENONET локализована на текущем API34 image. Ответ dnsproxyd и отдельный platform TUN с другим owner UID воспроизводят отказ; bypassable control получает A+AAAA. Typed/null и explicit VPN DNS идут через TUN. Product APK/JNI/default kill-switch неизменны; compatibility FAIL сохранён, SIGKILL и first-post-APPLIED открыты. [Q29 DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-current-sigkill-20261012 -->
+
+Текущий production R8 SIGKILL recovery: FAIL; общий runtime FAIL. Plain/TUN platform-only controls выполнены один раз,45s window сохранён. Manual recovery/revoke и блокировка при dead/force-stopped VPN PASS. Product APK/JNI и byte-identical restart policy неизменны;SIGKILL FAIL не переписан. [Q29](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.

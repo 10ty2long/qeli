@@ -1,6 +1,6 @@
 # Q29: Android system Always-on, lockdown and process death
 
-<!-- normative-sync: q29-android-system-v6 -->
+<!-- normative-sync: q29-android-system-v7 -->
 
 **5 October 2026. Partial result; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain. The complete system gate is FAIL: automatic redelivery after external SIGKILL is unqualified.**
 
@@ -78,3 +78,21 @@ New final product-only run(r5):219.07s,bootstrap2.668s,1 fresh PASS and7 receipt
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 October:** Q29 generic/null ENONET cause localized on the current API34 image. Authenticated dnsproxyd selection and independent platform TUN owner UID reproduce failure;bypassable control returns A+AAAA. Typed/null and explicit VPN DNS traverse TUN. Product APK/JNI/default kill-switch unchanged;compatibility failure retained,SIGKILL and first-post-APPLIED remain open. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+## 12 October: current production SIGKILL and platform TUN control
+
+One current ordinary-R8 run took 401.05s on readonly Android14/API34 x86_64. Whole runtime `FAIL`,automatic authenticated recovery `FAIL`. Actual UI/SAF imported INI without instrumentation/private-prefs injection;126 canonical Android inputs unchanged. CLI/APK/JNI were not rebuilt. Only the standalone platform Java restart control APK was built;plain and TUN+lockdown ran,prior TUN without lockdown was not repeated.
+
+| Control | Result | Observation,s | PID |
+| --- | --- | --- | --- |
+| plain | RESTART_OBSERVED | 18.95 | 1889 → 2329 |
+| vpn | NO_RESTART_OBSERVED | 45.49 | 2494 → none |
+
+The current plain foreground control restarts;TUN control and Qeli reproduce unbind/DeadObjectException before process death and no restart scheduling during45s. Failure is localized to Android framework TUN teardown,not an exact framework revision or an assertion that restart can never occur.
+
+Before SIGKILL services have isForeground=true,startRequested=true,startCommandResult=3. Exit-info confirms SIGNALED/status9;the live PID is captured before kill. System logs check exact component/PID unbind exception,DeadObjectException,process death and restart scheduling. START_REDELIVER/desired policy is byte-identical to historical source;actual redelivery requires new PID/READY flags1. START_STICKY was not tested as a fix. [AOSP Android14 reference](https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-14.0.0_r1/services/core/java/com/android/server/am/ActiveServices.java) removes the service/process association after an unbind exception before the subsequent service traversal. This explains reference code;it does not identify the exact AVD build.
+
+A separate ordinary UID confirmed dead/force-stopped blocking:0 server receipts. Manual recovery/revoke PASS;these do not qualify automatic recovery. Guest1536MiB/lowram,actual MemTotal=1505648KiB;prior2560MB attempts retain their results. Whole runtime failure/error remain in original result. Broad platform-health conclusions are limited to one AVD.
+
+Local manifest read failed before runtime dispatch. One owned staging root was resumed only after all existing payload SHA values matched;metadata completed without reuploading APK/core. Service/PID,host firewall/routes/resolver and original userdata preserved. Owned root removed after verified recovery and inode/process/fd/mount guards. [Evidence](../../../release/certification/evidence/q29-current-sigkill-20261012.json). Raw:`audit-debt-20260924/q29-current-sigkill-20261012`. Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.

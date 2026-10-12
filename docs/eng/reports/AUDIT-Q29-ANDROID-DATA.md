@@ -1,6 +1,6 @@
 # Q29: Android VPN payload and post-auth lifecycle
 
-<!-- normative-sync: q29-android-data-v7 -->
+<!-- normative-sync: q29-android-data-v8 -->
 
 **5 October 2026. Stage PASS; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain.**
 
@@ -74,3 +74,8 @@ The subsequent [system lifecycle stage](AUDIT-Q29-ANDROID-SYSTEM.md) confirms po
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 October:** Q29 generic/null ENONET cause localized on the current API34 image. Authenticated dnsproxyd selection and independent platform TUN owner UID reproduce failure;bypassable control returns A+AAAA. Typed/null and explicit VPN DNS traverse TUN. Product APK/JNI/default kill-switch unchanged;compatibility failure retained,SIGKILL and first-post-APPLIED remain open. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-current-sigkill-20261012 -->
+
+Current production R8 SIGKILL recovery:FAIL;whole runtime FAIL. Plain/TUN platform controls ran once,45s window retained. Manual recovery/revoke and dead/force-stopped blocking PASS. Product APK/JNI and byte-identical restart policy unchanged;SIGKILL failure not overwritten. [System scope](AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.

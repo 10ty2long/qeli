@@ -1,6 +1,6 @@
 # Q29: системные Always-on, lockdown и смерть процесса Android
 
-<!-- normative-sync: q29-android-system-v6 -->
+<!-- normative-sync: q29-android-system-v7 -->
 
 **5 октября 2026. Частичный результат; Q29 IN_PROGRESS. План28/37(75,7%),9 разделов осталось. Общий системный gate FAIL: автоматическая redelivery после внешнего SIGKILL не подтверждена.**
 
@@ -78,3 +78,21 @@ Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-syst
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 октября:** Q29: причина generic/null ENONET локализована на текущем API34 image. Ответ dnsproxyd и отдельный platform TUN с другим owner UID воспроизводят отказ; bypassable control получает A+AAAA. Typed/null и explicit VPN DNS идут через TUN. Product APK/JNI/default kill-switch неизменны; compatibility FAIL сохранён, SIGKILL и first-post-APPLIED открыты. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+## 12 октября: текущий production SIGKILL и platform TUN-контроль
+
+Один свежий current ordinary-R8 прогон занял 401.05s на readonly Android14/API34 x86_64. Общий runtime `FAIL`, automatic authenticated recovery `FAIL`. INI импортирован реальным UI/SAF без instrumentation/private-prefs injection;126 канонических Android build inputs прежние. CLI/APK/JNI не пересобирались. Только standalone platform Java restart control APK собран свежим инструментом; plain и TUN+lockdown cells выполнены, прежний TUN без lockdown не повторялся.
+
+| Контроль | Результат | Наблюдение,s | PID |
+| --- | --- | --- | --- |
+| plain | RESTART_OBSERVED | 18.95 | 1889 → 2329 |
+| vpn | NO_RESTART_OBSERVED | 45.49 | 2494 → none |
+
+Текущий plain foreground-контроль перезапускается, а TUN-контроль и Qeli воспроизводят unbind/DeadObjectException до process-death и отсутствие scheduling restart в наблюдавшихся45s. Отказ локализован в Android framework teardown TUN; это не доказательство точной framework-ревизии или бесконечного отсутствия перезапуска.
+
+Перед SIGKILL сервисы имеют isForeground=true,startRequested=true,startCommandResult=3. Exit-info подтверждает SIGNALED/status9; PID берётся из живого процесса перед kill. Системные логи проверены по конкретным component/PID: unbind exception,DeadObjectException,process death и scheduling restart. START_REDELIVER/desired policy байт-в-байт совпадает с историческим source; новый процесс/READY flags1 требуется для фактической redelivery. Изменение START_STICKY не проверялось как исправление. [AOSP Android14 reference](https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-14.0.0_r1/services/core/java/com/android/server/am/ActiveServices.java) при исключении unbind удаляет связь с процессом до последующего обхода его сервисов. Это объяснение reference-кода,не доказанная точная сборка AVD.
+
+Отдельный обычный UID проверил блокировку после смерти и force-stop:0 server receipts. Ручное восстановление и отзыв VPN PASS; они не заменяют automatic recovery. Guest1536MiB с lowram,фактический MemTotal=1505648KiB; прежние2560MB attempts не переписаны. Общий runtime failure/ошибка остаются в исходном result. Точность глобальных platform-health выводов ограничена состоянием одного AVD.
+
+Локальный отказ чтения manifest произошёл до запуска теста. Единственный собственный staging root принят только после совпадения SHA всех уже загруженных файлов; служебные metadata дописаны без повторной загрузки APK/ядра. Сервис/PID,host firewall/routes/resolver и original userdata сохранены. Own root удалён после verified recovery и inode/process/fd/mount guards. [Evidence](../../../release/certification/evidence/q29-current-sigkill-20261012.json). Raw:`audit-debt-20260924/q29-current-sigkill-20261012`. Q29 IN_PROGRESS;32/37(86,5%).NO_PUSH_DEPLOY_RELEASE.

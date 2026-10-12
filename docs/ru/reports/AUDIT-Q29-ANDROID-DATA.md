@@ -1,6 +1,6 @@
 # Q29: Android VPN-трафик и lifecycle после Auth
 
-<!-- normative-sync: q29-android-data-v7 -->
+<!-- normative-sync: q29-android-data-v8 -->
 
 **5 октября 2026. Этап PASS; Q29 IN_PROGRESS. План: 28/37 (75,7%), осталось 9 разделов.**
 
@@ -74,3 +74,8 @@ Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-rout
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 октября:** Q29: причина generic/null ENONET локализована на текущем API34 image. Ответ dnsproxyd и отдельный platform TUN с другим owner UID воспроизводят отказ; bypassable control получает A+AAAA. Typed/null и explicit VPN DNS идут через TUN. Product APK/JNI/default kill-switch неизменны; compatibility FAIL сохранён, SIGKILL и first-post-APPLIED открыты. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-current-sigkill-20261012 -->
+
+Текущий production R8 SIGKILL recovery: FAIL; общий runtime FAIL. Plain/TUN platform-only controls выполнены один раз,45s window сохранён. Manual recovery/revoke и блокировка при dead/force-stopped VPN PASS. Product APK/JNI и byte-identical restart policy неизменны;SIGKILL FAIL не переписан. [System scope](AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.

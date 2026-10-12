@@ -2745,3 +2745,12 @@ Increasing TUN tx_dropped with zero qdisc drops identifies TUN device loss,
 without establishing the driver drop reason or the lost TCP flow. Compare
 latency before increasing queues: larger buffers may increase delay.
 [Scoped experiment and evidence limits](../reports/BENCHMARK.md).
+
+
+<!-- normative-sync: q29-process-death-troubleshooting-v1 -->
+
+### Android: VPN did not return after process death
+
+After process death,Always-on VPN depends on Android restarting its service. The lab Android14 failed to restore TUN automatically despite START_REDELIVER_INTENT. Block connections without VPN continues to block traffic. Open Qeli and check the active profile,Always-on and Block connections without VPN. The lab separately verified a manual restart through system VPN Settings;toggling blocking temporarily changes network policy. Verify the resulting connection and policy separately;Force stop,VPN revoke and explicit Disconnect are different operations. If automatic start is absent,retain ActivityManager/Vpn/VpnSvc logcat and dumpsys activity services;reconnect settings cannot start a dead process.
+
+[Audit details](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).

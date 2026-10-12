@@ -432,3 +432,8 @@ notices are preserved in `native-rust/toolchains/`. The external reviewed TSV is
 a Gradle InputFile, so policy drift invalidates cached legal assets. Upstream
 notices absent from this reviewed scope, matching source publication, signatures and
 full release admission remain separate checks.
+
+
+### Восстановление после смерти процесса
+
+Always-on запрашивает перезапуск у Android. На одном API34 AVD automatic SIGKILL recovery не прошла; ручное восстановление с проверкой итоговой политики блокировки проверено отдельно. Подробнее: [диагностика](../docs/ru/manuals/TROUBLESHOOTING.md) и [текущий scope](../docs/ru/reports/AUDIT-Q29-ANDROID-SYSTEM.md).
