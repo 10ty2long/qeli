@@ -412,16 +412,16 @@
   "q35_eight_hour_endurance_qualified": false,
   "hosted_ci_certified": false,
   "push_deploy_release": false,
-  "source_digest": "ce7a40f5eda7cc7af75840f246b2402df1ddde77ed0eae1980bdfbbbda4310f5",
-  "applicable_source_commit": "f18ae7c9d740d125f85310f453608449747f0ecd",
+  "source_digest": "7b07d44edb4d33086310a070114e4699a0448dc903614f06da106729e21da61a",
+  "applicable_source_commit": "62921052e636652b86069b43bc5021b3a102657a",
   "source_applicability": {
-    "kind": "EXACT_DOCS_SDK_ANDROID_FIXTURES_AND_QUALIFIED_OPENWRT_SOURCE_METADATA_DIFF_AFTER_FRESH_LINUX_RUNTIME",
+    "kind": "EXACT_DOCS_SDK_ANDROID_FIXTURES_WITH_CURRENT_STORAGE_STARTUP_AND_QUALIFIED_OPENWRT_METADATA_DIFF",
     "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
     "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-    "applicable_source_commit": "f18ae7c9d740d125f85310f453608449747f0ecd",
-    "applicable_source_digest": "ce7a40f5eda7cc7af75840f246b2402df1ddde77ed0eae1980bdfbbbda4310f5",
+    "applicable_source_commit": "62921052e636652b86069b43bc5021b3a102657a",
+    "applicable_source_digest": "7b07d44edb4d33086310a070114e4699a0448dc903614f06da106729e21da61a",
     "execution_tree": "037e2c83fb57acb6c00b64f33733b1c668e72409",
-    "applicable_tree": "5e6d7caf7420ca61c20ac5924eda25059c1ae0f3",
+    "applicable_tree": "97fab360e4044475341e2bdaf16b425d8fdf80c4",
     "all_changed_paths": [
       "docs/eng/index.md",
       "docs/eng/plans/AUDIT-DEBT.md",
@@ -450,6 +450,7 @@
       "release/certification/0.8.2.json",
       "release/certification/evidence/current-pool-linux-matrix-20261012.json",
       "release/certification/evidence/q29-current-vpn-20261012.json",
+      "release/certification/evidence/q29-storage-startup-20261012.json",
       "release/certification/evidence/q31-current-portable-20261012.json",
       "release/certification/evidence/q34-current-source-cut-20261012.json",
       "release/certification/evidence/q35-performance-order-20261012.json",
@@ -462,6 +463,7 @@
       "scripts/test_android_lab_ui_anr.py",
       "scripts/test_android_release_ui_transition.py",
       "scripts/test_android_startup_state.py",
+      "scripts/test_android_storage_admission.py",
       "scripts/test_openwrt_compile.py",
       "scripts/test_openwrt_opkg.py"
     ],
@@ -498,16 +500,17 @@
       "scripts/test_android_lab_ui_anr.py",
       "scripts/test_android_release_ui_transition.py",
       "scripts/test_android_startup_state.py",
+      "scripts/test_android_storage_admission.py",
       "scripts/test_openwrt_compile.py",
       "scripts/test_openwrt_opkg.py"
     ],
     "changed_source_file_sha256": {
       "docs/eng/index.md": "f080f2095c3cc2f93ce02029e3d412295786c83993ebd183fec01e96354cbf18",
       "docs/eng/plans/AUDIT-DEBT.md": "052ae16d682dfaff0f2c616d4341f01b89a71b527e7941b89844b813aff67fef",
-      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "d02e8f41e8f5167ad51f21fe85b1df5305eeb7d17dd6a37327b45b8fa83dc767",
-      "docs/eng/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md": "16d4a1994edb4c62507b06a5baee4815de63d94574c11617fb2ea736f174ad04",
-      "docs/eng/reports/AUDIT-Q29-ANDROID-DATA.md": "d913a0cc5647fa49d9c9aac0c1e995112d5e9bc128b5ca703f0b11af8dbc43b3",
-      "docs/eng/reports/AUDIT-Q29-ANDROID-SYSTEM.md": "e65c2cbd1d99053bf54670ae001e79663be030956e6454aaa118a55d6e6c4faf",
+      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "970c01a2f061798ad37e041727eb43ac9238976c52d5d09b5381748e3ce7573e",
+      "docs/eng/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md": "0137fd997447cc106ceecf63d8188506d75539ef0a6b61f1f04ea8da25d557c1",
+      "docs/eng/reports/AUDIT-Q29-ANDROID-DATA.md": "2f1b5b00420082454523a1f67fdf9a00dfa3c17e69b4640662d8332e92fbc5b6",
+      "docs/eng/reports/AUDIT-Q29-ANDROID-SYSTEM.md": "c029b6144af494b76f98de724b21cfaff9f6b45b6964f0a734e4691567749ec3",
       "docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md": "85a2e0f3ef70c774a1ad1ca08577b1aacf4f1acadcc36e19f6213e4ebcf7b4d2",
       "docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md": "a82ab40a377edf1cdd3dc4a0517ee3ab8170cabf194f5c0e5f9966bf20a70cbf",
       "docs/eng/reports/AUDIT-Q35-LONG-SOAK.md": "440b81e344bb993d892e681bd31f3b1b81cc0bdb8bad540c4fa1d88b34cee715",
@@ -515,10 +518,10 @@
       "docs/eng/reports/BENCHMARK.md": "045682fb4b02744f8d1a6a0f5836319acd79d22c1a15d3fcb81d19215f891261",
       "docs/ru/index.md": "04d2aad553642b443f4fca420f8923e697a9609fcc06624d413ace9987e4e8a9",
       "docs/ru/plans/AUDIT-DEBT.md": "d362c61d75e9cbea82e3af1c3794a5895ba29facce78cb4587a75f670b130d50",
-      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "64a70fd17f651eab2700d13c9e73723562a8763fd4169e91396bcce4c2cd143a",
-      "docs/ru/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md": "d800ac1b1e6696fd7949d3e1a5e3f55b6947982e8b6de9dde47536e200109cd1",
-      "docs/ru/reports/AUDIT-Q29-ANDROID-DATA.md": "c9822113f7cc629f0b4f6ea46ecf47692fb80597b637426aef8fa143b164f25f",
-      "docs/ru/reports/AUDIT-Q29-ANDROID-SYSTEM.md": "6d68b927170f77f03114b25e5b392a2566e789f23ff6c5a3ca24b7079c8d7803",
+      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "f9ae582e581e93e286d5f9913708c856454c2befa8b8c196f55363ab151dde3a",
+      "docs/ru/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md": "ac10792b2bfe791aedbc875fcb0c4f4c73fbc523a677b084a327776791ba13ca",
+      "docs/ru/reports/AUDIT-Q29-ANDROID-DATA.md": "050f7281745dd7bf1b47e934de740db2ee4fe05c5d431d8df8a102304c7de3f6",
+      "docs/ru/reports/AUDIT-Q29-ANDROID-SYSTEM.md": "4051f313f4f3bcf3a7953b8949cf05b283724d9fc85f99bdf65525576943d228",
       "docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md": "68fa5183be5d719852d9a0773107eea58d5f323a7c254d20b6e25a621c20f2c0",
       "docs/ru/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md": "9a8e7e0e6a626e6c94a5795cb42682c58022b9efed0b0546a53eb27ec59600d5",
       "docs/ru/reports/AUDIT-Q35-LONG-SOAK.md": "76fbf8ff15890311927c746ce26bbc3e72e0c47c43dea70fdce78a3b6e1e1115",
@@ -527,13 +530,14 @@
       "qeli-openwrt/Makefile": "cfc6c45869b2cbff9836f3ac48bdc56b6882bae465ae782ed2165145c508b60d",
       "qeli-openwrt/README.md": "eec4d44b388625f2dca899aa3745d539bc9aa1a065bc62856c0e7e5b3c190006",
       "scripts/android_lab_ui.py": "c5d2bd815240ab3c7003a638416fd1bc4a30951a3f7fa79cb02a38889f41eb37",
-      "scripts/audit_android_data_plane_lab.py": "4b65e31d931eb41082950d55a4e6881936207ee9b157b10807d67d6057ccebc6",
-      "scripts/audit_android_release_ui.py": "eedd5211c4bd24cf863d8bf5d0d19df6efc4e20c46beb6bd3ab0bf0a69e681ee",
+      "scripts/audit_android_data_plane_lab.py": "cd0f5c40671f5304a4e5a8b9a83b7ad44f54038539e62123fe02349448e3946f",
+      "scripts/audit_android_release_ui.py": "56ac0b2d249bd3599fc8c999c5ad6f0cbeb8d3b2d91825ce3d1fbb031e347309",
       "scripts/audit_android_startup_dns.py": "53d7a6d9852c3d9ad8fa7388462f9c3f3ab84ad9266bb6491b1a4c729d069765",
       "scripts/test_android_emulator_memory.py": "90a2121ba59b9eae9b0294b32e5f49be452953193684bab1917a30a4137345af",
       "scripts/test_android_lab_ui_anr.py": "c334464696a688527e3bffb15efabd12d532e91852be0b44f2077dc37c7ce38f",
       "scripts/test_android_release_ui_transition.py": "e7c62f0f1a5d38eddce959738e338ec336027e7612926c05cec81ae1c1d6665b",
       "scripts/test_android_startup_state.py": "e03c5c8eccf511dbc6482f52dbcec3c46fa7c7e88e55cdb875e9cdf5e314b027",
+      "scripts/test_android_storage_admission.py": "f8f774bc27be3c4ec3ac0ec0a8b3c0bb98d4019b062b9697029a613344447815",
       "scripts/test_openwrt_compile.py": "781c0135bdd9e26efe2d32493165e4c4f537ca2d0eb694defff4de018b39fff9",
       "scripts/test_openwrt_opkg.py": "d1d3e099346f46462da909d981544848badd25eb6c7330b9f31bbb4a1c02e452"
     },
@@ -587,7 +591,8 @@
         "scripts/test_android_emulator_memory.py",
         "scripts/test_android_lab_ui_anr.py",
         "scripts/test_android_release_ui_transition.py",
-        "scripts/test_android_startup_state.py"
+        "scripts/test_android_startup_state.py",
+        "scripts/test_android_storage_admission.py"
       ],
       "fresh_android_vpn_evidence": "release/certification/evidence/q29-current-vpn-20261012.json",
       "helper_inventory": 453,
@@ -601,12 +606,12 @@
         {
           "path": "scripts/audit_android_data_plane_lab.py",
           "executed_runtime_sha256": "3a261d9e27bb8fd5a4091b0b3c3d074e330ae6d8d921f05405fb6affbe91c60d",
-          "current_runtime_sha256": "e310d6bf7b581e6d692f1ce2f29d669a015ab92e56a1484d61911267e0f33cd8"
+          "current_runtime_sha256": "98dbce4f8c5db9bd3269ac316b221d354a6f4eef8cd2419d25939c5dd38aad7b"
         },
         {
           "path": "scripts/audit_android_release_ui.py",
           "executed_runtime_sha256": "40cdb67040865aad714e80f7fcccb79a3cf9c3968e7acf7b2b6693e8974c2f95",
-          "current_runtime_sha256": "43df1d92204dcf907610a2fa7d1fafc63de52c3e4e8bcd41600793b63404d2dc"
+          "current_runtime_sha256": "b6146d014c0f2cfd4842049517502c66b4fa0745341250c059d5ca621a964f5e"
         },
         {
           "path": "scripts/audit_android_startup_dns.py",
@@ -638,7 +643,76 @@
       ],
       "compiled_inputs_exact": 915,
       "format_only_input": "qeli/src/transport_core/buffer_pool.rs",
-      "no_new_linux_20case_execution_claimed": true
+      "no_new_linux_20case_execution_claimed": true,
+      "fresh_storage_startup_evidence": "release/certification/evidence/q29-storage-startup-20261012.json",
+      "original_android_boundary_before_storage_admission": {
+        "changed_fixture_paths": [
+          "scripts/android_lab_ui.py",
+          "scripts/audit_android_data_plane_lab.py",
+          "scripts/audit_android_release_ui.py",
+          "scripts/audit_android_startup_dns.py",
+          "scripts/test_android_emulator_memory.py",
+          "scripts/test_android_lab_ui_anr.py",
+          "scripts/test_android_release_ui_transition.py",
+          "scripts/test_android_startup_state.py"
+        ],
+        "fresh_android_vpn_evidence": "release/certification/evidence/q29-current-vpn-20261012.json",
+        "helper_inventory": 453,
+        "exact_unchanged_helpers": 446,
+        "changed_non_linux_matrix_helpers": [
+          {
+            "path": "scripts/android_lab_ui.py",
+            "executed_runtime_sha256": "7a0582331509f3653c564eeea8fbd3d7a325511e7d7eba76ffd1ebfb464e4bb4",
+            "current_runtime_sha256": "c55a4a2150843f88c9a06b5753d0f14dae031440383705e4f80a893dd06a722f"
+          },
+          {
+            "path": "scripts/audit_android_data_plane_lab.py",
+            "executed_runtime_sha256": "3a261d9e27bb8fd5a4091b0b3c3d074e330ae6d8d921f05405fb6affbe91c60d",
+            "current_runtime_sha256": "e310d6bf7b581e6d692f1ce2f29d669a015ab92e56a1484d61911267e0f33cd8"
+          },
+          {
+            "path": "scripts/audit_android_release_ui.py",
+            "executed_runtime_sha256": "40cdb67040865aad714e80f7fcccb79a3cf9c3968e7acf7b2b6693e8974c2f95",
+            "current_runtime_sha256": "43df1d92204dcf907610a2fa7d1fafc63de52c3e4e8bcd41600793b63404d2dc"
+          },
+          {
+            "path": "scripts/audit_android_startup_dns.py",
+            "executed_runtime_sha256": "9b95180481a6bf777800abdddf4230fb0329a54d5254032384c80f2c72fa85f7",
+            "current_runtime_sha256": "bf095d0f05a676c896fac192a999e926e9ea625f86972caf680c7ee8de324537"
+          },
+          {
+            "path": "scripts/test_android_startup_state.py",
+            "executed_runtime_sha256": "f1317c81f38f9373ae0c62d54d4aa78d605d33ebf977110678f3ff5f14e88bdb",
+            "current_runtime_sha256": "44732ab67ed475775fe6075f55b0dc564054a0e81aca3703affd03b6f28690dc"
+          },
+          {
+            "path": "scripts/test_openwrt_compile.py",
+            "executed_runtime_sha256": "08239167451368a94849326676d516347186bface186e742aa3bc9c3f6401782",
+            "current_runtime_sha256": "26bbc3b13238bcd010dbd0f5999502ee9649af14294c9723f563e3fd69cd54e8"
+          },
+          {
+            "path": "scripts/test_openwrt_opkg.py",
+            "executed_runtime_sha256": "597832a12ef4e6ee9a4c2c8ae364689466a41c863042a18a34bc6689e5a562fa",
+            "current_runtime_sha256": "fc9cee10090025d774ea9fd976f6412e71f127b3a1504fe94e43402fb284c4f6"
+          }
+        ],
+        "reviewed_unchanged_linux_entrypoints": [
+          "ipv6_dns_pair.sh",
+          "ipv6_legacy_pair.sh",
+          "ipv6_mtu_pair.sh",
+          "ipv6_netns_case.sh",
+          "linux_roaming_release_soak.sh"
+        ],
+        "compiled_inputs_exact": 915,
+        "format_only_input": "qeli/src/transport_core/buffer_pool.rs",
+        "no_new_linux_20case_execution_claimed": true
+      },
+      "new_storage_test_outside_original453_inventory": "scripts/test_android_storage_admission.py",
+      "fresh_scoped_helper_methods": 8,
+      "current_independent_UID_UI_startup_lockdown_qualified": true,
+      "ordinary_production_APK_qualified": false,
+      "generic_null_DNS_failure_retained": true,
+      "automatic_SIGKILL_gate_qualified": false
     },
     "openwrt_source_cut_boundary": {
       "evidence": "release/certification/evidence/q34-current-source-cut-20261012.json",
