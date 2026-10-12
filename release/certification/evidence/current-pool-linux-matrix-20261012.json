@@ -1,0 +1,415 @@
+{
+  "schema_version": 1,
+  "kind": "current-pool-cli-20-fresh-linux-cases",
+  "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+  "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+  "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+  "qualification": {
+    "status": "ALL_20_CURRENT_POOL_CLI_RUNTIME_CASES_QUALIFIED_CLEANUP_PENDING",
+    "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+    "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+    "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+    "qualified_rows": [
+      {
+        "id": "linux.outer4.inner4.tcp.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner4.tcp.full.log",
+        "log_sha256": "422a773351c2b9e0c120a6f8df008b3cdc63e35351be49e9162a31e4edc455bc",
+        "seconds": 6.010354051017202,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer4.inner6.tcp.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner6.tcp.full.log",
+        "log_sha256": "a452a364c22577c2108e66b01fc4d4b4716c106ab6134d72a3d97070f576d1d8",
+        "seconds": 6.008504632045515,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner4.tcp.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner4.tcp.full.log",
+        "log_sha256": "5c0985b471f5da9f85ab9e662326cd8cbf55dcc375ca0ede5943548b226ec53a",
+        "seconds": 6.008875755011104,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner6.tcp.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner6.tcp.full.log",
+        "log_sha256": "726bd203d55db85e9159f3a64224af5fb5abc1d497fbca27782920db8fb2c5e8",
+        "seconds": 6.009123431984335,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer4.inner4.udp-fake-tls.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner4.udp-fake-tls.full.log",
+        "log_sha256": "5ee8bb15b4159b9aab679a5a75012a7a7d380901055910efaa1bba5c744166b4",
+        "seconds": 6.010193440015428,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer4.inner6.udp-fake-tls.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner6.udp-fake-tls.full.log",
+        "log_sha256": "a1a53cf52c1046876ef6f2db81da944cbad0b84c72d129c8032448715cfa406a",
+        "seconds": 6.00955854204949,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner4.udp-fake-tls.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner4.udp-fake-tls.full.log",
+        "log_sha256": "20f8e689f3884a50fd90cdc9c48ac7f12b8f1198f89fa1aa6c9029e6306ba198",
+        "seconds": 6.009790449985303,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner6.udp-fake-tls.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner6.udp-fake-tls.full.log",
+        "log_sha256": "e77f0900cf0b51c5eaa9b4aae9e37fe224652170b28df1b7ccf938f672057e5f",
+        "seconds": 6.010129516012967,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer4.inner4.udp-quic.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner4.udp-quic.full.log",
+        "log_sha256": "79a9bef43c9f232a884422c39829965738c4fd34145200391ec632f34f18cab2",
+        "seconds": 6.010509726009332,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer4.inner6.udp-quic.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer4.inner6.udp-quic.full.log",
+        "log_sha256": "f5a18228a8293d3c9ab423f14c63256478674a884932ed12ac0b44a8dcbb2bb3",
+        "seconds": 6.01091647404246,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner4.udp-quic.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner4.udp-quic.full.log",
+        "log_sha256": "472fdff4d958e27647a0f0cdfa73897c0820bfa8d04e11dfccf18ed572b9c0dc",
+        "seconds": 6.010990279959515,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.outer6.inner6.udp-quic.full",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 13,
+        "log": "linux.outer6.inner6.udp-quic.full.log",
+        "log_sha256": "9fc70024100f256ae6b7261c11f19064d57ae096ba303fd71cbb72c27836530a",
+        "seconds": 6.0117786400951445,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.dual.tcp.split",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 19,
+        "log": "linux.dual.tcp.split.log",
+        "log_sha256": "cb69d7295ef730df0ef44b61a9734c7f5dcff0a722e6a899d45f2ba2e0958773",
+        "seconds": 8.015603423933499,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.dual.udp.split",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 19,
+        "log": "linux.dual.udp.split.log",
+        "log_sha256": "9d6c566404da8f901837ab40db8bf58bce7c79520bddce84c797ee9b71c313ce",
+        "seconds": 8.017496298067272,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.tap.ndp-ra",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 15,
+        "log": "linux.tap.ndp-ra.log",
+        "log_sha256": "2d96cb3c6ce6d1859ca96560d1b9c233cf074fc14e8f3c24f95274af0b4804b3",
+        "seconds": 8.015944743994623,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.dns.ipv4-ipv6",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 105,
+        "log": "linux.dns.ipv4-ipv6.log",
+        "log_sha256": "0ee884c61d2bef6cfb2b7ea472e96de561ff5ff44d05b2f17af310bea0e267cd",
+        "seconds": 26.057621584041044,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.mtu.1280-pmtu-ptb",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 36,
+        "log": "linux.mtu.1280-pmtu-ptb.log",
+        "log_sha256": "9e90111c1b198a53058179d2e6090f14b45aada7d90a274287c86d25ea0f34c9",
+        "seconds": 18.04022119101137,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.legacy-peer",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 26,
+        "log": "linux.legacy-peer.log",
+        "log_sha256": "06d39395d11aa5df3af5130566633b2ca5cd55e4ee0482c1b947e3490ec20cda",
+        "seconds": 12.027634456055239,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.roaming-flap-soak",
+        "status": "passed",
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
+        "checks_passed": 33,
+        "log": "linux.roaming-flap-soak.log",
+        "log_sha256": "76661ec3b73b05422ccf5ea62aa0f4c8cd1df8e2e7cf4df336d3ce5c45556cd6",
+        "seconds": 441.03870128199924,
+        "namespaces": {
+          "mnt": "mnt:[4026532327]",
+          "net": "net:[4026532329]",
+          "pid": "pid:[4026532328]"
+        }
+      },
+      {
+        "id": "linux.leak.ipv4-ipv6",
+        "status": "passed",
+        "derived_from": [
+          "linux.dual.tcp.split",
+          "linux.dual.udp.split",
+          "linux.outer4.inner4.tcp.full",
+          "linux.outer4.inner4.udp-fake-tls.full",
+          "linux.outer4.inner4.udp-quic.full",
+          "linux.outer4.inner6.tcp.full",
+          "linux.outer4.inner6.udp-fake-tls.full",
+          "linux.outer4.inner6.udp-quic.full",
+          "linux.outer6.inner4.tcp.full",
+          "linux.outer6.inner4.udp-fake-tls.full",
+          "linux.outer6.inner4.udp-quic.full",
+          "linux.outer6.inner6.tcp.full",
+          "linux.outer6.inner6.udp-fake-tls.full",
+          "linux.outer6.inner6.udp-quic.full"
+        ],
+        "source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
+        "release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
+        "cli_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069"
+      }
+    ],
+    "failed_rows": [],
+    "all_20_runtime_cases_qualified": true,
+    "actual_ordinary_executions": 19,
+    "aggregate_leak_derived_from_actual_cases": [
+      "linux.dual.tcp.split",
+      "linux.dual.udp.split",
+      "linux.outer4.inner4.tcp.full",
+      "linux.outer4.inner4.udp-fake-tls.full",
+      "linux.outer4.inner4.udp-quic.full",
+      "linux.outer4.inner6.tcp.full",
+      "linux.outer4.inner6.udp-fake-tls.full",
+      "linux.outer4.inner6.udp-quic.full",
+      "linux.outer6.inner4.tcp.full",
+      "linux.outer6.inner4.udp-fake-tls.full",
+      "linux.outer6.inner4.udp-quic.full",
+      "linux.outer6.inner6.tcp.full",
+      "linux.outer6.inner6.udp-fake-tls.full",
+      "linux.outer6.inner6.udp-quic.full"
+    ],
+    "collection_sha256": "c68746edb3f85f95afbb197c7eeec1bdd8a66d6313d82a20d166b4b3bdd77a58",
+    "archive_sha256": "8c3c7d7170e9a3506b6af48b4f89fd8a7de35b3fdce9b511c05383d83e36bdbd",
+    "host_gate": "PASS",
+    "changed_fields": [],
+    "source_equivalence": {
+      "build_seal_sha256": "4c02b82ce0a016b90835640ac63ce29738cb5c2044148baf2f81a9c57594ff07",
+      "compiled_input_count": 916,
+      "exact_inputs": 915,
+      "explicit_format_only_input": "qeli/src/transport_core/buffer_pool.rs",
+      "format_amendment_sha256": "e15a03aa468c2cf2a625a2841fef5314f91a5c514c3a9ab58e318078c5060c85",
+      "exact_replacement_reverified": true
+    },
+    "old_results_reused": false,
+    "q35_eight_hour_endurance_qualified": false,
+    "final_release_certified": false
+  },
+  "execution_packet_seal_sha256": "3a41c1e3c407f057a44bcd16730d8e0ef5dc1aa491fc2e03357cc205ff7b58a0",
+  "raw_archive_sha256": "8c3c7d7170e9a3506b6af48b4f89fd8a7de35b3fdce9b511c05383d83e36bdbd",
+  "collection_host_gate": "PASS",
+  "collection_host_differences": [],
+  "cleanup_host_gate": "PASS",
+  "cleanup_host_differences": [],
+  "production_and_existing_dns_tools_accounts_preserved": true,
+  "old_executions_relabelled": false,
+  "actual_ordinary_executions": 19,
+  "aggregate_leak_derived_from_actual_cases": [
+    "linux.dual.tcp.split",
+    "linux.dual.udp.split",
+    "linux.outer4.inner4.tcp.full",
+    "linux.outer4.inner4.udp-fake-tls.full",
+    "linux.outer4.inner4.udp-quic.full",
+    "linux.outer4.inner6.tcp.full",
+    "linux.outer4.inner6.udp-fake-tls.full",
+    "linux.outer4.inner6.udp-quic.full",
+    "linux.outer6.inner4.tcp.full",
+    "linux.outer6.inner4.udp-fake-tls.full",
+    "linux.outer6.inner4.udp-quic.full",
+    "linux.outer6.inner6.tcp.full",
+    "linux.outer6.inner6.udp-fake-tls.full",
+    "linux.outer6.inner6.udp-quic.full"
+  ],
+  "source_equivalence": {
+    "build_seal_sha256": "4c02b82ce0a016b90835640ac63ce29738cb5c2044148baf2f81a9c57594ff07",
+    "compiled_input_count": 916,
+    "exact_inputs": 915,
+    "explicit_format_only_input": "qeli/src/transport_core/buffer_pool.rs",
+    "format_amendment_sha256": "e15a03aa468c2cf2a625a2841fef5314f91a5c514c3a9ab58e318078c5060c85",
+    "exact_replacement_reverified": true
+  },
+  "source_applicability_after_documentation_commit_pending": true,
+  "whole_audit_complete": false,
+  "full_android_vpn_runtime_certified": false,
+  "q35_eight_hour_endurance_qualified": false,
+  "hosted_ci_certified": false,
+  "push_deploy_release": false
+}

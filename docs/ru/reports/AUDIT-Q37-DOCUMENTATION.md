@@ -89,3 +89,41 @@ Q37-F012/F013: [текущий Android package и правила R8](../../../re
 Независимый TraceReferences --check обнаружил устаревшие433 строки instrumented ABI:18 из19 новых требуемых типов отсутствовали под ожидаемыми именами в фактическом DEX. Правила перегенерированы до505 строк; пересобраны только два затронутых APK, все19 типов присутствуют, inferred rules и packaged Trace/superclass ABI PASS. Это воспроизведение build/packaging дефекта, не Android runtime exception. Исходный отказ и старые APK сохранены. Offline cache miss AGP и локальный qualifier minSdkVersion mismatch также сохранены; зависимости разрешены со штатными strict locks/checksums.
 
 JNI Java/DEX harness скомпилирован отдельно. APK/JNI execution в Android ещё не выполнен: .11 занят настоящим Q35 endurance. Новый Linux runtime не приписан:922 frozen CLI inputs и453 frozen helper inputs совпадают,20/409 прежних текущих проверок применимы с исходными artifact/time/source/raw. Native inputs unchanged. Strict automated certification отдельно проверяется после commit; whole preflight/current push CI/OpenWrt source cut остаются OPEN. Q37 IN_PROGRESS,30/37 DONE81.1%; NO_PUSH_DEPLOY_RELEASE.
+
+### 12 октября: 20 Linux-критериев на CLI с исправлением пула
+
+<!-- normative-sync: current-pool-linux-certification-20261012 -->
+
+[Новые результаты и привязка к исходникам](../../../release/certification/evidence/current-pool-linux-matrix-20261012.json).
+На .11 заново выполнены все обязательные автоматические Linux-сценарии на
+CLI `52511ceb`: 19 самостоятельных запусков, 409 успешных утверждений,
+без отказов; двадцатый критерий отсутствия утечек выведен из реальных проб
+14 full/split случаев. Длительность — 595.0 с. Старые результаты
+другого бинарника и даты их выполнения не переписаны.
+
+Проверены 12 сочетаний outer/inner IPv4/IPv6 и TCP/UDP fake-TLS/UDP QUIC,
+два dual-stack split tunnel, TAP с локальными NDP/RA, настоящие systemd-resolved
+и DNS через IPv4/IPv6/принудительный TCP, DATA_FRAG/PMTU на MTU 1280 и ICMPv6 PTB,
+совместимость с Qeli 0.7.16 в обоих направлениях, 100 переключений TCP и 100 QUIC.
+Для каждого случая проверены команды, исходные журналы, итоговые утверждения,
+SHA, отдельные mount/net/PID namespaces и нужные функциональные отметки.
+
+Повторная компиляция не выполнялась: из 916 входов существующей квалифицированной
+сборки совпали 915; в buffer_pool.rs заново проверены только две прежние явные
+замены пробелов/переносов, без изменения логики, строк и комментариев.
+Все 453 входа тестовой обвязки совпали. SHA ELF и legacy-клиента закреплены.
+DNS-инструменты, зависимости и учётная запись уже присутствовали на .11;
+установка или изменение службы не потребовались.
+
+Все сохранённые файлы проверены по SHA. Структурные снимки всех backend хоста
+до/после/после очистки совпали. Production PID/start ticks/бинарники, staged CLI,
+DNS-инструменты, зависимости и passwd/group сохранены. Созданный каталог,
+удалённый архив и transient unit удалены. Сертификат Linux связан с новым
+результатом и проверенной применимостью последующих изменений только документации;
+первоначальный source/time/raw этого запуска остаётся отдельным неизменным фактом.
+
+Это закрывает устаревшую привязку 20 Linux-критериев после изменения пула.
+Короткий 100+100 soak не заменяет восьмичасовой Q35 release gate.
+Старый Q35 performance FAIL, Android SIGKILL/ENONET, полный Android VPN data plane,
+hosted CI и остальные открытые критерии остаются за пределами этого PASS.
+План: 31/37 (83,8%), Q29/Q31/Q34/Q35/Q36/Q37 открыты. `NO_PUSH_DEPLOY_RELEASE`.

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v236 -->
+<!-- normative-sync: full-system-audit-v237 -->
 
 **Current result, 12 October: 31/37 sections complete within agreed scope (83.8%), 6 remain. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2741,3 +2741,41 @@ preserved. The owned root, remote archive and transient unit were cleaned.
 Full structural comparison across all host backends passed.
 Q35 remains IN_PROGRESS; the ledger remains 31/37 (83.8%), six sections open.
 Full release and hosted CI are not certified. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: 20 Linux criteria on the pool-fixed CLI
+
+<!-- normative-sync: current-pool-linux-certification-20261012 -->
+
+[New results and source binding](../../../release/certification/evidence/current-pool-linux-matrix-20261012.json).
+Lab .11 freshly executed every required automated Linux scenario on CLI
+`52511ceb`: 19 separate executions, 409 successful assertions and no failures;
+the twentieth leak criterion is derived from actual probes in 14 full/split
+cases. Elapsed time: 595.0 seconds. Previous executions on a different
+binary and their timestamps were not rewritten.
+
+Coverage includes 12 outer/inner IPv4/IPv6 combinations with TCP/UDP fake-TLS/UDP
+QUIC, two dual-stack split tunnels, TAP with local NDP/RA, real systemd-resolved
+and DNS over IPv4/IPv6/forced TCP, DATA_FRAG/PMTU on MTU 1280 and ICMPv6 PTB,
+both directions of Qeli 0.7.16 compatibility, 100 TCP switches and 100 QUIC switches.
+Commands, raw logs, result assertions, SHA, separate mount/net/PID namespaces
+and the required functional markers were independently checked for each case.
+
+No recompilation was needed: 915 of the existing qualified build's 916 inputs
+match exactly. The only two previously declared whitespace replacements in
+buffer_pool.rs were reverified without changing logic, strings or comments.
+All 453 fixture inputs match. ELF and legacy-client SHA are pinned. DNS tools,
+dependencies and the resolver account already existed on .11; no installation
+or service change was needed.
+
+Every retained file was SHA-verified. Structural comparisons across all host
+backends passed before/after/after cleanup. Production PID/start ticks/binaries,
+staged CLI, DNS tools/dependencies and passwd/group were preserved. The owned
+root, remote archive and transient unit were removed. Linux certification binds
+these new results and the verified applicability of later documentation-only
+changes; this execution's original source/time/raw remains a separate immutable fact.
+
+This closes the stale binding of 20 Linux criteria after the pool change.
+The bounded 100+100 soak does not replace the eight-hour Q35 release gate.
+The old Q35 performance FAIL, Android SIGKILL/ENONET, full Android VPN data plane,
+hosted CI and other open criteria remain outside this PASS. The ledger remains
+31/37 (83.8%), with Q29/Q31/Q34/Q35/Q36/Q37 open. `NO_PUSH_DEPLOY_RELEASE`.

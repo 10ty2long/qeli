@@ -89,3 +89,41 @@ Q37-F012/F013: [current Android package and R8 rules](../../../release/certifica
 Independent TraceReferences --check refused stale433-line instrumented ABI rules:18 of19 newly required types lacked their expected names in actual packaged DEX. Regenerated505-line rules and only the two affected APKs were rebuilt; all19 types are present, inferred rules and packaged Trace/superclass ABI PASS. This reproduces a build/packaging defect, not an Android runtime exception. Original refusal and stale APKs retained. Offline AGP cache miss and local qualifier minSdkVersion mismatch retained; dependencies resolved with normal strict locks/checksums.
 
 The JNI Java/DEX harness compiled separately. Android APK/JNI execution remains pending while .11 runs genuine Q35 endurance. No new Linux execution claimed:922 frozen CLI inputs and453 helper inputs match; prior20/409 current checks remain applicable with original artifact/time/source/raw. Native inputs unchanged. Strict automated certification is checked separately after commit; whole preflight/current push CI/OpenWrt source cut remain OPEN. Q37 IN_PROGRESS,30/37 DONE81.1%; NO_PUSH_DEPLOY_RELEASE.
+
+### 12 October: 20 Linux criteria on the pool-fixed CLI
+
+<!-- normative-sync: current-pool-linux-certification-20261012 -->
+
+[New results and source binding](../../../release/certification/evidence/current-pool-linux-matrix-20261012.json).
+Lab .11 freshly executed every required automated Linux scenario on CLI
+`52511ceb`: 19 separate executions, 409 successful assertions and no failures;
+the twentieth leak criterion is derived from actual probes in 14 full/split
+cases. Elapsed time: 595.0 seconds. Previous executions on a different
+binary and their timestamps were not rewritten.
+
+Coverage includes 12 outer/inner IPv4/IPv6 combinations with TCP/UDP fake-TLS/UDP
+QUIC, two dual-stack split tunnels, TAP with local NDP/RA, real systemd-resolved
+and DNS over IPv4/IPv6/forced TCP, DATA_FRAG/PMTU on MTU 1280 and ICMPv6 PTB,
+both directions of Qeli 0.7.16 compatibility, 100 TCP switches and 100 QUIC switches.
+Commands, raw logs, result assertions, SHA, separate mount/net/PID namespaces
+and the required functional markers were independently checked for each case.
+
+No recompilation was needed: 915 of the existing qualified build's 916 inputs
+match exactly. The only two previously declared whitespace replacements in
+buffer_pool.rs were reverified without changing logic, strings or comments.
+All 453 fixture inputs match. ELF and legacy-client SHA are pinned. DNS tools,
+dependencies and the resolver account already existed on .11; no installation
+or service change was needed.
+
+Every retained file was SHA-verified. Structural comparisons across all host
+backends passed before/after/after cleanup. Production PID/start ticks/binaries,
+staged CLI, DNS tools/dependencies and passwd/group were preserved. The owned
+root, remote archive and transient unit were removed. Linux certification binds
+these new results and the verified applicability of later documentation-only
+changes; this execution's original source/time/raw remains a separate immutable fact.
+
+This closes the stale binding of 20 Linux criteria after the pool change.
+The bounded 100+100 soak does not replace the eight-hour Q35 release gate.
+The old Q35 performance FAIL, Android SIGKILL/ENONET, full Android VPN data plane,
+hosted CI and other open criteria remain outside this PASS. The ledger remains
+31/37 (83.8%), with Q29/Q31/Q34/Q35/Q36/Q37 open. `NO_PUSH_DEPLOY_RELEASE`.
