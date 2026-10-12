@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v246 -->
+<!-- normative-sync: full-system-audit-v247 -->
 
 **Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2900,3 +2900,8 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q29-current-sigkill-20261012 -->
 
 Текущий production R8 SIGKILL recovery: FAIL; общий runtime FAIL. Plain/TUN platform-only controls выполнены один раз,45s window сохранён. Manual recovery/revoke и блокировка при dead/force-stopped VPN PASS. Product APK/JNI и byte-identical restart policy неизменны;SIGKILL FAIL не переписан. [Q29](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+Разобрана граница APPLIED/CONNECTED: первые sampled сокеты после APPLIED начаты до CONNECTED;8 отказов в окне и80/80 post-CONNECTED PASS в каждом из двух сохранённых прогонов. Вопрос трактовки закрыт, исходный FAIL_POST_PLAN_BLOCKING сохранён. Helper уже проверяет post-CONNECTED;6 методов PASS. Новые runtime/builds не выполнялись. SIGKILL/DNS compatibility FAIL и Q29 IN_PROGRESS сохраняются. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.

@@ -1,6 +1,6 @@
 # Q29: current VPN integrations and Android fixture reliability
 
-<!-- normative-sync: q29-current-vpn-v5 -->
+<!-- normative-sync: q29-current-vpn-v6 -->
 
 12 October2026. Q29 IN_PROGRESS;32/37 (86.5%),5 sections open.
 
@@ -123,7 +123,7 @@ not described as VPN leakage. Established stopped state had no socket or DNS rep
 The first sockets after Native NetworkPlan APPLIED still had EACCES/Pending
 connect failure;FAIL_POST_PLAN_BLOCKING is retained. Android CONNECTED was
 published535ms after APPLIED. All80 observed post-CONNECTED sockets passed:32
-cold-burst and48 follow-up samples,all four family/protocol combinations.
+cold-burst and 48 follow-up samples,all four family/protocol combinations.
 Coverage=COLD_AND_FOLLOWUP;finite sampling does not prove uninterrupted delivery
 or the first possible socket exactly at publication.
 
@@ -148,7 +148,7 @@ Raw:`audit-debt-20260924/q29-storage-startup-20261012`.NO_PUSH_DEPLOY_RELEASE.
 
 The ordinary `assembleRelease` APK passed runtime in 252.94s on Android14/API34/x86_64. This build uses neither `instrumentation-abi.pro` nor `qeliTestBuildType=release`. No Gradle/Rust/JVM builds were repeated: the existing production-unsigned APK `ec05ed9330ca3db7cca6f296569e68b24f172f5c9d2a5d65667e80e717da288c` was signed with the Android Debug certificate for this isolated AVD. Signature,16KiB ZIP alignment and all 1091 non-signature ZIP entries were verified, including unchanged DEX/resources/manifest and both JNI. Signed SHA256 `3d8496b42251fd90109a4b87532acf8a1c8b16a1a07d85267ce6c08b2db7f2a7`. Real release signing and physical/OEM/arm64 execution are not qualified here.
 
-The app is not debuggable. Actual UI/SAF imported INI without instrumentation or private prefs injection. The test APK served only as a standalone broadcast receiver, UID 10149, separate from VPN owner UID 10148. Ordinary TCP/UDP sockets do not bind/protect; explicit Network binding occurs only in separately labelled diagnostics. All126 canonical Android build inputs are unchanged. x86_64 JNI `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 bytes are build-qualified, not runtime-qualified.
+The app is not debuggable. Actual UI/SAF imported INI without instrumentation or private prefs injection. The test APK served only as a standalone broadcast receiver, UID 10149, separate from VPN owner UID 10148. Ordinary TCP/UDP sockets do not bind/protect; explicit Network binding occurs only in separately labelled diagnostics. All 126 canonical Android build inputs are unchanged. x86_64 JNI `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 bytes are build-qualified, not runtime-qualified.
 
 | Phase | Samples / replies |
 | --- | --- |
@@ -174,3 +174,25 @@ The ordinary production R8 runtime gate is qualified in this scope alongside pre
 <!-- q29-current-sigkill-20261012 -->
 
 Current production R8 SIGKILL recovery:FAIL;whole runtime FAIL. Plain/TUN platform controls ran once,45s window retained. Manual recovery/revoke and dead/force-stopped blocking PASS. Product APK/JNI and byte-identical restart policy unchanged;SIGKILL failure not overwritten. [System scope](AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+## 12 October: APPLIED and CONNECTED boundary
+
+Current source and two retained cold-start runs were reviewed without new runtime. `APPLIED` is logged after `setTunFd` and positive `networkPlanResult`: Rust permits Running and packet pumping for that generation. This internal plan step does not confirm Android VPN publication for application sockets.
+
+The service remains CONNECTING until `awaitAndroidVpnPublication`. One Network must provide callback availability, VPN capabilities and LinkProperties matching the plan addresses, interface and MTU (public MTU is unavailable on API28). Facts from different Networks are never combined; onLost discards old facts. Before `announceConnected`, the service checks the live job, stopping, core, generation, identical TUN and CONNECTING state. Timeout stops the generation without CONNECTED; system lockdown remains. Native Running and user-visible Android CONNECTED are distinct states. The 5 October publication fix already implements this order; no new product fix is required.
+
+| Retained run | APPLIED → CONNECTED | Failed probes in that interval | After CONNECTED |
+| --- | --- | --- | --- |
+| matching-R8/storage admission | 535ms | 8 | 80/80,0 errors |
+| ordinary production R8 | 455ms | 8 | 80/80,0 errors |
+
+For all four family/protocol combinations, the first sampled socket after APPLIED started before CONNECTED. Each run has 32 successful post-CONNECTED cold-burst sockets and 48 follow-up sockets. Independent-UID journal start times are compared with publication device_ms, rather than ADB return or socket completion times. All 126 canonical Android inputs from each execution match current source. Previously qualified server receipts retain their original qualification.
+
+`FAIL_POST_PLAN_BLOCKING` remains unchanged in original result/qualification and new evidence: the observed refusal is not relabeled PASS. The helper already separately requires `published_start.status == PASS` and rejects post-CONNECTED errors, absent publication and failed follow-up. Its 6 existing unit methods passed without skips. No helper change or repetition of qualified runtime is needed.
+
+The first-post-APPLIED interpretation question is closed in this scope: early blocking during CONNECTING/lockdown does not establish a regression of an announced connected session. Delivery acceptance uses fresh sockets started after CONNECTED; failures after it remain FAIL. Sampled PASS does not prove the first possible socket, continuous zero loss, all UIDs, no leakage without lockdown, or physical/OEM behavior. The earlier historical CONNECTED publication without callback waiting had a separate defect and is not justified by this conclusion.
+
+Automatic SIGKILL recovery FAIL and generic/null DNS compatibility FAIL remain with platform localization. Q29 stays IN_PROGRESS;32/37(86.5%), five sections remain open. Product, fixtures, APK/JNI and original raw logs are unchanged; no lab execution or large builds/caches. [Evidence](../../../release/certification/evidence/q29-publication-contract-20261012.json). Raw: `audit-debt-20260924/q29-publication-contract-20261012`. NO_PUSH_DEPLOY_RELEASE.

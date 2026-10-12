@@ -1,6 +1,6 @@
 # Q29: актуальные VPN-интеграции и надёжность Android-стенда
 
-<!-- normative-sync: q29-current-vpn-v5 -->
+<!-- normative-sync: q29-current-vpn-v6 -->
 
 12 октября2026. Q29 IN_PROGRESS. План32/37 (86,5%),5 разделов открыты.
 
@@ -125,7 +125,7 @@ VPN leakage. После установившегося stop нет ни socket r
 После Native NetworkPlan APPLIED первые сокеты ещё получили EACCES/Pending
 connect failure: исходный FAIL_POST_PLAN_BLOCKING сохранён. Android CONNECTED
 опубликован через535ms после APPLIED. Все80 наблюдавшихся post-CONNECTED сокетов
-успешны:32 из cold burst и48 из follow-up, все четыре family/protocol сочетания.
+успешны:32 из cold burst и 48 из follow-up, все четыре family/protocol сочетания.
 Coverage=COLD_AND_FOLLOWUP; конечные samples не доказывают непрерывное отсутствие
 потерь или самый первый возможный сокет в момент события.
 
@@ -150,7 +150,7 @@ Raw: `audit-debt-20260924/q29-storage-startup-20261012`. NO_PUSH_DEPLOY_RELEASE.
 
 Штатный `assembleRelease` APK прошёл runtime за 252.94s на Android14/API34/x86_64. В этой сборке нет `instrumentation-abi.pro` и `qeliTestBuildType=release`. Повторных Gradle/Rust/JVM сборок не было: использован уже собранный production-unsigned APK `ec05ed9330ca3db7cca6f296569e68b24f172f5c9d2a5d65667e80e717da288c`. Его подписали Android Debug сертификатом для установки в изолированном AVD; проверены подпись, 16KiB ZIP alignment и совпадение всех 1091 несигнатурных ZIP entries, включая DEX/resources/manifest и обе JNI. Подписанный SHA256 `3d8496b42251fd90109a4b87532acf8a1c8b16a1a07d85267ce6c08b2db7f2a7`. Настоящая release-подпись, физические/OEM/arm64 runtime этим не проверяются.
 
-Приложение не debuggable. INI импортирован через UI/SAF; instrumentation и private prefs injection не запускались. Test APK использован только как standalone broadcast receiver с отдельным UID 10149, VPN owner UID 10148. Обычные TCP/UDP сокеты receiver не bind/protect; explicit Network binding применяется только в отдельно помеченной диагностике. Все126 канонических Android build inputs неизменны. JNI x86_64 `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 байты квалифицированы сборкой, выполнение arm64 не заявляется.
+Приложение не debuggable. INI импортирован через UI/SAF; instrumentation и private prefs injection не запускались. Test APK использован только как standalone broadcast receiver с отдельным UID 10149, VPN owner UID 10148. Обычные TCP/UDP сокеты receiver не bind/protect; explicit Network binding применяется только в отдельно помеченной диагностике. Все 126 канонических Android build inputs неизменны. JNI x86_64 `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 байты квалифицированы сборкой, выполнение arm64 не заявляется.
 
 | Фаза | Пробы / ответы |
 | --- | --- |
@@ -176,3 +176,25 @@ Raw: `audit-debt-20260924/q29-storage-startup-20261012`. NO_PUSH_DEPLOY_RELEASE.
 <!-- q29-current-sigkill-20261012 -->
 
 Текущий production R8 SIGKILL recovery: FAIL; общий runtime FAIL. Plain/TUN platform-only controls выполнены один раз,45s window сохранён. Manual recovery/revoke и блокировка при dead/force-stopped VPN PASS. Product APK/JNI и byte-identical restart policy неизменны;SIGKILL FAIL не переписан. [System scope](AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+## 12 октября: граница APPLIED и CONNECTED
+
+Разбор текущего исходного кода и двух сохранённых cold-start прогонов завершён без нового runtime. `APPLIED` записывается после `setTunFd` и положительного `networkPlanResult`: Rust разрешает переход в Running для соответствующего поколения и работу packet pump. Это внутренний этап применения плана; он не подтверждает публикацию VPN Android для сокетов приложений.
+
+Сервис остаётся CONNECTING до `awaitAndroidVpnPublication`. Для одного Network нужны callback availability, VPN capabilities и LinkProperties с интерфейсом, адресами плана и MTU (на API28 публичная MTU недоступна). Факты разных Network не объединяются, onLost удаляет старые факты. Перед `announceConnected` проверяются живой job, stopping, core, поколение, тот же TUN и CONNECTING. Timeout останавливает поколение, не публикуя CONNECTED; system lockdown сохраняется. Native Running и пользовательский Android CONNECTED — разные состояния. Этот порядок уже реализован исправлением публикации от 5 октября; новой правки продукта не требуется.
+
+| Сохранённый прогон | APPLIED → CONNECTED | Неуспешные пробы в этом окне | После CONNECTED |
+| --- | --- | --- | --- |
+| matching-R8/storage admission | 535ms | 8 | 80/80, ошибок0 |
+| ordinary production R8 | 455ms | 8 | 80/80, ошибок0 |
+
+Во всех четырёх family/protocol сочетаниях первый sampled сокет после APPLIED начат до CONNECTED. В каждом прогоне 32 успешных post-CONNECTED сокета относятся к cold burst,48 — к follow-up. Времена начала взяты из журнала отдельного UID и сравниваются с device_ms публикации, а не временем возврата ADB или завершения сокета.126 канонических Android inputs каждого исходного запуска совпадают с текущими. Проверенные прежде server receipts сохраняют исходную квалификацию.
+
+`FAIL_POST_PLAN_BLOCKING` остаётся в исходных result/qualification и новом evidence: наблюдавшийся отказ не переписан в PASS. Helper уже отдельно требует `published_start.status == PASS` и отклоняет ошибки post-CONNECTED, отсутствие публикации или неуспешный follow-up. Его 6 существующих unit methods прошли без skips. Изменять helper или повторять уже квалифицированные runtime не требуется.
+
+Открытый вопрос трактовки first-post-APPLIED закрыт в этом scope: ранняя блокировка при CONNECTING/lockdown не доказывает регрессию объявленной подключённой сессии. Приёмка передачи начинается со свежих сокетов, начатых после CONNECTED; ошибки после него остаются FAIL. Sampled PASS не доказывает самый первый возможный сокет, непрерывное отсутствие потерь, все UID, отсутствие утечки без lockdown или поведение физических/OEM устройств. Более ранняя историческая публикация CONNECTED без ожидания callbacks имела отдельный дефект и не оправдывается этим выводом.
+
+SIGKILL automatic recovery FAIL и generic/null DNS compatibility FAIL сохраняются с локализацией платформенного поведения. Q29 остаётся IN_PROGRESS;32/37(86,5%), пять разделов открыты. Продукт, fixture, APK/JNI и исходные raw logs не менялись; лаба не запускалась, больших сборок/кэшей нет. [Evidence](../../../release/certification/evidence/q29-publication-contract-20261012.json). Raw: `audit-debt-20260924/q29-publication-contract-20261012`. NO_PUSH_DEPLOY_RELEASE.

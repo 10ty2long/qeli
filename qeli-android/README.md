@@ -437,3 +437,8 @@ full release admission remain separate checks.
 ### Восстановление после смерти процесса
 
 Always-on запрашивает перезапуск у Android. На одном API34 AVD automatic SIGKILL recovery не прошла; ручное восстановление с проверкой итоговой политики блокировки проверено отдельно. Подробнее: [диагностика](../docs/ru/manuals/TROUBLESHOOTING.md) и [текущий scope](../docs/ru/reports/AUDIT-Q29-ANDROID-SYSTEM.md).
+
+
+### Готовность подключения
+
+`Native NetworkPlan APPLIED` подтверждает передачу TUN ядру. Пользовательский CONNECTED публикуется отдельно после Android VPN callbacks. Проверяйте новые сокеты после статуса «Подключено»; ранние отказы при CONNECTING/lockdown сохраняются как отдельное наблюдение. [Граница и результаты](../docs/ru/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).

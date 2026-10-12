@@ -1,6 +1,6 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v137 -->
+<!-- normative-sync: audit-debt-v138 -->
 
 Current reconciliation: 12 October 2026. The original 15 obligation groups were dispositioned on 3 October: 14 DONE and D06 ACCEPTED_LIMITATION by user decision. The full audit continues; current total32/37 (86.5%), Q29/Q31/Q34/Q35/Q36 remain open. The historical register and subsequent actual checks are retained below; these groups are not15 confirmed bugs or the completion percentage of37 sections.
 
@@ -1503,3 +1503,8 @@ Network runs and large builds were not replayed; no new compiler caches were cre
 <!-- q31-current-portable-20261012 -->
 
 **12 October, Q31-V013:** current ARM/MIPS and client-only SDK compile/packaging qualified; fixed0664 license permissions and stale SDK/opkg assertions.54 scoped methods PASS,533 license files checked. The ELF was unchanged during corrected Install/repackaging. Owned roots removed, about3.6GiB released, original services preserved. [Full scope and remainder](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Total32/37 (86.5%),5 open sections.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+APPLIED/CONNECTED boundary reviewed: first sampled sockets after APPLIED started before CONNECTED;8 interval refusals and80/80 post-CONNECTED PASS in each retained run. Interpretation question closed, original FAIL_POST_PLAN_BLOCKING retained. The helper already gates post-CONNECTED;6 methods PASS. No new runtime/builds. SIGKILL/DNS compatibility FAIL and Q29 IN_PROGRESS remain. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.

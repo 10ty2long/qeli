@@ -1,6 +1,6 @@
 # Техдолг начатых аудитов
 
-<!-- normative-sync: audit-debt-v137 -->
+<!-- normative-sync: audit-debt-v138 -->
 
 Дата текущей сверки: 12 октября 2026. Исходные 15 групп обязательств закрыты 3 октября: 14 DONE и D06 ACCEPTED_LIMITATION по решению пользователя. Полный аудит продолжается; текущий итог 32/37 (86,5%), открыты Q29/Q31/Q34/Q35/Q36. Ниже сохранён исторический реестр и последующие фактические проверки; это не 15 найденных багов и не процент готовности 37 разделов.
 
@@ -1634,3 +1634,8 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q31-current-portable-20261012 -->
 
 **12 октября, Q31-V013:** текущие ARM/MIPS и SDK client-only compile/packaging подтверждены; исправлены0664 права лицензий и устаревшие SDK/opkg assertions.54 scoped методов PASS,533 license files проверены. Сам ELF не менялся при исправленной установке/перепаковке. Own roots удалены, около3,6GiB освобождено, исходные сервисы сохранены. [Полный scope и остаток](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Полный32/37 (86,5%),5 открытых разделов.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+Разобрана граница APPLIED/CONNECTED: первые sampled сокеты после APPLIED начаты до CONNECTED;8 отказов в окне и80/80 post-CONNECTED PASS в каждом из двух сохранённых прогонов. Вопрос трактовки закрыт, исходный FAIL_POST_PLAN_BLOCKING сохранён. Helper уже проверяет post-CONNECTED;6 методов PASS. Новые runtime/builds не выполнялись. SIGKILL/DNS compatibility FAIL и Q29 IN_PROGRESS сохраняются. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.

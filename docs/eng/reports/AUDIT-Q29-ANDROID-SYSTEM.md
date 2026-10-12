@@ -1,6 +1,6 @@
 # Q29: Android system Always-on, lockdown and process death
 
-<!-- normative-sync: q29-android-system-v7 -->
+<!-- normative-sync: q29-android-system-v8 -->
 
 **5 October 2026. Partial result; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain. The complete system gate is FAIL: automatic redelivery after external SIGKILL is unqualified.**
 
@@ -96,3 +96,8 @@ Before SIGKILL services have isForeground=true,startRequested=true,startCommandR
 A separate ordinary UID confirmed dead/force-stopped blocking:0 server receipts. Manual recovery/revoke PASS;these do not qualify automatic recovery. Guest1536MiB/lowram,actual MemTotal=1505648KiB;prior2560MB attempts retain their results. Whole runtime failure/error remain in original result. Broad platform-health conclusions are limited to one AVD.
 
 Local manifest read failed before runtime dispatch. One owned staging root was resumed only after all existing payload SHA values matched;metadata completed without reuploading APK/core. Service/PID,host firewall/routes/resolver and original userdata preserved. Owned root removed after verified recovery and inode/process/fd/mount guards. [Evidence](../../../release/certification/evidence/q29-current-sigkill-20261012.json). Raw:`audit-debt-20260924/q29-current-sigkill-20261012`. Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+APPLIED/CONNECTED boundary reviewed: first sampled sockets after APPLIED started before CONNECTED;8 interval refusals and80/80 post-CONNECTED PASS in each retained run. Interpretation question closed, original FAIL_POST_PLAN_BLOCKING retained. The helper already gates post-CONNECTED;6 methods PASS. No new runtime/builds. SIGKILL/DNS compatibility FAIL and Q29 IN_PROGRESS remain. [Current contract](AUDIT-Q29-ANDROID-CURRENT-VPN.md).

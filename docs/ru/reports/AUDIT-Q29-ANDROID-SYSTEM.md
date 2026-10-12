@@ -1,6 +1,6 @@
 # Q29: системные Always-on, lockdown и смерть процесса Android
 
-<!-- normative-sync: q29-android-system-v7 -->
+<!-- normative-sync: q29-android-system-v8 -->
 
 **5 октября 2026. Частичный результат; Q29 IN_PROGRESS. План28/37(75,7%),9 разделов осталось. Общий системный gate FAIL: автоматическая redelivery после внешнего SIGKILL не подтверждена.**
 
@@ -96,3 +96,8 @@ Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-syst
 Отдельный обычный UID проверил блокировку после смерти и force-stop:0 server receipts. Ручное восстановление и отзыв VPN PASS; они не заменяют automatic recovery. Guest1536MiB с lowram,фактический MemTotal=1505648KiB; прежние2560MB attempts не переписаны. Общий runtime failure/ошибка остаются в исходном result. Точность глобальных platform-health выводов ограничена состоянием одного AVD.
 
 Локальный отказ чтения manifest произошёл до запуска теста. Единственный собственный staging root принят только после совпадения SHA всех уже загруженных файлов; служебные metadata дописаны без повторной загрузки APK/ядра. Сервис/PID,host firewall/routes/resolver и original userdata сохранены. Own root удалён после verified recovery и inode/process/fd/mount guards. [Evidence](../../../release/certification/evidence/q29-current-sigkill-20261012.json). Raw:`audit-debt-20260924/q29-current-sigkill-20261012`. Q29 IN_PROGRESS;32/37(86,5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+Разобрана граница APPLIED/CONNECTED: первые sampled сокеты после APPLIED начаты до CONNECTED;8 отказов в окне и80/80 post-CONNECTED PASS в каждом из двух сохранённых прогонов. Вопрос трактовки закрыт, исходный FAIL_POST_PLAN_BLOCKING сохранён. Helper уже проверяет post-CONNECTED;6 методов PASS. Новые runtime/builds не выполнялись. SIGKILL/DNS compatibility FAIL и Q29 IN_PROGRESS сохраняются. [Current contract](AUDIT-Q29-ANDROID-CURRENT-VPN.md).

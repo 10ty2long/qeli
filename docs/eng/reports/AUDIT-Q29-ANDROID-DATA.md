@@ -1,6 +1,6 @@
 # Q29: Android VPN payload and post-auth lifecycle
 
-<!-- normative-sync: q29-android-data-v8 -->
+<!-- normative-sync: q29-android-data-v9 -->
 
 **5 October 2026. Stage PASS; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain.**
 
@@ -79,3 +79,8 @@ The subsequent [system lifecycle stage](AUDIT-Q29-ANDROID-SYSTEM.md) confirms po
 <!-- q29-current-sigkill-20261012 -->
 
 Current production R8 SIGKILL recovery:FAIL;whole runtime FAIL. Plain/TUN platform controls ran once,45s window retained. Manual recovery/revoke and dead/force-stopped blocking PASS. Product APK/JNI and byte-identical restart policy unchanged;SIGKILL failure not overwritten. [System scope](AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-publication-contract-20261012 -->
+
+APPLIED/CONNECTED boundary reviewed: first sampled sockets after APPLIED started before CONNECTED;8 interval refusals and80/80 post-CONNECTED PASS in each retained run. Interpretation question closed, original FAIL_POST_PLAN_BLOCKING retained. The helper already gates post-CONNECTED;6 methods PASS. No new runtime/builds. SIGKILL/DNS compatibility FAIL and Q29 IN_PROGRESS remain. [Current contract](AUDIT-Q29-ANDROID-CURRENT-VPN.md).
