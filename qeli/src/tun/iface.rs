@@ -253,6 +253,7 @@ impl TunInterface {
 
     /// Observe the device attached to this descriptor, including a renamed interface.
     /// None means the original was externally unregistered; never resolve its saved name.
+    #[cfg(any(test, feature = "client"))]
     fn attached_name(&self) -> io::Result<Option<String>> {
         let mut ifr = IfReq {
             ifr_name: [0; 16],
@@ -274,6 +275,7 @@ impl TunInterface {
         Ok(Some(name.to_string()))
     }
 
+    #[cfg(any(test, feature = "client"))]
     fn require_attached_namespace(&self) -> io::Result<bool> {
         use std::os::unix::{fs::MetadataExt, io::FromRawFd};
         // SAFETY: this ioctl returns a newly owned namespace fd on success.
@@ -300,6 +302,7 @@ impl TunInterface {
         Ok(true)
     }
 
+    #[cfg(any(test, feature = "client"))]
     pub(crate) fn attached_link(&self) -> io::Result<Option<(String, u32)>> {
         if !self.require_attached_namespace()? {
             return Ok(None);

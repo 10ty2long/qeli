@@ -286,7 +286,7 @@ fn validate_rule(rule: &Rule) -> anyhow::Result<()> {
 #[cfg(target_os = "linux")]
 #[path = "firewall_journal/native.rs"]
 mod native;
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", feature = "server"))]
 pub(crate) use native::Session;
 
 #[cfg(test)]

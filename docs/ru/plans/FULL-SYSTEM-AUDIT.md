@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v233 -->
+<!-- normative-sync: full-system-audit-v234 -->
 
-**Текущий итог, 11 октября: 30/37 разделов DONE/PASS (81,1%), осталось 7. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 12 октября: 31/37 разделов завершено в согласованном объёме (83,8%), осталось 6. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -176,7 +176,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 27 | Windows: GUI, служба и драйверы | H01, H04, H08 | DONE / PASS |
 | 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | IN_PROGRESS |
-| 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | IN_PROGRESS |
+| 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | DONE: SOURCE REVIEW; Apple USER_SKIPPED |
 | 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | IN_PROGRESS |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
@@ -1913,12 +1913,14 @@ Exactly-once start/stop completion, generation/cancel, Keychain/app groups, exte
 **Имеющаяся обвязка/fixtures:** `qeli-ios/PARITY.md`, `scripts/test_verify_ios_ipa.py`.
 
 - [x] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [ ] Штатные, граничные и негативные сценарии. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Отказы и конкуренция. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Интеграция и целевая платформа. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Исправления, повторная проверка и evidence. — USER_SKIPPED (Swift/Xcode/Apple runtime).
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE в согласованном объёме: SOURCE REVIEW и переносимые проверки. Swift/Xcode/Apple runtime USER_SKIPPED; результаты XCTest, signed IPA, callbacks, RSS/leaks и сетевых сценариев остаются NOT_RUN.**
+**Сверка 12 октября:** текущие92 Swift inputs охвачены исходным review;91 побайтно прежний. Изменён только test fixture `exit_node` с обязательным `gateway=false`; project.yml добавляет resources для LICENSE/notices. Production Swift/MDM/header inputs неизменны. Свежие6 Python IPA fixtures,10 plist parses и bindings PASS. Четыре оставшихся платформенных критерия исключены прямым решением пользователя о Mac/iOS-стенде. Ранние IN_PROGRESS/NOT_RUN ниже являются историческими checkpoints; фактическое исполнение Swift ими не подтверждается. [Текущая сверка](../reports/AUDIT-Q30-IOS-SOURCE-MEMORY.md).
+
 
 [Source fixes F290/F291](../reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md):
 точные MDM-числа и владение устаревшими ответами расширения. Шесть IPA-verifier
@@ -2678,3 +2680,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **11 октября, Q36-F026:** [TUN queue intervention](../reports/BENCHMARK.md),3 fresh raw sessions/6 windows,обе стороны unlimited,server1000/4000/client500. Throughput/matched ACK/kernel/qdisc counters и policy/SHA сверены; результаты отдельно от F025. Defaults/source не менялись,root SHA-архивирован/удалён,full host gate сохранён. Механизм/factory AUTH-rate и Q35 soak OPEN.30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 октября,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md): неизменённый fat-LTO Cargo/profile/features,916 inputs,108 fresh bursts/756 peers всех12,c1/4/16×3,proof/registry/108 server exit0 PASS. Factory AUTH finite-burst блок закрыт; sustained/current data-plane/точная стадия TCP и Q35 soak OPEN. Stale observer cache mtime0 воспроизведён/исправлен, early marker gate6Windows+6Linux PASS; исходные отказы сохранены. Own cache/root SHA-qualified cleanup,службы/staged сохранены.30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**12 октября, перенос проверенного кандидата:** [wire pool и фактические результаты](../reports/BENCHMARK.md): при переносе 916 входов совпали с проверенной сборкой; затем только два явно проверенных изменения пробелов/переносов в одном файле для rustfmt, логика прежняя. Четыре строгих feature-профиля, 8+1 тестов PASS. 24 минутных AUTH-прогона / 34644 аутентификаций, пик RSS 336320 КиБ при прежнем лимите 524288; 20+4 составной результат, исходный отказ бюджета файлов и host differences сохранены. 12 новых native сессий /48 функциональных окон IPv4 TCP/UDP P1/P4. Исходники и CI warning gate перенесены. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): пять ресурсных сценариев завершены, upload 6,8627%>5% FAIL, межсерверный этап NOT_RUN. Android: 23 JNI +2 packaged INI теста подтверждены на прежнем x86_64 native; исходные harness/signature/wlan0 отказы сохранены, полный VPN runtime не заявляется. Q30 DONE в согласованном объёме; итог31/37 (83,8%), остаются Q29/Q31/Q34/Q35/Q36/Q37. Native refresh, hosted CI, performance/cross-node и оставшиеся критерии этих шести разделов открыты. `NO_PUSH_DEPLOY_RELEASE`.

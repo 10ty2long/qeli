@@ -110,6 +110,7 @@ pub(crate) mod runtime;
 pub(crate) mod udp_batch;
 #[cfg_attr(target_os = "ios", allow(dead_code))]
 pub(crate) mod udp_buffer;
+#[cfg(any(feature = "client", test))]
 pub(crate) mod udp_client_framing;
 pub(crate) mod udp_receive;
 #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -370,8 +371,8 @@ impl CoreError {
 #[cfg(unix)]
 struct AttachedTun {
     generation: u64,
-    // Kept opaque until the platform packet pump is connected. Ownership is already real:
-    // replacing the attachment, stopping or freeing the core closes this descriptor.
+    // Owns the descriptor until the platform packet pump takes it; replacing the
+    // attachment, stopping or freeing the core closes an unconsumed descriptor.
     _fd: std::os::fd::OwnedFd,
 }
 
@@ -498,6 +499,7 @@ impl NetworkDataPlaneFacts {
         }
     }
 
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn set_negotiated_modes(
         &mut self,
         recordizer: Option<&crate::config::RecordizerConfig>,
@@ -934,7 +936,9 @@ pub(crate) struct RuntimeCounters {
     pub rx_packets: portable_atomic::AtomicU64,
     pub rx_bytes: portable_atomic::AtomicU64,
     pub udp: Arc<udp_buffer::UdpBufferCounters>,
+    #[cfg(any(feature = "client", test))]
     pub tcp_uplink: client_uplink::UplinkCounters,
+    #[cfg(any(feature = "client", test))]
     pub tcp_downlink: client_downlink::DownlinkCounters,
 }
 
@@ -1124,7 +1128,7 @@ impl ClientCore {
         Ok(())
     }
 
-    #[allow(dead_code)]
+    #[cfg(all(test, feature = "transport-core-ffi"))]
     pub(crate) fn device_id(&self) -> Option<&[u8; crate::protocol::DEVICE_ID_LEN]> {
         self.device_id.as_ref()
     }
@@ -1668,8 +1672,6 @@ impl ClientCore {
     /// The caller retains ownership of `fd` and must keep it open until the returned receiver
     /// resolves or is cancelled by stop/free. The event sequence is the one-shot request ID;
     /// a platform must acknowledge exactly that value after its synchronous `protect(fd)` call.
-    // The native socket-opening handshake will consume this seam in the next migration slice.
-    // Until then only contract tests exercise the producer side; Android already binds the ACK.
     #[allow(dead_code)]
     pub(crate) fn request_socket_protect(
         &mut self,
@@ -2169,8 +2171,7 @@ impl ClientCore {
         Ok((sequence, receiver))
     }
 
-    /// Publish transport proof for a bound candidate. Stage 1 exposes the COMMIT contract,
-    /// but deliberately does not switch a live socket; TCP/UDP proof producers land later.
+    /// Publish transport proof for a bound candidate and request the platform COMMIT.
     #[allow(dead_code)]
     pub(crate) fn candidate_path_validated(
         &mut self,
@@ -2439,6 +2440,7 @@ impl ClientCore {
     /// the platform adapter still has to observe. Native FFI pollers continue to use `poll_event`.
     #[cfg(any(test, all(feature = "experimental-roaming", target_os = "linux")))]
     #[cfg_attr(not(feature = "experimental-roaming"), allow(dead_code))]
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn poll_path_event(&mut self) -> Option<ClientEvent> {
         let position = self
             .events
@@ -2556,9 +2558,8 @@ impl ClientCore {
         }
     }
 
-    // The Linux transport migration will consume the parsed config through this crate-only
-    // accessor. Keep credentials away from the public API while the data plane is still
-    // being moved behind this state machine.
+    // Shared transport adapters consume parsed config through this internal accessor;
+    // credentials stay out of the public API.
     #[allow(dead_code)]
     pub(crate) fn config(&self) -> &ClientConfig {
         &self.config

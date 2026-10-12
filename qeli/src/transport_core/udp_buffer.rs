@@ -40,8 +40,10 @@ pub(crate) enum InternalDrop {
     /// The packet does not fit the tunnel MTU or a pool slot.
     Oversize,
     /// Not an inner packet we forward (currently: anything but IPv4).
+    #[cfg(any(feature = "client", test))]
     Unsupported,
     /// The TUN device itself refused the write with `EAGAIN`/`ENOBUFS`.
+    #[cfg(any(feature = "client", test))]
     TunWrite,
 }
 
@@ -94,7 +96,9 @@ impl UdpBufferCounters {
             InternalDrop::PoolExhausted => &self.pool_exhausted_drops,
             InternalDrop::QueueFull => &self.queue_full_drops,
             InternalDrop::Oversize => &self.oversize_drops,
+            #[cfg(any(feature = "client", test))]
             InternalDrop::Unsupported => &self.unsupported_drops,
+            #[cfg(any(feature = "client", test))]
             InternalDrop::TunWrite => &self.tun_write_drops,
         };
         reason.fetch_add(1, Ordering::Relaxed);
@@ -102,6 +106,7 @@ impl UdpBufferCounters {
 
     /// Hand one reason to a component that has no other business knowing about UDP buffers —
     /// notably the TUN writer thread, whose `EAGAIN`/`ENOBUFS` drops were counted nowhere.
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn sink(self: &Arc<Self>, reason: InternalDrop) -> DropSink {
         DropSink {
             counters: Arc::clone(self),
@@ -111,11 +116,13 @@ impl UdpBufferCounters {
 }
 
 #[derive(Debug, Clone)]
+#[cfg(any(feature = "client", test))]
 pub(crate) struct DropSink {
     counters: Arc<UdpBufferCounters>,
     reason: InternalDrop,
 }
 
+#[cfg(any(feature = "client", test))]
 impl DropSink {
     pub(crate) fn note(&self) {
         self.counters.note_internal_drop(self.reason);
@@ -293,6 +300,7 @@ impl UdpBufferController {
         self.bytes_in_window = self.bytes_in_window.saturating_add(bytes as u64);
     }
 
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn note_internal_drop(&self, reason: InternalDrop) {
         self.counters.note_internal_drop(reason);
     }

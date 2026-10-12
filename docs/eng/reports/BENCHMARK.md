@@ -2451,3 +2451,128 @@ capacity or an automatic regression claim. Exact TCP asymmetry stage is
 still OPEN; no extra queue/CPU/BPF series were launched. Full Q35 endurance
 and full Q36 remain OPEN, overall30/37 DONE81.1%.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+## Sustained AUTH: retained failure and UDP source-port check — 12 October 2026
+
+<!-- normative-sync: q36-persistent-auth-port-reuse-v1 -->
+
+The current standard release CLI SHA-256
+`a482ac7cf885061b14e84d925b4057945e2454f6c4aaba99238875837a2950c5`
+was checked with the previously qualified native observer
+`1d7088d93df764bd16328b82259f22fa25154060c26c019fa6ffe91bf1dcd807`.
+This tests the current server; whole-current-client equivalence is not established.
+Four independent clients are offered in successive waves to one persistent worker.
+Wall rate includes preparation, AUTH, registry observation, termination and raw-result
+packing; it does not measure saturation capacity.
+
+Series r2 completed seven one-minute TCP runs: plain, fake-tls, padding,
+fragmented, obfs, reality and reality-tls, with **10,384** accepted admissions.
+The first UDP fake-tls run completed 21 waves (84 peers); three clients in the next
+wave verified proof/AUTH, while the fourth received no ServerHello. The partial wave
+is not admitted; **the original full series is FAIL**, and the next 16 runs were not
+executed. All outer-archive files and 2,680 inner archives were verified. Raw results
+and the refusal remain in `audit-debt-20260924/q36-sustained-auth-r2-20261012`.
+
+A separate short diagnostic produced the same result on three fresh workers:
+the first client authenticates from UDP port 42000; a new client at that same port
+sends ClientHello but receives no reply for five seconds; port 42001 authenticates
+to the same server. Actual socket inode/endpoints, captured datagrams, server registry
+and native proofs were independently checked. The old observer exits after AUTH
+without notifying the server that its session has closed. The existing authenticated
+session remains protected from replacement by an unauthenticated ClientHello.
+The original failed peer's exact port was not recorded: the diagnostic confirms tuple
+reuse behavior but does not prove causality for that original failure.
+Raw: `audit-debt-20260924/q36-udp-port-reuse-20261012`.
+
+Both jobs drained; their owned temporary roots were removed after archive verification.
+Production/staged binaries and processes were unchanged. Whole-host firewall differences
+on `.10` remain recorded (`iptables4`/`legacy4` for r2, `legacy4` for the diagnostic);
+whole-host PASS is not claimed. No build, swap or deploy was performed.
+
+### Resource-budget stop and prepared pool fix
+
+Series r3 also stopped: no one-minute run completed. Its first UDP fake-tls run
+admitted all four clients in 222 offered waves (888 distinct source tuples), then
+server RSS rose from 84,976 to 530,204 KiB, exceeding the unchanged 512 MiB limit.
+FD stayed within 18–19 and sockets remained at six. All 222 inner archives and the
+original FAIL remain; the owned root was removed after SHA verification.
+Production/staged were unchanged; whole-host `iptables4`/`legacy4` differences remain.
+Raw: `audit-debt-20260924/q36-sustained-auth-r3-20261012`.
+
+A separate minimal fixture ran 4 baseline and 8 candidate BufferPool tests
+(12 PASS,0 ignored), including waiter cancellation, concurrency and permit restoration
+after allocation failure. Two separate process pairs with release jemalloc and 888
+idle pools produced about 290 MiB RSS before the fix and 11 MiB after it; RSS growth
+fell by 99.29%. The lazy pool preserves its previous 4 MiB limit and reuses buffers.
+This proves the effect for the pools themselves, not the complete server.
+Raw: `audit-debt-20260924/q36-lazy-wire-pool-20261012`.
+
+The fixture's final wrapper remains FAIL: it incorrectly included the private Cargo
+cache's mutable SQLite database among immutable inputs. The failure, database before/
+after, logs and measurements remain. Code, Cargo.lock, crate archives and registry
+index were independently confirmed unchanged; tests were not rerun. Owned build/cache
+trees were removed only after process checks and retained recovery. Whole-host
+`iptables4` differences remain; whole-host PASS is not claimed.
+The fix is staged separately from frozen main: full-server build, feature/platform
+compile gates, AUTH and data-plane retests remain NOT_RUN. Q36 memory debt stays OPEN.
+
+## Lazy server wire pool: actual candidate verification on 12 October
+
+<!-- normative-sync: q36-lazy-pool-adopted-candidate-v1 -->
+
+The fix is adopted in source: the server reserves a bounded number of slots,
+allocating packet buffers on first use and returning allocated buffers to the
+pool. Allocation failure and cancelled waits preserve the slot. Queue limits
+and network defaults are unchanged. Client/server feature gates are explicit,
+and the server-only CI check now rejects warnings.
+
+At adoption, all **916 inputs** matched the tested build byte for byte.
+Two explicitly verified spacing/line-break edits in `buffer_pool.rs` then
+satisfied rustfmt. The other 915 inputs remain byte-identical; logic, strings
+and comments are unchanged. Formatting check PASS.
+CLI SHA-256 `52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069`. Four strict feature profiles,
+eight pool tests and one server integration test passed. The original build OOM
+is preserved; the retry used an owned temporary swap file, removed afterwards.
+
+All 12 modes ran twice: **24 one-minute AUTH runs at c4**, with
+**34644** verified authentications. Peak server RSS was
+**336320 KiB**, below the unchanged **524,288-KiB** limit.
+The original fixture completed twenty runs before exceeding its 128-MiB
+artifact budget. Raw archives independently qualified completed runs;
+the incomplete run was excluded. A separate fixture executed only the four
+remaining runs with a 512-MiB file budget. This is a composite result:
+the original FAIL and `iptables4` / `legacy4` differences remain preserved,
+without claiming an overall host PASS for the original fixture.
+Production/staged binaries were preserved. Owned roots and remote archives
+were removed after SHA verification.
+
+The same new CLI on both server and client completed **12 fresh sessions /
+48 windows** of IPv4 TCP/UDP bidirectional P1/P4, four seconds each.
+This is functional regression evidence with one window per condition;
+it does not replace the previous benchmark with three repeats. The table
+reports actual measurements without a capacity claim. UDP P4 offers
+400+400 Mbps on a single VM.
+
+| Mode | AUTH, two runs | Peak RSS, KiB | TCP P1 upload / download, Mbps | UDP P4 upload / download loss, % |
+|---|---:|---:|---:|---:|
+| `tcp-plain-raw` | 3120 | 96160 | 170.52 / 516.02 | 41.12 / 29.95 |
+| `tcp-faketls` | 3212 | 94252 | 124.26 / 570.31 | 33.22 / 36.18 |
+| `tcp-padding` | 3056 | 93920 | 166.24 / 529.08 | 50.11 / 20.00 |
+| `tcp-frag` | 2968 | 95952 | 156.67 / 486.49 | 50.30 / 39.70 |
+| `tcp-obfs` | 3008 | 94152 | 97.93 / 568.23 | 56.65 / 40.77 |
+| `tcp-reality` | 2764 | 99892 | 158.61 / 593.08 | 37.69 / 28.83 |
+| `tcp-reality-tls` | 2692 | 103076 | 240.90 / 621.54 | 38.54 / 13.41 |
+| `udp-faketls` | 2712 | 320652 | 251.51 / 441.90 | 43.49 / 36.33 |
+| `udp-padding` | 2724 | 327196 | 185.38 / 627.90 | 42.09 / 37.43 |
+| `udp-quic` | 2776 | 336320 | 208.99 / 574.66 | 49.69 / 47.74 |
+| `tcp-obfs-awg` | 3048 | 101888 | 161.07 / 444.44 | 55.15 / 34.57 |
+| `udp-faketls-awg` | 2564 | 317240 | 132.24 / 616.77 | 41.09 / 40.47 |
+
+
+Idle AUTH memory growth passed with the fix in these conditions. Q36 remains
+open: short windows establish neither the cause of TCP asymmetry nor capacity.
+Q35 retains the 6.8627% upload FAIL against its 5% budget; the cross-node phase
+did not run. Platform native artifacts have not been rebuilt after the source
+change. `NO_PUSH_DEPLOY_RELEASE`. Raw evidence and cleanup are in the out-of-Git
+packet `audit-debt-20260924/q36-pool-candidate-chain-20261012` and its two
+separate AUTH packets.

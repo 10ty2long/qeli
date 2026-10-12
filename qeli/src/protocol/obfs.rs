@@ -1454,6 +1454,7 @@ impl ObfsUdp {
     /// `slots` must be empty and hold spare capacity. On return the first `n` carry opened
     /// plaintext; a slot left empty is a malformed obfs frame the caller must skip, exactly as
     /// `n == 0` means today on the single-datagram path.
+    #[cfg(any(feature = "client", test))]
     pub(crate) async fn recv_batch(
         &self,
         slots: &mut [BytesMut],
@@ -1511,6 +1512,7 @@ impl ObfsUdp {
     /// Returns how many datagrams the kernel accepted; a short count is normal under pressure
     /// and the caller must retry the remainder. Sealing still happens per datagram, so keyed
     /// `obfs` behaves exactly as on the single-datagram path.
+    #[cfg(any(feature = "client", test))]
     pub(crate) async fn send_batch(
         &self,
         datagrams: &[&[u8]],

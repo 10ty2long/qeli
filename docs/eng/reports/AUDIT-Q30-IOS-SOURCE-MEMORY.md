@@ -1,8 +1,10 @@
 # Q30: memory bounds, probe lifetime and source reconciliation
 
-<!-- normative-sync: q30-ios-source-memory-v1 -->
+<!-- normative-sync: q30-ios-source-memory-v2 -->
 
-6 October 2026. Scoped fixes F303–F306. The Q30 **Review and dead code**
+**12 October: Q30 complete within agreed SOURCE REVIEW and portable-check scope. Swift/Xcode/Apple runtime USER_SKIPPED by direct user decision. XCTest and real Apple scenarios remain NOT_RUN.**
+
+Historical checkpoint: 6 October 2026. Scoped fixes F303–F306. The Q30 **Review and dead code**
 criterion is complete for source review; Q30 remains IN_PROGRESS. Runtime checks
 and the other four checklist criteria are not promoted to PASS.
 
@@ -105,3 +107,11 @@ criterion completion does not close whole Q30 or resolve those platform observat
 
 Raw packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q30-ios-source-memory-20261006.
 Evidence: release/certification/evidence/q30-ios-source-memory-20261006.json.
+
+## Agreed-scope reconciliation on 12 October
+
+All original F290–F306 fixes,92 Swift inputs,12 framework entry points and callback/RSS/Keychain/MDM limits remain. Production Swift/MDM/headers have not changed since 6 October; one `exit_node` test profile was corrected and project.yml gained LICENSE/notices resources. Git deltas were reviewed;91 Swift inputs are byte-identical.
+
+Fresh6 IPA-verifier fixtures,10 plist parses, bindings and9 docs checks on a read-only overlay PASS. These checks do not compile Swift. Native iOS build, XCTest, OS settings/read callback drain, signing/entitlements, leaks, sleep/wake/NAT64/MDM remain USER_SKIPPED/NOT_RUN. Future Apple admission requires actual platform qualification.
+
+The direct user decision to skip unavailable Mac/router/VM labs excludes bringing those platforms back into the mandatory queue. The four platform criteria therefore become USER_SKIPPED and this section closes within the available agreed scope. Q29 SIGKILL/ENONET observations, other open sections and D06 remain. Publication is prepared separately from the frozen checkout; the applied plan becomes31/37(83.8%). Raw: `audit-debt-20260924/q30-agreed-scope-20261012`.

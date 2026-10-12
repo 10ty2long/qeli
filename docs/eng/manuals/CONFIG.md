@@ -224,6 +224,14 @@ desktop-only; carrier source binding also applies to the Linux CLI):**
   rules). Bonded TCP members keep `local`, but use ephemeral ports because simultaneous streams
   to the same server cannot share one TCP four-tuple.
   An omitted value or explicit `lport = 0` selects the normal OS-assigned ephemeral port.
+  <!-- normative-sync: udp-source-tuple-reuse-q36-v1 -->
+  For UDP, reconnecting from the same external address and source port may wait for
+  removal of the previous authenticated server session. A new unauthenticated ClientHello
+  does not replace a live session. Removal follows the server idle timeout and negotiated
+  liveness checks; it is not necessarily controlled by the client's `timeout`.
+  For this timeout, use a different source port or wait for the old session to be removed.
+  `lport = 0` lets the OS choose a port but does not guarantee that the previous port will
+  never be assigned again; NAT also determines the external port.
 - `dev_node = <name>` — name the Wintun adapter manually (Windows; otherwise auto `Qeli-<hash>`).
 - `metric = <n>` — TUN interface routing metric (Windows; lower = higher priority). Applied to
   **both IPv4 and IPv6** via the WinAPI `SetIpInterfaceEntry` (no `netsh`; falls back to `netsh` on failure).

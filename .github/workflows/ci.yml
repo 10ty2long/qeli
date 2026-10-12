@@ -152,6 +152,8 @@ jobs:
       - name: Build release server with jemalloc
         run: cargo build --locked --bin qeli --release --features jemalloc
       - name: Server library without client feature
+        env:
+          RUSTFLAGS: -D warnings
         run: cargo check --locked --no-default-features --features server --lib
       - name: Standalone client without server feature
         run: cargo check --locked --no-default-features --features client-bin --bin qeli-client

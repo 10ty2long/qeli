@@ -7,6 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(all(target_os = "linux", feature = "server"))]
 pub(crate) const LIMIT: Duration = Duration::from_secs(45);
 pub(crate) const EXIT_CODE: i32 = 124;
 
@@ -67,7 +68,7 @@ impl Budget {
         })
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", feature = "server"))]
     pub(crate) fn for_worker() -> io::Result<Self> {
         Self::new(LIMIT, || exit_process())
     }

@@ -9,6 +9,7 @@ pub(crate) enum DefaultDevice {
 }
 
 impl DefaultDevice {
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn selected(self) -> Option<String> {
         match self {
             Self::Selected(device) => Some(device),

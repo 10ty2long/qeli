@@ -1,8 +1,10 @@
 # Q30: лимиты памяти, владение probe и итоговая сверка исходников
 
-<!-- normative-sync: q30-ios-source-memory-v1 -->
+<!-- normative-sync: q30-ios-source-memory-v2 -->
 
-6 октября 2026. Исправления F303–F306. Критерий Q30 **Review and dead code**
+**12 октября: Q30 завершён в согласованном объёме SOURCE REVIEW и переносимых проверок. Swift/Xcode/Apple runtime USER_SKIPPED по прямому решению пользователя. XCTest и реальные Apple сценарии остаются NOT_RUN.**
+
+Исторический checkpoint: 6 октября 2026. Исправления F303–F306. Критерий Q30 **Review and dead code**
 завершён на уровне исходников; весь Q30 остаётся IN_PROGRESS. Runtime и остальные
 четыре критерия checklist не объявляются PASS.
 
@@ -104,3 +106,11 @@ auto-null ENONET,D06 и platform skips сохранены. Завершение 
 
 Raw packet: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q30-ios-source-memory-20261006.
 Evidence: release/certification/evidence/q30-ios-source-memory-20261006.json.
+
+## Сверка согласованного объёма 12 октября
+
+Сохранены все исходные F290–F306 fixes,92 Swift inputs,12 framework entry points и ограничения callback/RSS/Keychain/MDM. С 6 октября production Swift/MDM/headers не менялись; исправлен один тестовый профиль `exit_node` и добавлены LICENSE/notices resources в project.yml. Эти изменения сверены с Git;91 Swift input побайтно прежний.
+
+Свежие6 IPA-verifier fixtures,10 plist parses, bindings и9 docs checks на read-only overlay PASS. Эти проверки не компилируют Swift. Native iOS build, XCTest, OS settings/read callback drain, signing/entitlements, leaks, sleep/wake/NAT64/MDM остаются USER_SKIPPED/NOT_RUN. Для повторного допуска на Apple потребуется реальная платформенная квалификация.
+
+Решение пользователя «мак роутер и вм не будет это пропускай» исключает возвращение этих стендов в обязательную очередь. Поэтому четыре платформенных критерия получают USER_SKIPPED, а раздел закрывается в доступном согласованном объёме. Наблюдения Q29 SIGKILL/ENONET, другие открытые разделы и D06 сохранены. Публикация подготовлена отдельно от замороженного checkout; после применения план31/37(83,8%). Raw: `audit-debt-20260924/q30-agreed-scope-20261012`.

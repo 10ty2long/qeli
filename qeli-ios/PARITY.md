@@ -157,3 +157,5 @@ entry points. F303-F306 unify cancellable probe ownership, prune obsolete pings,
 bound log bytes (4KiB/message,1MiB encoded archive) and stream update data (1MiB).
 11 new XCTest NOT_RUN; actual Apple callbacks/RSS/leaks/worker joins unqualified.
 Q30 IN_PROGRESS; this source closure supersedes earlier open-review notes only.
+
+**12 October agreed-scope reconciliation:** Q30 SOURCE REVIEW and portable checks are complete; Swift/Xcode/Apple execution is USER_SKIPPED by direct user decision. XCTest, real callbacks/RSS/leaks, signing and physical network scenarios remain NOT_RUN. Current92 Swift inputs match the reviewed inventory (91 byte-identical, one corrected test profile); project.yml only gained LICENSE/notices resources. Fresh IPA-verifier6,plist10,bindings and read-only-overlay docs9 PASS. This supersedes the historical whole-section IN_PROGRESS scope above; no Apple runtime PASS is claimed.

@@ -53,6 +53,7 @@ impl SupervisorServices {
             failures: Default::default(),
         }
     }
+    #[cfg(all(target_os = "linux", feature = "server"))]
     pub(crate) fn stop_sender(&self) -> watch::Sender<bool> {
         self.stopping.clone()
     }

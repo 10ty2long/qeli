@@ -14,14 +14,11 @@
 //! 5. switch to application traffic keys.
 //!
 //! On success returns [`EstablishedTls`]: the application-data record crypto for
-//! each direction. Only TLS_AES_128_GCM_SHA256 is supported (the server must
-//! negotiate it — our REALITY server is configured to).
+//! each direction. The peer can negotiate TLS_AES_128_GCM_SHA256 or
+//! TLS_AES_256_GCM_SHA384.
 
-// Wired into the client data-plane (`client/mod.rs`, `mode = "reality-tls"`) and the
-// Android/Windows/macOS FFI clients. The module-level allow stays because a few
-// items are exercised only through the sans-io / FFI paths or the interop tests,
-// not via the Rust client's direct `client_handshake` entry point.
-#![allow(dead_code)]
+// Client handshake and ServerHello validation are shared across adapters.
+// Server-only fingerprint details and the owned parsing helper have explicit feature gates.
 
 use super::clienthello::build_client_hello;
 use super::keyschedule::{
@@ -32,8 +29,6 @@ use super::keyschedule::{
 use super::record::RecordCrypto;
 use crate::crypto::mlkem::{mlkem768_decapsulate, MLKEM768_CT_LEN};
 use crate::crypto::{Keypair, PublicKey};
-use hmac::{Hmac, KeyInit, Mac};
-use sha2::Sha256;
 use std::io;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
@@ -73,12 +68,6 @@ fn ierr(msg: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, msg)
 }
 
-pub(crate) fn hmac256(key: &[u8], msg: &[u8]) -> [u8; 32] {
-    let mut m = <Hmac<Sha256>>::new_from_slice(key).expect("HMAC accepts any key length");
-    m.update(msg);
-    m.finalize().into_bytes().into()
-}
-
 pub(crate) fn u24(b: &[u8]) -> usize {
     ((b[0] as usize) << 16) | ((b[1] as usize) << 8) | (b[2] as usize)
 }
@@ -105,6 +94,7 @@ pub(crate) struct ServerHello<'a> {
     pub(crate) group: u16,
     pub(crate) key_share: &'a [u8],
     pub(crate) session_id: &'a [u8],
+    #[cfg(any(test, feature = "server"))]
     pub(crate) key_share_first: bool,
 }
 
@@ -127,6 +117,7 @@ pub(crate) fn decode_server_hello(msg: &[u8]) -> io::Result<ServerHello<'_>> {
     }
     let mut version = false;
     let mut share = None;
+    #[cfg(any(test, feature = "server"))]
     let mut key_share_first = false;
     while offset < msg.len() {
         if msg.len() - offset < 4 {
@@ -152,7 +143,10 @@ pub(crate) fn decode_server_hello(msg: &[u8]) -> io::Result<ServerHello<'_>> {
                 if key_len != expected || data.len() != 4 + key_len {
                     return Err(ierr("invalid ServerHello key_share length"));
                 }
-                key_share_first = !version;
+                #[cfg(any(test, feature = "server"))]
+                {
+                    key_share_first = !version;
+                }
                 share = Some((group, &data[4..]));
             }
             // Neither client offers PSK or other ServerHello extensions.
@@ -173,10 +167,12 @@ pub(crate) fn decode_server_hello(msg: &[u8]) -> io::Result<ServerHello<'_>> {
         group,
         key_share,
         session_id: &msg[39..39 + sid_len],
+        #[cfg(any(test, feature = "server"))]
         key_share_first,
     })
 }
 
+#[cfg(any(test, feature = "server"))]
 pub(crate) fn parse_server_hello(msg: &[u8]) -> io::Result<(Suite, u16, Vec<u8>)> {
     let parsed = decode_server_hello(msg)?;
     Ok((parsed.suite, parsed.group, parsed.key_share.to_vec()))
@@ -438,6 +434,15 @@ async fn client_handshake_inner<S: AsyncRead + AsyncWrite + Unpin>(
 #[cfg(all(test, feature = "server"))]
 mod tests {
     use super::*;
+
+    use hmac::{Hmac, KeyInit, Mac};
+    use sha2::Sha256;
+
+    fn hmac256(key: &[u8], msg: &[u8]) -> [u8; 32] {
+        let mut m = <Hmac<Sha256>>::new_from_slice(key).expect("HMAC accepts any key length");
+        m.update(msg);
+        m.finalize().into_bytes().into()
+    }
 
     #[test]
     fn q11_server_hello_rejects_malformed_tail_and_required_fields() {

@@ -4,18 +4,24 @@
 //! untrusted response before a platform network plan is constructed.
 
 use crate::config::PushedObf;
+#[cfg(any(feature = "client", test))]
 use crate::crypto::{
     derive_keys, derive_keys_bound, derive_keys_hybrid, derive_keys_hybrid_bound,
     handshake_transcript_hash, Keypair,
 };
 #[cfg(feature = "experimental-roaming")]
+#[cfg(any(feature = "client", test))]
 use crate::crypto::{
     derive_session_material, derive_session_material_bound, derive_session_material_hybrid,
     derive_session_material_hybrid_bound,
 };
+#[cfg(any(feature = "client", test))]
 use crate::protocol::stream_io::WriteAllFlush;
+#[cfg(any(feature = "client", test))]
 use crate::protocol::{read_record, read_tls_record, FakeTlsHandshake, Framing, PacketCodec};
+#[cfg(any(feature = "client", test))]
 use std::future::Future;
+#[cfg(any(feature = "client", test))]
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 
 #[derive(Debug)]
@@ -31,11 +37,13 @@ pub(crate) struct AuthOk {
     pub dns_servers: Vec<crate::transport_core::NetworkDns>,
     pub routes_json: String,
     pub pushed_obf: Option<PushedObf>,
+    #[cfg(any(feature = "client", test))]
     pub session_token: String,
     pub max_streams: u32,
     pub adaptive: bool,
     /// Present only after bidirectional UDP_ROAM_V1 negotiation. Hex avoids JSON's lossy
     /// numeric representation in app-layer parsers while retaining the protocol's full u64.
+    #[cfg(any(feature = "client", test))]
     pub udp_roaming_session_id: Option<u64>,
 }
 
@@ -44,6 +52,7 @@ pub(crate) struct AuthOk {
 /// Roaming builds retain only the domain-separated resume secret from the original
 /// authentication KDF. It is never serialized, cloned into diagnostics, or reused as a
 /// data-plane key. Default builds do not carry the field at all.
+#[cfg(any(feature = "client", test))]
 pub(crate) struct TcpAuthentication {
     pub client_rx: PacketCodec,
     pub client_tx: PacketCodec,
@@ -58,6 +67,7 @@ pub(crate) struct TcpAuthentication {
 /// One hybrid UDP ClientHello flight shared by the live tunnel and native diagnostics.
 /// Keeping construction here prevents a reachability check from growing a second TLS/PQ/
 /// fragmentation implementation that can silently drift from the data plane.
+#[cfg(any(feature = "client", test))]
 pub(crate) struct UdpClientHelloFlight {
     pub client_keypair: Keypair,
     pub mlkem_decapsulation_key: crate::crypto::mlkem::DecapKey,
@@ -65,6 +75,7 @@ pub(crate) struct UdpClientHelloFlight {
     pub fragments: Vec<Vec<u8>>,
 }
 
+#[cfg(any(feature = "client", test))]
 pub(crate) fn build_udp_client_hello_flight(
     config: &crate::config::client::ClientConfig,
 ) -> anyhow::Result<UdpClientHelloFlight> {
@@ -297,7 +308,7 @@ pub(crate) fn parse_auth_ok(response: &str) -> anyhow::Result<AuthOk> {
         })
         .transpose()?;
 
-    let udp_roaming_session_id = match value.get("udp_roaming_session") {
+    let _udp_roaming_session_id = match value.get("udp_roaming_session") {
         None => None,
         Some(serde_json::Value::String(encoded))
             if encoded.len() == 16 && encoded.bytes().all(|byte| byte.is_ascii_hexdigit()) =>
@@ -331,10 +342,12 @@ pub(crate) fn parse_auth_ok(response: &str) -> anyhow::Result<AuthOk> {
             .map(ToString::to_string)
             .unwrap_or_else(|| "[]".into()),
         pushed_obf,
+        #[cfg(any(feature = "client", test))]
         session_token: value["session_token"].as_str().unwrap_or("").to_string(),
         max_streams: value["max_streams"].as_u64().unwrap_or(1).clamp(1, 16) as u32,
         adaptive: value["multipath_adaptive"].as_bool().unwrap_or(false),
-        udp_roaming_session_id,
+        #[cfg(any(feature = "client", test))]
+        udp_roaming_session_id: _udp_roaming_session_id,
     })
 }
 
@@ -343,6 +356,7 @@ pub(crate) fn parse_auth_ok(response: &str) -> anyhow::Result<AuthOk> {
 /// Device identity and server trust are explicit inputs: Linux can keep its persistent
 /// known-hosts policy, while Android/iOS/Windows provide their own storage adapters. The
 /// wire protocol and cryptographic transcript therefore have one implementation.
+#[cfg(any(feature = "client", test))]
 pub(crate) async fn authenticate_tcp<S, V, F>(
     stream: &mut S,
     config: &crate::config::client::ClientConfig,
@@ -589,6 +603,7 @@ where
     })
 }
 
+#[cfg(any(feature = "client", test))]
 pub(crate) fn effective_mtu(client_mtu: i32, pushed_mtu: i32) -> i32 {
     if client_mtu > 0 {
         client_mtu
@@ -599,6 +614,7 @@ pub(crate) fn effective_mtu(client_mtu: i32, pushed_mtu: i32) -> i32 {
     }
 }
 
+#[cfg(any(feature = "client", test))]
 pub(crate) fn verify_server_identity(
     auth_proof: &[u8],
     client_keypair: &Keypair,
@@ -634,6 +650,7 @@ pub(crate) fn verify_server_identity(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg(any(feature = "client", test))]
 pub(crate) fn build_client_auth_plaintext(
     config: &crate::config::client::ClientConfig,
     client_keypair: &Keypair,
@@ -674,6 +691,7 @@ pub(crate) fn build_client_auth_plaintext(
     Ok(plaintext)
 }
 
+#[cfg(any(feature = "client", test))]
 pub(crate) fn static_es(
     config: &crate::config::client::ClientConfig,
     client_keypair: &Keypair,

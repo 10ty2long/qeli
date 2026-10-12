@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v233 -->
+<!-- normative-sync: full-system-audit-v234 -->
 
-**Current result, 11 October: 30/37 sections DONE/PASS (81.1%), 7 remain. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 12 October: 31/37 sections complete within agreed scope (83.8%), 6 remain. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -171,7 +171,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 27 | Windows GUI, service and drivers | H01, H04, H08 | DONE / PASS |
 | 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | IN_PROGRESS |
-| 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | IN_PROGRESS |
+| 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | DONE: SOURCE REVIEW; Apple USER_SKIPPED |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | IN_PROGRESS |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
@@ -1902,12 +1902,14 @@ Exactly-once start/stop completion, generation/cancellation, Keychain/app groups
 **Existing harness/fixtures:** `qeli-ios/PARITY.md`, `scripts/test_verify_ios_ipa.py`.
 
 - [x] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [ ] Positive, boundary and negative scenarios. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Failures and concurrency. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Integration and target platform. — USER_SKIPPED (Swift/Xcode/Apple runtime).
+- [ ] Fixes, retesting and evidence. — USER_SKIPPED (Swift/Xcode/Apple runtime).
 
-**Status: IN_PROGRESS.**
+**Status: DONE within agreed scope: SOURCE REVIEW and portable checks. Swift/Xcode/Apple runtime USER_SKIPPED; XCTest, signed IPA, callbacks, RSS/leaks and network scenarios remain NOT_RUN.**
+**12 October reconciliation:** current92 Swift inputs are covered by the source review;91 are byte-identical. Only the `exit_node` test fixture changed to include required `gateway=false`; project.yml adds LICENSE/notices resources. Production Swift/MDM/header inputs are unchanged. Fresh6 Python IPA fixtures,10 plist parses and bindings PASS. The four remaining platform criteria are excluded by the direct user decision about the Mac/iOS lab. Earlier IN_PROGRESS/NOT_RUN entries below are historical checkpoints; they do not establish Swift execution. [Current reconciliation](../reports/AUDIT-Q30-IOS-SOURCE-MEMORY.md).
+
 
 [Scoped F290/F291 source fixes](../reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md):
 exact MDM numbers and stale provider-reply ownership. Six IPA-verifier fixture
@@ -2666,3 +2668,5 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October, Q36-F026:** [TUN queue intervention](../reports/BENCHMARK.md),3 fresh raw sessions/6 windows,both directions unlimited,server1000/4000/client500.Throughput/matched ACK/kernel/qdisc counters and policy/SHA verified; population separate from F025.Defaults/source unchanged,root SHA-archived/removed,full host gate retained.Mechanism/factory AUTH-rate and Q35 soak OPEN.30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **11 October,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md):unchanged fat-LTO Cargo/profile/features,916inputs,108fresh bursts/756peers all12,c1/4/16×3,proof/registry/108server exit0 PASS.Factory AUTH finite-burst block complete;sustained/current data-plane/precise TCP stage andQ35soak OPEN.Stale observer mtime0 cache reproduced/fixed,early marker gate6Windows+6Linux PASS;original failures retained.Own cache/root SHA-qualified cleanup,services/staged preserved.30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+**12 October, tested candidate adoption:** [wire pool and actual results](../reports/BENCHMARK.md): 916 inputs matched the qualified build at adoption; two explicitly verified spacing/line-break edits in one file then satisfied rustfmt without changing logic. Four strict feature profiles and 8+1 tests PASS. Twenty-four one-minute AUTH runs /34644 authentications, peak RSS 336320 KiB against the unchanged 524288 limit; composite20+4 evidence preserves the original file-budget refusal and host differences. Twelve fresh native sessions /48 functional IPv4 TCP/UDP P1/P4 windows. Source and CI warning gate adopted. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): five resource scenarios completed; upload6.8627%>5% FAIL, cross-node phase NOT_RUN. Android:23 JNI +2 packaged INI tests verified with the previous x86_64 native; original harness/signature/wlan0 refusals retained, no full VPN runtime claim. Q30 DONE in agreed scope;31/37 (83.8%), Q29/Q31/Q34/Q35/Q36/Q37 remain. Native refresh, hosted CI, performance/cross-node and the remaining criteria of these six sections stay open. `NO_PUSH_DEPLOY_RELEASE`.

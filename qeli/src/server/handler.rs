@@ -72,7 +72,7 @@ pub(crate) fn server_wire_pool(
     pcfg: &crate::config::server::ProfileConfig,
 ) -> std::io::Result<BufferPool> {
     let buffer_capacity = server_wire_buffer_capacity(pcfg);
-    BufferPool::new(SERVER_WIRE_BUFFER_BYTES / buffer_capacity, buffer_capacity)
+    BufferPool::new_lazy(SERVER_WIRE_BUFFER_BYTES / buffer_capacity, buffer_capacity)
 }
 
 // Stream-bonding wire constants live in `crate::protocol` (shared with the

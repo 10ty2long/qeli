@@ -119,6 +119,7 @@ mod imp {
     ///
     /// Slots must be empty; on return the first `n` have their lengths set. When `addrs` is
     /// given the peer address of each datagram is written to it (unconnected sockets).
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn recv_batch(
         socket: &tokio::net::UdpSocket,
         slots: &mut [BytesMut],
@@ -235,6 +236,7 @@ mod imp {
     /// Send up to `datagrams.len()` datagrams. Returns how many the kernel accepted, which may
     /// be fewer: `sendmmsg` stops at the first datagram it cannot queue and reports the prefix
     /// it did send. The caller must retry the remainder rather than assume all-or-nothing.
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn send_batch(
         socket: &tokio::net::UdpSocket,
         datagrams: &[&[u8]],
@@ -243,7 +245,7 @@ mod imp {
         send_batch_inner(socket, datagrams, None, None, scratch)
     }
 
-    /// Unconnected counterpart of [`send_batch`]. Every datagram in one call goes to the same
+    /// Unconnected counterpart of the client `send_batch` helper. Every datagram in one call goes to the same
     /// immutable peer snapshot; callers split a batch when roaming publishes a new path.
     #[allow(dead_code)] // server-only in client/FFI feature builds
     pub(crate) fn send_batch_to(
@@ -403,6 +405,7 @@ mod imp {
         }
     }
 
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn recv_batch(
         socket: &tokio::net::UdpSocket,
         slots: &mut [BytesMut],
@@ -434,6 +437,7 @@ mod imp {
         Ok(filled)
     }
 
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn send_batch(
         socket: &tokio::net::UdpSocket,
         datagrams: &[&[u8]],
@@ -474,10 +478,12 @@ mod imp {
     }
 }
 
-pub(crate) use imp::{recv_batch, send_batch, send_batch_to, BatchScratch};
+#[cfg(any(feature = "client", test))]
+pub(crate) use imp::{recv_batch, send_batch};
 #[cfg(any(target_os = "linux", target_os = "android"))]
 #[allow(unused_imports)] // Linux server builds own source-pinned replies.
 pub(crate) use imp::{recv_batch_local, send_batch_from};
+pub(crate) use imp::{send_batch_to, BatchScratch};
 
 #[cfg(test)]
 mod tests {

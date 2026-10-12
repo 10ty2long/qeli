@@ -86,6 +86,7 @@ impl Report {
 /// process exit instead of running destructors ahead of their async descendants.
 pub(crate) struct Deferred<T> {
     entries: Mutex<Vec<T>>,
+    #[cfg(all(target_os = "linux", feature = "server"))]
     pub(crate) failures: Report,
 }
 
@@ -93,6 +94,7 @@ impl<T> Default for Deferred<T> {
     fn default() -> Self {
         Self {
             entries: Mutex::new(Vec::new()),
+            #[cfg(all(target_os = "linux", feature = "server"))]
             failures: Report::default(),
         }
     }
