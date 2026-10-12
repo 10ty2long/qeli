@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v45 -->
+<!-- normative-sync: q31-openwrt-controls-v46 -->
 
-**Текущий checkpoint, 8 октября:** в Q31 закрыты3/5критериев (review/мёртвый код, сценарии и отказы/cooperative lifecycle concurrency);Q31-V011 current32-bit/core-module execution;F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration ниже; прежние shell/source evidence сохранены. Q31 остаётся IN_PROGRESS. Native provenance актуален/PASS; прежние STALE относятся к старым checkpoint.
+**Текущий checkpoint, 12 октября:** Q31-V013 обновляет ARM/MIPS/SDK evidence и исправляет права лицензий;3/5 IN_PROGRESS. Полный аудит32/37 (86,5%). Bootstrap resource-deferred, физический роутер USER_EXCLUDED. Прежние проверки ниже исторические.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2510,3 +2510,54 @@ Read-only inventory: обе VM имеют2020932KiB RAM, два CPU, ~9GiB св�
 На .11 начата отдельная загрузка официального SDK и отменена после9437184 байт. SHA-admission/распаковка SDK, host/prepare, host/configure и compile не выполнялись. SSH launch timeout и отказ первого process-group guard — примечания подготовки; остановлена только точная собственная python/curl группа. Backup834257байт SHA256 `a40bc8dcf7fefbbd9386283e2582fe054da62a0a816cb89aad0796de16013981` скопирован и проверен; свой каталог удалён после path/process/fd/mount guards. PID777/worker845/service сохранены. Raw13файлов/1016634байт; manifest SHA256 `9c9b347eb444fe467fdbb6f46edad754408d61eee7f2fb197b2bdb770ba5ce6d`.
 
 Полный bootstrap OPEN/capacity-deferred; release source-cut/current Actions также OPEN. Прежние package/32-bit PASS сохранены. Чтобы независимая работа не стояла, продолжены проверки entrypoint Q33. Q31 остаётся3/5 IN_PROGRESS, полный29/37(78.4%),восемь осталось; exclusions/Q29/Q30/D06 сохранены. Production pin/hash, Rust/native artifacts и сервисы не менялись; push/deploy/release отсутствуют.
+
+<!-- q31-current-portable-20261012 -->
+## Q31-V013: текущие ARM/MIPS, SDK-пакет и права лицензий (12 октября)
+
+Старые SDK/32-bit artifacts не объявляются актуальными: изменились 38 ранее
+переданных input, включая Cargo, клиент и buffer pool. Commit c52e0c15:
+две новые client-only release-сборки ARMv7 Rust1.97/Zig0.13 и MIPS
+nightly-2026-06-10/build-std/soft-float прошли SHA/static-ELF admission и
+32 CLI/INI проверки QEMU10.0.13 на cortex-a7/24Kc под uid65534.
+Переданные src/Cargo/config bytes сверены с immutable Git archive.
+Прежние 14 production-module probes и A/B four-target результаты сохраняют
+свои даты/source; полный VPN/firmware этим пакетом не проверялся.
+
+Официальный SDK24.10.4 x86/64 с приватными официальными prebuilt Rust/std1.89
+выполнил download/hash/prepare, Cargo client-only, GCC13.3 musl link,
+install/dependency-check/strip/BuildPackage. Подготовленные исходники до
+rlib-проекции побайтно проверены. Upstream bootstrap и cold/hermetic build
+не заявлены. Production URL/pin/hash неизменны; private fixture изменяет
+только URL/pin/hash. Полный SDK compile завершён до исправления Install ниже.
+
+Найден и исправлен дефект упаковки: CP сохранял права исходного архива,
+поэтому 533 файла лицензий устанавливались 0664. Рецепт нормализует файлы
+0644 и каталоги0755. Выполнены настоящий обновлённый SDK Install macro и
+ipkg-build с тем же ELF: все payload bytes и control поля прежние, права
+лицензий исправлены. Повторной Rust-компиляции/full BuildPackage после
+правки Install не было. Финальный IPK: 2712812 байт, SHA256
+`1f6967bc996695976d906c50034c4180128db025e089d3a5a8a17b2787c0b39a`.
+
+Тесты перестали зависеть от даты SDK-каталога, сохранив /var/tmp и marker
+guards. Строгий список payload дополнен независимым inventory исходных
+лицензий: точные имена/bytes,0644/0755 и root owner; неизвестные файлы
+по-прежнему отвергаются. Удаление проверяет отсутствие файлов/ссылок;
+стандартные пустые каталоги opkg разрешены. Свежие6 real-Cargo методов,
+7 opkg методов (nft/legacy, upgrade/remove/dependency/corrupt refusal) и
+9 CLI/INI запусков OpenWrt userspace PASS без skips; всего54 метода в
+этом scoped пакете вместе с QEMU. Дополнительно25 Windows source-admission
+методов и2 Linux POSIX метода PASS; historical opt-in baseline не повторён.
+
+Исходные отказы сохранены: HOME/Zig и SDK/tmp/flock в подготовке, датированный
+guard, старый four-file assertion,0664 modes и слишком строгий empty-dir
+assertion. Последние проверки используют точные текущие тесты без private
+root projections. Компиляция ограничена одним job, MemoryMax1400M,
+MemorySwapMax512M, CPUQuota150%. Собственные roots удалены после backup/SHA/
+process/fd/mount/path guards: освобождено около3,6GiB. PID/commands/service
+state исходных Qeli сохранены; новые большие кеши на Windows не создавались.
+
+Q31 остаётся3/5 IN_PROGRESS: bootstrap resource-deferred; public release cut/
+hosted CI относятся к Q34, physical router USER_EXCLUDED. Всего32/37 (86,5%);
+Q29/Q31/Q34/Q35/Q36 открыты. Evidence:
+`release/certification/evidence/q31-current-portable-20261012.json`.
+NO_PUSH_DEPLOY_RELEASE.

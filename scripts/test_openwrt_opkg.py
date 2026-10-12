@@ -21,7 +21,7 @@ class OpkgTests(unittest.TestCase):
     def setUp(self):
         template = Path(TEMPLATE).resolve()
         self.assertEqual(template.parent.parent, Path('/var/tmp'))
-        self.assertTrue(template.parent.name.startswith(('qeli-q31-openwrt-opkg-', 'qeli-sdk-build-20261008.')))
+        self.assertTrue(template.parent.name.startswith(('qeli-q31-openwrt-opkg-', 'qeli-sdk-')))
         self.assertEqual(template.name, 'rootfs-template')
         self.assertEqual((template/'.qeli-opkg-audit').read_text().strip(),
                          'qeli-openwrt-opkg-fixture-v1')
@@ -73,6 +73,16 @@ class OpkgTests(unittest.TestCase):
         control, payload = ipk_contents(self.root/'fixtures/qeli.ipk')
         modes = {'usr/bin/qeli-client': 0o755, 'etc/init.d/qeli': 0o755,
                  'etc/config/qeli': 0o600, 'etc/uci-defaults/99-qeli-firewall': 0o755}
+        notices = SOURCE/'qeli/third-party-notices/rust'
+        expected_notices = {}
+        for source in sorted(notices.rglob('*')):
+            self.assertFalse(source.is_symlink(), source)
+            if source.is_file():
+                name = 'usr/share/licenses/qeli/rust/'+source.relative_to(notices).as_posix()
+                expected_notices[name] = source.read_bytes()
+        self.assertIn('usr/share/licenses/qeli/rust/INDEX.tsv', expected_notices)
+        self.assertIn('usr/share/licenses/qeli/rust/BINDING.properties', expected_notices)
+        modes.update({name: 0o644 for name in expected_notices})
         self.assertEqual(set(payload), set(modes))
         self.assertEqual(control['Version'], '0.8.2-r1')
         self.assertEqual(set(control['Depends'].split(', ')),
@@ -82,6 +92,14 @@ class OpkgTests(unittest.TestCase):
             self.assertEqual(p.read_bytes(), payload[name][0], name)
             self.assertEqual(p.stat().st_mode & 0o777, mode, name)
             self.assertEqual(p.stat().st_uid, 0, name)
+        for name, expected in expected_notices.items():
+            self.assertEqual(payload[name][0], expected, name)
+        installed_notices = self.root/'usr/share/licenses/qeli/rust'
+        for directory in [installed_notices, *installed_notices.rglob('*')]:
+            if directory.is_dir():
+                self.assertFalse(directory.is_symlink(), directory)
+                self.assertEqual(directory.stat().st_mode & 0o777, 0o755, directory)
+                self.assertEqual(directory.stat().st_uid, 0, directory)
         for source, target in [('qeli.init', 'etc/init.d/qeli'), ('qeli.config', 'etc/config/qeli'),
                                ('qeli.firewall.uci-defaults', 'etc/uci-defaults/99-qeli-firewall')]:
             self.assertEqual((SOURCE/'qeli-openwrt/files'/source).read_bytes(), (self.root/target).read_bytes())
@@ -140,6 +158,13 @@ class OpkgTests(unittest.TestCase):
         for name in ['usr/bin/qeli-client', 'etc/init.d/qeli', 'etc/uci-defaults/99-qeli-firewall',
                      'usr/share/rpcd/ucode/qeli.uc', 'usr/share/rpcd/acl.d/luci-app-qeli.json']:
             self.assertFalse((self.root/name).exists(), name)
+        notices = self.root/'usr/share/licenses/qeli/rust'
+        if notices.exists():
+            # opkg may retain empty directories; no package file may remain.
+            self.assertFalse(notices.is_symlink())
+            for path in notices.rglob('*'):
+                self.assertFalse(path.is_symlink(), path)
+                self.assertTrue(path.is_dir(), path)
         self.assertNotIn('installed', self.status().get('qeli', {}).get('Status', ''))
 
     def test_corrupt_upgrade_rejected_before_payload_change(self):

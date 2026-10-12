@@ -110,6 +110,8 @@ define Package/qeli/install
 
 	$(INSTALL_DIR) $(1)/usr/share/licenses/qeli
 	$(CP) $(PKG_BUILD_DIR)/qeli/third-party-notices/rust $(1)/usr/share/licenses/qeli/
+	find $(1)/usr/share/licenses/qeli/rust -type d -exec chmod 0755 {} +
+	find $(1)/usr/share/licenses/qeli/rust -type f -exec chmod 0644 {} +
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/qeli.init $(1)/etc/init.d/qeli

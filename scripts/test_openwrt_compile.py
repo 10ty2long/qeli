@@ -18,7 +18,7 @@ class CompileTests(unittest.TestCase):
     def setUp(self):
         self.run = Path(RUN).resolve()
         self.assertEqual(self.run.parent, Path("/var/tmp"))
-        self.assertTrue(self.run.name.startswith(("qeli-q31-openwrt-compiler-", "qeli-sdk-build-20261008.")))
+        self.assertTrue(self.run.name.startswith(("qeli-q31-openwrt-compiler-", "qeli-sdk-")))
         self.assertEqual((self.run/'.qeli-compiler-audit').read_text().strip(), 'qeli-sdk-compiler-fixture-v1')
         self.root = Path(tempfile.mkdtemp(prefix='compile-case-', dir=self.run))
         self.addCleanup(shutil.rmtree, self.root)

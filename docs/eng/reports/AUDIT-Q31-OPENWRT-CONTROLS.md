@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v45 -->
+<!-- normative-sync: q31-openwrt-controls-v46 -->
 
-**Current checkpoint, 8 October:** Q31 has3/5criteria complete (review/dead code, scenarios and cooperative lifecycle failures/concurrency);Q31-V011 current32-bit/core-module execution;F399/Q31-V010 actual SDK source-to-IPK and OpenWrt userspace;F396 whole-preflight source identity and F397–F398 CI fixtures;F395 cooperative core/hook publication exclusion;Q31-V009 actual live Gate2 helper/32-bit CLI;F379 SDK source/prepare integration below; earlier shell/source evidence retained. Q31 remains IN_PROGRESS. Native provenance is current/PASS; earlier STALE statements are historical.
+**Current checkpoint, 12 October:** Q31-V013 refreshes ARM/MIPS/SDK evidence and fixes license permissions;3/5 IN_PROGRESS. Full audit32/37 (86.5%). Bootstrap resource-deferred; physical router USER_EXCLUDED. Earlier checkpoints below remain historical.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2501,3 +2501,53 @@ Read-only inventory: both VMs have2020932KiB RAM, two CPUs, ~9GiB free root disk
 An isolated official SDK download on .11 was started then cancelled at9437184 bytes. SDK hash admission/extraction, host/prepare, host/configure and compile did not run. The SSH launch timeout and first process-group guard refusal are preparation notes; only exact owned python/curl group was stopped. Backup834257bytes SHA256 `a40bc8dcf7fefbbd9386283e2582fe054da62a0a816cb89aad0796de16013981` was copied and verified; exact own root removed after path/process/fd/mount guards. Original PID777/worker845/service remains. Raw13files/1016634bytes, manifest SHA256 `9c9b347eb444fe467fdbb6f46edad754408d61eee7f2fb197b2bdb770ba5ce6d`.
 
 Full bootstrap remains OPEN/capacity-deferred; release source-cut/current Actions also remain OPEN. Previous package/32-bit PASS is retained. To avoid blocking independent work, Q33 entrypoint checks continue. Q31 remains3/5 IN_PROGRESS, full29/37(78.4%),eight remain; user exclusions/Q29/Q30/D06 unchanged. No production pin/hash, Rust/native artifacts, service, push/deploy/release changes.
+
+<!-- q31-current-portable-20261012 -->
+## Q31-V013: current ARM/MIPS, SDK package and license permissions (12 October)
+
+The previous SDK/32-bit artifacts are not relabelled current:38 formerly
+transferred inputs changed, including Cargo, client and buffer pool.
+Commit c52e0c15 produced fresh client-only ARMv7 Rust1.97/Zig0.13 and MIPS
+nightly-2026-06-10/build-std/soft-float release builds. SHA/static-ELF admission
+and32 CLI/INI QEMU10.0.13 cases on cortex-a7/24Kc, uid65534, passed.
+Transferred src/Cargo/config bytes match the immutable Git archive.
+Earlier14 production-module probes and four-target A/B builds retain their
+original dates/source. This packet does not qualify full VPN/firmware runtime.
+
+Official SDK24.10.4 x86/64 with private official prebuilt Rust/std1.89 performed
+download/hash/prepare, client-only Cargo, GCC13.3 musl link, install/dependency
+check/strip/BuildPackage. Prepared inputs were compared before rlib projection.
+Upstream bootstrap and cold/hermetic build are not claimed. Production URL/pin/
+hash remain unchanged; the private fixture overrides only URL/pin/hash.
+The full SDK compile completed before the following Install correction.
+
+Packaging defect fixed: CP inherited archive permissions, installing533 license
+files as0664. The recipe normalizes files0644 and directories0755. The actual
+updated SDK Install macro and ipkg-build ran using the same ELF: all payload
+bytes and control fields are unchanged; license permissions are corrected.
+There was no second Rust compilation/full BuildPackage after the Install edit.
+Final IPK:2712812 bytes, SHA256
+`1f6967bc996695976d906c50034c4180128db025e089d3a5a8a17b2787c0b39a`.
+
+Tests no longer depend on the SDK directory date; /var/tmp and marker guards
+remain. Exact payload admission now uses the independent source license inventory
+and checks names/bytes,0644/0755 and root ownership; extra files are refused.
+Removal verifies no license files or links remain; ordinary empty opkg directories
+are permitted. Fresh6 real-Cargo methods,7 opkg methods (nft/legacy,
+upgrade/remove/dependency/corrupt refusal) and9 OpenWrt CLI/INI executions passed
+without skips:54 scoped methods including QEMU. Additionally25 Windows admission
+methods and2 Linux POSIX methods passed; the historical opt-in baseline was not replayed.
+
+Failures are retained: HOME/Zig and SDK/tmp/flock preparation errors, dated
+fixture guard, old four-file assertion,0664 modes and excessive empty-directory
+assertion. Final executions use exact current tests, without private root
+projections. Builds used one job, MemoryMax1400M, MemorySwapMax512M and CPUQuota150%.
+Owned roots were removed after backup/SHA/process/fd/mount/path guards, releasing
+about3.6GiB. Original Qeli PIDs/commands/service states are preserved; no large
+Windows build caches were created.
+
+Q31 remains3/5 IN_PROGRESS: compiler bootstrap resource-deferred; public source
+cut/hosted CI remain Q34 obligations; physical router USER_EXCLUDED.
+Total32/37 (86.5%);Q29/Q31/Q34/Q35/Q36 remain open. Evidence:
+`release/certification/evidence/q31-current-portable-20261012.json`.
+NO_PUSH_DEPLOY_RELEASE.
