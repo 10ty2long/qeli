@@ -2576,3 +2576,38 @@ did not run. Platform native artifacts have not been rebuilt after the source
 change. `NO_PUSH_DEPLOY_RELEASE`. Raw evidence and cleanup are in the out-of-Git
 packet `audit-debt-20260924/q36-pool-candidate-chain-20261012` and its two
 separate AUTH packets.
+
+
+<!-- normative-sync: current-pool-native-20261012 -->
+
+### October 12: platform libraries after the pool fix
+
+[Build and runtime results](../../../release/certification/evidence/current-pool-native-20261012.json).
+Two independent builds of each of four libraries used source `c0aad62a`:
+Android arm64/x86_64, Windows x64 and macOS universal2. Every A/B pair is
+byte-identical; both copies of each artifact were updated and provenance/SHA256
+checked. Exact export sets passed: 55 per Android ABI and 33 C exports on
+Windows and each macOS architecture. The current Windows library passed 22
+C ABI checks; Android API34 x86_64 passed 23 JNI checks and 2 packaged INI tests.
+
+Fresh instrumented Release/test APKs and an ordinary unsigned Release contain
+both current Android ABIs. R8 and package checks passed. Prior 201 JVM tests
+and lint were reused after comparing all 679 input files with the already
+qualified repaired projection; this is not a new JVM run through the fresh
+native library. The original wlan0 guard refusal is retained. The fresh
+fixture waited for carrier (LOWER_UP/state UP) and interface startup and passed strict before/after network
+equality. Original AVD, SDK and production services were preserved; owned
+runtime/build roots and temporary swap were removed.
+
+The original desktop worker FAIL is retained: the final inventory found only
+an empty `.intentionally-empty-file.o`; all 327 inputs matched. Artifacts,
+API and C ABI were qualified from the complete SHA-verified archive without
+recompilation. The .10 iptables4/legacy4 host-gate FAIL remains; production
+process identities and binaries were preserved. Whole-host PASS is not claimed.
+
+The plan remains 31/37 complete (83.8%); Q29/Q31/Q34/Q35/Q36/Q37 are open.
+These results close the native-artifact refresh required by the pool change.
+Full Android VPN data plane, load limits, TCP asymmetry cause, the Q35 upload
+regression and cross-node step are not covered by this PASS. Physical
+Mac/Xcode/iOS, router and Windows VM runtime were excluded by the user.
+Whole-release and hosted CI gates remain open. `NO_PUSH_DEPLOY_RELEASE`.

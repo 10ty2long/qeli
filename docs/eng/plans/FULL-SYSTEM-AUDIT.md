@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v234 -->
+<!-- normative-sync: full-system-audit-v235 -->
 
 **Current result, 12 October: 31/37 sections complete within agreed scope (83.8%), 6 remain. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2670,3 +2670,38 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 **11 October,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md):unchanged fat-LTO Cargo/profile/features,916inputs,108fresh bursts/756peers all12,c1/4/16×3,proof/registry/108server exit0 PASS.Factory AUTH finite-burst block complete;sustained/current data-plane/precise TCP stage andQ35soak OPEN.Stale observer mtime0 cache reproduced/fixed,early marker gate6Windows+6Linux PASS;original failures retained.Own cache/root SHA-qualified cleanup,services/staged preserved.30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **12 October, tested candidate adoption:** [wire pool and actual results](../reports/BENCHMARK.md): 916 inputs matched the qualified build at adoption; two explicitly verified spacing/line-break edits in one file then satisfied rustfmt without changing logic. Four strict feature profiles and 8+1 tests PASS. Twenty-four one-minute AUTH runs /34644 authentications, peak RSS 336320 KiB against the unchanged 524288 limit; composite20+4 evidence preserves the original file-budget refusal and host differences. Twelve fresh native sessions /48 functional IPv4 TCP/UDP P1/P4 windows. Source and CI warning gate adopted. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): five resource scenarios completed; upload6.8627%>5% FAIL, cross-node phase NOT_RUN. Android:23 JNI +2 packaged INI tests verified with the previous x86_64 native; original harness/signature/wlan0 refusals retained, no full VPN runtime claim. Q30 DONE in agreed scope;31/37 (83.8%), Q29/Q31/Q34/Q35/Q36/Q37 remain. Native refresh, hosted CI, performance/cross-node and the remaining criteria of these six sections stay open. `NO_PUSH_DEPLOY_RELEASE`.
+
+
+<!-- normative-sync: current-pool-native-20261012 -->
+
+### October 12: platform libraries after the pool fix
+
+[Build and runtime results](../../../release/certification/evidence/current-pool-native-20261012.json).
+Two independent builds of each of four libraries used source `c0aad62a`:
+Android arm64/x86_64, Windows x64 and macOS universal2. Every A/B pair is
+byte-identical; both copies of each artifact were updated and provenance/SHA256
+checked. Exact export sets passed: 55 per Android ABI and 33 C exports on
+Windows and each macOS architecture. The current Windows library passed 22
+C ABI checks; Android API34 x86_64 passed 23 JNI checks and 2 packaged INI tests.
+
+Fresh instrumented Release/test APKs and an ordinary unsigned Release contain
+both current Android ABIs. R8 and package checks passed. Prior 201 JVM tests
+and lint were reused after comparing all 679 input files with the already
+qualified repaired projection; this is not a new JVM run through the fresh
+native library. The original wlan0 guard refusal is retained. The fresh
+fixture waited for carrier (LOWER_UP/state UP) and interface startup and passed strict before/after network
+equality. Original AVD, SDK and production services were preserved; owned
+runtime/build roots and temporary swap were removed.
+
+The original desktop worker FAIL is retained: the final inventory found only
+an empty `.intentionally-empty-file.o`; all 327 inputs matched. Artifacts,
+API and C ABI were qualified from the complete SHA-verified archive without
+recompilation. The .10 iptables4/legacy4 host-gate FAIL remains; production
+process identities and binaries were preserved. Whole-host PASS is not claimed.
+
+The plan remains 31/37 complete (83.8%); Q29/Q31/Q34/Q35/Q36/Q37 are open.
+These results close the native-artifact refresh required by the pool change.
+Full Android VPN data plane, load limits, TCP asymmetry cause, the Q35 upload
+regression and cross-node step are not covered by this PASS. Physical
+Mac/Xcode/iOS, router and Windows VM runtime were excluded by the user.
+Whole-release and hosted CI gates remain open. `NO_PUSH_DEPLOY_RELEASE`.

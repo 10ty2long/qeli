@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v234 -->
+<!-- normative-sync: full-system-audit-v235 -->
 
 **Текущий итог, 12 октября: 31/37 разделов завершено в согласованном объёме (83,8%), осталось 6. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2682,3 +2682,38 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 **11 октября,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md): неизменённый fat-LTO Cargo/profile/features,916 inputs,108 fresh bursts/756 peers всех12,c1/4/16×3,proof/registry/108 server exit0 PASS. Factory AUTH finite-burst блок закрыт; sustained/current data-plane/точная стадия TCP и Q35 soak OPEN. Stale observer cache mtime0 воспроизведён/исправлен, early marker gate6Windows+6Linux PASS; исходные отказы сохранены. Own cache/root SHA-qualified cleanup,службы/staged сохранены.30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **12 октября, перенос проверенного кандидата:** [wire pool и фактические результаты](../reports/BENCHMARK.md): при переносе 916 входов совпали с проверенной сборкой; затем только два явно проверенных изменения пробелов/переносов в одном файле для rustfmt, логика прежняя. Четыре строгих feature-профиля, 8+1 тестов PASS. 24 минутных AUTH-прогона / 34644 аутентификаций, пик RSS 336320 КиБ при прежнем лимите 524288; 20+4 составной результат, исходный отказ бюджета файлов и host differences сохранены. 12 новых native сессий /48 функциональных окон IPv4 TCP/UDP P1/P4. Исходники и CI warning gate перенесены. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): пять ресурсных сценариев завершены, upload 6,8627%>5% FAIL, межсерверный этап NOT_RUN. Android: 23 JNI +2 packaged INI теста подтверждены на прежнем x86_64 native; исходные harness/signature/wlan0 отказы сохранены, полный VPN runtime не заявляется. Q30 DONE в согласованном объёме; итог31/37 (83,8%), остаются Q29/Q31/Q34/Q35/Q36/Q37. Native refresh, hosted CI, performance/cross-node и оставшиеся критерии этих шести разделов открыты. `NO_PUSH_DEPLOY_RELEASE`.
+
+
+<!-- normative-sync: current-pool-native-20261012 -->
+
+### 12 октября: платформенные библиотеки после исправления пула
+
+[Результаты сборок и runtime-проверок](../../../release/certification/evidence/current-pool-native-20261012.json).
+Для исходников `c0aad62a` выполнены две независимые сборки каждой из четырёх
+библиотек: Android arm64/x86_64, Windows x64 и macOS universal2. Пары A/B
+побайтно совпали, обе копии каждого артефакта обновлены; provenance и SHA256
+проверены. На Android проверены точные 55 экспортов каждой ABI, на Windows
+и в каждой архитектуре macOS — 33 C-экспорта. На Windows выполнены 22 C ABI
+проверки; на Android API34 x86_64 — 23 JNI проверки и 2 теста INI из нового APK.
+
+Новые instrumented Release/test APK и обычный unsigned Release содержат
+актуальные обе Android ABI. Проверки R8 и упаковки прошли. Результаты 201 JVM
+теста и lint переиспользованы после точного сравнения 679 входных файлов
+с уже проверенным исправленным вариантом; это не новое выполнение JVM-тестов
+через свежую native-библиотеку. Исходный отказ проверки wlan0 сохранён;
+новый стенд дождался carrier (LOWER_UP/state UP) и завершения запуска интерфейса и прошёл строгую проверку
+неизменности сетевого состояния. Исходный AVD, SDK и рабочие сервисы сохранены,
+созданные для прогонов каталоги и временный swap удалены.
+
+Исходный desktop worker FAIL сохранён: финальная проверка обнаружила только
+пустой `.intentionally-empty-file.o`; все 327 входов совпали. Артефакты,
+API и C ABI подтверждены из полного SHA-проверенного архива без пересборки.
+На .10 сохранён host gate FAIL по iptables4/legacy4; рабочие сервисы и их
+бинарные файлы остались прежними. Это не полный PASS состояния хоста.
+
+Итог плана остаётся 31/37 (83,8%); открыты Q29/Q31/Q34/Q35/Q36/Q37.
+Эти результаты закрывают обновление native-артефактов после правки пула.
+Полный Android VPN data plane, пределы нагрузки, причина TCP-асимметрии,
+upload-регрессия Q35 и межсерверный этап остаются вне данного PASS.
+Физические Mac/Xcode/iOS, роутер и Windows VM исключены пользователем.
+Полный релиз и hosted CI не подтверждены. `NO_PUSH_DEPLOY_RELEASE`.

@@ -1319,3 +1319,38 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 **10 October,F512/Q35-F010:** [Release-soak false PASS](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): silent children previously produced PASS in0.064s; eight verified results, final10k/10k+3×1k checkpoints and28800s now required. Seven Linux/Bash checks PASS; owned root removed,service preserved. Actual eight-hour run remains open,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 **12 October, tested candidate adoption:** [wire pool and actual results](../reports/BENCHMARK.md): 916 inputs matched the qualified build at adoption; two explicitly verified spacing/line-break edits in one file then satisfied rustfmt without changing logic. Four strict feature profiles and 8+1 tests PASS. Twenty-four one-minute AUTH runs /34644 authentications, peak RSS 336320 KiB against the unchanged 524288 limit; composite20+4 evidence preserves the original file-budget refusal and host differences. Twelve fresh native sessions /48 functional IPv4 TCP/UDP P1/P4 windows. Source and CI warning gate adopted. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): five resource scenarios completed; upload6.8627%>5% FAIL, cross-node phase NOT_RUN. Android:23 JNI +2 packaged INI tests verified with the previous x86_64 native; original harness/signature/wlan0 refusals retained, no full VPN runtime claim. Q30 DONE in agreed scope;31/37 (83.8%), Q29/Q31/Q34/Q35/Q36/Q37 remain. Native refresh, hosted CI, performance/cross-node and the remaining criteria of these six sections stay open. `NO_PUSH_DEPLOY_RELEASE`.
+
+
+<!-- normative-sync: current-pool-native-20261012 -->
+
+### October 12: platform libraries after the pool fix
+
+[Build and runtime results](../../../release/certification/evidence/current-pool-native-20261012.json).
+Two independent builds of each of four libraries used source `c0aad62a`:
+Android arm64/x86_64, Windows x64 and macOS universal2. Every A/B pair is
+byte-identical; both copies of each artifact were updated and provenance/SHA256
+checked. Exact export sets passed: 55 per Android ABI and 33 C exports on
+Windows and each macOS architecture. The current Windows library passed 22
+C ABI checks; Android API34 x86_64 passed 23 JNI checks and 2 packaged INI tests.
+
+Fresh instrumented Release/test APKs and an ordinary unsigned Release contain
+both current Android ABIs. R8 and package checks passed. Prior 201 JVM tests
+and lint were reused after comparing all 679 input files with the already
+qualified repaired projection; this is not a new JVM run through the fresh
+native library. The original wlan0 guard refusal is retained. The fresh
+fixture waited for carrier (LOWER_UP/state UP) and interface startup and passed strict before/after network
+equality. Original AVD, SDK and production services were preserved; owned
+runtime/build roots and temporary swap were removed.
+
+The original desktop worker FAIL is retained: the final inventory found only
+an empty `.intentionally-empty-file.o`; all 327 inputs matched. Artifacts,
+API and C ABI were qualified from the complete SHA-verified archive without
+recompilation. The .10 iptables4/legacy4 host-gate FAIL remains; production
+process identities and binaries were preserved. Whole-host PASS is not claimed.
+
+The plan remains 31/37 complete (83.8%); Q29/Q31/Q34/Q35/Q36/Q37 are open.
+These results close the native-artifact refresh required by the pool change.
+Full Android VPN data plane, load limits, TCP asymmetry cause, the Q35 upload
+regression and cross-node step are not covered by this PASS. Physical
+Mac/Xcode/iOS, router and Windows VM runtime were excluded by the user.
+Whole-release and hosted CI gates remain open. `NO_PUSH_DEPLOY_RELEASE`.
