@@ -412,58 +412,73 @@
   "q35_eight_hour_endurance_qualified": false,
   "hosted_ci_certified": false,
   "push_deploy_release": false,
-  "source_digest": "59722c6afa49407c8d1ff1f0c74919e0a7b0ba50c3ab3061967cd17054062189",
-  "applicable_source_commit": "b35553b5aa9e19f65e40b3a854034770915cd527",
+  "source_digest": "24286562dc2bff4a12820f398fc2fb14047479421c1d8a26114048483d444cbe",
+  "applicable_source_commit": "a2b294307918cd110cbfc93d9b88162d6e539e88",
   "source_applicability": {
-    "kind": "EXACT_DOCUMENTATION_ONLY_DIFF_AFTER_FRESH_RUNTIME",
+    "kind": "EXACT_DOCS_AND_SDK_INSTALL_TEST_DIFF_AFTER_FRESH_LINUX_RUNTIME",
     "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
     "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-    "applicable_source_commit": "b35553b5aa9e19f65e40b3a854034770915cd527",
-    "applicable_source_digest": "59722c6afa49407c8d1ff1f0c74919e0a7b0ba50c3ab3061967cd17054062189",
+    "applicable_source_commit": "a2b294307918cd110cbfc93d9b88162d6e539e88",
+    "applicable_source_digest": "24286562dc2bff4a12820f398fc2fb14047479421c1d8a26114048483d444cbe",
     "execution_tree": "037e2c83fb57acb6c00b64f33733b1c668e72409",
-    "applicable_tree": "687023c531d59e74ea8d7096c67aca6bce8ac0f9",
+    "applicable_tree": "5e1163d5b858c10bd4e226a0fb03b0f94631402e",
     "all_changed_paths": [
       "docs/eng/plans/AUDIT-DEBT.md",
       "docs/eng/plans/FULL-SYSTEM-AUDIT.md",
+      "docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md",
       "docs/eng/reports/AUDIT-Q35-LONG-SOAK.md",
       "docs/eng/reports/AUDIT-Q37-DOCUMENTATION.md",
       "docs/eng/reports/BENCHMARK.md",
       "docs/ru/plans/AUDIT-DEBT.md",
       "docs/ru/plans/FULL-SYSTEM-AUDIT.md",
+      "docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md",
       "docs/ru/reports/AUDIT-Q35-LONG-SOAK.md",
       "docs/ru/reports/AUDIT-Q37-DOCUMENTATION.md",
       "docs/ru/reports/BENCHMARK.md",
+      "qeli-openwrt/Makefile",
       "release/certification/0.8.2.json",
       "release/certification/evidence/current-pool-linux-matrix-20261012.json",
+      "release/certification/evidence/q31-current-portable-20261012.json",
       "release/certification/evidence/q35-performance-order-20261012.json",
-      "release/certification/evidence/q37-closure-20261012.json"
+      "release/certification/evidence/q37-closure-20261012.json",
+      "scripts/test_openwrt_compile.py",
+      "scripts/test_openwrt_opkg.py"
     ],
     "release_source_changed_paths": [
       "docs/eng/plans/AUDIT-DEBT.md",
       "docs/eng/plans/FULL-SYSTEM-AUDIT.md",
+      "docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md",
       "docs/eng/reports/AUDIT-Q35-LONG-SOAK.md",
       "docs/eng/reports/AUDIT-Q37-DOCUMENTATION.md",
       "docs/eng/reports/BENCHMARK.md",
       "docs/ru/plans/AUDIT-DEBT.md",
       "docs/ru/plans/FULL-SYSTEM-AUDIT.md",
+      "docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md",
       "docs/ru/reports/AUDIT-Q35-LONG-SOAK.md",
       "docs/ru/reports/AUDIT-Q37-DOCUMENTATION.md",
-      "docs/ru/reports/BENCHMARK.md"
+      "docs/ru/reports/BENCHMARK.md",
+      "qeli-openwrt/Makefile",
+      "scripts/test_openwrt_compile.py",
+      "scripts/test_openwrt_opkg.py"
     ],
     "changed_source_file_sha256": {
-      "docs/eng/plans/AUDIT-DEBT.md": "cd152eab6f900be6aba2965ea50562b98728ada75a4d657010962c2feac64694",
-      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "0ac62f94a9ef1d3655fed0f06372e8f52f27f94f62dc79e16636391ab13b539e",
+      "docs/eng/plans/AUDIT-DEBT.md": "052ae16d682dfaff0f2c616d4341f01b89a71b527e7941b89844b813aff67fef",
+      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "d11a4aa822ad4a50d4839123781d7611be8ae56a0a82d7c7a1dc95a3cb7e553e",
+      "docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md": "85a2e0f3ef70c774a1ad1ca08577b1aacf4f1acadcc36e19f6213e4ebcf7b4d2",
       "docs/eng/reports/AUDIT-Q35-LONG-SOAK.md": "440b81e344bb993d892e681bd31f3b1b81cc0bdb8bad540c4fa1d88b34cee715",
       "docs/eng/reports/AUDIT-Q37-DOCUMENTATION.md": "c2f8305a6e342ce71241f1cb8c7751120a442563062c67ebe427af4809f0a122",
       "docs/eng/reports/BENCHMARK.md": "045682fb4b02744f8d1a6a0f5836319acd79d22c1a15d3fcb81d19215f891261",
-      "docs/ru/plans/AUDIT-DEBT.md": "89f9d9f0d0b49efd337479e9a5a5103f2cab0bd8cde68d138029a31623eed62b",
-      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "52417ad86267fdca30331216898d76d957a58e694ddea151554063ff059825f4",
+      "docs/ru/plans/AUDIT-DEBT.md": "d362c61d75e9cbea82e3af1c3794a5895ba29facce78cb4587a75f670b130d50",
+      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "5d0e60fd2202060922c63042818cd47463c0dc59dd55520736a25e5d35e2e7f6",
+      "docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md": "68fa5183be5d719852d9a0773107eea58d5f323a7c254d20b6e25a621c20f2c0",
       "docs/ru/reports/AUDIT-Q35-LONG-SOAK.md": "76fbf8ff15890311927c746ce26bbc3e72e0c47c43dea70fdce78a3b6e1e1115",
       "docs/ru/reports/AUDIT-Q37-DOCUMENTATION.md": "dd95f7a6f847aea30e3defabb3f84744c7822a92cc5a2a36a0ed7e93906c21a3",
-      "docs/ru/reports/BENCHMARK.md": "b8e91dbd3015ae807200adf47ea6b371b5823bb8f750ea9418b97e999fa549b9"
+      "docs/ru/reports/BENCHMARK.md": "b8e91dbd3015ae807200adf47ea6b371b5823bb8f750ea9418b97e999fa549b9",
+      "qeli-openwrt/Makefile": "4dad8d2b238fb6dc845374c9809556eeddb9167e860dbf623e1397823c2b16cc",
+      "scripts/test_openwrt_compile.py": "781c0135bdd9e26efe2d32493165e4c4f537ca2d0eb694defff4de018b39fff9",
+      "scripts/test_openwrt_opkg.py": "d1d3e099346f46462da909d981544848badd25eb6c7330b9f31bbb4a1c02e452"
     },
     "rust_manifests_conformance_fixtures_native_platform_apps_workflows_unchanged": true,
-    "no_new_execution_claimed_for_documentation_commit": true,
     "source_equivalence": {
       "build_seal_sha256": "4c02b82ce0a016b90835640ac63ce29738cb5c2044148baf2f81a9c57594ff07",
       "compiled_input_count": 916,
@@ -471,7 +486,39 @@
       "explicit_format_only_input": "qeli/src/transport_core/buffer_pool.rs",
       "format_amendment_sha256": "e15a03aa468c2cf2a625a2841fef5314f91a5c514c3a9ab58e318078c5060c85",
       "exact_replacement_reverified": true
-    }
+    },
+    "sdk_boundary": {
+      "only_packaging_change": "license chmod0644/0755 after existing CP; unchanged Build/Compile/public URL/pin/hash",
+      "compiled_input_count": 916,
+      "exact_inputs": 915,
+      "explicit_prior_format_only_input": "qeli/src/transport_core/buffer_pool.rs",
+      "helper_inventory": 453,
+      "exact_unchanged_helpers": 451,
+      "changed_sdk_only_tests": [
+        {
+          "path": "scripts/test_openwrt_compile.py",
+          "executed_runtime_sha256": "08239167451368a94849326676d516347186bface186e742aa3bc9c3f6401782",
+          "current_runtime_sha256": "26bbc3b13238bcd010dbd0f5999502ee9649af14294c9723f563e3fd69cd54e8"
+        },
+        {
+          "path": "scripts/test_openwrt_opkg.py",
+          "executed_runtime_sha256": "597832a12ef4e6ee9a4c2c8ae364689466a41c863042a18a34bc6689e5a562fa",
+          "current_runtime_sha256": "fc9cee10090025d774ea9fd976f6412e71f127b3a1504fe94e43402fb284c4f6"
+        }
+      ],
+      "reviewed_unchanged_matrix_entrypoints": [
+        "ipv6_dns_pair.sh",
+        "ipv6_legacy_pair.sh",
+        "ipv6_mtu_pair.sh",
+        "ipv6_netns_case.sh",
+        "linux_roaming_release_soak.sh"
+      ],
+      "sdk_runtime_evidence": "release/certification/evidence/q31-current-portable-20261012.json",
+      "fresh_sdk_install_and_opkg_qualified": true,
+      "no_second_full_sdk_rust_compile_claim": true,
+      "sdk_tests_not_invoked_by_20case_linux_matrix": true
+    },
+    "no_new_linux_20case_execution_claimed_for_packaging_commit": true
   },
   "automated_linux_certification_qualified": true,
   "full_release_preflight_qualified": false,
