@@ -1,6 +1,6 @@
 # Q29: Android system Always-on, lockdown and process death
 
-<!-- normative-sync: q29-android-system-v4 -->
+<!-- normative-sync: q29-android-system-v5 -->
 
 **5 October 2026. Partial result; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain. The complete system gate is FAIL: automatic redelivery after external SIGKILL is unqualified.**
 
@@ -68,3 +68,8 @@ New final product-only run(r5):219.07s,bootstrap2.668s,1 fresh PASS and7 receipt
 <!-- q29-storage-startup-20261012 -->
 
 **12 October:** A new current matching-R8 cold UI/SAF run with independent UID passed after bounded storage admission. All80 post-CONNECTED sockets passed; established stopped lockdown48/0,manual recovery/system+raw DNS PASS.241 receipts correlated to UID journal. Generic DNS/null ENONET and historical SIGKILL FAIL remain open;ordinary production APK unqualified. [Current scope](AUDIT-Q29-ANDROID-CURRENT-VPN.md). Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-production-runtime-20261012 -->
+
+**12 October:** Ordinary production R8 APK qualified via UI/SAF and independent UID without instrumentation: 80 post-CONNECTED sockets PASS,230 correlated receipts,stopped lockdown48/0 and manual recovery/DNS PASS. APK payload unchanged by lab signing;real release signing and physical platforms unqualified. DNS/null ENONET,first-post-APPLIED blocking and historical SIGKILL retained. [Current scope](AUDIT-Q29-ANDROID-CURRENT-VPN.md).Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.

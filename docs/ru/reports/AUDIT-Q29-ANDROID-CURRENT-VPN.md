@@ -1,6 +1,6 @@
 # Q29: актуальные VPN-интеграции и надёжность Android-стенда
 
-<!-- normative-sync: q29-current-vpn-v2 -->
+<!-- normative-sync: q29-current-vpn-v3 -->
 
 12 октября2026. Q29 IN_PROGRESS. План32/37 (86,5%),5 разделов открыты.
 
@@ -144,3 +144,25 @@ backends/routes/resolver сохранены. Результаты SHA-qualified;
 Новые Rust/JVM/native builds и большие compiler caches отсутствуют.
 [Evidence](../../../release/certification/evidence/q29-storage-startup-20261012.json).
 Raw: `audit-debt-20260924/q29-storage-startup-20261012`. NO_PUSH_DEPLOY_RELEASE.
+
+
+## 12 октября: обычный production R8 APK, отдельный UID
+
+Штатный `assembleRelease` APK прошёл runtime за 252.94s на Android14/API34/x86_64. В этой сборке нет `instrumentation-abi.pro` и `qeliTestBuildType=release`. Повторных Gradle/Rust/JVM сборок не было: использован уже собранный production-unsigned APK `ec05ed9330ca3db7cca6f296569e68b24f172f5c9d2a5d65667e80e717da288c`. Его подписали Android Debug сертификатом для установки в изолированном AVD; проверены подпись, 16KiB ZIP alignment и совпадение всех 1091 несигнатурных ZIP entries, включая DEX/resources/manifest и обе JNI. Подписанный SHA256 `3d8496b42251fd90109a4b87532acf8a1c8b16a1a07d85267ce6c08b2db7f2a7`. Настоящая release-подпись, физические/OEM/arm64 runtime этим не проверяются.
+
+Приложение не debuggable. INI импортирован через UI/SAF; instrumentation и private prefs injection не запускались. Test APK использован только как standalone broadcast receiver с отдельным UID 10149, VPN owner UID 10148. Обычные TCP/UDP сокеты receiver не bind/protect; explicit Network binding применяется только в отдельно помеченной диагностике. Все126 канонических Android build inputs неизменны. JNI x86_64 `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 байты квалифицированы сборкой, выполнение arm64 не заявляется.
+
+| Фаза | Пробы / ответы |
+| --- | --- |
+| physical-baseline | 48/48 |
+| cold-lockdown-start | 96/68 |
+| startup-followup | 48/48 |
+| connected-steady | 48/48 |
+| force-stop | 48/8 |
+| stopped-lockdown | 48/0 |
+
+Все 230 echo receipts независимо сопоставлены с успешными ответами отдельного UID по protocol/family/payloadSHA: 220 burst replies и10 отдельных сокетов. При установившемся stopped lockdown все48 сокетов блокированы, DNS answers отсутствуют. Ручное force-stop/re-enable восстановление IPv4/IPv6 TCP/UDP и system/raw DNS прошло. Ответы до завершения перехода force-stop не считаются утечкой.
+
+После Android CONNECTED успешны 80/80 наблюдавшихся сокетов: 32 cold и 48 follow-up, coverage=COLD_AND_FOLLOWUP. Это конечная выборка. Первые sampled сокеты после Native NetworkPlan APPLIED: `FAIL_POST_PLAN_BLOCKING`; исторические отказы сохраняются. Generic DnsResolver `network=null` по-прежнему даёт ENONET; explicit active VPN и typed A/AAAA null/active успешны. Автоматическая SIGKILL recovery здесь не выполнялась и остаётся историческим FAIL.
+
+Обычный production R8 runtime gate закрыт в этом scope; это дополнение к прежним matching-R8 результатам. Q29 IN_PROGRESS;32/37(86,5%), пять разделов открыты. Original AVD userdata, рабочий service/PID, host firewall/routes/resolver сохранены. Собственный runtime root удалён после SHA-qualified backup и inode/path/process/fd/mount checks. [Evidence](../../../release/certification/evidence/q29-production-runtime-20261012.json). Raw:`audit-debt-20260924/q29-production-runtime-20261012`. NO_PUSH_DEPLOY_RELEASE.

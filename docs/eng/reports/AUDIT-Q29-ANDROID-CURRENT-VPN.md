@@ -1,6 +1,6 @@
 # Q29: current VPN integrations and Android fixture reliability
 
-<!-- normative-sync: q29-current-vpn-v2 -->
+<!-- normative-sync: q29-current-vpn-v3 -->
 
 12 October2026. Q29 IN_PROGRESS;32/37 (86.5%),5 sections open.
 
@@ -142,3 +142,25 @@ verified recovery and inode/path/process/fd/mount guards. No Rust/JVM/native
 builds or large compiler caches were created.
 [Evidence](../../../release/certification/evidence/q29-storage-startup-20261012.json).
 Raw:`audit-debt-20260924/q29-storage-startup-20261012`.NO_PUSH_DEPLOY_RELEASE.
+
+
+## 12 October: ordinary production R8 APK, independent UID
+
+The ordinary `assembleRelease` APK passed runtime in 252.94s on Android14/API34/x86_64. This build uses neither `instrumentation-abi.pro` nor `qeliTestBuildType=release`. No Gradle/Rust/JVM builds were repeated: the existing production-unsigned APK `ec05ed9330ca3db7cca6f296569e68b24f172f5c9d2a5d65667e80e717da288c` was signed with the Android Debug certificate for this isolated AVD. Signature,16KiB ZIP alignment and all 1091 non-signature ZIP entries were verified, including unchanged DEX/resources/manifest and both JNI. Signed SHA256 `3d8496b42251fd90109a4b87532acf8a1c8b16a1a07d85267ce6c08b2db7f2a7`. Real release signing and physical/OEM/arm64 execution are not qualified here.
+
+The app is not debuggable. Actual UI/SAF imported INI without instrumentation or private prefs injection. The test APK served only as a standalone broadcast receiver, UID 10149, separate from VPN owner UID 10148. Ordinary TCP/UDP sockets do not bind/protect; explicit Network binding occurs only in separately labelled diagnostics. All126 canonical Android build inputs are unchanged. x86_64 JNI `01da54a3d1b24fdbfc4d305697df582a6b8bec2e04985b0c7ce64a6277d0ea82`; arm64 bytes are build-qualified, not runtime-qualified.
+
+| Phase | Samples / replies |
+| --- | --- |
+| physical-baseline | 48/48 |
+| cold-lockdown-start | 96/68 |
+| startup-followup | 48/48 |
+| connected-steady | 48/48 |
+| force-stop | 48/8 |
+| stopped-lockdown | 48/0 |
+
+All 230 echo receipts independently matched protocol/family/payloadSHA to the separate UID: 220 burst replies and10 single sockets. Established stopped lockdown blocked all48 sockets with no DNS answers. Manual force-stop/re-enable recovery passed IPv4/IPv6 TCP/UDP and system/raw DNS. Replies before the force-stop transition completes are not described as leakage.
+
+All 80/80 observed post-CONNECTED sockets passed: 32 cold and 48 follow-up,coverage=COLD_AND_FOLLOWUP. This is finite sampling. First sampled sockets after Native NetworkPlan APPLIED: `FAIL_POST_PLAN_BLOCKING`; prior refusals remain recorded. Generic DnsResolver `network=null` still returns ENONET;explicit active VPN and typed A/AAAA null/active pass. Automatic SIGKILL recovery was not executed here; its historical failure remains open.
+
+The ordinary production R8 runtime gate is qualified in this scope alongside previous matching-R8 results. Q29 IN_PROGRESS;32/37(86.5%),five sections open. Original AVD userdata,working service/PID and host firewall/routes/resolver are preserved. The owned runtime root was removed after SHA-qualified backup and inode/path/process/fd/mount checks. [Evidence](../../../release/certification/evidence/q29-production-runtime-20261012.json). Raw:`audit-debt-20260924/q29-production-runtime-20261012`.NO_PUSH_DEPLOY_RELEASE.
