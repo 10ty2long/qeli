@@ -1,11 +1,8 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v135 -->
+<!-- normative-sync: audit-debt-v136 -->
 
-Current reconciliation:9 October2026. The October3 result below remains a historical checkpoint. At the user’s request, new full-audit sections
-are paused until this register is closed. These are **15 groups of obligations**,
-not 15 confirmed bugs or a completion percentage for all 37 sections. Sources: 57 baseline
-`AUDIT-Q*.md` reports and `CLIENT-CONFIG-CORE.md`; repeated limitations are consolidated.
+Current reconciliation: 12 October 2026. The original 15 obligation groups were dispositioned on 3 October: 14 DONE and D06 ACCEPTED_LIMITATION by user decision. The full audit continues; current total32/37 (86.5%), Q29/Q31/Q34/Q35/Q36 remain open. The historical register and subsequent actual checks are retained below; these groups are not15 confirmed bugs or the completion percentage of37 sections.
 
 `DONE` requires a fix/justification and the required verification. `BLOCKED` denotes an
 unavailable external prerequisite, never success. The user supplied Linux and an Android
@@ -1469,3 +1466,36 @@ root cause is NOT_ESTABLISHED. The 13-hour resource prefix was not replayed.
 
 Q35 remains IN_PROGRESS; the current CLI's full eight-hour gate is not certified.
 The ledger stays 31/37 (83.8%), with six sections open. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: Q37 complete against five criteria
+
+<!-- normative-sync: q37-five-criteria-closure-20261012 -->
+
+[Criterion matrix and verifiable evidence](../../../release/certification/evidence/q37-closure-20261012.json).
+
+| Criterion | Completion basis |
+| --- | --- |
+| Review and dead code | 297 Rust modules / 306 edges; 59 diagnostics in four Linux profiles, 73 reviewed suppressions. 41 retired bodies and unused direct dependencies removed; external API, JNI/C/Swift and RAII retained. Subsequent changes covered by current strict profiles and native A/B. |
+| Positive, boundary and negative cases | 84 client fields, 134 server defaults and 176 reader keys reconciled; actual INI admissions and original negatives retained. Eight current schema/docs/generated-adapter methods PASS. |
+| Failures and concurrency | Four current admission methods and two safe-import methods for 24 scenarios PASS; five real Linux CI-fixture methods remain applicable after exact unchanged runner/test SHA. Empty/incomplete/skipped/expected-failure suites never qualify; child failures remain visible. |
+| Integration and target platform | Current four native A/B, exports/provenance, 22 Windows C ABI, 23 Android JNI and two packaged INI checks; fresh 20 Linux criteria / 409 assertions. User-skipped physical platforms are not described as tested. |
+| Fixes, retesting and evidence | Original F001–F013 and maintenance failures retained; 915/916 current CLI inputs match, with the sole formatter delta separately proved. Current provenance/docs/version/source gates PASS; owned cleanup and historical host failures retained. |
+
+Final targeted checks: 14 methods without failures/errors/skips; provenance,
+documentation, version and strict Linux certification passed. The initial wrapper
+expected one import method rather than two: its count refusal is retained; both
+actual successful methods were qualified from their original log without a replay.
+Previous full Rust suites, 149 Linux fixtures, native/JNI and network executions
+retain their actual timestamps and SHA; they are not presented as new executions.
+
+Q37 covers documentation, reachability, test connection/admission and the qualified
+integration of changed harnesses. Full Android VPN data plane, SIGKILL recovery and
+ENONET belong to Q29; hosted CI and publication to Q34; SDK/bootstrap to Q31;
+historical performance failure/full endurance to Q35; TCP asymmetry cause/capacity
+to Q36. These remain open without duplicating them as an undefined Q37 remainder.
+This does not claim semantic reachability for every possible execution or public API.
+
+**Q37 DONE within agreed scope. Total: 32/37 (86.5%), five sections remain:**
+Q29/Q31/Q34/Q35/Q36. The whole audit and release remain incomplete.
+Network runs and large builds were not replayed; no new compiler caches were created.
+`NO_PUSH_DEPLOY_RELEASE`.

@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v238 -->
+<!-- normative-sync: full-system-audit-v239 -->
 
-**Текущий итог, 12 октября: 31/37 разделов завершено в согласованном объёме (83,8%), осталось 6. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -183,7 +183,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Бенчмарки и методика измерения | H07 | IN_PROGRESS |
-| 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | IN_PROGRESS |
+| 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | DONE |
 
 Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31,35–36
 11октября. Старые checkpoint-числа далее остаются историческими.
@@ -2245,11 +2245,11 @@ Keys/defaults/errors против runtime, полные examples через chec
 
 **Имеющаяся обвязка/fixtures:** `scripts/check_docs.py`, `scripts/check_panel.py`, `scripts/test_site_docs.js`, `scripts/sync_version.py`.
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
 **11 октября, Q37-F001/F002:** [исходная точка и исправления](../reports/AUDIT-Q37-DOCUMENTATION.md): версия RU/EN attestation examples восстановлена; private site передаётся явно через `--site-root PATH`, отсутствие входов остаётся отказом. Реальный сайт, пять отрицательных site-сценариев, пять RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE и release certification 21 problems остаются OPEN; нужны реальные текущие сборки и финальная Linux-матрица. Полный Q37 не закрыт, общий итог 30/37 DONE81,1%.
 
@@ -2265,8 +2265,7 @@ Keys/defaults/errors против runtime, полные examples через chec
 
 **11 октября, Q37-F008:** локальный ci-check использует общий Rust pin и явный +toolchain, locked tests/Clippy и минимальные server/client/FFI checks. Пять настоящих Linux shell fixtures PASS, старый runner отказал; это не компиляция Rust. Два own roots SHA-архивированы/удалены; host PASS/FAIL сохранены. [Отчёт](../reports/AUDIT-Q37-DOCUMENTATION.md). Native 3538e06c STALE, Q35 TCP5300 RUNNING; Q37 IN_PROGRESS, 30/37 DONE (81,1%).
 
-**Статус: IN_PROGRESS.**
-
+**Q37 DONE: 12 October; agreed scope.**
 ## 7. Команды исходной точки и последующих прогонов
 
 Команды ниже выполняются из корня checkout. Использовать toolchain проекта и писать
@@ -2833,3 +2832,37 @@ steal/PSI/cgroup telemetry, и новый короткий тест не вос�
 
 Q35 IN_PROGRESS; полный 8-часовой gate на текущем CLI не подтверждён.
 План остаётся 31/37 (83,8%), шесть разделов открыты. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 октября: Q37 завершён по пяти критериям
+
+<!-- normative-sync: q37-five-criteria-closure-20261012 -->
+
+[Матрица критериев и проверяемые доказательства](../../../release/certification/evidence/q37-closure-20261012.json).
+
+| Критерий | Основание закрытия |
+| --- | --- |
+| Review и мёртвый код | 297 Rust-модулей / 306 связей; 59 диагностик четырёх Linux-профилей, 73 проверенных подавления. Удалены 41 retired body и лишние прямые зависимости; внешние API, JNI/C/Swift и RAII сохранены. Последующие изменения покрыты актуальными строгими профилями и native A/B. |
+| Штатные, граничные и негативные сценарии | Сверены 84 клиентских поля, 134 server defaults и 176 reader keys; реальные INI admissions и исходные отрицательные случаи сохранены. Текущие 8 schema/docs/generated-adapter методов PASS. |
+| Отказы и конкуренция | Текущие 4 admission-метода и 2 метода безопасного импорта 24 сценариев PASS; 5 настоящих Linux CI-fixture методов применимы по точным неизменным SHA runner/test. Пустые/неполные/skipped/expected-failure наборы не получают PASS, отказ дочерней команды сохраняется. |
+| Интеграция и целевая платформа | Актуальные четыре native A/B, exports/provenance, 22 Windows C ABI, 23 Android JNI и 2 packaged INI; свежие 20 Linux-критериев / 409 проверок. Исключённые пользователем физические платформы не объявлены проверенными. |
+| Исправления, повторная проверка и evidence | Исходные отказы F001–F013 и maintenance сохранены; 915/916 входов текущей CLI совпадают, единственный форматный delta отдельно доказан. Все текущие provenance/docs/version/source gates PASS; owned cleanup и исторические host FAIL сохранены. |
+
+Финальная адресная проверка: 14 методов, без failures/errors/skips; provenance,
+документация, версия и строгий Linux-сертификат прошли. Исходная обвязка ожидала
+один import method вместо двух: сохранён её отказ по счётчику, оба реально
+выполненных PASS квалифицированы из исходного лога без повторного запуска.
+Прежние полные Rust suites, 149 Linux fixtures, native/JNI и сетевые прогоны
+сохраняют исходные даты и SHA; новым выполнением они не названы.
+
+Q37 закрывает документацию, достижимость, подключение и допуск тестов, а также
+проверенную интеграцию изменённой обвязки. Полный Android VPN data plane,
+SIGKILL recovery/ENONET относятся к Q29; hosted CI и выпуск — к Q34;
+SDK/bootstrap — Q31; старый performance FAIL и полный endurance — Q35;
+причина TCP-асимметрии и пределы нагрузки — Q36. Они остаются открытыми,
+но не дублируются как неопределённый остаток Q37. Не утверждается, что все
+возможные исполнения или все публичные API доказаны семантически достижимыми.
+
+**Q37 DONE в согласованном объёме. Итог: 32/37 (86,5%), осталось 5 разделов:**
+Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не завершены.
+Сетевые прогоны и большие сборки в этом пакете не повторялись;
+новые кэши компиляции не создавались. `NO_PUSH_DEPLOY_RELEASE`.

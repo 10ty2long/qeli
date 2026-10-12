@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v238 -->
+<!-- normative-sync: full-system-audit-v239 -->
 
-**Current result, 12 October: 31/37 sections complete within agreed scope (83.8%), 6 remain. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 12 October: 32/37 sections complete within agreed scope (86.5%), 5 remain. Q37 five criteria complete; Q29/Q31/Q34/Q35/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -178,7 +178,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | IN_PROGRESS |
 | 36 | Benchmarks and measurement methodology | H07 | IN_PROGRESS |
-| 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | IN_PROGRESS |
+| 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | DONE |
 
 Table reconciled against section21–23,26,28 completion and open29–31,35–36 statuses
 on11October. Earlier checkpoint totals below remain historical.
@@ -2235,11 +2235,11 @@ Compare keys/defaults/errors with runtime, execute complete examples, verify RU/
 
 **Existing harness/fixtures:** `scripts/check_docs.py`, `scripts/check_panel.py`, `scripts/test_site_docs.js`, `scripts/sync_version.py`.
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
 **11 October, Q37-F001/F002:** [baseline and fixes](../reports/AUDIT-Q37-DOCUMENTATION.md): restored RU/EN versioned attestation examples; private website selected explicitly with `--site-root PATH`, missing inputs still refuse. Actual website, five negative site scenarios, five RU/EN version methods, 97 native harness/18 certification gate tests PASS. Native provenance STALE and release certification 21 problems remain OPEN; actual current builds and final Linux matrix required. Full Q37 remains open, overall 30/37 DONE81.1%.
 
@@ -2255,8 +2255,7 @@ Compare keys/defaults/errors with runtime, execute complete examples, verify RU/
 
 **11 October, Q37-F008:** local ci-check uses the shared Rust pin and explicit +toolchain, locked tests/Clippy and minimal server/client/FFI checks. Five actual Linux shell fixtures passed and the original runner was rejected; no Rust compilation occurred. Two owned roots SHA-archived/removed; host PASS/FAIL retained. [Report](../reports/AUDIT-Q37-DOCUMENTATION.md). Native 3538e06c STALE, Q35 TCP5300 RUNNING; Q37 IN_PROGRESS, 30/37 DONE (81.1%).
 
-**Status: IN_PROGRESS.**
-
+**Q37 DONE: 12 October; agreed scope.**
 ## 7. Baseline and subsequent commands
 
 Run from the checkout root using the project toolchain; retain one log per invocation.
@@ -2820,3 +2819,36 @@ root cause is NOT_ESTABLISHED. The 13-hour resource prefix was not replayed.
 
 Q35 remains IN_PROGRESS; the current CLI's full eight-hour gate is not certified.
 The ledger stays 31/37 (83.8%), with six sections open. `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: Q37 complete against five criteria
+
+<!-- normative-sync: q37-five-criteria-closure-20261012 -->
+
+[Criterion matrix and verifiable evidence](../../../release/certification/evidence/q37-closure-20261012.json).
+
+| Criterion | Completion basis |
+| --- | --- |
+| Review and dead code | 297 Rust modules / 306 edges; 59 diagnostics in four Linux profiles, 73 reviewed suppressions. 41 retired bodies and unused direct dependencies removed; external API, JNI/C/Swift and RAII retained. Subsequent changes covered by current strict profiles and native A/B. |
+| Positive, boundary and negative cases | 84 client fields, 134 server defaults and 176 reader keys reconciled; actual INI admissions and original negatives retained. Eight current schema/docs/generated-adapter methods PASS. |
+| Failures and concurrency | Four current admission methods and two safe-import methods for 24 scenarios PASS; five real Linux CI-fixture methods remain applicable after exact unchanged runner/test SHA. Empty/incomplete/skipped/expected-failure suites never qualify; child failures remain visible. |
+| Integration and target platform | Current four native A/B, exports/provenance, 22 Windows C ABI, 23 Android JNI and two packaged INI checks; fresh 20 Linux criteria / 409 assertions. User-skipped physical platforms are not described as tested. |
+| Fixes, retesting and evidence | Original F001–F013 and maintenance failures retained; 915/916 current CLI inputs match, with the sole formatter delta separately proved. Current provenance/docs/version/source gates PASS; owned cleanup and historical host failures retained. |
+
+Final targeted checks: 14 methods without failures/errors/skips; provenance,
+documentation, version and strict Linux certification passed. The initial wrapper
+expected one import method rather than two: its count refusal is retained; both
+actual successful methods were qualified from their original log without a replay.
+Previous full Rust suites, 149 Linux fixtures, native/JNI and network executions
+retain their actual timestamps and SHA; they are not presented as new executions.
+
+Q37 covers documentation, reachability, test connection/admission and the qualified
+integration of changed harnesses. Full Android VPN data plane, SIGKILL recovery and
+ENONET belong to Q29; hosted CI and publication to Q34; SDK/bootstrap to Q31;
+historical performance failure/full endurance to Q35; TCP asymmetry cause/capacity
+to Q36. These remain open without duplicating them as an undefined Q37 remainder.
+This does not claim semantic reachability for every possible execution or public API.
+
+**Q37 DONE within agreed scope. Total: 32/37 (86.5%), five sections remain:**
+Q29/Q31/Q34/Q35/Q36. The whole audit and release remain incomplete.
+Network runs and large builds were not replayed; no new compiler caches were created.
+`NO_PUSH_DEPLOY_RELEASE`.
