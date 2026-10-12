@@ -563,6 +563,9 @@ perf.connection.handshake_timeout_secs = 12
         guest_meminfo = arun("shell", "cat", "/proc/meminfo").stdout
         (evidence / "android-meminfo-before.txt").write_text(guest_meminfo)
         result["emulator_memory"] = admitted_guest_memory(guest_meminfo)
+        if args.variant == 'release' and args.suite in ('system', 'power', 'recovery', 'handover', 'nat64', 'startup', 'app-policy', 'endurance', 'private-dns'):
+            from audit_android_release_ui import await_download_storage
+            await_download_storage(arun, evidence, result, label='before-install')
         assert not arun("shell", "pm", "list", "packages", "com.qeli").stdout.strip(), "fixture already has Qeli"
         stale = arun("shell", "pm", "list", "packages", "-u", "com.qeli").stdout
         for package in ("com.qeli.test", "com.qeli"):

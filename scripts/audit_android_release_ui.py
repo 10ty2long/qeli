@@ -1,7 +1,53 @@
 #!/usr/bin/env python3
 """Import a production R8 INI profile through the file picker, outside instrumentation."""
+import hashlib
+import json
+import subprocess
 import time
 from android_lab_ui import AndroidVpnSettings
+
+STORAGE_PROBE = """printf 'Q29_STORAGE_PATH='; readlink -f /sdcard
+df -P /sdcard
+if [ -d /sdcard ] && [ -w /sdcard ]; then printf 'Q29_STORAGE_WRITABLE\\n'; fi
+"""
+
+
+def download_storage_ready(proc):
+    """Admit this API34 AVD's published FUSE storage, not an underlying directory."""
+    lines = proc.stdout.splitlines()
+    paths = [line for line in lines if line.startswith('Q29_STORAGE_PATH=')]
+    filesystems = [line.split() for line in lines if line.startswith('/dev/fuse ')]
+    return (proc.returncode == 0 and paths == ['Q29_STORAGE_PATH=/storage/emulated/0']
+            and 'Q29_STORAGE_WRITABLE' in lines and len(filesystems) == 1
+            and len(filesystems[0]) == 6 and filesystems[0][-1] == '/storage/emulated')
+
+
+def await_download_storage(arun, evidence, result, *, label, budget_seconds=60):
+    """Bound external-storage readiness before package/UI work or INI push."""
+    if label not in ('before-install', 'before-import'):
+        raise ValueError('unknown storage observation phase')
+    started = time.monotonic()
+    deadline = started + budget_seconds
+    samples = result.setdefault('external_storage_admission', {}).setdefault(label, [])
+    while time.monotonic() < deadline:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        try:
+            proc = arun('shell', STORAGE_PROBE, check=False, timeout=min(10, remaining))
+            row = dict(stdout=proc.stdout, stderr=proc.stderr, returncode=proc.returncode,
+                       ready=download_storage_ready(proc))
+        except subprocess.TimeoutExpired as error:
+            row = dict(ready=False, error='ADB_STORAGE_PROBE_TIMEOUT', timeout=error.timeout)
+        samples.append(dict(row, elapsed_seconds=round(time.monotonic()-started, 3)))
+        (evidence / ('external-storage-' + label + '.json')).write_text(json.dumps(samples, indent=2)+'\n')
+        if row['ready']:
+            return
+        remaining = deadline-time.monotonic()
+        if remaining > 0:
+            time.sleep(min(2, remaining))
+    raise AssertionError('AVD_EXTERNAL_STORAGE_NOT_READY: ' + label)
+
 
 def await_import_button(ui, tree, stable_ui):
     """Observe the completed tab transition instead of treating one dump as ready."""
@@ -52,7 +98,11 @@ def import_release_profile(arun, evidence, result, keys, transport, *, server=No
     result["release_apps_mode"] = apps_mode
     ini="# Release fixture\n[qeli]\n"+"".join(k+" = "+v+"\n" for k,v in fields.items())+"[logging]\nlevel = debug\n"
     path=evidence/"release-fixture.ini";path.write_text(ini)
+    await_download_storage(arun, evidence, result, label='before-import')
+    arun("shell", "mkdir", "-p", "/sdcard/Download")
     arun("push",str(path),"/sdcard/Download/q29-release-fixture.ini")
+    uploaded=arun("shell", "sha256sum", "/sdcard/Download/q29-release-fixture.ini").stdout.split()
+    assert len(uploaded)==2 and uploaded[0]==hashlib.sha256(path.read_bytes()).hexdigest(), 'uploaded INI bytes differ'
     button=await_import_button(ui,tree,stable_ui)
     ui.tap(button);tree=stable_ui("import-chooser")
     option=ui.text_node(tree,"Import config file");assert option is not None

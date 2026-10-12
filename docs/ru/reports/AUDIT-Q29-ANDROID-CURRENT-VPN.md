@@ -1,6 +1,6 @@
 # Q29: актуальные VPN-интеграции и надёжность Android-стенда
 
-<!-- normative-sync: q29-current-vpn-v1 -->
+<!-- normative-sync: q29-current-vpn-v2 -->
 
 12 октября2026. Q29 IN_PROGRESS. План32/37 (86,5%),5 разделов открыты.
 
@@ -77,3 +77,70 @@ AVD userdata. Семь own roots удалены после SHA-верифици�
 `audit-debt-20260924/q29-current-vpn-20261012`, `q29-current-vpn-r2-20261012`…
 `q29-current-vpn-r7-20261012`. [Scoped evidence](../../../release/certification/evidence/q29-current-vpn-20261012.json).
 `NO_PUSH_DEPLOY_RELEASE`.
+
+
+## 12 октября: cold UI и независимый UID после storage admission
+
+Новый исправленный прогон current matching-R8 пары прошёл за256,91s.
+Приложение не debuggable; INI импортирован реальным UI/SAF, instrumentation
+и private prefs injection не запускались.126 канонических Android build inputs,
+CLI52511ceb…, APK77c12051… и native01da54a3… те же квалифицированные текущие
+байты. Ordinary production-rules APK и физические устройства остаются вне scope.
+
+После boot_completed `/sdcard` реально отсутствовал: readlink вёл к
+`/storage/self/primary`, df сообщал No such file. Наблюдался и один10s ADB timeout.
+Через16,995s обнаружены настоящий `/dev/fuse` на `/storage/emulated`,
+`/storage/emulated/0` и shell write access. Это наблюдение одной загрузки,
+не универсальное время готовности. Теперь общий helper ждёт максимум60s
+с сохранением каждого состояния до APK install и непосредственно перед INI push.
+`Download` создаётся только после допуска; после push SHA256 файла сверяется
+до открытия file picker. Простое наличие каталога без FUSE не допускается.
+[AOSP](https://source.android.com/docs/core/storage/scoped) описывает FUSE для
+современного emulated storage; точные path/filesystem guards относятся к этому API34 AVD.
+
+Пять новых storage методов и три UI transition метода PASS без skips.
+Негативные случаи: underlying directory вместо mount, wrong user/ambiguous path,
+transport failure, истечение общего budget без его продления, timeout и unknown
+phase. Зависимый cold сценарий выполнен один раз после исправления; прежние
+шесть FAIL сохранены, не переписаны. Guest MemTotal1505652KiB при запросе1536MiB
+в пределах прежнего допуска с kernel reservations. Первоначальный local qualifier
+ошибочно требовал старое значение1505648KiB; разница4KiB не является product FAIL.
+Исправлена только проверка метаданных, runtime не повторялся.
+
+| Обычный UID10149, VPN owner10148 | Свежие пробы / ответы |
+| --- | --- |
+| Physical baseline |48/48|
+| Cold lockdown start |96/64|
+| Startup follow-up |48/48|
+| Connected steady |48/48|
+| Переход force-stop |48/23 — ответы до завершения перехода|
+| Установившийся stopped lockdown |48/0 — все блокированы|
+
+Всего336 burst probes,231 успешный ответ и10 отдельных успешных сокетов.
+Все241 server echo receipts независимо сопоставлены по protocol/family/payloadSHA
+с журналом non-VPN-owner UID. IPv4/IPv6 TCP16384B и UDP257B при connected/manual
+recovery прошли. Физический baseline и ответы во время переходов не называются
+VPN leakage. После установившегося stop нет ни socket replies, ни DNS answers.
+
+После Native NetworkPlan APPLIED первые сокеты ещё получили EACCES/Pending
+connect failure: исходный FAIL_POST_PLAN_BLOCKING сохранён. Android CONNECTED
+опубликован через535ms после APPLIED. Все80 наблюдавшихся post-CONNECTED сокетов
+успешны:32 из cold burst и48 из follow-up, все четыре family/protocol сочетания.
+Coverage=COLD_AND_FOLLOWUP; конечные samples не доказывают непрерывное отсутствие
+потерь или самый первый возможный сокет в момент события.
+
+Семь DNS cases PASS: raw physical baseline; system/raw connected; обе blocked
+проверки отказа; system/raw после ручного восстановления. Generic DnsResolver
+с явным active VPN теперь получает A+AAAA; typed A/AAAA с null и active network
+также успешны. Generic `network=null` по-прежнему ENONET при действующем VPN.
+Диагностика не превращает этот отказ в общий DNS PASS.
+
+Current independent-UID cold UI/startup/lockdown/force-stop/manual recovery gate
+закрыт в описанном scope. Автоматическая SIGKILL recovery — другая операция и
+остаётся историческим FAIL, здесь не выполнялась. Q29 IN_PROGRESS;32/37(86,5%).
+Userdata оригинального readonly AVD, PID777/845/service и все host firewall
+backends/routes/resolver сохранены. Результаты SHA-qualified; собственный root
+удалён после verified recovery и inode/path/process/fd/mount guards.
+Новые Rust/JVM/native builds и большие compiler caches отсутствуют.
+[Evidence](../../../release/certification/evidence/q29-storage-startup-20261012.json).
+Raw: `audit-debt-20260924/q29-storage-startup-20261012`. NO_PUSH_DEPLOY_RELEASE.

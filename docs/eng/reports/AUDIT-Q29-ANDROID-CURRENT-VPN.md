@@ -1,6 +1,6 @@
 # Q29: current VPN integrations and Android fixture reliability
 
-<!-- normative-sync: q29-current-vpn-v1 -->
+<!-- normative-sync: q29-current-vpn-v2 -->
 
 12 October2026. Q29 IN_PROGRESS;32/37 (86.5%),5 sections open.
 
@@ -75,3 +75,70 @@ archives and process/fd/mount/host snapshot checks. Raw:
 `audit-debt-20260924/q29-current-vpn-20261012`, `q29-current-vpn-r2-20261012`…
 `q29-current-vpn-r7-20261012`. [Scoped evidence](../../../release/certification/evidence/q29-current-vpn-20261012.json).
 `NO_PUSH_DEPLOY_RELEASE`.
+
+
+## 12 October: cold UI and independent UID after storage admission
+
+One corrected current matching-R8 run PASS in256.91s. The app is not debuggable;
+actual UI/SAF imported INI without instrumentation or private prefs injection.
+126 canonical Android build inputs,CLI52511ceb…,APK77c12051… and native01da54a3…
+retain the qualified current bytes. Ordinary production-rules APK and physical
+devices remain outside this scope.
+
+After boot_completed,`/sdcard` was absent: readlink pointed to
+`/storage/self/primary`,df reported No such file. One10s ADB timeout was observed.
+At16.995s,the real `/dev/fuse` mounted at `/storage/emulated`,resolved
+`/storage/emulated/0` and shell write access were observed. This is one boot
+measurement,not a universal deadline. A shared helper now waits at most60s and
+retains every observation before APK install and immediately before INI push.
+`Download` is created only after admission; uploaded INI SHA256 is checked before
+the file picker opens. A writable underlying directory without FUSE is refused.
+[AOSP](https://source.android.com/docs/core/storage/scoped) describes modern FUSE
+emulated storage; exact path/filesystem guards apply to this API34 AVD.
+
+Five new storage and three UI transition methods PASS with no skips. Negative
+cases include underlying directories,wrong/ambiguous user paths,transport errors,
+shared budget expiry without extension,timeouts and unknown phase. The full
+corrected cold scenario ran once; all six prior failures retain their results.
+Guest MemTotal1505652KiB for requested1536MiB passed the existing reserved-kernel
+memory admission. An initial local qualifier incorrectly demanded the previous
+1505648KiB;4KiB difference is not a product failure. Only metadata qualification
+was corrected; the runtime was not replayed.
+
+| Ordinary UID10149,VPN owner10148 | Fresh samples / replies |
+| --- | --- |
+| Physical baseline |48/48|
+| Cold lockdown start |96/64|
+| Startup follow-up |48/48|
+| Connected steady |48/48|
+| Force-stop transition |48/23 — before transition completed|
+| Established stopped lockdown |48/0 — all blocked|
+
+336 burst probes yielded231 successful replies;10 additional socket probes
+succeeded. All241 server echo receipts independently matched protocol/family/
+payloadSHA from the non-VPN-owner journal. Connected/manual recovery IPv4/IPv6
+TCP16384B and UDP257B passed. Physical baseline and pre-transition replies are
+not described as VPN leakage. Established stopped state had no socket or DNS replies.
+
+The first sockets after Native NetworkPlan APPLIED still had EACCES/Pending
+connect failure;FAIL_POST_PLAN_BLOCKING is retained. Android CONNECTED was
+published535ms after APPLIED. All80 observed post-CONNECTED sockets passed:32
+cold-burst and48 follow-up samples,all four family/protocol combinations.
+Coverage=COLD_AND_FOLLOWUP;finite sampling does not prove uninterrupted delivery
+or the first possible socket exactly at publication.
+
+Seven DNS cases PASS:raw physical baseline;system/raw connected;two blocked
+refusals;system/raw after manual recovery. Generic DnsResolver with explicit
+active VPN now returns A+AAAA;typed A/AAAA with null/active network also pass.
+Generic `network=null` still returns ENONET while VPN is active. Diagnostic
+observation does not turn this failure into a complete DNS qualification.
+
+The current independent-UID cold UI/startup/lockdown/force-stop/manual recovery
+gate is qualified in this scope. Automatic SIGKILL recovery is another lifecycle:
+historical FAIL remains,not executed here. Q29 IN_PROGRESS;32/37(86.5%).
+Original readonly AVD userdata,PID777/845/service and all host firewall backends/
+routes/resolver preserved. Results SHA-qualified;owned root removed after
+verified recovery and inode/path/process/fd/mount guards. No Rust/JVM/native
+builds or large compiler caches were created.
+[Evidence](../../../release/certification/evidence/q29-storage-startup-20261012.json).
+Raw:`audit-debt-20260924/q29-storage-startup-20261012`.NO_PUSH_DEPLOY_RELEASE.

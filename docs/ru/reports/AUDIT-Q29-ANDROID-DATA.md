@@ -1,6 +1,6 @@
 # Q29: Android VPN-трафик и lifecycle после Auth
 
-<!-- normative-sync: q29-android-data-v4 -->
+<!-- normative-sync: q29-android-data-v5 -->
 
 **5 октября 2026. Этап PASS; Q29 IN_PROGRESS. План: 28/37 (75,7%), осталось 9 разделов.**
 
@@ -59,3 +59,8 @@ Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-rout
 
 
 Следующий [системный lifecycle этап](AUDIT-Q29-ANDROID-SYSTEM.md) подтверждает положительный lockdown и блокировку проверяемого трафика после смерти процесса;автоматическая SIGKILL redelivery остаётся FAIL (вопрос открыт). Это отдельная частичная проверка,Q29 не закрыт.
+
+
+<!-- q29-storage-startup-20261012 -->
+
+**12 октября:** Новый current matching-R8 cold UI/SAF прогон с независимым UID прошёл после bounded storage admission. Все80 post-CONNECTED сокетов успешны; established stopped lockdown48/0,manual recovery/system+raw DNS PASS.241 receipts сверены с UID-журналом. Generic DNS/null ENONET и historical SIGKILL FAIL остаются открыты,ordinary production APK не квалифицирован. [Current scope](AUDIT-Q29-ANDROID-CURRENT-VPN.md). Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
