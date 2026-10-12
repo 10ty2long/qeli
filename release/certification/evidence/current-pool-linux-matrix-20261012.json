@@ -412,16 +412,16 @@
   "q35_eight_hour_endurance_qualified": false,
   "hosted_ci_certified": false,
   "push_deploy_release": false,
-  "source_digest": "3d3df11cad51a06e1b1ad88139dc7820811b09d6fc15202ba49eafcb377e9922",
-  "applicable_source_commit": "8f86790f8f81a2ddd6ff270f903d432a41449d55",
+  "source_digest": "59722c6afa49407c8d1ff1f0c74919e0a7b0ba50c3ab3061967cd17054062189",
+  "applicable_source_commit": "b35553b5aa9e19f65e40b3a854034770915cd527",
   "source_applicability": {
     "kind": "EXACT_DOCUMENTATION_ONLY_DIFF_AFTER_FRESH_RUNTIME",
     "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
     "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-    "applicable_source_commit": "8f86790f8f81a2ddd6ff270f903d432a41449d55",
-    "applicable_source_digest": "3d3df11cad51a06e1b1ad88139dc7820811b09d6fc15202ba49eafcb377e9922",
+    "applicable_source_commit": "b35553b5aa9e19f65e40b3a854034770915cd527",
+    "applicable_source_digest": "59722c6afa49407c8d1ff1f0c74919e0a7b0ba50c3ab3061967cd17054062189",
     "execution_tree": "037e2c83fb57acb6c00b64f33733b1c668e72409",
-    "applicable_tree": "e4571593dc712827eac8f642b70018972e6579f0",
+    "applicable_tree": "687023c531d59e74ea8d7096c67aca6bce8ac0f9",
     "all_changed_paths": [
       "docs/eng/plans/AUDIT-DEBT.md",
       "docs/eng/plans/FULL-SYSTEM-AUDIT.md",
@@ -435,7 +435,8 @@
       "docs/ru/reports/BENCHMARK.md",
       "release/certification/0.8.2.json",
       "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "release/certification/evidence/q35-performance-order-20261012.json"
+      "release/certification/evidence/q35-performance-order-20261012.json",
+      "release/certification/evidence/q37-closure-20261012.json"
     ],
     "release_source_changed_paths": [
       "docs/eng/plans/AUDIT-DEBT.md",
@@ -450,15 +451,15 @@
       "docs/ru/reports/BENCHMARK.md"
     ],
     "changed_source_file_sha256": {
-      "docs/eng/plans/AUDIT-DEBT.md": "64b88be11967b64f8eebae542350e0c7cbe02be10be6144f1b587288b6b6aa5c",
-      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "2956eae4eb9f489d1eec96ab3d13c3dbd16834c6ba798c5e64983c8105589f33",
+      "docs/eng/plans/AUDIT-DEBT.md": "cd152eab6f900be6aba2965ea50562b98728ada75a4d657010962c2feac64694",
+      "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "0ac62f94a9ef1d3655fed0f06372e8f52f27f94f62dc79e16636391ab13b539e",
       "docs/eng/reports/AUDIT-Q35-LONG-SOAK.md": "440b81e344bb993d892e681bd31f3b1b81cc0bdb8bad540c4fa1d88b34cee715",
-      "docs/eng/reports/AUDIT-Q37-DOCUMENTATION.md": "1c153c4aab2754f38e7dad16543f524a488a27f58dc30be0e896ba6db4901d00",
+      "docs/eng/reports/AUDIT-Q37-DOCUMENTATION.md": "c2f8305a6e342ce71241f1cb8c7751120a442563062c67ebe427af4809f0a122",
       "docs/eng/reports/BENCHMARK.md": "045682fb4b02744f8d1a6a0f5836319acd79d22c1a15d3fcb81d19215f891261",
-      "docs/ru/plans/AUDIT-DEBT.md": "6c6ee654ec83d1992e41a76a706de95df0569d88f9768d09540401ee4be81695",
-      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "93830ab49b7a0548851b6614603f3de860a1ebe84c7a93960d47c65ac8c2936b",
+      "docs/ru/plans/AUDIT-DEBT.md": "89f9d9f0d0b49efd337479e9a5a5103f2cab0bd8cde68d138029a31623eed62b",
+      "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "52417ad86267fdca30331216898d76d957a58e694ddea151554063ff059825f4",
       "docs/ru/reports/AUDIT-Q35-LONG-SOAK.md": "76fbf8ff15890311927c746ce26bbc3e72e0c47c43dea70fdce78a3b6e1e1115",
-      "docs/ru/reports/AUDIT-Q37-DOCUMENTATION.md": "28075701c595670cfffa3ec625ae5a399386bad0fa96a425ba2e37eee32a82b3",
+      "docs/ru/reports/AUDIT-Q37-DOCUMENTATION.md": "dd95f7a6f847aea30e3defabb3f84744c7822a92cc5a2a36a0ed7e93906c21a3",
       "docs/ru/reports/BENCHMARK.md": "b8e91dbd3015ae807200adf47ea6b371b5823bb8f750ea9418b97e999fa549b9"
     },
     "rust_manifests_conformance_fixtures_native_platform_apps_workflows_unchanged": true,
