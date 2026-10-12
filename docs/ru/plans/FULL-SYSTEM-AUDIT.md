@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v240 -->
+<!-- normative-sync: full-system-audit-v241 -->
 
 **Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2870,3 +2870,8 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q31-current-portable-20261012 -->
 
 **12 октября, Q31-V013:** текущие ARM/MIPS и SDK client-only compile/packaging подтверждены; исправлены0664 права лицензий и устаревшие SDK/opkg assertions.54 scoped методов PASS,533 license files проверены. Сам ELF не менялся при исправленной установке/перепаковке. Own roots удалены, около3,6GiB освобождено, исходные сервисы сохранены. [Полный scope и остаток](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Полный32/37 (86,5%),5 открытых разделов.
+
+
+<!-- q29-current-vpn-20261012 -->
+
+**12 октября:** [Q29: текущие VPN-интеграции и надёжность стенда](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Исправлены RAM admission, окно post-CONNECTED, Profiles transition и ANR handling.23 helper methods и7 matching-R8 routed cases PASS,72 exact receipts/6 DNS names. Шесть cold attempts FAIL сохранены; последняя остановилась на unpublished storage. SIGKILL/ENONET открыты, ordinary production-rules/current independent UID cold gate не квалифицирован. Q29 IN_PROGRESS;32/37(86,5%),5 разделов осталось.

@@ -1,6 +1,6 @@
 # Q29: Android VPN-трафик и lifecycle после Auth
 
-<!-- normative-sync: q29-android-data-v3 -->
+<!-- normative-sync: q29-android-data-v4 -->
 
 **5 октября 2026. Этап PASS; Q29 IN_PROGRESS. План: 28/37 (75,7%), осталось 9 разделов.**
 
@@ -14,7 +14,7 @@
 
 ## Стенд и воспроизводимость
 
-scripts/audit_android_data_plane_lab.py запускает Qeli и readonly AVD в новых NET/MNT/PID namespaces на .11, без внешнего uplink и production-профилей. Два INI-профиля используют NAT=false и IPv6 manual: проверяется доставка на адреса самого сервера, без внешней маршрутизации или DNS. Android14/API34 x86_64; memory768MiB/1core. Linux CLI сверяется с ранее квалифицированным SHA256; новой сборки Rust нет.
+scripts/audit_android_data_plane_lab.py запускает Qeli и readonly AVD в новых NET/MNT/PID namespaces на .11, без внешнего uplink и production-профилей. Два INI-профиля используют NAT=false и IPv6 manual: проверяется доставка на адреса самого сервера, без внешней маршрутизации или DNS. Android14/API34 x86_64; запрошено memory768MiB/1core; сохранённый runtime-final/emulator.log сообщает увеличение до2560MB. Linux CLI сверяется с ранее квалифицированным SHA256; новой сборки Rust нет.
 
 Product APK побайтно совпадает с предыдущим этапом. 289 прежних входов, JNI и 7 managed DLL неизменны; прежние 167 JVM,28 Android,1248.NET и Release/R8/lint(0errors55warnings) переиспользованы только в своих исходных областях. Они **не** объявляются новыми прогонами. Свежий общий запуск 31 Android теста не выполнялся. Без специальных аргументов приватного стенда три integration-теста пропускаются; обычный emulator job не подтверждает этот этап.
 

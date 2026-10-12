@@ -1,6 +1,6 @@
 # Q29: Android system Always-on, lockdown and process death
 
-<!-- normative-sync: q29-android-system-v2 -->
+<!-- normative-sync: q29-android-system-v3 -->
 
 **5 October 2026. Partial result; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain. The complete system gate is FAIL: automatic redelivery after external SIGKILL is unqualified.**
 
@@ -51,7 +51,7 @@ Raw:C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-resta
 
 Only tests/driver changed:singular instrumentation output;bounded timeout instead of nc -w misuse;real separate UID instead of shell/su sockets;platform Java for standalone probes;instrumentation force-stop separation;bounded Wait for SystemUI ANR;already-open management-screen detection;FORGET text selection instead of button1,which is DISMISS here. Failed attempts remain separate and are not called core regressions.
 
-Android14/API34 x86_64,readonly AVD768MiB/1core and Linux Qeli in fresh NET/MNT/PID namespaces on.11,no external uplink. Product APK9af9789d…/JNI are unchanged;no Rust/product fix.290 previous source inputs,14 native hashes and7 managed DLLs match;293 current inputs,fresh test-APK build only. Prior167JVM/28Android/1248.NET/Release-R8-lint and3+6+7 integration stages retain their original scopes,not a fresh combined45Android run. Every attempt checks host network/qeli.service and userdata SHA/mtime/size;.10 untouched;arm64 not executed.
+Android14/API34 x86_64,readonly AVD requested768MiB/1core (launch argument, not measured guest RAM;12 October correction below) and Linux Qeli in fresh NET/MNT/PID namespaces on.11,no external uplink. Product APK9af9789d…/JNI are unchanged;no Rust/product fix.290 previous source inputs,14 native hashes and7 managed DLLs match;293 current inputs,fresh test-APK build only. Prior167JVM/28Android/1248.NET/Release-R8-lint and3+6+7 integration stages retain their original scopes,not a fresh combined45Android run. Every attempt checks host network/qeli.service and userdata SHA/mtime/size;.10 untouched;arm64 not executed.
 
 Raw:C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-system-20261005. Evidence:release/certification/evidence/q29-android-system-20261005.json. Driver --suite system. Previous [off-pool/DNS and data plane](AUDIT-Q29-ANDROID-DATA.md) remain distinct qualifications. Q29 stays open:SIGKILL recovery,Doze,roam/protect,Release runtime,olderAPI,physical/OEM scenarios. Early CONNECTED/source readiness stays open in the earlier report.
 
@@ -60,3 +60,6 @@ Previous qualified run(r13)213.97s,bootstrap2.421s. The complete gate correctly 
 
 
 New final product-only run(r5):219.07s,bootstrap2.668s,1 fresh PASS and7 receipts;no harness error. Complete gate FAIL solely for SIGKILL recovery. Both negative probes blocked,manual recovery and Settings revoke PASS;final service/TUN absent,AndroidRuntime without FATAL. Three-mode control(r4) completed in a separate preceding AVD;its product portion reached SIGKILL/blocking,but manual recovery there remained unqualified due to UI. All5 new attempts preserve host/service/userdata,serverexit0,namespace addresses restored. Product/test APKs,14 native and7managed unchanged;296 source inputs and6 auxiliary verified. Evidence:release/certification/evidence/q29-android-restart-control-20261005.json. Old results are not aggregated into a fresh suite.
+
+
+12 October:768MiB above was a launch request, not measured RAM. Control/r4 log reports an increase to2560MB. [Fix and current scoped gate](AUDIT-Q29-ANDROID-CURRENT-VPN.md);SIGKILL FAIL retained.

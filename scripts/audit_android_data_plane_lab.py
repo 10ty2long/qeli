@@ -22,6 +22,20 @@ import xml.etree.ElementTree as ET
 from audit_udp_handshake_contracts import hashed, stop
 from android_lab_ui import AndroidVpnSettings, wait_until
 
+EMULATOR_MEMORY_MB = 1536
+
+
+def admitted_guest_memory(meminfo, requested_mb=EMULATOR_MEMORY_MB):
+    """Reject silent emulator RAM clamping before measuring application behavior."""
+    totals = re.findall(r"^MemTotal:\s+([0-9]+)\s+kB\s*$", meminfo, re.M)
+    assert len(totals) == 1, "guest MemTotal missing or ambiguous"
+    total_kib = int(totals[0])
+    # The guest kernel reserves part of configured RAM; MemTotal cannot exceed it.
+    assert requested_mb * 1024 * 3 // 4 <= total_kib <= requested_mb * 1024, (
+        "guest RAM differs from bounded fixture", requested_mb, total_kib)
+    return dict(requested_mb=requested_mb, actual_guest_total_kib=total_kib,
+                explicit_lowram_override=True)
+
 
 def sha(path):
     digest = hashlib.sha256()
@@ -528,7 +542,7 @@ perf.connection.handshake_timeout_secs = 12
             leak_capture = subprocess.Popen(["tcpdump", "-i", "any", "-U", "-s", "0", "-w", str(evidence / "leak-any.pcap"), "port", "26000", "or", "port", "53", "or", "port", "853"], stdout=(evidence / "leak-capture.log").open("wb"), stderr=subprocess.STDOUT, start_new_session=True)
         command = ["/root/android-sdk/emulator/emulator", "-avd", "test", "-port", "5560", "-read-only",
                    "-no-snapshot-load", "-no-snapshot-save", "-no-window", "-no-audio", "-no-boot-anim",
-                   "-gpu", "swiftshader", "-memory", "768", "-cores", "1"]
+                   "-gpu", "swiftshader", "-memory", str(EMULATOR_MEMORY_MB), "-lowram", "-cores", "1"]
         if args.suite in ("app-policy","private-dns"):command.extend(["-dns-server", "198.19.0.53"])
         if nat64 is not None:
             command.extend(nat64.emulator_options())
@@ -546,6 +560,9 @@ perf.connection.handshake_timeout_secs = 12
             time.sleep(2)
         else:
             raise AssertionError("AVD boot timeout")
+        guest_meminfo = arun("shell", "cat", "/proc/meminfo").stdout
+        (evidence / "android-meminfo-before.txt").write_text(guest_meminfo)
+        result["emulator_memory"] = admitted_guest_memory(guest_meminfo)
         assert not arun("shell", "pm", "list", "packages", "com.qeli").stdout.strip(), "fixture already has Qeli"
         stale = arun("shell", "pm", "list", "packages", "-u", "com.qeli").stdout
         for package in ("com.qeli.test", "com.qeli"):

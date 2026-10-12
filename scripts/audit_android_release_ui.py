@@ -3,6 +3,19 @@
 import time
 from android_lab_ui import AndroidVpnSettings
 
+def await_import_button(ui, tree, stable_ui):
+    """Observe the completed tab transition instead of treating one dump as ready."""
+    deadline=time.monotonic()+30
+    for _ in range(5):
+        button=next((n for n in tree.iter('node') if n.get('resource-id')=='com.qeli:id/btnImport'),None)
+        if button is not None:return button
+        tab=ui.text_node(tree,'Profiles')
+        assert tab is not None,'product Profiles tab absent'
+        if tab.get('selected')!='true':ui.tap(tab)
+        if time.monotonic()>=deadline:break
+        tree=stable_ui('profiles-ready')
+    raise AssertionError('product Import button absent after bounded tab observation')
+
 
 def import_release_profile(arun, evidence, result, keys, transport, *, server=None, tunnel_dns=False, apps_mode="all", policy_fixture=False):
     ui=AndroidVpnSettings(arun,evidence,result,"Qeli",prefix="release-")
@@ -40,12 +53,7 @@ def import_release_profile(arun, evidence, result, keys, transport, *, server=No
     ini="# Release fixture\n[qeli]\n"+"".join(k+" = "+v+"\n" for k,v in fields.items())+"[logging]\nlevel = debug\n"
     path=evidence/"release-fixture.ini";path.write_text(ini)
     arun("push",str(path),"/sdcard/Download/q29-release-fixture.ini")
-    button=next((n for n in tree.iter("node") if n.get("resource-id")=="com.qeli:id/btnImport"),None)
-    if button is None:
-        tab=ui.text_node(tree,"Profiles");assert tab is not None
-        ui.tap(tab);tree=stable_ui("profiles")
-        button=next((n for n in tree.iter("node") if n.get("resource-id")=="com.qeli:id/btnImport"),None)
-    assert button is not None,"product Import button absent"
+    button=await_import_button(ui,tree,stable_ui)
     ui.tap(button);tree=stable_ui("import-chooser")
     option=ui.text_node(tree,"Import config file");assert option is not None
     ui.tap(option);tree=stable_ui("file-picker")

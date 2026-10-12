@@ -453,6 +453,7 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q29 F286–F288: bounded input, UI state and source reconciliation](reports/AUDIT-Q29-ANDROID-SOURCE.md)
 
 - [Q29 F289: LAN settings reconfiguration](reports/AUDIT-Q29-ANDROID-SETTINGS.md)
+- [Q29: current VPN integrations and Android fixture reliability](reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md)
 
 - [Q30: iOS MDM / provider snapshot](reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md)
 

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v240 -->
+<!-- normative-sync: full-system-audit-v241 -->
 
 **Current result, 12 October: 32/37 sections complete within agreed scope (86.5%), 5 remain. Q37 five criteria complete; Q29/Q31/Q34/Q35/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2856,3 +2856,8 @@ Network runs and large builds were not replayed; no new compiler caches were cre
 <!-- q31-current-portable-20261012 -->
 
 **12 October, Q31-V013:** current ARM/MIPS and client-only SDK compile/packaging qualified; fixed0664 license permissions and stale SDK/opkg assertions.54 scoped methods PASS,533 license files checked. The ELF was unchanged during corrected Install/repackaging. Owned roots removed, about3.6GiB released, original services preserved. [Full scope and remainder](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Total32/37 (86.5%),5 open sections.
+
+
+<!-- q29-current-vpn-20261012 -->
+
+**12 October:** [Q29: current VPN integrations/fixture reliability](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Fixed RAM admission, post-CONNECTED sampling, Profiles transition and ANR handling.23 helper methods/7 matching-R8 routed cases PASS,72 exact receipts/6 DNS names. Six cold attempts FAIL retained;last stopped at unpublished storage. SIGKILL/ENONET remain open;ordinary production-rules/current independent UID cold gate not qualified. Q29 IN_PROGRESS;32/37(86.5%),5 sections remain.

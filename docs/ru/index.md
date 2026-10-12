@@ -453,6 +453,7 @@
 - [Q29 F286–F288: границы чтения, UI state и итоговая сверка source](reports/AUDIT-Q29-ANDROID-SOURCE.md)
 
 - [Q29 F289: переподключение после LAN-настроек](reports/AUDIT-Q29-ANDROID-SETTINGS.md)
+- [Q29: текущие VPN-интеграции и надёжность Android-стенда](reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md)
 
 - [Q30: iOS MDM / provider snapshot](reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md)
 

@@ -78,12 +78,23 @@ class StartupDns:
                 sample=min(samples,key=lambda v:v['started_ms'])
                 first[family+'-'+protocol]=dict(sample=sample['sample'],delay_ms=round(sample['started_ms']-epoch*1000,3),success=sample['success'],detail=sample['detail'])
         self.result['cold_start']=dict(immediate_first_socket_status='FAIL_POST_PLAN_BLOCKING' if any(v.get('success') is False for v in first.values()) else 'NOT_SAMPLED_AFTER_PLAN' if any('success' not in v for v in first.values()) else 'PASS',network_plan_applied_device_epoch=epoch,first_post_plan=first,coverage='First fresh sampled sockets after APPLIED; bounded sampling, not synchronous CONNECTED observation')
+        # Keep the cold observations, then take independently timestamped fresh
+        # sockets. A finite cold burst may end before Android publishes CONNECTED.
         if self.result.get('require_published_start'):
+            wait_until(lambda:'Android VPN CONNECTED: generation=1 ' in self.arun('shell','logcat','-d','-v','epoch','-s','VpnSvc:D').stdout,
+                       'product did not publish CONNECTED',30)
+        tail=bursts.run('startup-followup')
+        assert all(v['success'] for v in tail['samples']),('bounded startup follow-up failed',tail)
+        if self.result.get('require_published_start'):
+            logs=self.arun('shell','logcat','-d','-v','epoch','-s','VpnSvc:D','Q29Probe:I','Q29Trigger:I').stdout
+            (self.evidence/'published-start-epoch.log').write_text(logs)
             published=[line for line in logs.splitlines() if 'Android VPN CONNECTED: generation=1 ' in line]
             assert len(published)==1,('product did not publish CONNECTED',published)
             connected_ms=int(published[0].split('device_ms=')[1].split()[0])
             assert connected_ms>=epoch*1000,('CONNECTED precedes plan ACK',epoch,connected_ms)
-            post=[v for v in row['samples'] if v['started_ms']>=connected_ms]
+            cold_post=[dict(v,source_phase='cold-lockdown-start') for v in row['samples'] if v['started_ms']>=connected_ms]
+            follow_post=[dict(v,source_phase='startup-followup') for v in tail['samples'] if v['started_ms']>=connected_ms]
+            post=cold_post+follow_post
             first_connected={}
             for family in ('ipv4','ipv6'):
                 for protocol in ('tcp','udp'):
@@ -94,11 +105,11 @@ class StartupDns:
             observation=dict(status='PASS' if all(v['success'] for v in post) else 'FAIL_POST_CONNECTED_BLOCKING',
                              device_ms=connected_ms,delay_after_plan_ms=round(connected_ms-epoch*1000,3),
                              post_connected_samples=len(post),errors=sum(not v['success'] for v in post),
+                             cold_burst_post_connected_samples=len(cold_post),
+                             coverage='COLD_AND_FOLLOWUP' if cold_post else 'FOLLOWUP_ONLY_COLD_COVERAGE_GAP_RETAINED',
                              first_post_connected=first_connected,product_log=published[0])
             self.result['cold_start']['published_start']=observation
             (self.evidence/'published-start.json').write_text(json.dumps(observation,indent=2)+'\n')
             assert observation['status']=='PASS',observation
         (self.evidence/'leak-bursts.json').write_text(json.dumps(self.result['leak_bursts'],indent=2)+'\n')
-        tail=bursts.run('startup-followup')
-        assert all(v['success'] for v in tail['samples']),('bounded startup follow-up failed',tail)
         tree=settings.ui('cold-lockdown-enabled');_,widget=settings.widget(tree,'Block connections without VPN');assert widget.get('checked')=='true'

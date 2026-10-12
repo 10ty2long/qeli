@@ -31,6 +31,15 @@ class AndroidVpnSettings:
                 value = self.arun("shell", "cat", remote, check=False)
                 if value.returncode == 0:
                     tree = ET.fromstring(value.stdout)
+                    waiting = next((n for n in tree.iter('node') if n.get('resource-id') == 'android:id/aerr_wait'), None)
+                    if waiting is not None:
+                        # A system ANR can interrupt any transition, including a
+                        # Settings switch. Preserve its XML before bounded Wait.
+                        (self.evidence / f"{self.prefix}ui-{self.sequence:02}-{label}-attempt{attempt + 1}-anr.xml").write_text(value.stdout)
+                        self.result.setdefault('ui_anr_waits', []).append(dict(label=label,sequence=self.sequence,attempt=attempt + 1))
+                        self.tap(waiting)
+                        time.sleep(.5)
+                        continue
                     (self.evidence / f"{self.prefix}ui-{self.sequence:02}-{label}.xml").write_text(value.stdout)
                     return tree
                 diagnostic.append(value.stderr)

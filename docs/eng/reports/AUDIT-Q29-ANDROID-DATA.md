@@ -1,6 +1,6 @@
 # Q29: Android VPN payload and post-auth lifecycle
 
-<!-- normative-sync: q29-android-data-v3 -->
+<!-- normative-sync: q29-android-data-v4 -->
 
 **5 October 2026. Stage PASS; Q29 IN_PROGRESS. Plan28/37(75.7%),9 sections remain.**
 
@@ -14,7 +14,7 @@ After traffic,invalid ACTION_CONNECT must preserve CONNECTED,negotiated properti
 
 ## Fixture and provenance
 
-scripts/audit_android_data_plane_lab.py runs Qeli andreadonlyAVD in freshNET/MNT/PID namespaces on.11,without external uplink orproduction profiles. TwoINI profiles useNAT=false andIPv6manual;traffic targets the server's own tunnel addresses,no external routing orDNS. Android14/API34 x86_64,memory768MiB/1core. LinuxCLI matches a previously qualifiedSHA256,no freshRust build.
+scripts/audit_android_data_plane_lab.py runs Qeli andreadonlyAVD in freshNET/MNT/PID namespaces on.11,without external uplink orproduction profiles. TwoINI profiles useNAT=false andIPv6manual;traffic targets the server's own tunnel addresses,no external routing orDNS. Android14/API34 x86_64,requested memory768MiB/1core; retained runtime-final/emulator.log reports an increase to2560MB. LinuxCLI matches a previously qualifiedSHA256,no freshRust build.
 
 ProductAPK matches preceding stage byte-for-byte.289 prior inputs,JNI and7managedDLLs unchanged;prior167JVM,28Android,1248.NET andRelease/R8/lint(0errors55warnings) reused only within their original scopes. These are **not** fresh runs. No fresh combined31Android run. Without private fixture arguments the three integration tests skip;ordinary emulator CI does not qualify this stage.
 
