@@ -1,6 +1,6 @@
 # Q34: точный локальный source cut OpenWrt
 
-<!-- normative-sync: q34-openwrt-source-cut-v1 -->
+<!-- normative-sync: q34-openwrt-source-cut-v2 -->
 
 Дата: 9 октября 2026.
 
@@ -59,3 +59,45 @@ FAIL/ENONET, Q30/Q31, F459 braces OPEN, D06 ACCEPTED_LIMITATION и USER_EXCLUDED
 ## Evidence
 
 `q34-openwrt-source-cut-20261009`: SEALED 81 files / 261832009 bytes; manifest SHA256 `3e57c16820e13a9177f2e8339779d50d09f41573357ae6eed5e6bfa21b8aaa98`.
+
+
+## 12 октября: актуальный source cut после изменений ядра
+
+Предыдущий production pin `746e09cce08b4ffa07f5128427feec99aafcdb98`
+не соответствует текущему дереву `qeli/`; настоящий source gate сохранил
+ожидаемый отказ. Рецепт обновлён на точный существующий commit `c71e4803cd086add92c066dd48a64af1fdb9dec0`
+и SHA256 `2843576ae0eac173c95bb1f222d9459ef402ea992a0c43ff496e1e1f52ed8137` настоящего SDK-архива `qeli-0.8.2.tar.zst`
+(28029607 байт). Public URL и версия 0.8.2 сохранены; Build/Compile и Install
+не изменялись. Сам commit не пересоздавался: перенесены полный исходный commit
+и все его tree/blob objects, shallow boundary только обозначает отсутствующих родителей.
+
+Два штатных SDK24.10.4 download из пустых DL_DIR и разных собственных Git URLs
+получили одинаковые байты. SDK prepare проверил новый hash до распаковки.
+Все 3272 tracked files, включая LICENSE/notices, сверены с Git; локальная
+независимая проверка повторно сверила каждый blob и symlink target. SDK download.pl
+побайтно совпал с ранее SHA-квалифицированным официальным SDK. Использован тот же
+проверенный SDK projection без нового локального дубликата. Rust/Cargo/bootstrap,
+полный BuildPackage, IPK и сетевые router-тесты не запускались.
+
+Настоящий gate на committed production recipe принял новый SDK-архив,
+отклонил изменённые байты, отсутствующий argument и отсутствующий файл.
+25 source-admission методов PASS; три прежних Windows skips (POSIX symlink/FIFO,
+opt-in old baseline) сохранены и не названы PASS. Это не whole release preflight.
+
+Read-only GitHub вернул HTTP422 для `c71e4803cd086add92c066dd48a64af1fdb9dec0`; public dev —
+`83c07f5c31178c67a005f20f59975e14528ab73a`, push CI для exact pin отсутствует.
+Перед публичным использованием feed необходимо опубликовать точный commit
+и получить CI на конечной ревизии релиза. Архив содержит полное дерево pinned
+commit; последующая правка recipe/docs вне `qeli/` не выдаётся за это дерево.
+Локальная source-admission сравнивает именно `qeli/`, версию и фактический hash.
+
+Лаба .11: один собственный root, jobs1, MemoryMax1400M, MemorySwapMax512M,
+CPUQuota150%, общий runtime limit900s. Исходные PID777/845, service/start timestamp,
+все firewall backends, routes/resolver сохранены. Результаты/архив скопированы
+и проверены по SHA; root удалён после проверки inode/path/process/fd/mount.
+SDK build caches удалены; .10 не использовалась. Исходный отказ старого pin сохранён; компиляция и большой benchmark не повторялись.
+
+[Машиночитаемое evidence](../../../release/certification/evidence/q34-current-source-cut-20261012.json).
+Q34 IN_PROGRESS: current public cut/publication, hosted CI, full release gate
+и F459 остаются открыты. Q29/Q31/Q35/Q36 также открыты. Всего32/37 (86,5%).
+NO_PUSH_DEPLOY_RELEASE.

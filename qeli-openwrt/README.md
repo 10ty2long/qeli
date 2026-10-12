@@ -413,9 +413,9 @@ immutable source pin and actual SDK mirror archive; removing flags does not
 qualify a stale source cut. [Audit](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md).
 
 
-### Qualified local OpenWrt source cut (9 October 2026)
+### Historical local OpenWrt source cut (9 October 2026)
 
-The feed now pins the exact full local dev commit `f4b80a9a3052e9ec12c640036928d543f931dafa` and
+That qualification pinned the exact full local dev commit `f4b80a9a3052e9ec12c640036928d543f931dafa` and
 its actual SDK-generated `qeli-0.8.2.tar.zst` SHA256 `d6c112641de77b446d3a32a702221b247556b873c11f648087aebb57d3b209c5`.
 Two real SDK24.10.4 downloads from different private Git URLs and empty download
 caches produced identical archive bytes. SDK prepare verified the archive and
@@ -431,3 +431,20 @@ The release preflight source gate passes only with the matching SDK archive;
 missing or modified bytes still refuse admission. Every later qeli tree change
 requires a new immutable cut and fresh SDK archive hash. See the
 [qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
+
+
+### Current local OpenWrt source cut (12 October 2026)
+
+The current recipe pins `c71e4803cd086add92c066dd48a64af1fdb9dec0` and the actual SDK-generated source archive
+SHA256 `2843576ae0eac173c95bb1f222d9459ef402ea992a0c43ff496e1e1f52ed8137` (28029607 bytes). Two SDK24.10.4 downloads from empty caches
+and distinct private Git URLs matched; prepare verified the hash and all
+3272 tracked files matched the original commit. Build/Compile and Install
+are unchanged; no new Rust bootstrap, full package build or router runtime
+is claimed. The committed production gate accepts that archive and refuses
+modified/missing inputs.
+
+The pinned commit is still local: read-only GitHub returned HTTP422 and no
+push CI for that SHA. Publish the exact pin before using the public URL; final
+release CI and whole release preflight remain separate requirements. Later
+recipe/docs changes do not change `qeli/` source admission or the archive
+identity. See the [current qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).

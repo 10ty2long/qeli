@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v241 -->
+<!-- normative-sync: full-system-audit-v242 -->
 
 **Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2875,3 +2875,8 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q29-current-vpn-20261012 -->
 
 **12 октября:** [Q29: текущие VPN-интеграции и надёжность стенда](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Исправлены RAM admission, окно post-CONNECTED, Profiles transition и ANR handling.23 helper methods и7 matching-R8 routed cases PASS,72 exact receipts/6 DNS names. Шесть cold attempts FAIL сохранены; последняя остановилась на unpublished storage. SIGKILL/ENONET открыты, ordinary production-rules/current independent UID cold gate не квалифицирован. Q29 IN_PROGRESS;32/37(86,5%),5 разделов осталось.
+
+
+<!-- q34-current-source-cut-20261012 -->
+
+**12 октября:** Обновлён production OpenWrt pin/hash: два SDK download и prepare проверены, все 3272 tracked files совпали с Git. Настоящий source gate и25 методов PASS;3 прежних skips сохранены. Public pin/CI отсутствуют; bootstrap/IPK не запускались. Q34 IN_PROGRESS;32/37(86,5%),5 разделов открыты. [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md). NO_PUSH_DEPLOY_RELEASE.
