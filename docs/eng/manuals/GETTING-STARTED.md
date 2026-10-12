@@ -1102,9 +1102,9 @@ ss -tulnp | grep qeli                           # is it listening on :443 / :808
 
 On the client, check that a `vpn0` interface and routes appeared (`ip a`, `ip route`).
 
-> **Deep obfuscation diagnostics.** If DPI is cutting the tunnel and you need to see what
-> actually goes on the wire, enable the packet-shape timeline: `QELI_TRACE=<file> qeli
-> client …` (opt-in; records sizes/timing only, never payload; dumps on SIGUSR1). Details
+> **Deep obfuscation diagnostics.** For a timeline of packet processing inside the application,
+> enable `QELI_TRACE=<file> qeli client …`. Tracing does not confirm network delivery
+> (opt-in; records sizes/timing only, never payload; dumps on SIGUSR1). Details
 > and a walkthrough in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---

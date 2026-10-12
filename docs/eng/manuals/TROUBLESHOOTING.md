@@ -117,8 +117,8 @@ can still exist only in logcat; Qeli's own service diagnostics are written to th
 
 ### 1.4 Packet trace (`QELI_TRACE`, Rust server and Rust client)
 
-For when the logs are too coarse and you need a timeline — "did the packet leave, and when
-did the other end see it". Armed by an environment variable, off otherwise:
+When logs are too coarse, tracing shows packet timing and sizes at processing points
+inside the application. Enabled by an environment variable, off otherwise:
 
 ```bash
 # client
@@ -146,15 +146,31 @@ t_us,dir,site,size,seq
 479384,tx,client.tcp,40,0
 ```
 
-- `t_us` — microseconds since tracing was armed, `dir` — `tx` (TUN → tunnel) / `rx`
+- `t_us` — microseconds since tracing initialized in this process, `dir` — `tx` (TUN → tunnel) / `rx`
   (tunnel → TUN), `site` — the capture point, `size` — bytes, `seq` — stream index.
 - Only packet **shapes** are written: no payloads, no addresses — a trace can be attached
   to an issue without exposing anyone's traffic.
 - The buffer is a 65,536-event ring. The header's `overwritten=` says how many events were
   overwritten (the trace outran the buffer) and `contended=` how many were lost to lock
   contention: a trace is **never silently partial**.
-- Both ends write their own file. There is no shared packet id, so correlate client and
-  server by time and size.
+- Both ends write their own file with a separate time origin. `seq` is a stream index,
+  not a packet identifier or TCP sequence number.
+
+<!-- normative-sync: q36-trace-correlation-v1 -->
+
+Comparing client and server traces first requires an external alignment of their time
+axes. Matching time and size after alignment is only a hypothesis: multiple packets
+can have the same size. The CSV cannot prove delivery of a particular ACK or measure
+its exact delay between peers.
+
+An event means the packet reached `site`, not that network transmission completed.
+For example, `server.stream` records after dequeue, before rate limiting, encryption
+and socket writes; receive-side `client.tcp` records before the TUN queue accepts
+the packet. An event can exist even if a later enqueue or send fails. The size at
+that point may also differ from the encrypted record and network packet sizes.
+To verify delivery and latency, use separate captures on the relevant interfaces
+with packet identification and verified clock alignment. Account for ring-buffer
+incompleteness and the diagnostic capture's effect on load.
 
 <!-- normative-sync: q32-log-trace-io-v1 -->
 

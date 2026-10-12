@@ -3778,9 +3778,9 @@ For diagnostics, `level: "info"` with a set `file` is the minimum sufficient.
 
 > **`QELI_TRACE` — a packet-shape timeline (obfuscation diagnostics).** Not an INI key but
 > an environment variable: `QELI_TRACE=<file> qeli client …` enables opt-in recording of
-> packet sizes and timings (never payload) into a ring buffer; it dumps on `SIGUSR1`. Use
-> it when DPI is cutting the tunnel and you need to see what actually goes on the wire. A
-> walkthrough is in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+> packet sizes and timings (never payload) into a ring buffer; it dumps on `SIGUSR1`.
+> It shows processing events inside the application; it does not confirm network delivery.
+> Capture-point boundaries and clock comparison rules are in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 > Dumps use atomic replacement and mode `0600`; shutdown does not dump automatically.
 > Parent directories must already exist. The guide lists capture coverage and panel log limits.
 

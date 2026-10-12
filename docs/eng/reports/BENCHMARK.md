@@ -2726,3 +2726,42 @@ root cause is NOT_ESTABLISHED. The 13-hour resource prefix was not replayed.
 
 Q35 remains IN_PROGRESS; the current CLI's full eight-hour gate is not certified.
 The ledger stays 31/37 (83.8%), with six sections open. `NO_PUSH_DEPLOY_RELEASE`.
+
+### ACK diagnostic boundaries — review of retained captures, 12 October
+
+<!-- normative-sync: q36-tcp-boundary-review-v1 -->
+
+[Verified source and results](../../../release/certification/evidence/q36-tcp-boundaries-20261012.json)
+bind 18 earlier capture windows and 58 server ACK headers absent from client
+captures to the original `238153ab` build. There were no new runs.
+A later ACK advances the cumulative byte position in all 58 cases; this does not
+prove delivery of the missing header or equivalence of its TCP options/window.
+
+That subsequent ACK has an exact header match in both captures.
+The medians below cover only omission-adjacent cases, not all ACKs:
+
+| Original series | Omissions | Server capture gap, ms | Subsequent ACK path to client, ms |
+| --- | ---: | ---: | ---: |
+| ACK path | 15 | 1.571114 | 22.915014 |
+| TUN counters | 10 | 0.943829 | 19.608773 |
+| TUN queue | 33 | 0.351519 | 24.846015 |
+
+In every case, the subsequent ACK's path time exceeds the gap between its server
+capture and the missing ACK's capture. The server capture does not timestamp kernel
+ACK generation; the combined path includes TUN, Qeli queues, encryption, outer TCP
+and client TUN. The specific delay and omission cause remains OPEN.
+Original firewall gate failures are preserved: TUN counters measurement and TUN
+queue cleanup (`iptables4`, `legacy4`). These series did not become successful runtime qualification.
+
+Seven files were compared against the original and current build inputs. The
+server TUN forwarder and TCP writer loop are unchanged; the only handler change
+is lazy allocation for the same wire pool. Old delays therefore cannot be treated
+as fixed or measured on the current `52511ceb` CLI.
+`QELI_TRACE` uses separate process clocks and has no shared packet ID; its events
+precede completed sends/TUN admission. Interpretation rules are clarified in
+the [guide](../manuals/TROUBLESHOOTING.md).
+
+The next diagnostic is one raw TCP 100M/unlimited pair after the active Q35 is
+finished and archived, with exact ACK identification, clock alignment and an
+observer overhead control. Replaying the full carrier matrix or changing defaults is unnecessary.
+Plan: 32/37 (86.5%); Q29/Q31/Q34/Q35/Q36 open. `NO_PUSH_DEPLOY_RELEASE`.
