@@ -1,6 +1,6 @@
 # Q29: системные Always-on, lockdown и смерть процесса Android
 
-<!-- normative-sync: q29-android-system-v5 -->
+<!-- normative-sync: q29-android-system-v6 -->
 
 **5 октября 2026. Частичный результат; Q29 IN_PROGRESS. План28/37(75,7%),9 разделов осталось. Общий системный gate FAIL: автоматическая redelivery после внешнего SIGKILL не подтверждена.**
 
@@ -73,3 +73,8 @@ Raw: C:/Users/litvi/OneDrive/Documents/qeli/audit-debt-20260924/q29-android-syst
 <!-- q29-production-runtime-20261012 -->
 
 **12 октября:** Обычный production R8 APK проверен через UI/SAF и отдельный UID без instrumentation: 80 post-CONNECTED sockets PASS,230 correlated receipts, stopped lockdown48/0 и manual recovery/DNS PASS. APK payload неизменен после lab signing; реальная release-подпись и физические платформы не квалифицированы. DNS/null ENONET, first-post-APPLIED blocking и historical SIGKILL сохраняются. [Current scope](AUDIT-Q29-ANDROID-CURRENT-VPN.md).Q29 IN_PROGRESS;32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-dns-selection-control-20261012 -->
+
+**12 октября:** Q29: причина generic/null ENONET локализована на текущем API34 image. Ответ dnsproxyd и отдельный platform TUN с другим owner UID воспроизводят отказ; bypassable control получает A+AAAA. Typed/null и explicit VPN DNS идут через TUN. Product APK/JNI/default kill-switch неизменны; compatibility FAIL сохранён, SIGKILL и first-post-APPLIED открыты. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.

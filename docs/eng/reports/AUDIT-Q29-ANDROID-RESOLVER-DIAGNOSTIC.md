@@ -1,6 +1,6 @@
 # Q29: comparing Android DNS APIs
 
-<!-- normative-sync: q29-android-resolver-diagnostic-v1 -->
+<!-- normative-sync: q29-android-resolver-diagnostic-v2 -->
 
 October5,2026. Q29 IN_PROGRESS;plan28/37(75.7%). One successful readonly API34 x86_64 Release/TCP run on .11 in private NET/MNT/PID;four preserved failed attempts. .10 untouched.
 
@@ -33,3 +33,31 @@ Localization: auto/null ENONET without questions/receipts;typed/null A/AAAA and 
 Broad DNS API compatibility,immediate startup publication,split/per-app/Private DNS,long power/flapping,SIGKILL recovery FAIL remain. One AVD does not qualify OEM/arm64/otherAPI versions. USER_SKIPPED/D06 unchanged.
 
 Raw:`audit-debt-20260924/q29-android-resolver-diagnostic-20261005`;evidence:`release/certification/evidence/q29-android-resolver-diagnostic-20261005.json`.
+
+
+## 12 October: measured DNS network selection and independent TUN control
+
+Six completed DNS comparisons are independently qualified;the remaining control-only run took 189.99s on Android14/API34/x86_64. Production R8 APK/JNI unchanged;126 canonical Android inputs match. Whole cold/startup and native/Gradle/JVM suites were not repeated. The final pair consists of two small standalone platform Java APKs: a sender and minimal TUN/local DNS responder, with no Qeli code or `.so`.
+
+Sender UID 10150,control TUN owner UID 10151,Qeli UID 10148. Every cell observed an unbound process. The same UID directly read dnsproxyd `getdnsnetid 0`:code222 plus big-endian netId,the selection operation used by reference AOSP getDnsNetwork. Selected/active networks,capabilities/LinkProperties,IPv4/IPv6 bind/connect phases,five overload/network variants,unique names and uncached flags were retained.
+
+| Cell | Active netId | Selected app netId | Selected family checks | Generic/null |
+| --- | --- | --- | --- | --- |
+| physical-baseline | 100 | 100 | 8.8.8.8:True,2000:::True | 198.19.0.1,2001:db8:29::1 |
+| qeli-secure-open | 101 | 100 | 8.8.8.8:False,2000:::False | ENONET |
+| qeli-secure-lockdown | 102 | 100 | 8.8.8.8:False,2000:::False | ENONET |
+| control-secure-open | 101 | 100 | 8.8.8.8:False,2000:::False | ENONET |
+| control-secure-lockdown | 102 | 100 | 8.8.8.8:False,2000:::False | ENONET |
+| control-bypass-open | 104 | 104 | 8.8.8.8:True,2000:::True | 198.19.0.1,2001:db8:29::1 |
+
+NetIds are local to each AVD boot;equal numbers across boots do not identify the same Network object. EPERM also occurs without lockdown. Under lockdown both providers select a network different from the active VPN;both family checks fail,generic/null and generic/selected return ENONET without DNS questions. Typed/null A/AAAA and generic/active return answers. Changing only `allowBypass()` on the same minimal TUN with lockdown disabled selects the VPN network and passes family checks and generic/null A+AAAA. Scoped ENONET is therefore localized to Android network selection/checks before DNS,not Qeli Rust DNS packet processing. The actual ENONET remains recorded:this is cause qualification on one image,not universal DNS API compatibility PASS.
+
+[AOSP DnsResolver](https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/heads/android14-release/framework/src/android/net/DnsResolver.java) performs family checks in the generic overload;the typed overload skips them. [Netd DNS context](https://android.googlesource.com/platform/system/netd/+/refs/heads/android14-release/server/NetworkController.cpp) separates app_netid from dns_netid;secure and bypassable VPN app-network selection differ. The retained reference branch is not asserted to be the exact AVD revision. The conclusion uses current authenticated dnsproxyd responses and causal secure/bypassable comparison,not reference code alone.
+
+DNS delivery matches unique name/qtype/source in host receipts and local control logs. Qeli typed/null and explicit-active answers traverse TUN10.86.0.2;the control handles those queries locally at TUN10.88.29.2. Physical baseline uses its original host peer. Secure/open generic-selected emits no DNS packets;the pre-DNS refusal remains recorded instead of a tunneled PASS. Additional Qeli socket probes are unqualified:their optional tag was outside the receiver whitelist. The prior complete production transport gate retains separate evidence and was not repeated here.
+
+Production Qeli Java/Kotlin has no DnsResolver or allowBypass calls. Server hostname resolution already uses the explicitly selected network (`selected.getAllByName(config.serverAddress)`);source files were verified unchanged. This failure concerns the ordinary third-party UID generic DNS API.
+
+Private INI explicitly uses `kill_switch=false` to compare OS lockdown off/on. Production defaults and the previously qualified fail-closed profile are unchanged. The initial211.94s attempt is unqualified:LocalSocket timeout before connect,DNS name outside whitelist,and correct Qeli rejection of `kill_switch=true` without lockdown. Raw FAIL remains;its owned root was removed after verified recovery before the corrected attempt. Sender/TUN owner UIDs are separate in the corrected fixture;the local DNS TUN uses a blocking FD.
+
+Three Qeli/baseline DNS cells retain their second195.93s attempt,whose overall optional-socket-tag FAIL is not overwritten. The third run executes only the three remaining controls,without repeating Qeli DNS,UI import or production runtime. The third whole runtime is also FAIL:AndroidRuntime records only `com.android.systemui` crashing with `subscriptionId 1 is not in the list of valid subscriptions`. All six DNS cells completed with verified answers/UID/policy;whole AVD stability/runtime is unqualified. The original FAIL is not overwritten or rerun to obtain a green status. Host/service/firewall/routes/resolver and original userdata preserved;all three owned roots removed after SHA/inode/process/fd/mount guards. UI/SAF INI import without instrumentation/private-prefs injection. ENONET cause investigation is qualified in this scope. Historical automatic SIGKILL recovery FAIL,first-post-APPLIED blocking and full release/platform qualification remain. Q29 IN_PROGRESS;32/37(86.5%). [Evidence](../../../release/certification/evidence/q29-dns-selection-control-20261012.json). Raw:`audit-debt-20260924/q29-dns-selection-control-r2-20261012` + `q29-dns-selection-control-r3-20261012`;initial attempt:`q29-dns-selection-control-20261012`.NO_PUSH_DEPLOY_RELEASE.

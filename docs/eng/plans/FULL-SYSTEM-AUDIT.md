@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v244 -->
+<!-- normative-sync: full-system-audit-v245 -->
 
 **Current result, 12 October: 32/37 sections complete within agreed scope (86.5%), 5 remain. Q37 five criteria complete; Q29/Q31/Q34/Q35/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2876,3 +2876,8 @@ Network runs and large builds were not replayed; no new compiler caches were cre
 <!-- q29-production-runtime-20261012 -->
 
 **12 October:** Ordinary production R8 APK qualified via UI/SAF and independent UID without instrumentation: 80 post-CONNECTED sockets PASS,230 correlated receipts,stopped lockdown48/0 and manual recovery/DNS PASS. APK payload unchanged by lab signing;real release signing and physical platforms unqualified. DNS/null ENONET,first-post-APPLIED blocking and historical SIGKILL retained. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-dns-selection-control-20261012 -->
+
+**12 October:** Q29 generic/null ENONET cause localized on the current API34 image. Authenticated dnsproxyd selection and independent platform TUN owner UID reproduce failure;bypassable control returns A+AAAA. Typed/null and explicit VPN DNS traverse TUN. Product APK/JNI/default kill-switch unchanged;compatibility failure retained,SIGKILL and first-post-APPLIED remain open. [Q29 DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.

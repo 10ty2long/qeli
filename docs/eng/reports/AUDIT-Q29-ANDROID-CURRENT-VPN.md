@@ -1,6 +1,6 @@
 # Q29: current VPN integrations and Android fixture reliability
 
-<!-- normative-sync: q29-current-vpn-v3 -->
+<!-- normative-sync: q29-current-vpn-v4 -->
 
 12 October2026. Q29 IN_PROGRESS;32/37 (86.5%),5 sections open.
 
@@ -164,3 +164,8 @@ All 230 echo receipts independently matched protocol/family/payloadSHA to the se
 All 80/80 observed post-CONNECTED sockets passed: 32 cold and 48 follow-up,coverage=COLD_AND_FOLLOWUP. This is finite sampling. First sampled sockets after Native NetworkPlan APPLIED: `FAIL_POST_PLAN_BLOCKING`; prior refusals remain recorded. Generic DnsResolver `network=null` still returns ENONET;explicit active VPN and typed A/AAAA null/active pass. Automatic SIGKILL recovery was not executed here; its historical failure remains open.
 
 The ordinary production R8 runtime gate is qualified in this scope alongside previous matching-R8 results. Q29 IN_PROGRESS;32/37(86.5%),five sections open. Original AVD userdata,working service/PID and host firewall/routes/resolver are preserved. The owned runtime root was removed after SHA-qualified backup and inode/path/process/fd/mount checks. [Evidence](../../../release/certification/evidence/q29-production-runtime-20261012.json). Raw:`audit-debt-20260924/q29-production-runtime-20261012`.NO_PUSH_DEPLOY_RELEASE.
+
+
+<!-- q29-dns-selection-control-20261012 -->
+
+**12 October:** Q29 generic/null ENONET cause localized on the current API34 image. Authenticated dnsproxyd selection and independent platform TUN owner UID reproduce failure;bypassable control returns A+AAAA. Typed/null and explicit VPN DNS traverse TUN. Product APK/JNI/default kill-switch unchanged;compatibility failure retained,SIGKILL and first-post-APPLIED remain open. [DNS comparison](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%).NO_PUSH_DEPLOY_RELEASE.
