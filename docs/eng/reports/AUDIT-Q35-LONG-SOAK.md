@@ -41,3 +41,39 @@ does not establish whole-current-HEAD source equivalence. Raw results,
 independent completed-prefix qualification, the original FAIL and cleanup
 proof remain in the out-of-Git packet `audit-debt-20260924/q35-release-endurance-20261011`.
 Q35 remains `IN_PROGRESS`; `NO_PUSH_DEPLOY_RELEASE`.
+
+### 12 October: separate performance and cross-node verification
+
+<!-- normative-sync: q35-bounded-performance-crossnode-20261012 -->
+
+[Qualified results](../../../release/certification/evidence/q35-bounded-performance-crossnode-20261012.json).
+Lab .11 ran four predeclared independent checks: performance and cross-node
+for the previous CLI `35da83fd` and current pool-fixed CLI `52511ceb`. Both
+performance runs retained three 20-second rounds, the 5% threshold, the 2-CPU
+limit and the upload/download/combined-CPU assertions. Receiver rates were
+checked against raw iperf3 output separately by policy and direction, and medians
+were independently recalculated. No measurement was excluded or replaced by a retry.
+
+| Binary | Upload off / required, Mbps | Upload decrease | Download off / required, Mbps | CPU off / required, % | Performance: failed criteria | Cross-node |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| Previous CLI | 515 / 518 | -0.5825% | 626 / 620 | 159.921 / 160.140 | PASS: — | 28 PASS / 0 FAIL |
+| CLI with pool fix | 515 / 538 | -4.4660% | 615 / 624 | 160.560 / 163.601 | PASS: — | 28 PASS / 0 FAIL |
+
+Cross-node here means two independent server processes and registries in separate
+network namespaces on one VM. Checks cover foreign-locator JOIN rejection,
+primary-carrier loss, fallback to full AUTH, a new address and traffic through
+the secondary process. This does not certify physical-server failover.
+
+The original 13-hour release gate remains FAIL: upload decreased 6.8627%
+against a 5% limit. Comparing off/required on one binary does not measure a
+regression between software versions. The old failure's cause is not established;
+these checks do not prove an effect from the pool fix or background load. The five
+completed resource scenarios were not repeated and belong to the previous SHA.
+This packet does not certify a full 8-hour release gate on the current CLI.
+
+Every input and retained file was SHA-verified; observed processes ran in private
+mount/net/PID namespaces. Services, PID/start ticks/binaries and staged CLI were
+preserved. The owned root, remote archive and transient unit were cleaned.
+Full structural comparison across all host backends passed.
+Q35 remains IN_PROGRESS; the ledger remains 31/37 (83.8%), six sections open.
+Full release and hosted CI are not certified. `NO_PUSH_DEPLOY_RELEASE`.
