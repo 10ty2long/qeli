@@ -2962,3 +2962,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон,3 matched пары recordizer off/required. Переговоры legacy/packet_mux_v1 и оригинальные INI подтверждены; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review исключил удержание текущего TunPacket во время outer write. Defaults не изменены, source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: recordizer deadline control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон required recordizer default2–8ms vs fixed1ms. Парный median upload+2.92%,download-3.71%,bidir sum+0.34%,idleICMP average-64.28%. Интервальные TCP_INFO/30idle probes разделены; reverse sender RTT N/A. Defaults не изменены; deadline randomization и DPI equivalence не подменены throughput. Source/host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DELAY_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

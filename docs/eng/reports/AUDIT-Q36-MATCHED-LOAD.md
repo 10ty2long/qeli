@@ -208,3 +208,42 @@ Source review of the [client writer](../../../qeli/src/client/mod.rs) confirms c
 Source/generation/negotiated-mode/full host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;74 raw JSON/12 worker logs qualified. No new lab cleanup debt. Q36 IN_PROGRESS,33/37(89.2%), NO_PUSH_DEPLOY_RELEASE.
 
 Initial attempt retained3 baseline windows, then worker refused before required measurements: experiment-owned Unix control-socket path exceeded SUN_LEN. R2 uses short directory labels with path-length preflight. Original FAIL/3 windows remain separate, excluded from R2 tables; both attempts fully cleaned. Experiment-controller correction, not a recordizer bug.
+
+
+## Recordizer deadline:2–8ms versus1ms,13 October
+
+**6 new sessions /18 eight-second windows**,3 matched required-recordizer pairs: default2–8ms versus fixed1ms. TCPraw P1 upload/download/bidir, outer/innerIPv4, same2vCPU VM. Only two INI delay fields change; max_packets16/random sizes/fragmentation/other options retained. Repeat2 reverses session/payload order. Both conditions retain1s iperf intervals, unlimited caller and no omit/warmup. CLI52511cebd43a,916 native inputs/9 helpers unchanged, original MTU/queues/qdisc/affinity. Separate fresh population, not pooled with prior off/required or pacing results.
+
+NetworkPlan and client log verify PACKET_MUX_V1 in all6 sessions. SHA-archived INI: required in both, fixed1ms alone adds `obf.recordizer.batch.delay_min_ms=1`/`obf.recordizer.batch.delay_max_ms=1`. No native builds/product/default changes/tracing/BPF.
+
+Three-session medians. RTT column first takes each window's median **client-sender interval TCP_INFO snapshots**, then median of3 sessions. Not a per-packet RTT distribution or exact ACK-stage latency. Reverse client cannot observe remote sender TCP_INFO: N/A, no zero imputation.
+
+|Deadline|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Median sampled client-sender RTT µs|
+|---|---|---:|---:|---:|---:|---:|
+|default2–8ms|tcp_up|1416.59|—|173.00|0.00|3221.50|
+|default2–8ms|tcp_down|—|1492.80|0.00|380.00|N/A|
+|default2–8ms|tcp_bidir|443.35|1186.68|499.00|165.00|7166.00|
+|fixed1ms|tcp_up|1364.67|—|250.00|0.00|3687.00|
+|fixed1ms|tcp_down|—|1441.48|0.00|220.00|N/A|
+|fixed1ms|tcp_bidir|412.69|1238.19|404.00|238.00|7404.50|
+
+Before payload,30 idle ICMP probes per session; raw ping times/averages verified. Separate idle ICMP, not loaded TCP RTT.
+
+|Deadline|Idle ICMP RTT: median of3 session averages ms|
+|---|---:|
+|default|13.770|
+|1ms|4.919|
+
+Within-repeat changes; bidir sum adds both receivers of the corresponding session.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|Idle ICMP average change %|
+|---|---:|---:|---:|---:|---:|---:|
+|1|+2.92|-3.71|-14.39|+5.96|+0.34|-63.83|
+|2|-7.89|-7.04|+21.01|+13.57|+15.61|-64.28|
+|3|+11.39|+7.04|-6.92|+2.62|+0.06|-66.04|
+
+Median paired changes: upload **+2.92%**, download **-3.71%**, bidir sum **+0.34%**, idle ICMP average **-64.28%**. All repeats/retransmits/TUN/native drops/CPU/RSS retained. Zero median is not zero loss in every window; separate loss-window counts retained in analysis evidence.
+
+[Source review](../../../qeli/src/protocol/recordizer.rs): incomplete records share a deadline without ACK-only classification; size/count limits can flush sooner. Default2–8ms is not an unconditional delay for every packet. Fixed1ms retains batching but removes deadline randomization; DPI equivalence untested. Defaults unchanged. This comparison tests deadline effects, not an exact FULL_RING/ACK stage or universal capacity.
+
+Source/generation/host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;80 raw JSON/12 worker logs qualified. No new cleanup debt. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.

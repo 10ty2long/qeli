@@ -208,3 +208,42 @@ Source review [client writer](../../../qeli/src/client/mod.rs) подтверж�
 Source/generation/negotiated-mode/full host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы, namespaces, root и удалённый архив удалены;74 raw JSON/12 worker logs квалифицированы. Нового долга очистки нет. Q36 IN_PROGRESS, итог33/37(89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Исходная попытка сохранила3 baseline окна, затем worker отказал до required измерений: слишком длинный путь контрольного Unix-сокета (SUN_LEN). R2 использует короткие имена каталогов и проверяет длину пути до запуска. Исходный FAIL и3 окна сохранены отдельно, в таблицы R2 не включены; обе попытки полностью очищены. Это исправление обвязки эксперимента, не баг recordizer.
+
+
+## Срок отправки recordizer:2–8 мс против1 мс,13 октября
+
+**6 новых сессий /18 окон по8с**, три пары required recordizer с исходным deadline2–8ms и fixed1ms. TCPraw P1 upload/download/bidir, outer/innerIPv4, та же2vCPU VM. Изменены только два INI delay поля; max_packets16, случайные размеры, фрагментация и прочие параметры сохранены. В повторе2 обратный порядок сессий/нагрузок. В обоих условиях iperf записывает интервалы1с; отправитель без лимита и omit/warmup. CLI52511cebd43a,916 native inputs и9 helpers прежние, MTU/очереди/qdisc/affinity не менялись. Это новая отдельная популяция, не объединённая с прежними off/required или pacing числами.
+
+PACKET_MUX_V1 подтверждён NetworkPlan и client log во всех6 сессиях. SHA-архивированные INI проверены: required в обоих условиях; только fixed1ms добавляет `obf.recordizer.batch.delay_min_ms=1` и `obf.recordizer.batch.delay_max_ms=1`. Нативных сборок, изменения продукта/default, трассировки/BPF нет.
+
+Медианы трёх сессий. RTT-столбец сначала берёт медиану **интервальных TCP_INFO снимков отправителя на клиенте**, затем медиану трёх сессий. Это не распределение RTT каждого пакета и не точная задержка ACK. В reverse направлении клиент не наблюдает TCP_INFO удалённого отправителя: N/A, без подстановки0.
+
+|Deadline|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Median sampled client-sender RTT µs|
+|---|---|---:|---:|---:|---:|---:|
+|default2–8ms|tcp_up|1416.59|—|173.00|0.00|3221.50|
+|default2–8ms|tcp_down|—|1492.80|0.00|380.00|N/A|
+|default2–8ms|tcp_bidir|443.35|1186.68|499.00|165.00|7166.00|
+|fixed1ms|tcp_up|1364.67|—|250.00|0.00|3687.00|
+|fixed1ms|tcp_down|—|1441.48|0.00|220.00|N/A|
+|fixed1ms|tcp_bidir|412.69|1238.19|404.00|238.00|7404.50|
+
+Отдельно до нагрузки отправлены30 ICMP probes на сессию. Их задержки и средние значения проверены по raw ping; это idle ICMP, не RTT под TCP-нагрузкой.
+
+|Deadline|Idle ICMP RTT: median of3 session averages ms|
+|---|---:|
+|default|13.770|
+|1ms|4.919|
+
+Парные изменения внутри каждого повтора; bidir sum складывает оба receiver соответствующей сессии.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|Idle ICMP average change %|
+|---|---:|---:|---:|---:|---:|---:|
+|1|+2.92|-3.71|-14.39|+5.96|+0.34|-63.83|
+|2|-7.89|-7.04|+21.01|+13.57|+15.61|-64.28|
+|3|+11.39|+7.04|-6.92|+2.62|+0.06|-66.04|
+
+Медианы парных изменений: upload **+2.92%**, download **-3.71%**, bidir sum **+0.34%**, idle ICMP average **-64.28%**. Все повторы, retransmits, TUN/native drops и CPU/RSS сохранены; нулевая медиана не означает отсутствие потерь в каждом окне. Отдельные loss-window counts находятся в analysis evidence.
+
+[Source review](../../../qeli/src/protocol/recordizer.rs): неполная запись имеет общий deadline без ACK-only классификации; full/count limits могут отправить её раньше. Поэтому настройка2–8ms не добавляет такую задержку безусловно к каждому пакету. Fixed1ms сохраняет пакетирование, но убирает случайность самого deadline; равноценность против DPI этим тестом не подтверждена. Default не изменён. Сравнение проверяет влияние срока, а не конкретное событие FULL_RING/стадию ACK или универсальную capacity.
+
+Все source/generation/host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы/namespaces/root/удалённый архив удалены;80 raw JSON/12 worker logs квалифицированы. Нового долга очистки нет. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.

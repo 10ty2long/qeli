@@ -2949,3 +2949,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows,3 matched recordizer off/required pairs. Negotiated legacy/packet_mux_v1 and archived INI verified; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review excludes current TunPacket retention during outer write. Defaults unchanged; source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: recordizer deadline control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows required recordizer default2–8ms vs fixed1ms. Paired median upload+2.92%,download-3.71%,bidir sum+0.34%,idleICMP average-64.28%. Interval TCP_INFO/30idle probes separate, reverse sender RTT N/A. Defaults unchanged; deadline randomization/DPI equivalence not replaced by throughput. Source/host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DELAY_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
