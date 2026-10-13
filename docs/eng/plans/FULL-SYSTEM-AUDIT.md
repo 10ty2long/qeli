@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v247 -->
+<!-- normative-sync: full-system-audit-v248 -->
 
-**Current result, 12 October: 32/37 sections complete within agreed scope (86.5%), 5 remain. Q37 five criteria complete; Q29/Q31/Q34/Q35/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 13 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -176,7 +176,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
-| 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | IN_PROGRESS |
+| 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | DONE/PASS |
 | 36 | Benchmarks and measurement methodology | H07 | IN_PROGRESS |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | DONE |
 
@@ -2150,13 +2150,13 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming with retained corpora
 
 **Existing harness/fixtures:** `qeli/fuzz/README.md`, `scripts/roaming_udp_resource_soak_netns_gate.sh`, `scripts/linux_roaming_release_soak.sh`.
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE within the verified bounded scope.**
 
 **10 October,F504–F505:** [Stability gate](../reports/BENCHMARK.md): fixed false admission from incomplete/rounded/invalid measurements and removed host-wide cleanup.89Windows/19Linux methods,4workflow lint and actual read-only .11 refusal PASS;service777/845/CLI75bc preserved. No new throughput/soak or wholeQ34/Q35/Q36 completion.30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
@@ -2177,6 +2177,9 @@ consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
 35Linuxscript+7kernelmethods PASS;initial familyFAIL and TCP-only observer
 failure retained. Whole Q35 IN_PROGRESS,30/37DONE81.1%,7remain.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**13 October, Q35 final:** [five-criterion mapping](../reports/AUDIT-Q35-FINAL.md) combines actual fuzz, owning-module fault/limits audits, concurrency and current full endurance; original dates, failures and limitations are preserved. Q36 stage observation was executed separately and does not qualify its original cause. The plan is33/37 (89.2%), four sections remain open.
 
 ### 36. Benchmarks and measurement methodology
 
@@ -2913,3 +2916,11 @@ source applicability/certification, a public source cut and hosted CI.
 Q29 platform scope, Q31 bootstrap and Q36 diagnostics remain open.
 The overall count remains 32/37 (86.5%) without inferred module completion.
 `NO_PUSH_DEPLOY_RELEASE`.
+
+
+### 13 October: actual Q36 TUN diagnostics
+
+<!-- normative-sync: q35-final-q36-stage-checkpoint-20261013 -->
+
+[Q35 complete](../reports/AUDIT-Q35-FINAL.md): 33/37 (89.2%).
+[Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): six measured phases, archive/host/cleanup verified; original --client guard failure retained. Server q0 has no successful read trace; observed ACK latency exceeds both controls by11.5356/5.7921. Neither loss nor the original delay stage is established. Next is current steady data plane without the observer; do not repeat this intrusive method to infer the original cause. Q29/Q31/Q34/Q36 remain open. NO_PUSH_DEPLOY_RELEASE.

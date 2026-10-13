@@ -535,3 +535,7 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q37: documentation and test harnesses](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
 
 - [Q34: native libraries for the adopted patch](reports/AUDIT-Q34-ADOPTED-NATIVE.md) — 13 October 2026.
+
+- [Q35: final five-criterion mapping](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
+
+- [Q36: TUN stage and observer overhead](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.

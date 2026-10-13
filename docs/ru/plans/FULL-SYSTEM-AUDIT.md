@@ -10,9 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v247 -->
+<!-- normative-sync: full-system-audit-v248 -->
 
-**Текущий итог, 12 октября: 32/37 разделов завершено в согласованном объёме (86,5%), осталось 5. Q37 завершён по пяти критериям; Q29/Q31/Q34/Q35/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 13 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -181,7 +181,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
-| 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | IN_PROGRESS |
+| 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | DONE/PASS |
 | 36 | Бенчмарки и методика измерения | H07 | IN_PROGRESS |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | DONE |
 
@@ -2161,13 +2161,13 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming с сохранени
 
 **Имеющаяся обвязка/fixtures:** `qeli/fuzz/README.md`, `scripts/roaming_udp_resource_soak_netns_gate.sh`, `scripts/linux_roaming_release_soak.sh`.
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE в проверенном конечном объёме.**
 
 **10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
@@ -2188,6 +2188,9 @@ TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
 7liveconcurrent snapshots,35Linuxscript+7kernelmethods PASS; первый family
 FAIL и ошибка TCP-only наблюдателя сохранены. Общий Q35 IN_PROGRESS,
 30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
+
+
+**13 октября, итог Q35:** [матрица пяти критериев](../reports/AUDIT-Q35-FINAL.md) объединяет фактический fuzz, owning-module fault/limits audits, concurrency и полный актуальный endurance; прежние даты, FAIL и ограничения сохранены. Q36 stage-наблюдение выполнено отдельно и не квалифицирует исходную причину. Итог33/37 (89,2%), четыре раздела открыты.
 
 ### 36. Бенчмарки и методика измерения
 
@@ -2926,3 +2929,11 @@ source applicability/certification, публичного source cut и hosted CI
 Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика остаются открытыми.
 Общий итог без искусственного изменения статусов: 32/37 (86,5%).
 `NO_PUSH_DEPLOY_RELEASE`.
+
+
+### 13 октября: реальная TUN-диагностика Q36
+
+<!-- normative-sync: q35-final-q36-stage-checkpoint-20261013 -->
+
+[Q35 завершён](../reports/AUDIT-Q35-FINAL.md): 33/37 (89,2%).
+[Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): шесть фаз измерены, архив/host/cleanup проверены; исходный --client guard FAIL сохранён. Серверный q0 trace без успешных read; traced ACK latency выходит за оба контроля в 11,5356/5,7921 раза. Ни потери, ни исходная стадия задержки этим не установлены. Дальше current steady data plane без observer; этот intrusive метод для исходной причины не повторять. Q29/Q31/Q34/Q36 остаются открытыми. NO_PUSH_DEPLOY_RELEASE.

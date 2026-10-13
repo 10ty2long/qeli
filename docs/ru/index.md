@@ -535,3 +535,7 @@
 - [Q37: документация и тестовая обвязка](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
 
 - [Q34: нативные библиотеки принятого патча](reports/AUDIT-Q34-ADOPTED-NATIVE.md) — 13 October 2026.
+
+- [Q35: итог пяти критериев](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
+
+- [Q36: TUN stage и overhead наблюдателя](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
