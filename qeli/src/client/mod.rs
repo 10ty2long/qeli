@@ -4442,7 +4442,21 @@ struct StreamPump {
 /// Plaintext queued for one TCP stream. TUN packets retain their reusable backing
 /// allocation until encryption finishes; small control frames keep ordinary owned storage.
 const CLIENT_BONDED_UPLINK_BUFFER_BYTES: usize = 4 * 1024 * 1024;
-const CLIENT_BONDED_UPLINK_SLOT_BYTES: usize = u16::MAX as usize;
+/// Keep slot metadata bounded even when an authenticated peer advertises a tiny MTU.
+const CLIENT_BONDED_UPLINK_MIN_SLOT_BYTES: usize = 2 * 1024;
+
+/// Packet storage follows the already accepted wire contract. Legacy AEAD records cannot
+/// carry more than MAX_TUNNEL_MTU; the mux can fragment packets up to its negotiated bound.
+/// The shared byte budget and other-carrier/resume-candidate queue reserves stay unchanged.
+fn bonded_uplink_pool_layout(
+    recordizer: Option<&crate::protocol::recordizer::RuntimeConfig>,
+) -> (usize, usize) {
+    let packet_bound = recordizer.map_or(crate::protocol::packet::MAX_TUNNEL_MTU, |mux| {
+        mux.max_packet_bytes
+    });
+    let slot_bytes = packet_bound.clamp(CLIENT_BONDED_UPLINK_MIN_SLOT_BYTES, u16::MAX as usize);
+    (CLIENT_BONDED_UPLINK_BUFFER_BYTES / slot_bytes, slot_bytes)
+}
 
 enum ClientUplink {
     Tun(TunPacket),
@@ -4571,6 +4585,81 @@ mod tcp_uplink_tests {
             },
             receiver,
         )
+    }
+
+    #[test]
+    fn bonded_packet_contract_preserves_bounds_and_byte_budget() {
+        let config = crate::config::RecordizerConfig::default();
+        for packet_bound in [64, 1464, 9064, u16::MAX as usize, u16::MAX as usize + 1] {
+            let mux = crate::protocol::recordizer::RuntimeConfig::from_config(
+                &config,
+                crate::protocol::packet::MAX_TUNNEL_MTU,
+                packet_bound,
+            )
+            .unwrap();
+            let (count, slot) = bonded_uplink_pool_layout(Some(&mux));
+            assert!(slot >= packet_bound.min(u16::MAX as usize));
+            assert!(slot >= CLIENT_BONDED_UPLINK_MIN_SLOT_BYTES);
+            assert!(count <= 2048);
+            assert!(count * slot <= CLIENT_BONDED_UPLINK_BUFFER_BYTES);
+        }
+        let (count, slot) = bonded_uplink_pool_layout(None);
+        assert_eq!(slot, crate::protocol::packet::MAX_TUNNEL_MTU);
+        assert!(count * slot <= CLIENT_BONDED_UPLINK_BUFFER_BYTES);
+    }
+
+    #[test]
+    fn bonded_reader_burst_keeps_pinned_data_and_ack_packets_without_drops() {
+        let mux = crate::protocol::recordizer::RuntimeConfig::from_config(
+            &crate::config::RecordizerConfig::default(),
+            crate::protocol::packet::MAX_TUNNEL_MTU,
+            1464,
+        )
+        .unwrap();
+        let (count, slot) = bonded_uplink_pool_layout(Some(&mux));
+        let pool = BufferPool::new(count, slot).unwrap();
+        let capacity = crate::transport_core::buffer_pool::bonded_queue_capacity(count, 2);
+        let (sender, mut receiver) = mpsc::channel(capacity);
+        let (terminal_sender, _terminal_receiver) = mpsc::channel(1);
+        let mut streams = vec![ClientStreamSender {
+            logical_slot_id: 0,
+            sender,
+            terminal_sender,
+        }];
+        let counters = UplinkCounters::default();
+        // Two 64-packet reader bursts collide on one pinned carrier before it drains.
+        // Include small ACK-sized packets instead of requiring bulk-payload-only fairness.
+        for index in 0..128 {
+            let bytes = vec![index as u8; if index % 2 == 0 { 1400 } else { 40 }];
+            let packet = prepare_bonded_uplink(&bytes, &pool, &counters).unwrap();
+            queue_tcp_uplink(
+                &mut streams,
+                ClientUplink::Bonded(packet),
+                0,
+                Some(2),
+                &counters,
+            );
+        }
+        assert_eq!(counters.snapshot().total, 0);
+        for index in 0..128 {
+            let packet = receiver.try_recv().unwrap();
+            assert_eq!(packet.as_ref()[0], index as u8);
+            assert_eq!(
+                packet.as_ref().len(),
+                if index % 2 == 0 { 1400 } else { 40 }
+            );
+        }
+        assert!(receiver.try_recv().is_err());
+        // A stalled pinned carrier still cannot take the whole shared pool.
+        for _ in 0..capacity {
+            let packet = prepare_bonded_uplink(b"stalled", &pool, &counters).unwrap();
+            streams[0]
+                .try_send(ClientUplink::Bonded(packet))
+                .ok()
+                .unwrap();
+        }
+        assert!(pool.try_acquire().is_some());
+        assert!(capacity * 3 < count);
     }
 
     #[test]
@@ -6233,6 +6322,20 @@ where
         mtu: tun_mtu,
         fallback_dns_servers: &fallback_dns_servers,
     };
+    let validated_tun_mtu = usize::try_from(tun_mtu)
+        .map_err(|_| anyhow::anyhow!("authenticated TUN MTU is negative"))?;
+    let recordizer = pushed_obf
+        .as_ref()
+        .and_then(|pushed| pushed.recordizer.as_ref())
+        .map(|config| {
+            crate::protocol::recordizer::RuntimeConfig::from_config(
+                config,
+                crate::protocol::packet::MAX_TUNNEL_MTU,
+                validated_tun_mtu.saturating_add(64),
+            )
+        })
+        .transpose()
+        .map_err(|error| anyhow::anyhow!("invalid negotiated recordizer: {error}"))?;
     // Stream-bonding plan. `max_streams` is the server's hard ceiling.
     let target = if max_streams > 1 {
         max_streams as usize
@@ -6250,9 +6353,10 @@ where
     // release TUN buffers (and FIFO Wintun ring reservations) even when one writer
     // is blocked. One 4 MiB budget serves all streams; there is no fallback allocation.
     let bonded_uplink_pool = if bonding {
+        let (buffer_count, slot_bytes) = bonded_uplink_pool_layout(recordizer.as_ref());
         Some(crate::transport_core::buffer_pool::BufferPool::new(
-            CLIENT_BONDED_UPLINK_BUFFER_BYTES / CLIENT_BONDED_UPLINK_SLOT_BYTES,
-            CLIENT_BONDED_UPLINK_SLOT_BYTES,
+            buffer_count,
+            slot_bytes,
         )?)
     } else {
         None
@@ -6321,20 +6425,6 @@ where
     let (tap_gateway_ipv4, tap_ipv4_prefix_len, tap_gateway_ipv6, tap_ipv6_prefix_len) =
         (None, 0, None, 0);
     // Validate data-plane parameters before acquiring platform resources or invoking hooks.
-    let validated_tun_mtu = usize::try_from(tun_mtu)
-        .map_err(|_| anyhow::anyhow!("authenticated TUN MTU is negative"))?;
-    let recordizer = pushed_obf
-        .as_ref()
-        .and_then(|pushed| pushed.recordizer.as_ref())
-        .map(|config| {
-            crate::protocol::recordizer::RuntimeConfig::from_config(
-                config,
-                crate::protocol::packet::MAX_TUNNEL_MTU,
-                validated_tun_mtu.saturating_add(64),
-            )
-        })
-        .transpose()
-        .map_err(|error| anyhow::anyhow!("invalid negotiated recordizer: {error}"))?;
     let tunnel = core.prepare_tunnel(config, plan).await?;
     run_pending_post_up(core).await;
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]

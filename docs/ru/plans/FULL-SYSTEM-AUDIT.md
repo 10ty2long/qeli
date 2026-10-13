@@ -2976,3 +2976,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
 
 **13 октября: измеритель TCP-bidir исправлен и проверен** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86тестов+1самостоятельное livewindowPASS: --get-server-output и противоположные endpointTX/RX обязательны, диагностика отказа сохраняется, старая/новая политика не смешиваются. Патч ядра/nativepending, legacy QueueFull остаётся;33/37 прежние.
+
+**13 октября: точный патч слотов перенесён** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Свежие current-tree/native сборки и consumer checks ожидаются; исходная применимость certification не переносится через Rust delta. Legacy QueueFull/регрессии сохранены;33/37 прежние.
