@@ -464,3 +464,14 @@ public availability and current push CI remain unqualified. Rust bootstrap, a fr
 build and physical-router networking are separate checks. The 12 October package/runtime results
 retain their original source and do not qualify the later core delta. See the
 [source-cut report](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
+
+### Current standalone 32-bit verification (14 October 2026)
+
+ARMv7/MIPS clients including the bonded-slot fix were freshly compiled from
+`d26c78df4cf1556046332b5a7744208a15c00e06` using the common pinned recipe and private offline registry/target.
+Both static ELF/SHA admissions and32 QEMU10.0.13 CLI/INI cases pass on cortex-a7/24Kc
+under uid65534. This qualifies current standalone compilation and CLI behavior;
+it does not qualify a new SDK1.89/IPK build, full VPN networking, cold compiler
+bootstrap or physical firmware. The12October package keeps its original source.
+All owned build/QEMU/cache resources were archived and removed; production preserved.
+See the [current32-bit scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

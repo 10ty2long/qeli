@@ -2561,3 +2561,15 @@ hosted CI относятся к Q34, physical router USER_EXCLUDED. Всего32
 Q29/Q31/Q34/Q35/Q36 открыты. Evidence:
 `release/certification/evidence/q31-current-portable-20261012.json`.
 NO_PUSH_DEPLOY_RELEASE.
+
+## Q31-V014: актуальные ARMv7/MIPS после Q36-F030 (14 октября)
+
+Собраны два новых client-only release-бинарника из commit `d26c78df4cf1556046332b5a7744208a15c00e06`, включая исправление bonded pool. Приватные source/registry/target, offline Cargo и jobs1; общий закреплённый router recipe: ARMv7 Rust1.97/Zig0.13, MIPS nightly-2026-06-10/build-std/soft-float, fat LTO/codegen1/opt3/strip/panic=abort. Старые target artifacts не переиспользованы; новые toolchain не устанавливались. Перед компиляцией все907 файлов сверены с Git; единственная разрешённая проекция Cargo — crate-type rlib.
+
+Оба SHA/static ELF прошли независимую проверку: little-endian32-bit executable с корректной entry point, без внешнего interpreter/shared-library dependencies. QEMU10.0.13 cortex-a7/24Kc под uid65534 выполнил32 CLI/INI случая: версия/help, BOM/case/quoted values, legacy/core ownership, device/attach, отрицательные TAP/duplicate/unknown/malformed/missing/nonregular и отсутствие исполнения hook-canary. Это исполнение новых бинарников, не перенос результатов12октября. Полный VPN/TUN/network runtime на ARM/MIPS, A/B четырёх архитектур и physical firmware не проверялись.
+
+Сохранены подготовительные отказы: local root-directory guard; read-only admission принял текст собственной Python-команды за cargo; первая bounded unit остановилась на неполном import closure ELF-валидатора до Rust. Её source/cache/unit архивированы и удалены, сервисы сохранены. В исправленном r2 импорт полного closure проверен до копирования registry; первая настоящая компиляция обеих целей прошла. Никаких повторов успешных Rust-сборок ради зелёного статуса.
+
+Логи, исходники и бинарники сохранены с SHA; текущий root/registry/target/QEMU/unit удалены после archive/cookie/process/fd/mount guards. Host/firewall/routes/resolver, production PID/start/exe/argv и passwd/group/Rustup settings сохранены. Для QEMU собственному parent разрешён только traversal group65534, leaf0700/uid65534; host binfmt не менялся. Исходные архивы сохранены, больших Windows-кешей нет.
+
+Закрыт долг актуальных standalone32-bit compile/CLI после F030. Предыдущий SDK1.89/IPK/opkg пакет сохраняет source/date и не квалифицирует это изменение ядра; его актуальная сборка остаётся отдельно. MIPS build-std не означает полный host Rust compiler bootstrap OpenWrt SDK. Bootstrap resource-deferred, physical router USER_EXCLUDED, public cut/hosted CI отдельны. Q31 IN_PROGRESS;33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.

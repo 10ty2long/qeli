@@ -2551,3 +2551,15 @@ cut/hosted CI remain Q34 obligations; physical router USER_EXCLUDED.
 Total32/37 (86.5%);Q29/Q31/Q34/Q35/Q36 remain open. Evidence:
 `release/certification/evidence/q31-current-portable-20261012.json`.
 NO_PUSH_DEPLOY_RELEASE.
+
+## Q31-V014: current ARMv7/MIPS after Q36-F030 (14 October)
+
+Two fresh client-only release binaries compiled from `d26c78df4cf1556046332b5a7744208a15c00e06`, including the bonded-pool fix. Private source/registry/target, offline Cargo and jobs1; common pinned router recipe: ARMv7 Rust1.97/Zig0.13, MIPS nightly-2026-06-10/build-std/soft-float, fat LTO/codegen1/opt3/strip/panic=abort. No prior target artifacts reused and no toolchains installed. All907 files matched Git before compilation; the sole admitted Cargo projection is crate-type rlib.
+
+Independent SHA/static ELF admission passed: little-endian32-bit executables with a valid entry point, no external interpreter/shared-library dependencies. QEMU10.0.13 cortex-a7/24Kc uid65534 executed32 CLI/INI cases: version/help, BOM/case/quoted values, legacy/core ownership, device/attach, negative TAP/duplicate/unknown/malformed/missing/nonregular inputs and no hook-canary execution. These are current-binary executions, not transferred12October results. Full ARM/MIPS VPN/TUN/network runtime, four-architecture A/B and physical firmware were not executed.
+
+Preparation refusals retained: local archive-root guard; read-only admission matched cargo in its own Python command; the first bounded unit stopped on an incomplete ELF-validator import closure before Rust compilation. Its source/cache/unit were archived and removed; production preserved. Corrected r2 checks the complete import closure before registry copy; the first actual compilation of both targets passed. No successful Rust build was replayed for a green label.
+
+Logs/source/binaries retained with SHA. Current root/registry/target/QEMU/unit removed after archive/cookie/process/fd/mount guards. Host/firewall/routes/resolver, production PID/start/exe/argv and passwd/group/Rustup settings preserved. QEMU receives only group65534 parent traversal, with a0700/uid65534 leaf; host binfmt unchanged. Original archives retained, no large Windows caches created.
+
+Current standalone32-bit compile/CLI debt after F030 closed. Prior SDK1.89/IPK/opkg results retain source/time and do not qualify this core delta; a current package build remains separate. MIPS build-std does not qualify full OpenWrt SDK host Rust compiler bootstrap. Bootstrap resource-deferred, physical router USER_EXCLUDED, public cut/hosted CI separate. Q31 IN_PROGRESS;33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
