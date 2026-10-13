@@ -1,0 +1,181 @@
+{
+  "status": "QUALIFIED_NEGOTIATED_RECORDIZER_COMPARISON_NO_DEFAULT_CHANGE",
+  "qualification_sha256": "63c0b70e52744201b021f994acacd910d600e25835ce8bab6d62bec8d1f9e0b7",
+  "execution_sha256": "702ac7bd0266981aa1e68665d8d88429226fc7859d71067704097d0b6c85e891",
+  "source_review_sha256": "dc5e71aab2c12f5984851c69eac300282988f3f31fad7db426cee71836b4bf9c",
+  "paired_receiver_changes": [
+    {
+      "repeat": 1,
+      "baseline_upload_mbps": 136.8597033012845,
+      "recordizer_upload_mbps": 1421.0533271581435,
+      "upload_change_pct": 938.3285166341627,
+      "baseline_download_mbps": 686.4274749976357,
+      "recordizer_download_mbps": 1513.7999415837887,
+      "download_change_pct": 120.53312210281248,
+      "baseline_bidir_up_mbps": 135.86807430351226,
+      "baseline_bidir_down_mbps": 600.2803359883497,
+      "recordizer_bidir_up_mbps": 419.03222127110183,
+      "recordizer_bidir_down_mbps": 1189.0677050056336,
+      "bidir_up_change_pct": 208.41109908942724,
+      "bidir_down_change_pct": 98.08540005693456,
+      "bidir_sum_change_pct": 118.44778903199283
+    },
+    {
+      "repeat": 2,
+      "baseline_upload_mbps": 163.85248427123526,
+      "recordizer_upload_mbps": 1398.1062169378836,
+      "upload_change_pct": 753.2712965300611,
+      "baseline_download_mbps": 634.1896474000459,
+      "recordizer_download_mbps": 1536.33919920765,
+      "download_change_pct": 142.25233027787496,
+      "baseline_bidir_up_mbps": 181.32635335420184,
+      "baseline_bidir_down_mbps": 545.2882756102894,
+      "recordizer_bidir_up_mbps": 436.3976560532962,
+      "recordizer_bidir_down_mbps": 1193.221665441466,
+      "bidir_up_change_pct": 140.66973607572618,
+      "bidir_down_change_pct": 118.82400902641935,
+      "bidir_sum_change_pct": 124.2756003711563
+    },
+    {
+      "repeat": 3,
+      "baseline_upload_mbps": 159.508955506546,
+      "recordizer_upload_mbps": 1427.9091215236947,
+      "upload_change_pct": 795.1905659397886,
+      "baseline_download_mbps": 709.6073193181915,
+      "recordizer_download_mbps": 1530.8516315960271,
+      "download_change_pct": 115.73222117648218,
+      "baseline_bidir_up_mbps": 154.29286326097846,
+      "baseline_bidir_down_mbps": 600.289536707471,
+      "recordizer_bidir_up_mbps": 454.10106892848086,
+      "recordizer_bidir_down_mbps": 1148.7239885941378,
+      "bidir_up_change_pct": 194.31112971206724,
+      "bidir_down_change_pct": 91.36165439344084,
+      "bidir_sum_change_pct": 112.41219747368025
+    }
+  ],
+  "median_paired_upload_change_pct": 795.1905659397886,
+  "median_paired_download_change_pct": 120.53312210281248,
+  "median_paired_bidir_sum_change_pct": 118.44778903199283,
+  "TUN_loss_window_counts": {
+    "off/tcp_up": {
+      "client": 3,
+      "server": 0
+    },
+    "off/tcp_down": {
+      "client": 1,
+      "server": 3
+    },
+    "off/tcp_bidir": {
+      "client": 3,
+      "server": 3
+    },
+    "required/tcp_up": {
+      "client": 3,
+      "server": 0
+    },
+    "required/tcp_down": {
+      "client": 0,
+      "server": 3
+    },
+    "required/tcp_bidir": {
+      "client": 3,
+      "server": 3
+    }
+  },
+  "client_native_loss_window_counts": {
+    "off/tcp_up": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    },
+    "off/tcp_down": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    },
+    "off/tcp_bidir": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    },
+    "required/tcp_up": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    },
+    "required/tcp_down": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    },
+    "required/tcp_bidir": {
+      "client_tcp_uplink_drops_total": 0,
+      "client_tcp_downlink_drops_total": 0
+    }
+  },
+  "archived_configuration_receipts": [
+    {
+      "label": "r1-off",
+      "server_ini_sha256": "cc710f80b33aca76a0fe32409a2b73d283877c290b53c6e178877ecb18415e83",
+      "client_ini_sha256": "6fdca573bb0106813022c43c910898e18997f61db38bdffecdd1e3ce88f399db",
+      "policy": "off",
+      "negotiated_mode": "legacy_packet_per_record",
+      "all_other_recordizer_options_use_defaults": true
+    },
+    {
+      "label": "r1-required",
+      "server_ini_sha256": "e3fbdd95f96cd60e7f532fa0256a7dfefc7c2037ac83b8b2d695c5ebf0532830",
+      "client_ini_sha256": "937f35d273060456b13f488c5b27c2cb82c5e98636bcde2cd4b4f97cb3901d0c",
+      "policy": "required",
+      "negotiated_mode": "packet_mux_v1",
+      "all_other_recordizer_options_use_defaults": true
+    },
+    {
+      "label": "r2-required",
+      "server_ini_sha256": "e3fbdd95f96cd60e7f532fa0256a7dfefc7c2037ac83b8b2d695c5ebf0532830",
+      "client_ini_sha256": "9efd01264a76ee827a7fdacd4d05d6e47da7c80eb6991e2d12fcfd2aab2db393",
+      "policy": "required",
+      "negotiated_mode": "packet_mux_v1",
+      "all_other_recordizer_options_use_defaults": true
+    },
+    {
+      "label": "r2-off",
+      "server_ini_sha256": "cc710f80b33aca76a0fe32409a2b73d283877c290b53c6e178877ecb18415e83",
+      "client_ini_sha256": "eb6095b22ba1dc9312e6478864a7895777e331c54012e019ff0445ae43f46243",
+      "policy": "off",
+      "negotiated_mode": "legacy_packet_per_record",
+      "all_other_recordizer_options_use_defaults": true
+    },
+    {
+      "label": "r3-off",
+      "server_ini_sha256": "cc710f80b33aca76a0fe32409a2b73d283877c290b53c6e178877ecb18415e83",
+      "client_ini_sha256": "e997a597daceb3144f77833fd2ab964b2bb2623780546e021e4e0cccee1264bf",
+      "policy": "off",
+      "negotiated_mode": "legacy_packet_per_record",
+      "all_other_recordizer_options_use_defaults": true
+    },
+    {
+      "label": "r3-required",
+      "server_ini_sha256": "e3fbdd95f96cd60e7f532fa0256a7dfefc7c2037ac83b8b2d695c5ebf0532830",
+      "client_ini_sha256": "90aa68c2b40c5e567452669668c5f6a0fabdf8b1b38db5d7970adb4397b48e41",
+      "policy": "required",
+      "negotiated_mode": "packet_mux_v1",
+      "all_other_recordizer_options_use_defaults": true
+    }
+  ],
+  "original_refusal": {
+    "packet": "q36-recordizer-control-20261013",
+    "execution_sha256": "17af3af7df640f3b260ec8aef5632828751e26caf4cb5bb7a5309419fb494c72",
+    "server_log_sha256": "5cfc05a6eff77705a5406248cafd1db873f14d2b30ab18c9634d59db886f2fe4",
+    "status": "FAIL",
+    "error": "Test-controlled Unix socket path too long: path must be shorter than SUN_LEN",
+    "baseline_windows": 3,
+    "baseline_windows_pooled": false,
+    "full_host_archive_cleanup_PASS": true
+  },
+  "observations": "Independent matched sessions; mode verified from actual NetworkPlan and client log; server INI changes only recordizer policy, all batching/morphology/fragment defaults retained. Earlier pacing populations not pooled.",
+  "no_exact_ACK_stage_or_FULL_RING_event_claim": true,
+  "product_defaults_changed": false,
+  "product_code_changed": false,
+  "no_native_build": true,
+  "full_host_source_archive_cleanup_PASS": true,
+  "Q36_closed": false,
+  "formal_done": 33,
+  "total": 37,
+  "no_push_deploy_release": true
+}

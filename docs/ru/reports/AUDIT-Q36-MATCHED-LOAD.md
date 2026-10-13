@@ -174,3 +174,37 @@ Q36 IN_PROGRESS, итог33/37(89,2%). Смена планировщика ис�
 Перед нагрузкой переключение fq_codel1→fq2→fq_codel1 PASS3/3 с точным восстановлением исходных fq_codel options. После SHA-архивирования удалены собственные процессы, namespaces, root и удалённый архив. Временно добавленный sch_fq выгружен при refcnt0; исходные module set, global qdisc/default, services, provider/staged CLI SHA и полный host/source gates PASS. Квалификация50 raw JSON /6 worker logs прошла с первой попытки. Нового долга по очистке стенда нет.
 
 Q36 остаётся IN_PROGRESS: ограничение темпа помогает upload, но общего исправления TUN/ACK-потерь и подтверждённого предела производительности нет. Агрегатный TX dropped не определяет точную причину FULL_RING. Общий итог33/37(89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+
+## Согласованный recordizer против legacy, 13 октября
+
+**6 свежих сессий /18 окон по8с**, три пары `off`/`required`, TCPraw P1 upload/download/bidir, outer/innerIPv4. Порядок сессий и направлений меняется в повторе2. Та же CLI52511cebd43a,916 native inputs и неизменные9 helpers; original MTU1400/1500, qdisc и очереди. Отправитель без лимита, без warmup/omit. Сравнение между отдельными поколениями соединения, не переключение внутри работающего соединения. Native/kernel/defaults не менялись, сборок/пейсинга/трассировки/BPF нет.
+
+Новые профили задают `prefer` в [конструкторе](../../../qeli/src/config/server.rs); старый baseline и [бенчмарк](../../../scripts/benchmark.py) используют `off`. Здесь `required` заставляет успешно согласовать режим, исключая незаметный fallback: NetworkPlan показывает packet_mux_v1 во всех3 required сессиях и legacy_packet_per_record во всех3 off. Client log независимо подтверждает PACKET_MUX_V1. SHA-архивированные INI проверены: единственное заданное поле recordizer — policy; остальные параметры исходные: batch2–8ms,16frames, случайная морфология размера и fragmentation. Это проверка работающего режима; не отдельный runtime тест fallback политики prefer.
+
+Медианы трёх сессий; прочерк — нет запрошенной полезной нагрузки в направлении. Все raw receiver/retransmit/CPU/RSS/TUN/native counters сохранены, без исключённых повторов.
+
+|Policy|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client CPU %|Server CPU %|
+|---|---|---:|---:|---:|---:|---:|---:|
+|off|tcp_up|159.51|—|90.00|0.00|21.55|17.89|
+|off|tcp_down|—|686.43|0.00|500.00|73.11|78.88|
+|off|tcp_bidir|154.29|600.28|432.00|697.00|77.66|79.77|
+|required|tcp_up|1421.05|—|182.00|0.00|71.44|72.00|
+|required|tcp_down|—|1530.85|0.00|318.00|71.89|67.33|
+|required|tcp_bidir|436.40|1189.07|501.00|93.00|76.22|73.11|
+
+Парные изменения между согласованными сессиями каждого повтора. Bidir sum — сумма обоих receiver внутри соответствующей сессии.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|---:|
+|1|+938.33|+120.53|+208.41|+98.09|+118.45|
+|2|+753.27|+142.25|+140.67|+118.82|+124.28|
+|3|+795.19|+115.73|+194.31|+91.36|+112.41|
+
+Медианы парных изменений: upload **+795.19%**, download **+120.53%**, bidir sum **+118.45%**. Полная таблица сохраняет различия направлений; общий эффект нельзя переносить на каждый отдельный поток, все транспортные режимы или платформы. Число окон с TUN/native потерями записано отдельно в analysis evidence; нулевая медиана не означает отсутствие потерь во всех повторах. Это не универсальный performance/capacity PASS и не основание автоматически менять default.
+
+Source review [client writer](../../../qeli/src/client/mod.rs) подтверждает освобождение текущего TunPacket до ожидания outer write **в обеих ветках**. Гипотеза удержания текущего буфера во время записи не подтверждается. [Linux pump](../../../qeli/src/transport_core/linux_tun.rs) имеет максимум64 read buffers при nominal channel4096; это ограниченная память/обратное давление, не само по себе доказанный баг. Recordizer меняет группировку, размеры, фрагментацию и сроки flush одновременно; результат не определяет точную задержку ACK или событие FULL_RING.
+
+Source/generation/negotiated-mode/full host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы, namespaces, root и удалённый архив удалены;74 raw JSON/12 worker logs квалифицированы. Нового долга очистки нет. Q36 IN_PROGRESS, итог33/37(89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Исходная попытка сохранила3 baseline окна, затем worker отказал до required измерений: слишком длинный путь контрольного Unix-сокета (SUN_LEN). R2 использует короткие имена каталогов и проверяет длину пути до запуска. Исходный FAIL и3 окна сохранены отдельно, в таблицы R2 не включены; обе попытки полностью очищены. Это исправление обвязки эксперимента, не баг recordizer.

@@ -2959,3 +2959,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 парные сессии /12 окон: fq maxrate300Mbit/поток перед TUN, iperf без лимита. Upload median137,51→288,60Mbps; capped upload TUN drops/retransmits0 в3/3. Bidir sum paired median+2.19%, но потери на обоих TUN остаются3/3; default не изменён. Все host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон,3 matched пары recordizer off/required. Переговоры legacy/packet_mux_v1 и оригинальные INI подтверждены; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review исключил удержание текущего TunPacket во время outer write. Defaults не изменены, source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

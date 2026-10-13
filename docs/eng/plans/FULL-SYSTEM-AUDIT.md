@@ -2946,3 +2946,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 paired sessions /12 windows: pre-TUN fq maxrate300Mbit/flow, unlimited caller. Upload median137.51→288.60Mbps; capped upload TUN drops/retransmits0 in3/3. Paired bidir-sum median+2.19%, both TUNs still drop in3/3; defaults unchanged. Full host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows,3 matched recordizer off/required pairs. Negotiated legacy/packet_mux_v1 and archived INI verified; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review excludes current TunPacket retention during outer write. Defaults unchanged; source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

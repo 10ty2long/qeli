@@ -174,3 +174,37 @@ Median paired upload gain **+109.84%**, bidir sum **+2.19%**. However, every cap
 Pre-payload fq_codel1→fq2→fq_codel1 smoke PASS3/3 restores original fq_codel options exactly. After SHA archiving, owned processes/namespaces/root/remote archive removed. Introduced sch_fq unloaded at refcnt0; original module set/global qdiscs/default/services/provider/staged CLI SHA/full host/source gates PASS.50 raw JSON/6 worker logs qualified on first attempt. No new lab cleanup debt.
 
 Q36 IN_PROGRESS: rate control helps upload, but no general TUN/ACK loss fix or qualified capacity limit. Aggregate TX dropped is not an exact FULL_RING-event diagnosis.33/37(89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+
+## Negotiated recordizer versus legacy, 13 October
+
+**6 fresh sessions /18 eight-second windows**,3 matched off/required pairs, TCPraw P1 upload/download/bidir, outer/innerIPv4. Repeat2 reverses session/payload order. Same CLI52511cebd43a,916 frozen native inputs and9 unchanged helpers, original MTU1400/1500/qdiscs/queues. Unlimited caller, no omit/warmup. Separate connection generations; no live same-generation toggle. No native/kernel/default changes, builds, pacing, tracing or BPF.
+
+New profiles use prefer in the [constructor](../../../qeli/src/config/server.rs); historical baseline and [benchmark](../../../scripts/benchmark.py) use off. Required enforces actual negotiation without silent fallback: NetworkPlan shows packet_mux_v1 in all3 required sessions and legacy_packet_per_record in all3 off sessions. Independent client logs confirm PACKET_MUX_V1. SHA-archived INI receipts verify policy is the only specified recordizer field; default batching2–8ms/16frames, randomized size morphology and fragmentation retained. A negotiated-mode comparison, not a separate prefer-fallback runtime test.
+
+Three-session medians; dash means no requested payload. All raw receiver/retransmit/CPU/RSS/TUN/native records retained without sample exclusions.
+
+|Policy|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client CPU %|Server CPU %|
+|---|---|---:|---:|---:|---:|---:|---:|
+|off|tcp_up|159.51|—|90.00|0.00|21.55|17.89|
+|off|tcp_down|—|686.43|0.00|500.00|73.11|78.88|
+|off|tcp_bidir|154.29|600.28|432.00|697.00|77.66|79.77|
+|required|tcp_up|1421.05|—|182.00|0.00|71.44|72.00|
+|required|tcp_down|—|1530.85|0.00|318.00|71.89|67.33|
+|required|tcp_bidir|436.40|1189.07|501.00|93.00|76.22|73.11|
+
+Matched-session changes in each repeat; bidir sum adds both receivers within the corresponding session.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|---:|
+|1|+938.33|+120.53|+208.41|+98.09|+118.45|
+|2|+753.27|+142.25|+140.67|+118.82|+124.28|
+|3|+795.19|+115.73|+194.31|+91.36|+112.41|
+
+Median paired changes: upload **+795.19%**, download **+120.53%**, bidir sum **+118.45%**. Direction differences remain visible; aggregate effects cannot be assigned to every flow/mode/platform. Separate evidence counts windows with TUN/native losses; zero median does not mean all repeats are loss-free. No universal performance/capacity PASS or automatic default change.
+
+Source review of the [client writer](../../../qeli/src/client/mod.rs) confirms current TunPacket release before awaiting outer write **in both branches**. Current-buffer-held-during-write hypothesis unsupported. [Linux pump](../../../qeli/src/transport_core/linux_tun.rs) caps read buffers at64 despite a nominal4096-slot channel; bounded memory/backpressure, not itself a reproduced bug. Recordizer simultaneously changes batching/size/fragmentation/flush timing; this comparison does not identify exact ACK delay or a FULL_RING event.
+
+Source/generation/negotiated-mode/full host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;74 raw JSON/12 worker logs qualified. No new lab cleanup debt. Q36 IN_PROGRESS,33/37(89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+Initial attempt retained3 baseline windows, then worker refused before required measurements: experiment-owned Unix control-socket path exceeded SUN_LEN. R2 uses short directory labels with path-length preflight. Original FAIL/3 windows remain separate, excluded from R2 tables; both attempts fully cleaned. Experiment-controller correction, not a recordizer bug.

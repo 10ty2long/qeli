@@ -2765,3 +2765,10 @@ The next diagnostic is one raw TCP 100M/unlimited pair after the active Q35 is
 finished and archived, with exact ACK identification, clock alignment and an
 observer overhead control. Replaying the full carrier matrix or changing defaults is unnecessary.
 Plan: 32/37 (86.5%); Q29/Q31/Q34/Q35/Q36 open. `NO_PUSH_DEPLOY_RELEASE`.
+
+
+### 13 October: recordizer is a separate measurement condition
+
+[Current matched comparison](AUDIT-Q36-MATCHED-LOAD.md) verified6 independent sessions/18 eight-second TCPraw P1 upload/download/bidir windows: legacy off versus successfully negotiated PACKET_MUX_V1 required. Median paired changes upload+795.19%, download+120.53%, bidir sum+118.45%. TUN losses and VM limits remain visible; not universal capacity or an exact ACK-stage diagnosis.
+
+Benchmark explicitly defaults to off; new profiles use prefer. Helper supports `QELI_BENCH_RECORDIZER_POLICY=required` to enforce the active mode. Report actual negotiated mode alongside CLI/source SHA and conditions: prefer alone does not prove PACKET_MUX_V1. Off and required numbers describe different configurations; do not replace or pool historical results. Product and benchmark defaults unchanged.
