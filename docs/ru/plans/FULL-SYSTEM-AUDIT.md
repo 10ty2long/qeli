@@ -2965,3 +2965,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: recordizer deadline control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон required recordizer default2–8ms vs fixed1ms. Парный median upload+2.92%,download-3.71%,bidir sum+0.34%,idleICMP average-64.28%. Интервальные TCP_INFO/30idle probes разделены; reverse sender RTT N/A. Defaults не изменены; deadline randomization и DPI equivalence не подменены throughput. Source/host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DELAY_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: fixed TCP-carrier control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон fixed1/2carriers, required recordizer default2–8ms. Парный median upload-98.28%,download+0.13%,bidir sum-7.57%. Реальные сокеты поPID/endpoint зеркальны и стабильны на42 границах; не гарантированное разделение ACK/innerflows, bonded pools/queues также меняются. Native drops/RTT/raw сохранены. Default не изменён;source/host/archive/cleanup PASS. CURRENT_MATCHED_TCP_BONDING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

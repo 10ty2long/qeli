@@ -247,3 +247,44 @@ Median paired changes: upload **+2.92%**, download **-3.71%**, bidir sum **+0.34
 [Source review](../../../qeli/src/protocol/recordizer.rs): incomplete records share a deadline without ACK-only classification; size/count limits can flush sooner. Default2–8ms is not an unconditional delay for every packet. Fixed1ms retains batching but removes deadline randomization; DPI equivalence untested. Defaults unchanged. This comparison tests deadline effects, not an exact FULL_RING/ACK stage or universal capacity.
 
 Source/generation/host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;80 raw JSON/12 worker logs qualified. No new cleanup debt. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Fixed1 versus2 TCP carriers,13 October
+
+**Q36-F030 (P2), REPRODUCED / FIX_PENDING:** upload collapses in all3 two-carrier pairs; all native uplink drops are QueueFull, not PoolExhausted/Oversize/NoCarrier. One-carrier native uplink drops0 in all9 windows.4MiB reserves64 slots of65535 bytes; width2 reserve formula allows only21 packets/queue. Negotiated recordizer already limits inner packets to MTU+64,1464 bytes here. Proposed slot sizing must use that existing accepted bound while preserving total byte budget and other-carrier/candidate reserves; not applied/validated yet. No exact ACK-packet or kernel FULL_RING event claim.
+
+**6 new sessions /18 eight-second windows**,3 matched1/2 outer TCP-carrier pairs, TCPraw P1 upload/download/bidir, outer/innerIPv4, same2vCPU VM. Both INI set multipath enabled=true/adaptive=false, required recordizer default2–8ms. Only max_streams1/2 differs. Repeat2 reverses session/payload order. CLI52511cebd43a,916 native inputs/9 helpers, original MTU1400/1500/qdiscs/queues/affinity. Unlimited caller, no omit/warmup. Separate population, no pooling with earlier recordizer/pacing results.
+
+Plan max_streams alone is insufficient: actual ESTABLISHED sockets filtered by native PID/outer endpoint on both ends before payload and at every boundary. All42 snapshots have mirrored endpoint pairs, correct1/2 width and stable tuples. NetworkPlan/client log verify PACKET_MUX_V1; width2 log also confirms two active fixed streams. SHA-archived INI verified. No builds/tracing/BPF/product/default changes.
+
+[Flow hash](../../../qeli/src/protocol/mod.rs) pins each inner flow to one carrier, no per-packet round-robin striping. Peers independently hash their own outbound directions; distinct flows can collide. [Bonded path](../../../qeli/src/client/mod.rs) also enables a bounded4MiB copy pool/different queue capacities, releasing original TunPacket after copy. Not one isolated ACK stage; two established sockets do not prove exact placement of every inner flow. Queue Full records a native drop rather than rerouting onto another live carrier.
+
+Three-session medians, all repeats/retransmits/CPU/RSS/kernel/native counters retained. RTT is median client-sender interval TCP_INFO snapshots, then median3 sessions. Reverse sender RTT N/A, no zero imputation; not a per-packet RTT distribution.
+
+|Carriers|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client native uplink drops|Client native downlink drops|Median sampled client-sender RTT µs|
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+|1|tcp_up|1433.04|—|167.00|0.00|0.00|0.00|3369.50|
+|1|tcp_down|—|1506.22|0.00|231.00|0.00|0.00|N/A|
+|1|tcp_bidir|425.55|1192.89|319.00|309.00|0.00|0.00|7015.50|
+|2|tcp_up|24.59|—|0.00|0.00|148.00|0.00|8565.00|
+|2|tcp_down|—|1494.84|0.00|187.00|34348.00|0.00|N/A|
+|2|tcp_bidir|20.80|1490.85|0.00|257.00|37085.00|0.00|8564.00|
+
+Separate30 idleICMP probes/session:
+
+|Carriers|Idle ICMP RTT: median of3 session averages ms|
+|---|---:|
+|1|13.729|
+|2|13.020|
+
+Within-repeat changes; bidir sums both receivers in the corresponding session.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|Idle ICMP average change %|
+|---|---:|---:|---:|---:|---:|---:|
+|1|-98.28|-16.51|-99.02|+20.71|-10.77|-5.88|
+|2|-98.12|+0.13|-94.82|+22.45|-7.57|+1.91|
+|3|-98.28|+0.14|-95.25|+29.39|-4.56|-0.25|
+
+Median paired changes: upload **-98.28%**, download **+0.13%**, bidir sum **-7.57%**. Exact native-loss samples/window counts retained in analysis evidence; zero median does not guarantee zero every window. Not a universal loss/asymmetry fix, ACK-priority feature, capacity limit or automatic all-profile multipath default.
+
+Source/generation/actual socket/host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;80 raw JSON/12 worker logs qualified. Defaults unchanged, no new cleanup debt. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.

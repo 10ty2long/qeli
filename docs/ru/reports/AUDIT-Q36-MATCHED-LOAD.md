@@ -247,3 +247,44 @@ PACKET_MUX_V1 подтверждён NetworkPlan и client log во всех6 с
 [Source review](../../../qeli/src/protocol/recordizer.rs): неполная запись имеет общий deadline без ACK-only классификации; full/count limits могут отправить её раньше. Поэтому настройка2–8ms не добавляет такую задержку безусловно к каждому пакету. Fixed1ms сохраняет пакетирование, но убирает случайность самого deadline; равноценность против DPI этим тестом не подтверждена. Default не изменён. Сравнение проверяет влияние срока, а не конкретное событие FULL_RING/стадию ACK или универсальную capacity.
 
 Все source/generation/host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы/namespaces/root/удалённый архив удалены;80 raw JSON/12 worker logs квалифицированы. Нового долга очистки нет. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Фиксированные1 и2 TCP-соединения,13 октября
+
+**Q36-F030 (P2), REPRODUCED / FIX_PENDING:** в3/3 пар двух соединений upload проваливается; все native uplink drops имеют причину QueueFull, а не PoolExhausted/Oversize/NoCarrier. При одном соединении во всех9 окнах native uplink drops0. Для4MiB зарезервированы64 слота по65535 байт; reserve formula при width2 даёт всего21 пакет на очередь. С recordizer уже действует предел inner packet negotiatedMTU+64, здесь1464 байта. Предлагаемое исправление должно использовать этот существующий предел для размера слота, сохранив общий бюджет и резервы остальных carriers/candidate; пока не применено и не проверено. Exact capture конкретного ACK-пакета и kernel FULL_RING этим не заявляется.
+
+**6 новых сессий /18 окон по8с**, три пары1/2 внешних TCP-carriers, TCPraw P1 upload/download/bidir, outer/innerIPv4, та же2vCPU VM. В обоих INI multipath enabled=true/adaptive=false, recordizer required с исходным deadline2–8ms. Отличается только max_streams1/2. В повторе2 обратный порядок сессий/нагрузок. CLI52511cebd43a,916 native inputs/9 helpers, MTU1400/1500, qdisc/очереди/affinity прежние. Отправитель без лимита, без omit/warmup. Новая популяция, прежние recordizer/pacing числа не объединяются.
+
+План max_streams сам по себе недостаточен: реальные ESTABLISHED сокеты проверены по native PID и outer endpoint на обоих концах до нагрузки и на каждой границе окна. Во всех42 снимках пары endpoint зеркальны, фактическая ширина1/2 и tuples сохраняются. PACKET_MUX_V1 подтверждён NetworkPlan/client log; width2 дополнительно подтверждён сообщением о двух активных fixed streams. SHA-архивированные INI проверены. Новых сборок, трассировки, BPF, продуктовых/default изменений нет.
+
+[Flow hash](../../../qeli/src/protocol/mod.rs) закрепляет каждый внутренний поток за одним carrier, не распределяет пакеты одного потока round-robin. Каждая сторона хеширует своё outbound направление самостоятельно; разные потоки могут столкнуться на одном carrier. [Bonded path](../../../qeli/src/client/mod.rs) также включает ограниченный пул копирования4MiB и другие размеры очередей, освобождая исходный TunPacket после копирования. Поэтому сравнение не изолирует одну ACK-стадию; наличие двух сокетов не доказывает конкретное размещение каждого inner flow. Queue Full учитывается как native drop без переприкрепления к другому живому потоку.
+
+Медианы трёх сессий; все повторы/retransmits/CPU/RSS/kernel/native counters сохранены. RTT — медиана интервальных TCP_INFO снимков client sender, затем медиана3 сессий. Reverse sender RTT N/A, без0-imputation; это не распределение RTT каждого пакета.
+
+|Carriers|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client native uplink drops|Client native downlink drops|Median sampled client-sender RTT µs|
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+|1|tcp_up|1433.04|—|167.00|0.00|0.00|0.00|3369.50|
+|1|tcp_down|—|1506.22|0.00|231.00|0.00|0.00|N/A|
+|1|tcp_bidir|425.55|1192.89|319.00|309.00|0.00|0.00|7015.50|
+|2|tcp_up|24.59|—|0.00|0.00|148.00|0.00|8565.00|
+|2|tcp_down|—|1494.84|0.00|187.00|34348.00|0.00|N/A|
+|2|tcp_bidir|20.80|1490.85|0.00|257.00|37085.00|0.00|8564.00|
+
+Отдельные30 idle ICMP probes на сессию:
+
+|Carriers|Idle ICMP RTT: median of3 session averages ms|
+|---|---:|
+|1|13.729|
+|2|13.020|
+
+Парные изменения внутри каждого повтора; bidir sum складывает оба receiver соответствующей сессии.
+
+|Repeat|Upload change %|Download change %|Bidir upload change %|Bidir download change %|Bidir sum change %|Idle ICMP average change %|
+|---|---:|---:|---:|---:|---:|---:|
+|1|-98.28|-16.51|-99.02|+20.71|-10.77|-5.88|
+|2|-98.12|+0.13|-94.82|+22.45|-7.57|+1.91|
+|3|-98.28|+0.14|-95.25|+29.39|-4.56|-0.25|
+
+Медианы парных изменений: upload **-98.28%**, download **+0.13%**, bidir sum **-7.57%**. Точные native-loss samples/window counts находятся в analysis evidence;0 median не означает0 в каждом окне. Результат не объявляется универсальным исправлением потерь/асимметрии, ACK-приоритетом, пределом capacity или основанием автоматически включать multipath для всех профилей.
+
+Все source/generation/actual socket/host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы/namespaces/root/удалённый архив удалены;80 raw JSON/12 worker logs квалифицированы. Default не изменён, нового долга очистки нет. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.
