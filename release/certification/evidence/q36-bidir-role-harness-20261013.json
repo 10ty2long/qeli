@@ -1,0 +1,88 @@
+{
+  "status": "TCP_BIDIR_ROLE_HARNESS_86_TESTS_ONE_LIVE_WINDOW_CLEANUP_QUALIFIED",
+  "actual_unit_tests": 86,
+  "live_windows": 1,
+  "statistical_population": false,
+  "metrics": {
+    "up_mbps": 63.260085802815404,
+    "up_retransmits": 75,
+    "down_mbps": 695.3370507808426,
+    "down_retransmits": 80
+  },
+  "roles": [
+    {
+      "client_endpoint": [
+        "10.9.0.2",
+        44654
+      ],
+      "server_endpoint": [
+        "10.9.0.1",
+        5203
+      ],
+      "client_socket": 5,
+      "server_socket": 5,
+      "client_sender": true,
+      "server_sender": false
+    },
+    {
+      "client_endpoint": [
+        "10.9.0.2",
+        44662
+      ],
+      "server_endpoint": [
+        "10.9.0.1",
+        5203
+      ],
+      "client_socket": 7,
+      "server_socket": 8,
+      "client_sender": false,
+      "server_sender": true
+    }
+  ],
+  "peer_output_format": "server_output_text",
+  "host_gate": "PASS",
+  "owned_root_archive_removed": true,
+  "source_inputs_unchanged": 916,
+  "working_files": {
+    "scripts/benchmark_evidence.py": "c95649f15a6b5508d3a144e70d7bb5ce1ab877618a9dbda3e36258e630c32ace",
+    "scripts/benchmark_isolated_lab.py": "f207da82bf8dd71d8848a16d5768c2bd697997080f91613068ecaaa8c2379590",
+    "scripts/benchmark_report.py": "f4834218155464fdf89a3d0a4083729c5b335ddd11a7ceffb9f11d0b9927f700",
+    "scripts/fixtures/benchmark_tcp_bidir_role_conflict.json": "b0eba32b2274add5492d748b2353b783fcf8410cc1ded3008774f7ffa171c397",
+    "scripts/test_benchmark_bidir_roles.py": "9ef6d580f4de0a5c78100f60f61fa721cf08a51b9d21e2b0dda091ec6ea7d36c",
+    "scripts/test_benchmark_measure_evidence.py": "626e26894c6993aeb19e767b6ecb46a7f99b9e989aaa04f2a39319493ba409fe"
+  },
+  "scope": "One isolated live collector validation, not an added/replacement statistical sample. Actual --get-server-output roles admitted by reversed endpoint tuples. Historical time-budget failure and role-invalid window preserved. Rust/INI/Cargo/native build inputs unchanged; no source/native patch adoption or matrix rerun.",
+  "preparation_scope_correction": "One isolated live collector validation, not an added/replacement statistical sample. Actual --get-server-output roles admitted by reversed endpoint tuples. Historical time-budget failure and role-invalid window preserved. Rust/INI/Cargo/native build inputs unchanged; no source/native patch adoption or matrix rerun.",
+  "preparation_original_scope": "pairs=['tcp_bidir']",
+  "native_source_changed": false,
+  "source_fix_adopted": false,
+  "input_hashes": {
+    "execution.json": "f095a2bc7091840ce2d1685947b10e7613815eda01493e5f1252a93dff06757e",
+    "owned_archive.py": "e0e7ef30963818cb98575d9d89d1df1b27637ee05c07e38b8e8f97ea17860041",
+    "preparation.json": "e0f575fd249f859035842f590969a54e118849215bfaba93a00397aca69ddeff",
+    "qualify.py": "d30a9b76defcb9568d26b19e4a7958ae3d5e5fbafff7b267c3e7d6459bcaa282",
+    "run.py": "d74ef4e9b3c9e96195fee3b5660b016c8ea7653417311ef2e56d26555854b586",
+    "source-applicability.json": "23d93261ede5867ec25284d8f7a32928da0a41ce8cafad2500d21c694b36b7df",
+    "unit-tests.log": "68fe9b78646ce2c6c3089323fa1d2f9440708376070b80ff0e84a1d052b05ead",
+    "measurement-sources/benchmark.py": "d3661232801bad67486c680b7243d6f94ccf65f328dc8e41cb4c5f816b5ad2be",
+    "measurement-sources/benchmark_evidence.py": "c95649f15a6b5508d3a144e70d7bb5ce1ab877618a9dbda3e36258e630c32ace",
+    "measurement-sources/benchmark_host_state.py": "0d4aa43a9af84d85be4f9efd65160f9138cbb32978c4ebc09f723eff1c1ac913",
+    "measurement-sources/benchmark_isolated_lab.py": "f207da82bf8dd71d8848a16d5768c2bd697997080f91613068ecaaa8c2379590",
+    "measurement-sources/benchmark_report.py": "f4834218155464fdf89a3d0a4083729c5b335ddd11a7ceffb9f11d0b9927f700",
+    "measurement-sources/native_lab.py": "da52f1b2c94628074b56e002c6e2e0b8c09ebab207128c5dea780928469c61b0",
+    "measurement-sources/native_repro.py": "23b7750a13d847fe0bac36107dca674188068bb7a9482ef003a27c7e54ca8c0c",
+    "measurement-sources/ssh_command.py": "ea3800d9b7f8fa4abc7027166a0a6889c59c0e8dd683549a6e006c060da05b6b",
+    "measurement-sources/ssh_hostkey.py": "c82e9149d94b066f306f5eea265e726e72281eeb1cf9f8f084260a9ab9a00a39",
+    "r1-l2-c/client.log": "706f25e2663f18df5e6371af61324ee275ee8b4d168dc02a2289f6003f7aa611",
+    "r1-l2-c/idle-ping.json": "15d3d1a083a2c9ed3dacc3ed67129f8e41771f3ec52046e635a54dba41b775e3",
+    "r1-l2-c/server.log": "6e58f82c3e6e5c6d09d052795ae18653375d0b2444866cb554516ff2507e36fb",
+    "r1-l2-c/tcp_bidir-counters.json": "6cebe75a16d91a00d3f6df18caf5ca56f5c31122f9faf4c17eada900047d1735",
+    "r1-l2-c/tcp_bidir-iperf.json": "1993dbc00942a45c1edf71afe190bea71928c26e665ca7379a46d678ef0031e5",
+    "r1-l2-c/tcp_bidir-processes.json": "57cd26e4e0ae1bf05a6656cb273675572135d117fa90342b387792a4715b16b4",
+    "r1-l2-c/tcp_bidir-queue-boundaries.json": "4c0ec7e3027b87725952be6e29705717fea1d150fc8bf072ff29ef6d1e85eae7",
+    "remote-backups/10.66.116.10.tar.gz": "133d25cd50cbb5e2bbf6102db98fd219185f150e30dcf3c504763536cd31c1d6"
+  },
+  "formal_done": 33,
+  "formal_total": 37,
+  "no_push_deploy_release": true
+}

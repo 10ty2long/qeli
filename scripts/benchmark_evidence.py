@@ -1,5 +1,6 @@
 """Pure measurement admission shared by the lab runner and offline reports."""
 
+import ipaddress
 import math
 import re
 
@@ -126,10 +127,103 @@ def parse_iperf_result(raw, protocol, expected_seconds):
     raise ValueError('unsupported iperf protocol')
 
 
-def parse_iperf_bidir(raw, expected_seconds, parallel, *, expected_bitrate=0, protocol='tcp', expected_block_size=1200):
+def validate_iperf_tcp_bidir_roles(raw, parallel):
+    """Match stream endpoints, not accept order: each connection needs one TX and one RX."""
+    def endpoint(connection):
+        values = []
+        for side in ('local', 'remote'):
+            try:
+                host = connection[side + '_host']
+                if not isinstance(host, str):
+                    raise ValueError('stream host must be an IP literal')
+                address = ipaddress.ip_address(host)
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError('iperf bidir stream address missing or invalid') from error
+            if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+                address = address.ipv4_mapped
+            port = connection.get(side + '_port')
+            if type(port) is not int or not 1 <= port <= 65535:
+                raise ValueError('iperf bidir stream port missing or invalid')
+            values.append((str(address), port))
+        return tuple(values)
+
+    def streams(result):
+        if not isinstance(result, dict):
+            raise ValueError('iperf bidir endpoint output missing')
+        start, end = result.get('start'), result.get('end')
+        connected = start.get('connected') if isinstance(start, dict) else None
+        records = end.get('streams') if isinstance(end, dict) else None
+        if not isinstance(connected, list) or not isinstance(records, list) or len(connected) != 2 * parallel or len(records) != 2 * parallel:
+            raise ValueError('iperf bidir endpoint streams missing or incomplete')
+        roles = {}
+        for record in records:
+            sender = record.get('sender') if isinstance(record, dict) else None
+            sock = sender.get('socket') if isinstance(sender, dict) else None
+            role = sender.get('sender') if isinstance(sender, dict) else None
+            if type(sock) is not int or sock < 0 or sock in roles or type(role) is not bool:
+                raise ValueError('iperf bidir endpoint role missing or ambiguous')
+            roles[sock] = role
+        if sum(roles.values()) != parallel:
+            raise ValueError('iperf bidir endpoint direction count disagrees')
+        result = {}
+        seen_sockets = set()
+        for connection in connected:
+            if not isinstance(connection, dict):
+                raise ValueError('iperf bidir endpoint connection invalid')
+            sock = connection.get('socket')
+            if type(sock) is not int or sock not in roles or sock in seen_sockets:
+                raise ValueError('iperf bidir connection socket missing or ambiguous')
+            key = endpoint(connection)
+            if key in result:
+                raise ValueError('iperf bidir endpoint connection duplicated')
+            seen_sockets.add(sock)
+            result[key] = dict(socket=sock, sender=roles[sock])
+        return result
+
+    if type(parallel) is not int or parallel <= 0:
+        raise ValueError('invalid requested bidir stream count')
+    client = streams(raw)
+    if 'server_output_json' in raw:
+        server = streams(raw['server_output_json'])
+    else:
+        output = raw.get('server_output_text')
+        if not isinstance(output, str) or not output or len(output) > 1048576:
+            raise ValueError('iperf TCP bidir server role evidence missing or invalid')
+        roles = {}
+        for sock, role in re.findall(r'^\s*\[\s*(\d+)\]\[(RX-S|TX-S)\]', output, re.M):
+            sock, sender = int(sock), role == 'TX-S'
+            if sock in roles and roles[sock] != sender:
+                raise ValueError('iperf bidir server role ambiguous')
+            roles[sock] = sender
+        connections = re.findall(r'^\s*\[\s*(\d+)\] local (\S+) port (\d+) connected to (\S+) port (\d+)\s*$', output, re.M)
+        server = {}
+        for sock, local, local_port, remote, remote_port in connections:
+            sock = int(sock)
+            if sock not in roles:
+                raise ValueError('iperf bidir server stream role missing')
+            key = endpoint(dict(local_host=local, local_port=int(local_port), remote_host=remote, remote_port=int(remote_port)))
+            if key in server or any(x['socket'] == sock for x in server.values()):
+                raise ValueError('iperf bidir server stream duplicated')
+            server[key] = dict(socket=sock, sender=roles[sock])
+        if len(server) != 2 * parallel or len(roles) != 2 * parallel or sum(x['sender'] for x in server.values()) != parallel:
+            raise ValueError('iperf bidir server streams missing or incomplete')
+    if set(server) != {(remote, local) for local, remote in client}:
+        raise ValueError('iperf bidir client/server endpoints disagree')
+    receipt = []
+    for (local, remote), stream in client.items():
+        peer = server[(remote, local)]
+        if stream['sender'] == peer['sender']:
+            raise ValueError('iperf TCP bidir endpoint roles conflict (TX/TX or RX/RX)')
+        receipt.append(dict(client_endpoint=local, server_endpoint=remote,
+                            client_socket=stream['socket'], server_socket=peer['socket'],
+                            client_sender=stream['sender'], server_sender=peer['sender']))
+    return receipt
+
+
+def parse_iperf_bidir(raw, expected_seconds, parallel, *, expected_bitrate=0, protocol='tcp', expected_block_size=1200, require_tcp_roles=False):
     """Require both receiver directions; TCP and UDP use different sender flags."""
     if (protocol not in ('tcp', 'udp') or type(expected_seconds) is not int or expected_seconds <= 0
-            or type(parallel) is not int or parallel <= 0):
+            or type(parallel) is not int or parallel <= 0 or type(require_tcp_roles) is not bool):
         raise ValueError('invalid requested bidir settings')
     if not isinstance(raw, dict) or 'error' in raw:
         raise ValueError('iperf error or invalid JSON result')
@@ -148,6 +242,8 @@ def parse_iperf_bidir(raw, expected_seconds, parallel, *, expected_bitrate=0, pr
             or start.get('reverse') != 0 or type(start.get('num_streams')) is not int
             or start['num_streams'] != parallel or start.get('duration') != expected_seconds):
         raise ValueError('iperf bidir settings disagree with requested phase')
+    if protocol == 'tcp' and (require_tcp_roles or 'server_output_json' in raw or 'server_output_text' in raw):
+        validate_iperf_tcp_bidir_roles(raw, parallel)
     if protocol == 'udp' and (type(expected_block_size) is not int or expected_block_size <= 0
                              or type(start.get('blksize')) is not int or start['blksize'] != expected_block_size):
         raise ValueError('iperf UDP datagram size disagrees with requested phase')

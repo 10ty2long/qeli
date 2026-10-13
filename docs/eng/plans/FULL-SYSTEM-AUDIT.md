@@ -2961,3 +2961,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+**13 October: TCP-bidir harness fixed and validated** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86 tests +1independentlivewindowPASS, --get-server-output and endpointTX/RX maps enforced, raw rejection diagnostics retained, old/new policy not pooled. Native/sourcepatch pending, legacy QueueFull unresolved;33/37 unchanged.

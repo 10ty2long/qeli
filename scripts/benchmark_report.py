@@ -124,6 +124,10 @@ def validate_run(directory, *, measurements_only=False):
         'admission_sha256', 'seconds', 'tcp_parallel', 'recordizer', 'topology', 'hosts', 'selected_modes')}
     profile = meta.get('measurement', 'standard')
     comparison['measurement'] = profile
+    role_policy = meta.get('tcp_bidir_stream_roles_required', False)
+    if type(role_policy) is not bool:
+        raise ValueError('invalid TCP bidir role evidence policy')
+    comparison['tcp_bidir_stream_roles_required'] = role_policy
     coverage = [row.get('snapshot_schema', 'archived-core-only') for row in run['host_before']]
     if coverage[0] != coverage[1]:
         raise ValueError('host snapshot coverage differs across hosts')
@@ -161,7 +165,7 @@ def validate_run(directory, *, measurements_only=False):
             raise ValueError('phase population missing or unexpected: ' + name)
         for phase in phases:
             raw = read_json(root / name / (phase + '-iperf.json'), root, hashes)
-            metrics = parse_iperf_bidir(raw, 5 if phase == 'udp_bidir' else meta['seconds'], meta['tcp_parallel'], expected_bitrate=100000000 if phase == 'udp_bidir' else 0, protocol='udp' if phase == 'udp_bidir' else 'tcp') if phase.endswith('_bidir') else parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
+            metrics = parse_iperf_bidir(raw, 5 if phase == 'udp_bidir' else meta['seconds'], meta['tcp_parallel'], expected_bitrate=100000000 if phase == 'udp_bidir' else 0, protocol='udp' if phase == 'udp_bidir' else 'tcp', require_tcp_roles=meta.get('tcp_bidir_stream_roles_required', False)) if phase.endswith('_bidir') else parse_iperf_result(raw, 'udp' if phase.startswith('udp_') else 'tcp', 5 if phase.startswith('udp_') else meta['seconds'])
             expected = summary[phase]
             keys = tuple(metrics) if phase.endswith('_bidir') else ('mbps', 'retransmits', 'lost_percent') + (() if name == 'direct' else ('jitter_ms',))
             for key in keys:

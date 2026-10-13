@@ -278,6 +278,7 @@ def latency_probe_command(ip):
 def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, local, *, expected_bitrate=0):
     ipaddress.ip_address(ip)  # A literal target prevents shell interpolation.
     bidir = '--bidir' in flags.split()
+    tcp_bidir = bidir and '-u' not in flags.split()
     receiver = client if '-R' in flags.split() else server
     before_kernel = udp_kernel_all(receiver)
     before_client_kernel = udp_kernel_all(client) if bidir else None
@@ -290,7 +291,7 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
                    for fixture, pid in ((server, server_pid), (client, client_pid))]
         output = client.lab.checked(client.run_in('timeout ' + str(duration + 15) +
                  ' iperf3 -c ' + shlex.quote(ip) + ' -p 5203 -t ' + str(seconds) +
-                 ' -i 0 ' + flags + ' --json'), 'iperf ' + name, duration + 20)
+                 ' -i 0 ' + flags + ' --json' + (' --get-server-output' if tcp_bidir else '')), 'iperf ' + name, duration + 20)
         raw = json.loads(output)
         (local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
         samples = [json.loads(future.result()) for future in futures]
@@ -306,7 +307,7 @@ def measure(server, client, server_pid, client_pid, ip, name, flags, seconds, lo
     # Preserve the complete diagnostic window even when strict admission rejects
     # the iperf result. Rejection must still propagate; counters do not admit it.
     protocol = 'udp' if '-u' in flags.split() else 'tcp'
-    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate, protocol=protocol) if bidir else parse_iperf_result(raw, protocol, seconds)
+    metrics = parse_iperf_bidir(raw, seconds, int(flags.split()[flags.split().index('-P') + 1]), expected_bitrate=expected_bitrate, protocol=protocol, require_tcp_roles=tcp_bidir) if bidir else parse_iperf_result(raw, protocol, seconds)
     deltas = (bidir_counter_deltas if bidir else counter_deltas)(counters['before'], counters['after'])
     return dict(**metrics, **deltas, server=samples[0], client=samples[1])
 
@@ -360,7 +361,7 @@ def main():
         admission_sha256=hashlib.sha256((Path(__file__).parent / 'benchmark_evidence.py').read_bytes()).hexdigest(),
         host_state_sha256=hashlib.sha256(Path(benchmark_host_state.__file__).read_bytes()).hexdigest(),
         tracked_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=repo_root, text=True).strip()),
-        seconds=args.seconds, tcp_parallel=args.tcp_parallel, measurement=args.measurement, recordizer='off', hosts=hosts, selected_modes=selected,
+        seconds=args.seconds, tcp_parallel=args.tcp_parallel, measurement=args.measurement, tcp_bidir_stream_roles_required=True, recordizer='off', hosts=hosts, selected_modes=selected,
         remote_artifact_root=remote,
         throughput='receiver bits_per_second; UDP offered rates 100/500 Mbps',
         topology='two VM, isolated IPvlan network and private mount namespaces, local TLS target'), modes={})
@@ -388,10 +389,10 @@ def main():
             for name in measurement_phases(args.measurement, 'direct'):
                 flags = phase_flags(name, args.tcp_parallel)
                 seconds = 5 if name.startswith('udp_') else args.seconds
-                text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json'))
+                text = direct_client.checked(direct_client.run_in('timeout 45 iperf3 -c 10.255.42.1 -p 5203 -t ' + str(seconds) + ' -i 0 ' + flags + ' --json' + (' --get-server-output' if name == 'tcp_bidir' else '')))
                 raw = json.loads(text)
                 (direct_local / (name + '-iperf.json')).write_text(json.dumps(raw, indent=2) + '\n')
-                metrics = parse_iperf_bidir(raw, seconds, args.tcp_parallel, expected_bitrate=100000000 if name == 'udp_bidir' else 0, protocol='udp' if name == 'udp_bidir' else 'tcp') if name.endswith('_bidir') else parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
+                metrics = parse_iperf_bidir(raw, seconds, args.tcp_parallel, expected_bitrate=100000000 if name == 'udp_bidir' else 0, protocol='udp' if name == 'udp_bidir' else 'tcp', require_tcp_roles=(name == 'tcp_bidir')) if name.endswith('_bidir') else parse_iperf_result(raw, 'udp' if name.startswith('udp_') else 'tcp', seconds)
                 output['baseline'][name] = metrics if name.endswith('_bidir') else {key: metrics[key] for key in ('mbps', 'lost_percent', 'retransmits')}
             print('BASELINE', output['baseline'], flush=True)
         finally:

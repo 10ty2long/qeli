@@ -59,6 +59,7 @@ class MeasureEvidenceTests(unittest.TestCase):
             command = next(call.args[0] for call in checked.call_args_list if 'iperf3 -c ' in call.args[0])
             arguments = shlex.split(command)
             self.assertEqual(arguments[arguments.index('-c')+1], target)
+            self.assertEqual('--get-server-output' in arguments, '--bidir' in arguments and '-u' not in arguments)
 
     def test_scoped_ipv6_literal_stays_one_shell_argument(self):
         # ipaddress accepts arbitrary scope text; address validation alone does
