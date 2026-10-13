@@ -475,3 +475,22 @@ it does not qualify a new SDK1.89/IPK build, full VPN networking, cold compiler
 bootstrap or physical firmware. The12October package keeps its original source.
 All owned build/QEMU/cache resources were archived and removed; production preserved.
 See the [current32-bit scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Current SDK package verification (14 October 2026)
+
+The source at `2061407d12983a61ba958e2b88adcf660e94d3bc` was built through stock
+SDK 24.10.4 x86/64 Download/Prepare/Cargo/Install/dependency-check/strip/BuildPackage,
+using private official prebuilt Rust/std 1.89 and GCC 13.3 musl linking.
+IPK SHA256: `eb3886d8c449f425726e5ee4cc232af1e4a45e2194dc2970ee6c4741c04120fc` (2711950 bytes).
+Seven offline opkg cases and nine actual OpenWrt-userspace CLI/INI cases passed.
+All 533 Rust notices match by bytes, modes and root ownership.
+The opkg test helper now terminates owned namespace children and preserves partial
+output on timeout, verified by both the suite and an actual timeout test.
+Owned build/toolchain/cache/rootfs resources were archived and removed.
+
+The private Git fixture preserves the exact qeli tree, but is not the full original
+release commit. The production source cut remains separately qualified.
+Full feed Rust compiler bootstrap and cold dependency graph were not executed:
+the feed downloads LLVM but builds rustc/std/cargo/dist. This package test does
+not certify physical firmware, a public source pin, hosted CI or a release.
+See [current SDK scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v251 -->
+<!-- normative-sync: full-system-audit-v252 -->
 
 **Current result, 14 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2973,3 +2973,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 **14 October: OpenWrt source cut refreshed after Q36-F030.** [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): exact current commit,2actual SDK downloads/prepare/all tracked blobs PASS; pin/hash refreshed,Compile/Install unchanged;4committed source-gate probes andfullcleanup PASS. Public pin/hosted CI/bootstrap/current32bit package qualification remain open;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: current ARMv7/MIPS after F030 qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):2fresh client-only builds/907Git inputs/staticELF/SHA +32QEMU CLI/INI PASS;allownresourcesarchived/cleaned,productionpreserved. Original preparation/importFAIL retained;SDK/IPK-current-core refresh andbootstrap remainopen,physicalrouterUSER_EXCLUDED;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: current SDK/IPK after F030 qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): stock SDK 24.10.4 with private official Rust 1.89; client-only Compile/Install/BuildPackage, 7 opkg, 9 CLI/INI and 533 notices PASS. Child cleanup and partial logging on timeout fixed and verified with a real negative test. Owned resources cleaned, production preserved. Full feed rustc/std/cargo bootstrap remains unexecuted; physical router USER_EXCLUDED, public CI/release open. 33/37, NO_PUSH_DEPLOY_RELEASE.

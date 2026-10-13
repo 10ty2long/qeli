@@ -38,10 +38,15 @@ class OpkgTests(unittest.TestCase):
 
     def command(self, *args, success=True, target=False):
         self.step += 1
-        result = subprocess.run(['unshare', '--mount', '--net', '--pid', '--fork',
-                                 'chroot', str(self.root if target else self.wrapper), *args],
-                                capture_output=True, timeout=40)
         log = self.run/'logs'/f'{self.id().split(".")[-1]}-{self.step}.log'
+        try:
+            result = subprocess.run(['unshare', '--mount', '--net', '--pid', '--fork',
+                                     '--kill-child=KILL',
+                                     'chroot', str(self.root if target else self.wrapper), *args],
+                                    capture_output=True, timeout=40)
+        except subprocess.TimeoutExpired as error:
+            log.write_bytes((error.stdout or b'') + (error.stderr or b''))
+            raise
         log.write_bytes(result.stdout+result.stderr)
         if success:
             self.assertEqual(result.returncode, 0, log.read_text(errors='replace'))
