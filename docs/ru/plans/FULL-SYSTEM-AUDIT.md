@@ -2950,3 +2950,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: directional control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 новые сессии/9 окон TCPraw P1 up/down/bidir: upload-only median139,93Mbps при CPU server16,33%/client19,67%; down-only692,55Mbps. Асимметрия сохраняется без встречного трафика; во всех6 unidirectional окнах retransmits совпали с отправляющим TUN TX drops, native client drops0. Полный host/source/archive/cleanup PASS; точная причина не закрыта. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%).
+
+
+**13 октября: upload-duration и producer pacing:** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 пары8/32с: uploadmedian173,19/165,15Mbps, retransmits сохраняются во второй половине32с. Другие3пары: unlimitedmedian145,99Mbps сTUNTXdrops против producer300Mbps→receiver300,06Mbps безTUNTXdrops/retransmits3/3. Только темп iperf, не Qeli fix/defaults. UpstreamTUNsource fullring-гипотеза; kernelbackpressure patch отменён upstream, здесь не применён. Full source/host/archive/cleanup PASS; CURRENT_PAIRED_TCP_PRODUCER_PACING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

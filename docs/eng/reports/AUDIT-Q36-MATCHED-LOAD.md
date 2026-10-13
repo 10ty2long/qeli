@@ -75,3 +75,36 @@ Source review: both senders write a complete encrypted record through write_all_
 The external Windows collector wrote local log snapshots in CP1251/CRLF. The initial UTF8-only qualifier refused; its second revision refused nonnumeric TCP-only loss/jitter=None. Both refusals are retained. The final qualifier reads complete original UTF8 logs from the SHA-verified cleanup archive and verifies each local snapshot as its exact normalized text prefix. None remains in samples without zero imputation or numeric summaries. All38 raw JSON /6 logs are SHA-bound; no network rerun. The future external collector template writes explicit UTF8 bytes; it has not been claimed as another runtime. The common benchmark helper already writes UTF8 worker logs and is unchanged.
 
 Full source/host/service/staged CLI/archive/cleanup gates PASS; owned processes/namespaces and remote root/archive removed. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED. Q36 remains open;33/37 (89.2%); NO_PUSH_DEPLOY_RELEASE.
+
+
+## Upload duration and producer pacing: 13 October
+
+Another **6 fresh sessions /12 windows** tested two independent hypotheses. Three paired sessions compared TCPraw P1 upload8/32s; three separate sessions compared unlimited and iperf TCP producer300Mbps in eight-second windows. Each pair retains PID/NetworkPlan/generation/TUN; repeat2 reverses order. IPv4/IPv4, same two-vCPU VM, affinity0–1/nice0, MTU1400/1500, CLI52511cebd43a and all916 frozen inputs unchanged. No product/queue/qdisc changes, builds/caches/tracers/BPF. Populations are not pooled.
+
+### Longer window
+
+Three-session medians; process CPU uses one core as100%.
+
+|Seconds|Receiver Mbps|Server CPU %|Client CPU %|Client TUN TX drops|Retransmits|
+|---|---:|---:|---:|---:|---:|
+|8|173.19|20.78|25.55|43.00|43.00|
+|32|165.15|20.18|24.76|25.00|25.00|
+
+Thirty-two seconds did not recover upload to the separately measured download level. Second-half sender intervals still contain retransmits in all three32s runs:6/54/7; losses are not confined to startup. One-second sender bytes/retransmits/TCP_INFO(cwnd, RTT, rttvar, PMTU) retain contiguous intervals, exact summary sums, no omitted/warmup. Sender interval bitrate is not delivered goodput: final receiver summary is qualified separately. This32s control does not exclude all longer congestion changes and is not capacity/soak.
+
+### TCP producer pacing
+
+Only iperf `-b 300000000` changes: software-paced test production before TUN, not a Qeli limit/fix. Unlimited has no `-b`; startup traffic is retained.
+
+|TCP producer|Receiver Mbps|Server CPU %|Client CPU %|Client TUN TX drops|Retransmits|
+|---|---:|---:|---:|---:|---:|
+|Unlimited|145.99|18.78|22.89|50.00|50.00|
+|300Mbps|300.06|36.11|40.22|0.00|0.00|
+
+Paced TCP delivered **300.03–300.07Mbps in3/3 windows, with zero retransmits/TUN TX drops** and zero client native TCP drops. Unlimited delivered132.16–161.10Mbps, with kernel drops/retransmits50/8/63. Median paired receiver-speed gain:2.06×. Thus this uplink can carry300Mbps;≈146Mbps is not an immutable compute ceiling of the build. Dependence on producer mode is confirmed; exact per-packet burst mechanism and runtime drop reason are not observed. This is a measured producer mitigation, not a universal transformation of other applications or maximum throughput. Benchmark defaults retain unlimited results rather than substituting paced load.
+
+### Upstream TUN source
+
+In [upstream6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/drivers/net/tun.c), a full pointer ring can increment TX dropped. Other errors use that counter too, so aggregates do not prove FULL_RING. Changing txqueuelen also resizes driver rings. Version matches the lab kernel number, but exact Debian-build equivalence is unverified. [Upstream backpressure was reverted](https://github.com/torvalds/linux/commit/f11b48aa674b475f196bede7d69593c050107fc5) after another test regressed; no kernel change here. This is source review, not kernel-runtime qualification.
+
+Both runtime/source/host/service/staged CLI/archive/cleanup gates PASS; owned resources removed after SHA archival. Explicit UTF8 logs qualified on the first attempt. Each experiment binds26 raw JSON/6 worker logs; complete sender telemetry remains in original iperf JSON. Q36 remains open: producer mitigation measured;33/37(89.2%) unchanged. A paired Linux TUN pacing/qdisc upload+bidir control is appropriate before product changes; larger queues already showed a negative tradeoff. NO_PUSH_DEPLOY_RELEASE.

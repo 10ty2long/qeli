@@ -75,3 +75,36 @@ Source review: клиент и сервер передают полную шиф
 Сборщик первоначально записал локальные логи в Windows CP1251/CRLF. Первый UTF8-only qualifier отказал; второе исправление отказало на нечисловых TCP-only loss/jitter=None. Оба отказа сохранены. Финальный qualifier читает полные исходные UTF8 логи из SHA-проверенного архива и подтверждает точный префикс локального снимка после нормализации перевода строк. None сохранены в samples без нулевой подстановки и числовых summaries. Все 38 raw JSON /6 логов связаны SHA; сетевые проверки не повторялись. Будущий внешний шаблон сборщика теперь пишет UTF8 bytes явно; шаблон не объявлен повторно исполненным runtime. Общий benchmark helper уже сохраняет worker logs в UTF8 и не изменён.
 
 Полный source/host/service/staged CLI/archive/cleanup gate PASS; собственные процессы, namespaces и удалённый root/archive удалены. Квалификация CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED. Q36 остаётся открыт, общий итог33/37 (89,2%); NO_PUSH_DEPLOY_RELEASE.
+
+
+## Длительность upload и темп отправителя: 13 октября
+
+Ещё **6 свежих сессий /12 окон** проверили две независимые гипотезы. Сначала три парные сессии сравнили TCPraw P1 upload8/32с. Затем три другие — unlimited и iperf TCP producer300Mbps в восьмисекундных окнах. В каждой паре PID/NetworkPlan/generation/TUN совпадают, повтор2 меняет порядок. IPv4/IPv4, прежняя двухъядерная VM, affinity0–1/nice0, MTU1400/1500, CLI52511cebd43a;916 frozen inputs прежние. Native product, очереди и qdisc не менялись; новых builds/caches/tracers/BPF нет. Между экспериментами и с прежними популяциями samples не объединяются.
+
+### Удлинение окна
+
+Медианы трёх сессий; CPU дан в процентах одного ядра.
+
+|Seconds|Receiver Mbps|Server CPU %|Client CPU %|Client TUN TX drops|Retransmits|
+|---|---:|---:|---:|---:|---:|
+|8|173.19|20.78|25.55|43.00|43.00|
+|32|165.15|20.18|24.76|25.00|25.00|
+
+За32с скорость до уровня отдельного download не восстановилась. Во второй половине32с sender intervals тоже содержат retransmits во всех трёх повторах:6/54/7; потери не ограничены стартом. Посекундные sender bytes/retransmits/TCP_INFO(cwnd, RTT, rttvar, PMTU) сохранены с проверкой непрерывности интервалов, точного совпадения сумм и отсутствия omitted/warmup. Sender interval bitrate не подменяет доставленную скорость: receiver summary квалифицирован отдельно. Этот32-секундный контроль не исключает любое более длительное изменение congestion и не является capacity/soak.
+
+### Темп TCP producer
+
+Изменён только параметр iperf `-b 300000000`; это программное управление темпом тестового отправителя до TUN, не лимит/исправление в Qeli. Обычный TCP producer работает без `-b`; начальный трафик не исключён.
+
+|TCP producer|Receiver Mbps|Server CPU %|Client CPU %|Client TUN TX drops|Retransmits|
+|---|---:|---:|---:|---:|---:|
+|Unlimited|145.99|18.78|22.89|50.00|50.00|
+|300Mbps|300.06|36.11|40.22|0.00|0.00|
+
+В paced варианте **3/3 окна доставили300,03–300,07Mbps, без retransmits и TUN TX drops**; native client TCP drop counters также0. В unlimited —132,16–161,10Mbps, с kernel TX drops/retransmits50/8/63. Медиана парного прироста receiver скорости —2.06×. Следовательно, проверенный uplink способен передавать300Mbps; прежние≈146Mbps не являются неизменным вычислительным пределом этой сборки. Зависимость от режима отправки подтверждена, но помикропакетная burst-причина и конкретный runtime drop reason не измерены. Это проверенная мера для данного тестового producer, не безопасное универсальное преобразование трафика чужих приложений или максимальный throughput. Defaults бенчмарка не заменены paced нагрузкой, чтобы не скрывать unlimited результат.
+
+### Проверка upstream TUN
+
+В [upstream6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/drivers/net/tun.c) заполненное pointer ring может увеличить TX dropped. Этот же счётчик включает другие ошибки, поэтому агрегат не доказывает FULL_RING. Изменение txqueuelen пересчитывает и driver ring. Версия совпадает с номером ядра лабы, но точное соответствие Debian-сборке не проверено. [Upstream backpressure-патч отменили](https://github.com/torvalds/linux/commit/f11b48aa674b475f196bede7d69593c050107fc5) после регрессии другого теста; его здесь не применяли. Это source review, не новая квалификация ядра.
+
+Оба runtime/source/host/service/staged CLI/archive/cleanup gates PASS. Все собственные ресурсы удалены после SHA-архивирования; UTF8 логи проверены с первой попытки. Для каждого эксперимента26 raw JSON/6 worker logs связаны SHA; sender telemetry полностью внутри исходных iperf JSON. Q36 остаётся открыт: практическая producer-мера установлена, итог33/37(89,2%) не изменён. Далее уместен парный Linux TUN pacing/qdisc контроль с upload+bidir, до изменения продукта; большие очереди уже показали отрицательный tradeoff. NO_PUSH_DEPLOY_RELEASE.
