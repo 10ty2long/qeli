@@ -2978,3 +2978,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **13 октября: измеритель TCP-bidir исправлен и проверен** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86тестов+1самостоятельное livewindowPASS: --get-server-output и противоположные endpointTX/RX обязательны, диагностика отказа сохраняется, старая/новая политика не смешиваются. Патч ядра/nativepending, legacy QueueFull остаётся;33/37 прежние.
 
 **13 октября: точный патч слотов перенесён** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Свежие current-tree/native сборки и consumer checks ожидаются; исходная применимость certification не переносится через Rust delta. Legacy QueueFull/регрессии сохранены;33/37 прежние.
+
+**13 октября: новый core/native cohort установлен локально** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.

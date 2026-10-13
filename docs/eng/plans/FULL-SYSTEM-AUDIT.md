@@ -2965,3 +2965,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 **13 October: TCP-bidir harness fixed and validated** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86 tests +1independentlivewindowPASS, --get-server-output and endpointTX/RX maps enforced, raw rejection diagnostics retained, old/new policy not pooled. Native/sourcepatch pending, legacy QueueFull unresolved;33/37 unchanged.
 
 **13 October: exact slot-sizing patch adopted** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Current-tree/native rebuild and consumer qualification pending; old certification source identity not transferred across Rust delta. Legacy QueueFull/regressions retained;33/37 unchanged.
+
+**13 October: current core/native cohort refreshed locally** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
