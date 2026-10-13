@@ -108,3 +108,37 @@ Paced TCP delivered **300.03–300.07Mbps in3/3 windows, with zero retransmits/T
 In [upstream6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/drivers/net/tun.c), a full pointer ring can increment TX dropped. Other errors use that counter too, so aggregates do not prove FULL_RING. Changing txqueuelen also resizes driver rings. Version matches the lab kernel number, but exact Debian-build equivalence is unverified. [Upstream backpressure was reverted](https://github.com/torvalds/linux/commit/f11b48aa674b475f196bede7d69593c050107fc5) after another test regressed; no kernel change here. This is source review, not kernel-runtime qualification.
 
 Both runtime/source/host/service/staged CLI/archive/cleanup gates PASS; owned resources removed after SHA archival. Explicit UTF8 logs qualified on the first attempt. Each experiment binds26 raw JSON/6 worker logs; complete sender telemetry remains in original iperf JSON. Q36 remains open: producer mitigation measured;33/37(89.2%) unchanged. A paired Linux TUN pacing/qdisc upload+bidir control is appropriate before product changes; larger queues already showed a negative tradeoff. NO_PUSH_DEPLOY_RELEASE.
+
+
+## Client TUN: fq_codel versus fq, 13 October
+
+**3 fresh sessions /12 eight-second windows**, TCPraw P1 unlimited upload/bidir, outer/innerIPv4. Within each session only the owned client TUN qdisc changes: original fq_codel options versus standard fq. Generation/PID/NetworkPlan, MTU1400/1500, txqueuelen500, CLI52511cebd43a and all916 frozen inputs retained; repeat2 reverses order. These classes have different natural parameters: a configuration comparison, not one isolated algorithm with identical numeric settings. No product/kernel source/default changes, builds/tracers/BPF.
+
+Three-session medians; dash means no requested payload. Complete receiver/retransmit/CPU/RSS/TUN/native/tc-s-JSON records retained.
+
+|Client qdisc|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Client qdisc drops|
+|---|---|---:|---:|---:|---:|
+|fq_codel|tcp_up|136.09|—|50.00|0.00|
+|fq_codel|tcp_bidir|160.49|562.79|242.00|0.00|
+|fq|tcp_up|131.34|—|36.00|0.00|
+|fq|tcp_bidir|167.05|563.19|249.00|0.00|
+
+Decisions use within-pair changes, not ratios of separate medians. Bidir sums both receivers from the same pair.
+
+|Repeat|Upload change %|Bidir sum change %|
+|---|---:|---:|
+|1|-18.96|-11.88|
+|2|-15.46|+8.94|
+|3|+1.31|-7.71|
+
+Median paired upload change **-15.46%**, bidir sum **-7.71%**. One bidir repeat improved and two regressed; none excluded. A default switch to fq **is unsupported**, so fq_codel stays.
+
+FQ was applied: kind/handle/options verified and throttled counter increased in all6 FQ windows (1657/2611/2069/4002/1896/3570). All12 qdisc-drop/client native TCP-drop deltas are0; kernel TUN TX losses persist. Not a loss fix or specific FULL_RING-event proof. The [upstream iproute2 manual](https://man7.org/linux/man-pages/man8/tc-fq.8.html) describes TCP pacing and socket-flow support; it does not guarantee a TUN fix. Scope is TCPraw/P1/this VM, not every mode/platform.
+
+### Experiment-controller correction
+
+Two initial attempts each preserved two fq_codel windows but refused before FQ measurements. The controller requested fq at handle1 already used by fq_codel; the same refusal persisted after successful module loading. The earlier autoload-cause explanation **is withdrawn**. [Source6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/net/sched/sch_api.c) checks kind against an existing handle. R3 uses fq_codel1/fq2 and a pre-payload1→2→1 smoke, PASS in all3 sessions. Both original FAILs remain separate; their4 windows are not pooled. This was a measurement-controller error, not a Qeli bug.
+
+Stock sch_fq explicitly loaded temporarily; after owned processes/namespaces/root/archive removal, the introduced module was unloaded at refcnt0. Original module set/global qdiscs/default/provider SHA/services/staged CLI/full host/source/archive/cleanup gates PASS. Both refused attempts and module probe are also fully restored; no new lab cleanup debt.50 raw JSON/6 worker logs qualified on first attempt. Negative candidate remains visible without a performance fix/PASS claim.
+
+Q36 IN_PROGRESS,33/37(89.2%). Qdisc replacement is not a confirmed universal fix. Prior producer300Mbps pacing remains a measured test-producer mitigation; a targeted next candidate could control pre-TUN rate without caller cooperation, with bidir tradeoff validation. NO_PUSH_DEPLOY_RELEASE.

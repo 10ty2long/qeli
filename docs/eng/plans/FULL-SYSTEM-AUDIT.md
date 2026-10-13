@@ -2940,3 +2940,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: upload-duration and producer pacing:** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3paired8/32s controls: receiver173.19/165.15Mbps, second-half32s retransmits persist. Separate3pairs: unlimitedmedian145.99Mbps withTUNTXdrops vs producer300Mbps→receiver300.06Mbps and zeroTUNTXdrops/retransmits3/3. Onlyiperf pacing, no Qeli fix/defaults. UpstreamTUNfull-ring hypothesis, backpressure patch reverted upstream/notapplied. Full source/host/archive/cleanup PASS; CURRENT_PAIRED_TCP_PRODUCER_PACING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3pairedsessions/12windows fq_codel vsfq unlimitedTCPrawP1 up/bidir; pairedupload-15.46%,bidirsum-7.71%; TUNlossespersist,defaultunchanged. Controllerhandlecollision corrected distinct1/2+smoke3/3; originaltwoFAILs/4baselinewindows separate,autoloadcausewithdrawn. Fullhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

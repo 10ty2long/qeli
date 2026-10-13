@@ -2953,3 +2953,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 октября: upload-duration и producer pacing:** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 пары8/32с: uploadmedian173,19/165,15Mbps, retransmits сохраняются во второй половине32с. Другие3пары: unlimitedmedian145,99Mbps сTUNTXdrops против producer300Mbps→receiver300,06Mbps безTUNTXdrops/retransmits3/3. Только темп iperf, не Qeli fix/defaults. UpstreamTUNsource fullring-гипотеза; kernelbackpressure patch отменён upstream, здесь не применён. Full source/host/archive/cleanup PASS; CURRENT_PAIRED_TCP_PRODUCER_PACING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3парные сессии/12окон fq_codel vsfq, unlimited TCPrawP1 up/bidir; paired upload-15.46%,bidir sum-7.71%; потериTUNсохранились,defaultнеизменён. Контроллерsamehandlecollisionисправлен distinct1/2+smoke3/3; дваисходныхFAIL/4baselineокна сохраненыотдельно, объяснениеавтозагрузкойотозвано. Полныеhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

@@ -108,3 +108,37 @@ Source review: клиент и сервер передают полную шиф
 В [upstream6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/drivers/net/tun.c) заполненное pointer ring может увеличить TX dropped. Этот же счётчик включает другие ошибки, поэтому агрегат не доказывает FULL_RING. Изменение txqueuelen пересчитывает и driver ring. Версия совпадает с номером ядра лабы, но точное соответствие Debian-сборке не проверено. [Upstream backpressure-патч отменили](https://github.com/torvalds/linux/commit/f11b48aa674b475f196bede7d69593c050107fc5) после регрессии другого теста; его здесь не применяли. Это source review, не новая квалификация ядра.
 
 Оба runtime/source/host/service/staged CLI/archive/cleanup gates PASS. Все собственные ресурсы удалены после SHA-архивирования; UTF8 логи проверены с первой попытки. Для каждого эксперимента26 raw JSON/6 worker logs связаны SHA; sender telemetry полностью внутри исходных iperf JSON. Q36 остаётся открыт: практическая producer-мера установлена, итог33/37(89,2%) не изменён. Далее уместен парный Linux TUN pacing/qdisc контроль с upload+bidir, до изменения продукта; большие очереди уже показали отрицательный tradeoff. NO_PUSH_DEPLOY_RELEASE.
+
+
+## Клиентский TUN: fq_codel против fq, 13 октября
+
+**3 свежие сессии /12 окон по8с**, TCPraw P1 unlimited upload и bidir, outer/innerIPv4. В каждой сессии изменён только планировщик собственного client TUN: исходные параметры fq_codel против стандартных fq. Поколение, PID, NetworkPlan, MTU1400/1500, txqueuelen500, CLI52511cebd43a и916 native/config/helper inputs сохранены; повтор2 меняет порядок. Параметры двух классов естественно различаются — это сравнение вариантов, не изоляция одного алгоритма при одинаковых числовых настройках. Product/kernel source и defaults не изменены; builds/tracers/BPF отсутствуют.
+
+Медианы трёх сессий; прочерк — направление без запрошенной полезной нагрузки. Полные receiver, retransmits, CPU/RSS, TUN/native и tc-s-JSON counters сохранены.
+
+|Client qdisc|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Client qdisc drops|
+|---|---|---:|---:|---:|---:|
+|fq_codel|tcp_up|136.09|—|50.00|0.00|
+|fq_codel|tcp_bidir|160.49|562.79|242.00|0.00|
+|fq|tcp_up|131.34|—|36.00|0.00|
+|fq|tcp_bidir|167.05|563.19|249.00|0.00|
+
+Для решения используются изменения внутри каждой пары, а не отношение отдельных медиан. Bidir sum складывает оба receiver одной пары.
+
+|Repeat|Upload change %|Bidir sum change %|
+|---|---:|---:|
+|1|-18.96|-11.88|
+|2|-15.46|+8.94|
+|3|+1.31|-7.71|
+
+Медиана парного upload change **-15.46%**, bidir sum **-7.71%**. Один bidir повтор улучшился; два ухудшились. Все повторы сохранены. Замена default на fq **не обоснована**, поэтому fq_codel оставлен.
+
+FQ применялся: kind/handle/options проверены, throttled counter вырос во всех6 FQ-окнах (1657/2611/2069/4002/1896/3570). Все12 qdisc-drop deltas и client native TCP-drop deltas равны0, но kernel TUN TX losses сохранились. Это не устранение потерь и не доказательство конкретного FULL_RING event. По [upstream iproute2 manual](https://man7.org/linux/man-pages/man8/tc-fq.8.html) FQ учитывает TCP pacing и socket flows; эти возможности не гарантируют исправление данного TUN. Результат относится к TCPraw/P1/данной VM, не всем режимам/платформам.
+
+### Исправленная ошибка контроллера
+
+Две исходные попытки сохранили2+2 fq_codel окна и отказали до FQ-измерений. Контроллер запрашивал fq с handle1, уже занятым fq_codel. Отказ сохранился с успешно загруженным модулем; прежнее объяснение автозагрузкой **отозвано**. [Source6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/net/sched/sch_api.c) проверяет соответствие типа существующему handle. Исправленный контроллер использует fq_codel1/fq2 и до нагрузки проверяет1→2→1, во всех трёх сессиях PASS. Оба исходных FAIL остаются отдельными; их4 окна не включены в новую популяцию. Это ошибка измерительной обвязки, не обнаруженный баг Qeli.
+
+Штатный sch_fq временно загружен явно. После удаления всех собственных процессов/namespaces/root/archive модуль выгружен при refcnt0. Исходный module set, global qdiscs/default, provider SHA, services, staged CLI, полный host/source и SHA-archive/cleanup gates PASS. Обе отказавшие попытки и отдельная module-проба также полностью очищены; нового техдолга стенда нет.50 raw JSON/6 worker logs квалифицированы с первой попытки. Документация сохранит negative candidate, не выдавая его за performance fix/PASS.
+
+Q36 IN_PROGRESS, итог33/37(89,2%). Смена планировщика исключена как подтверждённое универсальное исправление. Producer pacing300Mbps остаётся ранее измеренной мерой только для тестового отправителя; следующий адресный кандидат может ограничивать темп до TUN без участия приложения, с проверкой bidir tradeoff. NO_PUSH_DEPLOY_RELEASE.
