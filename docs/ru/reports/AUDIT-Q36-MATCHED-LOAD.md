@@ -401,3 +401,24 @@ Windows/macOS:33CAPIexports наWindows и каждомmacOSslice,22реальн
 Это новый прогон после Rust-патча, а не перенос старого результата через изменение ядра. Исходный execution commit `55eb810865e290e427f6cd2b5838e4278aa304bf`, actual CLI build `e0ce217b630d9dfd7db5f59936bb41e6d68eb69d`; build inputs между ними совпадают. Все исходные логи и архивы проверены по SHA. Собственные root/archive/unit удалены; host/firewall/routes/DNS/accounts, рабочие процессы и staged CLI сохранены. Сертификация обновлена по свежим результатам; прежний manifest сохранён отдельно. Последующая применимость относится только к четырём Markdown-файлам этого отчёта/плана, даты и исходная идентичность прогона не меняются.
 
 Обязательный долг функциональной проверки перенесённого Q36-F030 закрыт вместе с ранее выполненными native A/B, ABI/JNI и пакетными проверками. Legacy QueueFull, снижение legacy download на 6,63%, один bidir выброс и потери TUN остаются в результатах; общего zero-loss/performance PASS нет. Q36 остаётся IN_PROGRESS; Q29/Q31/Q34 также открыты. Итог 33/37 (89,2%), без push/deploy/release.
+
+## 14 октября: новый current-product legacy/mux cohort
+
+На текущем исходном commit `3a7e25dcdf1af6f3a761dfa883851df807535fb0` выполнены шесть новых сессий / 18 окон по 8 секунд: TCP raw P1, фиксированные два carrier, legacy `off` против recordizer `required`, по три парных повтора upload/download/bidir. Во втором повторе порядок протоколов и направлений обратный. Сервер и клиент во всех случаях — один уже собранный CLI `6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363`, actual build commit `e0ce217b630d9dfd7db5f59936bb41e6d68eb69d`. Полное Git-дерево `qeli/` совпало с build commit; 919 текущих input и точные measurement helpers сохранены. Новых компиляций, изменения MTU/defaults/очередей/qdisc/pacing не было.
+
+Медианы трёх сессий; native/TUN drops ниже — суммы разностей счётчиков между границами вокруг девяти окон каждого протокола, не точное соответствие отдельным пакетам iperf.
+
+|Protocol|Upload Mbps|Download Mbps|Bidir up/down Mbps|Native uplink/downlink drops|TUN TX drops client/server|
+|---|---:|---:|---:|---:|---:|
+|Legacy|583.38|709.27|105.73/666.36|43676/0|0/0|
+|Recordizer|1214.62|1448.40|490.63/1166.87|0/0|1723/1684|
+
+Recordizer относительно legacy: медиана парного изменения upload +108.20%, download +104.21%, bidir sum +113.10%. Все три samples, min/max/spread, direction tradeoffs, CPU/RSS/steal и счётчики сохранены. Наблюдавшийся максимальный RSS worker 95020 KiB. Это конечные same-VM окна двух sibling namespaces, не WAN/physical capacity или общий performance PASS.
+
+Legacy native uplink потери (43676) во всех наблюдённых границах относятся к QueueFull; прочие uplink-причины и native downlink потери нулевые. При recordizer native uplink/downlink drops нулевые во всех девяти окнах, но потери TUN остаются в таблице. Это подтверждает оставшееся давление legacy-очереди на текущем продукте, не утечку pool и не исправление всех причин потерь. Допустимый legacy packet bound не сужен, очередь и контракт pinned-flow/nonblocking drop не менялись.
+
+Все шесть bidir-окон допущены по противоположным TX/RX ролям и зеркальным endpoint tuples client/server output. На 42 границах сохранены два действительных native-PID carrier sockets; поколение VPN не менялось в пределах сессии. Сверены raw iperf summaries, interval sender bytes/retransmits и TCP_INFO RTT; reverse-only клиент не является отправителем, его sender RTT остаётся неизвестным. Различия финального и интервального byte horizon сохранены без исправления исходных JSON. Счётчики показывают наблюдённые границы потерь, а не точную причину каждого kernel drop.
+
+Это новая популяция текущего продукта. Она не дописывается к историческому candidate/baseline набору, не заменяет role-invalid окно и не измеряет before/after эффект F030. Историческое снижение legacy download на 6,63% и N2 bidir остаются со своими исходными бинарниками и датами. Первая подготовка отказала до лабы из-за смешения whole-worker и отдельно квалифицированного CLI статусов; отказ сохранён. Следующий интерактивный контроллер исчез до завершения: одно окно сохранено отдельно, его ресурсы архивированы и очищены, host/staged CLI восстановлены. Финальный контроллер запускался скрыто вне интерактивного job; пароль передан только через stdin.
+
+Фактический прогон занял 514.06 секунды при measurement budget 900 секунд. Полный host/firewall/routes/resolver/services и staged CLI сохранены. Собственные процессы/namespaces/root и удалённый архив удалены после проверки inode, PID, SHA и полного archive inventory. Оригинальный полный архив и raw сохранены. Долг актуального legacy/mux измерения закрыт в этом объёме; отсутствие всех потерь или закрытие Q36 не заявлено. Q29/Q31/Q34/Q36 открыты, 33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE. Evidence: `release/certification/evidence/q36-current-legacy-mux-20261014.json`.

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v253 -->
+<!-- normative-sync: full-system-audit-v254 -->
 
 **Current result, 14 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
 
@@ -2977,3 +2977,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 **14 October: current SDK/IPK after F030 qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): stock SDK 24.10.4 with private official Rust 1.89; client-only Compile/Install/BuildPackage, 7 opkg, 9 CLI/INI and 533 notices PASS. Child cleanup and partial logging on timeout fixed and verified with a real negative test. Owned resources cleaned, production preserved. Full feed rustc/std/cargo bootstrap remains unexecuted; physical router USER_EXCLUDED, public CI/release open. 33/37, NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: F459 / Q34-F013 closed for the current panel graph.** [Client supply](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): adopted Tailwind 4 compiler API removes braces/CLI/watcher chain. Fresh npm audit: old graph exit 1 / five affected entries; current exit 0 / zero. CSS/build/watch/template inputs and previous 29 Linux / 29 Windows, 36 variants / 96 states, 131 HTTP checks checked without rerunning. Cache removed; whole Q34 remains open, 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: current legacy/mux cohort qualified.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 fresh current-product sessions / 18 windows / 3 paired repeats; all 6 bidir endpoint-role checks, exact current CLI/source/host/archive/cleanup PASS. Historical invalid window and before/after results retained separately; no default change, rebuild or general performance PASS. 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.

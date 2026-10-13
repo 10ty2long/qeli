@@ -401,3 +401,24 @@ All 20 required criteria passed with current CLI `6f617bdcab5aecf3068ffa9bd6a110
 This is a new execution after the Rust patch, not old evidence transferred across a core delta. Original execution commit `55eb810865e290e427f6cd2b5838e4278aa304bf`, actual CLI build `e0ce217b630d9dfd7db5f59936bb41e6d68eb69d`; their build inputs match. Raw logs/archives verified by SHA. Owned root/archive/unit removed; host/firewall/routes/DNS/accounts, production processes and staged CLI preserved. Certification uses fresh results and retains the superseded manifest separately. Subsequent applicability is restricted to four Markdown report/plan files; original execution time and identity remain unchanged.
 
 Required functional qualification debt for adopted Q36-F030 is closed alongside earlier native A/B, ABI/JNI and package checks. Legacy QueueFull, the 6.63% legacy download decrease, one bidirectional outlier and TUN losses remain visible; no universal zero-loss/performance PASS. Q36 remains IN_PROGRESS, as do Q29/Q31/Q34. Overall 33/37 (89.2%); no push/deploy/release.
+
+## 14 October: fresh current-product legacy/mux cohort
+
+Current source commit `3a7e25dcdf1af6f3a761dfa883851df807535fb0` ran six fresh sessions / 18 eight-second windows: TCP raw P1, fixed two carriers, legacy `off` versus recordizer `required`, three paired upload/download/bidir repeats. Repeat two reverses protocol and direction order. Every server and client uses the same already-built CLI `6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363`, actual build commit `e0ce217b630d9dfd7db5f59936bb41e6d68eb69d`. The full `qeli/` Git tree matches that build commit; 919 current inputs and exact measurement helpers are frozen. No compilation or MTU/default/queue/qdisc/pacing change.
+
+Medians of three sessions; native/TUN drops below sum counter deltas across boundaries around nine windows per protocol, not individual iperf packet correspondence.
+
+|Protocol|Upload Mbps|Download Mbps|Bidir up/down Mbps|Native uplink/downlink drops|TUN TX drops client/server|
+|---|---:|---:|---:|---:|---:|
+|Legacy|583.38|709.27|105.73/666.36|43676/0|0/0|
+|Recordizer|1214.62|1448.40|490.63/1166.87|0/0|1723/1684|
+
+Recordizer relative to legacy: median paired upload change +108.20%, download +104.21%, bidir sum +113.10%. All three samples, min/max/spread, direction tradeoffs, CPU/RSS/steal and counters are retained. Maximum observed worker RSS is 95020 KiB. These are finite same-VM sibling-namespace windows, not WAN/physical capacity or a general performance PASS.
+
+All observed legacy native uplink losses (43676) are QueueFull; other uplink reasons and native downlink losses are zero. Recordizer has zero native uplink/downlink drops in all nine windows, while TUN losses remain in the table. This confirms remaining legacy queue pressure on the current product, not a pool leak or an all-loss fix. The accepted legacy packet bound, queue and pinned-flow/nonblocking-drop contract were unchanged.
+
+All six bidir windows were admitted with opposite TX/RX roles and mirrored endpoint tuples in client/server output. Two real native-PID carrier sockets were retained at 42 boundaries; VPN generation stayed unchanged within each session. Raw iperf summaries, sender interval bytes/retransmits and TCP_INFO RTT were checked; a reverse-only client is not a sender and its sender RTT remains unknown. Final/interval byte horizon differences are retained without editing raw JSON. Counters show observed loss boundaries, not the exact cause of every kernel drop.
+
+This is a fresh current-product population. It is not appended to the historical candidate/baseline set, does not replace the role-invalid window, and is not a before/after F030 effect measurement. Historical legacy download -6.63% and N2 bidir retain their own binary identities and dates. First preparation refused before lab access because whole-worker and independently qualified CLI statuses were confused; refusal retained. A subsequent interactive controller disappeared before completion: one window is retained separately, its resources archived and cleaned, host/staged CLI restored. The final controller ran hidden outside the interactive job; the password was passed only via stdin.
+
+Actual runtime was 514.06 seconds with a 900-second measurement budget. Full host/firewall/routes/resolver/services and staged CLI were preserved. Owned processes/namespaces/root and remote archive were removed after inode/PID/SHA/full archive inventory checks. Original full archive and raw are retained. Current legacy/mux measurement debt is closed within this scope; no all-loss fix or whole-Q36 closure is claimed. Q29/Q31/Q34/Q36 remain open, 33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE. Evidence: `release/certification/evidence/q36-current-legacy-mux-20261014.json`.

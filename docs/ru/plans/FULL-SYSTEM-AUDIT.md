@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v253 -->
+<!-- normative-sync: full-system-audit-v254 -->
 
 **Текущий итог, 14 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2990,3 +2990,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **14 октября: актуальный SDK/IPK после F030 проверен.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): штатный SDK 24.10.4 с приватным официальным Rust 1.89; client-only Compile/Install/BuildPackage, 7 opkg, 9 CLI/INI и 533 notices — PASS. Исправлена очистка дочерних процессов и сохранение журналов при timeout; реальный отрицательный тест PASS. Собственные ресурсы очищены, production сохранён. Full feed rustc/std/cargo bootstrap ещё не выполнен; physical router USER_EXCLUDED, public CI/release открыты. 33/37, NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: F459 / Q34-F013 закрыт для текущего графа панели.** [Client supply](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): принятый Tailwind 4 compiler API удалил braces/CLI/watcher цепочку. Свежий npm audit: старый граф exit 1 / пять затронутых записей; текущий exit 0 / ноль. CSS/build/watch/template входы и прежние 29 Linux / 29 Windows, 36 variants / 96 states, 131 HTTP checks сверены без повторного запуска. Cache удалён; Q34 целиком открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: актуальный legacy/mux cohort проверен.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 fresh current-product sessions / 18 windows / 3 paired repeats; all 6 bidir endpoint-role checks, exact current CLI/source/host/archive/cleanup PASS. Historical invalid window and before/after results retained separately; no default change, rebuild or general performance PASS. 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
