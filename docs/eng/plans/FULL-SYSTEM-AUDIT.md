@@ -2934,3 +2934,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 [Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
+
+
+**13 October: directional control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 fresh sessions/9 TCPraw P1 up/down/bidir windows: upload-only median139.93Mbps at server16.33%/client19.67% CPU; download-only692.55Mbps. Asymmetry persists without concurrent payload; all6 unidirectional retransmits match sending TUN TX drops, client native drops0. Full host/source/archive/cleanup PASS; exact cause remains open. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%).

@@ -52,3 +52,26 @@ Three more sessions/12 windows compare client txqueuelen 500/1000 within the sam
 In 3/3 TCP pairs, aggregate goodput at 1000 was below 500. Median paired changes: uplink +27.01%, downlink -44.88%, sum -25.10%. This measures queue influence on the directional balance. The increase is not qualified as a general performance fix; defaults remain unchanged and the final original TCP-asymmetry cause stays open. All individual pairs are retained.
 
 Paired intervention evidence: `release/certification/evidence/q36-queue-length-control-20261013.json`.
+
+
+## Separate TCP directions: 13 October
+
+Following the queue-length control, **3 fresh sessions /9 eight-second windows** measured TCP raw P1 upload, download and bidirectional traffic within the same generation in each session. Repeat2 reverses order. Original queue lengths/settings retained. IPv4/IPv4, same two-vCPU VM, affinity0–1/nice0, TUN1400/carrier1500, CLI52511cebd43a and all916 native/config/helper inputs unchanged. No tracer, BPF or rebuild. Earlier populations remain separate.
+
+Medians of three sessions; process CPU percentages use one core as100%. A dash means no payload was requested in that direction, not a measured zero.
+
+|Window|Delivered ↑ Mbps|Delivered ↓ Mbps|Server CPU %|Client CPU %|Client TUN TX drops|Server TUN TX drops|
+|---|---:|---:|---:|---:|---:|---:|
+|Upload only|139.93|—|16.33|19.67|53.00|0.00|
+|Download only|—|692.55|78.11|73.33|0.00|1019.00|
+|Bidirectional|172.11|567.44|79.22|77.88|270.00|298.00|
+
+Upload is low without concurrent download. Upload-only process CPU is substantially below one fully occupied core, so bidirectional CPU competition alone does not explain this population. Window-average CPU does not exclude short saturation episodes.
+
+All three upload-only sender retransmit counts equal client TUN TX drops: **34/62/53**. Download-only counts equal server TUN TX drops: **1034/1019/952**. Bidirectional counts do not universally match; TUN also carries ACK/control packets. Client native TCP uplink/downlink drop counters remained unchanged in all nine windows. Equal aggregate counts associate these results with TUN losses; they do not establish individual packet correspondence, driver-drop mechanism, ACK-delay stage or an asymmetry fix. Eight-second windows do not exclude congestion/slow-start effects; TCP-over-TCP and buffer limits remain hypotheses.
+
+Source review: both senders write a complete encrypted record through write_all_flush; separate header/body writes were not found. Client TUN read pool is bounded to64 buffers/4MiB, with fq_codel/500; server uses a shared32MiB pool and multiqueue/1000. These differences are not causal proof. No speculative product queue/pool increase was applied.
+
+The external Windows collector wrote local log snapshots in CP1251/CRLF. The initial UTF8-only qualifier refused; its second revision refused nonnumeric TCP-only loss/jitter=None. Both refusals are retained. The final qualifier reads complete original UTF8 logs from the SHA-verified cleanup archive and verifies each local snapshot as its exact normalized text prefix. None remains in samples without zero imputation or numeric summaries. All38 raw JSON /6 logs are SHA-bound; no network rerun. The future external collector template writes explicit UTF8 bytes; it has not been claimed as another runtime. The common benchmark helper already writes UTF8 worker logs and is unchanged.
+
+Full source/host/service/staged CLI/archive/cleanup gates PASS; owned processes/namespaces and remote root/archive removed. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED. Q36 remains open;33/37 (89.2%); NO_PUSH_DEPLOY_RELEASE.

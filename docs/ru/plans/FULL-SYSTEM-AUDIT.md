@@ -2947,3 +2947,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 [Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
+
+
+**13 October: directional control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 новые сессии/9 окон TCPraw P1 up/down/bidir: upload-only median139,93Mbps при CPU server16,33%/client19,67%; down-only692,55Mbps. Асимметрия сохраняется без встречного трафика; во всех6 unidirectional окнах retransmits совпали с отправляющим TUN TX drops, native client drops0. Полный host/source/archive/cleanup PASS; точная причина не закрыта. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%).
