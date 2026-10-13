@@ -1,6 +1,8 @@
 # Q34: зависимости сборки клиентов и подписи Windows
 
-<!-- normative-sync: q34-client-supply-v4 -->
+<!-- normative-sync: q34-client-supply-v5 -->
+
+**Актуальный статус, 14 октября:** F459 / Q34-F013 закрыт для текущего исходного дерева: принятый граф Tailwind 4 не содержит braces, свежий npm audit возвращает 0. Датированные результаты ниже сохраняют прежние отказы; итоговая проверка описана в конце отчёта. Q34 остаётся IN_PROGRESS; полный план 33/37 (89,2%).
 
 8 октября 2026. F455–F458 / Q34-F009–F012 закрыты в указанном ниже объёме. F459 / Q34-F013 остаётся OPEN. Q34 IN_PROGRESS; полный аудит 30/37 DONE (81.1%), осталось7. Только локальные изменения; без push, deployment и release.
 
@@ -188,3 +190,15 @@ F459/Q29/Q30/Q31/D06accepted/USER_EXCLUDED и expected release publisher OPEN с
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 F493 evidence: `q34-apk-consumers-20261009`; SEALED 90 files / 1637228 bytes; manifest SHA256 `c6888dfc8edc8712f6f92d98fa9165c5e93e350830c1a2f8b0d9c994e349ac84`.
+
+## 14 октября: F459 закрыт после принятия замены сборки CSS
+
+Проверен текущий commit `67b418ddd5cc8a00f495eb744e77fd18cc73302c`. Вместо Tailwind 3 CLI используется публичный compiler API Tailwind 4.3.3 (`@tailwindcss/node` и `@tailwindcss/oxide`), а watch реализован локальным кодом. Во всех 45 package entries lockfile, включая optional platform packages, отсутствуют braces, micromatch, chokidar и `@tailwindcss/cli`; dependency и optionalDependency edges также проверены. Изменение уже принято коммитом `da776fb892bd6c02b34194a8e772770744832a77`; в этом проходе зависимости не обновлялись.
+
+Свежий `npm audit --package-lock-only --ignore-scripts --json --audit-level=low` через официальный registry выполнен на двух неизменённых Git-снимках. Старый граф `3638b43c145ae2dc9ca609c0811d0b56175548b3` вернул exit 1 и пять high-записей от GHSA-vfj7-8cjw-p6xm. Текущий граф вернул exit 0 и ноль известных уязвимостей всех уровней. Node v24.14.0, npm 11.9.0; suppression, audit=false и audit fix не применялись. Это проверка известных advisory для конкретного lockfile на дату запроса, не доказательство отсутствия неизвестных дефектов. [Upstream advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) остаётся без исправленной версии; находка закрыта удалением уязвимой цепочки, а не заявлением об upstream patch.
+
+Точные CSS/build/watch/template входы сверены с уже выполненными 29 Linux и 29 Windows checks. Встроенный CSS совпал по SHA с Linux build и финальными 36 browser variants / 96 paired states; ноль наблюдавшихся JS/geometry/font/spacing/text/aria отличий. Деревья `qeli/web-assets` и `qeli/src/web` не изменились после принятия патча. Ранее выполненные 131 HTTP asset/auth/CSP/CSRF/INI checks сохранены с собственными датами и CLI SHA; новой сборки, browser или HTTP runtime в этом проходе не было. Исторические F459_closed=false в кандидатных пакетах не переписаны.
+
+Первоначальный запрос в sandbox не прошёл сетевые ограничения; JSON ошибки сохранён отдельно. Разрешённый запрос к тому же официальному endpoint прошёл. Собственный npm cache (5458196 байт) удалён, node_modules не создавались, глобальный cache и исходники не менялись.
+
+F459 / Q34-F013 CLOSED в текущем локальном коде. Q34 целиком открыт: hosted exact-source CI, публичный pin/source publication и полный release admission этим результатом не подтверждены. Актуальные SDK/IPK/native/Linux20 имеют отдельные evidence; full feed compiler bootstrap относится к Q31 и остаётся открытым. 33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE. Evidence: `release/certification/evidence/q34-f459-current-graph-20261014.json`; локальные raw: `audit-debt-20260924/q34-f459-current-graph-r2-20261014`.
