@@ -17,6 +17,21 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ManifestInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    @Test fun recoveryRecordIsPrivateSameProcessAndSpecialUseOnly() {
+        val service = context.packageManager.getServiceInfo(
+            ComponentName(context, VpnRecoveryService::class.java), PackageManager.GET_META_DATA,
+        )
+        assertFalse(service.exported)
+        assertEquals(context.applicationInfo.processName, service.processName)
+        assertEquals(0, service.flags and android.content.pm.ServiceInfo.FLAG_STOP_WITH_TASK)
+        if (Build.VERSION.SDK_INT >= 34) {
+            assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, service.foregroundServiceType)
+            assertTrue(context.packageManager.getProperty(
+                "android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE",
+                ComponentName(context, VpnRecoveryService::class.java),
+            ).string?.isNotBlank() == true)
+        }
+    }
     @Test fun vpnServiceHasThePlatformSpecialUseProperty() {
         assumeTrue(Build.VERSION.SDK_INT >= 34)
         val property = context.packageManager.getProperty(

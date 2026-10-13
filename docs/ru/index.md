@@ -541,3 +541,6 @@
 - [Q36: TUN stage и overhead наблюдателя](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
 
 - [Q36: текущая статистическая популяция](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
+
+
+Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.

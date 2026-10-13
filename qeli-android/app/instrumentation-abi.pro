@@ -100,7 +100,10 @@
 }
 -keep,allowaccessmodification class com.qeli.ProfileStore {
   public java.lang.String activeProfileConfigText(android.content.Context);
+  public void clearConnectionConfig(android.content.Context);
+  public java.lang.String connectionConfigText(android.content.Context);
   public com.qeli.ProfileStore$SecureStore open(android.content.Context);
+  public void saveConnectionConfig(android.content.Context,java.lang.String);
   com.qeli.ProfileStore INSTANCE;
 }
 -keep,allowaccessmodification class com.qeli.ProfileStore$SecureStore {
@@ -118,6 +121,7 @@
 -keep,allowaccessmodification class com.qeli.ProfileStore$SecureStore$StaleVersionException {
 }
 -keep,allowaccessmodification class com.qeli.ProfileStore$SecureStore$Version {
+  public java.lang.Object getEncrypted();
   public boolean getPresent();
 }
 -keep,allowaccessmodification class com.qeli.R$string {
@@ -166,6 +170,8 @@
 }
 -keep,allowaccessmodification enum com.qeli.VpnConnectRequest$Permission {
   com.qeli.VpnConnectRequest$Permission NOTIFICATION;
+}
+-keep,allowaccessmodification class com.qeli.VpnRecoveryService {
 }
 -keep,allowaccessmodification class com.qeli.VpnServiceImpl {
   public <init>();

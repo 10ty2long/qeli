@@ -31,6 +31,7 @@ import org.json.JSONObject
  */
 object ProfileStore {
     const val KEY_PROFILES = "profiles_json"
+    internal const val KEY_CONNECTION_INI = "connection_recovery_ini"
     const val MAX_PROFILE_SET_BYTES = ProfileLimits.MAX_ARCHIVE_BYTES
     const val MAX_PROFILES = ProfileLimits.MAX_PROFILES
     private const val PREFS_SECURE = "vpn_secure_v2"
@@ -79,7 +80,7 @@ object ProfileStore {
         return store.also { singleton = it }
     }
 
-    /** Minimal encrypted preference surface. Profiles are the only secret value stored here. */
+    /** Minimal encrypted preference surface for profiles and the active connection snapshot. */
     class SecureStore internal constructor(
         context: Context,
         private val preferenceName: String,
@@ -197,6 +198,26 @@ object ProfileStore {
                 return editor.commit()
             }
 
+        }
+    }
+
+    /** The requested connection is independent of subsequent edits/selection in the UI. */
+    fun saveConnectionConfig(context: Context, ini: String) {
+        val store = open(context)
+        check(store.edit().putString(KEY_CONNECTION_INI, ini).commit()) {
+            "Could not persist connection recovery configuration"
+        }
+        check(store.getString(KEY_CONNECTION_INI, null) == ini) {
+            "Connection recovery configuration failed read-back verification"
+        }
+    }
+
+    fun connectionConfigText(context: Context): String? =
+        open(context).getString(KEY_CONNECTION_INI, null)
+
+    fun clearConnectionConfig(context: Context) {
+        check(open(context).edit().remove(KEY_CONNECTION_INI).commit()) {
+            "Could not remove connection recovery configuration"
         }
     }
 

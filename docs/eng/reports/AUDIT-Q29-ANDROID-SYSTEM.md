@@ -101,3 +101,6 @@ Local manifest read failed before runtime dispatch. One owned staging root was r
 <!-- q29-publication-contract-20261012 -->
 
 APPLIED/CONNECTED boundary reviewed: first sampled sockets after APPLIED started before CONNECTED;8 interval refusals and80/80 post-CONNECTED PASS in each retained run. Interpretation question closed, original FAIL_POST_PLAN_BLOCKING retained. The helper already gates post-CONNECTED;6 methods PASS. No new runtime/builds. SIGKILL/DNS compatibility FAIL and Q29 IN_PROGRESS remain. [Current contract](AUDIT-Q29-ANDROID-CURRENT-VPN.md).
+
+
+Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](AUDIT-Q29-ANDROID-RECOVERY.md).

@@ -2779,3 +2779,8 @@ After process death,Always-on VPN depends on Android restarting its service. The
 During Android connection, `Native NetworkPlan APPLIED` means plan application and TUN handoff to the core; system VPN publication may still be pending. Wait for Connected / `Android VPN CONNECTED` before checking traffic. With Block connections without VPN enabled, early sockets during connection may be refused. If a fresh request started after CONNECTED fails, retain its start time and VpnSvc/ConnectivityService logcat: investigate it as a separate failure rather than disabling blocking. Lab samples qualified delivery after CONNECTED, without guaranteeing zero delay for every socket on every device.
 
 [Audit](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).
+
+
+### Android: recovery after process death
+
+Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Details](../reports/AUDIT-Q29-ANDROID-RECOVERY.md).

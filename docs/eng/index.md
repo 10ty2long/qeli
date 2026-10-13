@@ -541,3 +541,6 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q36: TUN stage and observer overhead](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
 
 - [Q36: current statistical population](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
+
+
+Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.

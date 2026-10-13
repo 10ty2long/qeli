@@ -2928,3 +2928,6 @@ The overall count remains 32/37 (86.5%) without inferred module completion.
 ### 13 October: current Q36 statistical population
 
 [Current data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 fresh sessions/144 eight-second windows of all12 TCP/UDP bidir P1/P4 modes×3; median/spread/raw receiver/CPU/RSS/counters qualified. Loss/outliers retained; full host/archive/cleanup PASS. Not saturation capacity; TCP/ACK cause and load limits OPEN. Q36 IN_PROGRESS,33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+
+Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.

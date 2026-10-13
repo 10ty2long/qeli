@@ -436,7 +436,7 @@ full release admission remain separate checks.
 
 ### Восстановление после смерти процесса
 
-Always-on запрашивает перезапуск у Android. На одном API34 AVD automatic SIGKILL recovery не прошла; ручное восстановление с проверкой итоговой политики блокировки проверено отдельно. Подробнее: [диагностика](../docs/ru/manuals/TROUBLESHOOTING.md) и [текущий scope](../docs/ru/reports/AUDIT-Q29-ANDROID-SYSTEM.md).
+Qeli сохраняет зашифрованный INI текущего соединения и использует закрытую запись восстановления Android. На API34 после SIGKILL проверено восстановление аутентифицированного VPN; Disconnect и отзыв разрешения останавливают запись. Ограниченные окна наблюдения и оставшийся DNS/null: [результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-RECOVERY.md).
 
 
 ### Готовность подключения

@@ -2941,3 +2941,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 ### 13 октября: текущая статистическая популяция Q36
 
 [Текущий data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 свежих сессий/144 восьмисекундных окна всех12 режимов TCP/UDP bidir P1/P4×3, медианы/разброс/raw receiver/CPU/RSS/counters квалифицированы. Потери и выбросы сохранены; полный host gate/архив/очистка PASS. Не saturation capacity; причина TCP/ACK и пределы нагрузки OPEN. Q36 IN_PROGRESS,33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+
+Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.

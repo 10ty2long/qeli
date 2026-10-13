@@ -35,6 +35,34 @@ class ProfileStoreInstrumentedTest {
     }
 
     @Test
+    fun connectionSnapshotSurvivesProfileSelectionAndIsEncryptedSeparately() {
+        val store = ProfileStore.open(context)
+        val previous = store.getString(ProfileStore.KEY_CONNECTION_INI, null)
+        val profilesVersion = store.version(ProfileStore.KEY_PROFILES)
+        val ini = VpnConfig.fromIni("[qeli]\nserver = vpn.example:8443\nuser = recovery\npass = recovery-fixture-secret\nmtu_probe = off\n").toIni()
+        try {
+            ProfileStore.saveConnectionConfig(context, ini)
+            assertEquals(ini, ProfileStore.connectionConfigText(context))
+            assertEquals(8443, VpnConfig.fromIni(ProfileStore.connectionConfigText(context)!!).port)
+            assertEquals(profilesVersion, store.version(ProfileStore.KEY_PROFILES))
+            val envelope = store.version(ProfileStore.KEY_CONNECTION_INI).encrypted.toString()
+            assertFalse(envelope.contains("recovery-fixture-secret"))
+            assertThrows(SecurityException::class.java) {
+                // AAD binds ciphertext to its entry, preventing substitution for profiles.
+                val backing = context.getSharedPreferences("vpn_secure_v2", Context.MODE_PRIVATE)
+                backing.edit().putString("recovery-substitution-test", envelope).commit()
+                try { store.getString("recovery-substitution-test", null) }
+                finally { backing.edit().remove("recovery-substitution-test").commit() }
+            }
+            ProfileStore.clearConnectionConfig(context)
+            assertEquals(null, ProfileStore.connectionConfigText(context))
+        } finally {
+            if (previous != null) ProfileStore.saveConnectionConfig(context, previous)
+            else ProfileStore.clearConnectionConfig(context)
+        }
+    }
+
+    @Test
     fun profileRoundTripsWithoutPlaintextAtRest() {
         val secret = "[server]\naddress = vpn.example\npassword = never-store-this-clear"
         val store = ProfileStore.SecureStore(context, prefsName, keyAlias)

@@ -171,7 +171,7 @@ def system_lifecycle(arun, evidence, echo, result, *, dot=None):
     settings = AndroidVpnSettings(arun, evidence, result, "Qeli")
     open_settings, switch = settings.open, settings.switch
     def logs():
-        return arun("shell", "logcat", "-d", "-s", "VpnSvc:D", "Q29System:I").stdout
+        return arun("shell", "logcat", "-d", "-s", "VpnSvc:D", "VpnRecovery:I", "Q29System:I").stdout
     def probe(tag, expect_reply, label=None, family="ipv4", protocol="udp", payload_bytes=None):
         label = label or tag
         assert family in ("ipv4", "ipv6") and protocol in ("tcp", "udp")
@@ -315,6 +315,7 @@ def system_lifecycle(arun, evidence, echo, result, *, dot=None):
         (evidence / "before-sigkill-services.txt").write_text(arun("shell", "dumpsys", "activity", "services", "com.qeli").stdout)
         (evidence / "before-sigkill-vpn.txt").write_text(arun("shell", "dumpsys", "vpn_management").stdout)
         arun("shell", "su", "0", "kill", "-9", old_pid)
+        recovery_started = time.monotonic()
         recovery_error = None
         try:
             wait_until(lambda: logs().count("Native NetworkPlan 1 APPLIED:") > before_applied, "OS did not restore authenticated VPN after SIGKILL", 45)
@@ -329,8 +330,19 @@ def system_lifecycle(arun, evidence, echo, result, *, dot=None):
         new_pid = arun("shell", "pidof", "com.qeli", check=False).stdout.strip()
         if recovery_error is None:
             assert new_pid and new_pid != old_pid
-            assert "Android redelivered" in logs(), "missing actual redelivery evidence"
-            result["sigkill_recovery"] = dict(status="PASS", old_pid=old_pid, new_pid=new_pid, redelivery=True)
+            recovery_log = logs()
+            new_process_lines = "\n".join(line for line in recovery_log.splitlines()
+                if re.search(r"\s" + re.escape(new_pid) + r"\s+\d+\s+[VDIWEF]\s", line))
+            redelivery = "Android redelivered" in new_process_lines
+            sticky_recovery = (
+                "Android restarted the recovery record; requesting desired VPN recovery" in new_process_lines
+                and "Android recovery record requested the desired VPN after process death" in new_process_lines
+            )
+            assert redelivery or sticky_recovery, "missing recovery trigger in the new process"
+            assert new_process_lines.count("Native NetworkPlan 1 APPLIED:") == 1, "duplicate VPN generation after recovery"
+            result["sigkill_recovery"] = dict(status="PASS", old_pid=old_pid, new_pid=new_pid,
+                redelivery=redelivery, sticky_recovery=sticky_recovery,
+                seconds=time.monotonic()-recovery_started, one_network_plan=True)
             state = arun("shell", "dumpsys", "activity", "services", "com.qeli").stdout
             assert "isForeground=true" in state, state
             (evidence / "sigkill-services.txt").write_text(state)
@@ -343,6 +355,10 @@ def system_lifecycle(arun, evidence, echo, result, *, dot=None):
         arun("shell", "am", "force-stop", "com.qeli")
         wait_until(lambda: not re.search(r"^\d+: tun\d", arun("shell", "su", "0", "ip", "-o", "link", "show").stdout, re.M), "force-stop retained TUN")
         result["app_probe_lockdown_without_VPN"] = probe("Q29BLOCKED", False)
+        time.sleep(30)
+        assert not arun("shell", "pidof", "com.qeli", check=False).stdout.strip(), "force-stopped VPN resurrected"
+        assert "VpnRecoveryService" not in arun("shell", "dumpsys", "activity", "services", "com.qeli").stdout
+        result["force_stop_no_resurrection_seconds"] = 30
         # Force-stop is a user stop; clear the package's stopped state by an explicit launch.
         arun("shell", "am", "start", "-n", "com.qeli/.MainActivity")
         recovery_applied = logs().count("Native NetworkPlan 1 APPLIED:")
@@ -376,6 +392,11 @@ def system_lifecycle(arun, evidence, echo, result, *, dot=None):
     (evidence / "revoked-consent.txt").write_text(consent)
     assert "ignore" in consent or "deny" in consent, consent
     result["system_revoke"] = "PASS"
+    time.sleep(30)
+    stopped = arun("shell", "dumpsys", "activity", "services", "com.qeli").stdout
+    assert "VpnServiceImpl" not in stopped and "VpnRecoveryService" not in stopped, "revoked VPN resurrected"
+    assert not re.search(r"^\d+: tun\d", arun("shell", "su", "0", "ip", "-o", "link", "show").stdout, re.M)
+    result["revoke_no_resurrection_seconds"] = 30
     (evidence / "system-lifecycle-logcat.log").write_text(logs())
     result["system_echo_receipts"] = len(echo.rows)
 

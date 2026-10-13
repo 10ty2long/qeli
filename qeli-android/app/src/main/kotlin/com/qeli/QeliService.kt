@@ -1,10 +1,6 @@
 package com.qeli
 
 import android.Manifest
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -162,8 +158,9 @@ class VpnServiceImpl : VpnService() {
     private var trustedWifiLocationTypeActive = false
     private var currentNotificationText: String? = null
 
-    private val CHANNEL_ID = "vpn_obfuscated_channel"
-    private val NOTIFICATION_ID = 1001
+    private val NOTIFICATION_ID = VpnForegroundNotification.ID
+    private var recoveryConfigReady = false
+    private var recoveryRecordArmed = false
 
     private class ServerKickException(message: String) : IllegalStateException(message)
 
@@ -176,6 +173,7 @@ class VpnServiceImpl : VpnService() {
         const val ACTION_CONNECT = "com.qeli.CONNECT"
         const val ACTION_RECONFIGURE = "com.qeli.RECONFIGURE"
         const val ACTION_DISCONNECT = "com.qeli.DISCONNECT"
+        internal const val ACTION_RECOVER_DESIRED = "com.qeli.RECOVER_DESIRED"
         // Non-exported and accepted only by a debuggable build. CI grants Android's
         // ACTIVATE_VPN app-op, then executes the production Builder path on a real emulator.
         internal const val ACTION_DEBUG_TUN_SELF_TEST = "com.qeli.DEBUG_TUN_SELF_TEST"
@@ -330,7 +328,31 @@ class VpnServiceImpl : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val redelivered = flags and START_FLAG_REDELIVERY != 0
+        // A late redelivery must never override an explicit Disconnect/revocation. Fresh
+        // always-on starts remain system-owned and may select the current saved profile.
+        if (redelivered && !connectionDesired()) {
+            rejectForegroundConnect("VPN redelivery ignored: connection is no longer desired")
+            return START_NOT_STICKY
+        }
         when (intent?.action) {
+            ACTION_RECOVER_DESIRED -> {
+                if (!connectionDesired() || VpnService.prepare(this) != null) {
+                    rejectForegroundConnect("VPN recovery ignored: connection stopped or consent revoked")
+                    return START_NOT_STICKY
+                }
+                // Android may also redeliver the original action. Never reset diagnostics,
+                // Trusted Wi-Fi state, or a live native generation for the second callback.
+                if (!hasConnectionController() && !stopping && teardownJob?.isActive != true) {
+                    val config = recoveryConfig()
+                    if (config == null) {
+                        rejectForegroundConnect("VPN recovery unavailable: no usable connection snapshot")
+                        return START_NOT_STICKY
+                    }
+                    prepareDiagnosticSession("process-recovery", redelivered = true)
+                    broadcastLog("Android recovery record requested the desired VPN after process death")
+                    startTrustedAware(config)
+                }
+            }
             ACTION_DEBUG_TUN_SELF_TEST -> {
                 if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE == 0) {
                     Log.w("VpnSvc", "Ignoring TUN self-test action in a non-debuggable build")
@@ -352,7 +374,9 @@ class VpnServiceImpl : VpnService() {
                 return START_NOT_STICKY
             }
             ACTION_CONNECT, ACTION_RECONFIGURE -> {
-                val config = if (Build.VERSION.SDK_INT >= 33) {
+                val config = if (redelivered) {
+                    recoveryConfig()
+                } else if (Build.VERSION.SDK_INT >= 33) {
                     intent.getSerializableExtra(EXTRA_CONFIG, VpnConfig::class.java)
                 } else {
                     @Suppress("DEPRECATION")
@@ -377,6 +401,7 @@ class VpnServiceImpl : VpnService() {
                         rejectForegroundConnect("Invalid profile: ${rejected.message}")
                     }
                     intent.action == ACTION_RECONFIGURE -> requestReconfiguration(config)
+                    hasConnectionController() -> broadcastLog("Connect ignored because a VPN controller is already active")
                     else -> {
                         prepareDiagnosticSession("app", redelivered)
                         if (redelivered) {
@@ -415,10 +440,7 @@ class VpnServiceImpl : VpnService() {
                 if (activeConfig != null || trustedWaitConfig != null) {
                     reevaluateTrustedWifi()
                 } else if (connectionDesired()) {
-                    val cfg = ProfileStore.activeProfileConfigText(this)
-                        ?.let { raw ->
-                            runCatching { VpnConfig.parse(raw) }.getOrNull()
-                        }
+                    val cfg = recoveryConfig()
                     if (cfg != null) startTrustedAware(cfg)
                     else stopVpn("No usable active profile")
                 }
@@ -433,9 +455,10 @@ class VpnServiceImpl : VpnService() {
             // alternative to autostart, which made this the advertised path.
             // (Audit 2026-07-27, M1)
             VpnService.SERVICE_INTERFACE -> {
+                if (hasConnectionController()) return START_REDELIVER_INTENT
                 // Strict parsing rejects invalid saved profiles before always-on activation;
                 // the failure is reported by the no-usable-profile branch below.
-                val cfg = ProfileStore.activeProfileConfigText(this)
+                val cfg = if (redelivered) recoveryConfig() else ProfileStore.activeProfileConfigText(this)
                     ?.let { runCatching { VpnConfig.parse(it) }.getOrNull() }
                 if (cfg == null || cfg.serverAddress.isBlank() || cfg.serverAddress == "SERVER_IP_OR_HOST") {
                     // Nothing to connect. Say so loudly: with lockdown on, the user sees a
@@ -586,8 +609,7 @@ class VpnServiceImpl : VpnService() {
     }
 
     private fun createNotificationChannel() {
-        getSystemService(NotificationManager::class.java)
-            .createNotificationChannel(NotificationChannel(CHANNEL_ID, s(R.string.notif_channel_name), NotificationManager.IMPORTANCE_LOW))
+        VpnForegroundNotification.createChannel(this)
     }
 
     /**
@@ -607,28 +629,7 @@ class VpnServiceImpl : VpnService() {
 
     private fun showNotification(text: String): Boolean {
         return try {
-            val tapIntent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                this, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            // "Disconnect" action → stop the tunnel from the notification shade without opening the app.
-            val disconnectPending = PendingIntent.getService(
-                this, 1, Intent(this, VpnServiceImpl::class.java).setAction(ACTION_DISCONNECT),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val notification = Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("Qeli")
-                .setContentText(text)
-                .setSmallIcon(android.R.drawable.ic_lock_lock)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .setVisibility(Notification.VISIBILITY_SECRET)
-                .addAction(Notification.Action.Builder(
-                    android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
-                    s(R.string.disconnect), disconnectPending).build())
-                .build()
+            val notification = VpnForegroundNotification.build(this, text)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // A connected SSID is location-sensitive even though Qeli only compares it
                 // locally. Add the location type only during a user-visible Activity lifetime;
@@ -681,6 +682,7 @@ class VpnServiceImpl : VpnService() {
         }
         broadcastStatus(STATUS_ERROR, message)
         showNotification(message)
+        disarmRecoveryRecord()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopping = true
         stopSelf()
@@ -703,11 +705,48 @@ class VpnServiceImpl : VpnService() {
             .getBoolean(MainActivity.PREF_CONNECTION_DESIRED, false)
 
     private fun setConnectionDesired(desired: Boolean) {
+        if (!desired) disarmRecoveryRecord()
         val stored = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(MainActivity.PREF_CONNECTION_DESIRED, desired)
             .commit()
         if (!stored) Log.e("VpnSvc", "Failed to persist connection_desired=$desired")
+        if (!desired) runCatching { ProfileStore.clearConnectionConfig(this) }
+            .onFailure { Log.e("VpnSvc", "Failed to remove connection recovery configuration") }
+    }
+
+    private fun hasConnectionController(): Boolean = transportCore != null || vpnInterface != null ||
+        transportJob?.isActive == true || pausedByTrustedWifi || trustedPauseInFlight
+
+    private fun recoveryConfig(): VpnConfig? = runCatching {
+        ProfileStore.connectionConfigText(this)?.let { VpnConfig.parse(it) }
+    }.getOrNull()
+
+    private fun saveRecoveryConfig(config: VpnConfig): Boolean {
+        val saved = runCatching {
+            ProfileStore.saveConnectionConfig(this, config.toIni())
+        }.isSuccess
+        if (!saved) {
+            rejectForegroundConnect("Could not persist connection recovery configuration")
+            return false
+        }
+        recoveryConfigReady = true
+        return true
+    }
+
+    private fun armRecoveryRecord() {
+        if (recoveryRecordArmed || !recoveryConfigReady || !connectionDesired()) return
+        try {
+            startForegroundService(Intent(this, VpnRecoveryService::class.java))
+            recoveryRecordArmed = true
+        } catch (error: Exception) {
+            Log.w("VpnSvc", "VPN recovery record could not be started", error)
+        }
+    }
+
+    private fun disarmRecoveryRecord() {
+        recoveryRecordArmed = false
+        stopService(Intent(this, VpnRecoveryService::class.java))
     }
 
     private fun diagnosticSessionId(): String {
@@ -787,6 +826,7 @@ class VpnServiceImpl : VpnService() {
     }
 
     private fun startTrustedAware(config: VpnConfig) {
+        if (!saveRecoveryConfig(config)) return
         trustedWaitConfig = config
         userRequestedDisconnect = false
         // A requested/system lockdown cannot coexist with an intentionally absent TUN.
@@ -839,6 +879,7 @@ class VpnServiceImpl : VpnService() {
             return
         }
         broadcastStatus(STATUS_WAITING_TRUSTED)
+        armRecoveryRecord()
     }
 
     @Synchronized
@@ -996,6 +1037,7 @@ class VpnServiceImpl : VpnService() {
             rejectForegroundConnect(error)
             return
         }
+        if (!saveRecoveryConfig(config)) return
         setConnectionDesired(true)
         if (transportCore == null && vpnInterface == null && transportJob?.isActive != true) {
             prepareDiagnosticSession("settings", redelivered = false)
@@ -1035,6 +1077,7 @@ class VpnServiceImpl : VpnService() {
             // recomputes the prepared-provider + secure-lockdown proof from live state.
             showNotification(killSwitchError)
             if (transportCore == null && vpnInterface == null) {
+                disarmRecoveryRecord()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopping = true // onDestroy must not replace the visible ERROR with DISCONNECTED
                 stopSelf()
@@ -1161,6 +1204,7 @@ class VpnServiceImpl : VpnService() {
             stopVpn("Notification permission denied")
             return
         }
+        armRecoveryRecord()
 
         // Publish the Job before it can enter JNI. Otherwise an immediate native failure
         // can call stopVpn before teardown has a runner to join.
@@ -2904,6 +2948,7 @@ class VpnServiceImpl : VpnService() {
                     startTrustedAware(reconfigure)
                     return@withContext
                 }
+                disarmRecoveryRecord()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 if (finalError == null) {
                     broadcastStatus(STATUS_DISCONNECTED)
