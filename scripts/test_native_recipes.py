@@ -676,6 +676,21 @@ class NativeRecipeTests(unittest.TestCase):
             self.assertIn("qeli_core::", source, target.name)
 
 
+    def test_retired_lab_rebuild_refuses_before_optional_imports(self):
+        script = Path(__file__).parent / "lab_sync_build.py"
+        # -S omits Paramiko: a refusal must happen before imports or SSH, even
+        # for old package commands and --help. No lab credentials are required.
+        for arguments in ([], ["--help"], ["package"], ["--unknown"]):
+            with self.subTest(arguments=arguments):
+                result = subprocess.run(
+                    [sys.executable, "-S", "-B", str(script), *arguments],
+                    capture_output=True, text=True, encoding="utf-8", timeout=10,
+                )
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual(result.stdout, "")
+                self.assertTrue(result.stderr.startswith("RETIRED:"), result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
     def test_lab_gate_syncs_integration_tests_and_their_release_fixture(self):
         source = (Path(__file__).parent / "lab_sync_build.py").read_text(encoding="utf-8")
         self.assertIn('"tests"', source)

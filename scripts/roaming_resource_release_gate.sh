@@ -77,7 +77,7 @@ require_result() {
 }
 
 verify_phase_output() {
-  local phase=$1 count
+  local phase=$1 count marker
   case "$phase" in
     tcp-wire-smoke) require_result "$phase" '^TCP roaming transport-mode matrix \(success\): 6 passed, 0 failed$' ;;
     udp-wire-smoke) require_result "$phase" '^UDP roaming transport-mode matrix \(success\): 4 passed, 0 failed$' ;;

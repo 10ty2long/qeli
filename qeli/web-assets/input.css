@@ -1,6 +1,46 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@config "./tailwind.config.js";
+@source "../src/web/templates";
+@source not inline("space-y-1 space-y-1.5 space-y-2 space-y-2.5 space-y-3 space-y-4 space-y-5");
+@import "./legacy-spacing.css";
+@theme {
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-900: #78350f;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-900: #1e3a8a;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-green-400: #4ade80;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-700: #b91c1c;
+  --color-red-900: #7f1d1d;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --default-ring-color: rgb(59 130 246 / 0.5);
+  --default-ring-width: 3px;
+  --radius-sm: 0.125rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-sm--line-height: 1.25rem;
+  --text-xs--line-height: 1rem;
+}
+@layer base {
+  *, ::before, ::after, ::backdrop, ::file-selector-button { border-color: #e5e7eb; }
+  option { padding: revert; }
+}
+
 
 /* ════════════════════════════════════════════════════════════════════════
    Self-hosted fonts (served from /assets/<name>.woff2 by the panel) — no Google
@@ -48,7 +88,7 @@
   --violet:#a78bfa; --amber:#ffb020; --host-memory:#f59e0b; --red:#ff5d6c;
   --grad-3:linear-gradient(110deg,#4a9eff,#16c8b6 52%,#00e676);
   --grad-ring:conic-gradient(from 135deg,#4a9eff,#16c8b6,#00e676,#16c8b6,#4a9eff);
-  --radius:16px; --radius-sm:11px;
+  --radius:16px; --qeli-radius-sm:11px;
   --glow-blue:0 0 40px -10px rgba(74,158,255,.55);
   --glow-green:0 0 40px -10px rgba(0,230,118,.5);
   --ease:cubic-bezier(.22,.61,.36,1);
@@ -277,7 +317,7 @@ select.inp.inp-fit{ width:var(--qeli-select-fit-width,auto); max-width:100%; fle
 .toggle-wrap{ cursor:pointer; flex-shrink:0; padding-top:2px; }
 .toggle-wrap:focus-visible{ outline:2px solid var(--blue); outline-offset:3px; border-radius:10px; }
 .toggle{ width:32px; height:18px; border-radius:9px; position:relative; transition:background-color 0.2s; }
-.toggle-dot{ position:absolute; top:2px; width:14px; height:14px; background:white; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.2s; }
+.toggle-dot{ position:absolute; top:2px; width:14px; height:14px; background:white; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:transform 0.2s,translate 0.2s; }
 .toggle-lg{ width:40px; height:20px; border-radius:10px; }
 .toggle-lg .toggle-dot{ width:16px; height:16px; }
 .toggle-sm{ width:32px; height:16px; border-radius:8px; }
@@ -480,7 +520,7 @@ tr:hover .tbl-td{ background:rgba(74,158,255,.04); }
   min-width:0;
   padding:.65rem .75rem;
   border:1px solid var(--line-soft);
-  border-radius:var(--radius-sm);
+  border-radius:var(--qeli-radius-sm);
   background:var(--bg-2);
 }
 .host-runtime-item dt{
@@ -647,3 +687,6 @@ html[data-theme=light] ::-webkit-scrollbar-thumb:hover{background:#aebccf}
 .logs-inputs{flex:1 1 16rem}
 .logs-search{min-width:6rem}
 @media (max-width:639px){.logs-inputs{flex-basis:100%}}
+
+/* Preserve the shipped date editor height after the v4 native-control reset. */
+.inp[type="date"]::-webkit-datetime-edit { padding-block: 1px; }

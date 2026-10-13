@@ -4,13 +4,15 @@
   "version": "0.0.0",
   "description": "Build pipeline for the qeli web panel's self-hosted CSS (no runtime CDN). Generated app.css is committed under ../src/web/assets/ and embedded into the binary; this package is only needed to regenerate it.",
   "scripts": {
-    "build": "tailwindcss -c tailwind.config.js -i input.css -o ../src/web/assets/app.css --minify",
-    "watch": "tailwindcss -c tailwind.config.js -i input.css -o ../src/web/assets/app.css --watch"
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3"
   },
-  "//overrides": "PostCSS, selector-parser and source-map-js security fixes are qualified by byte-identical embedded CSS. braces GHSA-vfj7-8cjw-p6xm has no published fixed version; trusted repository build inputs only. See docs/eng/reports/AUDIT-Q34-CLIENT-SUPPLY.md for the remaining finding.",
+  "//overrides": "Pinned transitive build dependencies. The public compiler API avoids the CLI/watcher dependency chain; see the Q34 qualification report.",
   "overrides": {
     "postcss": "^8.5.18",
     "nanoid": "^3.3.17",

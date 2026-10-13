@@ -12,9 +12,15 @@ and the control socket.
 - **Self-contained:** CSS/JS/fonts are embedded in the binary and served from
   `/assets/*` — **no runtime CDN**, so the panel works on an air-gapped server.
 - **Stack:** `axum` + `alpine.js`; REST `/api/*`; the session is a stateless HMAC
-  cookie (key = the admin password hash).
+  cookie. Its signing key is derived with HKDF from a separate random secret,
+  the admin password hash and the session-revocation generation.
 - **Languages:** RU/EN dropdown at the bottom of the sidebar (default English;
   the choice is remembered in the browser).
+
+The Tailwind 4 stylesheet targets Safari 16.4+, Chrome/Chromium 111+
+and Firefox 128+. These are upstream minimum requirements, not evidence that
+every browser/version has been tested. See the
+[upstream compatibility guide](https://tailwindcss.com/docs/upgrade-guide).
 
 > Full `[web]` key reference — [CONFIG.md](CONFIG.md#web-panel-web). This page is
 > how to bring it up and how to use it.
@@ -186,7 +192,11 @@ honors `X-Forwarded-Prefix`. Full nginx example — see "Reverse-proxy sub-path"
 - **Anti-brute-force** — hard lockout per source IP + per-username tarpit (you
   can't lock someone else's account by guessing their name).
 - **Session** — `HttpOnly; SameSite=Strict; Path=/` cookie (+`Secure` under TLS),
-  HMAC-signed with the password hash (changing the password invalidates sessions).
+  HMAC-signed with a key derived from a separate signing secret, the password
+  hash and the revocation generation. Changing the password or revoking all
+  sessions invalidates existing tokens. With `web.persist_session_key = true`
+  (the default), the secret is stored in a file with mode `0600`; with it disabled,
+  or if the file cannot be used, a process-local secret ends sessions on restart.
 
 ---
 
