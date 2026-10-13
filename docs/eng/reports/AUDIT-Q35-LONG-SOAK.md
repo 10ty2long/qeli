@@ -2,6 +2,46 @@
 
 <!-- normative-sync: audit-q35-long-soak-v1 -->
 
+## 13 October: the complete current CLI gate passed
+
+<!-- normative-sync: q35-current-full-endurance-20261013 -->
+
+[Independent qualification and cleanup](../../../release/certification/evidence/q35-current-endurance-20261013.json).
+The declared full run of CLI `52511ceb` completed on .11 in 47,036.8 seconds,
+about 13 h 4 min, passing all eight phases: 10,000 TCP cycles, 10,000 UDP QUIC
+cycles, 1,000 each for UDP fake-TLS/obfs/obfs-awg, performance and cross-node.
+There are 9,403 snapshots and 18,786 process observations; the largest sample
+gap was 5.009 seconds. Declared RSS/fd/socket/thread budgets passed. The cgroup
+memory peak was 274,624,512 bytes, swap peak zero and task peak 38; no OOM,
+memory max/high or CPU throttling events were recorded.
+
+Upload off/required medians were 511/495 Mbps, download 628/603 Mbps:
+3.1311% and 3.9809% reductions, both below the unchanged 5% threshold.
+Combined CPU passed as well. Cross-node passed 28 checks using two independent
+server processes in separate network namespaces on one VM. This does not
+claim handover between physical servers.
+
+Both qualifier failures are retained. Bash dynamic scoping let an inner loop
+overwrite the caller's phase marker. Qualification of the completed run
+independently checked inner markers, completion boundaries and all adapter
+ordering; the source now makes that variable local. Nine actual Bash cases
+verify the fix and refusals for missing markers. The second failure concerned
+different third-decimal CPU rounding in AWK and the decimal helper. The
+qualifier accepts only adjacent floor/ceil values implied by the original
+samples and evaluates the budget against the upper median. Thresholds and
+samples were unchanged; throughput is checked exactly.
+
+The archive and all inputs passed SHA verification. The owned root and remote
+archive were removed; structural host state, services and production/staged
+CLI were preserved. The previous 13-hour upload -6.8627% FAIL remains a FAIL
+with its cause unestablished. This new PASS neither replaces those results
+nor establishes the cause of their difference.
+
+The full endurance debt is closed. Q35 still needs final mapping of its
+fuzz/concurrency/DoS criteria to accumulated evidence and remains IN_PROGRESS.
+This CLI is distinct from the separately qualified panel build `15c34473`.
+The overall plan remains 32/37 (86.5%). `NO_PUSH_DEPLOY_RELEASE`.
+
 On 10 October 2026, lab .11 ran two real VPN scenarios concurrently: TCP fake-TLS and UDP QUIC, with **900 route switches each**. Both finished without failures: respectively 16 and 17 scenario assertions passed. Total elapsed time was **1850.9 seconds**; 368 complete process snapshots show **1835.9 seconds** of simultaneous live VPN activity, exceeding the predeclared 1800-second minimum.
 
 The scenarios ran in distinct network and PID namespaces inside an isolated environment, with separate directories and control sockets. Their checkpoints verified the working tunnel and route; TCP left no orphan sessions, while UDP left no candidates and retained three CID aliases. The collector sampled each transport's client and worker every five seconds, including stable process/config identity, RSS, threads, file descriptors and sockets. Maximum growth was **12,584 KiB RSS** (UDP client), **11 descriptors**, **2 sockets** and **3 threads**, within the declared 32-MiB, 16, 8 and 8 peak limits. Final descriptor growth was at most 4, socket growth at most 1, and thread growth at most 1. The scenarios' built-in resource checks also passed.

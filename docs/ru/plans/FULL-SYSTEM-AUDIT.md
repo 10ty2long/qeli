@@ -2905,3 +2905,24 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 <!-- q29-publication-contract-20261012 -->
 
 Разобрана граница APPLIED/CONNECTED: первые sampled сокеты после APPLIED начаты до CONNECTED;8 отказов в окне и80/80 post-CONNECTED PASS в каждом из двух сохранённых прогонов. Вопрос трактовки закрыт, исходный FAIL_POST_PLAN_BLOCKING сохранён. Helper уже проверяет post-CONNECTED;6 методов PASS. Новые runtime/builds не выполнялись. SIGKILL/DNS compatibility FAIL и Q29 IN_PROGRESS сохраняются. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
+
+### 13 октября: закрыты native copies и полный endurance
+
+<!-- normative-sync: adopted-native-endurance-checkpoint-20261013 -->
+
+[Q34: принятые исправления и свежие native](../reports/AUDIT-Q34-ADOPTED-NATIVE.md):
+factory panel build, два assets-теста и 131 HTTP-проверка PASS. Принятый
+коммит da776fb8 заново собран A/B для четырёх библиотек; 22 Windows ABI,
+23 Android JNI и два packaged INI теста PASS. Все восемь локальных копий,
+SHA256SUMS и PROVENANCE обновлены и проверены. Независимая квалификация
+архивов и очистка обоих build roots/временного swap/эмулятора завершены.
+
+[Q35: полный актуальный endurance](../reports/AUDIT-Q35-LONG-SOAK.md):
+13 ч 4 мин, все восемь этапов, 10k TCP/10k QUIC/1k каждого дополнительного
+UDP-адаптера, performance и 28 cross-node checks PASS; порог 5% сохранён.
+Старый upload FAIL -6,8627% и неустановленная причина сохраняются отдельно.
+Q35 требует итогового сопоставления остальных критериев; Q34 — общей
+source applicability/certification, публичного source cut и hosted CI.
+Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика остаются открытыми.
+Общий итог без искусственного изменения статусов: 32/37 (86,5%).
+`NO_PUSH_DEPLOY_RELEASE`.

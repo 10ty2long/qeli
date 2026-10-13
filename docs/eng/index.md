@@ -533,3 +533,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [MicroCom source identity and compatibility](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
 
 - [Q37: documentation and test harnesses](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
+
+- [Q34: native libraries for the adopted patch](reports/AUDIT-Q34-ADOPTED-NATIVE.md) — 13 October 2026.

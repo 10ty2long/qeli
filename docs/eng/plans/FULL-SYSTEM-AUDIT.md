@@ -2891,3 +2891,25 @@ Current production R8 SIGKILL recovery:FAIL;whole runtime FAIL. Plain/TUN platfo
 <!-- q29-publication-contract-20261012 -->
 
 APPLIED/CONNECTED boundary reviewed: first sampled sockets after APPLIED started before CONNECTED;8 interval refusals and80/80 post-CONNECTED PASS in each retained run. Interpretation question closed, original FAIL_POST_PLAN_BLOCKING retained. The helper already gates post-CONNECTED;6 methods PASS. No new runtime/builds. SIGKILL/DNS compatibility FAIL and Q29 IN_PROGRESS remain. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
+
+### 13 October: native copy and full endurance debt closed
+
+<!-- normative-sync: adopted-native-endurance-checkpoint-20261013 -->
+
+[Q34: adopted fixes and fresh natives](../reports/AUDIT-Q34-ADOPTED-NATIVE.md):
+factory panel build, two assets tests and 131 HTTP checks PASS. Adopted
+commit da776fb8 was rebuilt A/B for four libraries; 22 Windows ABI checks,
+23 Android JNI checks and two packaged INI tests PASS. All eight local copies,
+SHA256SUMS and PROVENANCE were updated and verified. Independent archive
+qualification and cleanup of both build roots, temporary swap and emulator
+are complete.
+
+[Q35: complete current endurance](../reports/AUDIT-Q35-LONG-SOAK.md):
+13 h 4 min, all eight phases, 10k TCP/10k QUIC/1k per additional UDP adapter,
+performance and 28 cross-node checks PASS with the unchanged 5% threshold.
+The old -6.8627% upload FAIL and its unestablished cause remain separately
+recorded. Q35 needs final mapping of the other criteria; Q34 needs global
+source applicability/certification, a public source cut and hosted CI.
+Q29 platform scope, Q31 bootstrap and Q36 diagnostics remain open.
+The overall count remains 32/37 (86.5%) without inferred module completion.
+`NO_PUSH_DEPLOY_RELEASE`.
