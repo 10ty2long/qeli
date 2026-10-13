@@ -2971,3 +2971,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: Q36-F030 Linux candidate validation** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): F030 candidate: actual4featurechecks/15tests/releaseCLI и6runtime sessions/18windows приfixed2carrier. Native client uplink/downlink0 во всех9 candidate windows; upload median24,34→1278,97Mbps, paired52.91×;bidir sum+8.16% с одним ухудшением, kernel losses остаются. Сервер exactbaseline, consumer/source adoption pending. Ownswap/cache/source/build/runtime root/archives SHAочищены, host/services/source PASS. CURRENT_MATCHED_BONDED_SLOT_FIX_RUNTIME_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.

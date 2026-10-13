@@ -2958,3 +2958,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: Q36-F030 Linux candidate validation** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): F030 candidate: actual4featurechecks/15tests/releaseCLI and6sessions/18windows fixed2carrier. Native client uplink/downlink0 all9candidate windows; upload median24.34→1278.97Mbps,paired52.91×;bidir sum+8.16% with one regression/kernel losses remain. Server exactbaseline,consumer/source adoption pending. Ownswap/cache/source/build/runtime roots/archives SHAcleaned,host/services/source PASS. CURRENT_MATCHED_BONDED_SLOT_FIX_RUNTIME_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.

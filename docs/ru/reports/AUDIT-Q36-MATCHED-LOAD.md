@@ -324,3 +324,46 @@ Median paired bidir sum **+8.16%**. В одном повторе сумма сн
 Собственный swap удалён по UUID/inode после остановки unit, исходный swap inventory восстановлен. Owned compiler target/registry/source/root и runtime процессы/namespaces/root/remote archives удалены после SHA-проверки; services/staged CLI/full host/source gates PASS. Build qualification и runtime qualification независимы;80 raw JSON/12 logs runtime проверены с первой попытки.
 
 Перед source adoption остаются legacy bonded/one-carrier проверки и обновление/проверка native consumers. Статус F030 не превращён в окончательный FIXED; product defaults прежние. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Q36-F030: совместимость одного канала и незакрытый legacy
+
+**PARTIAL35_QUALIFIED; source/native adoption pending.** 12 фактических сессий,36 попыток окон по8с: **35 пригодных измерений и1 недостоверное bidir-окно iperf3**. Проверены required recordizer/один канал и off/legacy/два канала, TCPraw P1 upload/download/bidir,outer/innerIPv4,original MTU/qdisc/очереди/affinity,unlimited producer/no omit. Сервер всегда exactbaseline52511cebd43a, клиент baseline или уже собранный candidate524443061b95; без новых сборок/изменения defaults. Предыдущие18окон fixed2mux не смешивали с этой популяцией.
+
+Один канал:3полные пары,0native uplink/downlink drops во всех18окнах обоих вариантов. Upload median1447,89→1414,29Mbps; median paired upload−1,26%,download+4,55%,bidir sum+2,34%. Это сохранение поведения в проверенных сценариях, не гарантия нулевой разницы скорости при любой нагрузке; kernel TUN losses остаются.
+
+Legacy:3пары upload/download. Median upload435,57→574,22Mbps,paired+32,27%;download736,23→687,54Mbps,paired−6,63%. QueueFull остаётся во всех8пригодных candidate windows;Oversize/PoolExhausted/NoCarrier0. Bidir candidate имеет только2пригодных повтора: отдельные значения сохранены, статистическая квалификация трёх повторов для этой ячейки отсутствует. Candidate legacy slot16602B/252слота даёт83места в width2 queue против21baseline и682mux приMTU1400. Максимальный accepted legacy packet bound не сужен. Синтетический128burst unit выполнен только дляmux; арифметика ёмкости не устанавливает событие каждого runtime дропа.
+
+Таблица: N3 — медианы; N2 — два отдельных диагностических значения через slash, без вычисления статистики.
+
+|Condition|Client|Phase|N|Up Mbps|Down Mbps|Native uplink drops|Client TUN TX drops|Server TUN TX drops|
+|---|---|---|---:|---:|---:|---:|---:|---:|
+|required/carriers-1|baseline|tcp_up|3|1447.89|—|0.00|174.00|0.00|
+|required/carriers-1|baseline|tcp_down|3|—|1463.53|0.00|0.00|186.00|
+|required/carriers-1|baseline|tcp_bidir|3|423.96|1160.85|0.00|645.00|271.00|
+|required/carriers-1|candidate|tcp_up|3|1414.29|—|0.00|202.00|0.00|
+|required/carriers-1|candidate|tcp_down|3|—|1549.98|0.00|0.00|442.00|
+|required/carriers-1|candidate|tcp_bidir|3|457.97|1185.90|0.00|464.00|321.00|
+|off/carriers-2|baseline|tcp_up|3|435.57|—|5059.00|0.00|0.00|
+|off/carriers-2|baseline|tcp_down|3|—|736.23|18448.00|0.00|0.00|
+|off/carriers-2|baseline|tcp_bidir|3|36.27|657.31|22031.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_up|3|574.22|—|2706.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_down|3|—|687.54|6350.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_bidir|2|115.06/118.70|622.61/633.70|6893.00/8282.00|0.00/0.00|0.00/0.00|
+
+|Condition|Repeat|Upload change %|Download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|
+|required/carriers-1|1|-1.26|+4.55|+9.64|
+|required/carriers-1|2|-4.78|+2.01|+0.40|
+|required/carriers-1|3|-0.35|+8.45|+2.34|
+|off/carriers-2|1|+7.21|-16.26|+7.38|
+|off/carriers-2|2|+32.27|-6.61|+6.70|
+|off/carriers-2|3|+35.09|-6.63|role-invalid|
+
+Первый контроллер завершился по общему бюджету900с после11полных сессий/33окон. TimeoutError сохранён. Выполнена только недостающая legacy candidate session:upload/download завершились, а bidir вернул0receiver bytes в обоих направлениях. По rawJSON и архивному server iperf log доказаны TX/TX наclientport33208 иRX/RX на33220. В остальных11bidir role assignments противоположные и корректные. [Сервер iperf3 3.18](https://github.com/esnet/iperf/blob/3.18/src/iperf_server_api.c#L762-L769) назначает RX/TX по порядку принятия соединений, [клиент](https://github.com/esnet/iperf/blob/3.18/src/iperf_client_api.c#L324-L330) создаёт сначала TX,потомRX. Это объясняет отказ данного измерения; зависание Qeli им не доказано. Исходный FAIL не заменён успешным результатом,0не добавлен в статистику скорости, никаких повторов «до успеха» нет.
+
+В r1-m1-c/upload final sender bytes1417281536 против суммы1sintervals1417150464: разница131072B,один configured block. Retransmits282совпадают. Оба счётчика/разные горизонты оставлены, скорость берётся из исходного receiver summary. Первый отказ точного byte-sum assert и последующий отказ population(N2) сохранены; дляN2 статистика не вычисляется, существующий минимум3samples сохранён. Остальные sender byte/retransmit sums точные.
+
+Независимая квалификация35окон/157rawJSON/24logs и обеих исходных executions выполнена.82native socket snapshots пригодных окон verified stable/mirrored; failedbidir не имеет полного after-boundary snapshot и такой PASS не заявлен. Максимум RSSworker 95304KiB ниже512MiB. Структурный host совпадает между этапами; оба fullhost/firewall/routes/resolver/services/stagedCLI/source gates PASS, собственные процессы/namespaces/roots/remote archives SHAпроверены/удалены. Оба runtime FAIL и rawfailedwindow сохранены. Рабочий clientmod/native copies пока прежние.
+
+Далее: устранить/учитывать конфликт ролей в измерителе перед новыми bidir-проверками, разобраться с оставшимся legacy QueueFull и выполнить nativeconsumer refresh/проверки при переносе патча. Q36 IN_PROGRESS,F030не окончательноFIXED,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.

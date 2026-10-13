@@ -1,0 +1,3757 @@
+{
+  "status": "SLOT_COMPATIBILITY_PARTIAL35_ANALYZED_ADOPTION_PENDING",
+  "qualification_sha256": "b0313a9b8fb6a8df25fa576ee104378d487f8f987c06435aaa5790525385ab25",
+  "sessions": 12,
+  "windows": 35,
+  "attempted_windows": 36,
+  "role_invalid_windows": 1,
+  "measurement_collection_stages": 2,
+  "original_controller_budget_failure_retained": true,
+  "actual_socket_snapshots": 82,
+  "mirrors": [
+    {
+      "label": "r1-m1-b",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r1-m1-c",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r1-l2-b",
+      "snapshots": 7,
+      "actual_width": 2
+    },
+    {
+      "label": "r1-l2-c",
+      "snapshots": 7,
+      "actual_width": 2
+    },
+    {
+      "label": "r2-l2-c",
+      "snapshots": 7,
+      "actual_width": 2
+    },
+    {
+      "label": "r2-l2-b",
+      "snapshots": 7,
+      "actual_width": 2
+    },
+    {
+      "label": "r2-m1-c",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r2-m1-b",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r3-m1-b",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r3-m1-c",
+      "snapshots": 7,
+      "actual_width": 1
+    },
+    {
+      "label": "r3-l2-b",
+      "snapshots": 7,
+      "actual_width": 2
+    },
+    {
+      "label": "r3-l2-c",
+      "snapshots": 5,
+      "actual_width": 2
+    }
+  ],
+  "conditions": {
+    "required/carriers-1": {
+      "paired_changes": [
+        {
+          "repeat": 1,
+          "upload_change_pct": -1.2591563080462609,
+          "download_change_pct": 4.546118651534048,
+          "bidir_sum_change_pct": 9.638819345468264
+        },
+        {
+          "repeat": 2,
+          "upload_change_pct": -4.776412911486161,
+          "download_change_pct": 2.011261589706681,
+          "bidir_sum_change_pct": 0.39648868006501026
+        },
+        {
+          "repeat": 3,
+          "upload_change_pct": -0.352414101239118,
+          "download_change_pct": 8.445663601092889,
+          "bidir_sum_change_pct": 2.3377639802756534
+        }
+      ],
+      "median_paired_changes_pct": {
+        "upload_change_pct": -1.2591563080462609,
+        "download_change_pct": 4.546118651534048,
+        "bidir_sum_change_pct": 2.3377639802756534
+      },
+      "metrics": {
+        "baseline": {
+          "tcp_up": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 1432.3270685740938,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 174,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55252,
+                "server_rss_peak_kib": 75704,
+                "client_cpu_avg_pct": 71.21894990810877,
+                "server_cpu_avg_pct": 71.44057779514664
+              },
+              {
+                "mbps": 1461.2566922785552,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 206,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 79736,
+                "server_rss_peak_kib": 84796,
+                "client_cpu_avg_pct": 72.10688983101974,
+                "server_cpu_avg_pct": 72.88342689107357
+              },
+              {
+                "mbps": 1447.886831528897,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 147,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57184,
+                "server_rss_peak_kib": 77640,
+                "client_cpu_avg_pct": 72.55200923776817,
+                "server_cpu_avg_pct": 73.21810053929642
+              }
+            ],
+            "medians": {
+              "mbps": 1447.886831528897,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 174,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 57184,
+              "server_rss_peak_kib": 77640,
+              "client_cpu_avg_pct": 72.10688983101974,
+              "server_cpu_avg_pct": 72.88342689107357
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_down": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 1463.5349507667545,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 278,
+                "client_rss_peak_kib": 81112,
+                "server_rss_peak_kib": 88316,
+                "client_cpu_avg_pct": 71.10796736447763,
+                "server_cpu_avg_pct": 65.99697051195932
+              },
+              {
+                "mbps": 1519.4238715759302,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 186,
+                "client_rss_peak_kib": 80076,
+                "server_rss_peak_kib": 85128,
+                "client_cpu_avg_pct": 69.32843637327743,
+                "server_cpu_avg_pct": 66.44133831959525
+              },
+              {
+                "mbps": 1442.1675794895789,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 109,
+                "client_rss_peak_kib": 78412,
+                "server_rss_peak_kib": 83424,
+                "client_cpu_avg_pct": 72.55234085894764,
+                "server_cpu_avg_pct": 67.99618770239353
+              }
+            ],
+            "medians": {
+              "mbps": 1463.5349507667545,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 186,
+              "client_rss_peak_kib": 80076,
+              "server_rss_peak_kib": 85128,
+              "client_cpu_avg_pct": 71.10796736447763,
+              "server_cpu_avg_pct": 66.44133831959525
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_bidir": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "up_mbps": 388.9764122374573,
+                "down_mbps": 1118.2581215585428,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 645,
+                "server_tun_tx_dropped": 271,
+                "client_rss_peak_kib": 81000,
+                "server_rss_peak_kib": 88692,
+                "client_cpu_avg_pct": 75.99641574739198,
+                "server_cpu_avg_pct": 73.99575907176789
+              },
+              {
+                "up_mbps": 423.9555065733408,
+                "down_mbps": 1220.2955195378995,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 582,
+                "server_tun_tx_dropped": 383,
+                "client_rss_peak_kib": 80888,
+                "server_rss_peak_kib": 89536,
+                "client_cpu_avg_pct": 75.77396122864457,
+                "server_cpu_avg_pct": 73.55141417696815
+              },
+              {
+                "up_mbps": 429.46333323352997,
+                "down_mbps": 1160.846061259319,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 674,
+                "server_tun_tx_dropped": 228,
+                "client_rss_peak_kib": 77832,
+                "server_rss_peak_kib": 83828,
+                "client_cpu_avg_pct": 75.99596465530915,
+                "server_cpu_avg_pct": 73.6623429829333
+              }
+            ],
+            "medians": {
+              "up_mbps": 423.9555065733408,
+              "down_mbps": 1160.846061259319,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 645,
+              "server_tun_tx_dropped": 271,
+              "client_rss_peak_kib": 80888,
+              "server_rss_peak_kib": 88692,
+              "client_cpu_avg_pct": 75.99596465530915,
+              "server_cpu_avg_pct": 73.6623429829333
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "candidate": {
+          "tcp_up": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 1414.291831938289,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 282,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 52768,
+                "server_rss_peak_kib": 74444,
+                "client_cpu_avg_pct": 72.33013874378544,
+                "server_cpu_avg_pct": 71.6632046725529
+              },
+              {
+                "mbps": 1391.4610389586067,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 126,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 81732,
+                "server_rss_peak_kib": 87468,
+                "client_cpu_avg_pct": 70.10817648437296,
+                "server_cpu_avg_pct": 71.5516332541448
+              },
+              {
+                "mbps": 1442.7842741646048,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 202,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 53036,
+                "server_rss_peak_kib": 85336,
+                "client_cpu_avg_pct": 70.55154402681964,
+                "server_cpu_avg_pct": 71.88540798142927
+              }
+            ],
+            "medians": {
+              "mbps": 1414.291831938289,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 202,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 53036,
+              "server_rss_peak_kib": 85336,
+              "client_cpu_avg_pct": 70.55154402681964,
+              "server_cpu_avg_pct": 71.6632046725529
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_down": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 1530.0689861352816,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 523,
+                "client_rss_peak_kib": 77824,
+                "server_rss_peak_kib": 82852,
+                "client_cpu_avg_pct": 69.10578706991757,
+                "server_cpu_avg_pct": 66.32973090741616
+              },
+              {
+                "mbps": 1549.983460289771,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 442,
+                "client_rss_peak_kib": 81988,
+                "server_rss_peak_kib": 87976,
+                "client_cpu_avg_pct": 71.44140051674785,
+                "server_cpu_avg_pct": 67.66246164765022
+              },
+              {
+                "mbps": 1563.9682018172925,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 119,
+                "client_rss_peak_kib": 75956,
+                "server_rss_peak_kib": 85336,
+                "client_cpu_avg_pct": 70.66116674746891,
+                "server_cpu_avg_pct": 66.9973977912028
+              }
+            ],
+            "medians": {
+              "mbps": 1549.983460289771,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 442,
+              "client_rss_peak_kib": 77824,
+              "server_rss_peak_kib": 85336,
+              "client_cpu_avg_pct": 70.66116674746891,
+              "server_cpu_avg_pct": 66.9973977912028
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_bidir": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "up_mbps": 457.9697740753156,
+                "down_mbps": 1194.5443735457918,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 543,
+                "server_tun_tx_dropped": 405,
+                "client_rss_peak_kib": 77724,
+                "server_rss_peak_kib": 83132,
+                "client_cpu_avg_pct": 75.7737699274117,
+                "server_cpu_avg_pct": 73.99708132461318
+              },
+              {
+                "up_mbps": 464.872847664907,
+                "down_mbps": 1185.8974476367173,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 464,
+                "server_tun_tx_dropped": 248,
+                "client_rss_peak_kib": 82532,
+                "server_rss_peak_kib": 92236,
+                "client_cpu_avg_pct": 76.3284807006346,
+                "server_cpu_avg_pct": 73.21760771436401
+              },
+              {
+                "up_mbps": 445.27564843043103,
+                "down_mbps": 1182.2114262618115,
+                "client_tcp_uplink_drops_total": 0,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 401,
+                "server_tun_tx_dropped": 321,
+                "client_rss_peak_kib": 82668,
+                "server_rss_peak_kib": 84876,
+                "client_cpu_avg_pct": 75.88469832549028,
+                "server_cpu_avg_pct": 73.21879862491885
+              }
+            ],
+            "medians": {
+              "up_mbps": 457.9697740753156,
+              "down_mbps": 1185.8974476367173,
+              "client_tcp_uplink_drops_total": 0,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 464,
+              "server_tun_tx_dropped": 321,
+              "client_rss_peak_kib": 82532,
+              "server_rss_peak_kib": 84876,
+              "client_cpu_avg_pct": 75.88469832549028,
+              "server_cpu_avg_pct": 73.21879862491885
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                0,
+                0,
+                0
+              ],
+              "queue_full": [
+                0,
+                0,
+                0
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "all_candidate_native_uplink_downlink_zero": true
+    },
+    "off/carriers-2": {
+      "paired_changes": [
+        {
+          "repeat": 1,
+          "upload_change_pct": 7.210892431837501,
+          "download_change_pct": -16.257310669327918,
+          "bidir_sum_change_pct": 7.378120880133143
+        },
+        {
+          "repeat": 2,
+          "upload_change_pct": 32.26792007685966,
+          "download_change_pct": -6.613890954287482,
+          "bidir_sum_change_pct": 6.702904773782348
+        },
+        {
+          "repeat": 3,
+          "upload_change_pct": 35.085614611740134,
+          "download_change_pct": -6.6323329236015915,
+          "bidir_sum_change_pct": null
+        }
+      ],
+      "median_paired_changes_pct": {
+        "upload_change_pct": 32.26792007685966,
+        "download_change_pct": -6.6323329236015915,
+        "bidir_sum_change_pct": null
+      },
+      "metrics": {
+        "baseline": {
+          "tcp_up": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 444.44450175821225,
+                "client_tcp_uplink_drops_total": 5692,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57084,
+                "server_rss_peak_kib": 62444,
+                "client_cpu_avg_pct": 66.10780033611626,
+                "server_cpu_avg_pct": 58.10819112183233
+              },
+              {
+                "mbps": 434.1333825210794,
+                "client_tcp_uplink_drops_total": 5059,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57184,
+                "server_rss_peak_kib": 84080,
+                "client_cpu_avg_pct": 66.21862254843532,
+                "server_cpu_avg_pct": 59.88531045600805
+              },
+              {
+                "mbps": 435.5730191329045,
+                "client_tcp_uplink_drops_total": 4964,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 56884,
+                "server_rss_peak_kib": 60548,
+                "client_cpu_avg_pct": 64.10727343027791,
+                "server_cpu_avg_pct": 58.107722036410955
+              }
+            ],
+            "medians": {
+              "mbps": 435.5730191329045,
+              "client_tcp_uplink_drops_total": 5059,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 57084,
+              "server_rss_peak_kib": 62444,
+              "client_cpu_avg_pct": 66.10780033611626,
+              "server_cpu_avg_pct": 58.10819112183233
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                5692,
+                5059,
+                4964
+              ],
+              "queue_full": [
+                5692,
+                5059,
+                4964
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_down": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 728.0121384523472,
+                "client_tcp_uplink_drops_total": 17207,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57088,
+                "server_rss_peak_kib": 93356,
+                "client_cpu_avg_pct": 74.32935284744067,
+                "server_cpu_avg_pct": 79.77369053733882
+              },
+              {
+                "mbps": 736.229215312354,
+                "client_tcp_uplink_drops_total": 18448,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57172,
+                "server_rss_peak_kib": 84228,
+                "client_cpu_avg_pct": 74.88528378643177,
+                "server_cpu_avg_pct": 81.88396286003359
+              },
+              {
+                "mbps": 742.8103383780734,
+                "client_tcp_uplink_drops_total": 19234,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 56944,
+                "server_rss_peak_kib": 91588,
+                "client_cpu_avg_pct": 75.55240167857393,
+                "server_cpu_avg_pct": 80.1067534902097
+              }
+            ],
+            "medians": {
+              "mbps": 736.229215312354,
+              "client_tcp_uplink_drops_total": 18448,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 57088,
+              "server_rss_peak_kib": 91588,
+              "client_cpu_avg_pct": 74.88528378643177,
+              "server_cpu_avg_pct": 80.1067534902097
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                17207,
+                18448,
+                19234
+              ],
+              "queue_full": [
+                17207,
+                18448,
+                19234
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_bidir": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "up_mbps": 36.27114262614275,
+                "down_mbps": 650.7094073246384,
+                "client_tcp_uplink_drops_total": 22031,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57100,
+                "server_rss_peak_kib": 92872,
+                "client_cpu_avg_pct": 73.66248134432432,
+                "server_cpu_avg_pct": 79.10672048790371
+              },
+              {
+                "up_mbps": 47.83021926179571,
+                "down_mbps": 657.30515018402,
+                "client_tcp_uplink_drops_total": 23943,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 57168,
+                "server_rss_peak_kib": 88988,
+                "client_cpu_avg_pct": 74.21868058081078,
+                "server_cpu_avg_pct": 77.99590324785945
+              },
+              {
+                "up_mbps": 22.015577302758608,
+                "down_mbps": 679.337813913694,
+                "client_tcp_uplink_drops_total": 21996,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 56900,
+                "server_rss_peak_kib": 87416,
+                "client_cpu_avg_pct": 72.44004206905694,
+                "server_cpu_avg_pct": 77.10693225059686
+              }
+            ],
+            "medians": {
+              "up_mbps": 36.27114262614275,
+              "down_mbps": 657.30515018402,
+              "client_tcp_uplink_drops_total": 22031,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 57100,
+              "server_rss_peak_kib": 88988,
+              "client_cpu_avg_pct": 73.66248134432432,
+              "server_cpu_avg_pct": 77.99590324785945
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                22031,
+                23943,
+                21996
+              ],
+              "queue_full": [
+                22031,
+                23943,
+                21996
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "candidate": {
+          "tcp_up": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 476.492916699213,
+                "client_tcp_uplink_drops_total": 1504,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55392,
+                "server_rss_peak_kib": 62384,
+                "client_cpu_avg_pct": 70.21818381847052,
+                "server_cpu_avg_pct": 64.88600434621473
+              },
+              {
+                "mbps": 574.2191954199487,
+                "client_tcp_uplink_drops_total": 2706,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55492,
+                "server_rss_peak_kib": 86812,
+                "client_cpu_avg_pct": 70.55127278052595,
+                "server_cpu_avg_pct": 65.55172284915585
+              },
+              {
+                "mbps": 588.3964899785965,
+                "client_tcp_uplink_drops_total": 2899,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55156,
+                "server_rss_peak_kib": 66304,
+                "client_cpu_avg_pct": 71.44088662608452,
+                "server_cpu_avg_pct": 66.55299223777055
+              }
+            ],
+            "medians": {
+              "mbps": 574.2191954199487,
+              "client_tcp_uplink_drops_total": 2706,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 55392,
+              "server_rss_peak_kib": 66304,
+              "client_cpu_avg_pct": 70.55127278052595,
+              "server_cpu_avg_pct": 65.55172284915585
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                1504,
+                2706,
+                2899
+              ],
+              "queue_full": [
+                1504,
+                2706,
+                2899
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_down": {
+            "sample_count": 3,
+            "diagnostic_only": false,
+            "diagnostic_samples": [
+              {
+                "mbps": 609.6569433937315,
+                "client_tcp_uplink_drops_total": 2706,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55392,
+                "server_rss_peak_kib": 95304,
+                "client_cpu_avg_pct": 73.10738931239207,
+                "server_cpu_avg_pct": 77.99640816289283
+              },
+              {
+                "mbps": 687.5358178379885,
+                "client_tcp_uplink_drops_total": 6350,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55492,
+                "server_rss_peak_kib": 87120,
+                "client_cpu_avg_pct": 71.77394618779245,
+                "server_cpu_avg_pct": 77.77304731762813
+              },
+              {
+                "mbps": 693.5446837459081,
+                "client_tcp_uplink_drops_total": 6799,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55220,
+                "server_rss_peak_kib": 91064,
+                "client_cpu_avg_pct": 77.66334260609118,
+                "server_cpu_avg_pct": 79.88404346059016
+              }
+            ],
+            "medians": {
+              "mbps": 687.5358178379885,
+              "client_tcp_uplink_drops_total": 6350,
+              "client_tcp_downlink_drops_total": 0,
+              "client_tun_tx_dropped": 0,
+              "server_tun_tx_dropped": 0,
+              "client_rss_peak_kib": 55392,
+              "server_rss_peak_kib": 91064,
+              "client_cpu_avg_pct": 73.10738931239207,
+              "server_cpu_avg_pct": 77.99640816289283
+            },
+            "native_uplink_reason_samples": {
+              "total": [
+                2706,
+                6350,
+                6799
+              ],
+              "queue_full": [
+                2706,
+                6350,
+                6799
+              ],
+              "oversize": [
+                0,
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0,
+              0
+            ]
+          },
+          "tcp_bidir": {
+            "sample_count": 2,
+            "diagnostic_only": true,
+            "diagnostic_samples": [
+              {
+                "up_mbps": 115.05977173504289,
+                "down_mbps": 622.6070336141103,
+                "client_tcp_uplink_drops_total": 6893,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55392,
+                "server_rss_peak_kib": 92560,
+                "client_cpu_avg_pct": 77.21755781872494,
+                "server_cpu_avg_pct": 82.10698620993642
+              },
+              {
+                "up_mbps": 118.69655739824842,
+                "down_mbps": 633.7033643877787,
+                "client_tcp_uplink_drops_total": 8282,
+                "client_tcp_downlink_drops_total": 0,
+                "client_tun_tx_dropped": 0,
+                "server_tun_tx_dropped": 0,
+                "client_rss_peak_kib": 55492,
+                "server_rss_peak_kib": 89480,
+                "client_cpu_avg_pct": 77.44082073136222,
+                "server_cpu_avg_pct": 80.32900941146201
+              }
+            ],
+            "medians": {},
+            "native_uplink_reason_samples": {
+              "total": [
+                6893,
+                8282
+              ],
+              "queue_full": [
+                6893,
+                8282
+              ],
+              "oversize": [
+                0,
+                0
+              ],
+              "pool_exhausted": [
+                0,
+                0
+              ],
+              "no_carrier": [
+                0,
+                0
+              ]
+            },
+            "native_downlink_total_samples": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "all_candidate_native_uplink_downlink_zero": false
+    }
+  },
+  "max_process_RSS_KiB": 95304,
+  "legacy_capacity_source_review": {
+    "status": "LEGACY_ACCEPTED_BOUND_CAPACITY_SOURCE_REVIEW_NOT_NEW_RUNTIME_OR_UNIT_TEST",
+    "source_hashes": {
+      "packet.rs": "37e426b47b9e10555c4e056425cc9a5300aab52cd57de0b029a3dbe0eac3bc6d",
+      "buffer_pool.rs": "e56a56c49ac17519e6f6919bdae57c6996ead1c1a4fd800e1d8b51158662b82f",
+      "actual_candidate_clientmod": "02690ef6b1666f87a3e70a4a2965bee0d9ebe154a0ed5cd4c7bd32124f922dc5"
+    },
+    "legacy_slot_bytes": 16602,
+    "legacy_slots": 252,
+    "width2_legacy_queue_capacity": 83,
+    "width2_mux1400_queue_capacity": 682,
+    "storage_byte_budget": 4194304,
+    "queue_reserve_helper_unchanged": true,
+    "deterministic_pinned_128_burst_exceeds_legacy_queue_by": 45,
+    "legacy_128_burst_unit_executed": false,
+    "interpretation": "Candidate improves original21 queue entries but legacy83 retains full16602B accepted bound. Executed128packet-burst unit is mux only. Arithmetic describes finite capacity, not exact reason/timing for each observed runtime drop. No silent packet-bound narrowing/allocator fallback/bytebudget increase.",
+    "native_adoption_pending": true,
+    "no_push_deploy_release": true
+  },
+  "legacy_capacity_source_review_sha256": "792927e4e6b4150219322d3af6a7a9a35c3823b192c3e13cdc12e410c447cd65",
+  "role_review_qualification": {
+    "status": "ACTUAL_IPERF3_BIDIR_ROLE_MISMATCH_QUALIFIED_PRODUCT_STALL_NOT_ESTABLISHED",
+    "valid_prior_bidir_role_receipts": 11,
+    "invalid_windows": 1,
+    "role_receipts": [
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r1-m1-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 32836,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 32844,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "9a9790e59eb7c63fd0e03c1f378e96c3f8e55955df256e5cea5b4a974db5fb5b",
+        "archived_server_iperf_log_sha256": "62e86a90eb434320e02d46dedc5cb7d28e11598e587dd6ce423f5a25ef36d56d"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r1-m1-c",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 46438,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 46442,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "914cec4faebab31fc3f929c87c0df9a1feb0b7572dd0768c48d3358f1b35b640",
+        "archived_server_iperf_log_sha256": "a7fb26d592557b6c0bbeb332b2fa6b91f3fa63c4480dbf35425ec68fe4a33b2e"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r1-l2-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 33984,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 34000,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "7a9fbac7b2984b7b92678f9abcdc39d388878e884b42eb7eae8a53abe34a2c3d",
+        "archived_server_iperf_log_sha256": "9a2c96d75b58a25adafe5a65e0955925a6cd1b48f2bea581dbe7f9664d91932e"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r1-l2-c",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 53910,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 53918,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "ffdf000c99028ee2a1b71a1ca4daba3b5992d7c5defd121246ad7eaf53db8457",
+        "archived_server_iperf_log_sha256": "59dc37d952b54ba0399cfdf1726d2ff40489355619a36a931597102125de134e"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r2-l2-c",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 52806,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 52820,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "fffc990e9ad9ba3f27c22fc4482e280af68c67013c7a73ce0d57a791cc234019",
+        "archived_server_iperf_log_sha256": "07939d06db8d4b1516e4c4ab2a50e0cee8790b6ec387312ab30064e13336b3d9"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r2-l2-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 51762,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 51776,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "e37dcadc99837bbba50c8b9d60b24367b7168662fcb66878534be3fc3649a5e0",
+        "archived_server_iperf_log_sha256": "2990db49489ca3326560d2c0a91fbe991b030eadb2cad3520ca9fa25a6fabac2"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r2-m1-c",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 42350,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 42356,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "2b6b93534910e0e4ddd78ae921062f7f462885eee74c8fb2082e875004b2b30b",
+        "archived_server_iperf_log_sha256": "4951d067ea8b915c143d5056ee1864a0c0b3df84210d1dda91134cf15fe1f5d3"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r2-m1-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 45958,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 45964,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "26051b3646a155cf6b43ef5ccc3ed50832ccbdc94ec60d18ca2341108a98361a",
+        "archived_server_iperf_log_sha256": "0293f7b9f7ee047b3edfbd1e9f8658fb21c2b217455024c8b5305b48e0afadd6"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r3-m1-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 42438,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 42444,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "b4fea3af1a2d45d5727a82ff33f379cff0b76a70502d1bc6b0e738798ab33aeb",
+        "archived_server_iperf_log_sha256": "9c4b91ab64edc79c4d40966004057a5a7468e65ddf7e3c62cdff3df6f6e89f1b"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r3-m1-c",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 57140,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 57156,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "5bc038b267f61765f78d4fe50c0c7736d2705e9c001cf96df7408af8e6c796a4",
+        "archived_server_iperf_log_sha256": "b607f06ab8053a366900bd8684789af89476df2b463e636d5e3eb0094a9bba93"
+      },
+      {
+        "packet": "q36-slot-compat-runtime-20261013",
+        "label": "r3-l2-b",
+        "application_direction_roles_valid": true,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 33922,
+            "client_sender": true,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": true
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 33928,
+            "client_sender": false,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": true
+          }
+        ],
+        "raw_iperf_sha256": "a89adb3e4b5685a66ca1002d436a3e798b55f50b9a9278646b82ac8309be9393",
+        "archived_server_iperf_log_sha256": "a5c4e38c173aa842179b968ced4d9b8803e958bc165773df2913db559c1cec48"
+      },
+      {
+        "packet": "q36-slot-compat-tail-20261013",
+        "label": "r3-l2-c",
+        "application_direction_roles_valid": false,
+        "assignments": [
+          {
+            "client_socket": 5,
+            "client_local_port": 33208,
+            "client_sender": true,
+            "server_socket": 8,
+            "server_role": "TX-S",
+            "opposite_roles": false
+          },
+          {
+            "client_socket": 7,
+            "client_local_port": 33220,
+            "client_sender": false,
+            "server_socket": 5,
+            "server_role": "RX-S",
+            "opposite_roles": false
+          }
+        ],
+        "raw_iperf_sha256": "45d07c4cc2bea340d34546b574458a23722416225b8291362b8b92c4601bde4f",
+        "archived_server_iperf_log_sha256": "87d12097fdbd1d7453b07d9eae626158f8c29fb558b38871bff423c747780dc8"
+      }
+    ],
+    "installed_iperf_version": "iperf 3.18 (cJSON 1.7.15)",
+    "original_runtime_FAILURE_preserved": true,
+    "original_timeout_FAILURE_preserved": true,
+    "receiver_bytes_up": 0,
+    "receiver_bytes_down": 0,
+    "client_sender_peak_window_bytes": 0,
+    "primary_sources": {
+      "server": "https://github.com/esnet/iperf/blob/3.18/src/iperf_server_api.c#L762-L769",
+      "client": "https://github.com/esnet/iperf/blob/3.18/src/iperf_client_api.c#L324-L330"
+    },
+    "source_interpretation": "Client creates sender streams then receiver streams; server assigns receive then send roles by accepted order. Raw endpoint maps and actualserver log show TX/TX on33208 and RX/RX on33220;8s zero-receiver window is invalid application-role pairing, not proof of a Qeli stall. Do not silently admit, zero-impute or rerun until success.",
+    "new_product_regression_proved": false,
+    "legacy_native_QueueFull_still_pending": true,
+    "source_or_native_adopted": false,
+    "no_push_deploy_release": true
+  },
+  "interval_final_sender_horizon_observations": {
+    "r1-m1-b/tcp_up": {
+      "interval_bytes": 1436418048,
+      "final_sender_bytes": 1436418048,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 174,
+      "final_sender_retransmits": 174,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-m1-b/tcp_bidir": {
+      "interval_bytes": 391905280,
+      "final_sender_bytes": 391905280,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 391,
+      "final_sender_retransmits": 391,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-m1-c/tcp_up": {
+      "interval_bytes": 1417150464,
+      "final_sender_bytes": 1417281536,
+      "end_minus_intervals_bytes": 131072,
+      "interval_retransmits": 282,
+      "final_sender_retransmits": 282,
+      "exact_same_byte_horizon_claimed": false
+    },
+    "r1-m1-c/tcp_bidir": {
+      "interval_bytes": 459669504,
+      "final_sender_bytes": 459669504,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 227,
+      "final_sender_retransmits": 227,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-l2-b/tcp_up": {
+      "interval_bytes": 445120512,
+      "final_sender_bytes": 445120512,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 5699,
+      "final_sender_retransmits": 5699,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-l2-b/tcp_bidir": {
+      "interval_bytes": 37224448,
+      "final_sender_bytes": 37224448,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 1315,
+      "final_sender_retransmits": 1315,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-l2-c/tcp_up": {
+      "interval_bytes": 476971008,
+      "final_sender_bytes": 476971008,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 1504,
+      "final_sender_retransmits": 1504,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r1-l2-c/tcp_bidir": {
+      "interval_bytes": 115867648,
+      "final_sender_bytes": 115867648,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 1166,
+      "final_sender_retransmits": 1166,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-l2-c/tcp_bidir": {
+      "interval_bytes": 119144448,
+      "final_sender_bytes": 119144448,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 1447,
+      "final_sender_retransmits": 1447,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-l2-c/tcp_up": {
+      "interval_bytes": 575012864,
+      "final_sender_bytes": 575012864,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 2680,
+      "final_sender_retransmits": 2680,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-l2-b/tcp_bidir": {
+      "interval_bytes": 48103424,
+      "final_sender_bytes": 48103424,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 1397,
+      "final_sender_retransmits": 1397,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-l2-b/tcp_up": {
+      "interval_bytes": 434503680,
+      "final_sender_bytes": 434503680,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 5059,
+      "final_sender_retransmits": 5059,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-m1-c/tcp_bidir": {
+      "interval_bytes": 467140608,
+      "final_sender_bytes": 467140608,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 272,
+      "final_sender_retransmits": 272,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-m1-c/tcp_up": {
+      "interval_bytes": 1394475008,
+      "final_sender_bytes": 1394475008,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 126,
+      "final_sender_retransmits": 126,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-m1-b/tcp_bidir": {
+      "interval_bytes": 425984000,
+      "final_sender_bytes": 425984000,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 411,
+      "final_sender_retransmits": 411,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r2-m1-b/tcp_up": {
+      "interval_bytes": 1465647104,
+      "final_sender_bytes": 1465647104,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 206,
+      "final_sender_retransmits": 206,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-m1-b/tcp_up": {
+      "interval_bytes": 1452539904,
+      "final_sender_bytes": 1452539904,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 147,
+      "final_sender_retransmits": 147,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-m1-b/tcp_bidir": {
+      "interval_bytes": 431489024,
+      "final_sender_bytes": 431489024,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 402,
+      "final_sender_retransmits": 402,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-m1-c/tcp_up": {
+      "interval_bytes": 1447034880,
+      "final_sender_bytes": 1447034880,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 202,
+      "final_sender_retransmits": 202,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-m1-c/tcp_bidir": {
+      "interval_bytes": 447479808,
+      "final_sender_bytes": 447479808,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 247,
+      "final_sender_retransmits": 247,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-l2-b/tcp_up": {
+      "interval_bytes": 435945472,
+      "final_sender_bytes": 435945472,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 4964,
+      "final_sender_retransmits": 4964,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-l2-b/tcp_bidir": {
+      "interval_bytes": 22151168,
+      "final_sender_bytes": 22151168,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 201,
+      "final_sender_retransmits": 201,
+      "exact_same_byte_horizon_claimed": true
+    },
+    "r3-l2-c/tcp_up": {
+      "interval_bytes": 589037568,
+      "final_sender_bytes": 589037568,
+      "end_minus_intervals_bytes": 0,
+      "interval_retransmits": 2891,
+      "final_sender_retransmits": 2891,
+      "exact_same_byte_horizon_claimed": true
+    }
+  },
+  "original_stage_receipts": {
+    "q36-slot-compat-runtime-20261013": {
+      "execution_sha256": "9a85b7501a65f6d167b14ee9ab8852d7d6acd3d9fd128c0a49e8c9ddca5d45cf",
+      "driver_sha256": "433863ac7e7d40d8e234c24713ce5cd4cca77c7e14c065055c1fa63c3bb10b9e",
+      "preparation_sha256": "19fa0d3fe83987958a2aaab1577f34279848a7942161d07ad6c351671c7a2adf",
+      "original_status": "FAIL",
+      "original_errors": [
+        "TimeoutError: finite matrix wall-clock budget exceeded"
+      ],
+      "sessions": 11,
+      "windows": 33,
+      "hosts": {
+        "10.66.116.10": {
+          "before": {
+            "snapshot_schema": "all-firewall-v1",
+            "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+            "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+            "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+            "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+            "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+            "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+            "namespaces": "",
+            "iptables4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*mangle\n:PREROUTING ACCEPT [7132844:8232506650]\n:INPUT ACCEPT [7132803:8232504059]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5711015:10536854812]\n:POSTROUTING ACCEPT [5711152:10536869469]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*filter\n:INPUT ACCEPT [7132803:8232504059]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5711015:10536854812]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*nat\n:PREROUTING ACCEPT [11100:1448838]\n:INPUT ACCEPT [11069:1446891]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026",
+            "iptables6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*mangle\n:PREROUTING ACCEPT [13735:1525689]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8068:905662]\n:POSTROUTING ACCEPT [8068:905662]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8068:905662]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026",
+            "legacy4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*mangle\n:PREROUTING ACCEPT [7132852:8232507482]\n:INPUT ACCEPT [7132811:8232504891]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5711027:10536857548]\n:POSTROUTING ACCEPT [5711164:10536872205]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*filter\n:INPUT ACCEPT [7132811:8232504891]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5711027:10536857548]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 21:48:19 2026\n*nat\n:PREROUTING ACCEPT [11100:1448838]\n:INPUT ACCEPT [11069:1446891]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 21:48:19 2026",
+            "legacy6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:20 2026\n*mangle\n:PREROUTING ACCEPT [13735:1525689]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8068:905662]\n:POSTROUTING ACCEPT [8068:905662]\nCOMMIT\n# Completed on Tue Oct 13 21:48:20 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:20 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8068:905662]\nCOMMIT\n# Completed on Tue Oct 13 21:48:20 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 21:48:20 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 21:48:20 2026",
+            "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 21:48:20 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 21:48:20 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+            "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 21:48:20 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 21:48:20 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+            "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 7116246, \"bytes\": 8230459427}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 11316, \"bytes\": 1679352}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 938, \"bytes\": 48776}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+          },
+          "staged_before_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+          "cookie": "2049:313584",
+          "metadata": {
+            "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+            "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+            "iperf": "iperf 3.18 (cJSON 1.7.15)",
+            "version": "qeli 0.8.2",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "load_at_start": "0.00 0.00 0.00 1/117 651182",
+            "cpu_governor": {
+              "availability": "UNAVAILABLE",
+              "policies": {}
+            }
+          },
+          "after": {
+            "snapshot_schema": "all-firewall-v1",
+            "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+            "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+            "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+            "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+            "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+            "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+            "namespaces": "",
+            "iptables4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*mangle\n:PREROUTING ACCEPT [7161474:8263373854]\n:INPUT ACCEPT [7161433:8263371263]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5734884:10552454192]\n:POSTROUTING ACCEPT [5735021:10552468849]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*filter\n:INPUT ACCEPT [7161433:8263371263]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5734884:10552454192]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*nat\n:PREROUTING ACCEPT [11108:1449854]\n:INPUT ACCEPT [11077:1447907]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026",
+            "iptables6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026",
+            "legacy4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*mangle\n:PREROUTING ACCEPT [7161483:8263374726]\n:INPUT ACCEPT [7161442:8263372135]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5734897:10552456968]\n:POSTROUTING ACCEPT [5735034:10552471625]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*filter\n:INPUT ACCEPT [7161442:8263372135]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5734897:10552456968]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*nat\n:PREROUTING ACCEPT [11108:1449854]\n:INPUT ACCEPT [11077:1447907]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026",
+            "legacy6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:03:49 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026",
+            "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:03:49 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:03:49 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+            "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:03:50 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:03:50 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+            "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 7144869, \"bytes\": 8261325655}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 11324, \"bytes\": 1680368}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 938, \"bytes\": 48776}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+          },
+          "changed_fields": [],
+          "host_restored": true,
+          "active_services_unchanged": true,
+          "staged_after_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0"
+        }
+      },
+      "cleanup": {
+        "status": "OWNED_ROOT_ARCHIVED_AND_REMOVED",
+        "inventory": {
+          "cookie": "2049:313584",
+          "inventory": {
+            "baseline-qeli": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 14454184,
+              "sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069"
+            },
+            "candidate-qeli": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 14449384,
+              "sha256": "524443061b9552c70d5b44bc22e48e290dc0ff18c78f835dadb6ea737a9de63f"
+            },
+            "r1-l2-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "3f827056d0b6ca881abb16669885ba1c5998ecd83d981a81bcb532d97f708c8b"
+            },
+            "r1-l2-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r1-l2-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "c6c459ce3eb9b4419c2346c3149f23b9bd0bd6e53686ab7136ec354873d6bab4"
+            },
+            "r1-l2-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "c48f306e019258d0c3a940499d13537f6c79f23f613b0801f95c80db2458e9f8"
+            },
+            "r1-l2-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r1-l2-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 152,
+              "sha256": "2bb357315614ba482aab7ad3da2edc64c5a5c86e1b9a78c85cadd1c41ab0648a"
+            },
+            "r1-l2-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4690,
+              "sha256": "9a2c96d75b58a25adafe5a65e0955925a6cd1b48f2bea581dbe7f9664d91932e"
+            },
+            "r1-l2-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2435,
+              "sha256": "fd6eb05290cee66b34a6a8deaefe042a2f1c62ae0c0c654f6324ce2a10832c95"
+            },
+            "r1-l2-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r1-l2-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "008217e27921ff20e2458886542295407bf31d00e95ae0db0c130afb7c78e586"
+            },
+            "r1-l2-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r1-l2-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "9f23a06b0378ba4e2e91c2355ea4c09c942d7af32a5f9a061bc1470b8a70a40f"
+            },
+            "r1-l2-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r1-l2-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "45fa67a028388a89fcca5331248a004346e37093fa919705c947440f366acf6b"
+            },
+            "r1-l2-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "cc246841d3325ed6e539089edf2a5f55990f865e8261cd2d85989b9d07506940"
+            },
+            "r1-l2-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r1-l2-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 152,
+              "sha256": "0be2ab6de7cd0d737b9a0cbb226261a401a1a9aae964952b00a66876925041a9"
+            },
+            "r1-l2-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4451,
+              "sha256": "59dc37d952b54ba0399cfdf1726d2ff40489355619a36a931597102125de134e"
+            },
+            "r1-l2-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2434,
+              "sha256": "b13b5b8a95d9d35b91df244865178bccbb6fd8ee60e1d6dbb56f4cc0c49e0c43"
+            },
+            "r1-l2-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r1-l2-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "d37b85b2aff78acee64aeb87be2c09bdc0fc8398e11fcc1a87de2504dc636964"
+            },
+            "r1-l2-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-l2-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r1-l2-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-l2-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "672cb9dc93bc4fa81130a1bcaf21123294d3ed4c0274c5084b8bf8f8824f5719"
+            },
+            "r1-m1-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r1-m1-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "1b4985d57aced270fccd13fe89a927d23567fd54a7fb07e8f1478b59e2f3c7fe"
+            },
+            "r1-m1-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "665cc39247a8f31fce2e658a0bc6bf47af30010177a25309dd746170f590454d"
+            },
+            "r1-m1-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r1-m1-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "76e05a4f6294257ece7e87aac2ced242068334bb883068de65fe0b18e860c064"
+            },
+            "r1-m1-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4613,
+              "sha256": "62e86a90eb434320e02d46dedc5cb7d28e11598e587dd6ce423f5a25ef36d56d"
+            },
+            "r1-m1-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "2af801774a5254e66fda33b2f047b3a90c91d207c5072c5c79aace014fbc9317"
+            },
+            "r1-m1-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r1-m1-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "1893c828fd25ebafd5bdbc708cfd360fb61f3c0cfc0c229075720099a2e04bea"
+            },
+            "r1-m1-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r1-m1-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "032a4508e42945e85ed8375e17ad9ff147e5a5e846dd18cb0659498687a6c3f7"
+            },
+            "r1-m1-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r1-m1-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "0a2a0d151fe34f3a2eb787c440af3b7844184d84f9bf7e2e6f1d93064fadcd4b"
+            },
+            "r1-m1-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "89f5e83f20ffb8b8d86d77a6edae3c60173dfc9cd646b6a6a6845f3a10ebb161"
+            },
+            "r1-m1-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r1-m1-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "4902af90e342e0b415bb349faa85bd5794e1f32b78eccc2175886c496a7d020b"
+            },
+            "r1-m1-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4692,
+              "sha256": "a7fb26d592557b6c0bbeb332b2fa6b91f3fa63c4480dbf35425ec68fe4a33b2e"
+            },
+            "r1-m1-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "1135125c14e32255c17a55df01728547930cbcc0f22f79e8abf7d90cbcc12e29"
+            },
+            "r1-m1-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r1-m1-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "5e8f96594fcd2caef658ebf9c41a0d2c6c0e4158571ff101957ac173ec502d4b"
+            },
+            "r1-m1-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r1-m1-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r1-m1-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r1-m1-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "1a6bf331af116fc262c3c1674e3c845760df7bb02a8d758c7de8ea0f0122614c"
+            },
+            "r2-l2-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r2-l2-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "a8d87c9a705b90f2fa64f8be720a62ab3a2234529393f89a25926c86bc74e3c2"
+            },
+            "r2-l2-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "558c7503b03056315f365f8ad9439df481db8550486d648581601d304bb9a8bf"
+            },
+            "r2-l2-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r2-l2-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 152,
+              "sha256": "a94f3f1892312d653e1e49f4948cd7fc922396fbda165db968ddb7a5cb8dae37"
+            },
+            "r2-l2-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4380,
+              "sha256": "2990db49489ca3326560d2c0a91fbe991b030eadb2cad3520ca9fa25a6fabac2"
+            },
+            "r2-l2-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2435,
+              "sha256": "974ec16b213e3b96d3d87f5bf926d3aa1793a4386944dadafadbb41fd6235f51"
+            },
+            "r2-l2-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r2-l2-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "a5f91dbff681cb321aba93b57db8387512c0b3519135a6908b639f11ce110547"
+            },
+            "r2-l2-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r2-l2-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "dc9045877ff0e479319116b5366debbd17be79c3e16512f040330de8ebf0872a"
+            },
+            "r2-l2-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r2-l2-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "686ca14290b560d9725c89145ad09057288f3841da7d543b48d4e798d31f4970"
+            },
+            "r2-l2-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "9e83bcda6324e4fcf26a7a530d78caf8fad98a73f8a1de9de5d0b74b9369cdf0"
+            },
+            "r2-l2-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r2-l2-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 152,
+              "sha256": "f7b8ac33fd75e6f18175782916b52809aa010bbf14d13ad5668f835377689f23"
+            },
+            "r2-l2-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4451,
+              "sha256": "07939d06db8d4b1516e4c4ab2a50e0cee8790b6ec387312ab30064e13336b3d9"
+            },
+            "r2-l2-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2435,
+              "sha256": "39b721a90c5cc4bfd2892350502f14132d841c4d025ac65b541f254abd1aa419"
+            },
+            "r2-l2-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r2-l2-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "c6f3d6ebd0f0ee712fb63d0ca8159d3207e10aef90ea706bbee677b4322332a6"
+            },
+            "r2-l2-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-l2-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r2-l2-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-l2-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "ea8fb0dff088a1d40c0f59a0f9cc59a9bf761c3087cd463b0aadff6343efd51b"
+            },
+            "r2-m1-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r2-m1-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "74fb40aa7742e5c7ce0d4b21420e89cafab34c0688527b754b3804fe4f25e77a"
+            },
+            "r2-m1-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "55526d134147104e6ab1806ba3994bfbe7f17e6c239948cf2614059d0618ae71"
+            },
+            "r2-m1-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r2-m1-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "f04e81af8da9e0be46aa56a3031c8749794965e5ba877fb2358a3e45cebb93f0"
+            },
+            "r2-m1-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4692,
+              "sha256": "0293f7b9f7ee047b3edfbd1e9f8658fb21c2b217455024c8b5305b48e0afadd6"
+            },
+            "r2-m1-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "d4472b80b733cadd77260079c12a5f9e416d99ba685e583b8d69967f2a0ff338"
+            },
+            "r2-m1-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r2-m1-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "f2aff881d562275fbfddca618118177a5d63b6026fc8cf4d5ddca50a74643dc0"
+            },
+            "r2-m1-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r2-m1-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "24e52a60e4007f87293d51b64b8d53a64c288bad5e2a73756415d6c7b4c27aa3"
+            },
+            "r2-m1-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r2-m1-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "a23970cd59ffba7f02f39114f7e0bdbf05579269871377723d0375acf359f0f9"
+            },
+            "r2-m1-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "b18852db703639e03f054e9bac484b359288b87df90128e78baee6e7249e4fef"
+            },
+            "r2-m1-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r2-m1-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "5bda00e05b74e727410ea1d84acd1ecc5d27a661d23a93496050cd7920f15fd7"
+            },
+            "r2-m1-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4530,
+              "sha256": "4951d067ea8b915c143d5056ee1864a0c0b3df84210d1dda91134cf15fe1f5d3"
+            },
+            "r2-m1-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "bc165e93098aec9d932a1eb3bb9cb32e102bfcf7533c7666551d8bc29b39a87d"
+            },
+            "r2-m1-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r2-m1-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "44dff178dd65e55d48f2e6150c6a15ba968172c1754d14bffd752a9698931f8c"
+            },
+            "r2-m1-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r2-m1-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r2-m1-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r2-m1-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "9d28aba2824151436758478aac30d6a355dbee14a648597040c8873cd28b62fa"
+            },
+            "r3-l2-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r3-l2-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "db8dac94ef018a6d9c60291b958afe3fe9c70a3f3fdae2ced12a57a85712758b"
+            },
+            "r3-l2-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "9a349d818416bc8151189bb99cfb9d6e3b5302f6079f931b8ef831602393aacf"
+            },
+            "r3-l2-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r3-l2-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 152,
+              "sha256": "708b68df33b23f5b7d39e2761a1c07a45d831f55335d3aa2aa380afa9381b085"
+            },
+            "r3-l2-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4380,
+              "sha256": "a5c4e38c173aa842179b968ced4d9b8803e958bc165773df2913db559c1cec48"
+            },
+            "r3-l2-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2435,
+              "sha256": "8eee8b34222a49400abb2a2857be209c8f3ca3b94e0485510bf66bc8de8a24a9"
+            },
+            "r3-l2-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r3-l2-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "069ba17cd3f08d4979b7c60d9299b875b90bd668cecce8aab602cdc644502b48"
+            },
+            "r3-l2-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r3-l2-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-b": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-b/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "621920c8d0315514ed77d707a24635745e2d11a7d907801eae2cb63e4ba82d25"
+            },
+            "r3-m1-b/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r3-m1-b/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-b/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "376efe7c8dfa9217963df684abe014a461e3674b33e47acebd63189a5ca0e20e"
+            },
+            "r3-m1-b/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-b/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "8c61cdd01c16b36802dda89adb3566bf4d16cab69844a2329433be0b436735bf"
+            },
+            "r3-m1-b/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-b/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r3-m1-b/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "c583e0ebd232e66434764a9994c7202463a59714bdbcc9724729d62b1856e7b8"
+            },
+            "r3-m1-b/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-b/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4692,
+              "sha256": "9c4b91ab64edc79c4d40966004057a5a7468e65ddf7e3c62cdff3df6f6e89f1b"
+            },
+            "r3-m1-b/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-b/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "04be1378cd94c9ddc9ff9f25b715bd652dd94a0013bc41bffcf85ab3d95aec6e"
+            },
+            "r3-m1-b/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-b/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r3-m1-b/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "ca477a77209d8da68c57ae6c21a23aa869b1af1563b176842808d9647fc87d59"
+            },
+            "r3-m1-b/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-b/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r3-m1-b/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-b/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3235,
+              "sha256": "833afe79b9fe94d8ec625d37e6eb9251f2b307956503c974bbe82c8b9ae0a49f"
+            },
+            "r3-m1-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r3-m1-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "5200b92162420b4afd479ad4970116fc60c258ff424e10c214e16b3c27b2f8c2"
+            },
+            "r3-m1-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "1bb3f165e4bb31a560b357f96afe291f0f5d5aaacd36d8f923f35ac4c16b64d0"
+            },
+            "r3-m1-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1474,
+              "sha256": "72f45ec468a447e8873c9ba29fdb0d49e24b479f17981552159ee89dba32e34c"
+            },
+            "r3-m1-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 153,
+              "sha256": "936a9dc6d4ad8bed69edce5b93b86e84c4b2abe7789a6d9ce2a668c88bbc1131"
+            },
+            "r3-m1-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4611,
+              "sha256": "b607f06ab8053a366900bd8684789af89476df2b463e636d5e3eb0094a9bba93"
+            },
+            "r3-m1-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2439,
+              "sha256": "85e90f0949c93e9e003e910fe3873f5148af91f2151d665abf9bb88554b73271"
+            },
+            "r3-m1-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r3-m1-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3759,
+              "sha256": "5c2952f0555b5d55e12e840532d0865408a0cf2941a46fcf830130157d773a25"
+            },
+            "r3-m1-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-m1-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r3-m1-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-m1-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "digest": "7c20117831f36bdda4d6321ad51373a42f61ccd13c51f4c47aac0b7406ce6b7d"
+        },
+        "archive": {
+          "sha256": "cde05b3c0ef97d63dadf3b2b76f2d6cde49638ce165394b088c8931bc56b5dff",
+          "cookie": "2049:313808"
+        },
+        "backup": "remote-backups/10.66.116.10.tar.gz",
+        "removed": {
+          "root_absent": true,
+          "archive_absent": true
+        }
+      }
+    },
+    "q36-slot-compat-tail-20261013": {
+      "execution_sha256": "1662a3233eb50ee25b7b0c700e54e9f7b17068e1a3709321c26d420ed13f3515",
+      "driver_sha256": "af0bf5222150512c8d592e1873a0c543c8db6600c27e515c59fd0baf30c3d3ea",
+      "preparation_sha256": "2d03ae49163f16f4f558521b756baad90bf74d6eeda18711deb44848c990940d",
+      "original_status": "FAIL",
+      "original_errors": [
+        "ValueError: iperf bidir receiver made no progress"
+      ],
+      "sessions": 1,
+      "windows": 2,
+      "hosts": {
+        "10.66.116.10": {
+          "before": {
+            "snapshot_schema": "all-firewall-v1",
+            "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+            "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+            "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+            "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+            "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+            "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+            "namespaces": "",
+            "iptables4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*mangle\n:PREROUTING ACCEPT [7161562:8263383313]\n:INPUT ACCEPT [7161521:8263380722]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5735009:10552481117]\n:POSTROUTING ACCEPT [5735146:10552495774]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*filter\n:INPUT ACCEPT [7161521:8263380722]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5735009:10552481117]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*nat\n:PREROUTING ACCEPT [11110:1450033]\n:INPUT ACCEPT [11079:1448086]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026",
+            "iptables6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026",
+            "legacy4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*mangle\n:PREROUTING ACCEPT [7161570:8263384145]\n:INPUT ACCEPT [7161529:8263381554]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5735021:10552483853]\n:POSTROUTING ACCEPT [5735158:10552498510]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*filter\n:INPUT ACCEPT [7161529:8263381554]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5735021:10552483853]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*nat\n:PREROUTING ACCEPT [11110:1450033]\n:INPUT ACCEPT [11079:1448086]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026",
+            "legacy6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:06:53 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:06:53 2026",
+            "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:06:54 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:06:54 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+            "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:06:54 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:06:54 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+            "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 7144955, \"bytes\": 8261334935}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 11325, \"bytes\": 1680495}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 939, \"bytes\": 48828}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+          },
+          "staged_before_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0",
+          "cookie": "2049:313584",
+          "metadata": {
+            "kernel": "Linux 6.12.105+deb13-amd64 x86_64 GNU/Linux",
+            "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  2\nOn-line CPU(s) list:                     0,1\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) CPU E3-1270 v6 @ 3.80GHz\nCPU family:                              6\nModel:                                   158\nThread(s) per core:                      1\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                9\nBogoMIPS:                                7583,99\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 xsaves arat vnmi umip md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               64 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                8 MiB (2 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0,1\nVulnerability Gather data sampling:      Unknown: Dependent on hypervisor status\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion; VMX flush not necessary, SMT disabled\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Unknown: Dependent on hypervisor status\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+            "iperf": "iperf 3.18 (cJSON 1.7.15)",
+            "version": "qeli 0.8.2",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "load_at_start": "0.02 0.66 0.73 1/118 658335",
+            "cpu_governor": {
+              "availability": "UNAVAILABLE",
+              "policies": {}
+            }
+          },
+          "after": {
+            "snapshot_schema": "all-firewall-v1",
+            "addresses": "lo               UNKNOWN        127.0.0.1/8 \nens18            UP             10.66.116.10/24 \nvpn0             UNKNOWN        10.9.0.1/24",
+            "routes": "default via 10.66.116.1 dev ens18 onlink \n10.9.0.0/24 dev vpn0 proto kernel scope link src 10.9.0.1 \n10.66.116.0/24 dev ens18 proto kernel scope link src 10.66.116.10 \nlocal 10.9.0.1 dev vpn0 table local proto kernel scope host src 10.9.0.1 \nbroadcast 10.9.0.255 dev vpn0 table local proto kernel scope link src 10.9.0.1 \nlocal 10.66.116.10 dev ens18 table local proto kernel scope host src 10.66.116.10 \nbroadcast 10.66.116.255 dev ens18 table local proto kernel scope link src 10.66.116.10 \nlocal 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 \nlocal 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 \nbroadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1",
+            "addresses6": "lo               UNKNOWN        ::1/128 \nens18            UP             fe80::be24:11ff:fef1:572a/64 \nvpn0             UNKNOWN        fe80::1750:6d0e:8fba:4e3a/64",
+            "routes6": "fe80::/64 dev ens18 proto kernel metric 256 pref medium\nfe80::/64 dev vpn0 proto kernel metric 256 pref medium\nlocal ::1 dev lo table local proto kernel metric 0 pref medium\nlocal fe80::1750:6d0e:8fba:4e3a dev vpn0 table local proto kernel metric 0 pref medium\nlocal fe80::be24:11ff:fef1:572a dev ens18 table local proto kernel metric 0 pref medium\nmulticast ff00::/8 dev ens18 table local proto kernel metric 256 pref medium\nmulticast ff00::/8 dev vpn0 table local proto kernel metric 256 pref medium",
+            "qeli_listener": "LISTEN 0      128          0.0.0.0:443       0.0.0.0:*    users:((\"qeli\",pid=901,fd=10))",
+            "active": "ca0ab9e96db07e683779efcbbae03c4e9a2e5289cb35268c7fcfec33408710fc  /usr/bin/qeli\n    PID COMMAND\n    745 qeli\n    901 qeli",
+            "boot_id": "7a156e46-9e82-4942-b3b6-d7bf5e791878",
+            "resolver": "d9fcf7783d7b0b51869ef66ed4febbf50f514057108278e330b1e84d8aeb33e0  /etc/resolv.conf",
+            "namespaces": "",
+            "iptables4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*mangle\n:PREROUTING ACCEPT [7181831:8293364164]\n:INPUT ACCEPT [7181790:8293361573]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5748749:10565855401]\n:POSTROUTING ACCEPT [5748886:10565870058]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*filter\n:INPUT ACCEPT [7181790:8293361573]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5748749:10565855401]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*nat\n:PREROUTING ACCEPT [11111:1450160]\n:INPUT ACCEPT [11080:1448213]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026",
+            "iptables6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026",
+            "legacy4": "# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*mangle\n:PREROUTING ACCEPT [7181839:8293364996]\n:INPUT ACCEPT [7181798:8293362405]\n:FORWARD ACCEPT [41:2591]\n:OUTPUT ACCEPT [5748761:10565858137]\n:POSTROUTING ACCEPT [5748898:10565872794]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*filter\n:INPUT ACCEPT [7181798:8293362405]\n:FORWARD ACCEPT [26:1599]\n:OUTPUT ACCEPT [5748761:10565858137]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by iptables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*nat\n:PREROUTING ACCEPT [11111:1450160]\n:INPUT ACCEPT [11080:1448213]\n:OUTPUT ACCEPT [5346:343212]\n:POSTROUTING ACCEPT [5377:345159]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026",
+            "legacy6": "# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*mangle\n:PREROUTING ACCEPT [13736:1525745]\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\n:POSTROUTING ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*filter\n:INPUT ACCEPT [7455:873834]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [8069:905718]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Generated by ip6tables-save v1.8.11 on Tue Oct 13 22:09:00 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026",
+            "nft4": "# Table `filter' is incompatible, use 'nft' tool.\n# Table `nat' contains incompatible base-chains, use 'nft' tool to list them.\n# Generated by iptables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:09:00 2026\n*nat\n:PREROUTING ACCEPT [0:0]\n:INPUT ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:09:00 2026\n# Warning: iptables-legacy tables present, use iptables-legacy-save to see them",
+            "nft6": "# Generated by ip6tables-nft-save v1.8.11 (nf_tables) on Tue Oct 13 22:09:01 2026\n*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n# Completed on Tue Oct 13 22:09:01 2026\n# Warning: ip6tables-legacy tables present, use ip6tables-legacy-save to see them",
+            "nft": "{\"nftables\": [{\"metainfo\": {\"version\": \"1.1.3\", \"release_name\": \"Commodore Bullmoose #4\", \"json_schema_version\": 1}}, {\"table\": {\"family\": \"ip\", \"name\": \"nat\", \"handle\": 8}}, {\"chain\": {\"family\": \"ip\", \"table\": \"nat\", \"name\": \"postrouting\", \"handle\": 1, \"type\": \"nat\", \"hook\": \"postrouting\", \"prio\": 100, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"nat\", \"chain\": \"postrouting\", \"handle\": 2, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"ens18\"}}, {\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"masquerade\": null}]}}, {\"table\": {\"family\": \"ip\", \"name\": \"filter\", \"handle\": 9}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"forward\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 4, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 5, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 7165222, \"bytes\": 8291315619}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 6, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 4699, \"bytes\": 343188}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 7, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-reply\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 8, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"destination-unreachable\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 9, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"time-exceeded\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 10, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"icmp\", \"field\": \"type\"}}, \"right\": \"echo-request\"}}, {\"counter\": {\"packets\": 4, \"bytes\": 336}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 11, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 80}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 12, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 443}}, {\"counter\": {\"packets\": 99, \"bytes\": 5756}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 13, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"tcp\", \"field\": \"dport\"}}, \"right\": 8080}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 14, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"95.214.10.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 15, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"89.108.81.177\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 16, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": \"185.217.198.87\"}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 17, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.66.0.0\", \"len\": 16}}}}, {\"counter\": {\"packets\": 11326, \"bytes\": 1680622}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 18, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"192.168.50.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 939, \"bytes\": 48828}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"INPUT\", \"handle\": 19, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"payload\": {\"protocol\": \"ip\", \"field\": \"saddr\"}}, \"right\": {\"prefix\": {\"addr\": \"10.8.0.0\", \"len\": 24}}}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 20, \"expr\": [{\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"counter\": {\"packets\": 0, \"bytes\": 0}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 21, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"iifname\"}}, \"right\": \"vpn0\"}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"FORWARD\", \"handle\": 22, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"vpn0\"}}, {\"match\": {\"op\": \"in\", \"left\": {\"ct\": {\"key\": \"state\"}}, \"right\": [\"established\", \"related\"]}}, {\"accept\": null}]}}, {\"rule\": {\"family\": \"ip\", \"table\": \"filter\", \"chain\": \"OUTPUT\", \"handle\": 23, \"expr\": [{\"match\": {\"op\": \"==\", \"left\": {\"meta\": {\"key\": \"oifname\"}}, \"right\": \"lo\"}}, {\"counter\": {\"packets\": 48119, \"bytes\": 22300039}}, {\"accept\": null}]}}, {\"table\": {\"family\": \"ip6\", \"name\": \"filter\", \"handle\": 10}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"INPUT\", \"handle\": 1, \"type\": \"filter\", \"hook\": \"input\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"OUTPUT\", \"handle\": 2, \"type\": \"filter\", \"hook\": \"output\", \"prio\": 0, \"policy\": \"accept\"}}, {\"chain\": {\"family\": \"ip6\", \"table\": \"filter\", \"name\": \"FORWARD\", \"handle\": 3, \"type\": \"filter\", \"hook\": \"forward\", \"prio\": 0, \"policy\": \"accept\"}}]}"
+          },
+          "changed_fields": [],
+          "host_restored": true,
+          "active_services_unchanged": true,
+          "staged_after_sha256": "a526c03bf0bae927828e91f11ac5d751c3a82e560a7f12ada3a6ab6b410cedb0"
+        }
+      },
+      "cleanup": {
+        "status": "OWNED_ROOT_ARCHIVED_AND_REMOVED",
+        "inventory": {
+          "cookie": "2049:313584",
+          "inventory": {
+            "baseline-qeli": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 14454184,
+              "sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069"
+            },
+            "candidate-qeli": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 14449384,
+              "sha256": "524443061b9552c70d5b44bc22e48e290dc0ff18c78f835dadb6ea737a9de63f"
+            },
+            "r3-l2-c": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-c/client.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 3460,
+              "sha256": "6a9ae8336e27dc074ad42759bb8419190c9cc816119876094ce84b75af3cbfc2"
+            },
+            "r3-l2-c/control.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1179,
+              "sha256": "fdb9dd3e658e88cf036b8ebec9294ebe2681fffba51ff57af8835e890ef2e56c"
+            },
+            "r3-l2-c/etc": {
+              "mode": 493,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-c/etc/client.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 260,
+              "sha256": "5941238eebefc184a3b7910cff3e8b8f2229329de4ed8cb10ec3fbf51da7375d"
+            },
+            "r3-l2-c/etc/identity": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-c/etc/identity/bench.key": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 32,
+              "sha256": "556369f9a85b5caf287ee7f3700265b7f36714443a078a26d5ff81697892f918"
+            },
+            "r3-l2-c/etc/identity/bench.key.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-c/etc/server.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1469,
+              "sha256": "27d2d4d655a8617b6854c0c8984f0815af560debb3154bba16e40ac2da5ed4f6"
+            },
+            "r3-l2-c/etc/usage.json": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 151,
+              "sha256": "0ed6215aec00165be84af797aaa8f23af8d7ba16169abbc7d8377b0f4dc7541e"
+            },
+            "r3-l2-c/etc/users.conf": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-c/iperf.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4348,
+              "sha256": "87d12097fdbd1d7453b07d9eae626158f8c29fb558b38871bff423c747780dc8"
+            },
+            "r3-l2-c/run": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-c/run/client-status.json": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 2431,
+              "sha256": "46438122e5eeea8fa25a9cdbe464c92e2abe99f02df784051197629aad9bd776"
+            },
+            "r3-l2-c/run/control.sock.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-c/sample.py": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 1559,
+              "sha256": "c314c54071cb4ab865ecbee70475269b4952179c794b218e24f136a1d69491d9"
+            },
+            "r3-l2-c/server.log": {
+              "mode": 420,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 4049,
+              "sha256": "6e7c3211b27f70c754a00e4c37c94fb5e02bc08d55369555de942c1056750ff5"
+            },
+            "r3-l2-c/state": {
+              "mode": 448,
+              "uid": 0,
+              "gid": 0,
+              "kind": "directory"
+            },
+            "r3-l2-c/state/server-firewall.state": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 75,
+              "sha256": "7ba1741ea2fa4763b8657c8cae031c0ef734f443896eeac0713933f3ea4a8cfd"
+            },
+            "r3-l2-c/state/server-firewall.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "r3-l2-c/state/sysctls.state.lock": {
+              "mode": 384,
+              "uid": 0,
+              "gid": 0,
+              "kind": "file",
+              "size": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          },
+          "digest": "a46c24565aa5b15aa40dde7afe37ca91d18af1c89261bb3431ff66b65ae4deaa"
+        },
+        "archive": {
+          "sha256": "690a54a470d3a06d30ef6bcba8879364d4bcbbc886b18ed069e08f02cbe7431b",
+          "cookie": "2049:313597"
+        },
+        "backup": "remote-backups/10.66.116.10.tar.gz",
+        "removed": {
+          "root_absent": true,
+          "archive_absent": true
+        }
+      }
+    }
+  },
+  "previous_fixed2mux_population_not_pooled": true,
+  "source_adopted": false,
+  "native_refresh_pending": true,
+  "kernel_losses_closed": false,
+  "all_direction_performance_or_capacity_PASS_claimed": false,
+  "no_push_deploy_release": true
+}

@@ -324,3 +324,46 @@ Median paired bidir sum **+8.16%**, one repeat regressed. Bidir download shares 
 After unit drain, exact UUID/inode-owned swap removed, original inventory restored. Owned compiler target/registry/source/root and runtime processes/namespaces/root/remote archives SHA-verified/removed; services/stagedCLI/full host/source gates PASS. Independent build/runtime qualification;80 raw JSON/12logs qualified first attempt.
 
 Legacy bonded/one-carrier checks and native consumer refresh/qualification remain before source adoption. F030 not marked finally FIXED; defaults unchanged. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Q36-F030: one-carrier compatibility and unresolved legacy
+
+**PARTIAL35_QUALIFIED; source/native adoption pending.**12actualsessions/36attempted eight-second windows: **35admitted measurements and1iperf3 role-invalid bidir window**. Required recordizer/one carrier and off/legacy/two carriers, TCPraw P1 up/down/bidir,outer/innerIPv4,original MTU/qdisc/queues/affinity,unlimited producer/no omit. Server exactbaseline52511cebd43a throughout, client baseline or previously compiled candidate524443061b95; no rebuild/default change. Prior18fixed2mux windows not pooled.
+
+One carrier:3fullpairs,0native uplink/downlink drops in all18baseline/candidate windows. Upload median1447.89→1414.29Mbps;median paired upload−1.26%,download+4.55%,bidir sum+2.34%. Preserved behavior in tested cases, not universal speed equivalence; kernel TUN losses remain.
+
+Legacy:3upload/download pairs. Upload median435.57→574.22Mbps,paired+32.27%;download736.23→687.54Mbps,paired−6.63%. QueueFull persists in all8admitted candidate windows;Oversize/PoolExhausted/NoCarrier0. Candidate bidir has only2admitted repeats:individual diagnostic values retained, no three-sample statistical qualification for that cell. Legacy16602B/252slots yields83width2queue entries versus21baseline/682mux atMTU1400. Maximum accepted legacy bound unchanged. Executed128burst unit is mux only; capacity arithmetic does not diagnose every runtime drop.
+
+Table:N3medians;N2two separate diagnostic values divided byslash,no statistics.
+
+|Condition|Client|Phase|N|Up Mbps|Down Mbps|Native uplink drops|Client TUN TX drops|Server TUN TX drops|
+|---|---|---|---:|---:|---:|---:|---:|---:|
+|required/carriers-1|baseline|tcp_up|3|1447.89|—|0.00|174.00|0.00|
+|required/carriers-1|baseline|tcp_down|3|—|1463.53|0.00|0.00|186.00|
+|required/carriers-1|baseline|tcp_bidir|3|423.96|1160.85|0.00|645.00|271.00|
+|required/carriers-1|candidate|tcp_up|3|1414.29|—|0.00|202.00|0.00|
+|required/carriers-1|candidate|tcp_down|3|—|1549.98|0.00|0.00|442.00|
+|required/carriers-1|candidate|tcp_bidir|3|457.97|1185.90|0.00|464.00|321.00|
+|off/carriers-2|baseline|tcp_up|3|435.57|—|5059.00|0.00|0.00|
+|off/carriers-2|baseline|tcp_down|3|—|736.23|18448.00|0.00|0.00|
+|off/carriers-2|baseline|tcp_bidir|3|36.27|657.31|22031.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_up|3|574.22|—|2706.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_down|3|—|687.54|6350.00|0.00|0.00|
+|off/carriers-2|candidate|tcp_bidir|2|115.06/118.70|622.61/633.70|6893.00/8282.00|0.00/0.00|0.00/0.00|
+
+|Condition|Repeat|Upload change %|Download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|
+|required/carriers-1|1|-1.26|+4.55|+9.64|
+|required/carriers-1|2|-4.78|+2.01|+0.40|
+|required/carriers-1|3|-0.35|+8.45|+2.34|
+|off/carriers-2|1|+7.21|-16.26|+7.38|
+|off/carriers-2|2|+32.27|-6.61|+6.70|
+|off/carriers-2|3|+35.09|-6.63|role-invalid|
+
+Original900scontroller budget ended after11complete sessions/33windows;TimeoutError retained. Only missinglegacycandidate session executed:upload/down completed,bidir bothreceivers0. RawJSON plus archivedserver iperf log proveTX/TX onclientport33208 andRX/RX on33220;all11priorbidir endpoint roles match correctly. [iperf3 3.18 server](https://github.com/esnet/iperf/blob/3.18/src/iperf_server_api.c#L762-L769) assigns roles byaccept order;[client](https://github.com/esnet/iperf/blob/3.18/src/iperf_client_api.c#L324-L330) createsTX thenRX. This explains the invalid measurement; it does not establish a Qeli stall. OriginalFAIL retained,no0speed imputation,no retry-until-success.
+
+r1-m1-c/upload finalsender1417281536B versus1sintervalsum1417150464B:131072Bdifference,oneconfiguredblock;retransmits282match. Both separatehorizons retained;deliveredreceiver summary unchanged. Initial exactbytesum assertion refusal and subsequent population(N2) refusal preserved. NoN2statistics computed;existing3sampleminimum unchanged. Allother senderbyte/retransmitsums exact.
+
+Independent qualification35windows/157rawJSON/24logs andboth originalexecution receipts.82valid-window native socket snapshots stable/mirrored;failedbidir lacksfullafter-boundary snapshot,no suchPASS claimed. MaxworkerRSS 95304KiB below512MiB. Structuralhoststate matches acrossstages;both fullhost/firewall/routes/resolver/services/stagedCLI/source gatesPASS,ownedprocesses/namespaces/roots/remotearchives SHAverified/removed. BothruntimeFAILs andfailedrawdata retained;workingclientmod/nativecopies unchanged.
+
+Next:address instrument direction-role pairing before furtherbidir measurements,remaining legacyQueueFull,actualnativeconsumer refresh/qualification duringpatchadoption. Q36IN_PROGRESS,F030not finallyFIXED,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
