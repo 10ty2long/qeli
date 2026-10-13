@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+  "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -31,14 +31,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -62,14 +62,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -93,14 +93,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -124,14 +124,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -155,14 +155,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -186,14 +186,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -217,14 +217,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -248,14 +248,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -279,14 +279,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -310,14 +310,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -341,14 +341,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -372,14 +372,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -403,14 +403,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -434,14 +434,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -465,14 +465,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -496,14 +496,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -534,14 +534,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -565,14 +565,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -596,14 +596,14 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2e867af136d6920f495f5c5389e233a4545776195a2f668dc79da3bc17c5ff6a",
+      "source_digest": "abd67be67dde82aa403d2a7b917f6e72bf3ae804b91a70ad911d82985f10f5b8",
       "artifact_sha256": "52511cebd43aca364e317c04955287630dc24055de32168206d280ddbee82069",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; existing exact DNS tools/dependencies/account",
       "executed_at": "2026-10-12T02:17:03.410178+00:00",
@@ -627,8 +627,8 @@
       },
       "execution_source_commit": "e10799a97ba16b4dc793a205a2c27865d63e2285",
       "execution_release_source_digest": "16db8c930bb4ad6c9eaca290e6d0c89e94bb004f1a77797670ccfcb7bfadc46d",
-      "source_applicability_evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
-      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance."
+      "source_applicability_evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "acceptance_basis": "Fresh current pool-fixed CLI execution.915 exact build inputs plus only two explicit reverified formatter whitespace replacements. Subsequent exact44-docs-sdk-android-fixtures-publication-contract-trace-boundaries-and-qualified-openwrt-source-metadata Git diff verified; original execution source/time/raw preserved.100TCP+100QUIC is bounded certification, not Q35 eight-hour release endurance. Subsequent exact adopted panel/legacy/marker/native/docs tree review: release/certification/evidence/q34-adopted-source-applicability-20261013.json. Original execution facts unchanged; no new Linux matrix execution."
     },
     {
       "id": "android.wifi-to-cellular",
@@ -876,7 +876,7 @@
     },
     {
       "evidence": "release/certification/evidence/q31-router-toolchain-policy-20261006.json",
-      "scope": "Q31 F338/F339 common target/setup/build policy Rust1.97.0,MIPS nightly-2026-06-10 from installed manifest,Zig0.13.0,cargo-zigbuild0.23.0;post-install Rust/std/source/tool identities verified,wrong Zig rejects before mutations;dead checked/features/duplicate build_std removed. Encoded/compiler ambient overrides isolated,recipe flags/wrappers/pin explicit,MIPSsoftfloat preserved.52Linux router tests,12old-current models,actual offline tiny host Rust1.96ambient→1.97recipe prefix,22Windows helper/policy,37recipes/docs/bindings PASS. Initial CLI/BIN/importmock failures retained,repaired/final rerun.14 supplied staged Git files;Rust/core/native compile inputs/artifacts/router binaries unchanged.No actual Qeli/cross/MIPS/nightly/SDK/firmware build or hermeticity/fullABI/ISA/A-Brepro claim. Sharedconfig/PATH/profile/cache/install/uploadrace/generation/ABA/lastcheck/rollback OPEN. .10 read-only,.11 owned execution,global tools/services/default unchanged. All41 historical fields except digest,acceptance/older supplements preserved;Q29 FAIL/ENONET,Q30 skips/drainOPEN,D06 retained.Q31 IN_PROGRESS28/37(75.7%)."
+      "scope": "Q31 F338/F339 common target/setup/build policy Rust1.97.0,MIPS nightly-2026-06-10 from installed manifest,Zig0.13.0,cargo-zigbuild0.23.0;post-install Rust/std/source/tool identities verified,wrong Zig rejects before mutations;dead checked/features/duplicate build_std removed. Encoded/compiler ambient overrides isolated,recipe flags/wrappers/pin explicit,MIPSsoftfloat preserved.52Linux router tests,12old-current models,actual offline tiny host Rust1.96ambient\u21921.97recipe prefix,22Windows helper/policy,37recipes/docs/bindings PASS. Initial CLI/BIN/importmock failures retained,repaired/final rerun.14 supplied staged Git files;Rust/core/native compile inputs/artifacts/router binaries unchanged.No actual Qeli/cross/MIPS/nightly/SDK/firmware build or hermeticity/fullABI/ISA/A-Brepro claim. Sharedconfig/PATH/profile/cache/install/uploadrace/generation/ABA/lastcheck/rollback OPEN. .10 read-only,.11 owned execution,global tools/services/default unchanged. All41 historical fields except digest,acceptance/older supplements preserved;Q29 FAIL/ENONET,Q30 skips/drainOPEN,D06 retained.Q31 IN_PROGRESS28/37(75.7%)."
     },
     {
       "evidence": "release/certification/evidence/q31-keenetic-install-rollback-20261006.json",
@@ -884,11 +884,11 @@
     },
     {
       "evidence": "release/certification/evidence/q31-openwrt-ini-roundtrip-20261006.json",
-      "scope": "Q31F342 scoped OpenWrt UCI→INI literal string serialization PASS.One quoted writer matches shared core quote unescape,escapes double quotes only,keeps backslashes/edge spaces/Unicode for user/volatile obfs key,required and logging fields;ASCIIcontrols/bool/MTU/INI-only external format unchanged.41fresh tests per ash/dash incl4new/40roundtrip;baseline13mismatches per shell.Actual exact unmodified Rustparser GNU inspector+existinglog rlib/owned files,UCI/procd/fw models/saved rc.common only.11Node/37recipes/docs/bindings PASS.Initial missing-log compileFAIL retained/repaired;finalartifact/dependency/snapshot hashes verified.7suppliedGitinputs,core/native/buildrecipes/artifacts unchanged,no fresh Qeli/FFI/cross/firmware/ABI/obfs handshake or semanticvalidation claim.41historical fields except digest,acceptance/older supplements unchanged,Q29FAIL/ENONET,Q30drainOPEN/Appleexclusions,D06retained.Q31IN_PROGRESS28/37(75.7%),9remain;generation/ABA/firmware/cross OPEN;.10 untouched,.11owned,no deploy/push."
+      "scope": "Q31F342 scoped OpenWrt UCI\u2192INI literal string serialization PASS.One quoted writer matches shared core quote unescape,escapes double quotes only,keeps backslashes/edge spaces/Unicode for user/volatile obfs key,required and logging fields;ASCIIcontrols/bool/MTU/INI-only external format unchanged.41fresh tests per ash/dash incl4new/40roundtrip;baseline13mismatches per shell.Actual exact unmodified Rustparser GNU inspector+existinglog rlib/owned files,UCI/procd/fw models/saved rc.common only.11Node/37recipes/docs/bindings PASS.Initial missing-log compileFAIL retained/repaired;finalartifact/dependency/snapshot hashes verified.7suppliedGitinputs,core/native/buildrecipes/artifacts unchanged,no fresh Qeli/FFI/cross/firmware/ABI/obfs handshake or semanticvalidation claim.41historical fields except digest,acceptance/older supplements unchanged,Q29FAIL/ENONET,Q30drainOPEN/Appleexclusions,D06retained.Q31IN_PROGRESS28/37(75.7%),9remain;generation/ABA/firmware/cross OPEN;.10 untouched,.11owned,no deploy/push."
     },
     {
       "evidence": "release/certification/evidence/q31-keenetic-interface-admission-20261006.json",
-      "scope": "Q31F343 scoped Keenetic interface/attachment/L3 owner admission PASS.Canonical bounded strict core parser verifies templateTUN=dev,device_type=tun,dev_attach;attached router disallows gateway_nat/forward/exit_node;GATEWAY=no still checks,paired metadata-only CLI flags,no shellINIparser.Old metadata API preserved,upgradebinary/template together.317compile/17fixture Gitinputs private rlib-only manifest,fresh isolated GNUclient-bin build12units/strictClippy/fmt,184tests per ash/dash incl8newmethods/34newactualcells,20baseline mismatches each;37recipes/docs/bindings PASS.Initial Windowsfmtmissing/old Cargc4helper timeout retained;new arity4/8metadata-only helper,owned suite/helper/temp cleanup complete,not productfailure.Linuxclientbinmetadata/CLI only,default data plane/schema/FFI/JNI unchanged,priorartifactshashes retained,no fresh FFI/release/cross/firmware/ABI/runtime claim.Config preflight→launchreload/generation/ABA OPEN.41historical fields except digest,acceptance/older supplements retained,Q29FAIL/ENONET,Q30drainOPEN/Appleexclusions,D06retained.Q31IN_PROGRESS28/37(75.7%),9remain,no rowclosed;.10untouched,.11owned,no deploy/push."
+      "scope": "Q31F343 scoped Keenetic interface/attachment/L3 owner admission PASS.Canonical bounded strict core parser verifies templateTUN=dev,device_type=tun,dev_attach;attached router disallows gateway_nat/forward/exit_node;GATEWAY=no still checks,paired metadata-only CLI flags,no shellINIparser.Old metadata API preserved,upgradebinary/template together.317compile/17fixture Gitinputs private rlib-only manifest,fresh isolated GNUclient-bin build12units/strictClippy/fmt,184tests per ash/dash incl8newmethods/34newactualcells,20baseline mismatches each;37recipes/docs/bindings PASS.Initial Windowsfmtmissing/old Cargc4helper timeout retained;new arity4/8metadata-only helper,owned suite/helper/temp cleanup complete,not productfailure.Linuxclientbinmetadata/CLI only,default data plane/schema/FFI/JNI unchanged,priorartifactshashes retained,no fresh FFI/release/cross/firmware/ABI/runtime claim.Config preflight\u2192launchreload/generation/ABA OPEN.41historical fields except digest,acceptance/older supplements retained,Q29FAIL/ENONET,Q30drainOPEN/Appleexclusions,D06retained.Q31IN_PROGRESS28/37(75.7%),9remain,no rowclosed;.10untouched,.11owned,no deploy/push."
     },
     {
       "evidence": "release/certification/evidence/q31-router-cross-matrix-20261006.json",
@@ -1012,7 +1012,7 @@
     },
     {
       "evidence": "release/certification/evidence/q31-preflight-identity-20261008.json",
-      "scope": "F396 whole-preflight source admission/boundary stability: one clean committed source, same router snapshot/report commit, timeout120-second certification process and failed verdict on tool/timeouts. One baseline positive control and three old mixed-commit false-PASS cases reproduced with real Git/controlled external gates.12 new whole-program methods; Windows78PASS/3pre-existing POSIX/opt-in skips out of81; Linux56 related methods uid65534 without skips with328 staged Git Python inputs verified before/after. Initial Windows fixture PATH error repaired; one owned Python lab root removed after SHA-verified backup/process/mount/path guards. CI tests/manual/report synchronized. Rust/native/library/SDK recipes unchanged and SHA/provenance retain previous scope; no new native/cross/benchmark/matrix required. Real read-only full-script preflight is a refusal check; optional lab skip is not a new build, live current-commit success/Actions/source-cut/SDKbootstrap remain OPEN. Git boundary checks do not lock/restrict privileged writers or detect a change wholly reverted inside a gate. Q31 3/5IN_PROGRESS, full29/37(78.4%),8remain;old debt14DONE+D06accepted,Q29SIGKILLFAIL/auto-nullENONET,Q30/exclusions retained.41historical cases/acceptance and52previous supplements preserved modulo source_digest. No push/deploy/release. F397–F398 from actual failed Actions37598403060 at83c07f5c: mac CI uses guarded per-app-arm64 leaf, old command fails/11Windows and12Linux path cases PASS; Linux CI now runs path fixtures. iOS known-key fixture uses supported gateway=false/default shared split mode; seven actual shipped configuration ABI checks PASS. Explicit routing syntax preparation refusals retained; no unsupported INI fields left. iOS Swift XCTest/Keychain(-34018) signed-runtime qualification remains OPEN; no new Actions success. Two owned lab roots cleaned after verified backups; initial tar output-entry directory-mtime warning repaired by retrying backup only. Native recipes37/checks PASS; no Rust or native refresh needed."
+      "scope": "F396 whole-preflight source admission/boundary stability: one clean committed source, same router snapshot/report commit, timeout120-second certification process and failed verdict on tool/timeouts. One baseline positive control and three old mixed-commit false-PASS cases reproduced with real Git/controlled external gates.12 new whole-program methods; Windows78PASS/3pre-existing POSIX/opt-in skips out of81; Linux56 related methods uid65534 without skips with328 staged Git Python inputs verified before/after. Initial Windows fixture PATH error repaired; one owned Python lab root removed after SHA-verified backup/process/mount/path guards. CI tests/manual/report synchronized. Rust/native/library/SDK recipes unchanged and SHA/provenance retain previous scope; no new native/cross/benchmark/matrix required. Real read-only full-script preflight is a refusal check; optional lab skip is not a new build, live current-commit success/Actions/source-cut/SDKbootstrap remain OPEN. Git boundary checks do not lock/restrict privileged writers or detect a change wholly reverted inside a gate. Q31 3/5IN_PROGRESS, full29/37(78.4%),8remain;old debt14DONE+D06accepted,Q29SIGKILLFAIL/auto-nullENONET,Q30/exclusions retained.41historical cases/acceptance and52previous supplements preserved modulo source_digest. No push/deploy/release. F397\u2013F398 from actual failed Actions37598403060 at83c07f5c: mac CI uses guarded per-app-arm64 leaf, old command fails/11Windows and12Linux path cases PASS; Linux CI now runs path fixtures. iOS known-key fixture uses supported gateway=false/default shared split mode; seven actual shipped configuration ABI checks PASS. Explicit routing syntax preparation refusals retained; no unsupported INI fields left. iOS Swift XCTest/Keychain(-34018) signed-runtime qualification remains OPEN; no new Actions success. Two owned lab roots cleaned after verified backups; initial tar output-entry directory-mtime warning repaired by retrying backup only. Native recipes37/checks PASS; no Rust or native refresh needed."
     },
     {
       "evidence": "release/certification/evidence/q31-sdk-build-20261008.json",
@@ -1068,7 +1068,7 @@
     },
     {
       "evidence": "release/certification/evidence/q33-release-vpn-20261008.json",
-      "scope": "Q33 release and package→systemd→VPN:actual production DEBb3d0363b/extracted portable jemalloc ELFf9c70e67 from9afbb348 unchanged qeli/Cargo/native. Existing actual release matrix18cells376checksPASS:outerinner4/6 TCPfakeTLS/UDPfakeTLS/UDPQUICfull12,dualsplit2,TAPNDPRA,DNSrealresolvedIPv4IPv6andforcedTCP3,MTU1280PMTUDATAFRAGPTB2,legacy0.7.16bothdirections;aggregate leak14PASS;matrixTOFUbindstaticfalse. Actual apt/dpkg/debconf/manager257 package gate36PASS adds pinneddefaultH1 TCPfakeTLS client onprivateveth:threeinnerpings+TUNroute+cleanstopeachfresh/upgrade/brokenunitrollback/corruptELFrollback,configuredDBidentityusersconfigreceiptbackupUIDmodepreserved. Newconnectioneachstage,notsessioncontinuity;DNSoff/kill-switchoff packagepeer. PrivateDB/explicitunitadapter/dependenciesaccountpreseeded/localQELI_DEB;notemptybootstrap/hostinstall/HTTPattestation or differentcoreversionupgrade. Original fixture rootidentitytrustFAILretained;setprivqeli fixesfixturewithoutweakertrust.3packetsSEALEDsecret-scanned5rootsSHAarchivedguardcleaned777/845/networkresolverhostELFunchanged,.10notused.Recipes38/docs9/684/native14SHApriorA-Bsource923b retained,noRustrebuild/benchmark/soak/SIGKILLorcurrentActions. Wholebinary/kernelinstaller andDockerimagevolume(realdockerabsent) OPEN. Q33IN_PROGRESS29/37DONE78.4%8remain,Q31capacity3/5,Q29SIGKILLFAILENONET,Q30/exclusions/D06 retained.41casesacceptance+66priorsupplements preservedmodulosourcedigest;append67;20automated21advisorynotallphysicalPASS. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE."
+      "scope": "Q33 release and package\u2192systemd\u2192VPN:actual production DEBb3d0363b/extracted portable jemalloc ELFf9c70e67 from9afbb348 unchanged qeli/Cargo/native. Existing actual release matrix18cells376checksPASS:outerinner4/6 TCPfakeTLS/UDPfakeTLS/UDPQUICfull12,dualsplit2,TAPNDPRA,DNSrealresolvedIPv4IPv6andforcedTCP3,MTU1280PMTUDATAFRAGPTB2,legacy0.7.16bothdirections;aggregate leak14PASS;matrixTOFUbindstaticfalse. Actual apt/dpkg/debconf/manager257 package gate36PASS adds pinneddefaultH1 TCPfakeTLS client onprivateveth:threeinnerpings+TUNroute+cleanstopeachfresh/upgrade/brokenunitrollback/corruptELFrollback,configuredDBidentityusersconfigreceiptbackupUIDmodepreserved. Newconnectioneachstage,notsessioncontinuity;DNSoff/kill-switchoff packagepeer. PrivateDB/explicitunitadapter/dependenciesaccountpreseeded/localQELI_DEB;notemptybootstrap/hostinstall/HTTPattestation or differentcoreversionupgrade. Original fixture rootidentitytrustFAILretained;setprivqeli fixesfixturewithoutweakertrust.3packetsSEALEDsecret-scanned5rootsSHAarchivedguardcleaned777/845/networkresolverhostELFunchanged,.10notused.Recipes38/docs9/684/native14SHApriorA-Bsource923b retained,noRustrebuild/benchmark/soak/SIGKILLorcurrentActions. Wholebinary/kernelinstaller andDockerimagevolume(realdockerabsent) OPEN. Q33IN_PROGRESS29/37DONE78.4%8remain,Q31capacity3/5,Q29SIGKILLFAILENONET,Q30/exclusions/D06 retained.41casesacceptance+66priorsupplements preservedmodulosourcedigest;append67;20automated21advisorynotallphysicalPASS. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE."
     },
     {
       "evidence": "release/certification/evidence/q33-installer-tuning-20261008.json",
@@ -1253,6 +1253,10 @@
     {
       "evidence": "release/certification/evidence/current-pool-linux-matrix-20261012.json",
       "scope": "20 fresh current pool CLI Linux criteria with exact documentation-only post-execution applicability; previous supplements remain historical, not new executions or whole-release PASS."
+    },
+    {
+      "evidence": "release/certification/evidence/q34-adopted-source-applicability-20261013.json",
+      "scope": "Exact committed tree equals sealed panel12+legacy3+tested-marker1 adoption plus independently qualified8nativecopies/provenance and8auditdocs. Only Rust delta is assets cfg(test); only embedded resource delta is exact CSS qualified by factory CLI15c34473 and131actualHTTP checks. Native A/B/22WindowsABI/23JNI/2INI are fresh and separately scoped. Prior20Linux executions, artifact52511ceb, timestamps, qualification rows and21unexecuted physical rows remain unchanged. Source applicability only; no new Linux matrix execution, no hostedCI/public release or platform limitation acceptance."
     }
   ]
 }
