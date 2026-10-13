@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v248 -->
+<!-- normative-sync: full-system-audit-v249 -->
 
-**Current result, 13 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 14 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -2967,3 +2967,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 **13 October: exact slot-sizing patch adopted** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Current-tree/native rebuild and consumer qualification pending; old certification source identity not transferred across Rust delta. Legacy QueueFull/regressions retained;33/37 unchanged.
 
 **13 October: current core/native cohort refreshed locally** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: fresh current-core functional qualification completed.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 20 Linux criteria / 19 executions / 409 assertions PASS, including legacy and 100 TCP + 100 QUIC network flips; independent archive verification and full cleanup PASS. Certification updated using fresh current-core execution. F030 adoption qualification debt closed; legacy QueueFull and other performance results retained. Q29/Q31/Q34/Q36 remain open; 33/37 (89.2%). NO_PUSH_DEPLOY_RELEASE.
