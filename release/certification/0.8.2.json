@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+  "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -31,14 +31,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -62,14 +62,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -93,14 +93,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -124,14 +124,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -155,14 +155,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -186,14 +186,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -217,14 +217,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -248,14 +248,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -279,14 +279,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -310,14 +310,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -341,14 +341,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -372,14 +372,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -403,14 +403,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -434,14 +434,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -465,14 +465,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -496,14 +496,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -534,14 +534,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -565,14 +565,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -596,14 +596,14 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "46592a16579980a43071810095eb1316514bd50318e19d3a179c005620fb4eb9",
+      "source_digest": "8df9286da74528a7d56c161661d6ec462e61bc57b3c01dc247c0a9ac3d28d886",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
       "environment": "Debian 13.5 amd64; lab10.66.116.11; fresh private mount/network/PID namespaces; actual preserved DNS tools/dependencies and accounts",
       "executed_at": "2026-10-13T21:05:59.567775+00:00",
@@ -627,8 +627,8 @@
       },
       "execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "execution_release_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2",
-      "source_applicability_evidence": "release/certification/evidence/q36-current-slot-documentation-applicability-20261014.json",
-      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run."
+      "source_applicability_evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "acceptance_basis": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.100 TCP + 100 QUIC flips are bounded functional certification, not a new eight-hour endurance run. Qualified subsequent source-cut metadata: release/certification/evidence/q34-current-slot-source-applicability-20261014.json."
     },
     {
       "id": "android.wifi-to-cellular",
@@ -786,7 +786,7 @@
     "current_linux_matrix": {
       "evidence": "release/certification/evidence/current-slot-linux-matrix-20261014.json",
       "artifact_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
-      "source_applicability": "Fresh current-core execution; subsequent exact four Markdown report/plan changes only. All actual source/time/CLI/rows/log/archive facts retained. No additional execution or physical qualification claimed.",
+      "source_applicability": "Exact two OpenWrt pin/hash literals and qualification date plus five Markdown files only; Compile/Install/public URL and all qeli/native inputs unchanged. Fresh SDK cut separately qualified. Current-core 20 Linux execution source/time/CLI/raw preserved without rerun. Prior 32-bit package results not rebound across the core delta.",
       "raw_execution_source_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "raw_execution_source_digest": "31b5c9db63e403937495e1cc55474c459713702c60a06131d4b568d2320b59f2"
     },
@@ -818,6 +818,14 @@
     {
       "evidence": "release/certification/evidence/q36-pre-slot-certification-20261014.json",
       "scope": "Superseded original manifest, including historical supplements; retained as history, not transferred across the Rust delta."
+    },
+    {
+      "evidence": "release/certification/evidence/q34-current-slot-source-cut-20261014.json",
+      "scope": "Exact two OpenWrt pin/hash literals and qualification date plus five Markdown files only; Compile/Install/public URL and all qeli/native inputs unchanged. Fresh SDK cut separately qualified. Current-core 20 Linux execution source/time/CLI/raw preserved without rerun. Prior 32-bit package results not rebound across the core delta."
+    },
+    {
+      "evidence": "release/certification/evidence/q34-current-slot-source-applicability-20261014.json",
+      "scope": "Exact two OpenWrt pin/hash literals and qualification date plus five Markdown files only; Compile/Install/public URL and all qeli/native inputs unchanged. Fresh SDK cut separately qualified. Current-core 20 Linux execution source/time/CLI/raw preserved without rerun. Prior 32-bit package results not rebound across the core delta."
     }
   ]
 }
