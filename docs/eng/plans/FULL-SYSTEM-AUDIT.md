@@ -2924,3 +2924,7 @@ The overall count remains 32/37 (86.5%) without inferred module completion.
 
 [Q35 complete](../reports/AUDIT-Q35-FINAL.md): 33/37 (89.2%).
 [Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): six measured phases, archive/host/cleanup verified; original --client guard failure retained. Server q0 has no successful read trace; observed ACK latency exceeds both controls by11.5356/5.7921. Neither loss nor the original delay stage is established. Next is current steady data plane without the observer; do not repeat this intrusive method to infer the original cause. Q29/Q31/Q34/Q36 remain open. NO_PUSH_DEPLOY_RELEASE.
+
+### 13 October: current Q36 statistical population
+
+[Current data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 fresh sessions/144 eight-second windows of all12 TCP/UDP bidir P1/P4 modes×3; median/spread/raw receiver/CPU/RSS/counters qualified. Loss/outliers retained; full host/archive/cleanup PASS. Not saturation capacity; TCP/ACK cause and load limits OPEN. Q36 IN_PROGRESS,33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.

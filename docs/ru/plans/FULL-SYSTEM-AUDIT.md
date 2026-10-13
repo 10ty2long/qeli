@@ -2937,3 +2937,7 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 [Q35 завершён](../reports/AUDIT-Q35-FINAL.md): 33/37 (89,2%).
 [Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): шесть фаз измерены, архив/host/cleanup проверены; исходный --client guard FAIL сохранён. Серверный q0 trace без успешных read; traced ACK latency выходит за оба контроля в 11,5356/5,7921 раза. Ни потери, ни исходная стадия задержки этим не установлены. Дальше current steady data plane без observer; этот intrusive метод для исходной причины не повторять. Q29/Q31/Q34/Q36 остаются открытыми. NO_PUSH_DEPLOY_RELEASE.
+
+### 13 октября: текущая статистическая популяция Q36
+
+[Текущий data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 свежих сессий/144 восьмисекундных окна всех12 режимов TCP/UDP bidir P1/P4×3, медианы/разброс/raw receiver/CPU/RSS/counters квалифицированы. Потери и выбросы сохранены; полный host gate/архив/очистка PASS. Не saturation capacity; причина TCP/ACK и пределы нагрузки OPEN. Q36 IN_PROGRESS,33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.

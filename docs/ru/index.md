@@ -539,3 +539,5 @@
 - [Q35: итог пяти критериев](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
 
 - [Q36: TUN stage и overhead наблюдателя](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
+
+- [Q36: текущая статистическая популяция](reports/AUDIT-Q36-CURRENT-STATISTICS.md)

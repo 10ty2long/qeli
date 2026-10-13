@@ -539,3 +539,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Q35: final five-criterion mapping](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
 
 - [Q36: TUN stage and observer overhead](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
+
+- [Q36: current statistical population](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
