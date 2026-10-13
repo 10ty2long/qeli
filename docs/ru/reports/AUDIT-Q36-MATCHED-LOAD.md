@@ -142,3 +142,35 @@ FQ применялся: kind/handle/options проверены, throttled count
 Штатный sch_fq временно загружен явно. После удаления всех собственных процессов/namespaces/root/archive модуль выгружен при refcnt0. Исходный module set, global qdiscs/default, provider SHA, services, staged CLI, полный host/source и SHA-archive/cleanup gates PASS. Обе отказавшие попытки и отдельная module-проба также полностью очищены; нового техдолга стенда нет.50 raw JSON/6 worker logs квалифицированы с первой попытки. Документация сохранит negative candidate, не выдавая его за performance fix/PASS.
 
 Q36 IN_PROGRESS, итог33/37(89,2%). Смена планировщика исключена как подтверждённое универсальное исправление. Producer pacing300Mbps остаётся ранее измеренной мерой только для тестового отправителя; следующий адресный кандидат может ограничивать темп до TUN без участия приложения, с проверкой bidir tradeoff. NO_PUSH_DEPLOY_RELEASE.
+
+
+## Ограничение темпа перед TUN, 13 октября
+
+**3 новые парные сессии / 12 окон по 8 секунд:** исходный client TUN fq_codel против fq maxrate 300Mbit на поток. TCPraw P1 upload и bidir, внешний и внутренний IPv4, та же VM с двумя vCPU. Отправляющее приложение без лимита: iperf target_bitrate=0, параметр `-b` отсутствует. Менялся только qdisc собственного client TUN; исходные параметры fq_codel, txqueuelen500, MTU1400/1500, generation/PID/NetworkPlan и все916 зафиксированных native/config/helper inputs сохранены. Повтор2 меняет порядок. Новых сборок, трассировки, BPF и изменений продукта нет.
+
+`tc -j` подтвердил maxrate=37500000 байт/с до нагрузки и на обеих границах каждого окна. Это ограничение **каждого потока**, а не суммарного трафика профиля. [Исходный код Linux6.12.105](https://github.com/gregkh/linux/blob/v6.12.105/net/sched/sch_fq.c) обновляет время следующего пакета при включённом максимуме и с TCP EDT; upstream source review не доказывает побайтовое совпадение с собранным Debian kernel. Runtime separately фиксирует SHA штатного модуля. Лимит относится к пакетам в планировщике, поэтому полезные TCP-данные могут идти медленнее300Mbps.
+
+Медианы трёх сессий; прочерк означает отсутствие запрошенной полезной нагрузки в направлении. Исходные receiver, TCP-повторы, CPU/RSS и счётчики сохранены, выбросов не исключали.
+
+|Client qdisc|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client qdisc drops|
+|---|---|---:|---:|---:|---:|---:|
+|original fq_codel|tcp_up|137.51|—|36.00|0.00|0.00|
+|original fq_codel|tcp_bidir|167.11|534.53|274.00|643.00|0.00|
+|fq maxrate 300Mbit/flow|tcp_up|288.60|—|0.00|0.00|0.00|
+|fq maxrate 300Mbit/flow|tcp_bidir|184.54|532.82|380.00|679.00|0.00|
+
+Все три capped upload окна дали288,56–288,84Mbps без TUN TX drops на обоих концах и без TCP-повторов. Baseline upload:133,86–156,27Mbps, drops/retransmits36/28/115. Это воспроизводимая мера против upload-провала на данном стенде без участия приложения. Все12 client qdisc-drop и native client TCP-drop deltas равны0; FQ throttled вырос во всех6 capped окнах, что подтверждает применение ограничения.
+
+Парные изменения рассчитаны внутри каждой сессии; bidir sum складывает оба receiver одной пары. Отношения отдельных медиан не используются для решения.
+
+|Repeat|Upload change %|Bidir upload change %|Bidir download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|
+|1|+115.77|-6.33|+11.58|+7.74|
+|2|+109.84|+15.68|-4.53|+0.26|
+|3|+84.69|+10.20|-0.32|+2.19|
+
+Медиана парного upload gain **+109.84%**, bidir sum **+2.19%**. Однако во всех трёх capped bidir окнах client TUN TX drops380/523/335 и server TUN TX drops679/429/705; upload-повторы185/375/252. Потери в обоих направлениях не устранены; в одном повторе upload снизился, в другом download снизился. Лимит300Mbit и fq **не вводятся по умолчанию**. Сочетание смены класса и ограничения темпа является сравнением конфигураций, не изоляцией единственного параметра. Прежние unlimited fq и producer pacing остаются отдельными популяциями.
+
+Перед нагрузкой переключение fq_codel1→fq2→fq_codel1 PASS3/3 с точным восстановлением исходных fq_codel options. После SHA-архивирования удалены собственные процессы, namespaces, root и удалённый архив. Временно добавленный sch_fq выгружен при refcnt0; исходные module set, global qdisc/default, services, provider/staged CLI SHA и полный host/source gates PASS. Квалификация50 raw JSON /6 worker logs прошла с первой попытки. Нового долга по очистке стенда нет.
+
+Q36 остаётся IN_PROGRESS: ограничение темпа помогает upload, но общего исправления TUN/ACK-потерь и подтверждённого предела производительности нет. Агрегатный TX dropped не определяет точную причину FULL_RING. Общий итог33/37(89,2%), NO_PUSH_DEPLOY_RELEASE.

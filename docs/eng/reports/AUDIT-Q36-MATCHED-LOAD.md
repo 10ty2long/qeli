@@ -142,3 +142,35 @@ Two initial attempts each preserved two fq_codel windows but refused before FQ m
 Stock sch_fq explicitly loaded temporarily; after owned processes/namespaces/root/archive removal, the introduced module was unloaded at refcnt0. Original module set/global qdiscs/default/provider SHA/services/staged CLI/full host/source/archive/cleanup gates PASS. Both refused attempts and module probe are also fully restored; no new lab cleanup debt.50 raw JSON/6 worker logs qualified on first attempt. Negative candidate remains visible without a performance fix/PASS claim.
 
 Q36 IN_PROGRESS,33/37(89.2%). Qdisc replacement is not a confirmed universal fix. Prior producer300Mbps pacing remains a measured test-producer mitigation; a targeted next candidate could control pre-TUN rate without caller cooperation, with bidir tradeoff validation. NO_PUSH_DEPLOY_RELEASE.
+
+
+## Pre-TUN rate control, 13 October
+
+**3 new paired sessions / 12 eight-second windows:** original client TUN fq_codel versus fq maxrate300Mbit per flow. TCPraw P1 upload/bidir, outer/innerIPv4, same two-vCPU VM. Caller unlimited: iperf target_bitrate=0, no `-b`. Only the owned client TUN qdisc changed; original fq_codel options, txqueuelen500, MTU1400/1500, generation/PID/NetworkPlan and all916 frozen native/config/helper inputs retained. Repeat2 reverses order. No new builds, tracing, BPF or product changes.
+
+`tc -j` verifies maxrate37500000 bytes/s before payload and at both boundaries of every capped window. This limits **each flow**, not the profile aggregate. [Linux6.12.105 source](https://github.com/gregkh/linux/blob/v6.12.105/net/sched/sch_fq.c) advances the next-packet time for a configured maximum even with TCP EDT. Upstream review is not compiled Debian-kernel byte equivalence; runtime separately records the stock module SHA. Scheduler packet rate includes more than TCP application payload, so delivered payload may be below300Mbps.
+
+Three-session medians; dash denotes no requested payload in that direction. Original receiver/retransmit/CPU/RSS/counter records retained without exclusions.
+
+|Client qdisc|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Client TUN TX drops|Server TUN TX drops|Client qdisc drops|
+|---|---|---:|---:|---:|---:|---:|
+|original fq_codel|tcp_up|137.51|—|36.00|0.00|0.00|
+|original fq_codel|tcp_bidir|167.11|534.53|274.00|643.00|0.00|
+|fq maxrate 300Mbit/flow|tcp_up|288.60|—|0.00|0.00|0.00|
+|fq maxrate 300Mbit/flow|tcp_bidir|184.54|532.82|380.00|679.00|0.00|
+
+All3 capped upload windows deliver288.56–288.84Mbps with zero TUN TX drops at both ends and zero TCP retransmits. Baseline upload133.86–156.27Mbps with drops/retransmits36/28/115. A reproduced upload mitigation on this VM without caller cooperation. All12 client qdisc-drop/native client TCP-drop deltas are0; FQ throttled increases in all6 capped windows, verifying application of the control.
+
+Within-session paired changes; bidir sums both receivers of the same pair. Decisions do not use ratios of separate medians.
+
+|Repeat|Upload change %|Bidir upload change %|Bidir download change %|Bidir sum change %|
+|---|---:|---:|---:|---:|
+|1|+115.77|-6.33|+11.58|+7.74|
+|2|+109.84|+15.68|-4.53|+0.26|
+|3|+84.69|+10.20|-0.32|+2.19|
+
+Median paired upload gain **+109.84%**, bidir sum **+2.19%**. However, every capped bidir window retains client TUN TX drops380/523/335 and server TUN TX drops679/429/705; upload retransmits185/375/252. Both-direction losses persist; upload falls in one pair and download falls in another. Neither the300Mbit cap nor fq becomes a default. Qdisc kind plus rate cap is a configuration comparison, not isolation of one parameter. Earlier unlimited-fq and producer-pacing populations stay separate.
+
+Pre-payload fq_codel1→fq2→fq_codel1 smoke PASS3/3 restores original fq_codel options exactly. After SHA archiving, owned processes/namespaces/root/remote archive removed. Introduced sch_fq unloaded at refcnt0; original module set/global qdiscs/default/services/provider/staged CLI SHA/full host/source gates PASS.50 raw JSON/6 worker logs qualified on first attempt. No new lab cleanup debt.
+
+Q36 IN_PROGRESS: rate control helps upload, but no general TUN/ACK loss fix or qualified capacity limit. Aggregate TX dropped is not an exact FULL_RING-event diagnosis.33/37(89.2%), NO_PUSH_DEPLOY_RELEASE.

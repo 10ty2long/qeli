@@ -1,0 +1,131 @@
+{
+  "status": "QUALIFIED_UPLOAD_MITIGATION_BIDIR_LOSSES_PERSIST",
+  "qualification_sha256": "fc6f062757845c33f7bb81889830c9bb70e66b919223fc636597b9da8cd70277",
+  "execution_sha256": "f6adbcdd5c3117014f021e0db16edf820aaebff13c9d49d51aab3692181498d1",
+  "paired_receiver_changes": [
+    {
+      "repeat": 1,
+      "baseline_upload_mbps": 133.8629521924936,
+      "capped_upload_mbps": 288.8373285590828,
+      "upload_change_pct": 115.77092379057765,
+      "baseline_bidir_up_mbps": 143.39323726614396,
+      "baseline_bidir_down_mbps": 525.0338149170033,
+      "capped_bidir_up_mbps": 134.3133067105156,
+      "capped_bidir_down_mbps": 585.820709093136,
+      "bidir_up_change_pct": -6.33218883173382,
+      "bidir_down_change_pct": 11.577710320570844,
+      "bidir_sum_change_pct": 7.7356180381426,
+      "baseline_upload_retransmits": 36,
+      "capped_upload_retransmits": 0,
+      "baseline_bidir_up_retransmits": 119,
+      "baseline_bidir_down_retransmits": 717,
+      "capped_bidir_up_retransmits": 185,
+      "capped_bidir_down_retransmits": 678
+    },
+    {
+      "repeat": 2,
+      "baseline_upload_mbps": 137.51443203911333,
+      "capped_upload_mbps": 288.5561192292222,
+      "upload_change_pct": 109.83697125487741,
+      "baseline_bidir_up_mbps": 167.106179098217,
+      "baseline_bidir_down_mbps": 537.561550576991,
+      "capped_bidir_up_mbps": 193.31559781483952,
+      "capped_bidir_down_mbps": 513.1959776790695,
+      "bidir_up_change_pct": 15.684290585818417,
+      "bidir_down_change_pct": -4.532610799966752,
+      "bidir_sum_change_pct": 0.26166173659618597,
+      "baseline_upload_retransmits": 28,
+      "capped_upload_retransmits": 0,
+      "baseline_bidir_up_retransmits": 87,
+      "baseline_bidir_down_retransmits": 238,
+      "capped_bidir_up_retransmits": 375,
+      "capped_bidir_down_retransmits": 402
+    },
+    {
+      "repeat": 3,
+      "baseline_upload_mbps": 156.26523807925022,
+      "capped_upload_mbps": 288.60339206732687,
+      "upload_change_pct": 84.68815944910351,
+      "baseline_bidir_up_mbps": 167.45618677737446,
+      "baseline_bidir_down_mbps": 534.5264228982702,
+      "capped_bidir_up_mbps": 184.53946553753326,
+      "capped_bidir_down_mbps": 532.8233753365772,
+      "bidir_up_change_pct": 10.201640852404136,
+      "bidir_down_change_pct": -0.31860867652880875,
+      "bidir_sum_change_pct": 2.190970401043457,
+      "baseline_upload_retransmits": 115,
+      "capped_upload_retransmits": 0,
+      "baseline_bidir_up_retransmits": 170,
+      "baseline_bidir_down_retransmits": 624,
+      "capped_bidir_up_retransmits": 252,
+      "capped_bidir_down_retransmits": 705
+    }
+  ],
+  "median_paired_upload_change_pct": 109.83697125487741,
+  "median_paired_bidir_sum_change_pct": 2.190970401043457,
+  "pacing_observations": [
+    {
+      "repeat": 1,
+      "phase": "tcp_up_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 4506,
+      "drops_delta": 0
+    },
+    {
+      "repeat": 1,
+      "phase": "tcp_bidir_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 3360,
+      "drops_delta": 0
+    },
+    {
+      "repeat": 2,
+      "phase": "tcp_up_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 4503,
+      "drops_delta": 0
+    },
+    {
+      "repeat": 2,
+      "phase": "tcp_bidir_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 3875,
+      "drops_delta": 0
+    },
+    {
+      "repeat": 3,
+      "phase": "tcp_up_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 4527,
+      "drops_delta": 0
+    },
+    {
+      "repeat": 3,
+      "phase": "tcp_bidir_fq",
+      "maxrate_bytes_per_second": 37500000,
+      "throttled_delta": 3971,
+      "drops_delta": 0
+    }
+  ],
+  "source_review_sha256": "7a0e0c7a65c385dbcb1deac2e475b06186199a774ee2c55aefe3c3a2056222b2",
+  "source": {
+    "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.105/net/sched/sch_fq.c",
+    "sha256": "fc2d00a508842aad33cff36657ba8dd06357028f1c4403bea8a62c76ea340090",
+    "bytes": 33828
+  },
+  "caller_target_bitrate": 0,
+  "per_flow_maxrate_bits_per_second": 300000000,
+  "aggregate_profile_limit_claimed": false,
+  "all_capped_upload_TUN_and_retransmit_deltas_zero": true,
+  "all_capped_bidir_windows_both_TUNs_drop": true,
+  "no_exact_FULL_RING_event_claim": true,
+  "product_code_changed": false,
+  "product_defaults_changed": false,
+  "no_kernel_patch": true,
+  "no_native_build": true,
+  "full_host_module_qdisc_source_archive_cleanup_PASS": true,
+  "Q36_closed": false,
+  "formal_done": 33,
+  "total": 37,
+  "no_push_deploy_release": true
+}

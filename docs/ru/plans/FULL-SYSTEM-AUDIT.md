@@ -2956,3 +2956,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 **13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3парные сессии/12окон fq_codel vsfq, unlimited TCPrawP1 up/bidir; paired upload-15.46%,bidir sum-7.71%; потериTUNсохранились,defaultнеизменён. Контроллерsamehandlecollisionисправлен distinct1/2+smoke3/3; дваисходныхFAIL/4baselineокна сохраненыотдельно, объяснениеавтозагрузкойотозвано. Полныеhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 парные сессии /12 окон: fq maxrate300Mbit/поток перед TUN, iperf без лимита. Upload median137,51→288,60Mbps; capped upload TUN drops/retransmits0 в3/3. Bidir sum paired median+2.19%, но потери на обоих TUN остаются3/3; default не изменён. Все host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.

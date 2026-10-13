@@ -2943,3 +2943,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3pairedsessions/12windows fq_codel vsfq unlimitedTCPrawP1 up/bidir; pairedupload-15.46%,bidirsum-7.71%; TUNlossespersist,defaultunchanged. Controllerhandlecollision corrected distinct1/2+smoke3/3; originaltwoFAILs/4baselinewindows separate,autoloadcausewithdrawn. Fullhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 paired sessions /12 windows: pre-TUN fq maxrate300Mbit/flow, unlimited caller. Upload median137.51→288.60Mbps; capped upload TUN drops/retransmits0 in3/3. Paired bidir-sum median+2.19%, both TUNs still drop in3/3; defaults unchanged. Full host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
