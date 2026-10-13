@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v249 -->
+<!-- normative-sync: full-system-audit-v250 -->
 
 **Текущий итог, 14 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2982,3 +2982,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **13 октября: новый core/native cohort установлен локально** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: свежая функциональная проверка нового ядра завершена.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 20 Linux-критериев / 19 запусков / 409 проверок PASS, включая legacy и 100 TCP + 100 QUIC смен сети; независимая проверка архива и полная очистка PASS. Сертификация текущего ядра обновлена по новому прогону. Долг переноса F030 закрыт; legacy QueueFull и остальные результаты производительности сохранены. Q29/Q31/Q34/Q36 остаются открытыми; 33/37 (89,2%). NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: OpenWrt source-cut обновлён после Q36-F030.** [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): exact current commit,2actual SDK downloads/prepare/all tracked blobs PASS; pin/hash refreshed,Compile/Install unchanged;4committed source-gate probes andfullcleanup PASS. Public pin/hosted CI/bootstrap/current32bit package qualification remain open;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.

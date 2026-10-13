@@ -433,9 +433,9 @@ requires a new immutable cut and fresh SDK archive hash. See the
 [qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
 
 
-### Current local OpenWrt source cut (12 October 2026)
+### Historical local OpenWrt source cut (12 October 2026)
 
-The current recipe pins `c71e4803cd086add92c066dd48a64af1fdb9dec0` and the actual SDK-generated source archive
+That recipe pinned `c71e4803cd086add92c066dd48a64af1fdb9dec0` and the actual SDK-generated source archive
 SHA256 `2843576ae0eac173c95bb1f222d9459ef402ea992a0c43ff496e1e1f52ed8137` (28029607 bytes). Two SDK24.10.4 downloads from empty caches
 and distinct private Git URLs matched; prepare verified the hash and all
 3272 tracked files matched the original commit. Build/Compile and Install
@@ -448,3 +448,19 @@ push CI for that SHA. Publish the exact pin before using the public URL; final
 release CI and whole release preflight remain separate requirements. Later
 recipe/docs changes do not change `qeli/` source admission or the archive
 identity. See the [current qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
+
+
+### Current local OpenWrt source cut (14 October 2026)
+
+The recipe now pins `ee2b74aafb2a57a2613541223c5522908cb71f71`, which includes the qualified bonded-slot core fix.
+The actual SDK24.10.4 source archive has SHA256 `6c82f2162ba9b4939c8d40393a157d5483ccdc6796e41706f0ec2672ee95fb16`
+(28375941 bytes). Two downloads from empty caches and distinct private Git URLs
+produced identical bytes. SDK prepare verified the archive; all 3348 tracked files
+match the pinned original commit. Build/Compile, Install, public URL and package version are unchanged.
+The source gate accepts the committed cut and rejects missing or modified archives.
+
+This is a local source-cut qualification. The exact pin has not been published by this audit;
+public availability and current push CI remain unqualified. Rust bootstrap, a fresh full package
+build and physical-router networking are separate checks. The 12 October package/runtime results
+retain their original source and do not qualify the later core delta. See the
+[source-cut report](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).

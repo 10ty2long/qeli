@@ -101,3 +101,11 @@ SDK build caches удалены; .10 не использовалась. Исхо
 Q34 IN_PROGRESS: current public cut/publication, hosted CI, full release gate
 и F459 остаются открыты. Q29/Q31/Q35/Q36 также открыты. Всего32/37 (86,5%).
 NO_PUSH_DEPLOY_RELEASE.
+
+## 14 октября: локальный срез после исправления ядра
+
+Закреплён исходный commit `ee2b74aafb2a57a2613541223c5522908cb71f71` и SHA256 настоящего SDK-архива `6c82f2162ba9b4939c8d40393a157d5483ccdc6796e41706f0ec2672ee95fb16` (28375941 байт). Старый pin не содержал Q36-F030: настоящий source gate отклонил несовпадающее `qeli/` до запуска. Два штатных SDK24.10.4 download из пустых кешей и разных приватных Git URLs дали одинаковые байты; prepare проверил hash, все 3348 tracked files сверены с исходным Git, включая лицензии и ссылки. Commit не синтезирован и не переписан; shallow mirror содержит все исходные tree/blob objects.
+
+В рецепте изменены только pin, hash и дата проверки; версия, public URL, Compile/Install прежние. Четыре проверки committed source gate охватывают успешный допуск, изменённый архив, отсутствие аргумента и файла. Неизменённые unit suites и Linux-матрица не повторялись. Последующая применимость текущих 20 Linux-критериев касается только recipe metadata и Markdown, исходные execution SHA/даты/артефакт сохранены.
+
+Собственный SDK root/cache/unit и удалённый recovery-архив очищены после SHA/process/fd/mount/inode guards; сервисы и состояние хоста сохранены. Ранее проверенная SDK-проекция переиспользована без локальной копии, исходные архивы сохранены. Нет нового compiler/bootstrap/BuildPackage/IPK/32-bit runtime. Прежние ARM/MIPS/IPK результаты остаются на своём исходнике; изменения ядра ими не квалифицированы. Локальный долг source-cut закрыт; public pin/hosted CI/full release gate и bootstrap остаются открыты. Q34 IN_PROGRESS,33/37 (89,2%),NO_PUSH_DEPLOY_RELEASE.

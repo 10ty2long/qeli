@@ -100,3 +100,11 @@ removed;.10 unused. The stale-pin refusal is retained; compiler and large benchm
 Q34 IN_PROGRESS: current public cut/publication,hosted CI,whole release gate and
 F459 remain open. Q29/Q31/Q35/Q36 also remain open.32/37 DONE(86.5%).
 NO_PUSH_DEPLOY_RELEASE.
+
+## 14 October: local source cut after the core fix
+
+Pinned original commit `ee2b74aafb2a57a2613541223c5522908cb71f71` and actual SDK archive SHA256 `6c82f2162ba9b4939c8d40393a157d5483ccdc6796e41706f0ec2672ee95fb16` (28375941 bytes). The old pin omitted Q36-F030; the actual source gate rejected the mismatching `qeli/` before execution. Two stock SDK24.10.4 downloads from empty caches and distinct private Git URLs matched byte-for-byte; prepare verified the hash and all 3348 tracked files matched Git, including notices and symlinks. The commit was neither synthesized nor rewritten; its shallow mirror contains all original tree/blob objects.
+
+Only recipe pin, hash and qualification date changed; package version, public URL, Compile/Install remain unchanged. Four committed source-gate probes cover admission, changed archive, missing argument and absent file. Unchanged unit suites/Linux matrix were not repeated. Subsequent applicability of the current 20 Linux criteria covers recipe metadata and Markdown only; original execution SHA/time/artifact preserved.
+
+Owned SDK root/cache/unit and remote recovery archive removed after SHA/process/fd/mount/inode guards; production and full host state preserved. Existing verified SDK projection reused without a local duplicate; original archives retained. No fresh compiler/bootstrap/BuildPackage/IPK/32-bit runtime. Prior ARM/MIPS/IPK results retain their source and do not qualify the core delta. Local source-cut debt closed; public pin/hosted CI/full release gate and bootstrap remain open. Q34 IN_PROGRESS,33/37 (89.2%),NO_PUSH_DEPLOY_RELEASE.
