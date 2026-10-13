@@ -12,7 +12,7 @@ for the full audit; existing obligations remain.
 
 <!-- normative-sync: full-system-audit-v248 -->
 
-**Current result, 13 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. SIGKILL automatic recovery FAIL and auto/null DnsResolver ENONET are retained; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 13 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -2931,3 +2931,6 @@ The overall count remains 32/37 (86.5%) without inferred module completion.
 
 
 Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
+
+
+[Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).

@@ -12,7 +12,7 @@
 
 <!-- normative-sync: full-system-audit-v248 -->
 
-**Текущий итог, 13 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. SIGKILL automatic recovery FAIL и auto/null DnsResolver ENONET сохранены; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 13 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -2944,3 +2944,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 
 Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
+
+
+[Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).

@@ -53,3 +53,6 @@
 Все собственные namespaces/processes удалены. Root и archive SHA-проверены, исходные INI/logs сохранены локально, удалённые временные файлы очищены. Полный host gate, production services и staged CLI неизменны. Локальная квалификация: `CURRENT_ALL_12_MODES_THREE_SESSION_DATA_PLANE_POPULATION_QUALIFIED`.
 
 Не объединяется со старой F029 CLI35da83fd или single-sample48windows. Исторические FAIL/host differences и исходный endurance performance FAIL сохранены в прежних пакетах. Причина TCP-асимметрии, точная стадия ACK-задержки и пределы нагрузки остаются открыты; никаких новых performance budget PASS или saturation capacity claims. Пункт Q36 не закрыт. Общий итог **33/37 (89,2%)**. NO_PUSH_DEPLOY_RELEASE.
+
+
+[Q36 matched-total load and TUN counters](AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).

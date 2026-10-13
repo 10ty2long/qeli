@@ -53,3 +53,6 @@ Maximum single-Qeli-process RSS: 128492KiB; maximum window host steal: 0.06%. Co
 All owned namespaces/processes removed. Root/archive SHA verified; original INI/logs retained locally, remote temporary files cleaned. Full host gate, production services and staged CLI unchanged. Local qualification: `CURRENT_ALL_12_MODES_THREE_SESSION_DATA_PLANE_POPULATION_QUALIFIED`.
 
 Not pooled with historical F029 CLI35da83fd or the single-sample48window packet. Historical FAIL/host differences and the original endurance performance FAIL remain in their packets. TCP asymmetry cause, exact ACK-delay stage and load limits remain open; no new performance budget PASS or saturation capacity claim. Q36 is not closed. Overall **33/37 (89.2%)**. NO_PUSH_DEPLOY_RELEASE.
+
+
+[Q36 matched-total load and TUN counters](AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).

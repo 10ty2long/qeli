@@ -544,3 +544,6 @@ guidance. Start with the **[archive map](archive/README.md)**.
 
 
 Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
+
+
+[Q36 matched-total load and TUN counters](reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
