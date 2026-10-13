@@ -288,3 +288,39 @@ PACKET_MUX_V1 подтверждён NetworkPlan и client log во всех6 с
 Медианы парных изменений: upload **-98.28%**, download **+0.13%**, bidir sum **-7.57%**. Точные native-loss samples/window counts находятся в analysis evidence;0 median не означает0 в каждом окне. Результат не объявляется универсальным исправлением потерь/асимметрии, ACK-приоритетом, пределом capacity или основанием автоматически включать multipath для всех профилей.
 
 Все source/generation/actual socket/host/services/staged CLI/SHA archive/cleanup gates PASS. Собственные процессы/namespaces/root/удалённый архив удалены;80 raw JSON/12 worker logs квалифицированы. Default не изменён, нового долга очистки нет. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Q36-F030: кандидат исправления QueueFull проверен в Linux,13 октября
+
+**Статус: LINUX_CANDIDATE_VALIDATED; source adoption/native consumers pending.** Рабочий код пока прежний. Кандидат одного файла client/mod.rs выбирает размер bonded-copy слота по уже допустимому размеру пакета: MAX_TUNNEL_MTU для legacy и max_packet_bytes для mux, с нижней границей2KiB и существующим u16 limit. При MTU1400 получается2048 слотов по2KiB и682 места на width2 очередь вместо64 слотов/21 места. Общий storage budget4MiB и reserve helper для остальных carriers/временного candidate сохранены; fallback allocation и перепривязка Full-потока не добавлены.
+
+В реальной изолированной сборке Rust1.97 выполнены четыре strict feature checks (default/server/client-bin/transport-core-ffi), **15 unit tests**:6 client uplink,8 buffer pool,1 server wire pool. Новый тест проверяет128 pinned пакетов размером1400/40 байт до освобождения очереди, FIFO без дропов и резерв после заполнения stalled queue; это синтетический unit burst, не capture настоящих ACK. Проверены packet bounds/byte budget, прежние Full/Closed/Oversize/PoolExhausted и освобождение памяти. Production release CLI собран с тем же factory profile/jemalloc, одним compiler job. Rustfmt нормализовал только candidate clientmod. Ни platform native artifact refresh, ни принятие исходников этим не подменены.
+
+Сборка использует точно замороженный factory source916 файлов плюс один изменённый clientmod. Current source applicability сохраняет известные7 format/panel-resource отличий от factory; эквивалентность целого текущего CLI не заявляется. **Сервер во всех runtime сессиях — неизменный baseline52511cebd43a**, клиент baseline либо candidate524443061b95. Это отделяет исправление клиента от пересборки сервера.
+
+**6 свежих сессий /18 окон по8с**, три пары baseline/candidate client при fixed2 carriers, required recordizer default2–8ms, TCPraw P1 upload/download/bidir, outer/innerIPv4 на2vCPU VM. В повторе2 обратный порядок сессий/нагрузок. В обоих случаях original INI/MTU/qdisc/очереди/affinity, unlimited caller/no omit,1s senderTCP_INFO и30 idleICMP/session. ProcPID binary SHA и реальные mirrored/stable socket tuples проверены на42 snapshots. Прежняя популяция1/2carriers в эти числа не включена.
+
+Медианы3 сессий, все повторы и kernel/native counters сохранены:
+
+|Client|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Native uplink drops|Client TUN TX drops|Server TUN TX drops|Client peak RSS KiB|
+|---|---|---:|---:|---:|---:|---:|---:|
+|baseline|tcp_up|24.34|—|127.00|0.00|0.00|59172.00|
+|baseline|tcp_down|—|1500.03|36565.00|0.00|132.00|77948.00|
+|baseline|tcp_bidir|29.72|1467.71|38521.00|0.00|189.00|81536.00|
+|candidate|tcp_up|1278.97|—|0.00|217.00|0.00|57912.00|
+|candidate|tcp_down|—|1438.19|0.00|0.00|108.00|78536.00|
+|candidate|tcp_bidir|519.27|1104.03|0.00|703.00|166.00|78708.00|
+
+Кандидат имеет **0 native uplink/downlink drops во всех9 окнах**; baseline имеет QueueFull в каждом окне, остальные причины0. Upload-only восстановлен во всех3 парах, median paired ratio **52.91×**. Наблюдаемый максимум RSS любого worker **88632KiB**, ниже действующего512MiB product budget; compiler memory limit1536MiB и временный build swap — отдельные параметры.
+
+|Repeat|Upload ratio|Download change %|Bidir sum change %|
+|---|---:|---:|---:|
+|1|53.41×|+1.43|+8.16|
+|2|52.91×|-4.67|+12.81|
+|3|51.47×|-7.11|-7.14|
+
+Median paired bidir sum **+8.16%**. В одном повторе сумма снизилась; направление download в bidir отдаёт часть пропускной способности восстановленному upload. Это не общий performance/capacity PASS, выбросов не исключали. Kernel TUN losses сохраняются; исправляется конкретный native QueueFull, а не объявляется установленной причина каждого kernel FULL_RING/ACK event.
+
+Собственный swap удалён по UUID/inode после остановки unit, исходный swap inventory восстановлен. Owned compiler target/registry/source/root и runtime процессы/namespaces/root/remote archives удалены после SHA-проверки; services/staged CLI/full host/source gates PASS. Build qualification и runtime qualification независимы;80 raw JSON/12 logs runtime проверены с первой попытки.
+
+Перед source adoption остаются legacy bonded/one-carrier проверки и обновление/проверка native consumers. Статус F030 не превращён в окончательный FIXED; product defaults прежние. Q36 IN_PROGRESS,33/37(89,2%),NO_PUSH_DEPLOY_RELEASE.

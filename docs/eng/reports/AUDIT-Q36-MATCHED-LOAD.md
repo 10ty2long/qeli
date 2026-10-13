@@ -288,3 +288,39 @@ Within-repeat changes; bidir sums both receivers in the corresponding session.
 Median paired changes: upload **-98.28%**, download **+0.13%**, bidir sum **-7.57%**. Exact native-loss samples/window counts retained in analysis evidence; zero median does not guarantee zero every window. Not a universal loss/asymmetry fix, ACK-priority feature, capacity limit or automatic all-profile multipath default.
 
 Source/generation/actual socket/host/services/staged CLI/SHA archive/cleanup gates PASS. Owned processes/namespaces/root/remote archive removed;80 raw JSON/12 worker logs qualified. Defaults unchanged, no new cleanup debt. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## Q36-F030: QueueFull candidate validated in Linux,13 October
+
+**LINUX_CANDIDATE_VALIDATED; source adoption/native consumers pending.** Working source unchanged. One-file clientmod candidate sizes bonded-copy slots from the existing accepted packet bound: legacy MAX_TUNNEL_MTU or mux max_packet_bytes,2KiB floor/existing u16 limit. MTU1400 yields2048 two-KiB slots/682 width2 queue entries versus64/21. Same4MiB storage budget and other-carrier/temporary-candidate reserve helper; no fallback allocations or rerouting Full flows.
+
+Actual isolated Rust1.97 build:4 strict feature checks (default/server/client-bin/transport-core-ffi), **15 unit tests** (6 client uplink/8 buffer pool/1 server wire pool). New test queues128 pinned1400/40-byte packets before drain, verifies FIFO/no drops and stalled-queue reserve. Synthetic unit burst, not real ACK capture. Packet/byte bounds and original Full/Closed/Oversize/PoolExhausted/release cases checked. Same factory release profile/jemalloc CLI, one compiler job. Rustfmt normalized only candidate clientmod. Not a substitute for platform artifact refresh/source adoption.
+
+Exact frozen factory916 inputs plus one clientmod variant. Current applicability retains7 known format/panel-resource differences from factory; no whole-current CLI byte equivalence. **Server stays exact baseline52511cebd43a in every runtime**, client baseline or candidate524443061b95, isolating client change from server rebuild.
+
+**6 fresh sessions /18 eight-second windows**,3 baseline/candidate client pairs, fixed2carriers/required recordizer default2–8ms, TCPraw P1 up/down/bidir, outer/innerIPv4 on2vCPU VM. Repeat2 reverses session/payload order. Original INI/MTU/qdisc/queues/affinity/unlimited caller/no omit,1s senderTCP_INFO and30idleICMP eachsession. ProcPID CLI SHA and actual mirrored stable socket tuples checked at42 snapshots. Previous1/2carrier population not pooled.
+
+Three-session medians; all samples and kernel/native counters retained:
+
+|Client|Payload|Delivered ↑ Mbps|Delivered ↓ Mbps|Native uplink drops|Client TUN TX drops|Server TUN TX drops|Client peak RSS KiB|
+|---|---|---:|---:|---:|---:|---:|---:|
+|baseline|tcp_up|24.34|—|127.00|0.00|0.00|59172.00|
+|baseline|tcp_down|—|1500.03|36565.00|0.00|132.00|77948.00|
+|baseline|tcp_bidir|29.72|1467.71|38521.00|0.00|189.00|81536.00|
+|candidate|tcp_up|1278.97|—|0.00|217.00|0.00|57912.00|
+|candidate|tcp_down|—|1438.19|0.00|0.00|108.00|78536.00|
+|candidate|tcp_bidir|519.27|1104.03|0.00|703.00|166.00|78708.00|
+
+Candidate **0 native uplink/downlink drops in all9 windows**; baseline QueueFull every window, other reasons0. Upload recovered in all3 pairs; median paired ratio **52.91×**. Maximum observed worker RSS **88632KiB**, below existing512MiB product budget.1536MiB compiler limit/temporary build swap are separate.
+
+|Repeat|Upload ratio|Download change %|Bidir sum change %|
+|---|---:|---:|---:|
+|1|53.41×|+1.43|+8.16|
+|2|52.91×|-4.67|+12.81|
+|3|51.47×|-7.11|-7.14|
+
+Median paired bidir sum **+8.16%**, one repeat regressed. Bidir download shares throughput with recovered upload; not universal performance/capacity PASS, no exclusions. Kernel TUN losses persist; specific native QueueFull addressed, not an exact kernel FULL_RING/ACK event diagnosis.
+
+After unit drain, exact UUID/inode-owned swap removed, original inventory restored. Owned compiler target/registry/source/root and runtime processes/namespaces/root/remote archives SHA-verified/removed; services/stagedCLI/full host/source gates PASS. Independent build/runtime qualification;80 raw JSON/12logs qualified first attempt.
+
+Legacy bonded/one-carrier checks and native consumer refresh/qualification remain before source adoption. F030 not marked finally FIXED; defaults unchanged. Q36 IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.

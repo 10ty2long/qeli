@@ -2955,3 +2955,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 
 **13 October: fixed TCP-carrier control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows fixed1/2carriers, required recordizer default2–8ms. Paired median upload-98.28%,download+0.13%,bidir sum-7.57%. Actual PID/endpoint sockets mirrored/stable at42 boundaries; no guaranteed ACK/innerflow separation, bonded pools/queues also change. Native drops/RTT/raw retained. Defaults unchanged;source/host/archive/cleanup PASS. CURRENT_MATCHED_TCP_BONDING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
+
+
+**13 October: Q36-F030 Linux candidate validation** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): F030 candidate: actual4featurechecks/15tests/releaseCLI and6sessions/18windows fixed2carrier. Native client uplink/downlink0 all9candidate windows; upload median24.34→1278.97Mbps,paired52.91×;bidir sum+8.16% with one regression/kernel losses remain. Server exactbaseline,consumer/source adoption pending. Ownswap/cache/source/build/runtime roots/archives SHAcleaned,host/services/source PASS. CURRENT_MATCHED_BONDED_SLOT_FIX_RUNTIME_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
