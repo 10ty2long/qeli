@@ -10,7 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v257 -->
+<!-- normative-sync: full-system-audit-v258 -->
+
+**Q34, 14 октября:** гонка Unix helper сервисного ключа исправлена и воспроизведена старым кодом;28 Windows/Linux checks PASS, daemon/self-test используют общий Mac RENAME_EXCL. Apple/current hosted runtime не подтверждён; iOS failures и public source pin остаются открыты. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
 **Текущий итог, 14 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 

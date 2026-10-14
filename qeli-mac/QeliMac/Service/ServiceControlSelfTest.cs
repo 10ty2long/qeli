@@ -160,6 +160,44 @@ internal static class ServiceControlSelfTest
             var a = Task.Run(() => ServiceKeySelection.Get(RacingRead, Publish, true));
             var b = Task.Run(() => ServiceKeySelection.Get(RacingRead, Publish, true)); Task.WaitAll(a, b);
             Check("racing key creators both use actual atomic winner", a.Result.SequenceEqual(b.Result) && a.Result.SequenceEqual(Read()!));
+            bool racesAgree = true;
+            for (int round = 0; round < 32; round++)
+            {
+                File.Delete(path);
+                using var start = new Barrier(4);
+                int firstReads = 0, winners = 0;
+                byte[]? ReadTogether()
+                {
+                    if (Interlocked.Increment(ref firstReads) <= 4)
+                    {
+                        if (!start.SignalAndWait(TimeSpan.FromSeconds(5))) throw new TimeoutException("Key creator barrier timed out");
+                        return null;
+                    }
+                    return Read();
+                }
+                bool CountPublish(byte[] bytes)
+                {
+                    bool won = Publish(bytes);
+                    if (won) Interlocked.Increment(ref winners);
+                    return won;
+                }
+                var creators = Enumerable.Range(0, 4).Select(_ => Task.Factory.StartNew(
+                    () => ServiceKeySelection.Get(ReadTogether, CountPublish, true),
+                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)).ToArray();
+                Task.WaitAll(creators);
+                var winner = Read()!;
+                racesAgree &= winners == 1 && creators.All(t => t.Result.SequenceEqual(winner));
+            }
+            Check("repeated four-way key publication has one immutable winner", racesAgree);
+            Check("key publication removes all private temporary files", Directory.GetFiles(dir).Length == 1);
+            if (!OperatingSystem.IsWindows())
+            {
+                Check("published key retains private Unix permissions", File.GetUnixFileMode(path) == (UnixFileMode.UserRead | UnixFileMode.UserWrite));
+                File.Delete(path);
+                File.CreateSymbolicLink(path, Path.Combine(dir, "missing-target"));
+                Check("dangling key symlink cannot be replaced", !Publish(new byte[32]) && new FileInfo(path).LinkTarget != null);
+                File.Delete(path);
+            }
             File.WriteAllBytes(path, new byte[31]);
             Check("corrupt daemon key never overwritten", Fails(() => ServiceKeySelection.Get(Read, Publish, true)) && Read()!.Length == 31);
             Check("unpersisted daemon key never returned", Fails(() => ServiceKeySelection.Get(() => null, _ => false, true)));

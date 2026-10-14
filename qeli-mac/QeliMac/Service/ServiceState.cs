@@ -137,8 +137,6 @@ public static class ServiceState
     private static extern int fchmod(int fd, uint mode);
     [DllImport("libc", EntryPoint = "renameat", SetLastError = true)]
     private static extern int renameat(int oldDirectory, string oldPath, int newDirectory, string newPath);
-    [DllImport("libc", EntryPoint = "renameatx_np", SetLastError = true)]
-    private static extern int renameatx_np(int oldDirectory, string oldPath, int newDirectory, string newPath, uint flags);
     [DllImport("libc", EntryPoint = "unlinkat", SetLastError = true)]
     private static extern int unlinkat(int directory, string path, int flags);
     [DllImport("libc", EntryPoint = "fsync", SetLastError = true)]
@@ -328,13 +326,13 @@ public static class ServiceState
                 stream.Flush(flushToDisk: true);
             }
             fd = -1; // SafeFileHandle closed it.
-            // RENAME_EXCL is 0x4 in XNU sys/stdio.h. Never replace a racing winner.
-            int published = replace ? renameat(dirfd, temp, dirfd, name)
-                : renameatx_np(dirfd, temp, dirfd, name, 0x4);
-            if (published != 0)
+            if (!replace)
+            {
+                if (!ServiceKeySelection.PublishExclusiveMac(dirfd, temp, dirfd, name)) return false;
+            }
+            else if (renameat(dirfd, temp, dirfd, name) != 0)
             {
                 int error = Marshal.GetLastPInvokeError();
-                if (!replace && error == 17) return false; // EEXIST
                 throw new InvalidOperationException($"Cannot publish service state file '{name}': errno {error}.");
             }
             _ = fsync(dirfd);

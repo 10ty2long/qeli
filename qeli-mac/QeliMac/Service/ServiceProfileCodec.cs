@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using Qeli.Shared.Model;
@@ -61,6 +62,20 @@ internal static class ServiceProfileCodec
 
 internal static class ServiceKeySelection
 {
+    [DllImport("libc", EntryPoint = "renameatx_np", SetLastError = true)]
+    private static extern int RenameExclusive(int oldDirectory, string oldPath, int newDirectory, string newPath, uint flags);
+    [DllImport("libc", EntryPoint = "link", SetLastError = true)]
+    private static extern int Link(string source, string destination);
+
+    internal static bool PublishExclusiveMac(int oldDirectory, string oldPath, int newDirectory, string newPath)
+    {
+        // Darwin RENAME_EXCL, also used by the daemon's validated directory handles.
+        if (RenameExclusive(oldDirectory, oldPath, newDirectory, newPath, 0x4) == 0) return true;
+        int error = Marshal.GetLastPInvokeError();
+        if (error == 17) return false; // EEXIST, including a dangling symlink.
+        throw new IOException($"Cannot publish service key: errno {error}.");
+    }
+
     internal static bool PublishExclusiveFile(string path, byte[] bytes)
     {
         var temp = path + ".tmp-" + Guid.NewGuid().ToString("N");
@@ -69,9 +84,20 @@ internal static class ServiceKeySelection
             var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Share = FileShare.None };
             if (!OperatingSystem.IsWindows()) options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
             using (var stream = new FileStream(temp, options)) { stream.Write(bytes); stream.Flush(flushToDisk: true); }
-            try { File.Move(temp, path, overwrite: false); }
-            catch (IOException) when (File.Exists(path)) { return false; }
-            return true;
+            if (OperatingSystem.IsMacOS())
+                return PublishExclusiveMac(-2, temp, -2, path); // Darwin AT_FDCWD.
+            if (OperatingSystem.IsWindows())
+            {
+                try { File.Move(temp, path, overwrite: false); }
+                catch (IOException) when (File.Exists(path)) { return false; }
+                return true;
+            }
+            // Unix File.Move(false) may use a check followed by an overwriting rename.
+            // Link the complete private file atomically; unsupported filesystems fail closed.
+            if (Link(temp, path) == 0) return true;
+            int error = Marshal.GetLastPInvokeError();
+            if (error == 17) return false;
+            throw new IOException($"Cannot publish service key: errno {error}.");
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
