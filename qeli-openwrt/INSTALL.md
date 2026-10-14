@@ -556,7 +556,7 @@ The already-qualified SDK/IPK run used a private official prebuilt Rust/std1.89.
 That remains a package integration result, not proof of cold compiler bootstrap.
 See [actual refusal and cleanup evidence](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
-### Source-LLVM remedy verification (14 October 2026)
+### Earlier bounded source-LLVM attempt (14 October 2026)
 
 The private pinned feed's single `download-ci-llvm=false` change has now passed
 actual prepare/configure and bootstrap compilation, then entered bundled LLVM
@@ -565,3 +565,19 @@ guard stopped the bounded attempt; full LLVM/rustc/dist/Host/Install and final
 cold SDK/IPK still need qualification. Original CI404 failure remains separate.
 This confirms the configured download bypass, not a completed toolchain. The
 production feed was not modified. See the [actual result and cleanup](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Later Clang source attempt: disk capacity limit (14 October 2026)
+
+A private Clang19 GNU host variant reached LLVM operation 3340/3710,
+then stopped at 1003.2 MiB free, below the 1024 MiB safety floor.
+Rust stage2/dist and Host/Install did not complete. No subsequent cold SDK
+package/opkg campaign started. The pinned Rust source/feed and musl target
+compiler/linker were preserved; host cc/cxx and jobs=1 were explicit overrides.
+The source compiler fallback remains unqualified on this lab.
+
+The owned build root and unit were removed after archive verification;
+only a 142834-byte evidence archive was retained locally. Before
+retrying, provide a materially larger disk reserve. The Rust compiler guide
+[recommends 30GB+ free disk](https://rustc-dev-guide.rust-lang.org/building/prerequisites.html);
+that is general guidance, not a measured minimum for this pinned dist build.
+See the [actual Clang disk failure](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

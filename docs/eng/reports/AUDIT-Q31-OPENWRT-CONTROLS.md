@@ -1,8 +1,8 @@
 # Q31: LuCI control, INI publication and firewall failures
 
-<!-- normative-sync: q31-openwrt-controls-v46 -->
+<!-- normative-sync: q31-openwrt-controls-v47 -->
 
-**Current checkpoint, 12 October:** Q31-V013 refreshes ARM/MIPS/SDK evidence and fixes license permissions;3/5 IN_PROGRESS. Full audit32/37 (86.5%). Bootstrap resource-deferred; physical router USER_EXCLUDED. Earlier checkpoints below remain historical.
+**Current checkpoint, 14 October:** the Clang19 source LLVM/Rust variant reached LLVM linking and stopped at the disk safety floor. Full bootstrap and the subsequent cold SDK did not pass; archive and cleanup are verified. Q31 remains 3/5 IN_PROGRESS. Full audit 34/37 (91.9%). Public source/hosted qualification remain open; physical router USER_EXCLUDED. Earlier results retain their original dates and failures.
 
 
 6 October 2026. F307–F309 product fixes and F310 test reconciliation. Q31 moves
@@ -2635,3 +2635,11 @@ The worker was interrupted before its final finally handler; intermediate STOCK_
 Removed 7040038732 owned root/cache bytes; remote archive and unit absent. Host/firewall/routes/resolver, accounts and staged CLI preserved. Retained only 79620 local evidence archive bytes. Do not start a third similar-budget bootstrap: the available host has not demonstrated adequate resources. Q31 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.
+
+## 14 October: Clang stopped at the disk floor
+
+After two retained GCC OOMs, the private bootstrap changed only GNU host cc/cxx to Clang19 and jobs=1; musl compiler/linker and other fields were preserved. Actual CMake compiler IDs/paths were verified. LLVM used official Rust1.89 sources; feed/source hashes were preserved.
+
+The last started Ninja operation was 3340/3710, linking llvm-ar. After 11472 seconds of Host/Compile, the worker stopped at 1003.2 MiB free, below the 1024 MiB floor. Counted owned files (7341742206 bytes) had not reached the 8 GiB ownership cap. Actual cgroup peaks were RAM 1154.5 MiB and swap 747.2 MiB. The recorded failure is disk capacity; full LLVM, Rust stage2/dist and Host/Install are unqualified. No subsequent SDK/IPK/opkg campaign started.
+
+The 142834-byte archive was verified against its SHA and full inventory. 7513146208 bytes of owned files and the owned unit were removed; host/account/staged identities were preserved. [Evidence](../../../release/certification/evidence/q31-clang-disk-floor-20261014.json). Q31 IN_PROGRESS; 34/37 (91.9%), NO_PUSH_DEPLOY_RELEASE. A different disk reserve is needed before another full bootstrap; an identical-resource retry is not qualified.

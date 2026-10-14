@@ -1,8 +1,8 @@
 # Q34: client build dependencies and Windows signatures
 
-<!-- normative-sync: q34-client-supply-v5 -->
+<!-- normative-sync: q34-client-supply-v6 -->
 
-**Current status, 14 October:** F459 / Q34-F013 is closed for the current source tree: the adopted Tailwind 4 graph contains no braces and fresh npm audit returns 0. Dated results below retain their original failures; final qualification is recorded at the end. Q34 remains IN_PROGRESS; full plan 33/37 (89.2%).
+**Current status, 14 October:** F459 / Q34-F013 is closed for the current source tree: the adopted Tailwind 4 graph contains no braces and fresh npm audit returns 0. Dated results below retain their original failures; final qualification is recorded at the end. Q34 remains IN_PROGRESS; full plan 34/37 (91.9%).
 
 8 October 2026. F455–F458 / Q34-F009–F012 are closed in the scope below. F459 / Q34-F013 remains OPEN. Full Q34 remains IN_PROGRESS; full audit 30/37 DONE (81.1%), 7 remain. Local changes only; no push, deployment or release.
 

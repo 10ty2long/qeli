@@ -1,8 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v46 -->
+<!-- normative-sync: q31-openwrt-controls-v47 -->
 
-**Текущий checkpoint, 12 октября:** Q31-V013 обновляет ARM/MIPS/SDK evidence и исправляет права лицензий;3/5 IN_PROGRESS. Полный аудит32/37 (86,5%). Bootstrap resource-deferred, физический роутер USER_EXCLUDED. Прежние проверки ниже исторические.
+**Актуальный checkpoint, 14 октября:** вариант source LLVM/Rust с Clang19 дошёл до линковки LLVM и остановлен по защитному порогу диска. Полный bootstrap и следующий cold SDK не прошли; архив и очистка проверены. Q31 остаётся 3/5 IN_PROGRESS. Полный аудит 34/37 (91,9%). Public source/hosted qualification открыты; физический роутер USER_EXCLUDED. Ранние результаты ниже сохраняют исходные даты и отказы.
 
 
 6 октября 2026. Исправления продукта F307–F309 и сверка теста F310. Q31 переведён
@@ -2645,3 +2645,11 @@ Worker снова прерван до итогового finally, поэтому
 Удалены 7040038732 байта собственного root/cache, remote archive и unit отсутствуют; host/firewall/routes/resolver, аккаунты и staged CLI сохранены. Локально осталось 79620 байт evidence archive, а не гигабайты compiler cache. Третью попытку с близким бюджетом не запускаем: имеющийся стенд не подтвердил достаточность ресурсов полного bootstrap. Q31 остаётся IN_PROGRESS; 33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.
+
+## 14 октября: Clang, остановка по дисковому порогу
+
+После двух сохранённых GCC OOM проверен другой вариант: только GNU host cc/cxx изменены на Clang19 и jobs=1 в собственном bootstrap.toml; musl compiler/linker и остальные поля сохранены. Фактические CMake compiler IDs и пути подтверждены; LLVM взят из официальных исходников Rust1.89, feed/source hashes сохранены.
+
+Последняя начатая операция Ninja — 3340/3710, линковка llvm-ar. Через 11472 секунд Host/Compile контроллер остановил сборку: свободно 1003.2 МиБ при пороге 1024 МиБ. Учтённый объём собственных файлов 7341742206 байт ещё не достиг лимита 8 ГиБ. Фактические cgroup peaks: RAM 1154.5 МиБ, swap 747.2 МиБ. Зафиксирован дисковый отказ; полного результата LLVM, Rust stage2/dist и Host/Install нет. Следующий SDK/IPK/opkg прогон не запускался.
+
+Архив 142834 байт сверён по SHA и полному inventory; удалено 7513146208 байт собственных файлов и собственный unit. Host/account/staged identities сохранены. [Evidence](../../../release/certification/evidence/q31-clang-disk-floor-20261014.json). Q31 IN_PROGRESS; 34/37 (91,9%), NO_PUSH_DEPLOY_RELEASE. Нужен другой запас диска перед следующим полным bootstrap; повтор с тем же ресурсным пределом не квалифицирован.
