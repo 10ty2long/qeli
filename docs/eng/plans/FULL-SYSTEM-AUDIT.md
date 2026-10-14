@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v266 -->
+<!-- normative-sync: full-system-audit-v267 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2034,6 +2034,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **14 October: long source compiler stopped by OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152MiB RAM/512MiB swap. Archive/cleanup qualified, host preserved, no SDK build started. Q31 remains IN_PROGRESS; no identical resource retry.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: Q31/Q36 runtime checkpoint.** Second source compiler OOM: cc1plus, LLVM1929/3710, RAM1152MiB/swap1024MiB; owned7.04GB removed, no SDK build. Q36 current CLI:4windows/2sessions,731146 stock events without trace loss; first late observer retained as invalid and driver fixed. Incomplete ACK linkage and changed observed/control results prevent delay-stage closure. See AUDIT-Q31-OPENWRT-CONTROLS and AUDIT-Q36-TUN-STAGE;33/37 (89.2%), both IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: Q36 small-packet pilot.** New4windows/2sessions,69703stock events/trace loss0; small-copy coverage14558/6090, but no exact individual ACK linkage or observer neutrality. Short observed/control ACK p50+18.67/+66.08%; no repeated stock-trace variant merely for closure. See AUDIT-Q36-TUN-STAGE;33/37 (89.2%), Q36 IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Metrics, usage, logs and notifications
 

@@ -62,3 +62,19 @@ Only hashed SKB/length pairs originating in previously verified server threads w
 The first pilot is retained as invalid stage observation: a fifth collector queued behind four occupied controller threads and enabled tracing after transfer completion. Fixed only the external diagnostic driver (max_workers=5), adding overlap/nonempty gates; no product change. Both packets completed process/namespace cleanup, SHA/inventory archive and owned root/archive removal. Global tracing controls, services and staged CLI preserved. This narrows an observed boundary but does not establish the original F023 stage: incomplete individual ACK correspondence and changed observed/control outcomes remain. Do not repeat this heavy four-event observer to claim the original cause. Q36 IN_PROGRESS; NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-stock-read-pilot-20261014.json`.
+
+## 14 October: small TUN packets only
+
+Execution source 553db95a5ddf; same current CLI 6f617bdcab5a and unchanged product tree. Two new sessions/four eight-second legacy one-carrier windows. Replaced all read/consume records with stock own-qbench0 net_dev_start_xmit and 1..128-byte skb_copy_datagram_iovec on both verified server reader TIDs. Private buffer 8192 KiB per CPU; no BPF/kprobe/strace or product change.
+
+Paced/unlimited downlink yielded 34346/35357 records, zero trace loss: 4.91/15.91 times fewer records than the previous four-event observation, comparing different actual sessions rather than claiming a speedup. All 14558/6090 small-copy events had a latest preceding stock xmit with matching hashed SKB and length. Previously unknown origin contexts were mostly new iperf3 threads; PID/comm and frequent pointer reuse retained. Events contain no IP/TCP header and do not identify a particular ACK. Copy trace fires before user-buffer copying, not after read completion.
+
+For 52 bytes:14475/6089 pairs; driver-entry to copy-entry p50 0.010/0.017 ms, p99 1.210/7.177 ms, max 4.801/8.607 ms. Matched ACK p50 in the same short estimated spans was 0.922168/18.530356 ms; controls at corresponding relative offsets were 0.777087/11.157324 ms. Equal counts of 6089 copy and matched ACK records in the unlimited span alone do not establish individual packet identity. PCAP span uses capture-ready clock offset estimate without an absolute clock-error bound. Client records outside the selected server span are expected unmatched destinations, not loss counts.
+
+Whole-phase observed/control uplink:346.90/299.33 Mbps with paced downlink,99.14/175.02 with unlimited downlink. Short-span ACK medians differ by +18.67/+66.08%; one control cannot separate observer overhead from inter-session variation. Lower event volume did not establish observation neutrality. Original F023 cause remains unestablished; no queue/default change justified. Do not repeat another stock-trace variant merely to close the checklist: a next step must test a concrete causal hypothesis with comparable controls.
+
+Workload/ACK/trace qualification, actual overlap, archive SHA/inventory and complete own process/namespace/root/archive/trace-instance cleanup passed. Host/firewall/services/staged CLI and global trace controls preserved. Kernel boundaries measured only in this observer-present pilot; other queues/crypto/socket/client delivery remain unmeasured. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+Source context: [Linux6.12 tun_put_user](https://raw.githubusercontent.com/torvalds/linux/refs/tags/v6.12/drivers/net/tun.c), [skb_copy_datagram_iter](https://raw.githubusercontent.com/torvalds/linux/v6.12/net/core/datagram.c), [stock event fields](https://raw.githubusercontent.com/torvalds/linux/v6.12/include/trace/events/skb.h). Primary upstream sources are context, not byte equivalence evidence for the running Debian module.
+
+Evidence: `release/certification/evidence/q36-stock-small-copy-pilot-20261014.json`.
