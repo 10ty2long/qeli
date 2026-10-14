@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v270 -->
+<!-- normative-sync: full-system-audit-v271 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2053,6 +2053,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **14 октября: Q36 client writer priority.** Fresh6sessions/12windows,nice0/-10 only own writer; actual TID/weight/policy/affinity/config/PID/ACK/host/SHA cleanup qualified. No consistent delay removal; no production adoption. Next direct per-packet stage timing with separate diagnostic build/observer controls.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: Q36 direct ACK stage pilot.** Private diagnostic build and2 isolated selector tests,3sessions/6windows stock/OFF/ON, unique exact-header seven-stage identity/cleanup qualified. Distinct ThinLTO artifact and one ordered observer pilot; original shipping cause and observer neutrality still open.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: Q36 sampled server handoffs.** Nine exact-header stages, three reversed same-artifact OFF/ON pairs /12windows, deterministic1/16 subset and actual cleanup qualified. Server TUN/forwarding/stream queue times separated; observer ratios and sampling limitations retained.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Метрики, usage, логи и уведомления
 

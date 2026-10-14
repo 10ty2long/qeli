@@ -179,3 +179,55 @@ Encrypt→client plaintext includes encryption, outer TCP buffering/transmission
 Workload/settings/lifetimes, actual binary/config/PCAP identities, causal stage ordering, actual buffers, complete host/firewall/services/staged preservation and root/archive SHA cleanup qualified. No active workload or owned compile cache remains. No BPF/kprobe/strace/kernel trace. Q36 remains IN_PROGRESS for observer neutrality and the shipping cause;33/37 (89.2%),NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-ack-stage-pilot-20261014.json`.
+
+## 14 October: separate server handoff boundaries
+
+Private diagnostic source 8f5932cf9043, CLI c7f573dfa066, same ThinLTO/codegen4/opt3/jemalloc profile. Three tests of the identical selector module PASS; actual CLI/dump/PID/hash and bounded build cleanup qualified separately. Product qeli/native unchanged. Nominal1/16 low-nibble-zero IPv4 ID selection happens before SHA/clocks/locks. Actual selection checked against PCAP; a deterministic subset, not an unbiased random sample claim.
+
+New6sessions/12windows: three same-binary OFF/ON pairs, reversed condition/rate order in repeat2. Two simultaneous P1/eight-second iperf connections; rawTCP legacy one-carrier. Server send/recv262144, actual tb/rb524288, INI match except per-session pin. No repeat of shipping matrix or stock pilot.
+
+| Repeat | Downlink | Uplink OFF / ON, Mbps | ACK p50 OFF / ON, ms |
+|---|---|---:|---:|
+| 1 | 100000000 | 280.61 / 255.33 | 0.940306 / 0.930185 |
+| 1 | unlimited | 123.59 / 173.95 | 16.699138 / 10.606932 |
+| 2 | 100000000 | 189.45 / 371.11 | 1.216701 / 0.865150 |
+| 2 | unlimited | 133.13 / 149.26 | 15.088365 / 11.580175 |
+| 3 | 100000000 | 186.73 / 295.79 | 1.201702 / 0.843077 |
+| 3 | unlimited | 136.48 / 180.26 | 13.779755 / 11.125608 |
+
+| Repeat | Downlink | Complete sampled ACKs | Segment | p50 / p99, ms |
+|---|---|---:|---|---:|
+| 1 | 100000000 | 1810 | server_read_to_forwarder | 0.039255 / 2.667328 |
+| 1 | 100000000 | 1810 | server_forwarder_to_stream_enqueue | 0.000744 / 0.008741 |
+| 1 | 100000000 | 1810 | server_stream_queue | 0.035131 / 3.664136 |
+| 1 | 100000000 | 1810 | client_plaintext_to_write_begin | 0.082666 / 1.873564 |
+| 1 | unlimited | 1451 | server_read_to_forwarder | 0.211360 / 9.907375 |
+| 1 | unlimited | 1451 | server_forwarder_to_stream_enqueue | 0.000728 / 0.008007 |
+| 1 | unlimited | 1451 | server_stream_queue | 6.019919 / 36.660742 |
+| 1 | unlimited | 1451 | client_plaintext_to_write_begin | 0.680580 / 4.067728 |
+| 2 | unlimited | 1224 | server_read_to_forwarder | 0.202277 / 9.924692 |
+| 2 | unlimited | 1224 | server_forwarder_to_stream_enqueue | 0.000737 / 0.001996 |
+| 2 | unlimited | 1224 | server_stream_queue | 6.237488 / 35.223276 |
+| 2 | unlimited | 1224 | client_plaintext_to_write_begin | 0.795184 / 4.249312 |
+| 2 | 100000000 | 2629 | server_read_to_forwarder | 0.038608 / 3.063380 |
+| 2 | 100000000 | 2629 | server_forwarder_to_stream_enqueue | 0.000752 / 0.008709 |
+| 2 | 100000000 | 2629 | server_stream_queue | 0.046379 / 2.991839 |
+| 2 | 100000000 | 2629 | client_plaintext_to_write_begin | 0.083706 / 1.821141 |
+| 3 | 100000000 | 2126 | server_read_to_forwarder | 0.041898 / 2.392429 |
+| 3 | 100000000 | 2126 | server_forwarder_to_stream_enqueue | 0.000737 / 0.009073 |
+| 3 | 100000000 | 2126 | server_stream_queue | 0.035224 / 4.422004 |
+| 3 | 100000000 | 2126 | client_plaintext_to_write_begin | 0.075225 / 2.182222 |
+| 3 | unlimited | 1589 | server_read_to_forwarder | 0.203898 / 11.892317 |
+| 3 | unlimited | 1589 | server_forwarder_to_stream_enqueue | 0.000708 / 0.007804 |
+| 3 | unlimited | 1589 | server_stream_queue | 6.076858 / 34.961849 |
+| 3 | unlimited | 1589 | client_plaintext_to_write_begin | 0.847020 / 5.155170 |
+
+Read→forwarder includes blocking_send/out_rx; forwarder→enqueue includes session/routing lookup, stream choice and pool copy; enqueue→stream dequeue measures time until rx.recv including scheduling. Nine boundaries linked by complete identical headers; no size/counter identity substitution or sum of segment quantiles. Complete/excluded/unsampled/lost/full counts, actual horizons and signed local async-write overlap retained in evidence.
+
+Three unlimited ON stream-queue p50 values:6.019919/6.237488/6.076858ms; at100M:0.035131/0.046379/0.035224ms. Unlimited TUN→forwarder p50=0.202277–0.211360ms; routing/copy=0.000708–0.000737ms. Stream queue is the largest individual segment for61.76–64.85% of complete sampled ACKs. Total10829 complete identities; server try_lock missed2 stamps, client lost0, full0 throughout. Actual selection6.2497–6.2532%; sampled/full PCAP p50 ratio0.99255–1.02936 across six ON windows, not a general unbiasedness guarantee.
+
+Unlimited ON/OFF ACKp50 ratios0.63518/0.76749/0.80739 (median−23.25%); median uplink ratio1.32085. Sparse observation still does not establish neutrality:6ms is not the exact shipping latency. Next use a bounded FIFO/service versus negotiated recordizer control, verifying only stages actually available in MUX, rather than another tracing variant/full matrix replay.
+
+Keep OFF/ON ratios and repeats separate: reduced overhead is not automatic observer neutrality. Do not pool this diagnostic artifact with shipping CLI or previous unsampled pilot. Owned processes/root/cache/archive removed; host/firewall/services/staged/source preserved. No BPF/kprobe/strace/kernel trace. Q36 IN_PROGRESS;33/37 (89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-server-handoff-runtime-20261014.json`.

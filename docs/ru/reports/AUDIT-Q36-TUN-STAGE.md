@@ -180,3 +180,55 @@ Evidence: `release/certification/evidence/q36-client-writer-priority-20261014.js
 Passed workload/settings/lifetimes, actual binary/config/PCAP identities, stage causal ordering, buffer readbacks, полный host/firewall/services/staged preservation и root/archive SHA cleanup. Нагрузка и выгрузка диагностики закончены; временные сборки/кэши лабы удалены. BPF/kprobe/strace/kernel trace не применялись. Q36 остаётся IN_PROGRESS по подтверждению нейтральности и причины на штатной сборке;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-ack-stage-pilot-20261014.json`.
+
+## 14 октября: разделение серверных handoff границ
+
+Private diagnostic source 8f5932cf9043, CLI c7f573dfa066, прежние ThinLTO/codegen4/opt3 и jemalloc. Три selector-теста того же модуля PASS; actual CLI/dump/PID/hash и bounded build cleanup проверены отдельно. Основной qeli/native не изменён. Номинальная выборка1/16 по low nibble IPv4 ID=0 выполняется до SHA/clock/lock. По PCAP проверен фактический отбор; это deterministic subset, не заявление о случайной несмещённой выборке всех ACK.
+
+Новые6sessions/12windows: три пары того же бинарника OFF/ON; во втором повторе порядок условий и100M/unlimited обращён. P1/8сек, два встречных iperf соединения, raw TCP legacy one-carrier. Server send/recv262144, actual tb/rb524288, INI match кроме per-session pin. Штатную матрицу и stock-пилот повторно не запускали.
+
+| Repeat | Downlink | Uplink OFF / ON, Mbps | ACK p50 OFF / ON, ms |
+|---|---|---:|---:|
+| 1 | 100000000 | 280.61 / 255.33 | 0.940306 / 0.930185 |
+| 1 | unlimited | 123.59 / 173.95 | 16.699138 / 10.606932 |
+| 2 | 100000000 | 189.45 / 371.11 | 1.216701 / 0.865150 |
+| 2 | unlimited | 133.13 / 149.26 | 15.088365 / 11.580175 |
+| 3 | 100000000 | 186.73 / 295.79 | 1.201702 / 0.843077 |
+| 3 | unlimited | 136.48 / 180.26 | 13.779755 / 11.125608 |
+
+| Repeat | Downlink | Complete sampled ACKs | Segment | p50 / p99, ms |
+|---|---|---:|---|---:|
+| 1 | 100000000 | 1810 | server_read_to_forwarder | 0.039255 / 2.667328 |
+| 1 | 100000000 | 1810 | server_forwarder_to_stream_enqueue | 0.000744 / 0.008741 |
+| 1 | 100000000 | 1810 | server_stream_queue | 0.035131 / 3.664136 |
+| 1 | 100000000 | 1810 | client_plaintext_to_write_begin | 0.082666 / 1.873564 |
+| 1 | unlimited | 1451 | server_read_to_forwarder | 0.211360 / 9.907375 |
+| 1 | unlimited | 1451 | server_forwarder_to_stream_enqueue | 0.000728 / 0.008007 |
+| 1 | unlimited | 1451 | server_stream_queue | 6.019919 / 36.660742 |
+| 1 | unlimited | 1451 | client_plaintext_to_write_begin | 0.680580 / 4.067728 |
+| 2 | unlimited | 1224 | server_read_to_forwarder | 0.202277 / 9.924692 |
+| 2 | unlimited | 1224 | server_forwarder_to_stream_enqueue | 0.000737 / 0.001996 |
+| 2 | unlimited | 1224 | server_stream_queue | 6.237488 / 35.223276 |
+| 2 | unlimited | 1224 | client_plaintext_to_write_begin | 0.795184 / 4.249312 |
+| 2 | 100000000 | 2629 | server_read_to_forwarder | 0.038608 / 3.063380 |
+| 2 | 100000000 | 2629 | server_forwarder_to_stream_enqueue | 0.000752 / 0.008709 |
+| 2 | 100000000 | 2629 | server_stream_queue | 0.046379 / 2.991839 |
+| 2 | 100000000 | 2629 | client_plaintext_to_write_begin | 0.083706 / 1.821141 |
+| 3 | 100000000 | 2126 | server_read_to_forwarder | 0.041898 / 2.392429 |
+| 3 | 100000000 | 2126 | server_forwarder_to_stream_enqueue | 0.000737 / 0.009073 |
+| 3 | 100000000 | 2126 | server_stream_queue | 0.035224 / 4.422004 |
+| 3 | 100000000 | 2126 | client_plaintext_to_write_begin | 0.075225 / 2.182222 |
+| 3 | unlimited | 1589 | server_read_to_forwarder | 0.203898 / 11.892317 |
+| 3 | unlimited | 1589 | server_forwarder_to_stream_enqueue | 0.000708 / 0.007804 |
+| 3 | unlimited | 1589 | server_stream_queue | 6.076858 / 34.961849 |
+| 3 | unlimited | 1589 | client_plaintext_to_write_begin | 0.847020 / 5.155170 |
+
+Теперь server read→forwarder измеряет blocking_send/out_rx; forwarder→enqueue включает session/route lookup, stream choice и pool copy; enqueue→stream dequeue показывает время до rx.recv, включая scheduling. Это девять границ для одного полного одинакового заголовка, а не корреляция по размеру/общим счётчикам. Не складывать квантили сегментов. Retained complete/excluded/unsampled/lost/full counts, observed horizons и signed async-write overlap доступны в evidence.
+
+В трёх unlimited ON-повторах stream queue p50=6,019919/6,237488/6,076858мс; при100M=0,035131/0,046379/0,035224мс. TUN→forwarder unlimited p50=0,202277–0,211360мс, route/copy=0,000708–0,000737мс. Stream queue был наибольшим отдельным сегментом у61,76–64,85% complete sampled ACKs. Всего10829 complete identities; server ring потерял2 отметки try_lock, client lost0, full0 везде. Фактический отбор6,2497–6,2532%; sampled/full PCAP p50 ratio=0,99255–1,02936 в шести ON-окнах. Это проверка данной выборки, не общая гарантия её несмещённости.
+
+Unlimited ON/OFF ACKp50 ratio=0,63518/0,76749/0,80739: медиана снижается на23,25%, uplink ratio median=1,32085. Даже редкий сборщик не доказал нейтральность; абсолютные6мс нельзя выдавать за точную latency штатного CLI. Следующий осмысленный контроль — обслуживание FIFO/согласованный recordizer, с проверкой реально доступных стадий в MUX; очередной вариант трассировщика или повтор общей матрицы не требуется.
+
+OFF/ON ratios и каждый повтор сохранены раздельно: снижение overhead не означает автоматическую нейтральность. Нельзя объединять новый diagnostic artifact с shipping CLI или предыдущим unsampled pilot. Временные процессы, root/cache/archive удалены; host/firewall/services/staged/source сохранены. BPF/kprobe/strace/kernel trace не применялись. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-server-handoff-runtime-20261014.json`.
