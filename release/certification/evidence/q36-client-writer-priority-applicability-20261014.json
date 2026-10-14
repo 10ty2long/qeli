@@ -1,8 +1,8 @@
 {
   "status": "FOUR_MARKDOWN_DELTA_LINUX_NATIVE_APPLICABILITY_PASS",
-  "source_commit": "23bc2948b25ffbd756010be9048c100ae7353573",
-  "previous_source_commit": "e07c2597d44695971c0f62e651fe739e5b44c1fc",
-  "source_digest": "b3d10761acec758e15a05318406cc00c87ff5b785598d2d092aed9be1bae6aed",
+  "source_commit": "40e4fb2188d81ce6ed0eb2a305849f37fdb0fef0",
+  "previous_source_commit": "776de2a63efcfb49d1b89c2ab323437aa23ccaa6",
+  "source_digest": "487bbd88c398e0f719d5021dc5beaebb9b98bc3c4345eb84fa0df278691e9dfe",
   "native_source_digest": "0dfac80b50d2bdd1964817dee8ac87f7311cde63bf61efade7a40abd7e32b635",
   "exact_delta": [
     "docs/eng/plans/FULL-SYSTEM-AUDIT.md",
@@ -11,10 +11,10 @@
     "docs/ru/reports/AUDIT-Q36-TUN-STAGE.md"
   ],
   "files": {
-    "docs/ru/reports/AUDIT-Q36-TUN-STAGE.md": "952cc6efcb468bd5284fce86928504c35df714b747ff37c060cf8bd4fe3d671d",
-    "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "87d9c598ca3b275849c17bb4249edf203d20892fa342bab3dd85469e827b4da4",
-    "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "5742002def728352a4872df6def6a898b498ac3b22fc2efb5f85fc8178da8965",
-    "docs/eng/reports/AUDIT-Q36-TUN-STAGE.md": "2d3706eca4329bb338972a38cfa11640936bc1e13c1c03e10b89679d26d17fec"
+    "docs/ru/reports/AUDIT-Q36-TUN-STAGE.md": "e6e0980c2e618cedf771d4625df6594f387ec100ee98e8663f7266fd5ac4f632",
+    "docs/eng/reports/AUDIT-Q36-TUN-STAGE.md": "23fbbda865766518ce15478809cce8189c0aba410ad7455492154a73f9dc1a60",
+    "docs/ru/plans/FULL-SYSTEM-AUDIT.md": "5305e041283d852edbffa6f657cf1c86876095ce1752d5b4b95bbd6203812202",
+    "docs/eng/plans/FULL-SYSTEM-AUDIT.md": "79862c8a7573adb1469c977f7d6bba3d2672444ec139c746a452893dec796d60"
   },
   "unchanged_Linux_script_closure": {
     "scripts/update-kernel.sh": "23dd2984b87e87d54279ba17ec7dde5341fc676365f1d06e811e7be79b8ab431",
@@ -68,7 +68,7 @@
     "scripts/check_docs.py": "e260cb024b56fc6257108801d5dae01607dfadfb6cb5458669b3b2e25e808a10",
     "scripts/add-client.sh": "d01fd52f435f6eb62eee2a95d96d33019a9aa1bed75031610ac9bb137611923b"
   },
-  "scope": "Four Markdown report/plan changes only; actual12-window current-CLI writer priority intervention with exact thread/config/ACK/cleanup scopes. No product/native/Linux-script delta; original automated/physical execution facts preserved.",
+  "scope": "Four Markdown report/plan changes only; actual6-window stock/OFF/ON private diagnostic pilot with exact config/ACK/stage/cleanup scopes. No product/native/Linux-script delta; original automated/physical execution facts preserved.",
   "new_release_matrix_runtime": false,
   "no_push_deploy_release": true
 }
