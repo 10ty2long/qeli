@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v264 -->
+<!-- normative-sync: full-system-audit-v265 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2041,6 +2041,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **14 октября: холодный Rust Host/Compile теперь выполнен.** Prepare/configure и реальная компиляция bootstrap79с PASS; скачивание закреплённого LLVM CI artifact получило4HTTP404. Host/Compile FAIL сохранён, Host/Install/stage2/dist не выполнены; лимиты не сработали. Все6226200078байт собственного каталога удалены, host/аккаунты/staged сохранены. Полный compiler/cold graph остаётся OPEN, prebuilt SDK/IPK scope прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: обход LLVM CI404 выполнен.** Один flag в частном feed, prepare/configure/bootstrap и реальная source LLVM C++ compilation проверены; последний Ninja indicator548/3710. Собственный guard остановил частичный прогон (time); full compiler/SDK graph не закрыт. Root/cache/archive/unit очищены, host сохранён; original404 прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: длительный source compiler остановлен OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152МиБ RAM/512МиБ swap. Архив и cleanup квалифицированы, host сохранён; SDK не запускался. Q31 остаётся IN_PROGRESS; одинаковый ресурсный retry не выполняется.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Метрики, usage, логи и уведомления
 

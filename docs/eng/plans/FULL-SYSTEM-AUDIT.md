@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v264 -->
+<!-- normative-sync: full-system-audit-v265 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2030,6 +2030,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **14 October: cold Rust Host/Compile now attempted.** Prepare/configure and actual bootstrap79s compilation PASS; pinned LLVM CI download returned4HTTP404. Host/Compile FAIL retained; Host/Install/stage2/dist not executed, budget guards did not fire. All6226200078owned bytes removed, host/accounts/staged preserved. Full compiler/cold graph remains OPEN; prebuilt SDK/IPK scope unchanged.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: LLVM CI404 remedy executed.** One private-feed flag, prepare/configure/bootstrap and actual source LLVM C++ compilation verified; last Ninja indicator548/3710. Owned guard stopped partial attempt (time); full compiler/SDK graph still open. Root/cache/archive/unit removed, host preserved, original404 retained.33/37,NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: long source compiler stopped by OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152MiB RAM/512MiB swap. Archive/cleanup qualified, host preserved, no SDK build started. Q31 remains IN_PROGRESS; no identical resource retry.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Metrics, usage, logs and notifications
 
