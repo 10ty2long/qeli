@@ -453,6 +453,8 @@ The prior runtime's imported population and sample_policy functions are byte-ide
 
 36 fresh sessions /144 eight-second windows: all12 transports, outer4/inner4, TCP/UDP bidir P1/P4, three independent repeats. Both peers use the qualified CLI6f617bdcab5a, actual build e0ce217b630d; its complete Git qeli-tree matches execution commit eacd0da0833a. No rebuild. This population does not pool historical full matrices, legacy/mux or before/after F030 results. Repeat2 reverses profile order. Phase order remains identical across repeats: an added reversal duplicated the existing reversal and cancelled its effect. Original driver and actual ordering retained; measurements not excluded, no reduction of phase-order dependence claimed. Unlimited TCP producer; UDP100Mbps per stream/direction (P1=100+100, P4=400+400), MTU1400/1500, original benchmark profiles, unchanged qdisc/affinity/defaults. Sibling namespaces on one2vCPU VM, not inter-server capacity.
 
+Actual configuration: NetworkPlan in all36 sessions confirms `legacy_packet_per_record`, `max_streams=1`, `adaptive=false`. Recordizer is off in this matrix; P1/P4 denotes iperf streams, not Qeli carriers. The table below applies to this specific mode.
+
 Three-session medians; all48 groups, samples/min/max/spread, CPU/RSS/steal, receiver raw and session-drop/UDP kernel RcvbufErrors counters retained without outlier exclusions. This matrix does not measure the exact TUN TX drop stage or all native uplink handoff counters.
 
 |Mode|TCP P1 up/down Mbps|TCP P4 up/down Mbps|UDP P4 loss up/down %|
@@ -493,3 +495,21 @@ One temporary owned trace-instance uses existing skb:kfree_skb filtered by `loca
 Observed throughput versus the mean of flanking controls ranges−10.360% to+21.826%; all12 comparisons and sender-RTT brackets retained, reverse-only missing RTT remains unknown. No no-overhead/performance PASS or original ACK-stage timing/reader-delay cause. Local qualifier import-path and observation-id/drop-kind collision failures corrected against identical raw, both original FAIL logs/source retained, no workload replay.
 
 Full source/CLI/PID/socket/role/generation/counter admission,9bidir role checks, archive inventory SHA and global trace/host/service/firewall/routes/DNS/staged-CLI cleanup PASS. Own instance/root/archive absent. Kernel reason checkpoint closed for these windows; Q36 IN_PROGRESS on ACK-stage/general acceptance,33/37(89.2%). Evidence: `release/certification/evidence/q36-stock-tun-drop-reason-20261014.json`; packet q36-tun-drop-reason-current-20261014. NO_PUSH_DEPLOY_RELEASE.
+
+## 14 October: TUN wait boundaries and distinct measurement conditions
+
+Reviewed six current Rust files and retained SHA receipts from two executed cohorts:45 sessions/171 windows. This is source review and evidence revalidation; no new runtime tests, load windows or builds.
+
+The client reader waits for a recycled buffer, fd readiness and bounded handoff. In single-carrier mode, TunPacket retains one of at most64 read buffers until writer processing. The bonded path copies into its separate bounded pool and releases the read buffer before queue admission. The server reader can wait for its shared32MiB read pool, blocking read and4096-slot handoff. The ordinary forwarder awaits the SessionMap read lock; selected stream pool/queue admission uses try_acquire/try_send. These boundaries are source-confirmed; their actual duration and the original ACK delay cause are not measured by this review. No new confirmed defect; pool/queue defaults unchanged.
+
+The stock-TUN experiment used PACKET_MUX_V1 and two carriers; the all-mode matrix above used legacy and one. The two original untraced control groups below remain separate, each with three repeats. Traced windows are excluded from this table.
+
+|Control group (n=3 each)|Upload Mbps median [min,max]|Download Mbps median [min,max]|Bidir up/down Mbps medians|
+|---|---:|---:|---:|
+|a|1326.38 [1269.37,1328.85]|1403.07 [1371.55,1507.14]|414.52/1147.53|
+|b|1250.32 [1232.67,1254.14]|1532.36 [1529.28,1538.06]|440.00/1177.56|
+
+
+Two conditions differ: negotiated mode and carrier width. A throughput ratio between these cohorts cannot be attributed to recordizer alone or F030. Mux controls achieved1.23–1.33Gbps standalone upload, while bidirectional asymmetry and TUN drops remain. These are results on one2vCPU VM, not a server-speed or zero-loss guarantee.
+
+Acceptance mapping updated without expanding requirements: observed kernel FULL_RING is no longer an unknown cause; the exact original ACK/read-delay stage remains OPEN. Historical IPv6 results retain original binary/source identities. Q36 stays open; universal zero-loss is not added as a new requirement.33/37(89.2%). Evidence: `release/certification/evidence/q36-reader-cohort-review-20261014.json`. NO_PUSH_DEPLOY_RELEASE.

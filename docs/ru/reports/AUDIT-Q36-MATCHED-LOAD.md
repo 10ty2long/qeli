@@ -453,6 +453,8 @@ Q36-F032: aggregate проверял совпадение целой raw-поп�
 
 36 новых сессий /144 окна по8с: все12 транспортов, outer4/inner4, TCP/UDP bidir P1/P4, по3 независимых повтора. Сервер и клиент используют уже квалифицированный CLI6f617bdcab5a; actual build e0ce217b630d, полный Git qeli-tree совпадает с execution commit eacd0da0833a. Новых компиляций нет. Это отдельная популяция; прежние полные матрицы, legacy/mux и до/после F030 не объединены с ней. Во втором повторе порядок профилей обратный. Порядок фаз фактически одинаковый во всех повторах: добавленное разворачивание в обвязке повторило уже существующее и отменило его эффект. Исходный driver и фактический порядок сохранены; результаты не исключены, снижения зависимости от порядка фаз не заявляется. TCP producer без лимита, UDP100Mbps на stream/направление (P1=100+100, P4=400+400); MTU1400/1500, штатные исходные профили benchmark, без смены qdisc/affinity/defaults. Это sibling namespaces одной2vCPU VM, не межсерверная capacity.
 
+Уточнение фактической конфигурации: во всех36 сессиях NetworkPlan подтверждает `legacy_packet_per_record`, `max_streams=1`, `adaptive=false`. Recordizer в этой матрице отключён; P1/P4 означает число потоков iperf, а не число carrier Qeli. Таблица ниже относится именно к этому режиму.
+
 Медианы трёх сессий; все48 групп, samples/min/max/spread, CPU/RSS/steal, receiver raw и счётчики session drops/UDP kernel RcvbufErrors сохранены без исключения выбросов. Эта матрица не измеряет точную стадию TUN TX drop или все native uplink handoff counters.
 
 |Mode|TCP P1 up/down Mbps|TCP P4 up/down Mbps|UDP P4 loss up/down %|
@@ -493,3 +495,21 @@ Q36-F033, QUALIFIED в наблюдаемом объёме: текущий CLI6f
 Throughput наблюдения относительно среднего двух соседних controls изменился от−10.360% до+21.826%; все12 сравниваемых значений и6 sender-RTT brackets сохранены с отсутствующими RTT для reverse-only как unknown. Это не no-overhead/performance PASS; original ACK-stage timing и причина задержки чтения не установлены. Две локальные ошибки qualifier (путь импортов и коллизия observation id с drop-kind loop) исправлены при анализе тех же неизменных raw; оба FAIL/log/source сохранены, нагрузка не повторялась.
 
 Полный source/CLI/PID/socket/role/generation/counter admission,9bidir role checks, archive inventory SHA и глобальная trace/host/service/firewall/routes/DNS/staged-CLI cleanup PASS. Instance/root/archive отсутствуют. Kernel drop reason checkpoint закрыт только для этих окон; Q36 IN_PROGRESS по ACK-stage/общему acceptance,33/37(89,2%). Evidence: `release/certification/evidence/q36-stock-tun-drop-reason-20261014.json`; packet q36-tun-drop-reason-current-20261014. NO_PUSH_DEPLOY_RELEASE.
+
+## 14 октября: границы ожидания TUN и разделение условий измерения
+
+Проверены шесть актуальных Rust-файлов и неизменные SHA receipts двух уже выполненных серий:45 сессий/171 окно. Это source review и повторная сверка evidence; новых runtime-тестов, нагрузочных окон или сборок нет.
+
+Клиентский reader ждёт возврата буфера, готовности fd и ограниченного handoff. В single-carrier режиме TunPacket удерживает один из максимум64 read buffers до обработки writer. Bonded-путь копирует пакет в свой bounded pool и возвращает read buffer до queue admission. Серверный reader может ждать общего32MiB read pool, блокирующего read и handoff4096. Обычный forwarder ждёт read-lock SessionMap; выбранные stream pool/queue используют try_acquire/try_send. Эти места ожидания подтверждены исходниками, но их фактическая длительность и причина original ACK delay не измерены этим review. Новой подтверждённой ошибки нет; pool/queue defaults не увеличены.
+
+Серия stock-TUN использовала PACKET_MUX_V1 и два carrier, тогда как all-mode матрица выше — legacy и один. Ниже сохранены отдельно две исходные группы без трассировки, каждая с тремя повторами; измеренные trace-окна сюда не включены.
+
+|Control group (n=3 each)|Upload Mbps median [min,max]|Download Mbps median [min,max]|Bidir up/down Mbps medians|
+|---|---:|---:|---:|
+|a|1326.38 [1269.37,1328.85]|1403.07 [1371.55,1507.14]|414.52/1147.53|
+|b|1250.32 [1232.67,1254.14]|1532.36 [1529.28,1538.06]|440.00/1177.56|
+
+
+Изменены сразу два условия — negotiated mode и carrier width. Делить скорости между этими сериями и называть отношение эффектом recordizer либо F030 некорректно. Отдельный upload с mux в контролях был1,23–1,33Гбит/с, но bidir-асимметрия и TUN drops остаются. Это результаты одной2vCPU VM, не гарантия скорости сервера или отсутствия потерь.
+
+Acceptance map обновлён без расширения требований: наблюдаемый kernel FULL_RING больше не является неизвестной причиной; точная стадия исходного ACK/read delay остаётся OPEN. Исторические IPv6-результаты сохраняют прежние binary/source identities. Общий Q36 не закрыт и universal zero-loss не добавлен как новое условие.33/37(89,2%). Evidence: `release/certification/evidence/q36-reader-cohort-review-20261014.json`. NO_PUSH_DEPLOY_RELEASE.
