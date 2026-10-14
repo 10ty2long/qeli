@@ -231,3 +231,41 @@ Unlimited ON/OFF ACKp50 ratios0.63518/0.76749/0.80739 (median−23.25%); median 
 Keep OFF/ON ratios and repeats separate: reduced overhead is not automatic observer neutrality. Do not pool this diagnostic artifact with shipping CLI or previous unsampled pilot. Owned processes/root/cache/archive removed; host/firewall/services/staged/source preserved. No BPF/kprobe/strace/kernel trace. Q36 IN_PROGRESS;33/37 (89.2%),NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-server-handoff-runtime-20261014.json`.
+
+## 14 October: recordizer and server FIFO
+
+Execution source 770ef7e14bb9; reused private ThinLTO/codegen4 diagnostic CLI c7f573dfa066, no compilation/product/native delta. New6sessions/12windows: three server obf.recordizer.policy off/required pairs, both endpoint probes ON. Reversed condition/rate order in repeat2. Two simultaneous P1/eight-second inner TCP connections, rawTCP one carrier. Actual legacy_packet_per_record/packet_mux_v1 negotiation, PID/outer sockets/actual tb-rb524288 and original INI verified; only server policy/per-session pin differ.
+
+| Repeat | Downlink | Uplink legacy / MUX, Mbps | ACK p50 legacy / MUX, ms | Stream queue p50 legacy / MUX, ms |
+|---|---|---:|---:|---:|
+| 1 | 100000000 | 289.72 / 1175.55 | 0.922641 / 1.064547 | 0.049031 / 0.006099 |
+| 1 | unlimited | 103.35 / 421.51 | 29.316383 / 3.159679 | 27.069859 / 0.048029 |
+| 2 | 100000000 | 290.31 / 1077.67 | 0.908023 / 1.157373 | 0.044805 / 0.007760 |
+| 2 | unlimited | 140.48 / 367.76 | 14.558145 / 3.486144 | 10.075171 / 0.061062 |
+| 3 | 100000000 | 214.79 / 1222.21 | 1.012247 / 1.014984 | 0.045017 / 0.005577 |
+| 3 | unlimited | 188.59 / 433.51 | 10.517356 / 3.285821 | 2.677874 / 0.049269 |
+
+Complete identical PCAP headers linked to six common boundaries: server read→forwarder→enqueue→dequeue→client TUN begin→done. Total36046 complete sampled identities; exclusions/repetitions/missed stamps/nonselected1/16 headers retained. MUX combines packets into records: per-ACK encryption/plaintext/write-completion timestamps are absent in this branch and were not substituted with whole-record times. Dequeue→client TUN combines recordization/encryption/outer TCP/decode/client queue.
+
+Paired MUX/legacy min/median/max:100M uplink 3.712/4.057/5.690; unlimited uplink 2.299/2.618/4.078; unlimited ACKp50 0.108/0.239/0.312. A batching-policy intervention in this topology, not isolated queue-size causality: morphology/deadline/writer servicing/buffering also change. Prior OFF/ON controls demonstrated observer effects; both probes ON does not prove neutrality or equivalent observer work, because available stamps differ. No default/config/release artifact adoption, shipping pooling or DPI-equivalence claim.
+
+Workload/negotiation/topology/headers/common-stage ordering/buffers/source/host/firewall/services/staged and SHA inventory/archive cleanup PASS; owned lab resources removed. Actual drops/retransmits and historical FAIL retained. Q36 IN_PROGRESS for shipping cause acceptance;33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-recordizer-handoff-20261014.json`.
+
+## 14 October: shipping CLI and Q36 completion
+
+Another6sessions/12windows use shipping CLI6f617bdcab5a without QELI_ACK_PROBE/SIGUSR1/compilation. Three legacy/MUX policy-only pairs, one carrier, same bounded PCAP/ss controls. No absolute zero-overhead claim. Runtime generation/source/config/PID/socket/matched headers/receiver roles/host/staged/root/archive cleanup PASS.
+
+| Repeat | Downlink | Uplink legacy / MUX, Mbps | ACK p50 legacy / MUX, ms |
+|---|---|---:|---:|
+| 1 | 100000000 | 283.48 / 1240.52 | 0.773993 / 0.989687 |
+| 1 | unlimited | 156.61 / 403.49 | 13.882233 / 3.277941 |
+| 2 | 100000000 | 144.76 / 1240.37 | 1.197513 / 1.012411 |
+| 2 | unlimited | 157.38 / 431.46 | 17.154599 / 3.166323 |
+| 3 | 100000000 | 281.17 / 1235.29 | 0.874503 / 0.956438 |
+| 3 | unlimited | 150.82 / 432.10 | 13.001141 / 3.119505 |
+
+Unlimited paired MUX/legacy median uplink=2.742×, downlink=2.043×, ACKp50=0.236×. At100M median ACKp50=1.094×: batching/deadline can cost latency despite lower queue residence. Policy effect confirmed on shipping binary; private queue times are not relabelled as shipping stamps. ACKs and downlink data share legacy per-stream FIFO; batching improves writer service. No global required default: morphology/peer compatibility changes.
+
+[Five Q36 criteria completed](AUDIT-Q36-FINAL.md). Bounded benchmark audit DONE, not capacity/performance-budget PASS. Original FAIL, kernel FULL_RING overload and legacy queue drops retained. Further latency tuning is optional optimization, not a reason to replay completed checks.34/37(91.9%);Q29/Q31/Q34 open,NO_PUSH_DEPLOY_RELEASE.

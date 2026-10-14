@@ -232,3 +232,41 @@ Unlimited ON/OFF ACKp50 ratio=0,63518/0,76749/0,80739: медиана снижа
 OFF/ON ratios и каждый повтор сохранены раздельно: снижение overhead не означает автоматическую нейтральность. Нельзя объединять новый diagnostic artifact с shipping CLI или предыдущим unsampled pilot. Временные процессы, root/cache/archive удалены; host/firewall/services/staged/source сохранены. BPF/kprobe/strace/kernel trace не применялись. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-server-handoff-runtime-20261014.json`.
+
+## 14 октября: recordizer и серверная FIFO
+
+Execution source 770ef7e14bb9; тот же private ThinLTO/codegen4 diagnostic CLI c7f573dfa066, без новой компиляции и изменений qeli/native. Новые6sessions/12windows, три пары server obf.recordizer.policy=off/required при ON диагностики обоих endpoints. Порядок условий и100M/unlimited обращён во втором повторе. Two simultaneous P1/8сек inner TCP connections, rawTCP one-carrier; фактические legacy_packet_per_record/packet_mux_v1, PID/outer socket/actual tb-rb524288 и исходные INI проверены. Единственные INI delta: server recordizer policy и per-session pin.
+
+| Repeat | Downlink | Uplink legacy / MUX, Mbps | ACK p50 legacy / MUX, ms | Stream queue p50 legacy / MUX, ms |
+|---|---|---:|---:|---:|
+| 1 | 100000000 | 289.72 / 1175.55 | 0.922641 / 1.064547 | 0.049031 / 0.006099 |
+| 1 | unlimited | 103.35 / 421.51 | 29.316383 / 3.159679 | 27.069859 / 0.048029 |
+| 2 | 100000000 | 290.31 / 1077.67 | 0.908023 / 1.157373 | 0.044805 / 0.007760 |
+| 2 | unlimited | 140.48 / 367.76 | 14.558145 / 3.486144 | 10.075171 / 0.061062 |
+| 3 | 100000000 | 214.79 / 1222.21 | 1.012247 / 1.014984 | 0.045017 / 0.005577 |
+| 3 | unlimited | 188.59 / 433.51 | 10.517356 / 3.285821 | 2.677874 / 0.049269 |
+
+Совпавшие заголовки PCAP связаны с шестью общими отметками: server read→forwarder→enqueue→dequeue→client TUN begin→done. Всего36046 complete sampled ACK identities; остальные/повторные/пропущенные/непопавшие в1/16 выборку сохранены с точными счётчиками. MUX объединяет несколько пакетов в record: прежних per-ACK crypto/plaintext/write-completion timestamps в этой ветке нет. Их не заменяли временем целого record. Участок dequeue→client TUN включает recordization, encryption, внешний TCP, decode и клиентскую очередь вместе.
+
+Paired MUX/legacy min/median/max: uplink100M 3.712/4.057/5.690; uplink unlimited 2.299/2.618/4.078; ACKp50 unlimited 0.108/0.239/0.312. Это причинный контроль политики batching в данном стенде, не отдельного размера очереди: меняются morphology/deadline, обслуживание writer и buffering. Прошлая OFF/ON серия показала влияние диагностики; одинаковое ON обеих веток не доказывает нейтральность или equivalence observers, поскольку набор доступных отметок различается. Default/config/release artifact не меняли. Нельзя объединять с shipping numbers и заявлять DPI equivalence.
+
+Workload/negotiation/topology/headers/common-stage ordering/buffers/source/host/firewall/services/staged и SHA inventory/archive cleanup PASS; все own ресурсы лабы удалены. Документированы actual drops/retransmits, исходные исторические FAIL сохранены. Q36 IN_PROGRESS по границам принятия shipping причины;33/37 (89,2%),NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-recordizer-handoff-20261014.json`.
+
+## 14 октября: штатный CLI и итог Q36
+
+После private localization выполнены ещё6sessions/12windows на штатном CLI6f617bdcab5a без QELI_ACK_PROBE, SIGUSR1 и новой компиляции. Три пары legacy/MUX при том же одном carrier и policy-only INI delta; PCAP/ss controls остаются. Абсолютного zero-overhead утверждения нет. Runtime generation/source/config/PID/socket/matching headers/receiver roles/host/staged/root/archive cleanup PASS.
+
+| Repeat | Downlink | Uplink legacy / MUX, Mbps | ACK p50 legacy / MUX, ms |
+|---|---|---:|---:|
+| 1 | 100000000 | 283.48 / 1240.52 | 0.773993 / 0.989687 |
+| 1 | unlimited | 156.61 / 403.49 | 13.882233 / 3.277941 |
+| 2 | 100000000 | 144.76 / 1240.37 | 1.197513 / 1.012411 |
+| 2 | unlimited | 157.38 / 431.46 | 17.154599 / 3.166323 |
+| 3 | 100000000 | 281.17 / 1235.29 | 0.874503 / 0.956438 |
+| 3 | unlimited | 150.82 / 432.10 | 13.001141 / 3.119505 |
+
+Unlimited paired MUX/legacy median uplink=2.742×, downlink=2.043×, ACKp50=0.236×. При downlink100M ACKp50 median=1.094×: batching/deadline имеет цену для коротких ACK даже при меньшей очереди. Это подтверждает эффект политики на рабочем бинарнике; private queue timestamps не переименованы в shipping stamps. Shared per-stream FIFO в legacy задерживает ACK вместе с downlink data; batching повышает скорость обслуживания очереди. Не включали required глобально: он меняет morphology и требует совместимого клиента.
+
+[Итог пяти критериев Q36](AUDIT-Q36-FINAL.md). Benchmark audit DONE в указанном объёме; finite VM data не являются capacity/performance budget PASS. Исходные FAIL, kernel FULL_RING overload и legacy queue drops сохранены. Дальнейший latency tuning — отдельная оптимизация, не основание повторять завершённые проверки.34/37 (91,9%); открытыQ29/Q31/Q34. NO_PUSH_DEPLOY_RELEASE.

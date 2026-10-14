@@ -542,8 +542,10 @@
 
 - [Q36: текущая статистическая популяция](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
 
+- [Q36: итог пяти критериев аудита бенчмарков](reports/AUDIT-Q36-FINAL.md) — 14 октября 2026.
 
-Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
+
+Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 34/37 (91.9%); Q29 IN_PROGRESS.
 
 
-[Q36 matched-total load and TUN counters](reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
+[Q36 matched-total load and TUN counters](reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. [Q36 DONE: итог и ограничения](reports/AUDIT-Q36-FINAL.md),34/37(91.9%).

@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v271 -->
+<!-- normative-sync: full-system-audit-v273 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -18,7 +18,7 @@ for the full audit; existing obligations remain.
 
 **Q34,14 October:** Unix service-key helper race fixed and reproduced by the old implementation;28 Windows/Linux checks PASS, daemon/self-test share Mac RENAME_EXCL. Apple/current hosted runtime unqualified; iOS failures and public source pin remain open. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Current result, 14 October: 33/37 sections complete within agreed scope (89.2%), 4 remain. Q35 and Q37 five criteria complete; Q29/Q31/Q34/Q36 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 14 October: 34/37 sections complete within agreed scope (91.9%), 3 remain. Q35/Q36/Q37 five criteria complete; Q29/Q31/Q34 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -183,7 +183,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
 | 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | DONE/PASS |
-| 36 | Benchmarks and measurement methodology | H07 | IN_PROGRESS |
+| 36 | Benchmarks and measurement methodology | H07 | DONE |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | DONE |
 
 Table reconciled against section21–23,26,28 completion and open29–31,35–36 statuses
@@ -2045,6 +2045,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **14 October: Q36 sampled server handoffs.** Nine exact-header stages, three reversed same-artifact OFF/ON pairs /12windows, deterministic1/16 subset and actual cleanup qualified. Server TUN/forwarding/stream queue times separated; observer ratios and sampling limitations retained.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
+**14 October: Q36 recordizer FIFO control.** Three same-diagnostic-artifact policy off/required pairs/12windows; probes ON both, actual one-carrier negotiation and six common exact-header stage identities/cleanup qualified. MUX per-ACK crypto stamps unavailable; observer/batching/deadline/morphology limits explicit.33/37(89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
+
 ### 32. Metrics, usage, logs and notifications
 
 **Source:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.
@@ -2207,6 +2209,8 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 
+**DONE,14 October:** [Q36 final](../reports/AUDIT-Q36-FINAL.md); five scoped criteria and current shipping control complete; historical checkpoint statuses retained.34/37(91.9%),Q29/Q31/Q34 open.
+
 **Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Q36-F019 completes functional native AUTH across all12 carriers (108 bursts/756 peers), using lto=false/codegen16. Q36-F027 completes current standard release AUTH/rate within finite-burst scope (108 bursts/756 peers,all12,source/profile/SHA/exit0); remaining: precise TCP asymmetry stage/current steady data-plane; .11 cleanup was completed in F024, and long soaks belong to Q35. Q36-F020/F021 reproduce asymmetry on one VM and test paired CPU placement: disjoint affinity did not eliminate it; these diagnostic series use the prior F010 CLI and do not test the current UDP fix. Q36-F022 confirms uplink sensitivity to downlink load: three paired separate iperf flows, downlink100M raises uplink by 2.05–2.14 times without increasing client drop counters; the mechanism remains OPEN. Q36-F023 measures ACK path: 169888 matched headers, delay p50 0.760/15.934ms at downlink100M/unlimited; 15 server-only headers, cause OPEN. Q36-F024 closes old .11 cleanup: original root/owned Cargo outputs archived/removed, services/full host gate PASS. Q36-F025 confirms kernel TUN TX drops in 3/3 unlimited windows with zero application/qdisc drops; exact driver-drop reason and delayed ACK stage remain OPEN, troubleshooting clarified. Q36-F026: queue4000 removes server kernel TX drops but reduces uplink34–49% and increases matched ACK p502.26–3.43 times; one4000 window has186 server application drops. This is not a fix; default1000 preserved, precise stage OPEN. Historical OPEN entries below describe their original checkpoints.
 
 **Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
@@ -2215,11 +2219,11 @@ Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and backgrou
 
 **Existing harness/fixtures:** `scripts/bench_bonding.py` (historical, explicitly guarded).
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
 **10 October, Q36-F001:** the [benchmark runner](../reports/BENCHMARK.md) no
 longer substitutes sender `end.sum` for a missing receiver `sum_received`,

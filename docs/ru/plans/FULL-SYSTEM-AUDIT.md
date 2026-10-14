@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v271 -->
+<!-- normative-sync: full-system-audit-v273 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -18,7 +18,7 @@
 
 **Q34, 14 октября:** гонка Unix helper сервисного ключа исправлена и воспроизведена старым кодом;28 Windows/Linux checks PASS, daemon/self-test используют общий Mac RENAME_EXCL. Apple/current hosted runtime не подтверждён; iOS failures и public source pin остаются открыты. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Текущий итог, 14 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 14 октября: 34/37 разделов завершено в согласованном объёме (91,9%), осталось 3. Q35/Q36/Q37 завершены по пяти критериям; Q29/Q31/Q34 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -188,7 +188,7 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
 | 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | DONE/PASS |
-| 36 | Бенчмарки и методика измерения | H07 | IN_PROGRESS |
+| 36 | Бенчмарки и методика измерения | H07 | DONE |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | DONE |
 
 Таблица сверена с итоговыми статусами разделов21–23,26,28 и открытыми29–31,35–36
@@ -2056,6 +2056,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **14 октября: Q36 sampled server handoffs.** Nine exact-header stages, three reversed same-artifact OFF/ON pairs /12windows, deterministic1/16 subset and actual cleanup qualified. Server TUN/forwarding/stream queue times separated; observer ratios and sampling limitations retained.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
+**14 октября: Q36 recordizer FIFO control.** Three same-diagnostic-artifact policy off/required pairs/12windows; probes ON both, actual one-carrier negotiation and six common exact-header stage identities/cleanup qualified. MUX per-ACK crypto stamps unavailable; observer/batching/deadline/morphology limits explicit.33/37(89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
+
 ### 32. Метрики, usage, логи и уведомления
 
 **Код:** `qeli/src/server/metrics.rs`, `qeli/src/server/usage.rs`, `qeli/src/server/notify.rs`, `qeli/src/server/roaming_metrics.rs`, `qeli/src/trace.rs`, `qeli/src/web/api/logs.rs`.
@@ -2218,6 +2220,8 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 
 ### 36. Бенчмарки и методика измерения
 
+**DONE,14 October:** [Q36 final](../reports/AUDIT-Q36-FINAL.md); five scoped criteria and current shipping control complete; historical checkpoint statuses retained.34/37(91.9%),Q29/Q31/Q34 open.
+
 **Текущее покрытие, 11 октября:** Q36-F012/F015/F016 завершили TCP/UDP bidir P1/P4 для всех 12 транспортов в трёх недефолтных парах внешнего/внутреннего IPv4/IPv6. Каждое условие имеет три независимых повтора, median/spread и исходные файлы; старые успешные ячейки сохранены отдельно. Матрица семейств закрыта в этих условиях. Q36-F017 завершил RTT outer6/inner6 при TCP bidir P1/P4 для всех12 транспортов и direct, по три сессии. Q36-F019 завершил функциональную native AUTH-матрицу всех12 транспортов (108 серий/756 клиентов) с lto=false/codegen16. Q36-F027 закрыл текущий штатный release AUTH/rate в finite-burst scope (108 серий/756 peers, все12, source/profile/SHA/exit0); остаток: точная стадия TCP-асимметрии и steady current data-plane; очистка .11 завершена в F024, длительные soaks относятся к Q35. Q36-F020/F021 подтвердили асимметрию на одной VM и проверили парное закрепление CPU: раздельная affinity её не устранила; это диагностические серии прежнего F010 CLI, не проверка текущего UDP-исправления. Q36-F022 подтвердил зависимость uplink от downlink-нагрузки: три пары отдельных iperf потоков, при downlink100М uplink вырос в 2.05–2.14 раза без прироста счётчиков drops клиента; механизм остаётся OPEN. Q36-F023 измерил ACK path: 169888 matched headers, delay p50 0,760/15,934 мс при downlink100M/unlimited; 15 server-only headers, причина OPEN. Q36-F024 закрыл старую очистку .11: исходный root и принадлежащий ему Cargo output архивированы/удалены, службы/полный host gate PASS. Q36-F025 подтвердил kernel TUN TX drops в 3/3 unlimited окнах при нулевых прикладных/qdisc drops; конкретная причина driver drop и стадия ACK delay OPEN, руководство уточнено. Q36-F026: очередь4000 устранила server kernel TX drops, но uplink снизился на34–49%, matched ACK p50 вырос в2.26–3.43 раза; один4000 прогон имеет186 server application drops. Это не исправление, default1000 сохранён, точная стадия OPEN. Исторические OPEN ниже отражают состояние своих checkpoint.
 
 **Код:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
@@ -2226,11 +2230,11 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 
 **Имеющаяся обвязка/fixtures:** `scripts/bench_bonding.py` (исторический, с явным guard).
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
 **10 октября, Q36-F001:** [benchmark runner](../reports/BENCHMARK.md) больше не
 подставляет `end.sum` отправителя при отсутствии `sum_received` приёмника и
