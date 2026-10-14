@@ -79,3 +79,41 @@ Workload/ACK/trace qualification, actual overlap, SHA/inventory archive и по�
 Source context: [Linux6.12 tun_put_user](https://raw.githubusercontent.com/torvalds/linux/refs/tags/v6.12/drivers/net/tun.c), [skb_copy_datagram_iter](https://raw.githubusercontent.com/torvalds/linux/v6.12/net/core/datagram.c), [stock event fields](https://raw.githubusercontent.com/torvalds/linux/v6.12/include/trace/events/skb.h). Это первичные upstream исходники, не доказательство byte equivalence текущего Debian module.
 
 Evidence: `release/certification/evidence/q36-stock-small-copy-pilot-20261014.json`.
+
+## 14 октября: причинные проверки TCP socket buffers без kernel trace
+
+Execution source 989c99d60554, тот же CLI 6f617bdcab5a, unchanged product tree 8c50631e7c253ab6cacd0056098ecad83f393487. Две отдельные серии по 6sessions/12windows: tcp-plain-raw, legacy one-carrier, uplink unlimited плюс отдельный downlink 100M/unlimited, P1/8сек. Порядок условий и скоростей изменён во втором повторе. Kernel trace/BPF/kprobe/strace отсутствуют; ACK-only tcpdump, process sampler и ss одинаковы в обеих группах. Это не повтор всей 144-window матрицы и не production capacity.
+
+Первая гипотеза: ограничение send buffer может убрать накопление ACK после серверного TUN. Сравнены **явный send=0 (kernel-auto)** и send=16384 при прежнем recv=262144. Внутренний case label `default` означает именно явный0, а не отсутствующий INI ключ: штатное значение Qeli — 262144. Эта серия не подменяет исторический stock-default baseline. Фактический small tb=32768 подтверждён во всех steady snapshots, контрольный tb больше32768. Клиентские INI templates идентичны кроме per-session pin; серверный template отличается ровно одним ключом.
+
+| Повтор | Downlink | Uplink контроль / изменение, Мбит/с | ACK p50 контроль / изменение, мс |
+|---|---|---|---|
+| 1 | 100M | 252.62 / 265.06 | 0.818935 / 1.095095 |
+| 1 | unlimited | 124.35 / 116.68 | 12.078993 / 30.485677 |
+| 2 | 100M | 215.45 / 277.33 | 1.022938 / 0.999153 |
+| 2 | unlimited | 207.75 / 144.98 | 9.931232 / 31.834243 |
+| 3 | 100M | 295.20 / 252.41 | 0.860319 / 1.097533 |
+| 3 | unlimited | 167.54 / 116.96 | 9.976525 / 37.260997 |
+
+При unlimited tiny send ухудшил ACK p50 во всех3парах: 2.524–3.735×, paired median3.205×; uplink ratio0.698–0.938, median0.698. Это отвергает tiny-SO_SNDBUF как универсальный обход в проверенной топологии. Не доказывает отсутствия задержек в kernel send queue: уменьшение буфера может переносить backpressure в userspace. Defaults не меняются.
+
+Вторая гипотеза: штатный фиксированный recv=262144 ограничивает окно приёма/рост TCP receive memory при duplex нагрузке. Сравнены **stock recv=262144** и recv=0; send=262144 явно одинаков в обеих группах. Stock rb=524288 и held tb=524288 подтверждены; auto rb составил 1272344–2838678 байт и превысил fixed capacity в каждом окне. Source parser baseline содержит вложенный tcp object и применяет field defaults; derive Default отдельно не является sparse-INI baseline.
+
+| Повтор | Downlink | Uplink контроль / изменение, Мбит/с | ACK p50 контроль / изменение, мс |
+|---|---|---|---|
+| 1 | 100M | 317.60 / 445.26 | 0.841706 / 0.864485 |
+| 1 | unlimited | 130.02 / 153.65 | 19.583172 / 15.429859 |
+| 2 | 100M | 245.72 / 427.21 | 0.868478 / 0.884169 |
+| 2 | unlimited | 150.18 / 117.20 | 11.769458 / 18.860308 |
+| 3 | 100M | 306.22 / 480.69 | 1.184153 / 0.796215 |
+| 3 | unlimited | 149.19 / 142.70 | 13.145937 / 14.609256 |
+
+При встречных100M auto/fixed uplink вырос во всех3парах: 1.402–1.739×, median1.570×. Steady socket-drop growth fixed/auto по повторам=[(199, 0), (288, 0), (106, 0)]; это изменение skmem.d на наблюдаемом steady участке, не потери всего туннеля/всей фазы. ACK p50 ratio min/median/max=0.672/1.018/1.027. Подтверждено отдельное ограничение uplink фиксированной receive-capacity при этой нагрузке; оно не устранило исходную unlimited ACK-асимметрию.
+
+Для unlimited paired uplink auto/fixed min/median/max=0.780/0.957/1.182; ACK p50 auto/fixed=0.788/1.111/1.602. Все исходные значения, unmatched header counts, клиентские drops и actual socket memory/steady receive-drop growth сохранены в evidence. Результат одного mode/shared2-vCPU стенда не устанавливает каждую внутреннюю стадию, не подтверждает исправление старого CLI и не обосновывает смену defaults во всех клиентах/транспортах.
+
+Ненулевые SO_SNDBUF/SO_RCVBUF закрепляют соответствующий размер, отключая kernel autotuning для данного направления; 0 в серверных INI ключах оставляет socket option нетронутым. Исправлено описание в RU/EN CONFIG, отличающее отсутствие ключа (262144) от явного0 и серверные TCP ключи от клиентских UDP buffer keys. [Linux6.12 tcp_rmem/tcp_wmem](https://www.kernel.org/doc/html/v6.12/networking/ip-sysctl.html) — первичный источник semantics. Кода/артефактов продукта не меняли.
+
+Обе серии прошли workload settings/roles, identical-header PCAP SHA/timestamps/zero capture loss, topology/source, full host/firewall/services/staged preservation и owned root/archive cleanup. Сохранены оба SHA/inventory backup; больших compiler caches нет. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-server-sndbuf-causal-20261014.json`, `release/certification/evidence/q36-server-rcvbuf-causal-20261014.json`.

@@ -3538,6 +3538,11 @@ defaults".
 | `perf.connection.new_session_rate_max` | `10` | max new sessions from one source IP per window |
 | `perf.connection.new_session_rate_window_secs` | `60` | window for `new_session_rate_max` (seconds) |
 
+
+On Linux these server TCP keys request `SO_SNDBUF` and `SO_RCVBUF`. An absent key uses **262144 bytes**. Explicit `0` skips the corresponding socket option, preserving kernel autotuning; a nonzero value disables it for that buffer. OS limits can constrain the grant; Linux includes bookkeeping memory, so readback is usually twice the request. Check `ss -tinmp`, `skmem` fields `tb`/`rb`.
+
+These are server TCP settings. Client `send_buffer_size`/`recv_buffer_size` apply to UDP; client TCP retains OS settings. Smaller buffers can move backpressure and reduce throughput. [Linux6.12 semantics](https://www.kernel.org/doc/html/v6.12/networking/ip-sysctl.html).
+
 ## Routing and other per-profile keys
 
 Server-side routing for the profile (client-side routing keys are in the "Client" section):

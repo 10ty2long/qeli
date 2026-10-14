@@ -78,3 +78,41 @@ Workload/ACK/trace qualification, actual overlap, archive SHA/inventory and comp
 Source context: [Linux6.12 tun_put_user](https://raw.githubusercontent.com/torvalds/linux/refs/tags/v6.12/drivers/net/tun.c), [skb_copy_datagram_iter](https://raw.githubusercontent.com/torvalds/linux/v6.12/net/core/datagram.c), [stock event fields](https://raw.githubusercontent.com/torvalds/linux/v6.12/include/trace/events/skb.h). Primary upstream sources are context, not byte equivalence evidence for the running Debian module.
 
 Evidence: `release/certification/evidence/q36-stock-small-copy-pilot-20261014.json`.
+
+## 14 October: causal TCP socket-buffer tests without kernel tracing
+
+Execution source 989c99d60554, same CLI6f617bdcab5a, unchanged product tree8c50631e7c253ab6cacd0056098ecad83f393487. Two separate six-session/twelve-window series: tcp-plain-raw, legacy one-carrier, unlimited uplink plus separate100M/unlimited downlink, P1/eight seconds. Condition/rate ordering reversed in repeat2. No kernel trace/BPF/kprobe/strace; identical ACK-only tcpdump, process sampler and ss in both conditions. Not a144-window matrix rerun or production-capacity claim.
+
+First hypothesis: reducing server send capacity may prevent ACK accumulation after server TUN. Compared **explicit send=0 (kernel-auto)** with send=16384, receive262144 unchanged. Internal case label `default` means explicit0, not an absent INI key: stock Qeli default is262144. This is not the historical stock-default baseline. All steady snapshots confirm small tb32768 and control tb>32768. Client INI templates match except per-session pin; server templates differ by exactly one key.
+
+| Repeat | Downlink | Uplink control / changed, Mbps | ACK p50 control / changed, ms |
+|---|---|---|---|
+| 1 | 100M | 252.62 / 265.06 | 0.818935 / 1.095095 |
+| 1 | unlimited | 124.35 / 116.68 | 12.078993 / 30.485677 |
+| 2 | 100M | 215.45 / 277.33 | 1.022938 / 0.999153 |
+| 2 | unlimited | 207.75 / 144.98 | 9.931232 / 31.834243 |
+| 3 | 100M | 295.20 / 252.41 | 0.860319 / 1.097533 |
+| 3 | unlimited | 167.54 / 116.96 | 9.976525 / 37.260997 |
+
+Unlimited tiny-send ACK p50 worsened in all three pairs: 2.524–3.735×, paired median3.205×; uplink ratio0.698–0.938, median0.698. Reject tiny SO_SNDBUF as a universal workaround in this topology. This does not eliminate kernel-send-queue latency: restricting a socket can move backpressure to userspace. Defaults unchanged.
+
+Second hypothesis: fixed stock receive262144 limits receive-window/memory growth under duplex load. Compared **stock receive262144** with receive0, explicitly holding send262144 in both conditions. Stock rb524288 and held tb524288 verified; auto rb was1272344–2838678bytes and exceeded fixed capacity in every window. Sparse-INI parser baseline includes an explicit nested tcp object, applying per-field defaults; derived Default alone is not that parser baseline.
+
+| Repeat | Downlink | Uplink control / changed, Mbps | ACK p50 control / changed, ms |
+|---|---|---|---|
+| 1 | 100M | 317.60 / 445.26 | 0.841706 / 0.864485 |
+| 1 | unlimited | 130.02 / 153.65 | 19.583172 / 15.429859 |
+| 2 | 100M | 245.72 / 427.21 | 0.868478 / 0.884169 |
+| 2 | unlimited | 150.18 / 117.20 | 11.769458 / 18.860308 |
+| 3 | 100M | 306.22 / 480.69 | 1.184153 / 0.796215 |
+| 3 | unlimited | 149.19 / 142.70 | 13.145937 / 14.609256 |
+
+With100M downlink, auto/fixed uplink improved in all3pairs: 1.402–1.739×, median1.570×. Steady socket-drop growth fixed/auto by repeat=[(199, 0), (288, 0), (106, 0)]; this is skmem.d growth within sampled steady spans, not whole-tunnel/whole-phase loss. ACK p50 ratio min/median/max=0.672/1.018/1.027. This establishes a separate fixed receive-capacity uplink constraint for this load, without resolving original unlimited ACK asymmetry.
+
+Unlimited paired uplink auto/fixed min/median/max=0.780/0.957/1.182; ACK p50 auto/fixed=0.788/1.111/1.602. Raw metrics, unmatched headers, client drops and actual socket memory/steady receive-drop growth retained. One mode on a shared two-vCPU lab does not identify every internal stage, qualify an old-CLI fix or justify changing defaults across clients/transports.
+
+Nonzero SO_SNDBUF/SO_RCVBUF disables corresponding kernel autotuning; explicit0 leaves the socket option untouched. RU/EN CONFIG now distinguishes absent keys262144 from explicit0 and server TCP keys from client UDP buffer settings. Primary semantics: [Linux6.12 tcp_rmem/tcp_wmem](https://www.kernel.org/doc/html/v6.12/networking/ip-sysctl.html). No product code/artifact changes.
+
+Both series passed workload settings/roles, identical-header PCAP SHA/timestamps/zero capture loss, topology/source, complete host/firewall/services/staged preservation and owned root/archive cleanup. Both SHA/inventory backups retained, no large compiler caches. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-server-sndbuf-causal-20261014.json`, `release/certification/evidence/q36-server-rcvbuf-causal-20261014.json`.
