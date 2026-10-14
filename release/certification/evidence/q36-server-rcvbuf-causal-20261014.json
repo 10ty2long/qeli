@@ -1,0 +1,5843 @@
+{
+  "status": "CURRENT_CLI_THREE_ACTUAL_SERVER_RCVBUF_PAIRS_ACK_HOST_AND_CLEANUP_QUALIFIED",
+  "qualification": {
+    "status": "CURRENT_CLI_THREE_ACTUAL_SERVER_RCVBUF_PAIRS_ACK_HOST_AND_CLEANUP_QUALIFIED",
+    "source_commit": "989c99d6055460fcc06c9ad55b8936f94ea23f89",
+    "cli_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
+    "hypothesis": "The stock fixed 256KiB server receive setting prevents Linux autotuning under concurrent bulk downlink, causing receive-window pressure/socket drops and reducing uplink. Leave only that receive setting at0 while preserving stock send256KiB, and compare exact ACK headers and actual socket memory in three paired sessions.",
+    "sessions": 6,
+    "windows": 12,
+    "one_server_INI_key_changed": true,
+    "client_templates_identical_except_per_session_public_pin": true,
+    "actual_stock_kernel_rcvbuf_bytes": 524288,
+    "actual_held_kernel_sndbuf_bytes": 524288,
+    "results": [
+      {
+        "label": "r1-default-raw",
+        "repeat": 1,
+        "condition": "default",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288.0,
+          "max": 524288,
+          "observations": 24
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 199,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122694704329253,
+            "send_q": 120,
+            "recv_q": 261900,
+            "r": 427020,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1980,
+            "w": 1080,
+            "o": 0,
+            "bl": 0,
+            "d": 29
+          },
+          {
+            "monotonic_ns": 1122694989689431,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 29
+          },
+          {
+            "monotonic_ns": 1122695265832556,
+            "send_q": 0,
+            "recv_q": 41760,
+            "r": 69600,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 32,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 29
+          },
+          {
+            "monotonic_ns": 1122695548801804,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 52
+          },
+          {
+            "monotonic_ns": 1122695817449464,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 52
+          },
+          {
+            "monotonic_ns": 1122696099711922,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 52
+          },
+          {
+            "monotonic_ns": 1122696394083252,
+            "send_q": 5760,
+            "recv_q": 146880,
+            "r": 229440,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 2624,
+            "w": 9600,
+            "o": 0,
+            "bl": 0,
+            "d": 52
+          },
+          {
+            "monotonic_ns": 1122696678651924,
+            "send_q": 0,
+            "recv_q": 116730,
+            "r": 180092,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 132,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 53
+          },
+          {
+            "monotonic_ns": 1122696955612542,
+            "send_q": 0,
+            "recv_q": 18720,
+            "r": 31200,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1568,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 53
+          },
+          {
+            "monotonic_ns": 1122697238018170,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 80
+          },
+          {
+            "monotonic_ns": 1122697508377953,
+            "send_q": 5244,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1476,
+            "w": 59964,
+            "o": 0,
+            "bl": 0,
+            "d": 80
+          },
+          {
+            "monotonic_ns": 1122697790786542,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 84
+          },
+          {
+            "monotonic_ns": 1122698057721097,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 84
+          },
+          {
+            "monotonic_ns": 1122698340211728,
+            "send_q": 116640,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 2208,
+            "w": 194400,
+            "o": 0,
+            "bl": 0,
+            "d": 84
+          },
+          {
+            "monotonic_ns": 1122698620434443,
+            "send_q": 77852,
+            "recv_q": 20160,
+            "r": 21120,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 3876,
+            "w": 130652,
+            "o": 0,
+            "bl": 0,
+            "d": 84
+          },
+          {
+            "monotonic_ns": 1122698906208645,
+            "send_q": 0,
+            "recv_q": 66240,
+            "r": 83040,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2976,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 85
+          },
+          {
+            "monotonic_ns": 1122699196135189,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 94
+          },
+          {
+            "monotonic_ns": 1122699462434238,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 102
+          },
+          {
+            "monotonic_ns": 1122699728391472,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 102
+          },
+          {
+            "monotonic_ns": 1122700014745413,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 127
+          },
+          {
+            "monotonic_ns": 1122700285079126,
+            "send_q": 0,
+            "recv_q": 168480,
+            "r": 265440,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 800,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 128
+          },
+          {
+            "monotonic_ns": 1122700570507766,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 154
+          },
+          {
+            "monotonic_ns": 1122700858864447,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 193
+          },
+          {
+            "monotonic_ns": 1122701127196267,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 228
+          }
+        ],
+        "metrics": {
+          "up_mbps": 317.60046291169397,
+          "up_retransmits": 311,
+          "down_mbps": 99.93595712687934,
+          "down_retransmits": 0
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r1-default-raw",
+          "repeat": 1,
+          "down_rate": 100000000,
+          "flow_peer_port": 35570,
+          "clock_delta_error_seconds": 4.642e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 36430,
+                "received": 36430,
+                "dropped": 0
+              },
+              "bytes": 2487752,
+              "data_ack_packets": 36427,
+              "excluded_control_or_other_port": 3,
+              "sha256": "381d912859d6f2c734e08f76e885fe7529c8150b15a5e5d4643afeb96208c2f6"
+            },
+            "client": {
+              "counts": {
+                "captured": 36430,
+                "received": 36430,
+                "dropped": 0
+              },
+              "bytes": 2487752,
+              "data_ack_packets": 36427,
+              "excluded_control_or_other_port": 3,
+              "sha256": "d88d81fba42e1a42c3462ef51e81668dfdc2cd23c21c3d76db691b11d2740b7d"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 36427,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.841706,
+            "p95": 4.232237,
+            "p99": 7.422319,
+            "max": 19.420315,
+            "min": 0.030131
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 261900
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 116640
+            },
+            "rtt": {
+              "min": 0.013,
+              "median": 0.13,
+              "max": 5.527
+            },
+            "cwnd": {
+              "min": 220,
+              "median": 331.0,
+              "max": 331
+            },
+            "unacked": {
+              "min": 1,
+              "median": 3.5,
+              "max": 82
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 139772
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 614338
+            },
+            "rtt": {
+              "min": 0.011,
+              "median": 0.3065,
+              "max": 5.301
+            },
+            "cwnd": {
+              "min": 90,
+              "median": 139.0,
+              "max": 343
+            },
+            "unacked": {
+              "min": 1,
+              "median": 23,
+              "max": 187
+            },
+            "notsent": {
+              "min": 47612,
+              "median": 541188.0,
+              "max": 604258
+            }
+          }
+        }
+      },
+      {
+        "label": "r1-default-raw",
+        "repeat": 1,
+        "condition": "default",
+        "down_rate": 0,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288,
+          "max": 524288,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122720389959855,
+            "send_q": 0,
+            "recv_q": 28800,
+            "r": 45120,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 4032,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122720684634628,
+            "send_q": 534656,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1472,
+            "w": 543296,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122720978619675,
+            "send_q": 0,
+            "recv_q": 920,
+            "r": 10520,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1768,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122721266247754,
+            "send_q": 5760,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 2688,
+            "w": 9600,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122721546310257,
+            "send_q": 0,
+            "recv_q": 92,
+            "r": 1052,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122721852968733,
+            "send_q": 0,
+            "recv_q": 7292,
+            "r": 29852,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2916,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122722154202638,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122722431049229,
+            "send_q": 0,
+            "recv_q": 5612,
+            "r": 64172,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1364,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122722709878827,
+            "send_q": 0,
+            "recv_q": 101168,
+            "r": 172208,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3920,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122723012018152,
+            "send_q": 191520,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 288,
+            "w": 319200,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122723292580116,
+            "send_q": 254880,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1184,
+            "w": 424800,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122723588292253,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122723886046727,
+            "send_q": 168480,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1824,
+            "w": 280800,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122724164252898,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122724440436135,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122724727108860,
+            "send_q": 1440,
+            "recv_q": 184778,
+            "r": 226060,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 916,
+            "w": 2400,
+            "o": 0,
+            "bl": 140580,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122725024540708,
+            "send_q": 53280,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1312,
+            "w": 88800,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122725305401603,
+            "send_q": 283436,
+            "recv_q": 48960,
+            "r": 81600,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3668,
+            "w": 484076,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122725589698248,
+            "send_q": 0,
+            "recv_q": 179998,
+            "r": 248640,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1216,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122725869905322,
+            "send_q": 0,
+            "recv_q": 69120,
+            "r": 115200,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3584,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122726186314123,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122726485086166,
+            "send_q": 227888,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1616,
+            "w": 383408,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          },
+          {
+            "monotonic_ns": 1122726821466130,
+            "send_q": 277280,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 1632,
+            "w": 498080,
+            "o": 0,
+            "bl": 0,
+            "d": 286
+          }
+        ],
+        "metrics": {
+          "up_mbps": 130.0174395353183,
+          "up_retransmits": 93,
+          "down_mbps": 527.0070289357501,
+          "down_retransmits": 719
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r1-default-raw",
+          "repeat": 1,
+          "down_rate": 0,
+          "flow_peer_port": 45806,
+          "clock_delta_error_seconds": 4.524e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 18623,
+                "received": 18623,
+                "dropped": 0
+              },
+              "bytes": 1268320,
+              "data_ack_packets": 18619,
+              "excluded_control_or_other_port": 4,
+              "sha256": "c7501259062a47c48455e63b0107fc43dd07fa6347935f61f6596d1b522a5fce"
+            },
+            "client": {
+              "counts": {
+                "captured": 18623,
+                "received": 18623,
+                "dropped": 0
+              },
+              "bytes": 1268320,
+              "data_ack_packets": 18619,
+              "excluded_control_or_other_port": 4,
+              "sha256": "cb87f567c6a076513b6a83d04c1d2760895d50db6d8c14dd17ee526d40f566fb"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 18619,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 19.583172,
+            "p95": 40.192718,
+            "p99": 47.351422,
+            "max": 54.498805,
+            "min": 0.029111
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 184778
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 534656
+            },
+            "rtt": {
+              "min": 0.013,
+              "median": 0.041,
+              "max": 5.588
+            },
+            "cwnd": {
+              "min": 102,
+              "median": 332,
+              "max": 332
+            },
+            "unacked": {
+              "min": 1,
+              "median": 77.0,
+              "max": 210
+            },
+            "notsent": {
+              "min": 534656,
+              "median": 534656,
+              "max": 534656
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 848620
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 693740
+            },
+            "rtt": {
+              "min": 0.006,
+              "median": 0.301,
+              "max": 5.411
+            },
+            "cwnd": {
+              "min": 84,
+              "median": 188,
+              "max": 208
+            },
+            "unacked": {
+              "min": 1,
+              "median": 16.5,
+              "max": 141
+            },
+            "notsent": {
+              "min": 512188,
+              "median": 595796.0,
+              "max": 679404
+            }
+          }
+        }
+      },
+      {
+        "label": "r1-auto-raw",
+        "repeat": 1,
+        "condition": "auto",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 2250965,
+          "median": 2250965,
+          "max": 2250965,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122761235238493,
+            "send_q": 0,
+            "recv_q": 90812,
+            "r": 152252,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3396,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122761522495908,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122761800382257,
+            "send_q": 0,
+            "recv_q": 41760,
+            "r": 69600,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 32,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122762091178527,
+            "send_q": 0,
+            "recv_q": 44640,
+            "r": 74400,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3424,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122762378650598,
+            "send_q": 0,
+            "recv_q": 31680,
+            "r": 37440,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3520,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122762674274518,
+            "send_q": 0,
+            "recv_q": 31680,
+            "r": 52800,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 448,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122762954451269,
+            "send_q": 0,
+            "recv_q": 124024,
+            "r": 208504,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 392,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122763238491710,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122763533206264,
+            "send_q": 0,
+            "recv_q": 141120,
+            "r": 219840,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1344,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122763841659838,
+            "send_q": 0,
+            "recv_q": 159932,
+            "r": 252092,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1860,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122764145664438,
+            "send_q": 920,
+            "recv_q": 247680,
+            "r": 314400,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2760,
+            "w": 10520,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122764433500854,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122764721653736,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122764998387215,
+            "send_q": 0,
+            "recv_q": 99360,
+            "r": 151200,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 352,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122765285240886,
+            "send_q": 0,
+            "recv_q": 18720,
+            "r": 20640,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3936,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122765568908948,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122765850860653,
+            "send_q": 0,
+            "recv_q": 2880,
+            "r": 4800,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3392,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122766137148909,
+            "send_q": 0,
+            "recv_q": 93600,
+            "r": 156000,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3744,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122766438245733,
+            "send_q": 0,
+            "recv_q": 92160,
+            "r": 138240,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1024,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122766711850936,
+            "send_q": 408,
+            "recv_q": 106560,
+            "r": 177600,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1256,
+            "w": 1368,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122766989723524,
+            "send_q": 0,
+            "recv_q": 165600,
+            "r": 276000,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2528,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122767270989944,
+            "send_q": 92,
+            "recv_q": 38880,
+            "r": 64320,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 164,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122767558635340,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          }
+        ],
+        "metrics": {
+          "up_mbps": 445.263146808766,
+          "up_retransmits": 120,
+          "down_mbps": 100.032623305115,
+          "down_retransmits": 0
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r1-auto-raw",
+          "repeat": 1,
+          "down_rate": 100000000,
+          "flow_peer_port": 38554,
+          "clock_delta_error_seconds": 4.193e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 52254,
+                "received": 52254,
+                "dropped": 0
+              },
+              "bytes": 3556588,
+              "data_ack_packets": 52250,
+              "excluded_control_or_other_port": 4,
+              "sha256": "db500087604a811aebe5594a672c01cf535e10e0f237bd6ec9789473c0765b39"
+            },
+            "client": {
+              "counts": {
+                "captured": 52254,
+                "received": 52254,
+                "dropped": 0
+              },
+              "bytes": 3556588,
+              "data_ack_packets": 52250,
+              "excluded_control_or_other_port": 4,
+              "sha256": "65744df981c6e46e390aa500e87a3bd478d3574e0051c6d250a0d87c0227fe33"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 52250,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.864485,
+            "p95": 3.971154,
+            "p99": 6.071238,
+            "max": 9.702302,
+            "min": 0.026311
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 297284
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 920
+            },
+            "rtt": {
+              "min": 0.042,
+              "median": 0.26,
+              "max": 2.187
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 205,
+              "max": 215
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1.0,
+              "max": 10
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 149144
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 266400
+            },
+            "rtt": {
+              "min": 0.013,
+              "median": 0.102,
+              "max": 0.583
+            },
+            "cwnd": {
+              "min": 64,
+              "median": 448,
+              "max": 470
+            },
+            "unacked": {
+              "min": 2,
+              "median": 31,
+              "max": 185
+            },
+            "notsent": {
+              "min": 14400,
+              "median": 14400,
+              "max": 14400
+            }
+          }
+        }
+      },
+      {
+        "label": "r1-auto-raw",
+        "repeat": 1,
+        "condition": "auto",
+        "down_rate": 0,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 2250965,
+          "median": 2250965,
+          "max": 2250965,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122787694711268,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122787975417045,
+            "send_q": 212200,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2328,
+            "w": 358120,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122788268359673,
+            "send_q": 83520,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 64,
+            "w": 139200,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122788557589202,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122788854153248,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 1052,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122789139850378,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122789426264098,
+            "send_q": 154204,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2148,
+            "w": 272284,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122789726297915,
+            "send_q": 145440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3360,
+            "w": 242400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122790018258341,
+            "send_q": 137720,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3144,
+            "w": 238520,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122790308158316,
+            "send_q": 146880,
+            "recv_q": 1440,
+            "r": 2400,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2656,
+            "w": 244800,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122790597921075,
+            "send_q": 0,
+            "recv_q": 736,
+            "r": 8416,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3872,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122790887547427,
+            "send_q": 0,
+            "recv_q": 1288,
+            "r": 14728,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1656,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122791181096527,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122791472357034,
+            "send_q": 184320,
+            "recv_q": 90,
+            "r": 1052,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 307200,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122791761683778,
+            "send_q": 274032,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2448,
+            "w": 489072,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122792049276391,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122792337842410,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2336,
+            "w": 165600,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122792629863105,
+            "send_q": 0,
+            "recv_q": 122280,
+            "r": 171240,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 792,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122792935541516,
+            "send_q": 79200,
+            "recv_q": 1932,
+            "r": 22092,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1556,
+            "w": 132000,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122793247487733,
+            "send_q": 0,
+            "recv_q": 85052,
+            "r": 128252,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 2820,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122793535469178,
+            "send_q": 193328,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 1872,
+            "w": 325808,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122793832181925,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1122794122675901,
+            "send_q": 0,
+            "recv_q": 181936,
+            "r": 348976,
+            "rb": 2250965,
+            "t": 0,
+            "tb": 524288,
+            "f": 3280,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          }
+        ],
+        "metrics": {
+          "up_mbps": 153.65459563368836,
+          "up_retransmits": 268,
+          "down_mbps": 543.759419771807,
+          "down_retransmits": 834
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r1-auto-raw",
+          "repeat": 1,
+          "down_rate": 0,
+          "flow_peer_port": 33166,
+          "clock_delta_error_seconds": 4.917e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 21474,
+                "received": 21474,
+                "dropped": 0
+              },
+              "bytes": 1464696,
+              "data_ack_packets": 21470,
+              "excluded_control_or_other_port": 4,
+              "sha256": "219338b615cc4229f5e4471a7ac59e78159fc888746e379ea9d6405bead86557"
+            },
+            "client": {
+              "counts": {
+                "captured": 21474,
+                "received": 21474,
+                "dropped": 0
+              },
+              "bytes": 1464696,
+              "data_ack_packets": 21470,
+              "excluded_control_or_other_port": 4,
+              "sha256": "aaea46f110f3fb01e6277753a9a975eaa9e3f64dbbdb909486aa1288705ccf70"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 21470,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 15.429859,
+            "p95": 29.310591,
+            "p99": 35.772968,
+            "max": 44.508163,
+            "min": 0.027135
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 181936
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 274032
+            },
+            "rtt": {
+              "min": 0.011,
+              "median": 0.228,
+              "max": 5.542
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 270,
+              "max": 270
+            },
+            "unacked": {
+              "min": 1,
+              "median": 102,
+              "max": 224
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 428512
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 89464
+            },
+            "rtt": {
+              "min": 0.006,
+              "median": 0.092,
+              "max": 5.616
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 377,
+              "max": 377
+            },
+            "unacked": {
+              "min": 1,
+              "median": 16.0,
+              "max": 64
+            }
+          }
+        }
+      },
+      {
+        "label": "r2-auto-raw",
+        "repeat": 2,
+        "condition": "auto",
+        "down_rate": 0,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 2838678,
+          "median": 2838678.0,
+          "max": 2838678,
+          "observations": 22
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122828678335393,
+            "send_q": 0,
+            "recv_q": 90812,
+            "r": 152252,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 3396,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122828979539971,
+            "send_q": 249120,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2592,
+            "w": 415200,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122829276629189,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122829573992191,
+            "send_q": 0,
+            "recv_q": 1012,
+            "r": 11572,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 716,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122829860063854,
+            "send_q": 123840,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2496,
+            "w": 206400,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122830180441249,
+            "send_q": 102332,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 580,
+            "w": 171452,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122830474741263,
+            "send_q": 5760,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2688,
+            "w": 9600,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122830759635987,
+            "send_q": 126720,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 1792,
+            "w": 211200,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122831033463528,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122831324733877,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122831617312790,
+            "send_q": 231840,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2720,
+            "w": 386400,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122831908119881,
+            "send_q": 161280,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 1536,
+            "w": 268800,
+            "o": 0,
+            "bl": 960,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122832189305713,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122832487625490,
+            "send_q": 315360,
+            "recv_q": 26016,
+            "r": 57696,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2432,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122832777529465,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122833077924179,
+            "send_q": 23040,
+            "recv_q": 1012,
+            "r": 11572,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 3276,
+            "w": 38400,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122833365002271,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122833642576411,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122833933745985,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122834215822190,
+            "send_q": 0,
+            "recv_q": 10172,
+            "r": 17852,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2628,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122834512297806,
+            "send_q": 72000,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2880,
+            "w": 120000,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122834798050153,
+            "send_q": 0,
+            "recv_q": 70500,
+            "r": 130980,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 92,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          }
+        ],
+        "metrics": {
+          "up_mbps": 117.19638943284336,
+          "up_retransmits": 209,
+          "down_mbps": 543.1460220283235,
+          "down_retransmits": 753
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r2-auto-raw",
+          "repeat": 2,
+          "down_rate": 0,
+          "flow_peer_port": 46544,
+          "clock_delta_error_seconds": 5.915e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 16464,
+                "received": 16464,
+                "dropped": 0
+              },
+              "bytes": 1123936,
+              "data_ack_packets": 16460,
+              "excluded_control_or_other_port": 4,
+              "sha256": "de26bbb302230e33248bc906970ebadb82b7d3bb83c78ffcf578fa8670e6e266"
+            },
+            "client": {
+              "counts": {
+                "captured": 16463,
+                "received": 16463,
+                "dropped": 0
+              },
+              "bytes": 1123868,
+              "data_ack_packets": 16459,
+              "excluded_control_or_other_port": 4,
+              "sha256": "dda22fd0f2b315502d4d1e2ce566333c9240d8a3e98eb3d9453f95fd59fac12c"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 16459,
+          "unmatched_source": 1,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 18.860308,
+            "p95": 34.591406,
+            "p99": 47.923361,
+            "max": 57.434937,
+            "min": 0.032937
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 94244
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 315360
+            },
+            "rtt": {
+              "min": 0.011,
+              "median": 0.142,
+              "max": 0.76
+            },
+            "cwnd": {
+              "min": 31,
+              "median": 257,
+              "max": 257
+            },
+            "unacked": {
+              "min": 1,
+              "median": 61.0,
+              "max": 219
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 940322
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 44640
+            },
+            "rtt": {
+              "min": 0.007,
+              "median": 0.272,
+              "max": 5.468
+            },
+            "cwnd": {
+              "min": 163,
+              "median": 278,
+              "max": 278
+            },
+            "unacked": {
+              "min": 4,
+              "median": 5,
+              "max": 34
+            }
+          }
+        }
+      },
+      {
+        "label": "r2-auto-raw",
+        "repeat": 2,
+        "condition": "auto",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 2838678,
+          "median": 2838678,
+          "max": 2838678,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122853583258887,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122853856722552,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122854147584326,
+            "send_q": 17128,
+            "recv_q": 388798,
+            "r": 648000,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 3096,
+            "w": 41128,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122854436977672,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122854720577062,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122855002524960,
+            "send_q": 121052,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2148,
+            "w": 202652,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122855280687965,
+            "send_q": 0,
+            "recv_q": 44640,
+            "r": 59040,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2400,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122855564318898,
+            "send_q": 43200,
+            "recv_q": 171360,
+            "r": 216480,
+            "rb": 2838678,
+            "t": 2400,
+            "tb": 524288,
+            "f": 2336,
+            "w": 72000,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122855853529824,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122856152393877,
+            "send_q": 109440,
+            "recv_q": 92160,
+            "r": 153600,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 3968,
+            "w": 182400,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122856439862949,
+            "send_q": 0,
+            "recv_q": 54812,
+            "r": 76892,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 932,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122856729743387,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122857027378641,
+            "send_q": 0,
+            "recv_q": 97920,
+            "r": 141120,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2240,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122857337663447,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122857637895003,
+            "send_q": 125280,
+            "recv_q": 187198,
+            "r": 223680,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 208800,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122857921591962,
+            "send_q": 63360,
+            "recv_q": 1440,
+            "r": 2400,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2592,
+            "w": 105600,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122858224562567,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122858515500418,
+            "send_q": 0,
+            "recv_q": 195352,
+            "r": 251032,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 2920,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122858820246369,
+            "send_q": 1840,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 1052,
+            "tb": 524288,
+            "f": 3536,
+            "w": 21040,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122859109605907,
+            "send_q": 47520,
+            "recv_q": 119612,
+            "r": 200252,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 3172,
+            "w": 79200,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122859390849611,
+            "send_q": 0,
+            "recv_q": 14400,
+            "r": 16320,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 4160,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122859672499533,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          },
+          {
+            "monotonic_ns": 1122859961337156,
+            "send_q": 0,
+            "recv_q": 7200,
+            "r": 12000,
+            "rb": 2838678,
+            "t": 0,
+            "tb": 524288,
+            "f": 288,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 1
+          }
+        ],
+        "metrics": {
+          "up_mbps": 427.20615388378064,
+          "up_retransmits": 77,
+          "down_mbps": 100.038681707083,
+          "down_retransmits": 0
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r2-auto-raw",
+          "repeat": 2,
+          "down_rate": 100000000,
+          "flow_peer_port": 37066,
+          "clock_delta_error_seconds": 6.341e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 48439,
+                "received": 48439,
+                "dropped": 0
+              },
+              "bytes": 3297868,
+              "data_ack_packets": 48434,
+              "excluded_control_or_other_port": 5,
+              "sha256": "265367825c1bd39e801c29150c827441440f2898694994985df06c76579436bb"
+            },
+            "client": {
+              "counts": {
+                "captured": 48439,
+                "received": 48439,
+                "dropped": 0
+              },
+              "bytes": 3297868,
+              "data_ack_packets": 48434,
+              "excluded_control_or_other_port": 5,
+              "sha256": "797286d6f0c624f8b7a9bd11e3f191fa95d2d32dbfd73c05e878dc1b6b2124f7"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 48434,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.884169,
+            "p95": 4.333574,
+            "p99": 6.523349,
+            "max": 14.864875,
+            "min": 0.024458
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 388798
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 125280
+            },
+            "rtt": {
+              "min": 0.028,
+              "median": 0.06,
+              "max": 0.737
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 212,
+              "max": 212
+            },
+            "unacked": {
+              "min": 1,
+              "median": 29.0,
+              "max": 87
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 142070
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 158708
+            },
+            "rtt": {
+              "min": 0.011,
+              "median": 0.385,
+              "max": 5.603
+            },
+            "cwnd": {
+              "min": 105,
+              "median": 486,
+              "max": 486
+            },
+            "unacked": {
+              "min": 1,
+              "median": 15,
+              "max": 128
+            }
+          }
+        }
+      },
+      {
+        "label": "r2-default-raw",
+        "repeat": 2,
+        "condition": "default",
+        "down_rate": 0,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288,
+          "max": 524288,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 1,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122896694455068,
+            "send_q": 315360,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2784,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122897009622909,
+            "send_q": 101104,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2768,
+            "w": 169264,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122897284422214,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122897584334099,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122897862418297,
+            "send_q": 0,
+            "recv_q": 185792,
+            "r": 257792,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 256,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122898148970820,
+            "send_q": 139680,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 672,
+            "w": 232800,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122898445160194,
+            "send_q": 89372,
+            "recv_q": 13522,
+            "r": 153684,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3664,
+            "w": 149852,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122898725522600,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122899019389514,
+            "send_q": 0,
+            "recv_q": 64740,
+            "r": 107072,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3520,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122899307061683,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122899598120262,
+            "send_q": 152640,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3648,
+            "w": 254400,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122899886916087,
+            "send_q": 123840,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2496,
+            "w": 206400,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122900165415169,
+            "send_q": 197280,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2976,
+            "w": 328800,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122900450161873,
+            "send_q": 0,
+            "recv_q": 368,
+            "r": 4208,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3984,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122900741263662,
+            "send_q": 25920,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1856,
+            "w": 43200,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122901036668212,
+            "send_q": 23040,
+            "recv_q": 2024,
+            "r": 23144,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3992,
+            "w": 38400,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122901329918037,
+            "send_q": 252000,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1888,
+            "w": 420000,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122901609624322,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122901904854105,
+            "send_q": 216000,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 448,
+            "w": 360000,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122902206674061,
+            "send_q": 20160,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3264,
+            "w": 33600,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122902484614081,
+            "send_q": 2880,
+            "recv_q": 78680,
+            "r": 140120,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2536,
+            "w": 4800,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122902762678864,
+            "send_q": 0,
+            "recv_q": 93600,
+            "r": 140640,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2720,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 39
+          },
+          {
+            "monotonic_ns": 1122903053927574,
+            "send_q": 68324,
+            "recv_q": 184,
+            "r": 2104,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 612,
+            "w": 120164,
+            "o": 0,
+            "bl": 0,
+            "d": 40
+          }
+        ],
+        "metrics": {
+          "up_mbps": 150.17887383263985,
+          "up_retransmits": 172,
+          "down_mbps": 527.621657193539,
+          "down_retransmits": 1313
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r2-default-raw",
+          "repeat": 2,
+          "down_rate": 0,
+          "flow_peer_port": 36258,
+          "clock_delta_error_seconds": 4.443e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 18648,
+                "received": 18648,
+                "dropped": 0
+              },
+              "bytes": 1272460,
+              "data_ack_packets": 18644,
+              "excluded_control_or_other_port": 4,
+              "sha256": "574da879f01479641f8a72cd324df74c7967f88d18902950f3374e0ba5b100b2"
+            },
+            "client": {
+              "counts": {
+                "captured": 18647,
+                "received": 18647,
+                "dropped": 0
+              },
+              "bytes": 1272392,
+              "data_ack_packets": 18643,
+              "excluded_control_or_other_port": 4,
+              "sha256": "13df4dc25e9fd010ec457618dd2bc77686528f99dde05f1731077ecf699da607"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 18643,
+          "unmatched_source": 1,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 11.769458,
+            "p95": 26.199925,
+            "p99": 32.830678,
+            "max": 50.902149,
+            "min": 0.033275
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 185792
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 315360
+            },
+            "rtt": {
+              "min": 0.016,
+              "median": 0.166,
+              "max": 6.017
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 270,
+              "max": 270
+            },
+            "unacked": {
+              "min": 3,
+              "median": 87.0,
+              "max": 219
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 660688
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 664924
+            },
+            "rtt": {
+              "min": 0.018,
+              "median": 0.296,
+              "max": 5.627
+            },
+            "cwnd": {
+              "min": 42,
+              "median": 192,
+              "max": 275
+            },
+            "unacked": {
+              "min": 1,
+              "median": 4.0,
+              "max": 64
+            },
+            "notsent": {
+              "min": 569988,
+              "median": 594288.0,
+              "max": 618588
+            }
+          }
+        }
+      },
+      {
+        "label": "r2-default-raw",
+        "repeat": 2,
+        "condition": "default",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288.0,
+          "max": 524288,
+          "observations": 24
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 288,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122925845688058,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 65
+          },
+          {
+            "monotonic_ns": 1122926146954104,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 73
+          },
+          {
+            "monotonic_ns": 1122926413655199,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 89
+          },
+          {
+            "monotonic_ns": 1122926679898571,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 126
+          },
+          {
+            "monotonic_ns": 1122926946010047,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 143
+          },
+          {
+            "monotonic_ns": 1122927213023312,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 143
+          },
+          {
+            "monotonic_ns": 1122927497941932,
+            "send_q": 0,
+            "recv_q": 10080,
+            "r": 16800,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3680,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 143
+          },
+          {
+            "monotonic_ns": 1122927779261728,
+            "send_q": 89280,
+            "recv_q": 1440,
+            "r": 2400,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 352,
+            "w": 148800,
+            "o": 0,
+            "bl": 0,
+            "d": 143
+          },
+          {
+            "monotonic_ns": 1122928074024997,
+            "send_q": 92,
+            "recv_q": 92160,
+            "r": 153600,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 996,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 144
+          },
+          {
+            "monotonic_ns": 1122928354417490,
+            "send_q": 0,
+            "recv_q": 77760,
+            "r": 132000,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3168,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 144
+          },
+          {
+            "monotonic_ns": 1122928632414299,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 176
+          },
+          {
+            "monotonic_ns": 1122928900369480,
+            "send_q": 0,
+            "recv_q": 1440,
+            "r": 2400,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 176
+          },
+          {
+            "monotonic_ns": 1122929175911941,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 176
+          },
+          {
+            "monotonic_ns": 1122929470778671,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 188
+          },
+          {
+            "monotonic_ns": 1122929737244643,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 222
+          },
+          {
+            "monotonic_ns": 1122930003504973,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 229
+          },
+          {
+            "monotonic_ns": 1122930273238417,
+            "send_q": 0,
+            "recv_q": 736,
+            "r": 8416,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3872,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 229
+          },
+          {
+            "monotonic_ns": 1122930551804699,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 242
+          },
+          {
+            "monotonic_ns": 1122930818000667,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 261
+          },
+          {
+            "monotonic_ns": 1122931085038310,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 301
+          },
+          {
+            "monotonic_ns": 1122931351296154,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 332
+          },
+          {
+            "monotonic_ns": 1122931618800983,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 346
+          },
+          {
+            "monotonic_ns": 1122931885826870,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 346
+          },
+          {
+            "monotonic_ns": 1122932170762118,
+            "send_q": 0,
+            "recv_q": 92,
+            "r": 1052,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 353
+          }
+        ],
+        "metrics": {
+          "up_mbps": 245.72125831918817,
+          "up_retransmits": 155,
+          "down_mbps": 99.2727359021507,
+          "down_retransmits": 50
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r2-default-raw",
+          "repeat": 2,
+          "down_rate": 100000000,
+          "flow_peer_port": 40702,
+          "clock_delta_error_seconds": 4.91e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 27608,
+                "received": 27608,
+                "dropped": 0
+              },
+              "bytes": 1881092,
+              "data_ack_packets": 27605,
+              "excluded_control_or_other_port": 3,
+              "sha256": "c29cb5dad0c7057ab81405406995ff98aed3009ec095108c43d4d4076ca7479d"
+            },
+            "client": {
+              "counts": {
+                "captured": 27607,
+                "received": 27607,
+                "dropped": 0
+              },
+              "bytes": 1881024,
+              "data_ack_packets": 27604,
+              "excluded_control_or_other_port": 3,
+              "sha256": "a2b64dd07b4275f6e5bcaf37082223d07f48a19995e4c894842a7ab09da74219"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 27604,
+          "unmatched_source": 1,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.868478,
+            "p95": 6.311908,
+            "p99": 18.462577,
+            "max": 36.8607,
+            "min": 0.024914
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 299500
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 181044
+            },
+            "rtt": {
+              "min": 0.02,
+              "median": 0.115,
+              "max": 6.251
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 248.0,
+              "max": 254
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1.0,
+              "max": 152
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 140180
+            },
+            "send_q": {
+              "min": 0,
+              "median": 1440.0,
+              "max": 821252
+            },
+            "rtt": {
+              "min": 0.007,
+              "median": 0.116,
+              "max": 0.471
+            },
+            "cwnd": {
+              "min": 83,
+              "median": 114.0,
+              "max": 281
+            },
+            "unacked": {
+              "min": 1,
+              "median": 31.0,
+              "max": 102
+            },
+            "notsent": {
+              "min": 479620,
+              "median": 595032,
+              "max": 803844
+            }
+          }
+        }
+      },
+      {
+        "label": "r3-default-raw",
+        "repeat": 3,
+        "condition": "default",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288.0,
+          "max": 524288,
+          "observations": 24
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 106,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122968280939301,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 54
+          },
+          {
+            "monotonic_ns": 1122968555292495,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 54
+          },
+          {
+            "monotonic_ns": 1122968831791857,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 61
+          },
+          {
+            "monotonic_ns": 1122969106612800,
+            "send_q": 0,
+            "recv_q": 155612,
+            "r": 260252,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1892,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 65
+          },
+          {
+            "monotonic_ns": 1122969385144450,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 86
+          },
+          {
+            "monotonic_ns": 1122969657650278,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122969937561065,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122970225869838,
+            "send_q": 111472,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 144,
+            "w": 188272,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122970533054654,
+            "send_q": 0,
+            "recv_q": 92160,
+            "r": 153600,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2048,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122970813239162,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122971109395191,
+            "send_q": 0,
+            "recv_q": 17280,
+            "r": 19200,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1280,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122971404918026,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 87
+          },
+          {
+            "monotonic_ns": 1122971706233139,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 117
+          },
+          {
+            "monotonic_ns": 1122971980468508,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 117
+          },
+          {
+            "monotonic_ns": 1122972271249413,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 142
+          },
+          {
+            "monotonic_ns": 1122972539482393,
+            "send_q": 0,
+            "recv_q": 149760,
+            "r": 234240,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3328,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 142
+          },
+          {
+            "monotonic_ns": 1122972833703739,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 144
+          },
+          {
+            "monotonic_ns": 1122973120871688,
+            "send_q": 59076,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1340,
+            "w": 105156,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122973415756107,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122973704214194,
+            "send_q": 0,
+            "recv_q": 112320,
+            "r": 171840,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 192,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122973989226353,
+            "send_q": 0,
+            "recv_q": 90812,
+            "r": 152252,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3396,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122974268918815,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122974551102846,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 150
+          },
+          {
+            "monotonic_ns": 1122974834484936,
+            "send_q": 97920,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 640,
+            "w": 163200,
+            "o": 0,
+            "bl": 0,
+            "d": 160
+          }
+        ],
+        "metrics": {
+          "up_mbps": 306.2195008630322,
+          "up_retransmits": 272,
+          "down_mbps": 99.93533298058959,
+          "down_retransmits": 0
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r3-default-raw",
+          "repeat": 3,
+          "down_rate": 100000000,
+          "flow_peer_port": 49094,
+          "clock_delta_error_seconds": 5.073e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 36845,
+                "received": 36845,
+                "dropped": 0
+              },
+              "bytes": 2511628,
+              "data_ack_packets": 36842,
+              "excluded_control_or_other_port": 3,
+              "sha256": "866a8125122b26abac664b5b1073629b4b189983b348eab8695665954084f583"
+            },
+            "client": {
+              "counts": {
+                "captured": 36845,
+                "received": 36845,
+                "dropped": 0
+              },
+              "bytes": 2511628,
+              "data_ack_packets": 36842,
+              "excluded_control_or_other_port": 3,
+              "sha256": "90c4105add4869f0eb824acc51a1b9b85feb472fab4ac172336721bc984f8f5a"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 36842,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 1.184153,
+            "p95": 6.040388,
+            "p99": 11.158203,
+            "max": 26.625884,
+            "min": 0.026058
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 162200
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 111472
+            },
+            "rtt": {
+              "min": 0.022,
+              "median": 0.076,
+              "max": 6.126
+            },
+            "cwnd": {
+              "min": 16,
+              "median": 217,
+              "max": 228
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1,
+              "max": 80
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 47,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0,
+              "max": 221792
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0,
+              "max": 737452
+            },
+            "rtt": {
+              "min": 0.012,
+              "median": 0.091,
+              "max": 0.538
+            },
+            "cwnd": {
+              "min": 35,
+              "median": 133,
+              "max": 277
+            },
+            "unacked": {
+              "min": 1,
+              "median": 21,
+              "max": 30
+            },
+            "notsent": {
+              "min": 490716,
+              "median": 558208,
+              "max": 697140
+            }
+          }
+        }
+      },
+      {
+        "label": "r3-default-raw",
+        "repeat": 3,
+        "condition": "default",
+        "down_rate": 0,
+        "requested_rcvbuf": 262144,
+        "actual_receive_capacity": {
+          "min": 524288,
+          "median": 524288,
+          "max": 524288,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1122993882353533,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122994192622619,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122994479275462,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122994774669574,
+            "send_q": 60480,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1600,
+            "w": 100800,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122995077504919,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122995364030237,
+            "send_q": 0,
+            "recv_q": 184,
+            "r": 2104,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1992,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122995684035774,
+            "send_q": 36000,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1440,
+            "w": 60000,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122995994383266,
+            "send_q": 0,
+            "recv_q": 92,
+            "r": 1052,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122996302601665,
+            "send_q": 0,
+            "recv_q": 184,
+            "r": 2104,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1992,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122996593881079,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122996877530591,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122997174762497,
+            "send_q": 57600,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2304,
+            "w": 96000,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122997464035982,
+            "send_q": 80488,
+            "recv_q": 59132,
+            "r": 84092,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2652,
+            "w": 146728,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122997750181174,
+            "send_q": 185644,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2324,
+            "w": 378604,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122998032747137,
+            "send_q": 135360,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3776,
+            "w": 225600,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122998316204480,
+            "send_q": 0,
+            "recv_q": 14584,
+            "r": 16504,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3976,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122998613971073,
+            "send_q": 0,
+            "recv_q": 46540,
+            "r": 67660,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1972,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122998912541190,
+            "send_q": 302400,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3904,
+            "w": 504000,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122999195071628,
+            "send_q": 315360,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 2784,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122999497906813,
+            "send_q": 119520,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 2400,
+            "tb": 524288,
+            "f": 1504,
+            "w": 199200,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1122999776019199,
+            "send_q": 168480,
+            "recv_q": 18720,
+            "r": 20640,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 1664,
+            "w": 280800,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1123000060452714,
+            "send_q": 312848,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 3376,
+            "w": 525008,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          },
+          {
+            "monotonic_ns": 1123000351440602,
+            "send_q": 0,
+            "recv_q": 174240,
+            "r": 290400,
+            "rb": 524288,
+            "t": 0,
+            "tb": 524288,
+            "f": 416,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 190
+          }
+        ],
+        "metrics": {
+          "up_mbps": 149.18666344508364,
+          "up_retransmits": 395,
+          "down_mbps": 506.9498818689104,
+          "down_retransmits": 160
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "default",
+          "label": "r3-default-raw",
+          "repeat": 3,
+          "down_rate": 0,
+          "flow_peer_port": 37972,
+          "clock_delta_error_seconds": 8.451e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 20303,
+                "received": 20303,
+                "dropped": 0
+              },
+              "bytes": 1387536,
+              "data_ack_packets": 20299,
+              "excluded_control_or_other_port": 4,
+              "sha256": "65c8eee2bae3a49f9eae5482630b353ef0b95852e32aa93e63652fb508d33ffe"
+            },
+            "client": {
+              "counts": {
+                "captured": 20253,
+                "received": 20253,
+                "dropped": 0
+              },
+              "bytes": 1384136,
+              "data_ack_packets": 20249,
+              "excluded_control_or_other_port": 4,
+              "sha256": "0066a862cc1cbc220e2d461bbd58a28765ebab677f6bf9f4a052fe2f06ba8099"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 20249,
+          "unmatched_source": 50,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 13.145937,
+            "p95": 34.493033,
+            "p99": 40.446427,
+            "max": 55.312887,
+            "min": 0.026057
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 174240
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 315360
+            },
+            "rtt": {
+              "min": 0.01,
+              "median": 0.022,
+              "max": 0.762
+            },
+            "cwnd": {
+              "min": 182,
+              "median": 282.0,
+              "max": 282
+            },
+            "unacked": {
+              "min": 1,
+              "median": 76.5,
+              "max": 221
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 1303936
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 93600
+            },
+            "rtt": {
+              "min": 0.01,
+              "median": 0.2685,
+              "max": 5.211
+            },
+            "cwnd": {
+              "min": 133,
+              "median": 220.0,
+              "max": 231
+            },
+            "unacked": {
+              "min": 1,
+              "median": 61,
+              "max": 65
+            }
+          }
+        }
+      },
+      {
+        "label": "r3-auto-raw",
+        "repeat": 3,
+        "condition": "auto",
+        "down_rate": 100000000,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 1272344,
+          "median": 1272344,
+          "max": 1272344,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1123034973416041,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123035261434459,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123035544014007,
+            "send_q": 184,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1992,
+            "w": 2104,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123035821732786,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123036101929179,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123036382617631,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123036661716076,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123036937868626,
+            "send_q": 0,
+            "recv_q": 24480,
+            "r": 40800,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 160,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123037217947606,
+            "send_q": 0,
+            "recv_q": 123840,
+            "r": 191040,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1472,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123037498625758,
+            "send_q": 0,
+            "recv_q": 60480,
+            "r": 85440,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 4672,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123037773510326,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123038050524135,
+            "send_q": 92,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3044,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123038336176534,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123038618138561,
+            "send_q": 0,
+            "recv_q": 1440,
+            "r": 2400,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123038894814335,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123039182287837,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123039469736370,
+            "send_q": 0,
+            "recv_q": 100798,
+            "r": 127292,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3780,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123039756732636,
+            "send_q": 0,
+            "recv_q": 82172,
+            "r": 137852,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1412,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123040040340390,
+            "send_q": 0,
+            "recv_q": 79200,
+            "r": 116640,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2144,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123040332296891,
+            "send_q": 92,
+            "recv_q": 198812,
+            "r": 332252,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2568,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123040615879488,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123040890402190,
+            "send_q": 0,
+            "recv_q": 20158,
+            "r": 37920,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3040,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123041180381895,
+            "send_q": 92,
+            "recv_q": 56158,
+            "r": 83040,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1924,
+            "w": 1052,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          }
+        ],
+        "metrics": {
+          "up_mbps": 480.694345062725,
+          "up_retransmits": 112,
+          "down_mbps": 100.06294765191609,
+          "down_retransmits": 0
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r3-auto-raw",
+          "repeat": 3,
+          "down_rate": 100000000,
+          "flow_peer_port": 46578,
+          "clock_delta_error_seconds": 4.279e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 56884,
+                "received": 56884,
+                "dropped": 0
+              },
+              "bytes": 3871756,
+              "data_ack_packets": 56880,
+              "excluded_control_or_other_port": 4,
+              "sha256": "dcbce3eb65869150b89e3c99c9f47ddb19d18a6e5e773408259caa447409086d"
+            },
+            "client": {
+              "counts": {
+                "captured": 56884,
+                "received": 56884,
+                "dropped": 0
+              },
+              "bytes": 3871756,
+              "data_ack_packets": 56880,
+              "excluded_control_or_other_port": 4,
+              "sha256": "fdc343a2ebc6eb28bc1f53664f754e07576dd3df757db5c9912753a78d05914a"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 56880,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.796215,
+            "p95": 3.680596,
+            "p99": 5.602616,
+            "max": 12.12079,
+            "min": 0.023972
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 212204
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 96572
+            },
+            "rtt": {
+              "min": 0.01,
+              "median": 0.094,
+              "max": 5.787
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 168.0,
+              "max": 177
+            },
+            "unacked": {
+              "min": 1,
+              "median": 1.0,
+              "max": 68
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 48,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 140088
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 182972
+            },
+            "rtt": {
+              "min": 0.022,
+              "median": 0.095,
+              "max": 1.354
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 493.0,
+              "max": 493
+            },
+            "unacked": {
+              "min": 1,
+              "median": 22,
+              "max": 128
+            }
+          }
+        }
+      },
+      {
+        "label": "r3-auto-raw",
+        "repeat": 3,
+        "condition": "auto",
+        "down_rate": 0,
+        "requested_rcvbuf": 0,
+        "actual_receive_capacity": {
+          "min": 1272344,
+          "median": 1272344,
+          "max": 1272344,
+          "observations": 23
+        },
+        "actual_send_capacity": [
+          524288
+        ],
+        "steady_receive_socket_drop_growth": 0,
+        "steady_socket_samples": [
+          {
+            "monotonic_ns": 1123061563750409,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123061862116308,
+            "send_q": 64800,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2592,
+            "w": 108000,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123062173075558,
+            "send_q": 2880,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3392,
+            "w": 4800,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123062455549930,
+            "send_q": 15840,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2272,
+            "w": 26400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123062750464750,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123063047237552,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123063341052482,
+            "send_q": 193728,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 932,
+            "w": 322652,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123063618112820,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123063905397630,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123064193448483,
+            "send_q": 31680,
+            "recv_q": 61156,
+            "r": 122596,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 732,
+            "w": 52800,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123064507747438,
+            "send_q": 314104,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3080,
+            "w": 525304,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123064789393388,
+            "send_q": 0,
+            "recv_q": 184320,
+            "r": 307200,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123065087018396,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123065361314888,
+            "send_q": 181440,
+            "recv_q": 27360,
+            "r": 30240,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3232,
+            "w": 302400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123065646391178,
+            "send_q": 206104,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2856,
+            "w": 345304,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123065948563448,
+            "send_q": 315360,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2784,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123066241024841,
+            "send_q": 1440,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1696,
+            "w": 2400,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123066531239752,
+            "send_q": 0,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 0,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123066832193005,
+            "send_q": 315360,
+            "recv_q": 0,
+            "r": 0,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 2784,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123067148021370,
+            "send_q": 162720,
+            "recv_q": 126720,
+            "r": 143040,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3552,
+            "w": 271200,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123067446829119,
+            "send_q": 0,
+            "recv_q": 123840,
+            "r": 191040,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1472,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123067737969070,
+            "send_q": 0,
+            "recv_q": 267412,
+            "r": 455572,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 3180,
+            "w": 0,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          },
+          {
+            "monotonic_ns": 1123068036867611,
+            "send_q": 315360,
+            "recv_q": 21202,
+            "r": 30120,
+            "rb": 1272344,
+            "t": 0,
+            "tb": 524288,
+            "f": 1336,
+            "w": 525600,
+            "o": 0,
+            "bl": 0,
+            "d": 0
+          }
+        ],
+        "metrics": {
+          "up_mbps": 142.69867185040343,
+          "up_retransmits": 122,
+          "down_mbps": 534.366772906585,
+          "down_retransmits": 629
+        },
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        },
+        "ACK": {
+          "condition": "auto",
+          "label": "r3-auto-raw",
+          "repeat": 3,
+          "down_rate": 0,
+          "flow_peer_port": 34680,
+          "clock_delta_error_seconds": 5.333e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 20181,
+                "received": 20181,
+                "dropped": 0
+              },
+              "bytes": 1374580,
+              "data_ack_packets": 20178,
+              "excluded_control_or_other_port": 3,
+              "sha256": "c88d1b879833ce3c05383a7fbdf54ed55675869cfcbdc5447327361e3cd404fc"
+            },
+            "client": {
+              "counts": {
+                "captured": 20181,
+                "received": 20181,
+                "dropped": 0
+              },
+              "bytes": 1374580,
+              "data_ack_packets": 20178,
+              "excluded_control_or_other_port": 3,
+              "sha256": "6e8312ff5fa417aef0062a84a8516554ee2ef9b3817048e7469de8a422c48447"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 20178,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 14.609256,
+            "p95": 27.107951,
+            "p99": 37.535578,
+            "max": 47.145903,
+            "min": 0.032834
+          }
+        },
+        "outer_server_tcp": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 267412
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 315360
+            },
+            "rtt": {
+              "min": 0.007,
+              "median": 0.068,
+              "max": 0.615
+            },
+            "cwnd": {
+              "min": 177,
+              "median": 269.0,
+              "max": 269
+            },
+            "unacked": {
+              "min": 1,
+              "median": 131.5,
+              "max": 220
+            }
+          }
+        },
+        "outer_client_tcp": {
+          "observations": 46,
+          "metrics": {
+            "recv_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 811272
+            },
+            "send_q": {
+              "min": 0,
+              "median": 0.0,
+              "max": 98012
+            },
+            "rtt": {
+              "min": 0.025,
+              "median": 0.053,
+              "max": 5.254
+            },
+            "cwnd": {
+              "min": 10,
+              "median": 397.0,
+              "max": 397
+            },
+            "unacked": {
+              "min": 1,
+              "median": 28,
+              "max": 70
+            }
+          }
+        }
+      }
+    ],
+    "pairs": [
+      {
+        "repeat": 1,
+        "down_rate": 100000000,
+        "default_up_mbps": 317.60046291169397,
+        "auto_up_mbps": 445.263146808766,
+        "auto_to_default_up_ratio": 1.401960005746489,
+        "default_ACK_p50_ms": 0.841706,
+        "auto_ACK_p50_ms": 0.864485,
+        "auto_to_default_ACK_p50_ratio": 1.0270628936944728,
+        "default_ACK_p99_ms": 7.422319,
+        "auto_ACK_p99_ms": 6.071238
+      },
+      {
+        "repeat": 1,
+        "down_rate": 0,
+        "default_up_mbps": 130.0174395353183,
+        "auto_up_mbps": 153.65459563368836,
+        "auto_to_default_up_ratio": 1.1817998891752457,
+        "default_ACK_p50_ms": 19.583172,
+        "auto_ACK_p50_ms": 15.429859,
+        "auto_to_default_ACK_p50_ratio": 0.7879141846887726,
+        "default_ACK_p99_ms": 47.351422,
+        "auto_ACK_p99_ms": 35.772968
+      },
+      {
+        "repeat": 2,
+        "down_rate": 100000000,
+        "default_up_mbps": 245.72125831918817,
+        "auto_up_mbps": 427.20615388378064,
+        "auto_to_default_up_ratio": 1.7385803605516554,
+        "default_ACK_p50_ms": 0.868478,
+        "auto_ACK_p50_ms": 0.884169,
+        "auto_to_default_ACK_p50_ratio": 1.0180672394695087,
+        "default_ACK_p99_ms": 18.462577,
+        "auto_ACK_p99_ms": 6.523349
+      },
+      {
+        "repeat": 2,
+        "down_rate": 0,
+        "default_up_mbps": 150.17887383263985,
+        "auto_up_mbps": 117.19638943284336,
+        "auto_to_default_up_ratio": 0.78037866739797,
+        "default_ACK_p50_ms": 11.769458,
+        "auto_ACK_p50_ms": 18.860308,
+        "auto_to_default_ACK_p50_ratio": 1.602478890701679,
+        "default_ACK_p99_ms": 32.830678,
+        "auto_ACK_p99_ms": 47.923361
+      },
+      {
+        "repeat": 3,
+        "down_rate": 100000000,
+        "default_up_mbps": 306.2195008630322,
+        "auto_up_mbps": 480.694345062725,
+        "auto_to_default_up_ratio": 1.5697705198655296,
+        "default_ACK_p50_ms": 1.184153,
+        "auto_ACK_p50_ms": 0.796215,
+        "auto_to_default_ACK_p50_ratio": 0.6723919966423257,
+        "default_ACK_p99_ms": 11.158203,
+        "auto_ACK_p99_ms": 5.602616
+      },
+      {
+        "repeat": 3,
+        "down_rate": 0,
+        "default_up_mbps": 149.18666344508364,
+        "auto_up_mbps": 142.69867185040343,
+        "auto_to_default_up_ratio": 0.9565109142810981,
+        "default_ACK_p50_ms": 13.145937,
+        "auto_ACK_p50_ms": 14.609256,
+        "auto_to_default_ACK_p50_ratio": 1.1113134042860544,
+        "default_ACK_p99_ms": 40.446427,
+        "auto_ACK_p99_ms": 37.535578
+      }
+    ],
+    "summary": {
+      "100000000": {
+        "auto_to_default_up_ratio": {
+          "min": 1.401960005746489,
+          "median": 1.5697705198655296,
+          "max": 1.7385803605516554
+        },
+        "auto_to_default_ACK_p50_ratio": {
+          "min": 0.6723919966423257,
+          "median": 1.0180672394695087,
+          "max": 1.0270628936944728
+        }
+      },
+      "0": {
+        "auto_to_default_up_ratio": {
+          "min": 0.78037866739797,
+          "median": 0.9565109142810981,
+          "max": 1.1817998891752457
+        },
+        "auto_to_default_ACK_p50_ratio": {
+          "min": 0.7879141846887726,
+          "median": 1.1113134042860544,
+          "max": 1.602478890701679
+        }
+      }
+    },
+    "configs": {
+      "r1-default-raw": {
+        "server_sha256": "3ac818b47c2c7c66be74f5ba67512a046ea9cdb18c8bbbf495403c35c0479fe6",
+        "client_sha256": "b150ff0146c313120590fb1ae9d205318511971efee306c687fcc6862df50329",
+        "requested_rcvbuf": 262144
+      },
+      "r1-auto-raw": {
+        "server_sha256": "0c29c045d8be1dc5f586c2a5b6f6789f96063d6420ea031eca6569929fd17bf4",
+        "client_sha256": "1c9371fb518d14e49a72d1e30c17cc9c62d6f2a0d65a51397177f0024e22edc7",
+        "requested_rcvbuf": 0
+      },
+      "r2-auto-raw": {
+        "server_sha256": "0c29c045d8be1dc5f586c2a5b6f6789f96063d6420ea031eca6569929fd17bf4",
+        "client_sha256": "1e95e8ecc5c1d07e54ac22b6f0a63746a6f587f20a9d12d57475899e071bb653",
+        "requested_rcvbuf": 0
+      },
+      "r2-default-raw": {
+        "server_sha256": "3ac818b47c2c7c66be74f5ba67512a046ea9cdb18c8bbbf495403c35c0479fe6",
+        "client_sha256": "62afe5f12ee0d9afb7a247333246ed331dbb980bb1140a87acac043273195bcf",
+        "requested_rcvbuf": 262144
+      },
+      "r3-default-raw": {
+        "server_sha256": "3ac818b47c2c7c66be74f5ba67512a046ea9cdb18c8bbbf495403c35c0479fe6",
+        "client_sha256": "2a48b6c86314bcbacace370a27fc0abe17a67218597048df7aada8b606ed693f",
+        "requested_rcvbuf": 262144
+      },
+      "r3-auto-raw": {
+        "server_sha256": "0c29c045d8be1dc5f586c2a5b6f6789f96063d6420ea031eca6569929fd17bf4",
+        "client_sha256": "6bcbf1c855994b32b33345faeb84e2734021d9afb6b863fa7085259a5a528062",
+        "requested_rcvbuf": 0
+      }
+    },
+    "server_config_template_sha256": "23eaa2ced9704a23f1329a8fc67d78739655fd0afd15d0acd5c99910be1575ef",
+    "host_staged_preserved": true,
+    "root_archive_removed": true,
+    "product_modified": false,
+    "kernel_trace_enabled": false,
+    "Q36_closed": false,
+    "formal_done": 33,
+    "total": 37,
+    "limitations": [
+      "SO_RCVBUF changes both receive memory and flow-control pressure; latency change alone does not identify every internal stage",
+      "shared two-vCPU same-VM topology, one mode/one carrier; no production capacity claim",
+      "ACK timing covers matched identical headers only; unmatched headers explicitly retained",
+      "capture/ss observers identical in both conditions, no zero-overhead claim"
+    ],
+    "raw_files": {
+      "q36-server-rcvbuf-causal-20261014\\execution.json": "0b9efd0255a7e48764cb50a2e00b3434205a4105529e06fe67e17a5de9943b30",
+      "q36-server-rcvbuf-causal-20261014\\runtime.tar.gz": "bd42780bc452e51eec7a27b8f47afa25965c042914958594dbe720c8cdc38353",
+      "q36-server-rcvbuf-causal-20261014\\qualified.json": "2d765d2e4ce66a7be61f2e060bfbfe9ceb31d4e14b2d3d6730f51c73498cc689",
+      "q36-server-rcvbuf-causal-20261014\\workload-qualified.json": "99b9a69365e996980363bade18f8810561177d60bec8fcd27744224dbcf088d3",
+      "q36-server-rcvbuf-causal-20261014\\preparation.json": "b764cb1f2426c9a5032c971c90287d798c61201c6dda062d0570b007ac371caa"
+    },
+    "qualified_unix": 1791980771.755667,
+    "no_push_deploy_release": true
+  },
+  "qualification_sha256": "891780b45afb3a6d19a45a0f85e7c45095c740bf5660a5c7713c65a5047e57f8",
+  "external_packet": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-server-rcvbuf-causal-20261014",
+  "scope": "Six Markdown reports/plans/manuals only. Two actual12-window current-CLI buffer interventions and exact scope/limitations; no product/native/LINUX-script delta. Original automated and physical execution facts preserved.",
+  "no_push_deploy_release": true
+}
