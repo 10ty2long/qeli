@@ -20,3 +20,22 @@
 Q29 остаётся IN_PROGRESS: обход generic/null DnsResolver ENONET для чужих приложений не найден и пользователем не принят как ограничение. `allowBypass` не включён. Физические платформы, полный аудит, hosted CI и публикация не квалифицированы. План: 33/37 (89.2%). NO_PUSH_DEPLOY_RELEASE.
 
 Доказательство: `release/certification/evidence/q29-product-recovery-20261013.json`.
+
+## 14 октября: точная стадия отказа generic/null DNS
+
+Повторно сверены архивы двух прогонов12 октября, подписи SHA входных APK/raw и шесть ячеек независимого UID10150. Это проверка сохранённого evidence, не новый запуск Android и не квалификация текущего APK. Исходные общие FAIL обвязки (отсутствующий необязательный socket receipt и SystemUI subscription exception) сохранены; квалифицированы только уже записанные DNS-наблюдения.
+
+| Условие | Active / selected netId | IPv4 и IPv6 selected socket | Generic/null |
+| --- | --- | --- | --- |
+| Без VPN | 100 /100 | connect PASS | Ответ A+AAAA |
+| Qeli secure, без lockdown | 101 /100 | bind EPERM | ENONET |
+| Qeli secure, lockdown | 102 /100 | bind EPERM | ENONET |
+| Независимый minimal secure VPN, без lockdown | 101 /100 | bind EPERM | ENONET |
+| Независимый minimal secure VPN, lockdown | 102 /100 | bind EPERM | ENONET |
+| Независимый bypass VPN, без lockdown | 104 /104 | connect PASS | Ответ A+AAAA |
+
+Всего36 socket checks:28 PASS и8 отказов bind EPERM (по IPv4/IPv6 в четырёх secure ячейках). Для каждой ячейки сохранены один PID/UID, active/selected network, policy, порядок и времена запросов. В secure-случаях выбран физический netId100, хотя активна VPN-сеть; generic/null и generic/selected вернули ENONET, соответствующих DNS query names на проводе не было. Typed A/AAAA с null и generic с явно указанной активной VPN-сетью получили ответы. Это локализует наблюдаемый отказ до DNS-пакета и до обработки DNS внутри Qeli; включение lockdown не является единственным условием отказа.
+
+Семь официальных AOSP-файлов Android14 связывают DnsResolver→JNI android_getprocdns→NetdClient getdnsnetid→ответ app_netid→DnsUtils bindSocket/connect. Это source-derived объяснение согласуется с сохранёнными наблюдениями; точное совпадение AOSP revision с образом AVD не доказано. Ссылки и SHA сохранены в evidence. Дополнительный кандидат android_setprocdns отклонён как прозрачный обход для чужих приложений: он меняет process-local netIdForResolv вызывающего процесса, а не другого UID. Переадресация DNS внутри туннеля не исправляет отказ, который возникает до запроса. allowBypass не включён; Q29 остаётся OPEN по требованию пользователя искать безопасный обход, ограничение не принято и совместимость не объявлена PASS.
+
+Новый повтор ради getdnsnetid/EPERM не требуется: данные уже были в архиве. Evidence: `release/certification/evidence/q29-dns-selector-reconciliation-20261014.json`. Полный аудит33/37(89,2%); NO_PUSH_DEPLOY_RELEASE.

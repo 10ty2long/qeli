@@ -13,3 +13,22 @@ These are bounded observations on one API34 image, not universal Android/OEM res
 Q29 remains IN_PROGRESS: no transparent workaround for third-party generic/null DnsResolver ENONET was found, and the user did not accept it as a limitation. `allowBypass` remains disabled. Physical platforms, whole audit, hosted CI and publication remain unqualified. Plan: 33/37 (89.2%). NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q29-product-recovery-20261013.json`.
+
+## 14 October: exact generic/null DNS failure stage
+
+Revalidated archives of two12 October runs, APK/raw SHA inputs and six cells from independent UID10150. This checks retained evidence, not a fresh Android run or current-APK qualification. Original whole-fixture FAILs (missing optional socket receipt and SystemUI subscription exception) remain intact; only already-recorded DNS observations are qualified.
+
+| Condition | Active / selected netId | IPv4 and IPv6 selected socket | Generic/null |
+| --- | --- | --- | --- |
+| No VPN | 100 /100 | connect PASS | A+AAAA answers |
+| Qeli secure, no lockdown | 101 /100 | bind EPERM | ENONET |
+| Qeli secure, lockdown | 102 /100 | bind EPERM | ENONET |
+| Independent minimal secure VPN, no lockdown | 101 /100 | bind EPERM | ENONET |
+| Independent minimal secure VPN, lockdown | 102 /100 | bind EPERM | ENONET |
+| Independent bypass VPN, no lockdown | 104 /104 | connect PASS | A+AAAA answers |
+
+There are36 socket checks:28 PASS and8 bind EPERM failures (IPv4/IPv6 in four secure cells). Each cell retains one PID/UID, active/selected network, policy, query ordering and timestamps. Secure cells select physical netId100 despite an active VPN network; generic/null and generic/selected return ENONET with no corresponding DNS query name on the wire. Typed A/AAAA with null and generic with the explicit active VPN network receive answers. This localizes the observed failure before a DNS packet and Qeli DNS handling; lockdown is not the only failure condition.
+
+Seven official Android14 AOSP files link DnsResolver→JNI android_getprocdns→NetdClient getdnsnetid→app_netid response→DnsUtils bindSocket/connect. This source-derived explanation agrees with retained observations; exact AOSP/AVD revision equality is unproven. Evidence retains URLs and SHAs. Additional android_setprocdns candidate is not a transparent foreign-app workaround: it modifies the caller's process-local netIdForResolv, not another UID. Tunnel DNS forwarding cannot repair a pre-query refusal. allowBypass remains disabled; Q29 stays OPEN under the user's request for a safe workaround. No accepted platform limitation or compatibility PASS.
+
+No new getdnsnetid/EPERM replay is needed: those observations were already archived. Evidence: `release/certification/evidence/q29-dns-selector-reconciliation-20261014.json`. Full audit33/37(89.2%); NO_PUSH_DEPLOY_RELEASE.
