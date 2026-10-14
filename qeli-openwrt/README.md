@@ -490,7 +490,8 @@ Owned build/toolchain/cache/rootfs resources were archived and removed.
 
 The private Git fixture preserves the exact qeli tree, but is not the full original
 release commit. The production source cut remains separately qualified.
-Full feed Rust compiler bootstrap and cold dependency graph were not executed:
-the feed downloads LLVM but builds rustc/std/cargo/dist. This package test does
+A14October cold feed Host/Compile attempt compiled bootstrap but failed on four
+HTTP404 responses for its pinned LLVM CI artifact. Stage2/dist/Host/Install and the
+full cold dependency graph remain unqualified; see the INSTALL troubleshooting note. This package test does
 not certify physical firmware, a public source pin, hosted CI or a release.
 See [current SDK scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

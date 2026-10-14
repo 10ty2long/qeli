@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v262 -->
+<!-- normative-sync: full-system-audit-v263 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2026,6 +2026,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **7 October,F379/Q31-V008:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual SDK source archive/check-FIXUP/prepare integration passes on exact candidate crate; old bad mirror download/prepare0 reproduced. Shared prepare/compile verifier stops bad hash before unpack/Cargo,9dash/9ash+25source methods uid65534 PASS;7integration stages with inert Cargo boundary. Full SDK Rust/bootstrap/release-cut/CI separate;3/5criteria IN_PROGRESS,28/37overall.
 
 **October7,Q31-V009:** [live release gate](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): real ARMv7/MIPS release builds through current Gate2 helper,SHA/static ELF PASS;32actual QEMU CLI/INI executions uid65534 PASS,317exact compile inputs. Named tools/defaults and qeli745/901 preserved,own roots cleaned. No new product fix/native refresh/firmware/full preflight/Actions;SDK bootstrap/release-cut/writer-lock/atomic ndm remain. Q31 IN_PROGRESS3/5,28/37overall.
+
+**14 October: cold Rust Host/Compile now attempted.** Prepare/configure and actual bootstrap79s compilation PASS; pinned LLVM CI download returned4HTTP404. Host/Compile FAIL retained; Host/Install/stage2/dist not executed, budget guards did not fire. All6226200078owned bytes removed, host/accounts/staged preserved. Full compiler/cold graph remains OPEN; prebuilt SDK/IPK scope unchanged.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Metrics, usage, logs and notifications
 

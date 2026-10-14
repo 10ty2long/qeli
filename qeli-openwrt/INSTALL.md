@@ -532,3 +532,26 @@ No new regression was found in this scope. This is neither the full cfg(test) su
 nor firmware/VPN networking, SDK Rust bootstrap or a new independent clean A/B.
 Previous four-target A/B retains its original source/date. See
 [Q31](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md) for artifacts and limits.
+
+
+## Rust feed LLVM download failure (SDK24.10.4, 14 October 2026)
+
+The pinned packages feed f1470815f41f uses Rust1.89.0 and
+`--set=llvm.download-ci-llvm=true`. A real isolated Host/Compile attempt built
+bootstrap successfully, then received HTTP404 for its pinned CI rust-dev artifact.
+The Qeli client had not started compiling. Repeating the same download or changing
+Qeli INI/DNS/firewall settings does not repair that dependency failure.
+
+For a full source toolchain build, use a private SDK/feed copy and change only
+`--set=llvm.download-ci-llvm=true` to `--set=llvm.download-ci-llvm=false` in
+`feeds/packages/lang/rust/Makefile`, preserving the existing host/target flags and
+source version/hash. Clean the Rust host package's own build state and reconfigure
+before compiling; changing a generated bootstrap.toml alone may be overwritten by
+Host/Configure. This selects bundled LLVM source compilation rather than the
+unavailable CI binary. It requires additional build resources and a separately
+validated Host/Compile/Host/Install and Qeli SDK package; that full remedy has not
+passed this audit yet. Do not silently substitute an unrelated LLVM binary or URL.
+
+The already-qualified SDK/IPK run used a private official prebuilt Rust/std1.89.
+That remains a package integration result, not proof of cold compiler bootstrap.
+See [actual refusal and cleanup evidence](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
