@@ -2623,3 +2623,15 @@ The worker was interrupted before its final finally handler: result.json retaine
 After archive SHA and full inventory verification, removed 6858519526 owned cache/root bytes; unit and remote archive are absent. Host/firewall/routes/resolver, accounts and staged CLI preserved. Retained 79253 bytes of local evidence, without a large compiler cache. Free disk on .10 is 9288957952 bytes. Alternative lab .11 also has approximately 2 GB RAM and less free disk; moving the build alone does not demonstrate sufficient capacity. A next source bootstrap needs a separately justified resource budget or another explicitly qualified remedy. Q31 IN_PROGRESS; 33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q31-long-compiler-oom-20261014.json`.
+
+## 14 October: second OOM after increasing the private swap budget
+
+Execution source 66cf9a2d5d40. A separate complete source-LLVM bootstrap kept RAM 1152 MiB, jobs=1 and CPUQuota=100%, increasing the cgroup swap limit from 512 to 1024 MiB without changing host swap configuration. The single private `llvm.download-ci-llvm=false` recipe change remained; prebuilt Rust 1.89 was not substituted.
+
+LLVM reached Ninja operation 1929/3710, not a Rust completion percentage. At 11:58:05 +03:00 the kernel recorded CONSTRAINT_MEMCG in the owned unit, killing cc1plus after the previous llvm-tblgen bottleneck. MemoryPeak=1211572224 bytes versus MemoryMax=1207959552; swap peak reached 1073741824 bytes. The small memory peak overshoot does not alter Result=oom-kill.
+
+The worker was interrupted before its final finally handler; intermediate STOCK_PREPARE_CONFIGURE_PASS_COMPILER_ATTEMPT_STARTING is not a compilation outcome. Archive SHA/inventory, systemd and kernel evidence establish the failure. The prepared SDK consumer correctly refused to run: no new SDK/IPK/runtime campaign. Stage2/dist/HostInstall and the cold source-built SDK remain unqualified; earlier prebuilt-Rust SDK results retain their separate scope.
+
+Removed 7040038732 owned root/cache bytes; remote archive and unit absent. Host/firewall/routes/resolver, accounts and staged CLI preserved. Retained only 79620 local evidence archive bytes. Do not start a third similar-budget bootstrap: the available host has not demonstrated adequate resources. Q31 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.

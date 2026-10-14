@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v265 -->
+<!-- normative-sync: full-system-audit-v266 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2043,6 +2043,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **14 октября: обход LLVM CI404 выполнен.** Один flag в частном feed, prepare/configure/bootstrap и реальная source LLVM C++ compilation проверены; последний Ninja indicator548/3710. Собственный guard остановил частичный прогон (time); full compiler/SDK graph не закрыт. Root/cache/archive/unit очищены, host сохранён; original404 прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: длительный source compiler остановлен OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152МиБ RAM/512МиБ swap. Архив и cleanup квалифицированы, host сохранён; SDK не запускался. Q31 остаётся IN_PROGRESS; одинаковый ресурсный retry не выполняется.33/37,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: Q31/Q36 runtime checkpoint.** Второй source compiler OOM: cc1plus, LLVM1929/3710, RAM1152МиБ/swap1024МиБ; own7,04ГБ удалены, SDK не запускался. Q36: current CLI,4окна/2sessions,731146 stock events без trace loss; первый поздний observer сохранён как невалидный, driver исправлен. Неполное ACK соответствие и изменение observed/control результатов не позволяют закрыть стадию задержки. Подробности в AUDIT-Q31-OPENWRT-CONTROLS и AUDIT-Q36-TUN-STAGE;33/37 (89,2%), оба пункта IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Метрики, usage, логи и уведомления
 

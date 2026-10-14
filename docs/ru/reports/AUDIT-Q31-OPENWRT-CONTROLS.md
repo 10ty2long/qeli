@@ -2633,3 +2633,15 @@ Worker был прерван до итогового finally: result.json сох
 После проверки SHA и полного inventory архива удалены 6858519526 байт собственного cache/root; unit и remote archive отсутствуют. Host/firewall/routes/resolver, аккаунты и staged CLI сохранены. Локально сохранён evidence archive 79253 байта, без большого compiler cache. Свободно 9288957952 байта на .10. Другой стенд .11 также имеет около 2 ГБ RAM и меньше свободного диска; перенос сам по себе не подтверждает достаточность ресурсов. Следующий source bootstrap требует отдельно обоснованного бюджета либо явно квалифицированного иного решения. Q31 IN_PROGRESS; 33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q31-long-compiler-oom-20261014.json`.
+
+## 14 октября: второй OOM после увеличения частного swap-бюджета
+
+Execution source 66cf9a2d5d40. Отдельная попытка полного source-LLVM bootstrap использовала прежние RAM 1152 МиБ, jobs=1 и CPUQuota=100%, но swap-лимит cgroup увеличен с 512 до 1024 МиБ. Настройки host swap не менялись. Одна private recipe-поправка `llvm.download-ci-llvm=false` сохранена; prebuilt Rust 1.89 не подставлялся.
+
+LLVM дошёл до операции Ninja 1929/3710; это не процент готовности Rust. В 11:58:05 +03:00 журнал ядра подтвердил CONSTRAINT_MEMCG в собственном unit, убив `cc1plus`. Это другое узкое место после прежнего `llvm-tblgen`. MemoryPeak=1211572224 байта, MemoryMax=1207959552; swap peak достиг лимита 1073741824 байта. Небольшое превышение memory peak не меняет исход `Result=oom-kill`.
+
+Worker снова прерван до итогового finally, поэтому его промежуточный `STOCK_PREPARE_CONFIGURE_PASS_COMPILER_ATTEMPT_STARTING` не является результатом сборки. Archive SHA/inventory, systemd и kernel подтверждают отказ. Подготовленный SDK consumer корректно отказался запускаться: новых SDK/IPK/runtime проверок нет. Stage2/dist/HostInstall и cold source-built SDK всё ещё не квалифицированы. Ранее проверенные сборки с готовым Rust сохраняют свой отдельный scope.
+
+Удалены 7040038732 байта собственного root/cache, remote archive и unit отсутствуют; host/firewall/routes/resolver, аккаунты и staged CLI сохранены. Локально осталось 79620 байт evidence archive, а не гигабайты compiler cache. Третью попытку с близким бюджетом не запускаем: имеющийся стенд не подтвердил достаточность ресурсов полного bootstrap. Q31 остаётся IN_PROGRESS; 33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.

@@ -49,3 +49,17 @@ Clock discontinuity не обнаружен, но абсолютная погр�
 наблюдателя; любое дальнейшее stage-наблюдение сначала требует проверки
 overhead и учёта всех TUN-очередей. Полный Q36 остаётся IN_PROGRESS.
 `NO_PUSH_DEPLOY_RELEASE`.
+
+## 14 октября: текущий CLI, штатные события чтения TUN
+
+Execution source 66cf9a2d5d40; текущий CLI SHA `6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363`, actual build e0ce217b630d9dfd7db5f59936bb41e6d68eb69d; product tree `8c50631e7c253ab6cacd0056098ecad83f393487` не изменился. Две fresh sessions / четыре 8-секундных окна: uplink unlimited, отдельный downlink 100 Мбит/с либо unlimited, legacy one-carrier на обоих концах. Одна session с наблюдением, одна контрольная; это не статистическая серия из трёх пар и не замена предыдущей матрицы.
+
+Наблюдатель использовал только stock sys_enter_read/sys_exit_read, net_dev_start_xmit для небольших пакетов собственных qbench0 и consume_skb в tun_do_read. Оба server reader TID и их реальные TUN fd проверены по namespace/inode, /proc и executable SHA; создан только частный trace instance. BPF/kprobe/strace не использовались. Для двух коротких участков внутри нагрузки получены 168599 и 562547 записей, trace loss=0; время наблюдения находится внутри фактических интервалов обоих iperf children. Проверены роли/параметры нагрузки, PCAP SHA/nanotimestamps, clock continuity и отсутствие tcpdump drops.
+
+Без stock trace uplink составил 254,24 Мбит/с при встречных 100 Мбит/с и 126,61 Мбит/с при unlimited. Для одинаковых ACK-заголовков end-to-end p50 вырос с 0,958656 до 14,155557 мс. В соответствующей наблюдаемой session — 316,40/99,75 Мбит/с и ACK p50 1,011884/22,166426 мс. Эти четыре значения относятся ко всей фазе; kernel trace короче. Одного контроля недостаточно для разделения observer overhead и межсессионной вариативности; наблюдение нельзя объявлять нейтральным.
+
+По hashed SKB identity и длине сопоставлены только небольшие пакеты с исходным событием в заранее проверенных server threads. Для 52 байт: 5079 пар при 100 Мбит/с, 998 при unlimited; TUN queue p50 0,010/0,011 мс, p99 2,515/3,718 мс. Неполное покрытие явно сохранено: 12944/3695 успешных небольших read без admitted server xmit. Это не потеря пакетов. События ядра не содержат IP/TCP-заголовка: длина 52 байта не доказывает связь с конкретным ACK из PCAP. Между read на активном reader p99=0,021/0,008 мс; этот интервал объединяет pool acquisition, handoff и scheduling. Длительное blocking read может означать отсутствие пакета, а не задержку доставки.
+
+Первая попытка наблюдения сохранена отдельно как невалидная для stage timing: пятый сборщик ожидал четыре занятых controller threads, включившись после завершения нагрузки. Исправлен только внешний диагностический driver (`max_workers=5`), добавлены overlap/nonempty gates; код продукта не менялся. Оба пакета завершили namespace/process cleanup, SHA/inventory archive и удаление собственных root/archive; global tracing controls, services и staged CLI сохранены. Новая серия сужает измеренную границу, но не устанавливает исходную стадию F023: неполное соответствие ACK и заметное изменение observer-present результата остаются ограничениями. Не повторять тяжёлый четырёхсобытийный observer для утверждения исходной причины. Q36 IN_PROGRESS; NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-stock-read-pilot-20261014.json`.
