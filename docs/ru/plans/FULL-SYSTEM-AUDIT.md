@@ -10,7 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v259 -->
+<!-- normative-sync: full-system-audit-v260 -->
+
+**Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
 **Q34, 14 октября, iOS:** finite-number MDM source fix, исправлен тест export/validate roaming и подготовлен signed simulator CI с проверкой effective Keychain entitlements.17 portable methods,32 native DTO requests и5 shell fixtures PASS; свежие Swift/Keychain/Apple CI НЕ запускались. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 

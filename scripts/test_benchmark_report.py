@@ -144,6 +144,29 @@ class BenchmarkReportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'duplicate run'):
             aggregate(self.runs)
 
+    def test_one_copied_phase_cannot_inflate_an_independent_population(self):
+        for mode, phase in [('tcp-fixture', 'tcp_up'), ('udp-fixture', 'udp_500')]:
+            fixture(self.runs[1], 1, 100)
+            relative = mode + '/' + phase + '-iperf.json'
+            (self.runs[1] / relative).write_bytes((self.runs[0] / relative).read_bytes())
+            first = json.loads((self.runs[0] / 'results.json').read_text())
+            metrics = first['modes'][mode][phase]
+            # Preserve the second run's independent process/counter samples so the
+            # duplicated raw throughput phase is the only violated admission rule.
+            self.mutate('results.json', lambda run: run['modes'][mode][phase].update(
+                {key: metrics[key] for key in ('mbps', 'retransmits', 'lost_percent', 'jitter_ms')}))
+            for measurements_only in (False, True):
+                with self.subTest(mode=mode, measurements_only=measurements_only):
+                    with self.assertRaisesRegex(ValueError, 'duplicated raw iperf phase'):
+                        aggregate(self.runs, measurements_only=measurements_only)
+
+    def test_equal_rates_from_distinct_raw_measurements_remain_valid(self):
+        for index, root in enumerate(self.runs):
+            fixture(root, index, 200)
+        report = aggregate(self.runs)
+        self.assertEqual(report['statistics']['tcp-fixture/tcp_up']['mbps']['n'], 3)
+        self.assertEqual(report['statistics']['tcp-fixture/tcp_up']['mbps']['median'], 200)
+
     def test_failed_run_is_not_discarded(self):
         self.mutate('results.json', lambda value: value.update(status='FAIL'))
         with self.assertRaisesRegex(ValueError, 'run incomplete'):

@@ -10,7 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v259 -->
+<!-- normative-sync: full-system-audit-v260 -->
+
+**Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
 **Q34,14 October,iOS:** finite-number MDM source fix, corrected export/validate roaming test and prepared signed simulator CI with effective Keychain entitlement checks.17 portable methods,32 native DTO requests and5 shell fixtures PASS; fresh Swift/Keychain/Apple CI NOT run. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 

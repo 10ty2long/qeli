@@ -9,11 +9,20 @@ Binary SHA-256 `7769f43cac84fee1b65bccb4c783685eb12a15a3f28a7610e7437c170bb5621e
 before/after compilation. This qualifies this CLI artifact's source provenance,
 not reproducibility across two independent builds.
 
-The latest supplemental measurement is [IPv6 RTT](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json),39 new sessions /78 windows. [Mixed-family coverage](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 new sessions /216 windows. [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+A historical supplemental measurement is [IPv6 RTT](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json),39 new sessions /78 windows. [Mixed-family coverage](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 new sessions /216 windows. [IPv6 carrier coverage](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json), 27 new sessions / 108 windows. [Prepared-peer AUTH bursts](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 bursts / 189 accepted peers. [Unpaced TCP-bidir RTT](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 sessions / 78 windows. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 contains separate 69 sessions / 204 windows. It uses CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 with 916 qualified build inputs. Details and limitations follow below.
+
+
+## Methodology update:14 October
+
+See [Q36](AUDIT-Q36-MATCHED-LOAD.md) for current scoped legacy/mux measurements and limits. The10/11 October values below retain their own binaries/dates; they do not substitute for current-core measurements.
+
+Statistical reports require unique raw iperf evidence for every same phase across independent repeats. Copying even one phase is refused in AGGREGATED and MEASUREMENTS_ONLY; equal rates from distinct actual measurements remain valid. New checks do not change retained results or constitute a new benchmark/performance PASS.
+
+Old perf_allmodes_prod.py, perf_ab_p3b1.py, perf_netns_cpu.py, perf_modes_test.py, perf_prod_live_monitor.py and perf_facts.py are retired before credentials/SSH; the old opt-in cannot revive them. Use the [isolated runner](../../../scripts/benchmark_isolated_lab.py) with its existing parameters and requirements.
 
 ## IPv6 RTT under TCP bidirectional load — 11 October 2026
 

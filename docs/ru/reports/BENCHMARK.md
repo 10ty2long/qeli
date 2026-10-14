@@ -9,11 +9,20 @@
 сверены до/после сборки. Это квалификация происхождения конкретного CLI,
 не доказательство воспроизводимости двух независимых сборок.
 
-Последний дополнительный замер — [RTT IPv6](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json),39 новых сессий /78 окон. [Смешанные семейства](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 новые сессии /216 окон. [IPv6 транспорты](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json),27 новых сессий /108 окон. [Всплески AUTH](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 серий / 189 принятых peers. [RTT под unpaced TCP-bidir](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
+Исторический дополнительный замер — [RTT IPv6](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_latency.json),39 новых сессий /78 окон. [Смешанные семейства](../../../release/benchmark_v0.8.2_2026-10-11_mixed_carriers.json),54 новые сессии /216 окон. [IPv6 транспорты](../../../release/benchmark_v0.8.2_2026-10-11_ipv6_carriers.json),27 новых сессий /108 окон. [Всплески AUTH](../../../release/benchmark_v0.8.2_2026-10-11_auth_bursts.json), 27 серий / 189 принятых peers. [RTT под unpaced TCP-bidir](../../../release/benchmark_v0.8.2_2026-10-10_unpaced_latency.json),
 39 сессий / 78 окон. [UDP-bidir/IPv6](../../../release/benchmark_v0.8.2_2026-10-10_udp_ipv6.json)
 содержит отдельные 69 сессий / 204 окна. Он использует CLI SHA-256
 `238153ab5c44dc707390e0adf6ac14fecd7079f242c71bdb3dcdd84ab8472a71`
 с подтверждёнными 916 входами сборки. Подробности и ограничения приведены ниже.
+
+
+## Методика: обновление 14 октября
+
+Для актуальных scoped legacy/mux измерений и ограничений см. [Q36](AUDIT-Q36-MATCHED-LOAD.md). Значения10/11 октября ниже сохраняют собственные binaries/даты; они не заменяют результаты текущего core.
+
+Статистический отчёт требует уникального raw iperf для каждой одинаковой фазы во всех независимых повторах. Копия даже одной фазы отклоняется в AGGREGATED и MEASUREMENTS_ONLY; одинаковая скорость разных исходных измерений разрешена. Новые проверки не меняют сохранённые результаты и не являются новым benchmark/performance PASS.
+
+Старые perf_allmodes_prod.py, perf_ab_p3b1.py, perf_netns_cpu.py, perf_modes_test.py, perf_prod_live_monitor.py и perf_facts.py выведены из эксплуатации: RETIRED до credentials/SSH, старый opt-in не поддерживается. Используйте [изолированный runner](../../../scripts/benchmark_isolated_lab.py); его параметры и требования сохраняются.
 
 ## Задержки IPv6 при двунаправленной TCP-нагрузке — 11 октября 2026
 

@@ -217,9 +217,15 @@ def aggregate(directories, *, measurements_only=False):
     ordered = sorted(runs, key=lambda run: run['started'])
     if any(current['started'] < previous['ended'] for previous, current in zip(ordered, ordered[1:])):
         raise ValueError('overlapping runs are not independent benchmark windows')
-    raw_identities = {tuple(sorted((path, sha) for path, sha in run['hashes'].items() if path.endswith('-iperf.json'))) for run in runs}
-    if len(raw_identities) != len(runs):
-        raise ValueError('duplicated raw iperf population')
+    raw_phases = {}
+    for run in runs:
+        for path, sha in run['hashes'].items():
+            if not path.endswith('-iperf.json'):
+                continue
+            seen = raw_phases.setdefault(path, set())
+            if sha in seen:
+                raise ValueError('duplicated raw iperf phase: ' + path)
+            seen.add(sha)
     metrics = {phase: {key: population([run['metrics'][phase][key] for run in runs])
                for key in values} for phase, values in runs[0]['metrics'].items()}
     scope = 'Same binary artifact and comparable measurement settings; binary source provenance UNVERIFIED; no performance PASS'
