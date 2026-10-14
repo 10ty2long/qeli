@@ -1,0 +1,578 @@
+{
+  "status": "CURRENT_CLI_STOCK_SMALL_COPY_PILOT_CONTROL_AND_CLEANUP_QUALIFIED_STAGE_OPEN",
+  "qualification": {
+    "status": "CURRENT_CLI_STOCK_SMALL_COPY_PILOT_CONTROL_AND_CLEANUP_QUALIFIED_STAGE_OPEN",
+    "source_commit": "553db95a5ddfdf9569c7781fbaa5bbb49387ab97",
+    "cli_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
+    "new_sessions": 2,
+    "new_windows": 4,
+    "observed_windows": 2,
+    "untraced_control_windows": 2,
+    "rows": [
+      {
+        "down_rate": 100000000,
+        "trace_records": 34346,
+        "trace_loss": 0,
+        "trace_bytes": 8092367,
+        "copy_boundary": {
+          "counters": {
+            "small_xmit_both_owned_namespaces": 19788,
+            "own_small_copy": 14558,
+            "small_pointer_length_pairs": 14558,
+            "pairs_from_other_execution_context": 12028,
+            "pairs_from_known_server_thread": 2530,
+            "pointer_replaced_before_server_copy": 4115
+          },
+          "trace_first_ns": 1121331578945000,
+          "trace_last_ns": 1121334720037000,
+          "small_packet_queue_by_length": {
+            "52": {
+              "count": 14475,
+              "min_ms": 0.0,
+              "p50_ms": 0.01,
+              "p95_ms": 0.532,
+              "p99_ms": 1.21,
+              "max_ms": 4.801,
+              "over_1ms": 227,
+              "over_10ms": 0
+            },
+            "64": {
+              "count": 83,
+              "min_ms": 0.0,
+              "p50_ms": 0.007,
+              "p95_ms": 0.342,
+              "p99_ms": 0.893,
+              "max_ms": 0.893,
+              "over_1ms": 0,
+              "over_10ms": 0
+            }
+          },
+          "pair_origin_contexts": [
+            {
+              "pid": 0,
+              "comm": "<idle>",
+              "count": 2
+            },
+            {
+              "pid": 763392,
+              "comm": "tokio-rt-worker",
+              "count": 3
+            },
+            {
+              "pid": 763393,
+              "comm": "tokio-rt-worker",
+              "count": 3
+            },
+            {
+              "pid": 763457,
+              "comm": "tun-tx-bench-q1",
+              "count": 2524
+            },
+            {
+              "pid": 763462,
+              "comm": "qeli",
+              "count": 1
+            },
+            {
+              "pid": 763468,
+              "comm": "tokio-rt-worker",
+              "count": 16
+            },
+            {
+              "pid": 763496,
+              "comm": "qeli-tun-writer",
+              "count": 1
+            },
+            {
+              "pid": 763563,
+              "comm": "iperf3",
+              "count": 11987
+            },
+            {
+              "pid": 763564,
+              "comm": "iperf3",
+              "count": 19
+            },
+            {
+              "pid": 763566,
+              "comm": "iperf3",
+              "count": 2
+            }
+          ],
+          "event_pids": [
+            {
+              "pid": 0,
+              "comm": "<idle>",
+              "count": 4
+            },
+            {
+              "pid": 763392,
+              "comm": "tokio-rt-worker",
+              "count": 3
+            },
+            {
+              "pid": 763393,
+              "comm": "tokio-rt-worker",
+              "count": 3
+            },
+            {
+              "pid": 763456,
+              "comm": "tun-rx-bench-q1",
+              "count": 14558
+            },
+            {
+              "pid": 763457,
+              "comm": "tun-tx-bench-q1",
+              "count": 2524
+            },
+            {
+              "pid": 763462,
+              "comm": "qeli",
+              "count": 1
+            },
+            {
+              "pid": 763468,
+              "comm": "tokio-rt-worker",
+              "count": 16
+            },
+            {
+              "pid": 763496,
+              "comm": "qeli-tun-writer",
+              "count": 2355
+            },
+            {
+              "pid": 763563,
+              "comm": "iperf3",
+              "count": 11987
+            },
+            {
+              "pid": 763564,
+              "comm": "iperf3",
+              "count": 19
+            },
+            {
+              "pid": 763566,
+              "comm": "iperf3",
+              "count": 2875
+            },
+            {
+              "pid": 763634,
+              "comm": "python3",
+              "count": 1
+            }
+          ],
+          "unconsumed_small_xmits": 1115,
+          "limitation": "Hashed latest SKB pointer and length, copy entry before completion; no event payload/TCP header, no automatic exact ACK identity. Both qbench0 namespaces admitted at xmit, only verified server reader TIDs at copy. Unknown origin contexts are retained. Upstream Linux6.12 provides source context, not exact running Debian module byte equivalence."
+        },
+        "observed_up_mbps": 346.90338407933996,
+        "control_up_mbps": 299.32640418286456,
+        "observed_to_control_up_ratio": 1.1589468193638195,
+        "matched_ACK_whole_phase": [
+          {
+            "label": "r1-raw",
+            "repeat": 1,
+            "down_rate": 100000000,
+            "flow_peer_port": 34916,
+            "clock_delta_error_seconds": 5.334e-06,
+            "population": {
+              "server": {
+                "counts": {
+                  "captured": 39673,
+                  "received": 39673,
+                  "dropped": 0
+                },
+                "bytes": 2701972,
+                "data_ack_packets": 39669,
+                "excluded_control_or_other_port": 4,
+                "sha256": "c32ae154bfed529dd8293f74af632976629b265085b4da9af87b6aeacf4b505d"
+              },
+              "client": {
+                "counts": {
+                  "captured": 39673,
+                  "received": 39673,
+                  "dropped": 0
+                },
+                "bytes": 2701972,
+                "data_ack_packets": 39669,
+                "excluded_control_or_other_port": 4,
+                "sha256": "7657210ac2e6492b93edbbb505eef00abc7a0367c58005d87c3519fec9340c1f"
+              }
+            },
+            "timing_population": "matched identical headers only",
+            "missing_header_cause": "unresolved; no kernel capture drops reported",
+            "matched": 39669,
+            "unmatched_source": 0,
+            "unmatched_destination": 0,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 1.026426,
+              "p95": 4.733536,
+              "p99": 9.242767,
+              "max": 25.403388,
+              "min": 0.028918
+            }
+          },
+          {
+            "label": "r2-raw",
+            "repeat": 2,
+            "down_rate": 100000000,
+            "flow_peer_port": 42826,
+            "clock_delta_error_seconds": 3.782e-06,
+            "population": {
+              "server": {
+                "counts": {
+                  "captured": 33585,
+                  "received": 33585,
+                  "dropped": 0
+                },
+                "bytes": 2291920,
+                "data_ack_packets": 33581,
+                "excluded_control_or_other_port": 4,
+                "sha256": "8053630b861b70af27e6a9322b0334a06b3f20d7d14207420f3e075e1b496a07"
+              },
+              "client": {
+                "counts": {
+                  "captured": 33568,
+                  "received": 33568,
+                  "dropped": 0
+                },
+                "bytes": 2290752,
+                "data_ack_packets": 33564,
+                "excluded_control_or_other_port": 4,
+                "sha256": "6af3ef37cb4f0957ff1aee4d069bbf3dd66342c5926fe17f793fc5a8f9dd0136"
+              }
+            },
+            "timing_population": "matched identical headers only",
+            "missing_header_cause": "unresolved; no kernel capture drops reported",
+            "matched": 33564,
+            "unmatched_source": 17,
+            "unmatched_destination": 0,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 0.875579,
+              "p95": 4.677106,
+              "p99": 10.759265,
+              "max": 22.704394,
+              "min": 0.026287
+            }
+          }
+        ],
+        "matched_ACK_estimated_same_short_span": [
+          {
+            "repeat": 1,
+            "estimated_start_ns": 1791978980787923653,
+            "estimated_end_ns": 1791978983929015653,
+            "matched": 14557,
+            "unmatched_source": 0,
+            "unmatched_destination": 25112,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 0.922168,
+              "p95": 4.02529,
+              "p99": 6.811753,
+              "max": 12.47271,
+              "min": 0.03367
+            }
+          },
+          {
+            "repeat": 2,
+            "estimated_start_ns": 1791979079369848610,
+            "estimated_end_ns": 1791979082510940610,
+            "matched": 16493,
+            "unmatched_source": 17,
+            "unmatched_destination": 17071,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 0.777087,
+              "p95": 3.380265,
+              "p99": 5.679746,
+              "max": 22.704394,
+              "min": 0.03027
+            }
+          }
+        ],
+        "short_span_observed_to_control_p50_ratio": 1.1866985292509076
+      },
+      {
+        "down_rate": 0,
+        "trace_records": 35357,
+        "trace_loss": 0,
+        "trace_bytes": 10270000,
+        "copy_boundary": {
+          "counters": {
+            "small_xmit_both_owned_namespaces": 29267,
+            "pointer_replaced_before_server_copy": 20248,
+            "own_small_copy": 6090,
+            "small_pointer_length_pairs": 6090,
+            "pairs_from_other_execution_context": 3158,
+            "pairs_from_known_server_thread": 2932
+          },
+          "trace_first_ns": 1121360187639000,
+          "trace_last_ns": 1121363356087000,
+          "small_packet_queue_by_length": {
+            "52": {
+              "count": 6089,
+              "min_ms": 0.0,
+              "p50_ms": 0.017,
+              "p95_ms": 1.155,
+              "p99_ms": 7.177,
+              "max_ms": 8.607,
+              "over_1ms": 382,
+              "over_10ms": 0
+            },
+            "88": {
+              "count": 1,
+              "min_ms": 1.169,
+              "p50_ms": 1.169,
+              "p95_ms": 1.169,
+              "p99_ms": 1.169,
+              "max_ms": 1.169,
+              "over_1ms": 1,
+              "over_10ms": 0
+            }
+          },
+          "pair_origin_contexts": [
+            {
+              "pid": 763457,
+              "comm": "tun-tx-bench-q1",
+              "count": 2932
+            },
+            {
+              "pid": 763812,
+              "comm": "iperf3",
+              "count": 3154
+            },
+            {
+              "pid": 763815,
+              "comm": "iperf3",
+              "count": 4
+            }
+          ],
+          "event_pids": [
+            {
+              "pid": 0,
+              "comm": "<idle>",
+              "count": 4
+            },
+            {
+              "pid": 763393,
+              "comm": "tokio-rt-worker",
+              "count": 1
+            },
+            {
+              "pid": 763456,
+              "comm": "tun-rx-bench-q1",
+              "count": 6092
+            },
+            {
+              "pid": 763457,
+              "comm": "tun-tx-bench-q1",
+              "count": 2932
+            },
+            {
+              "pid": 763468,
+              "comm": "tokio-rt-worker",
+              "count": 5
+            },
+            {
+              "pid": 763469,
+              "comm": "tokio-rt-worker",
+              "count": 8
+            },
+            {
+              "pid": 763495,
+              "comm": "qeli-tun-reader",
+              "count": 1
+            },
+            {
+              "pid": 763496,
+              "comm": "qeli-tun-writer",
+              "count": 9454
+            },
+            {
+              "pid": 763812,
+              "comm": "iperf3",
+              "count": 3156
+            },
+            {
+              "pid": 763813,
+              "comm": "iperf3",
+              "count": 1
+            },
+            {
+              "pid": 763815,
+              "comm": "iperf3",
+              "count": 4
+            },
+            {
+              "pid": 763816,
+              "comm": "iperf3",
+              "count": 13699
+            }
+          ],
+          "unconsumed_small_xmits": 2929,
+          "limitation": "Hashed latest SKB pointer and length, copy entry before completion; no event payload/TCP header, no automatic exact ACK identity. Both qbench0 namespaces admitted at xmit, only verified server reader TIDs at copy. Unknown origin contexts are retained. Upstream Linux6.12 provides source context, not exact running Debian module byte equivalence."
+        },
+        "observed_up_mbps": 99.14143489864,
+        "control_up_mbps": 175.02468044464175,
+        "observed_to_control_up_ratio": 0.5664425991053146,
+        "matched_ACK_whole_phase": [
+          {
+            "label": "r1-raw",
+            "repeat": 1,
+            "down_rate": 0,
+            "flow_peer_port": 48248,
+            "clock_delta_error_seconds": 5.597e-06,
+            "population": {
+              "server": {
+                "counts": {
+                  "captured": 15634,
+                  "received": 15634,
+                  "dropped": 0
+                },
+                "bytes": 1063328,
+                "data_ack_packets": 15631,
+                "excluded_control_or_other_port": 3,
+                "sha256": "9178b348df6d5cc772d9635b98660d657b4ed37f201401563e172a4a7d9dc9c8"
+              },
+              "client": {
+                "counts": {
+                  "captured": 15631,
+                  "received": 15631,
+                  "dropped": 0
+                },
+                "bytes": 1063124,
+                "data_ack_packets": 15628,
+                "excluded_control_or_other_port": 3,
+                "sha256": "a394a2ed740b3f41e90b06a90326d8b219a20e8804c515f06fdfe4b3cc86945f"
+              }
+            },
+            "timing_population": "matched identical headers only",
+            "missing_header_cause": "unresolved; no kernel capture drops reported",
+            "matched": 15628,
+            "unmatched_source": 3,
+            "unmatched_destination": 0,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 18.219942,
+              "p95": 27.799851,
+              "p99": 35.240748,
+              "max": 51.401984,
+              "min": 0.038481
+            }
+          },
+          {
+            "label": "r2-raw",
+            "repeat": 2,
+            "down_rate": 0,
+            "flow_peer_port": 54598,
+            "clock_delta_error_seconds": 1.8176e-05,
+            "population": {
+              "server": {
+                "counts": {
+                  "captured": 21993,
+                  "received": 21993,
+                  "dropped": 0
+                },
+                "bytes": 1499312,
+                "data_ack_packets": 21990,
+                "excluded_control_or_other_port": 3,
+                "sha256": "34b2be14bab97f685fb48616faf50c4ea32fdfb7e7f209c2a34698cfc756b672"
+              },
+              "client": {
+                "counts": {
+                  "captured": 21970,
+                  "received": 21970,
+                  "dropped": 0
+                },
+                "bytes": 1497748,
+                "data_ack_packets": 21967,
+                "excluded_control_or_other_port": 3,
+                "sha256": "298ba6c1346d934c7b1a73cb6906c49f6e37a985e2ac3cf9734c131ef93dd5ff"
+              }
+            },
+            "timing_population": "matched identical headers only",
+            "missing_header_cause": "unresolved; no kernel capture drops reported",
+            "matched": 21967,
+            "unmatched_source": 23,
+            "unmatched_destination": 0,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 11.320004,
+              "p95": 22.751226,
+              "p99": 36.433254,
+              "max": 52.853674,
+              "min": 0.032656
+            }
+          }
+        ],
+        "matched_ACK_estimated_same_short_span": [
+          {
+            "repeat": 1,
+            "estimated_start_ns": 1791979009396617498,
+            "estimated_end_ns": 1791979012565065498,
+            "matched": 6089,
+            "unmatched_source": 0,
+            "unmatched_destination": 9539,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 18.530356,
+              "p95": 26.785752,
+              "p99": 30.534551,
+              "max": 36.341487,
+              "min": 0.038481
+            }
+          },
+          {
+            "repeat": 2,
+            "estimated_start_ns": 1791979053820332658,
+            "estimated_end_ns": 1791979056988780658,
+            "matched": 9270,
+            "unmatched_source": 2,
+            "unmatched_destination": 12697,
+            "repeated_header_records": 0,
+            "delay_ms": {
+              "p50": 11.157324,
+              "p95": 19.802146,
+              "p99": 22.342184,
+              "max": 27.855694,
+              "min": 0.032673
+            }
+          }
+        ],
+        "short_span_observed_to_control_p50_ratio": 1.6608244055653492
+      }
+    ],
+    "host_staged_global_trace_preserved": true,
+    "root_archive_instance_removed": true,
+    "product_modified": false,
+    "Q36_closed": false,
+    "formal_done": 33,
+    "total": 37,
+    "BPF_or_kprobe_or_strace": false,
+    "limitations": [
+      "One observer/control pair; no observer neutrality or reproducible causal stage closure",
+      "Hashed pointer/length pairing does not contain TCP header; no exact per-ACK linkage",
+      "Copy entry excludes copy completion, application handoff, crypto/socket and client scheduling",
+      "Short-span ACK comparison uses capture clock offset estimate; absolute clock error unbounded",
+      "Unknown originating execution contexts and pointer replacement counts explicit; not claimed packet loss"
+    ],
+    "raw_files": {
+      "q36-small-copy-pilot-20261014\\execution.json": "ad3c7c8683922721ee02b01b36a891266b348905bdc8a364e79b5a3ea5aaa0f3",
+      "q36-small-copy-pilot-20261014\\runtime.tar.gz": "e1ea4331726a26e7bf791383317cfcd9cee222d0fc8a6237975d2a31f2ae5fe1",
+      "q36-small-copy-pilot-20261014\\qualified.json": "fcbb17c307213632a5e88d711dbcd45f1db55fea087c09f68690d5df31c8bf52",
+      "q36-small-copy-pilot-20261014\\workload-qualified.json": "c2e9dfc71b260c2a562b3daabca64c2e50f28978f4395b641502660043e3c12c",
+      "q36-small-copy-pilot-20261014\\trace-analysis.json": "53fc619643394db7b1ac492ac6c09ad174d03b97a5626d2cecf173663ee9122d"
+    },
+    "primary_references": [
+      "https://raw.githubusercontent.com/torvalds/linux/v6.12/net/core/datagram.c",
+      "https://raw.githubusercontent.com/torvalds/linux/refs/tags/v6.12/drivers/net/tun.c",
+      "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/trace/events/skb.h"
+    ],
+    "no_push_deploy_release": true
+  },
+  "qualification_sha256": "169678b8ca6dfd8e861f7de5c6e13302fbda68f9446564f93fef16766602608f",
+  "external_packet": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-small-copy-pilot-20261014",
+  "scope": "Four Markdown report/plan changes only; actual current Qeli small-copy pilot, matched ACK/control timing and observer limitations. Product/native and Linux script closure unchanged; original automated and physical execution facts preserved.",
+  "no_push_deploy_release": true
+}
