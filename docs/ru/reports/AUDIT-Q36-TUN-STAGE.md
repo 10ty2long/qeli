@@ -140,3 +140,43 @@ Execution source e07c2597d446, тот же текущий CLI6f617bdcab5a/produc
 Дальше — прямые диагностические timestamps на границах server TUN read → server wire handoff → client decrypt → client TUN write, с однозначным packet fingerprint, finite capture и одинаковой включённой/выключенной диагностикой. Одно совпадение размера пакета/счётчиков не заменяет packet identity. Read-only preflight подтвердил наличие Rust1.97 и local crate cache на .10; compiler не запускался, compiler/cache/core не менялись. Такой диагностический CLI должен иметь отдельную source/build qualification; он не является shipping CLI/native artifact. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-client-writer-priority-20261014.json`.
+
+## 14 октября: прямое измерение этапов ACK
+
+Отдельный диагностический Linux CLI собран из source 776de2a63efc с семью приватными source-файлами для SHA256 fingerprints синтетических bare IPv4 ACK5203, CLOCK_MONOTONIC timestamps и finite try_lock ring262144. Репозиторий qeli/native не изменялся. Два selector-теста того же модуля выполнены в маленьком тестовом пакете; его заглушка atomic dump не проверяет запись файла. Настоящая Qeli-запись/SIGUSR1 проверена пилотом. Первая сборка отказала из-за отсутствующих conformance fixtures, две сборки всей cfg(test) библиотеки — по OOM; исходные FAIL и очищенные root/cache сохранены. Диагностический release профиль ThinLTO/codegen4 отличается от штатного FatLTO/codegen1. Это отдельный артефакт 4f550f22e274, не shipping/native adoption.
+
+Новые3sessions/6windows: stock текущего CLI, диагностический CLI с probeOFF и тот же диагностический CLI с probeON. Legacy rawTCP one-carrier, две встречные P1/8сек iperf connections, downlink100M/unlimited. Server send/recv requested262144, actual tb/rb524288; INI одинаковы кроме server pin.
+
+| Downlink | CLI / probe | Uplink, Mbps | Downlink, Mbps | ACK p50, ms |
+|---|---|---:|---:|---:|
+| 100000000 | stock | 319.36 | 100.08 | 0.822205 |
+| 100000000 | off | 239.01 | 100.09 | 0.949443 |
+| 100000000 | on | 251.26 | 100.04 | 0.911861 |
+| unlimited | stock | 159.93 | 526.51 | 15.022166 |
+| unlimited | off | 162.41 | 536.84 | 14.158821 |
+| unlimited | on | 150.30 | 534.13 | 17.156824 |
+
+Наблюдаемые соотношения: down=100000000 stock→off: uplink×0.748, ACKp50×1.155; down=100000000 off→on: uplink×1.051, ACKp50×0.960; down=unlimited stock→off: uplink×1.016, ACKp50×0.943; down=unlimited off→on: uplink×0.925, ACKp50×1.212. Один последовательный пилот не доказывает нейтральность измерения; stock/OFF также включает отличие сборки. Нельзя объединять эти результаты с предыдущими stock бенчмарками или считать причину исторической задержки закрытой.
+
+По каждому ACK связаны полный одинаковый заголовок PCAP и семь SHA256 stage stamps. Дубликаты и неполные цепочки исключены из timing population с явными счётчиками в evidence; до стадии выводов допускаются только уникальные complete identities. Ring accounting: down=100000000: server events=121009 lost=103 full=0, client events=90732 lost=102 full=0; down=unlimited: server events=82600 lost=8 full=0, client events=61932 lost=24 full=0.
+
+| Downlink | Unique complete ACKs | Segment | p50 / p99, ms |
+|---|---:|---|---:|
+| 100000000 | 30096 | server_read_to_dequeue | 0.122074 / 7.414881 |
+| 100000000 | 30096 | server_dequeue_to_encrypt | 0.000719 / 0.001723 |
+| 100000000 | 30096 | encrypt_to_client_plaintext | 0.190948 / 3.744683 |
+| 100000000 | 30096 | client_plaintext_to_write_begin | 0.083340 / 2.079618 |
+| 100000000 | 30096 | client_tun_write | 0.003847 / 0.109530 |
+| unlimited | 20616 | server_read_to_dequeue | 14.311134 / 30.921991 |
+| unlimited | 20616 | server_dequeue_to_encrypt | 0.000694 / 0.001425 |
+| unlimited | 20616 | encrypt_to_client_plaintext | 0.694058 / 9.009626 |
+| unlimited | 20616 | client_plaintext_to_write_begin | 0.702128 / 4.437142 |
+| unlimited | 20616 | client_tun_write | 0.002850 / 0.115576 |
+
+В unlimited окне server_read_to_dequeue был наибольшим сегментом для17453/20616 complete ACKs (84,66%); p50=14,311134мс против0,122074мс при100M. По source review этот интервал включает blocking_send/out_rx, выбор session/маршрута и handoff в stream rx; это не измерение одной очереди. Чтобы установить внутреннюю причину, нужно разделить эти серверные границы и снизить влияние измерения. OFF→ON unlimited ACKp50 вырос на21,17%; текущий пилот не доказывает нейтральность.
+
+Граница encrypt→client plaintext включает шифрование, очередь/передачу внешнего TCP и получение/расшифрование клиента. Отдельно retained server write completion и signed overlap: завершение локального async write может произойти после обработки у клиента, это не timestamp wire egress. Квантили отдельных сегментов нельзя складывать как одну latency percentile.
+
+Passed workload/settings/lifetimes, actual binary/config/PCAP identities, stage causal ordering, buffer readbacks, полный host/firewall/services/staged preservation и root/archive SHA cleanup. Нагрузка и выгрузка диагностики закончены; временные сборки/кэши лабы удалены. BPF/kprobe/strace/kernel trace не применялись. Q36 остаётся IN_PROGRESS по подтверждению нейтральности и причины на штатной сборке;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-ack-stage-pilot-20261014.json`.

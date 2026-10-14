@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v269 -->
+<!-- normative-sync: full-system-audit-v270 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2051,6 +2051,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **14 октября: Q36 socket-buffer causal tests.** Две серии по6sessions/12windows без kernel trace: tiny send buffer ухудшил unlimited ACK во всех3парах; отдельно проверен stock/auto receive при held stock send. Actual tb/rb, единичный INI delta, workload/ACK/topology/host/SHA cleanup квалифицированы; CONFIG RU/EN уточняет0 против отсутствующего ключа. Defaults продукта неизменны. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: Q36 client writer priority.** Fresh6sessions/12windows,nice0/-10 only own writer; actual TID/weight/policy/affinity/config/PID/ACK/host/SHA cleanup qualified. No consistent delay removal; no production adoption. Next direct per-packet stage timing with separate diagnostic build/observer controls.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: Q36 direct ACK stage pilot.** Private diagnostic build and2 isolated selector tests,3sessions/6windows stock/OFF/ON, unique exact-header seven-stage identity/cleanup qualified. Distinct ThinLTO artifact and one ordered observer pilot; original shipping cause and observer neutrality still open.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Метрики, usage, логи и уведомления
 

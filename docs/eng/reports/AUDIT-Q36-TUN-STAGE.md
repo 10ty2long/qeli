@@ -139,3 +139,43 @@ Schedstat/tick deltas and sched_schedstats flag retained. Their horizon includes
 Next: direct diagnostic timestamps at server TUN read → server wire handoff → client decrypt → client TUN write with unique packet fingerprint, finite capture and enabled/disabled observer controls. Matching sizes/counters alone cannot establish packet identity. Read-only preflight confirms installed Rust1.97/local crate cache on .10; no compiler run or compiler/cache/core modification. A diagnostic CLI needs separate source/build qualification and is not a shipping CLI/native artifact. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-client-writer-priority-20261014.json`.
+
+## 14 October: direct ACK stage pilot
+
+Separate private Linux CLI built from source 776de2a63efc with seven private source-file changes: SHA256 fingerprints of synthetic bare IPv4 ACK5203, monotonic timestamps and finite nonblocking ring262144. Product repository/native unchanged. Two selector tests compile the identical module in a small crate; its atomic-dump stub does not test file I/O. Actual Qeli atomic dump/SIGUSR1 exercised by the pilot. Original missing-conformance failure and two whole-cfg(test)-library OOM failures remain FAIL, with owned source/cache/root cleanup proved. Diagnostic release ThinLTO/codegen4 differs from shipping FatLTO/codegen1; artifact 4f550f22e274 is not shipping/native adoption.
+
+New3sessions/6windows: current stock CLI, private diagnostic OFF, same private diagnostic ON. Legacy rawTCP one-carrier, two simultaneous P1/eight-second iperf connections, downlink100M/unlimited. Server send/recv requested262144, actual tb/rb524288, INI templates match except server pin.
+
+| Downlink | CLI / probe | Uplink, Mbps | Downlink, Mbps | ACK p50, ms |
+|---|---|---:|---:|---:|
+| 100000000 | stock | 319.36 | 100.08 | 0.822205 |
+| 100000000 | off | 239.01 | 100.09 | 0.949443 |
+| 100000000 | on | 251.26 | 100.04 | 0.911861 |
+| unlimited | stock | 159.93 | 526.51 | 15.022166 |
+| unlimited | off | 162.41 | 536.84 | 14.158821 |
+| unlimited | on | 150.30 | 534.13 | 17.156824 |
+
+Observed ratios: down=100000000 stock→off: uplink×0.748, ACKp50×1.155; down=100000000 off→on: uplink×1.051, ACKp50×0.960; down=unlimited stock→off: uplink×1.016, ACKp50×0.943; down=unlimited off→on: uplink×0.925, ACKp50×1.212. One ordered pilot cannot establish observer neutrality; stock/OFF additionally includes a build difference. Do not pool with previous stock benchmarks or close the historical shipping latency cause.
+
+Complete identical PCAP headers linked to seven SHA256 stage stamps. Repeated/incomplete identities excluded with explicit accounting in evidence; timings apply to unique complete identities only. Ring accounting: down=100000000: server events=121009 lost=103 full=0, client events=90732 lost=102 full=0; down=unlimited: server events=82600 lost=8 full=0, client events=61932 lost=24 full=0.
+
+| Downlink | Unique complete ACKs | Segment | p50 / p99, ms |
+|---|---:|---|---:|
+| 100000000 | 30096 | server_read_to_dequeue | 0.122074 / 7.414881 |
+| 100000000 | 30096 | server_dequeue_to_encrypt | 0.000719 / 0.001723 |
+| 100000000 | 30096 | encrypt_to_client_plaintext | 0.190948 / 3.744683 |
+| 100000000 | 30096 | client_plaintext_to_write_begin | 0.083340 / 2.079618 |
+| 100000000 | 30096 | client_tun_write | 0.003847 / 0.109530 |
+| unlimited | 20616 | server_read_to_dequeue | 14.311134 / 30.921991 |
+| unlimited | 20616 | server_dequeue_to_encrypt | 0.000694 / 0.001425 |
+| unlimited | 20616 | encrypt_to_client_plaintext | 0.694058 / 9.009626 |
+| unlimited | 20616 | client_plaintext_to_write_begin | 0.702128 / 4.437142 |
+| unlimited | 20616 | client_tun_write | 0.002850 / 0.115576 |
+
+In the unlimited window server_read_to_dequeue was the largest segment for17453/20616 complete ACKs (84.66%); p50=14.311134ms versus0.122074ms at100M. Source review shows blocking_send/out_rx, session/routing lookup and stream rx handoff inside this interval; it is not one isolated queue. Next isolate those server boundaries with lower observer overhead. Unlimited OFF→ON ACKp50 increased21.17%; this pilot does not establish neutrality.
+
+Encrypt→client plaintext includes encryption, outer TCP buffering/transmission and client receive/decryption. Retained signed local async write-completion overlap separately: completion may follow client plaintext and is not wire-egress time. Segment quantiles cannot be summed into an end-to-end percentile.
+
+Workload/settings/lifetimes, actual binary/config/PCAP identities, causal stage ordering, actual buffers, complete host/firewall/services/staged preservation and root/archive SHA cleanup qualified. No active workload or owned compile cache remains. No BPF/kprobe/strace/kernel trace. Q36 remains IN_PROGRESS for observer neutrality and the shipping cause;33/37 (89.2%),NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-ack-stage-pilot-20261014.json`.
