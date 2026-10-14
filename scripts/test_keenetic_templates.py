@@ -21,10 +21,27 @@ class KeeneticFixture(unittest.TestCase):
         self.opt=self.root/'opt';self.bundle=self.root/'bundle with spaces';self.bundle.mkdir()
         self.env=dict(os.environ,PATH=str(self.bin),QELI_FIXTURE_ROOT=str(self.root),QELI_FIXTURE_BIN=str(self.bin),
             QELI_ARCH='aarch64-3.10',QELI_FAIL='',QELI_SHOW_FAIL='0',QELI_CONNECTED='no',
-            QELI_CUR4='10.8.0.2',QELI_CUR6='fd00::2')
+            QELI_CUR4='10.8.0.2',QELI_CUR6='fd00::2',QELI_FIXTURE_OWNER='0')
         for name in ('awk','grep','head','uname','mkdir','chmod','mktemp','mv','rm','dirname','cp','touch','cat','sed','rmdir','stat'):
             command=shutil.which(name);self.assertIsNotNone(command)
             (self.bin/name).symlink_to(command)
+        # Router fixtures model root-owned /opt files even when CI is unprivileged.
+        # Keep real modes and delegate every path outside this fixture to real stat.
+        stat=shlex.quote(shutil.which('stat'))
+        self.write_command('stat',r'''
+if [ "$1" = -c ]; then
+  case "$3" in "$QELI_FIXTURE_ROOT"/*)
+    case "$2" in
+      %u)
+        '''+stat+r''' -c '%u' "$3" >/dev/null || exit $?
+        printf '%s\n' "$QELI_FIXTURE_OWNER"; exit 0 ;;
+      %u:%a)
+        mode=$('''+stat+r''' -c '%a' "$3") || exit $?
+        printf '%s:%s\n' "$QELI_FIXTURE_OWNER" "$mode"; exit 0 ;;
+    esac ;;
+  esac
+fi
+exec '''+stat+' "$@"')
         self.write_command('ip','exit 0')
         self.write_command('iptables','exit 0')
         self.write_command('ip6tables','exit 0')
@@ -110,6 +127,28 @@ esac
         p=self.opt/'var/log/qeli-client.log';return p.read_text() if p.exists() else ''
 
 class KeeneticInstallerTests(KeeneticFixture):
+    def test_foreign_config_owner_is_rejected_before_publication(self):
+        self.seed_installed()
+        before={str(p.relative_to(self.opt)):p.read_bytes() for p in self.opt.rglob('*') if p.is_file()}
+        result=self.installer(QELI_FIXTURE_OWNER='1234')
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('root-owned config directory required',result.stdout+result.stderr)
+        self.assertEqual({str(p.relative_to(self.opt)):p.read_bytes() for p in self.opt.rglob('*') if p.is_file()},before)
+        self.assert_no_temps()
+
+    def test_owner_model_preserves_modes_and_delegates_outside_paths(self):
+        target=self.root/'owned-file';target.write_text('fixture');target.chmod(0o640)
+        missing=subprocess.run([str(self.bin/'stat'),'-c','%u',str(self.root/'missing')],env=self.env,capture_output=True,text=True,timeout=5)
+        self.assertNotEqual(missing.returncode,0)
+        def probe(path,format):
+            p=subprocess.run([str(self.bin/'stat'),'-c',format,str(path)],env=dict(self.env,QELI_FIXTURE_OWNER='1234'),capture_output=True,text=True,timeout=5)
+            self.assertEqual(p.returncode,0,p.stderr)
+            return p.stdout.strip()
+        self.assertEqual(probe(target,'%u:%a'),'1234:640')
+        with tempfile.TemporaryDirectory(prefix='qeli-stat-outside-') as outside:
+            other=Path(outside)/'file';other.write_text('outside');other.chmod(0o600)
+            self.assertEqual(probe(other,'%u:%a'),str(os.getuid())+':600')
+
     def test_canonical_binary_names_both_arches_are_published(self):
         for arch,suffix in [('aarch64-3.10','aarch64'),('mipsel-3.4','mipsel')]:
             result=self.installer(QELI_ARCH=arch);self.assertEqual(result.returncode,0,result.stderr)

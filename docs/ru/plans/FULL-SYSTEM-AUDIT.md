@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v256 -->
+<!-- normative-sync: full-system-audit-v257 -->
 
 **Текущий итог, 14 октября: 33/37 разделов завершено в согласованном объёме (89,2%), осталось 4. Q35 и Q37 завершены по пяти критериям; Q29/Q31/Q34/Q36 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
 
@@ -2996,3 +2996,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **14 октября: компонентный контракт legacy-очереди проверен.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): exact production functions/BufferPool/Tokio, 11 положительных тестов, два отрицательных контроля и две восстановленные проверки PASS. Burst 128 → 83 queued / 45 Full; все 252 слота возвращены; bound 16 602/16 603 подтверждён. Уточнена область tcp_uplink_drops; новых native/CLI/VPN прогонов нет. Все собственные ресурсы очищены, host сохранён. Q36 открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: подготовка полного Rust feed проверена.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): шесть файлов из SDK pin, официальный source SHA, штатный patch, host-prepare/host-configure и семантика GNU host/musl target PASS. Исправлены пропуски feed и host exports в стенде; все ресурсы очищены. Compiler bootstrap/cold graph NOT_RUN, Q31 открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: проверен фактический публичный CI.** [Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): три failed jobs в опубликованном e7; source pin404, текущий core не опубликован. Keenetic fixture исправлена и проверена44/root +44/non-root с сохранением настоящих production owner guards. Mac/iOS причины и exact-source hosted gate остаются открыты; физические стенды USER_EXCLUDED,33/37 прежние,NO_PUSH_DEPLOY_RELEASE.
