@@ -116,3 +116,26 @@ Nonzero SO_SNDBUF/SO_RCVBUF disables corresponding kernel autotuning; explicit0 
 Both series passed workload settings/roles, identical-header PCAP SHA/timestamps/zero capture loss, topology/source, complete host/firewall/services/staged preservation and owned root/archive cleanup. Both SHA/inventory backups retained, no large compiler caches. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-server-sndbuf-causal-20261014.json`, `release/certification/evidence/q36-server-rcvbuf-causal-20261014.json`.
+
+## 14 October: client TUN writer priority
+
+Execution source e07c2597d446, same current CLI6f617bdcab5a/product tree8c50631e7c253ab6cacd0056098ecad83f393487. New6sessions/12windows: three normal nice0 versus nice−10 client qeli-tun-writer pairs; rawTCP legacy one-carrier, P1/eight seconds, separate concurrent iperf flows with100M/unlimited downlink. Reversed condition/rate order in repeat2. Config templates match except per-session public pin; held server requested send/receive262144, actual tb/rb524288 in all steady snapshots. No other socket/queue/default change.
+
+Before setting and before/after every window verified root/namespace cookies, /proc executable SHA/path, PID/TID starttime, unique writer comm and TUN fdinfo. Only writer receives nice−10; other client threads keep0. Ordinary SCHED_OTHER/affinity0-1 and within-session cgroup/autogroup unchanged. Readback fair weight grows only on the target TID; this affects CPU sharing, not a latency guarantee. [Linux per-thread nice semantics](https://man7.org/linux/man-pages/man2/setpriority.2.html).
+
+| Repeat | Downlink | Uplink control / changed, Mbps | ACK p50 control / changed, ms |
+|---|---|---|---|
+| 1 | 100M | 237.77 / 210.45 | 0.968889 / 0.927177 |
+| 1 | unlimited | 105.23 / 151.32 | 17.481170 / 15.946424 |
+| 2 | 100M | 288.49 / 270.03 | 0.837279 / 0.871184 |
+| 2 | unlimited | 164.18 / 139.85 | 13.142024 / 12.863850 |
+| 3 | 100M | 296.41 / 347.55 | 0.867200 / 0.802712 |
+| 3 | unlimited | 144.89 / 136.12 | 11.225342 / 14.199052 |
+
+Unlimited paired uplink priority/default min/median/max=0.852/0.939/1.438; ACK p50=0.912/0.979/1.265. No consistent delay removal. Reject priority increase as a sufficient workaround in this topology; it does not eliminate writer queue/wait because CPU sharing with neighboring client workers also changes. Production priority/defaults unchanged.
+
+Schedstat/tick deltas and sched_schedstats flag retained. Their horizon includes collection outside the eight-second transfer; disabled scheduler statistics does not imply zero runnable wait. No kernel trace/BPF/kprobe/strace. Workload/settings, identical-header PCAP SHA/timestamps/zero capture loss, topology/source, full host/firewall/services/staged preservation and SHA/inventory owned-root/archive cleanup passed. Own processes and target TID gone; no unrelated thread priorities changed.
+
+Next: direct diagnostic timestamps at server TUN read → server wire handoff → client decrypt → client TUN write with unique packet fingerprint, finite capture and enabled/disabled observer controls. Matching sizes/counters alone cannot establish packet identity. Read-only preflight confirms installed Rust1.97/local crate cache on .10; no compiler run or compiler/cache/core modification. A diagnostic CLI needs separate source/build qualification and is not a shipping CLI/native artifact. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-client-writer-priority-20261014.json`.

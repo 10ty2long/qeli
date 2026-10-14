@@ -117,3 +117,26 @@ Execution source 989c99d60554, тот же CLI 6f617bdcab5a, unchanged product t
 Обе серии прошли workload settings/roles, identical-header PCAP SHA/timestamps/zero capture loss, topology/source, full host/firewall/services/staged preservation и owned root/archive cleanup. Сохранены оба SHA/inventory backup; больших compiler caches нет. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
 Evidence: `release/certification/evidence/q36-server-sndbuf-causal-20261014.json`, `release/certification/evidence/q36-server-rcvbuf-causal-20261014.json`.
+
+## 14 октября: приоритет клиентского TUN writer
+
+Execution source e07c2597d446, тот же текущий CLI6f617bdcab5a/product tree8c50631e7c253ab6cacd0056098ecad83f393487. Новые6sessions/12windows: три пары обычного nice0 и nice−10 только client qeli-tun-writer; rawTCP legacy one-carrier, P1/8сек, два отдельных встречных iperf потока при downlink100M/unlimited. Во втором повторе порядок условий и скоростей обращён. Config templates одинаковы кроме per-session public pin; server requested send/recv262144, actual tb/rb524288 во всех steady snapshots. Новых socket/queue/default изменений нет.
+
+До установки и до/после каждого окна проверены root/ns cookies, /proc exe SHA и путь, PID/TID starttime, уникальный writer comm, TUN fdinfo. Только writer получилnice−10; у остальных клиентских потоков nice0. Ordinary SCHED_OTHER и affinity0-1 сохранены; cgroup/autogroup unchanged внутри каждой session. Считываемый fair weight вырос именно на целевом TID; его scope — распределение CPU, не гарантия latency. [Linux per-thread nice semantics](https://man7.org/linux/man-pages/man2/setpriority.2.html).
+
+| Повтор | Downlink | Uplink контроль / изменение, Мбит/с | ACK p50 контроль / изменение, мс |
+|---|---|---|---|
+| 1 | 100M | 237.77 / 210.45 | 0.968889 / 0.927177 |
+| 1 | unlimited | 105.23 / 151.32 | 17.481170 / 15.946424 |
+| 2 | 100M | 288.49 / 270.03 | 0.837279 / 0.871184 |
+| 2 | unlimited | 164.18 / 139.85 | 13.142024 / 12.863850 |
+| 3 | 100M | 296.41 / 347.55 | 0.867200 / 0.802712 |
+| 3 | unlimited | 144.89 / 136.12 | 11.225342 / 14.199052 |
+
+При unlimited paired uplink priority/default min/median/max=0.852/0.939/1.438; ACK p50=0.912/0.979/1.265. Устойчивого устранения задержки нет. Это отвергает повышение nice как достаточный обход в проверенной топологии, но не доказывает отсутствие очереди/ожидания в writer: меняется распределение CPU между его собственными соседними потоками, а не только время обработки конкретного ACK. Production priority/defaults не меняем.
+
+Сохранены schedstat/tick deltas и флаг sched_schedstats. Их горизонт включает весь сбор данных, а не только8сек передачи; disabled scheduler statistics не означает zero runnable wait. Kernel trace/BPF/kprobe/strace не применялись. Passed workload/settings, same-header PCAP SHA/timestamps/capture loss0, topology/source, full host/firewall/services/staged preservation и SHA/inventory owned root/archive cleanup. После завершения own process вместе с изменённым TID удалён; чужие приоритеты не затрагивались.
+
+Дальше — прямые диагностические timestamps на границах server TUN read → server wire handoff → client decrypt → client TUN write, с однозначным packet fingerprint, finite capture и одинаковой включённой/выключенной диагностикой. Одно совпадение размера пакета/счётчиков не заменяет packet identity. Read-only preflight подтвердил наличие Rust1.97 и local crate cache на .10; compiler не запускался, compiler/cache/core не менялись. Такой диагностический CLI должен иметь отдельную source/build qualification; он не является shipping CLI/native artifact. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
+
+Evidence: `release/certification/evidence/q36-client-writer-priority-20261014.json`.

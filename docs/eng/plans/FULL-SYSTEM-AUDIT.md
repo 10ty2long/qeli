@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v268 -->
+<!-- normative-sync: full-system-audit-v269 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2038,6 +2038,8 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **14 October: Q36 small-packet pilot.** New4windows/2sessions,69703stock events/trace loss0; small-copy coverage14558/6090, but no exact individual ACK linkage or observer neutrality. Short observed/control ACK p50+18.67/+66.08%; no repeated stock-trace variant merely for closure. See AUDIT-Q36-TUN-STAGE;33/37 (89.2%), Q36 IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: Q36 socket-buffer causal tests.** Two6session/12window series without kernel tracing: tiny send worsened unlimited ACK in all3pairs; separately tested stock/auto receive with held stock send. Actual tb/rb, single INI delta, workload/ACK/topology/host/SHA cleanup qualified; RU/EN CONFIG clarifies explicit0 versus absent key. Product defaults unchanged. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: Q36 client writer priority.** Fresh6sessions/12windows,nice0/-10 only own writer; actual TID/weight/policy/affinity/config/PID/ACK/host/SHA cleanup qualified. No consistent delay removal; no production adoption. Next direct per-packet stage timing with separate diagnostic build/observer controls.33/37 (89.2%),Q36 IN_PROGRESS,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Metrics, usage, logs and notifications
 
