@@ -1,0 +1,142 @@
+{
+  "status": "Q36_FIVE_CRITERIA_COMPLETE_WITH_EXPLICIT_PERFORMANCE_AND_OBSERVER_LIMITS",
+  "qualification": {
+    "status": "Q36_FIVE_CRITERIA_COMPLETE_WITH_EXPLICIT_PERFORMANCE_AND_OBSERVER_LIMITS",
+    "criteria": [
+      {
+        "id": "review_dead_code",
+        "status": "DONE",
+        "evidence": [
+          "q36-retired-perf-scenarios-20261014/qualification.json"
+        ],
+        "scope": "F001-F032 methodology/source review, six retired unreferenced perf scenarios, false phase replication refused on Windows/Linux"
+      },
+      {
+        "id": "normal_boundary_negative",
+        "status": "DONE",
+        "evidence": [
+          "q36-current-slot-statistics-r2-20261014/qualified.json",
+          "q36-legacy-contract-composite-20261014/qualification.json"
+        ],
+        "scope": "Actual current CLI all12 modes/P1-P4/TCP-UDP, three repeats per condition; receiver/role/interval gates and real production pool/queue boundaries with negative controls. Historical IPv6 binary cohorts remain separately identified"
+      },
+      {
+        "id": "failures_concurrency",
+        "status": "DONE",
+        "evidence": [
+          "q36-legacy-contract-composite-20261014/qualification.json",
+          "q36-recordizer-shipping-20261014/qualification.json"
+        ],
+        "scope": "Owned process/namespace/generation/host/archive guards, retained initial FAIL, returned bounded pool slots and queue Full semantics; no zero-loss overload claim"
+      },
+      {
+        "id": "integration_platform",
+        "status": "DONE",
+        "evidence": [
+          "q36-current-linux-checkpoint-20261014/completion.json",
+          "q36-current-slot-statistics-r2-20261014/qualified.json",
+          "q36-tun-drop-reason-current-20261014/qualification.json",
+          "q36-server-handoff-runtime-20261014/qualification.json",
+          "q36-recordizer-handoff-20261014/qualification.json",
+          "q36-recordizer-shipping-20261014/qualification.json"
+        ],
+        "scope": "Current native consumers/Linux20, current steady matrix, actual TUN FULL_RING reason and source-scoped per-stream queue localization, policy effect independently confirmed on shipping CLI without private stamps"
+      },
+      {
+        "id": "fixes_retest_evidence",
+        "status": "DONE",
+        "evidence": [
+          "q36-current-linux-checkpoint-20261014/completion.json",
+          "q36-retired-perf-scenarios-20261014/qualification.json",
+          "q36-recordizer-shipping-20261014/qualification.json"
+        ],
+        "scope": "F030 source/native adoption debt closed with fresh functional tests; F031/F032 fixes verified; FIFO/raw performance limitation and negotiated batching tradeoff documented. No unvalidated queue/nice/default fix adopted"
+      }
+    ],
+    "Q36_closed": true,
+    "formal_done": 34,
+    "total": 37,
+    "percent": 91.89189189189189,
+    "remaining": [
+      "Q29",
+      "Q31",
+      "Q34"
+    ],
+    "source_qeli_tree": "8c50631e7c253ab6cacd0056098ecad83f393487",
+    "native_source_digest": "0dfac80b50d2bdd1964817dee8ac87f7311cde63bf61efade7a40abd7e32b635",
+    "shipping_cli_sha256": "6f617bdcab5aecf3068ffa9bd6a11006aecbfead09cbb657d60671f0340b7363",
+    "input_hashes": {
+      "q36-retired-perf-scenarios-20261014/qualification.json": "1801011d8055b9f6572b789ecbb2e7ac52d171023534857b80a761afbc236a3c",
+      "q36-legacy-contract-composite-20261014/qualification.json": "3886965b602621ee4b13a99310b205a899fc78e5af4e72c09ce61e29e157fd75",
+      "q36-current-slot-statistics-r2-20261014/qualified.json": "80b6941be47a5dcc1a0da9555b24c1ff32b877718d2d0fa70d9f797c2207fdb8",
+      "q36-current-linux-checkpoint-20261014/completion.json": "4f55a6a68a8197b9aa7cda2d35c25c8c5e91b0a1f856a58170e6dda504a877a8",
+      "q36-tun-drop-reason-current-20261014/qualification.json": "0fbd7f35a2f4d58b9b53bab713208914e5d1661ed1b6767dccf56f82185e9351",
+      "q36-server-handoff-runtime-20261014/qualification.json": "b23d6fe5f58131e3bdcd6944a4bd32845a2bfb4ce87542bf6633f177dffbc34e",
+      "q36-recordizer-handoff-20261014/qualification.json": "15ea4f457e10d9d443f1216f5e8799c52fc1ac32fbdb9f06f150a8ec35eac9be",
+      "q36-recordizer-shipping-20261014/qualification.json": "15e910c01a4538bbfd914cdcf913b4dbb30044618303ba8ad979b700ec799b51"
+    },
+    "shipping_summary": {
+      "100000000": {
+        "uplink_ratio": {
+          "min": 4.376073110684421,
+          "median": 4.393309958491493,
+          "max": 8.568719029632046
+        },
+        "downlink_ratio": {
+          "min": 1.0010632848189212,
+          "median": 1.0011213973324715,
+          "max": 1.0011874328627797
+        },
+        "ACK_p50_ratio": {
+          "min": 0.8454279828277438,
+          "median": 1.0936932177476806,
+          "max": 1.2786769389387243
+        },
+        "ACK_p99_ratio": {
+          "min": 0.303430124946521,
+          "median": 0.30839847767948986,
+          "max": 0.3872678384829441
+        }
+      },
+      "0": {
+        "uplink_ratio": {
+          "min": 2.576336769606125,
+          "median": 2.7415215120564964,
+          "max": 2.8650753162010565
+        },
+        "downlink_ratio": {
+          "min": 1.8603181115219296,
+          "median": 2.0429323466263005,
+          "max": 2.062662309367589
+        },
+        "ACK_p50_ratio": {
+          "min": 0.18457575137722543,
+          "median": 0.23612490872325803,
+          "max": 0.23994086365189024
+        },
+        "ACK_p99_ratio": {
+          "min": 0.1729336857772838,
+          "median": 0.22503477361200966,
+          "max": 0.24816046362345984
+        }
+      }
+    },
+    "private_queue_cause_scope": "ACKs and downlink data share per-stream FIFO before server writer; raw packet-per-record servicing under heavy downlink accumulates queue delay in sampled diagnostic source fork. MUX drains the queue via batching; the same policy reduces total ACK delay and raises uplink on shipping CLI. Queue residence values are private diagnostics, not direct shipping timestamps.",
+    "known_limits": [
+      "Finite two-vCPU VM windows are not a saturation/capacity budget or universal performance PASS",
+      "Legacy FIFO delay and kernel TUN FULL_RING under overload are documented operating limits, not promises of zero loss/latency",
+      "Batching changes morphology/deadline/compatibility; no default switch, queue priority patch or DPI-equivalence claim",
+      "Private stage observer effects remain measured; no absolute zero-overhead assertion and no exact historical per-packet shipping timestamps",
+      "PCAP timing is conditional on matched headers; excluded/unmatched records remain explicit",
+      "Historic IPv6/old-source/failed/outlier windows retain their original identities; no pooling or relabelling"
+    ],
+    "new_product_fix": false,
+    "new_native_build": false,
+    "no_push_deploy_release": true,
+    "qualified_unix": 1791988794.9089234
+  },
+  "qualification_sha256": "3c17f5ad1fc74a22d414a98bd548bf082b49f01f0c5eecbeebc2ebaf170a109e",
+  "external_packet": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-final-20261014",
+  "scope": "Eight Markdown report/plan changes only; actual private12-window and shipping12-window recordizer controls plus five-criterion reconciliation with exact config/ACK/stage/cleanup scopes. No product/native/Linux-script delta; original automated/physical execution facts preserved.",
+  "no_push_deploy_release": true
+}
