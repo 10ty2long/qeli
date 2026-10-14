@@ -10,7 +10,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v260 -->
+<!-- normative-sync: full-system-audit-v261 -->
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2991,3 +2991,5 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 **14 October: complete Rust feed preparation qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): six SDK-pinned files, official source SHA, stock patch, host-prepare/host-configure and GNU-host/musl-target semantics PASS. Fixture feed omissions and host exports corrected; all owned resources removed. Compiler bootstrap/cold graph NOT_RUN, Q31 open,33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: actual public CI reviewed.** [Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): three failed published-e7 jobs;source pin404,current core unpublished. Keenetic fixture fixed and verified44/root +44/non-root, production owner guards intact. Mac/iOS diagnosis and exact-source hosted gate remain open;physical stands USER_EXCLUDED,33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
+
+**14 October: current CLI all12 statistical matrix.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):36 fresh sessions/144 windows/P1/P4 TCP+UDP×3,72 TCP role admissions, full source/host/archivecleanup PASS. Historical matrices not relabelled current; pre-measurement SUN_LEN/cleanup guard FAIL retained/cleaned. TUN/ACK stage OPEN;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.

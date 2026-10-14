@@ -448,3 +448,29 @@ Q36-F032: aggregate проверял совпадение целой raw-поп�
 На Windows и Linux по22 метода PASS:3 метода/14 subprocess invocations/6 imports защищают retired/guarded сценарии,19 report методов включают отдельные TCP/UDP phase copies и equal-rate distinct raws. Предыдущие ложные допуски и SSH constructor paths сохранены как baseline, не переписаны в PASS. Exact новый guard дополнительно применён к SHA18 raw-файлов ранее квалифицированных шести current legacy/mux sessions: по3 повтора off/required, дубликаты одинаковой фазы отсутствуют. Подставленная только в памяти копия одной настоящей phase identity отвергнута. Полный aggregate этих current diagnostic sessions не повторялся, throughput/statistics/raw байты не изменены.
 
 Используемые прежним runtime population и sample_policy побайтно неизменны на уровне функций, изменён только aggregate admission. Не было новых Rust/native/CLI/VPN сборок или нагрузочных измерений. Оба own lab roots/archives удалены после SHA/process/inode guards; host/service/firewall/routes/resolver сохранены. Методическая ошибка и dead-code perimeter закрыты в этом объёме; legacy queue pressure, TUN losses/стадия TCP-асимметрии и полное Q36 acceptance остаются открытыми.33/37(89,2%),NO_PUSH_DEPLOY_RELEASE. Evidence: `release/certification/evidence/q36-perf-methodology-20261014.json`; raw: q36-retired-perf-scenarios-20261014 и q36-benchmark-phase-independence-20261014.
+
+## 14 октября: полная статистическая матрица текущего CLI после F030
+
+36 новых сессий /144 окна по8с: все12 транспортов, outer4/inner4, TCP/UDP bidir P1/P4, по3 независимых повтора. Сервер и клиент используют уже квалифицированный CLI6f617bdcab5a; actual build e0ce217b630d, полный Git qeli-tree совпадает с execution commit eacd0da0833a. Новых компиляций нет. Это отдельная популяция; прежние полные матрицы, legacy/mux и до/после F030 не объединены с ней. Во втором повторе порядок профилей обратный. Порядок фаз фактически одинаковый во всех повторах: добавленное разворачивание в обвязке повторило уже существующее и отменило его эффект. Исходный driver и фактический порядок сохранены; результаты не исключены, снижения зависимости от порядка фаз не заявляется. TCP producer без лимита, UDP100Mbps на stream/направление (P1=100+100, P4=400+400); MTU1400/1500, штатные исходные профили benchmark, без смены qdisc/affinity/defaults. Это sibling namespaces одной2vCPU VM, не межсерверная capacity.
+
+Медианы трёх сессий; все48 групп, samples/min/max/spread, CPU/RSS/steal, receiver raw и счётчики session drops/UDP kernel RcvbufErrors сохранены без исключения выбросов. Эта матрица не измеряет точную стадию TUN TX drop или все native uplink handoff counters.
+
+|Mode|TCP P1 up/down Mbps|TCP P4 up/down Mbps|UDP P4 loss up/down %|
+|---|---:|---:|---:|
+|tcp-faketls|192.18/521.44|151.11/545.60|43.70/33.39|
+|tcp-frag|160.18/575.82|160.05/573.85|42.93/32.75|
+|tcp-obfs|114.11/568.31|138.89/528.06|57.34/39.97|
+|tcp-obfs-awg|168.25/503.30|125.45/553.62|54.52/39.88|
+|tcp-padding|158.43/551.21|144.36/581.40|40.85/36.79|
+|tcp-plain-raw|170.97/544.34|129.00/579.62|49.23/29.00|
+|tcp-reality|154.08/586.74|150.94/504.39|48.47/30.60|
+|tcp-reality-tls|254.34/663.98|218.77/654.62|35.48/7.46|
+|udp-faketls|226.96/586.24|216.53/557.00|40.28/53.25|
+|udp-faketls-awg|213.58/554.94|196.71/542.58|41.53/46.46|
+|udp-padding|197.61/532.04|203.05/543.19|43.85/50.11|
+|udp-quic|233.39/551.26|215.79/544.58|43.79/52.88|
+
+
+Все72 TCP endpoint-role проверки, независимость144 phase raw, source/CLI/process/generation/MTU/config/counter admissions, полный host gate и SHA-инвентаризация/очистка собственного root/archive подтверждены. Ранее выполненные текущие Linux20 и native/ABI/JNI проверки сохраняют исходные факты; этот прогон добавляет измерения, не заменяет их. Первая попытка отказала до измерений из-за SUN_LEN; старый archive guard отказал на новом префиксе. Исходный FAIL сохранён, отдельная recovery архивировала и удалила root/archive с неизменными host/staged CLI. R2 сокращает root/cell labels, заранее проверяет длину socket path и допускает только точный новый префикс.
+
+Критерии Q36 сопоставлены с прежними receipts: методическая review/dead-code работа F001–F032, негативные admissions, owning-module queue bounds/faults, роли/конкуренция и F030/F031/F032 ретесты имеют evidence. Current outer4/inner4 all-mode statistics теперь выполнены; прежние IPv6-популяции остаются историческими измерениями своих бинарников. Источник kernel TUN losses и точная стадия TCP-асимметрии не установлены; общего zero-loss/performance PASS и закрытия Q36 нет.33/37(89,2%). Evidence: `release/certification/evidence/q36-current-slot-statistics-20261014.json`; полный packet: q36-current-slot-statistics-r2-20261014. NO_PUSH_DEPLOY_RELEASE.
