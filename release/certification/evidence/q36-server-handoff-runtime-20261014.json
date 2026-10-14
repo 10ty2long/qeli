@@ -1,0 +1,2122 @@
+{
+  "status": "SAMPLED_SERVER_HANDOFF_THREE_OFF_ON_PAIRS_IDENTITIES_AND_CLEANUP_QUALIFIED",
+  "qualification": {
+    "status": "SAMPLED_SERVER_HANDOFF_THREE_OFF_ON_PAIRS_IDENTITIES_AND_CLEANUP_QUALIFIED",
+    "source_commit": "8f5932cf9043357f7cce6bc04c65c10e53546a48",
+    "diagnostic_build": {
+      "sampling": {
+        "selector": "IPv4 ID low nibble zero",
+        "mask": 15,
+        "value": 0,
+        "nominal_fraction": 0.0625
+      },
+      "stages": [
+        "server_tun_read",
+        "server_forwarder_dequeue",
+        "server_stream_enqueue",
+        "server_dequeue",
+        "server_encrypt_entry",
+        "server_write_done",
+        "client_plaintext",
+        "client_tun_write_begin",
+        "client_tun_write_done"
+      ],
+      "previous_attempts": [
+        {
+          "packet": "q36-ack-stage-build-20261014",
+          "status": "FAIL",
+          "errors": [
+            "AssertionError: bounded private build failed: private-ack-selector-tests"
+          ],
+          "cleaned": true
+        },
+        {
+          "packet": "q36-ack-stage-build-r2-20261014",
+          "status": "FAIL",
+          "errors": [
+            "AssertionError: bounded private build failed: private-ack-selector-tests"
+          ],
+          "cleaned": true
+        },
+        {
+          "packet": "q36-ack-stage-build-r3-20261014",
+          "status": "FAIL",
+          "errors": [
+            "AssertionError: bounded private build failed: private-ack-selector-tests"
+          ],
+          "cleaned": true
+        }
+      ],
+      "selector_scope": "Identical ack_probe.rs via isolated test crate; dummy write_atomic_private is not exercised. Actual Qeli atomic dump requires pilot runtime.",
+      "status": "PRIVATE_DIAGNOSTIC_BUILD_SELECTOR_SOURCE_AND_CLEANUP_QUALIFIED",
+      "source_commit": "8f5932cf9043357f7cce6bc04c65c10e53546a48",
+      "binary_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+      "source_delta": [
+        "qeli/src/ack_probe.rs",
+        "qeli/src/client/mod.rs",
+        "qeli/src/lib.rs",
+        "qeli/src/server/handler.rs",
+        "qeli/src/server/mod.rs",
+        "qeli/src/trace.rs",
+        "qeli/src/transport_core/linux_tun.rs"
+      ],
+      "source_files": 920,
+      "selector_tests": 3,
+      "private_release_profile": {
+        "lto": "thin",
+        "codegen_units": 4
+      },
+      "product_native_unchanged": true,
+      "host_preserved": true,
+      "owned_build_cache_removed": true,
+      "shipping_artifact": false,
+      "observer_neutrality_qualified": false,
+      "Q36_closed": false,
+      "qualified_unix": 1791986464.5704277,
+      "input_hashes": {
+        "build.json": "2cb22a3d77654d668f22d257c0f17fe6cf3ff31676dafc58c51ea35830ec6e37",
+        "plan.json": "0f8a4994a44df74021e9a5fa56dbc75487e08bb1fadc610a2d71bfd696d0e3ed",
+        "source.tar.gz": "bcfd9922b2f8f7f88f8b9353e1cf599baebd89020596fffc64ed2b85e3acf3f0",
+        "build.py": "576277984f5bf44bb45720038dc56bec0109df1fcefb4d20cae02ec35cf1054f",
+        "ack_probe.rs": "0b6b3f4673482a9b89ad76740a44f6341226ec2fbe62191faa1b06b20c699f5d",
+        "private-ack-selector-tests.log": "76ff49675920a5952479fa44cd59cc2d1ff0a3533966325d3fb9dddfc37510c9",
+        "private-cli.log": "3209e8cc8eb5141b72aee147a7d0d2fdb02f8bfe184045042135d19e325f2c01",
+        "diagnostic-qeli": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "probe-Cargo.toml": "550f143682681404c13c96f5aa2e610639c47fb2bbe67651259fbcc52cad86fa",
+        "probe-lib.rs": "1529178e3f7ef0ab73625bf0dbf2b833433347ca433166169a97dcac0e1ded2d",
+        "probe-Cargo.lock": "231282707e4bdd853b4917cb564bd65e8a0debdbffc4027986f6196b2bebd9e2",
+        "private-selector-lock.log": "32d71e01d156b5f285730583b0df72e3ebc4e533879a07b1164ba22b59e8042b"
+      }
+    },
+    "sessions": 6,
+    "windows": 12,
+    "results": [
+      {
+        "repeat": 1,
+        "label": "r1-off-raw",
+        "condition": "off",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 280.61059750015033,
+          "up_retransmits": 101,
+          "down_mbps": 99.9367560455066,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r1-off-raw",
+          "repeat": 1,
+          "down_rate": 100000000,
+          "flow_peer_port": 43656,
+          "clock_delta_error_seconds": 0.000964812,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 31585,
+                "received": 31585,
+                "dropped": 0
+              },
+              "bytes": 2151044,
+              "data_ack_packets": 31581,
+              "excluded_control_or_other_port": 4,
+              "sha256": "b5819e0e86f25da8aa0261017301903cbe61de2647b219d8e709436e32d2ee25"
+            },
+            "client": {
+              "counts": {
+                "captured": 31585,
+                "received": 31585,
+                "dropped": 0
+              },
+              "bytes": 2151044,
+              "data_ack_packets": 31581,
+              "excluded_control_or_other_port": 4,
+              "sha256": "004b65c0c3b3a8fad6b49e0e6f1b4a499db821095a4f722895ecb569a55c8bf2"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 31581,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.940306,
+            "p95": 4.709194,
+            "p99": 10.345101,
+            "max": 17.526973,
+            "min": 0.028524
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 24,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "label": "r1-on-raw",
+        "condition": "on",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 255.32920179962275,
+          "up_retransmits": 153,
+          "down_mbps": 99.930826875712,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r1-on-raw",
+          "repeat": 1,
+          "down_rate": 100000000,
+          "flow_peer_port": 48102,
+          "clock_delta_error_seconds": 4.38e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 28967,
+                "received": 28967,
+                "dropped": 0
+              },
+              "bytes": 1974964,
+              "data_ack_packets": 28963,
+              "excluded_control_or_other_port": 4,
+              "sha256": "c5ee4e9c3a1a3ba34ef1be91d01d03ccc2a7ee7f1062783db5b99b01d07f33fa"
+            },
+            "client": {
+              "counts": {
+                "captured": 28967,
+                "received": 28967,
+                "dropped": 0
+              },
+              "bytes": 1974964,
+              "data_ack_packets": 28963,
+              "excluded_control_or_other_port": 4,
+              "sha256": "f35b3518b7ddfb5af47a2f382f3decb6a3a4a976abf6266215c154a3f9bae84a"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 28963,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.930185,
+            "p95": 4.460166,
+            "p99": 8.734739,
+            "max": 22.595031,
+            "min": 0.030879
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 24,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "label": "r1-off-raw",
+        "condition": "off",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 123.59221610164307,
+          "up_retransmits": 145,
+          "down_mbps": 568.2750989441668,
+          "down_retransmits": 982
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r1-off-raw",
+          "repeat": 1,
+          "down_rate": 0,
+          "flow_peer_port": 39514,
+          "clock_delta_error_seconds": 3.987e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 16319,
+                "received": 16319,
+                "dropped": 0
+              },
+              "bytes": 1113468,
+              "data_ack_packets": 16316,
+              "excluded_control_or_other_port": 3,
+              "sha256": "b65e0a2f4e3e1ff457fbd5d7fe112d49d04163f5e0599a21a5e16b22a22ed42d"
+            },
+            "client": {
+              "counts": {
+                "captured": 16319,
+                "received": 16319,
+                "dropped": 0
+              },
+              "bytes": 1113468,
+              "data_ack_packets": 16316,
+              "excluded_control_or_other_port": 3,
+              "sha256": "408c2ffd2447ece1ea8296e4e9d6b124abd3b68c77af77053f50042f653a0644"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 16316,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 16.699138,
+            "p95": 37.743492,
+            "p99": 44.297975,
+            "max": 57.288535,
+            "min": 0.029935
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 23,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "label": "r1-on-raw",
+        "condition": "on",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 173.95015812107707,
+          "up_retransmits": 144,
+          "down_mbps": 456.7245238270956,
+          "down_retransmits": 536
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r1-on-raw",
+          "repeat": 1,
+          "down_rate": 0,
+          "flow_peer_port": 51656,
+          "clock_delta_error_seconds": 3.719e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 23236,
+                "received": 23236,
+                "dropped": 0
+              },
+              "bytes": 1583220,
+              "data_ack_packets": 23232,
+              "excluded_control_or_other_port": 4,
+              "sha256": "7ea6e48caeb4696814a1f79884befe352a955c5f6abf00282d34fa43cb42b237"
+            },
+            "client": {
+              "counts": {
+                "captured": 23236,
+                "received": 23236,
+                "dropped": 0
+              },
+              "bytes": 1583220,
+              "data_ack_packets": 23232,
+              "excluded_control_or_other_port": 4,
+              "sha256": "4835adbe00e2efa2bd556008f38de2b52266b1ee4108f2e5a94915b2e4c4ba9a"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 23232,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 10.606932,
+            "p95": 29.944872,
+            "p99": 40.267083,
+            "max": 61.695622,
+            "min": 0.038813
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 23,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 2,
+        "label": "r2-on-raw",
+        "condition": "on",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 371.11443458794764,
+          "up_retransmits": 154,
+          "down_mbps": 98.85863540784884,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r2-on-raw",
+          "repeat": 2,
+          "down_rate": 100000000,
+          "flow_peer_port": 50766,
+          "clock_delta_error_seconds": 3.316e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 42065,
+                "received": 42065,
+                "dropped": 0
+              },
+              "bytes": 2864532,
+              "data_ack_packets": 42061,
+              "excluded_control_or_other_port": 4,
+              "sha256": "ca485185483c59e9960f1f4390997a3d6ba38282cc05591b45988301895e4e05"
+            },
+            "client": {
+              "counts": {
+                "captured": 42065,
+                "received": 42065,
+                "dropped": 0
+              },
+              "bytes": 2864532,
+              "data_ack_packets": 42061,
+              "excluded_control_or_other_port": 4,
+              "sha256": "fd7af1394da1ebd0d26ed2d0372e43481325919832c928dd9dc05f50e9060265"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 42061,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.86515,
+            "p95": 4.066662,
+            "p99": 7.170038,
+            "max": 23.701444,
+            "min": 0.02976
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 23,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 2,
+        "label": "r2-off-raw",
+        "condition": "off",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 189.44984627445214,
+          "up_retransmits": 38,
+          "down_mbps": 99.9319752073455,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r2-off-raw",
+          "repeat": 2,
+          "down_rate": 100000000,
+          "flow_peer_port": 55874,
+          "clock_delta_error_seconds": 3.248e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 24311,
+                "received": 24311,
+                "dropped": 0
+              },
+              "bytes": 1655956,
+              "data_ack_packets": 24307,
+              "excluded_control_or_other_port": 4,
+              "sha256": "85b7a55082b91ffe214c1cb34227856f579b980d9454b9bf5dc4246f577c782b"
+            },
+            "client": {
+              "counts": {
+                "captured": 24311,
+                "received": 24311,
+                "dropped": 0
+              },
+              "bytes": 1655956,
+              "data_ack_packets": 24307,
+              "excluded_control_or_other_port": 4,
+              "sha256": "86206ffc0f8e2fd3fdb9c6a92416d823485a78c6881460f0287db019b3162e8a"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 24307,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 1.216701,
+            "p95": 6.975543,
+            "p99": 12.662402,
+            "max": 21.349986,
+            "min": 0.026247
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 24,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 2,
+        "label": "r2-on-raw",
+        "condition": "on",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 149.25549221375292,
+          "up_retransmits": 125,
+          "down_mbps": 540.4727154192108,
+          "down_retransmits": 870
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r2-on-raw",
+          "repeat": 2,
+          "down_rate": 0,
+          "flow_peer_port": 33358,
+          "clock_delta_error_seconds": 3.166e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 19588,
+                "received": 19588,
+                "dropped": 0
+              },
+              "bytes": 1335632,
+              "data_ack_packets": 19585,
+              "excluded_control_or_other_port": 3,
+              "sha256": "8dd8012a97ddae91a593734a6ad56c2245676b3f7dc32be1d61aae0ca28e7927"
+            },
+            "client": {
+              "counts": {
+                "captured": 19583,
+                "received": 19583,
+                "dropped": 0
+              },
+              "bytes": 1335212,
+              "data_ack_packets": 19580,
+              "excluded_control_or_other_port": 3,
+              "sha256": "5e6ef7c3024871d84e9bdd156b605217d9ee08c90fab1d6fffd1d3404af0fdcc"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 19580,
+          "unmatched_source": 5,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 11.580175,
+            "p95": 30.672496,
+            "p99": 37.996229,
+            "max": 48.367951,
+            "min": 0.033982
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 22,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 2,
+        "label": "r2-off-raw",
+        "condition": "off",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 133.1250916485718,
+          "up_retransmits": 515,
+          "down_mbps": 564.9272847089753,
+          "down_retransmits": 660
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r2-off-raw",
+          "repeat": 2,
+          "down_rate": 0,
+          "flow_peer_port": 56082,
+          "clock_delta_error_seconds": 3.276e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 18587,
+                "received": 18587,
+                "dropped": 0
+              },
+              "bytes": 1272140,
+              "data_ack_packets": 18584,
+              "excluded_control_or_other_port": 3,
+              "sha256": "ba59ff68be406f8881e47e671038d603b6547b021c68cfbaee9d9a9b6dc571ad"
+            },
+            "client": {
+              "counts": {
+                "captured": 18574,
+                "received": 18574,
+                "dropped": 0
+              },
+              "bytes": 1271256,
+              "data_ack_packets": 18571,
+              "excluded_control_or_other_port": 3,
+              "sha256": "1be0d825467368f8f842d32a54b41f06d27bbdc3428adc5c2f26fd8755f81050"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 18571,
+          "unmatched_source": 13,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 15.088365,
+            "p95": 27.022817,
+            "p99": 34.515443,
+            "max": 50.89084,
+            "min": 0.038413
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 23,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 3,
+        "label": "r3-off-raw",
+        "condition": "off",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 186.73230557714615,
+          "up_retransmits": 208,
+          "down_mbps": 99.9277065426096,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r3-off-raw",
+          "repeat": 3,
+          "down_rate": 100000000,
+          "flow_peer_port": 49882,
+          "clock_delta_error_seconds": 3.793e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 23037,
+                "received": 23037,
+                "dropped": 0
+              },
+              "bytes": 1570360,
+              "data_ack_packets": 23033,
+              "excluded_control_or_other_port": 4,
+              "sha256": "b3a1f53268a0ac17e0d22c520dd69a19d61ffd282d81400a2bf02ee957e8f3a5"
+            },
+            "client": {
+              "counts": {
+                "captured": 23037,
+                "received": 23037,
+                "dropped": 0
+              },
+              "bytes": 1570360,
+              "data_ack_packets": 23033,
+              "excluded_control_or_other_port": 4,
+              "sha256": "63b9c678aa4aef5d2a2a9ad679af929bb0deec25a652b5d83edc5aab0f34fea9"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 23033,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 1.201702,
+            "p95": 6.615489,
+            "p99": 14.393186,
+            "max": 26.860688,
+            "min": 0.031663
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 24,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 3,
+        "label": "r3-on-raw",
+        "condition": "on",
+        "down_rate": 100000000,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 295.7937419219993,
+          "up_retransmits": 119,
+          "down_mbps": 100.06268518687371,
+          "down_retransmits": 0
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r3-on-raw",
+          "repeat": 3,
+          "down_rate": 100000000,
+          "flow_peer_port": 59634,
+          "clock_delta_error_seconds": 3.129e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 34006,
+                "received": 34006,
+                "dropped": 0
+              },
+              "bytes": 2316596,
+              "data_ack_packets": 34003,
+              "excluded_control_or_other_port": 3,
+              "sha256": "67f93f88551afaa9471ae9cfb397e830ab641e2073e08dc48fb2ab4aa9e53abd"
+            },
+            "client": {
+              "counts": {
+                "captured": 34006,
+                "received": 34006,
+                "dropped": 0
+              },
+              "bytes": 2316596,
+              "data_ack_packets": 34003,
+              "excluded_control_or_other_port": 3,
+              "sha256": "1cb8866973834f01da145f0363bd70c169277c13e2248f0806548fc1b26c7366"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 34003,
+          "unmatched_source": 0,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 0.843077,
+            "p95": 3.936068,
+            "p99": 8.08409,
+            "max": 19.690946,
+            "min": 0.029957
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 24,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 3,
+        "label": "r3-off-raw",
+        "condition": "off",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 136.47584822528262,
+          "up_retransmits": 286,
+          "down_mbps": 525.6013484978974,
+          "down_retransmits": 965
+        },
+        "ACK": {
+          "condition": "off",
+          "label": "r3-off-raw",
+          "repeat": 3,
+          "down_rate": 0,
+          "flow_peer_port": 46094,
+          "clock_delta_error_seconds": 3.221e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 17823,
+                "received": 17823,
+                "dropped": 0
+              },
+              "bytes": 1217352,
+              "data_ack_packets": 17819,
+              "excluded_control_or_other_port": 4,
+              "sha256": "676e51191f18a66d6623489739a51472bc298ec4cfc52c54ace1a212f33a8bf9"
+            },
+            "client": {
+              "counts": {
+                "captured": 17818,
+                "received": 17818,
+                "dropped": 0
+              },
+              "bytes": 1216952,
+              "data_ack_packets": 17814,
+              "excluded_control_or_other_port": 4,
+              "sha256": "9c6d2524e3e36d15fe1a1f961943b965dba181d68ec4341923b66fe8f6a8255d"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 17814,
+          "unmatched_source": 5,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 13.779755,
+            "p95": 30.362194,
+            "p99": 39.017592,
+            "max": 48.904728,
+            "min": 0.039
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 22,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "repeat": 3,
+        "label": "r3-on-raw",
+        "condition": "on",
+        "down_rate": 0,
+        "actual_cli_sha256": "c7f573dfa066446ed0ce931a564cb37fa66468721de87983b687aa8c1d4e287e",
+        "metrics": {
+          "up_mbps": 180.26446377567186,
+          "up_retransmits": 53,
+          "down_mbps": 529.8348973259847,
+          "down_retransmits": 898
+        },
+        "ACK": {
+          "condition": "on",
+          "label": "r3-on-raw",
+          "repeat": 3,
+          "down_rate": 0,
+          "flow_peer_port": 42830,
+          "clock_delta_error_seconds": 3.461e-06,
+          "population": {
+            "server": {
+              "counts": {
+                "captured": 25446,
+                "received": 25446,
+                "dropped": 0
+              },
+              "bytes": 1732752,
+              "data_ack_packets": 25443,
+              "excluded_control_or_other_port": 3,
+              "sha256": "51beaf8a47196e8e43c62a8de36cc46b039bd7529c69daf95be28ec48812c652"
+            },
+            "client": {
+              "counts": {
+                "captured": 25417,
+                "received": 25417,
+                "dropped": 0
+              },
+              "bytes": 1730756,
+              "data_ack_packets": 25414,
+              "excluded_control_or_other_port": 3,
+              "sha256": "9f5f07ac6b2203cf9b21924dd191fb920278c750b6b083649df240031618c126"
+            }
+          },
+          "timing_population": "matched identical headers only",
+          "missing_header_cause": "unresolved; no kernel capture drops reported",
+          "matched": 25414,
+          "unmatched_source": 29,
+          "unmatched_destination": 0,
+          "repeated_header_records": 0,
+          "delay_ms": {
+            "p50": 11.125608,
+            "p95": 29.475659,
+            "p99": 39.009841,
+            "max": 46.273071,
+            "min": 0.030819
+          }
+        },
+        "held_actual_server_buffer_bytes": 524288,
+        "actual_buffer_observations": 23,
+        "client_drop_deltas": {
+          "uplink": {
+            "no_carrier": 0,
+            "oversize": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          },
+          "downlink": {
+            "disconnected": 0,
+            "pool_exhausted": 0,
+            "queue_full": 0,
+            "total": 0
+          }
+        }
+      }
+    ],
+    "observer_comparisons": [
+      {
+        "repeat": 1,
+        "down_rate": 100000000,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 0.9099057700395152,
+        "downlink_ratio": 0.9999406707799091,
+        "ACK_p50_ratio": 0.9892364825918372,
+        "ACK_p99_ratio": 0.8443357875384686
+      },
+      {
+        "repeat": 1,
+        "down_rate": 0,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 1.4074523753018497,
+        "downlink_ratio": 0.8037032146502145,
+        "ACK_p50_ratio": 0.6351784145984062,
+        "ACK_p99_ratio": 0.9090050504565953
+      },
+      {
+        "repeat": 2,
+        "down_rate": 100000000,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 1.9589059684446601,
+        "downlink_ratio": 0.9892592956631786,
+        "ACK_p50_ratio": 0.7110621261920553,
+        "ACK_p99_ratio": 0.5662462777599384
+      },
+      {
+        "repeat": 2,
+        "down_rate": 0,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 1.1211672447727787,
+        "downlink_ratio": 0.9567120053293896,
+        "ACK_p50_ratio": 0.7674903808331784,
+        "ACK_p99_ratio": 1.100847206278071
+      },
+      {
+        "repeat": 3,
+        "down_rate": 100000000,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 1.584052320286892,
+        "downlink_ratio": 1.001350762955883,
+        "ACK_p50_ratio": 0.701569107815415,
+        "ACK_p99_ratio": 0.5616609137129194
+      },
+      {
+        "repeat": 3,
+        "down_rate": 0,
+        "control": "off",
+        "changed": "on",
+        "uplink_ratio": 1.3208524886990023,
+        "downlink_ratio": 1.0080546764961433,
+        "ACK_p50_ratio": 0.8073879397710627,
+        "ACK_p99_ratio": 0.9998013460184831
+      }
+    ],
+    "stage_results": [
+      {
+        "repeat": 1,
+        "label": "r1-on-raw",
+        "sampled_unique_header_count": 1811,
+        "actual_header_sampling_fraction": 0.06252805303318026,
+        "complete_sampled_to_full_ACK_p50_ratio": 1.0293629761821572,
+        "full_ACK_p50_ms": 0.930185,
+        "down_rate": 100000000,
+        "complete_unique_same_header_ACKs": 1810,
+        "pcap_unique_header_union": 28963,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 27152,
+          "incomplete_or_repeated_stage_events": 1
+        },
+        "events": {
+          "server": {
+            "events": 10865,
+            "lost": 1,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 1811,
+              "server_forwarder_dequeue": 1810,
+              "server_stream_enqueue": 1811,
+              "server_dequeue": 1811,
+              "server_encrypt_entry": 1811,
+              "server_write_done": 1811
+            },
+            "clock_offset_spread_ns": 28661,
+            "sha256": "b509536c93f8edc7df006d2effb452489284a3f583abb5d6d9696dbec7aee6f4"
+          },
+          "client": {
+            "events": 5433,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 1811,
+              "client_tun_write_begin": 1811,
+              "client_tun_write_done": 1811
+            },
+            "clock_offset_spread_ns": 16699,
+            "sha256": "af49f56f8a16e910d478a0effeb8f7a56eb4652513171cc7d511bd206b0c7bda"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.13802318,
+        "all_server_pcap_horizon_seconds": 8.143935377,
+        "complete_subset_first_server_pcap_offset_seconds": 0.005901436,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.039255,
+            "p95": 1.024837,
+            "p99": 2.667328,
+            "min": 0.001147,
+            "max": 10.351368,
+            "mean": 0.23071960828729282
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000744,
+            "p95": 0.001441,
+            "p99": 0.008741,
+            "min": 0.000526,
+            "max": 0.117643,
+            "mean": 0.0011609436464088399
+          },
+          "server_stream_queue": {
+            "p50": 0.035131,
+            "p95": 1.277148,
+            "p99": 3.664136,
+            "min": 0.000777,
+            "max": 7.275836,
+            "mean": 0.2763349099447514
+          },
+          "server_read_to_dequeue": {
+            "p50": 0.118412,
+            "p95": 2.108676,
+            "p99": 6.094286,
+            "min": 0.002833,
+            "max": 11.600464,
+            "mean": 0.508215461878453
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.000798,
+            "p95": 0.001128,
+            "p99": 0.010049,
+            "min": 0.000672,
+            "max": 0.071086,
+            "mean": 0.0010797303867403315
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.196949,
+            "p95": 1.886705,
+            "p99": 3.08073,
+            "min": 0.008883,
+            "max": 5.229029,
+            "mean": 0.5033720596685083
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.082666,
+            "p95": 1.027479,
+            "p99": 1.873564,
+            "min": 0.000917,
+            "max": 4.277271,
+            "mean": 0.2493272281767956
+          },
+          "client_tun_write": {
+            "p50": 0.003798,
+            "p95": 0.036751,
+            "p99": 0.096873,
+            "min": 0.001999,
+            "max": 0.618453,
+            "mean": 0.010046975138121547
+          },
+          "server_read_to_client_write_done": {
+            "p50": 0.820732,
+            "p95": 3.971239,
+            "p99": 7.911952,
+            "min": 0.03502,
+            "max": 15.839638,
+            "mean": 1.2720414552486188
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.182712,
+            "p95": 1.86968,
+            "p99": 3.073741,
+            "min": -0.839728,
+            "max": 5.223637,
+            "mean": 0.4853201226519337
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006995,
+            "p95": 0.051499,
+            "p99": 0.194692,
+            "min": 0.003383,
+            "max": 1.663449,
+            "mean": 0.018051937016574586
+          },
+          "pcap_endpoint_delay": {
+            "p50": 0.957498,
+            "p95": 4.466111,
+            "p99": 8.878895,
+            "min": 0.042704,
+            "max": 20.417053,
+            "mean": 1.465980052486188
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.011517,
+            "p95": 1.112893,
+            "p99": 2.496546,
+            "min": 0.001713,
+            "max": 10.329639,
+            "mean": 0.2027481861878453
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.002779,
+            "p95": 0.034021,
+            "p99": 0.094586,
+            "min": 0.001326,
+            "max": 0.617155,
+            "mean": 0.008806381215469613
+          }
+        },
+        "dominant_segment_counts": {
+          "encrypt_to_client_plaintext": 916,
+          "server_read_to_forwarder": 244,
+          "server_stream_queue": 246,
+          "client_plaintext_to_write_begin": 369,
+          "client_tun_write": 35
+        },
+        "write_completion_before_plaintext_count": 1694,
+        "write_completion_after_plaintext_count": 116
+      },
+      {
+        "repeat": 1,
+        "label": "r1-on-raw",
+        "sampled_unique_header_count": 1452,
+        "actual_header_sampling_fraction": 0.0625,
+        "complete_sampled_to_full_ACK_p50_ratio": 0.9931494799815819,
+        "full_ACK_p50_ms": 10.606932,
+        "down_rate": 0,
+        "complete_unique_same_header_ACKs": 1451,
+        "pcap_unique_header_union": 23232,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 21780,
+          "incomplete_or_repeated_stage_events": 1
+        },
+        "events": {
+          "server": {
+            "events": 8717,
+            "lost": 1,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 1452,
+              "server_forwarder_dequeue": 1453,
+              "server_stream_enqueue": 1453,
+              "server_dequeue": 1453,
+              "server_encrypt_entry": 1453,
+              "server_write_done": 1453
+            },
+            "clock_offset_spread_ns": 22529,
+            "sha256": "79bd68ad0dec1b25666bae05bbf313fe837f65eff0d60770dd00ee5e6eda217c"
+          },
+          "client": {
+            "events": 4359,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 1453,
+              "client_tun_write_begin": 1453,
+              "client_tun_write_done": 1453
+            },
+            "clock_offset_spread_ns": 75,
+            "sha256": "40246c907427add9266f410ecf896d68552f20e016b6c6f03d4d11b49ccb0557"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.010612997,
+        "all_server_pcap_horizon_seconds": 8.017847748,
+        "complete_subset_first_server_pcap_offset_seconds": 0.001732442,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.21136,
+            "p95": 6.797761,
+            "p99": 9.907375,
+            "min": 0.001198,
+            "max": 12.872707,
+            "mean": 1.1833891598897313
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000728,
+            "p95": 0.001373,
+            "p99": 0.008007,
+            "min": 0.000535,
+            "max": 0.104757,
+            "mean": 0.001134053756030324
+          },
+          "server_stream_queue": {
+            "p50": 6.019919,
+            "p95": 24.655979,
+            "p99": 36.660742,
+            "min": 0.000849,
+            "max": 48.932677,
+            "mean": 7.563999085458304
+          },
+          "server_read_to_dequeue": {
+            "p50": 7.943306,
+            "p95": 24.806323,
+            "p99": 37.286854,
+            "min": 0.005064,
+            "max": 48.945546,
+            "mean": 8.748522299104065
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.00083,
+            "p95": 0.001104,
+            "p99": 0.001568,
+            "min": 0.00066,
+            "max": 0.620871,
+            "mean": 0.0014049875947622329
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.716663,
+            "p95": 4.694068,
+            "p99": 7.647327,
+            "min": 0.008854,
+            "max": 15.966736,
+            "mean": 1.2727507622329428
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.68058,
+            "p95": 2.967729,
+            "p99": 4.067728,
+            "min": 0.001574,
+            "max": 10.66062,
+            "mean": 0.9880665988973122
+          },
+          "client_tun_write": {
+            "p50": 0.003052,
+            "p95": 0.033723,
+            "p99": 0.103086,
+            "min": 0.001986,
+            "max": 1.618509,
+            "mean": 0.009704827705031014
+          },
+          "server_read_to_client_write_done": {
+            "p50": 10.001032,
+            "p95": 27.196242,
+            "p99": 39.214794,
+            "min": 0.044832,
+            "max": 50.242114,
+            "mean": 11.020449475534114
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.710008,
+            "p95": 4.686616,
+            "p99": 7.635104,
+            "min": -0.582702,
+            "max": 15.955255,
+            "mean": 1.2555174410751206
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006142,
+            "p95": 0.029087,
+            "p99": 0.217722,
+            "min": 0.003403,
+            "max": 1.502191,
+            "mean": 0.017233321157822192
+          },
+          "pcap_endpoint_delay": {
+            "p50": 10.534269,
+            "p95": 28.653254,
+            "p99": 40.231748,
+            "min": 0.051577,
+            "max": 50.372804,
+            "mean": 11.519076272226052
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.020432,
+            "p95": 2.907853,
+            "p99": 7.14518,
+            "min": 0.002087,
+            "max": 15.716087,
+            "mean": 0.5072491688490696
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.002232,
+            "p95": 0.032365,
+            "p99": 0.091245,
+            "min": 0.001353,
+            "max": 1.617736,
+            "mean": 0.00861927567195038
+          }
+        },
+        "dominant_segment_counts": {
+          "server_stream_queue": 941,
+          "server_read_to_forwarder": 223,
+          "client_plaintext_to_write_begin": 72,
+          "encrypt_to_client_plaintext": 212,
+          "client_tun_write": 3
+        },
+        "write_completion_before_plaintext_count": 1418,
+        "write_completion_after_plaintext_count": 33
+      },
+      {
+        "repeat": 2,
+        "label": "r2-on-raw",
+        "sampled_unique_header_count": 1224,
+        "actual_header_sampling_fraction": 0.0624968087822313,
+        "complete_sampled_to_full_ACK_p50_ratio": 0.99740435701533,
+        "full_ACK_p50_ms": 11.580175,
+        "down_rate": 0,
+        "complete_unique_same_header_ACKs": 1224,
+        "pcap_unique_header_union": 19585,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 18361
+        },
+        "events": {
+          "server": {
+            "events": 7344,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 1224,
+              "server_forwarder_dequeue": 1224,
+              "server_stream_enqueue": 1224,
+              "server_dequeue": 1224,
+              "server_encrypt_entry": 1224,
+              "server_write_done": 1224
+            },
+            "clock_offset_spread_ns": 31512,
+            "sha256": "b852e7a36d00c848f02794bf597a1c0304407b0ab479882746965e6b97788cce"
+          },
+          "client": {
+            "events": 3672,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 1224,
+              "client_tun_write_begin": 1224,
+              "client_tun_write_done": 1224
+            },
+            "clock_offset_spread_ns": 142,
+            "sha256": "4e5740b39b3e732d42873190804435fe50b4e08427b38870730428660a286720"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.00439998,
+        "all_server_pcap_horizon_seconds": 8.010367631,
+        "complete_subset_first_server_pcap_offset_seconds": 0.003176989,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.202277,
+            "p95": 6.432022,
+            "p99": 9.924692,
+            "min": 0.00116,
+            "max": 14.657203,
+            "mean": 1.1476861053921568
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000737,
+            "p95": 0.00127,
+            "p99": 0.001996,
+            "min": 0.000524,
+            "max": 0.106336,
+            "mean": 0.0010635727124183006
+          },
+          "server_stream_queue": {
+            "p50": 6.237488,
+            "p95": 28.282296,
+            "p99": 35.223276,
+            "min": 0.000769,
+            "max": 44.876332,
+            "mean": 8.590419541666666
+          },
+          "server_read_to_dequeue": {
+            "p50": 8.07752,
+            "p95": 28.386408,
+            "p99": 35.798203,
+            "min": 0.003829,
+            "max": 44.882083,
+            "mean": 9.739169219771242
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.000835,
+            "p95": 0.001232,
+            "p99": 0.001756,
+            "min": 0.000655,
+            "max": 0.085627,
+            "mean": 0.0010795212418300653
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.862744,
+            "p95": 5.096649,
+            "p99": 7.527722,
+            "min": 0.008757,
+            "max": 10.629237,
+            "mean": 1.4690430980392157
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.795184,
+            "p95": 3.067414,
+            "p99": 4.249312,
+            "min": 0.002031,
+            "max": 6.950301,
+            "mean": 1.0572055
+          },
+          "client_tun_write": {
+            "p50": 0.003008,
+            "p95": 0.034085,
+            "p99": 0.09311,
+            "min": 0.00196,
+            "max": 1.418868,
+            "mean": 0.011919513071895425
+          },
+          "server_read_to_client_write_done": {
+            "p50": 10.674663,
+            "p95": 30.531294,
+            "p99": 37.904481,
+            "min": 0.040034,
+            "max": 48.370857,
+            "mean": 12.278416852124183
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.856853,
+            "p95": 5.090319,
+            "p99": 7.521269,
+            "min": -0.28434,
+            "max": 10.619362,
+            "mean": 1.4571507859477124
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006028,
+            "p95": 0.022115,
+            "p99": 0.09274,
+            "min": 0.003396,
+            "max": 1.179864,
+            "mean": 0.011892312091503269
+          },
+          "pcap_endpoint_delay": {
+            "p50": 11.550117,
+            "p95": 30.672797,
+            "p99": 38.167748,
+            "min": 0.041995,
+            "max": 48.367951,
+            "mean": 12.822074993464053
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.018188,
+            "p95": 3.274925,
+            "p99": 7.271555,
+            "min": 0.001594,
+            "max": 17.315071,
+            "mean": 0.5546522303921568
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.002185,
+            "p95": 0.032994,
+            "p99": 0.092077,
+            "min": 0.001315,
+            "max": 1.417436,
+            "mean": 0.01098887908496732
+          }
+        },
+        "dominant_segment_counts": {
+          "server_stream_queue": 756,
+          "server_read_to_forwarder": 194,
+          "encrypt_to_client_plaintext": 200,
+          "client_plaintext_to_write_begin": 74
+        },
+        "write_completion_before_plaintext_count": 1199,
+        "write_completion_after_plaintext_count": 25
+      },
+      {
+        "repeat": 2,
+        "label": "r2-on-raw",
+        "sampled_unique_header_count": 2629,
+        "actual_header_sampling_fraction": 0.0625044578112741,
+        "complete_sampled_to_full_ACK_p50_ratio": 1.0073397676703462,
+        "full_ACK_p50_ms": 0.86515,
+        "down_rate": 100000000,
+        "complete_unique_same_header_ACKs": 2629,
+        "pcap_unique_header_union": 42061,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 39432
+        },
+        "events": {
+          "server": {
+            "events": 15774,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 2629,
+              "server_forwarder_dequeue": 2629,
+              "server_stream_enqueue": 2629,
+              "server_dequeue": 2629,
+              "server_encrypt_entry": 2629,
+              "server_write_done": 2629
+            },
+            "clock_offset_spread_ns": 11442,
+            "sha256": "fc9d751c266fa88edaa7171dc1f31d19a124b18f94d8a2d480d4e19b0f9087e9"
+          },
+          "client": {
+            "events": 7887,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 2629,
+              "client_tun_write_begin": 2629,
+              "client_tun_write_done": 2629
+            },
+            "clock_offset_spread_ns": 32947,
+            "sha256": "4fbe06c7e3bdd8de117268a0b7da3e5384139859a775f83f60deee45004c7e9d"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.024115643,
+        "all_server_pcap_horizon_seconds": 8.031679462,
+        "complete_subset_first_server_pcap_offset_seconds": 0.0,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.038608,
+            "p95": 1.004479,
+            "p99": 3.06338,
+            "min": 0.000862,
+            "max": 11.204291,
+            "mean": 0.23135945758843668
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000752,
+            "p95": 0.001464,
+            "p99": 0.008709,
+            "min": 0.000525,
+            "max": 0.497948,
+            "mean": 0.0013277702548497527
+          },
+          "server_stream_queue": {
+            "p50": 0.046379,
+            "p95": 1.19449,
+            "p99": 2.991839,
+            "min": 0.000786,
+            "max": 8.820987,
+            "mean": 0.2605222061620388
+          },
+          "server_read_to_dequeue": {
+            "p50": 0.127168,
+            "p95": 2.067779,
+            "p99": 5.46544,
+            "min": 0.002971,
+            "max": 12.30628,
+            "mean": 0.49320943400532524
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.000785,
+            "p95": 0.001155,
+            "p99": 0.001764,
+            "min": 0.000658,
+            "max": 0.086977,
+            "mean": 0.0010301380753138076
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.163519,
+            "p95": 1.861319,
+            "p99": 3.23161,
+            "min": 0.008744,
+            "max": 5.839231,
+            "mean": 0.4555596698364397
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.083706,
+            "p95": 0.995324,
+            "p99": 1.821141,
+            "min": 0.000976,
+            "max": 3.798557,
+            "mean": 0.24262185431723088
+          },
+          "client_tun_write": {
+            "p50": 0.003628,
+            "p95": 0.035993,
+            "p99": 0.1058,
+            "min": 0.001986,
+            "max": 0.691253,
+            "mean": 0.010439081399771776
+          },
+          "server_read_to_client_write_done": {
+            "p50": 0.74089,
+            "p95": 3.748984,
+            "p99": 6.96301,
+            "min": 0.036984,
+            "max": 14.285222,
+            "mean": 1.2028601776340815
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.154098,
+            "p95": 1.804523,
+            "p99": 3.225842,
+            "min": -1.391787,
+            "max": 5.82802,
+            "mean": 0.4399344374286801
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006884,
+            "p95": 0.043101,
+            "p99": 0.121366,
+            "min": 0.003602,
+            "max": 1.414001,
+            "mean": 0.015625232407759603
+          },
+          "pcap_endpoint_delay": {
+            "p50": 0.8715,
+            "p95": 4.148726,
+            "p99": 6.967938,
+            "min": 0.038624,
+            "max": 19.430732,
+            "mean": 1.348293492582731
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.015392,
+            "p95": 0.790324,
+            "p99": 1.550833,
+            "min": 0.001552,
+            "max": 6.745795,
+            "mean": 0.15436359452263218
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.002653,
+            "p95": 0.03374,
+            "p99": 0.10355,
+            "min": 0.001324,
+            "max": 0.689056,
+            "mean": 0.008938645492582732
+          }
+        },
+        "dominant_segment_counts": {
+          "encrypt_to_client_plaintext": 1326,
+          "server_read_to_forwarder": 364,
+          "server_stream_queue": 377,
+          "client_plaintext_to_write_begin": 525,
+          "client_tun_write": 35,
+          "server_forwarder_to_stream_enqueue": 1,
+          "server_dequeue_to_encrypt": 1
+        },
+        "write_completion_before_plaintext_count": 2487,
+        "write_completion_after_plaintext_count": 142
+      },
+      {
+        "repeat": 3,
+        "label": "r3-on-raw",
+        "sampled_unique_header_count": 2126,
+        "actual_header_sampling_fraction": 0.06252389495044555,
+        "complete_sampled_to_full_ACK_p50_ratio": 0.9980156023708393,
+        "full_ACK_p50_ms": 0.843077,
+        "down_rate": 100000000,
+        "complete_unique_same_header_ACKs": 2126,
+        "pcap_unique_header_union": 34003,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 31877
+        },
+        "events": {
+          "server": {
+            "events": 12756,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 2126,
+              "server_forwarder_dequeue": 2126,
+              "server_stream_enqueue": 2126,
+              "server_dequeue": 2126,
+              "server_encrypt_entry": 2126,
+              "server_write_done": 2126
+            },
+            "clock_offset_spread_ns": 9966,
+            "sha256": "d2794ca174d25ac998f8293b9a7536796b9f1afc60ac548324b26dc4dbebc924"
+          },
+          "client": {
+            "events": 6378,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 2126,
+              "client_tun_write_begin": 2126,
+              "client_tun_write_done": 2126
+            },
+            "clock_offset_spread_ns": 7960,
+            "sha256": "ba75799d110518a11481c8d7655589c53303cf585ed1aa74cc030e55f785b9a9"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.019108939,
+        "all_server_pcap_horizon_seconds": 8.019489529,
+        "complete_subset_first_server_pcap_offset_seconds": 0.0,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.041898,
+            "p95": 1.019342,
+            "p99": 2.392429,
+            "min": 0.0008,
+            "max": 7.117879,
+            "mean": 0.20126801269990593
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000737,
+            "p95": 0.001393,
+            "p99": 0.009073,
+            "min": 0.000529,
+            "max": 0.067241,
+            "mean": 0.0010855536218250235
+          },
+          "server_stream_queue": {
+            "p50": 0.035224,
+            "p95": 1.283385,
+            "p99": 4.422004,
+            "min": 0.000788,
+            "max": 14.177227,
+            "mean": 0.286282053621825
+          },
+          "server_read_to_dequeue": {
+            "p50": 0.122368,
+            "p95": 2.08195,
+            "p99": 5.740452,
+            "min": 0.003249,
+            "max": 14.649844,
+            "mean": 0.488635619943556
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.000787,
+            "p95": 0.001053,
+            "p99": 0.001483,
+            "min": 0.000652,
+            "max": 0.342334,
+            "mean": 0.0011269750705550328
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.169302,
+            "p95": 1.871359,
+            "p99": 3.338828,
+            "min": 0.008571,
+            "max": 5.478781,
+            "mean": 0.4752781970837253
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.075225,
+            "p95": 1.062502,
+            "p99": 2.182222,
+            "min": 0.001123,
+            "max": 3.533846,
+            "mean": 0.24218340357478835
+          },
+          "client_tun_write": {
+            "p50": 0.003658,
+            "p95": 0.037573,
+            "p99": 0.113289,
+            "min": 0.002051,
+            "max": 2.098362,
+            "mean": 0.012336120884289746
+          },
+          "server_read_to_client_write_done": {
+            "p50": 0.747322,
+            "p95": 3.715786,
+            "p99": 8.320307,
+            "min": 0.03157,
+            "max": 18.011893,
+            "mean": 1.2195603165569144
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.154874,
+            "p95": 1.839525,
+            "p99": 3.333208,
+            "min": -2.010967,
+            "max": 5.446314,
+            "mean": 0.4539921815616181
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006856,
+            "p95": 0.056199,
+            "p99": 0.199978,
+            "min": 0.00343,
+            "max": 2.416707,
+            "mean": 0.021286015522107245
+          },
+          "pcap_endpoint_delay": {
+            "p50": 0.841404,
+            "p95": 3.933367,
+            "p99": 8.341309,
+            "min": 0.03432,
+            "max": 19.690946,
+            "mean": 1.3430029129821262
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.011311,
+            "p95": 0.776763,
+            "p99": 1.923124,
+            "min": 0.001863,
+            "max": 5.470511,
+            "mean": 0.13461593555973658
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.002713,
+            "p95": 0.035251,
+            "p99": 0.112475,
+            "min": 0.001403,
+            "max": 2.09719,
+            "mean": 0.011169697554092192
+          }
+        },
+        "dominant_segment_counts": {
+          "encrypt_to_client_plaintext": 1094,
+          "client_tun_write": 38,
+          "client_plaintext_to_write_begin": 392,
+          "server_read_to_forwarder": 287,
+          "server_stream_queue": 314,
+          "server_forwarder_to_stream_enqueue": 1
+        },
+        "write_completion_before_plaintext_count": 1963,
+        "write_completion_after_plaintext_count": 163
+      },
+      {
+        "repeat": 3,
+        "label": "r3-on-raw",
+        "sampled_unique_header_count": 1591,
+        "actual_header_sampling_fraction": 0.06253193412726486,
+        "complete_sampled_to_full_ACK_p50_ratio": 0.9925467444116313,
+        "full_ACK_p50_ms": 11.125608,
+        "down_rate": 0,
+        "complete_unique_same_header_ACKs": 1589,
+        "pcap_unique_header_union": 25443,
+        "excluded_header_counts": {
+          "not_in_deterministic_1_of_16_sample": 23852,
+          "not_exactly_one_pcap_at_both_endpoints": 2
+        },
+        "events": {
+          "server": {
+            "events": 9540,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "server_tun_read": 1590,
+              "server_forwarder_dequeue": 1590,
+              "server_stream_enqueue": 1590,
+              "server_dequeue": 1590,
+              "server_encrypt_entry": 1590,
+              "server_write_done": 1590
+            },
+            "clock_offset_spread_ns": 44392,
+            "sha256": "98cca59f0269bc03caae69177d4e1afad2b0dbb44c6a01da187c00c0962ad93c"
+          },
+          "client": {
+            "events": 4770,
+            "lost": 0,
+            "full": 0,
+            "counts": {
+              "client_plaintext": 1590,
+              "client_tun_write_begin": 1590,
+              "client_tun_write_done": 1590
+            },
+            "clock_offset_spread_ns": 7093,
+            "sha256": "6fd6c351d0a41daddfb78984af05430c7c3f5094f214c4dd5a256f0a4b7ca45b"
+          }
+        },
+        "complete_subset_server_pcap_horizon_seconds": 8.008937826,
+        "all_server_pcap_horizon_seconds": 8.010316783,
+        "complete_subset_first_server_pcap_offset_seconds": 0.000915488,
+        "stage_durations_ms": {
+          "server_read_to_forwarder": {
+            "p50": 0.203898,
+            "p95": 7.93599,
+            "p99": 11.892317,
+            "min": 0.000616,
+            "max": 19.280897,
+            "mean": 1.3856020673379483
+          },
+          "server_forwarder_to_stream_enqueue": {
+            "p50": 0.000708,
+            "p95": 0.001252,
+            "p99": 0.007804,
+            "min": 0.000529,
+            "max": 0.139546,
+            "mean": 0.0010884348646947766
+          },
+          "server_stream_queue": {
+            "p50": 6.076858,
+            "p95": 23.588246,
+            "p99": 34.961849,
+            "min": 0.000813,
+            "max": 45.302442,
+            "mean": 7.341777144115796
+          },
+          "server_read_to_dequeue": {
+            "p50": 8.048402,
+            "p95": 24.327475,
+            "p99": 34.989212,
+            "min": 0.005323,
+            "max": 45.322454,
+            "mean": 8.728467646318439
+          },
+          "server_dequeue_to_encrypt": {
+            "p50": 0.000783,
+            "p95": 0.001048,
+            "p99": 0.00145,
+            "min": 0.000662,
+            "max": 0.207102,
+            "mean": 0.0011090465701699183
+          },
+          "encrypt_to_client_plaintext": {
+            "p50": 0.768929,
+            "p95": 5.562201,
+            "p99": 9.178478,
+            "min": 0.008675,
+            "max": 16.59364,
+            "mean": 1.4738915997482693
+          },
+          "client_plaintext_to_write_begin": {
+            "p50": 0.84702,
+            "p95": 3.52829,
+            "p99": 5.15517,
+            "min": 0.002122,
+            "max": 10.303008,
+            "mean": 1.1602820075519193
+          },
+          "client_tun_write": {
+            "p50": 0.00294,
+            "p95": 0.036144,
+            "p99": 0.098812,
+            "min": 0.002012,
+            "max": 2.010457,
+            "mean": 0.013710458149779736
+          },
+          "server_read_to_client_write_done": {
+            "p50": 10.416861,
+            "p95": 28.853204,
+            "p99": 38.58801,
+            "min": 0.045401,
+            "max": 46.242953,
+            "mean": 11.377460758338577
+          },
+          "write_done_to_plaintext_signed": {
+            "p50": 0.754883,
+            "p95": 5.534628,
+            "p99": 9.161385,
+            "min": -3.046175,
+            "max": 16.587583,
+            "mean": 1.4579701346758969
+          },
+          "server_encrypt_to_write_done": {
+            "p50": 0.006004,
+            "p95": 0.021334,
+            "p99": 0.126196,
+            "min": 0.005301,
+            "max": 3.374861,
+            "mean": 0.015921465072372562
+          },
+          "pcap_endpoint_delay": {
+            "p50": 11.042686,
+            "p95": 29.4162,
+            "p99": 38.755897,
+            "min": 0.044222,
+            "max": 46.273071,
+            "mean": 12.049910699181876
+          },
+          "server_pcap_to_read_signed": {
+            "p50": 0.036392,
+            "p95": 4.591821,
+            "p99": 8.916253,
+            "min": 0.001886,
+            "max": 13.629073,
+            "mean": 0.6852201170547514
+          },
+          "client_pcap_to_write_done_signed": {
+            "p50": 0.00217,
+            "p95": 0.03478,
+            "p99": 0.097942,
+            "min": 0.001364,
+            "max": 2.008925,
+            "mean": 0.01277076714915041
+          }
+        },
+        "dominant_segment_counts": {
+          "server_stream_queue": 1012,
+          "server_read_to_forwarder": 260,
+          "client_plaintext_to_write_begin": 78,
+          "encrypt_to_client_plaintext": 234,
+          "client_tun_write": 5
+        },
+        "write_completion_before_plaintext_count": 1542,
+        "write_completion_after_plaintext_count": 47
+      }
+    ],
+    "sampling": {
+      "mask": 15,
+      "value": 0,
+      "nominal_fraction": 0.0625
+    },
+    "stage_boundary_definition": {
+      "server_read_to_forwarder": "Published TUN read through blocking_send until out_rx.recv.",
+      "server_forwarder_to_stream_enqueue": "After out_rx.recv, session lookup/routing/stream choice/pool copy until before stream try_send.",
+      "server_stream_queue": "Before stream try_send until stream rx.recv; includes scheduling.",
+      "server_read_to_dequeue": "From published TUN read length through blocking_send/out_rx forwarder, session lookup/routing and per-stream handoff until stream rx.recv. Not isolated residence in a single queue.",
+      "encrypt_to_client_plaintext": "Encryption, outer transport buffering/transmission and client receive/decryption combined.",
+      "client_plaintext_to_write_begin": "Validated plaintext through client TUN writer queue until preparation immediately before write syscall."
+    },
+    "identical_INI_except_pin": true,
+    "product_native_unchanged": true,
+    "host_staged_preserved": true,
+    "root_archive_removed": true,
+    "observer_neutrality_qualified": false,
+    "original_shipping_cause_closed": false,
+    "Q36_closed": false,
+    "formal_done": 33,
+    "total": 37,
+    "no_push_deploy_release": true,
+    "limitations": [
+      "Three reversed same-binary OFF/ON pairs; nominal 1/16 deterministic sample, no unbiased population or automatic observer-neutrality claim",
+      "Private ThinLTO/codegen4 differs from shipping build; original asymmetry conclusions cannot pool the binaries",
+      "Nonblocking finite ring reports missed/full events; stage timings condition on unique complete identical headers, not every ACK",
+      "server_write_done is local async write completion; it may occur after remote plaintext and is not wire egress",
+      "Forwarder interval still includes session lookup/routing/pool copy; queue times include scheduling, not separate scheduler attribution",
+      "Shared two-vCPU VM, one TCP mode and one carrier; no capacity/cross-platform claim"
+    ],
+    "qualified_unix": 1791987042.9202094,
+    "raw_files": {
+      "q36-server-handoff-runtime-20261014\\execution.json": "8317bc9e6a3dc34f6213a531a82ba7dc61f1e519e1b2f123e2a78f4ae4241380",
+      "q36-server-handoff-runtime-20261014\\runtime.tar.gz": "ea2559851ad347ea21c7395d7de23fc594eb62fa189bea0d839da63755288e00",
+      "q36-server-handoff-runtime-20261014\\qualified.json": "024022b39a47f82b2ff934864b31962d3f8915eba78c1f895a6891325b96b6cd",
+      "q36-server-handoff-runtime-20261014\\workload-qualified.json": "1c29e1e8fdaa80c1f8b1b6d3cac3a235774d82bd07342e718e19b8cd613c7116",
+      "q36-server-handoff-build-20261014\\qualification.json": "237d3a4d2c6d13b4a2abb0103b47ec699e85bf27bfacceae3dd1cbaff71b78e6"
+    }
+  },
+  "qualification_sha256": "b23d6fe5f58131e3bdcd6944a4bd32845a2bfb4ce87542bf6633f177dffbc34e",
+  "external_packet": "C:\\Users\\litvi\\OneDrive\\Documents\\qeli\\audit-debt-20260924\\q36-server-handoff-runtime-20261014",
+  "scope": "Four Markdown report/plan changes only; actual12-window three-pair sampled server handoff diagnostic with exact config/ACK/stage/cleanup scopes. No product/native/Linux-script delta; original automated/physical execution facts preserved.",
+  "no_push_deploy_release": true
+}
