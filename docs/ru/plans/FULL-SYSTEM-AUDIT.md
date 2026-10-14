@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v261 -->
+<!-- normative-sync: full-system-audit-v262 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -3006,3 +3006,5 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 **14 октября: проверен фактический публичный CI.** [Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): три failed jobs в опубликованном e7; source pin404, текущий core не опубликован. Keenetic fixture исправлена и проверена44/root +44/non-root с сохранением настоящих production owner guards. Mac/iOS причины и exact-source hosted gate остаются открыты; физические стенды USER_EXCLUDED,33/37 прежние,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: current CLI all12 статистическая матрица.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):36 новых сессий/144 окна/P1/P4 TCP+UDP×3,72 TCP role admissions, полный source/host/archivecleanup PASS. Исторические матрицы не переименованы в current; SUN_LEN/cleanup guard FAIL до измерений сохранён/очищен. TUN/ACK стадия OPEN;33/37 прежние,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: причина наблюдаемых kernel TUN drops подтверждена.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):9сессий/27окон,3490FULL_RING с точным совпадением TX dropped в9наблюдаемых окнах,0trace-loss; native TCPdrops0,18контролей имеют4751TUNdrops. Собственный stock trace-instance и глобальные controls/host/owned artifacts восстановлены. Throughput−10,36…+21,83% от соседних контролей; ACK-stage/no-overhead/performance PASS не заявляется.

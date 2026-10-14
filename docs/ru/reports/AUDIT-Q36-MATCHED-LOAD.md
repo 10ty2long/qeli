@@ -474,3 +474,22 @@ Q36-F032: aggregate проверял совпадение целой raw-поп�
 Все72 TCP endpoint-role проверки, независимость144 phase raw, source/CLI/process/generation/MTU/config/counter admissions, полный host gate и SHA-инвентаризация/очистка собственного root/archive подтверждены. Ранее выполненные текущие Linux20 и native/ABI/JNI проверки сохраняют исходные факты; этот прогон добавляет измерения, не заменяет их. Первая попытка отказала до измерений из-за SUN_LEN; старый archive guard отказал на новом префиксе. Исходный FAIL сохранён, отдельная recovery архивировала и удалила root/archive с неизменными host/staged CLI. R2 сокращает root/cell labels, заранее проверяет длину socket path и допускает только точный новый префикс.
 
 Критерии Q36 сопоставлены с прежними receipts: методическая review/dead-code работа F001–F032, негативные admissions, owning-module queue bounds/faults, роли/конкуренция и F030/F031/F032 ретесты имеют evidence. Current outer4/inner4 all-mode statistics теперь выполнены; прежние IPv6-популяции остаются историческими измерениями своих бинарников. Источник kernel TUN losses и точная стадия TCP-асимметрии не установлены; общего zero-loss/performance PASS и закрытия Q36 нет.33/37(89,2%). Evidence: `release/certification/evidence/q36-current-slot-statistics-20261014.json`; полный packet: q36-current-slot-statistics-r2-20261014. NO_PUSH_DEPLOY_RELEASE.
+
+## 14 октября: причина потерь TUN подтверждена штатным событием ядра
+
+Q36-F033, QUALIFIED в наблюдаемом объёме: текущий CLI6f617bdcab5a /actual build e0ce217b630d, execution source28f97ec0b730, Linux6.12.105+deb13-amd64. Девять новых сессий /27 окон по8с: три серии control/trace/control, TCPraw up/down/bidir P1, outer4/inner4, required recordizer и2carrier. MTU1400/1500, очереди500client/1000server, qdisc/affinity/defaults прежние. Во второй серии обратный порядок контролей и фаз; точная последовательность проверена. Предыдущие trace/benchmark популяции не объединены с этой.
+
+Один собственный временный trace-instance использует готовое skb:kfree_skb с фильтром `location.function == tun_net_xmit`,512KiB/CPU. Событие активно только в наблюдаемых окнах. Нет BPF/kprobe/strace, нового kernel module или изменения приложения. События включают все очереди TUN; отдельный q0/TID не выбирался. Парсер/границы владения:7Windows+7Linux methods, включая Linux symlink negative; реальный lifecycle/filter admission сохранил глобальные controls и host state.
+
+|Repeat|Upload FULL_RING|Download FULL_RING|Bidir FULL_RING|
+|---|---:|---:|---:|
+|1|357|46|654|
+|2|220|370|724|
+|3|161|163|795|
+
+
+Итого3490 событий, все имеют FULL_RING и actual location tun_net_xmit+0x2c1/0x4f0 [tun]. Во всех9 наблюдаемых окнах число событий точно равно сумме прироста TX dropped двух собственных TUN; root TUN имена/ifindex/drop counters неизменны. Потери trace-buffer/commit/dropped events нулевые. Native TCP uplink/downlink drops нулевые во всех27 окнах; в18 контрольных окнах TUN drops суммарно4751. Это подтверждает переполнение внутреннего pointer ring драйвера в наблюдаемых условиях; точная byte-equivalence Debian module/upstream tag не заявляется. Не означает, что любой будущий TX dropped имеет ту же причину.
+
+Throughput наблюдения относительно среднего двух соседних controls изменился от−10.360% до+21.826%; все12 сравниваемых значений и6 sender-RTT brackets сохранены с отсутствующими RTT для reverse-only как unknown. Это не no-overhead/performance PASS; original ACK-stage timing и причина задержки чтения не установлены. Две локальные ошибки qualifier (путь импортов и коллизия observation id с drop-kind loop) исправлены при анализе тех же неизменных raw; оба FAIL/log/source сохранены, нагрузка не повторялась.
+
+Полный source/CLI/PID/socket/role/generation/counter admission,9bidir role checks, archive inventory SHA и глобальная trace/host/service/firewall/routes/DNS/staged-CLI cleanup PASS. Instance/root/archive отсутствуют. Kernel drop reason checkpoint закрыт только для этих окон; Q36 IN_PROGRESS по ACK-stage/общему acceptance,33/37(89,2%). Evidence: `release/certification/evidence/q36-stock-tun-drop-reason-20261014.json`; packet q36-tun-drop-reason-current-20261014. NO_PUSH_DEPLOY_RELEASE.

@@ -474,3 +474,22 @@ Three-session medians; all48 groups, samples/min/max/spread, CPU/RSS/steal, rece
 All72 TCP endpoint-role checks,144 independent raw phase identities, source/CLI/process/generation/MTU/config/counter admissions, full host gate and SHA-inventoried own root/archive cleanup qualified. Existing current Linux20 and native/ABI/JNI execution facts remain intact. Initial attempt refused before measurement on SUN_LEN; old archive guard refused the new prefix. Original FAIL retained; separate recovery archived/removed owned root/archive with host/staged CLI unchanged. R2 shortens root/cell labels, preflights socket path length and admits only its exact new prefix.
 
 Q36 criteria mapped to retained receipts: methodology review/dead-code F001–F032, negative admission, queue bounds/faults, roles/concurrency and F030/F031/F032 retests have evidence. Current outer4/inner4 all-mode statistics now executed; historical IPv6 populations retain their original binaries. Kernel TUN loss cause and exact TCP-asymmetry stage remain unqualified. No universal zero-loss/performance PASS or Q36 completion.33/37(89.2%). Evidence: `release/certification/evidence/q36-current-slot-statistics-20261014.json`; packet q36-current-slot-statistics-r2-20261014. NO_PUSH_DEPLOY_RELEASE.
+
+## 14 October: actual stock-kernel TUN drop reason captured
+
+Q36-F033, QUALIFIED in observed scope: current CLI6f617bdcab5a /actual build e0ce217b630d, execution source28f97ec0b730, Linux6.12.105+deb13-amd64. Nine fresh sessions /27 eight-second windows: three control/trace/control cycles, TCPraw up/down/bidir P1, outer4/inner4, required recordizer and2carriers. Original MTU1400/1500, client/server queues500/1000, qdisc/affinity/defaults. Repeat2 reverses controls and phases; actual order admitted. No pooling with earlier populations.
+
+One temporary owned trace-instance uses existing skb:kfree_skb filtered by `location.function == tun_net_xmit`,512KiB/CPU, enabled only in observed windows. No BPF/kprobe/strace, new kernel module or application change. All TUN queues covered; no selected q0/TID. Parser/ownership:7Windows+7Linux methods, including Linux symlink rejection; real filter/lifecycle admission preserved global controls and host.
+
+|Repeat|Upload FULL_RING|Download FULL_RING|Bidir FULL_RING|
+|---|---:|---:|---:|
+|1|357|46|654|
+|2|220|370|724|
+|3|161|163|795|
+
+
+3490 events, all FULL_RING at actual tun_net_xmit+0x2c1/0x4f0 [tun]. Each of9 observed windows exactly matches aggregate own-TUN TX dropped deltas; root TUN names/ifindexes/drop counters unchanged. Zero trace-buffer/commit/dropped events. Native TCP uplink/downlink drops zero across27 windows;18 controls have4751 TUN drops. This confirms internal driver pointer-ring exhaustion under observation; exact compiled Debian/upstream-tag equivalence not claimed. Not a reason attribution for every future TX dropped.
+
+Observed throughput versus the mean of flanking controls ranges−10.360% to+21.826%; all12 comparisons and sender-RTT brackets retained, reverse-only missing RTT remains unknown. No no-overhead/performance PASS or original ACK-stage timing/reader-delay cause. Local qualifier import-path and observation-id/drop-kind collision failures corrected against identical raw, both original FAIL logs/source retained, no workload replay.
+
+Full source/CLI/PID/socket/role/generation/counter admission,9bidir role checks, archive inventory SHA and global trace/host/service/firewall/routes/DNS/staged-CLI cleanup PASS. Own instance/root/archive absent. Kernel reason checkpoint closed for these windows; Q36 IN_PROGRESS on ACK-stage/general acceptance,33/37(89.2%). Evidence: `release/certification/evidence/q36-stock-tun-drop-reason-20261014.json`; packet q36-tun-drop-reason-current-20261014. NO_PUSH_DEPLOY_RELEASE.

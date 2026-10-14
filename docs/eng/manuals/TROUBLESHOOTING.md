@@ -2762,12 +2762,14 @@ without establishing the driver drop reason or the lost TCP flow. Compare
 latency before increasing queues: larger buffers may increase delay.
 [Scoped experiment and evidence limits](../reports/BENCHMARK.md).
 
+In the current lab PACKET_MUX_V1/two-carrier series,3490 kernel FULL_RING events from tun_net_xmit exactly matched TX dropped deltas across9 observed windows. The internal TUN ring,filled by the network stack before Qeli reads packets,was exhausted; native handoff counters do not cover this stage. Aggregate TX dropped still cannot classify arbitrary failures on other systems. [Evidence and observation limits](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
-<!-- normative-sync: q29-process-death-troubleshooting-v1 -->
+
+<!-- normative-sync: q29-process-death-troubleshooting-v2 -->
 
 ### Android: VPN did not return after process death
 
-After process death,Always-on VPN depends on Android restarting its service. The lab Android14 failed to restore TUN automatically despite START_REDELIVER_INTENT. Block connections without VPN continues to block traffic. Open Qeli and check the active profile,Always-on and Block connections without VPN. The lab separately verified a manual restart through system VPN Settings;toggling blocking temporarily changes network policy. Verify the resulting connection and policy separately;Force stop,VPN revoke and explicit Disconnect are different operations. If automatic start is absent,retain ActivityManager/Vpn/VpnSvc logcat and dumpsys activity services;reconnect settings cannot start a dead process.
+After process death,Always-on VPN depends on Android restarting services. Corrected ordinary R8 Qeli on tested Android14/API34 automatically restored authenticated connectivity after SIGKILL in2.985s with one new generation through guarded sticky recovery; previous refusal remains an older-control result. This is a specific lab result, not a guarantee across OEMs. Force stop,VPN revoke and explicit Disconnect intentionally did not resurrect connectivity in30s controls. If automatic start is absent,check active profile/Always-on and retain ActivityManager/Vpn/VpnSvc logcat and dumpsys activity services; manual Qeli start remains available. Generic/null DNS is a separate open item. [Qualified recovery and limits](../reports/AUDIT-Q29-ANDROID-RECOVERY.md).
 
 [Audit details](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).
 
