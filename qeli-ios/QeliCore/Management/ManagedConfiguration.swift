@@ -58,7 +58,10 @@ struct ManagedConfigurationReader {
 
     private static func integer(_ value: Any?) -> Int? {
         guard let number = value as? NSNumber,
-              CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
+              CFGetTypeID(number) != CFBooleanGetTypeID(),
+              number.doubleValue.isFinite else { return nil }
+        // Reject nonfinite input before Decimal conversion instead of relying on
+        // platform-specific parsing of NSNumber's string representation.
         let decimal = NSDecimalNumber(
             string: number.stringValue,
             locale: Locale(identifier: "en_US_POSIX")

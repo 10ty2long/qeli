@@ -10,7 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v258 -->
+<!-- normative-sync: full-system-audit-v259 -->
+
+**Q34,14 October,iOS:** finite-number MDM source fix, corrected export/validate roaming test and prepared signed simulator CI with effective Keychain entitlement checks.17 portable methods,32 native DTO requests and5 shell fixtures PASS; fresh Swift/Keychain/Apple CI NOT run. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
 **Q34,14 October:** Unix service-key helper race fixed and reproduced by the old implementation;28 Windows/Linux checks PASS, daemon/self-test share Mac RENAME_EXCL. Apple/current hosted runtime unqualified; iOS failures and public source pin remain open. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 

@@ -10,7 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v258 -->
+<!-- normative-sync: full-system-audit-v259 -->
+
+**Q34, 14 октября, iOS:** finite-number MDM source fix, исправлен тест export/validate roaming и подготовлен signed simulator CI с проверкой effective Keychain entitlements.17 portable methods,32 native DTO requests и5 shell fixtures PASS; свежие Swift/Keychain/Apple CI НЕ запускались. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
 **Q34, 14 октября:** гонка Unix helper сервисного ключа исправлена и воспроизведена старым кодом;28 Windows/Linux checks PASS, daemon/self-test используют общий Mac RENAME_EXCL. Apple/current hosted runtime не подтверждён; iOS failures и public source pin остаются открыты. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 

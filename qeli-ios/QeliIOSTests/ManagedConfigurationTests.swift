@@ -74,7 +74,8 @@ final class ManagedConfigurationTests: XCTestCase {
     func testVersionRequiresAnExactRepresentableInteger() {
         let invalid: [Any] = [
             true, false, NSNumber(value: 1.5), NSNumber(value: Double.nan),
-            NSNumber(value: Double.infinity), NSNumber(value: UInt64.max), "1", NSNull()
+            NSNumber(value: Double.infinity), NSNumber(value: -Double.infinity),
+            NSNumber(value: UInt64.max), "1", NSNull()
         ]
         for raw in invalid {
             XCTAssertNil(ManagedConfigurationReader.parse(["configurationVersion": raw]).configurationVersion)
