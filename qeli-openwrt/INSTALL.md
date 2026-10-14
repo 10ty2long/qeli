@@ -555,3 +555,13 @@ passed this audit yet. Do not silently substitute an unrelated LLVM binary or UR
 The already-qualified SDK/IPK run used a private official prebuilt Rust/std1.89.
 That remains a package integration result, not proof of cold compiler bootstrap.
 See [actual refusal and cleanup evidence](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Source-LLVM remedy verification (14 October 2026)
+
+The private pinned feed's single `download-ci-llvm=false` change has now passed
+actual prepare/configure and bootstrap compilation, then entered bundled LLVM
+C++ compilation. Last recorded Ninja indicator: 548/3710. The owned time
+guard stopped the bounded attempt; full LLVM/rustc/dist/Host/Install and final
+cold SDK/IPK still need qualification. Original CI404 failure remains separate.
+This confirms the configured download bypass, not a completed toolchain. The
+production feed was not modified. See the [actual result and cleanup](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

@@ -10,7 +10,7 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v263 -->
+<!-- normative-sync: full-system-audit-v264 -->
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -2039,6 +2039,8 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **7 октября,Q31-V009:** [live release gate](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): реальные ARMv7/MIPS release builds через текущий Gate2 helper, SHA/static ELF PASS;32actual QEMU CLI/INI executions uid65534 PASS,317 exact compile inputs. Named tools/defaults и qeli745/901 сохранены,own roots очищены. Без нового product fix/native refresh/firmware/full preflight/Actions;SDK bootstrap/release-cut/writer-lock/atomic ndm остаются. Q31 IN_PROGRESS3/5,28/37overall.
 
 **14 октября: холодный Rust Host/Compile теперь выполнен.** Prepare/configure и реальная компиляция bootstrap79с PASS; скачивание закреплённого LLVM CI artifact получило4HTTP404. Host/Compile FAIL сохранён, Host/Install/stage2/dist не выполнены; лимиты не сработали. Все6226200078байт собственного каталога удалены, host/аккаунты/staged сохранены. Полный compiler/cold graph остаётся OPEN, prebuilt SDK/IPK scope прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
+
+**14 октября: обход LLVM CI404 выполнен.** Один flag в частном feed, prepare/configure/bootstrap и реальная source LLVM C++ compilation проверены; последний Ninja indicator548/3710. Собственный guard остановил частичный прогон (time); full compiler/SDK graph не закрыт. Root/cache/archive/unit очищены, host сохранён; original404 прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 ### 32. Метрики, usage, логи и уведомления
 

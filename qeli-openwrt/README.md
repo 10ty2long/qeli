@@ -495,3 +495,13 @@ HTTP404 responses for its pinned LLVM CI artifact. Stage2/dist/Host/Install and 
 full cold dependency graph remain unqualified; see the INSTALL troubleshooting note. This package test does
 not certify physical firmware, a public source pin, hosted CI or a release.
 See [current SDK scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Source-LLVM remedy verification (14 October 2026)
+
+The private pinned feed's single `download-ci-llvm=false` change has now passed
+actual prepare/configure and bootstrap compilation, then entered bundled LLVM
+C++ compilation. Last recorded Ninja indicator: 548/3710. The owned time
+guard stopped the bounded attempt; full LLVM/rustc/dist/Host/Install and final
+cold SDK/IPK still need qualification. Original CI404 failure remains separate.
+This confirms the configured download bypass, not a completed toolchain. The
+production feed was not modified. See the [actual result and cleanup](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
