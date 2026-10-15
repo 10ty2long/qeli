@@ -106,3 +106,6 @@ qeli-android/*.apk
 
 # Local CSS compiler diagnostics
 /qeli/web-assets/.css-build.json
+
+# Private audit originals; never publish development performance measurements.
+/.local-audit/

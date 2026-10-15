@@ -19,7 +19,16 @@ class GitFixture(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name); (self.root / "qeli").mkdir()
         (self.root / "qeli/Cargo.toml").write_text('[package]\nname="qeli"\nversion="0.8.2"\n', encoding="utf-8")
-        self.git("init", "--quiet"); self.git("add", "."); self.git("commit", "--quiet", "-m", "fixture")
+        self.git("init", "--quiet")
+        # Fixtures must not inherit runner/user background maintenance or fsmonitor:
+        # a detached writer can race TemporaryDirectory cleanup after Git returns.
+        for key, value in (("gc.auto", "0"), ("maintenance.auto", "false"),
+                           ("gc.autoDetach", "false"), ("maintenance.autoDetach", "false"),
+                           ("core.fsmonitor", "false"),
+                           ("core.hooksPath", str(self.root / ".git" / "disabled-hooks"))):
+            self.git("config", "--local", key, value)
+        self.git("add", ".")
+        self.git("commit", "--quiet", "-m", "fixture")
         self.head = self.git("rev-parse", "HEAD")
     def git(self, *args):
         return subprocess.check_output(["git", "-c", "core.autocrlf=false", "-c", "user.name=Audit Fixture", "-c", "user.email=audit@localhost", *args], cwd=self.root, text=True).strip()

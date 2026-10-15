@@ -37,6 +37,46 @@ jobs:
       - name: Check all workflows with SHA-pinned actionlint
         run: python3 scripts/check_workflows.py --install-dir "$RUNNER_TEMP/qeli-actionlint"
 
+  # Exercise Docker tooling without invoking the publisher or writing to a registry.
+  # A successful DCO/lint alone cannot validate QEMU or a build-push action update.
+  docker-tooling-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: arm64,arm
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Prepare bounded architecture probes
+        run: |
+          mkdir -p "$RUNNER_TEMP/qeli-docker-tooling"
+          cat > "$RUNNER_TEMP/qeli-docker-tooling/Dockerfile" <<'DOCKERFILE'
+          FROM busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+          ARG TARGETARCH
+          ARG TARGETVARIANT
+          RUN arch="$(uname -m)"; \
+              case "$TARGETARCH/$TARGETVARIANT" in \
+                amd64/*) test "$arch" = x86_64 ;; \
+                arm64/*) test "$arch" = aarch64 ;; \
+                arm/v7) test "$arch" = armv7l ;; \
+                *) exit 1 ;; \
+              esac
+          DOCKERFILE
+      - name: Build three architectures without publishing
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ runner.temp }}/qeli-docker-tooling
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: false
+          provenance: false
+          sbom: false
+          outputs: type=oci,dest=${{ runner.temp }}/qeli-docker-tooling.oci.tar
+      - name: Check local OCI export
+        run: |
+          test -s "$RUNNER_TEMP/qeli-docker-tooling.oci.tar"
+          tar -tf "$RUNNER_TEMP/qeli-docker-tooling.oci.tar" >/dev/null
+
   # Hard gate: the committed native libraries (.so/.dll/.dylib) must match their
   # manifest. They are opaque blobs whose diff no reviewer can read, so without this a
   # swapped binary passes review unnoticed; the manifest also pins each canonical copy to
@@ -426,7 +466,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
         with:
           # Command-line tools are installed by the action itself. The legacy SDK
           # package named `tools` was removed from Google's current repository.
@@ -438,7 +478,23 @@ jobs:
       # of every known release; `allow-snapshots: false` keeps it to released versions.
       # Pinned by SHA like every other action here. (Audit 2026-08-04.)
       - name: Validate the Gradle wrapper
-        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Resolve opt-in release test dependencies under strict locking
+        working-directory: qeli-android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          report="$RUNNER_TEMP/qeli-release-test-dependencies.log"
+          if ! ./gradlew --no-daemon --dependency-verification strict -PqeliTestBuildType=release :app:dependencies >"$report" 2>&1; then
+            cat "$report"
+            exit 1
+          fi
+          if grep -n 'FAILED' "$report"; then
+            cat "$report"
+            exit 1
+          fi
+          grep -q '^releaseAndroidTestRuntimeClasspath' "$report"
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: 1.97.0
@@ -524,14 +580,14 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Validate the Gradle wrapper
-        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: 1.97.0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: qeli
-      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
         with:
           packages: platform-tools
       - name: Install pinned native Android build dependencies

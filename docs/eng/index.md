@@ -1,5 +1,8 @@
 # Qeli documentation — map
 
+> Development performance measurements for unreleased 0.8.2 have been withdrawn from publication. Complete original data and reports are retained locally for internal audit. They are not a public release benchmark or a basis for comparing version performance.
+
+
 The documentation is organized by **document type**. The same directory layout is used for
 English and Russian, and every active page is linked from this map.
 
@@ -157,6 +160,10 @@ Current analyses and measured results. Dated, frozen reports live in the archive
 | [AUDIT.md](reports/AUDIT.md) | Current security model and audit status |
 | [DPI-AUDIT.md](reports/DPI-AUDIT.md) | DPI detectability analysis and mitigations |
 | [BENCHMARK.md](reports/BENCHMARK.md) | Load-testing method and per-mode measurements |
+| [AUDIT-Q36-CURRENT-STATISTICS.md](reports/AUDIT-Q36-CURRENT-STATISTICS.md) | Development measurements withdrawn; original data retained locally |
+| [AUDIT-Q36-MATCHED-LOAD.md](reports/AUDIT-Q36-MATCHED-LOAD.md) | Publication status of laboratory measurements |
+| [AUDIT-Q36-TUN-STAGE.md](reports/AUDIT-Q36-TUN-STAGE.md) | Publication status of diagnostic measurements |
+| [AUDIT-Q36-FINAL.md](reports/AUDIT-Q36-FINAL.md) | Audit-publication scope; not a release benchmark |
 | [Qeli 0.8.0: 34 VPN modes](reports/benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md) | Full dated cross-protocol run, CPU/RSS, and interpretation limits |
 | [COMPARISON.md](reports/COMPARISON.md) | Comparison with WireGuard, OpenVPN and V2Ray |
 
@@ -538,14 +545,6 @@ guidance. Start with the **[archive map](archive/README.md)**.
 
 - [Q35: final five-criterion mapping](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
 
-- [Q36: TUN stage and observer overhead](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
-
 - [Q36: current statistical population](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
 
-- [Q36: benchmark audit five-criterion completion](reports/AUDIT-Q36-FINAL.md) — 14 October 2026.
-
-
 Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 34/37 (91.9%); Q29 IN_PROGRESS.
-
-
-[Q36 matched-total load and TUN counters](reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. [Q36 DONE: completion and limits](reports/AUDIT-Q36-FINAL.md),34/37(91.9%).

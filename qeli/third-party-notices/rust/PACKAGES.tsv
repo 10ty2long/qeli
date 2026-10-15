@@ -35,9 +35,9 @@ chacha20	0.10.2	MIT OR Apache-2.0	65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2
 chacha20poly1305	0.11.0	Apache-2.0 OR MIT	9b89e1c441e926b9c82a8d023f6e1b7ae0adcfaa7d621814e4d60789bac751cb	https://static.crates.io/crates/chacha20poly1305/chacha20poly1305-0.11.0.crate
 cipher	0.4.4	MIT OR Apache-2.0	773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad	https://static.crates.io/crates/cipher/cipher-0.4.4.crate
 cipher	0.5.2	MIT OR Apache-2.0	e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c	https://static.crates.io/crates/cipher/cipher-0.5.2.crate
-clap	4.6.6	MIT OR Apache-2.0	473c7e07f409a8d772161724aa8db6a765a2532a70f9667eeb7b49d3d02fbdca	https://static.crates.io/crates/clap/clap-4.6.6.crate
-clap_builder	4.6.6	MIT OR Apache-2.0	7b48fea5a88e9ae728a2dcbedbfc0e730f7d60da42e1cb049a83c9fb8b789889	https://static.crates.io/crates/clap_builder/clap_builder-4.6.6.crate
-clap_derive	4.6.4	MIT OR Apache-2.0	d012d2b9d65aca7f18f4d9878a045bc17899bba951561ba5ec3c2ba1eed9a061	https://static.crates.io/crates/clap_derive/clap_derive-4.6.4.crate
+clap	4.6.7	MIT OR Apache-2.0	aa8876b300ab35ba921adea3dfd70157a46249b33f95c9084ae5709785478946	https://static.crates.io/crates/clap/clap-4.6.7.crate
+clap_builder	4.6.7	MIT OR Apache-2.0	ec0797fb7aeb1406c84efac526901f7ec3ead2124f946b494e72879d4b54704d	https://static.crates.io/crates/clap_builder/clap_builder-4.6.7.crate
+clap_derive	4.6.7	MIT OR Apache-2.0	f9c751b79415d4e559e3d1fcf128e09e720eb673a06d26cf6f392d37d75b66e0	https://static.crates.io/crates/clap_derive/clap_derive-4.6.7.crate
 clap_lex	1.1.0	MIT OR Apache-2.0	c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9	https://static.crates.io/crates/clap_lex/clap_lex-1.1.0.crate
 cmov	0.5.4	Apache-2.0 OR MIT	0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a	https://static.crates.io/crates/cmov/cmov-0.5.4.crate
 colorchoice	1.0.5	MIT OR Apache-2.0	1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570	https://static.crates.io/crates/colorchoice/colorchoice-1.0.5.crate
@@ -79,7 +79,7 @@ generic-array	0.14.7	MIT	85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499
 getrandom	0.2.17	MIT OR Apache-2.0	ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0	https://static.crates.io/crates/getrandom/getrandom-0.2.17.crate
 getrandom	0.4.3	MIT OR Apache-2.0	300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099	https://static.crates.io/crates/getrandom/getrandom-0.4.3.crate
 ghash	0.5.1	Apache-2.0 OR MIT	f0d8a4362ccb29cb0b265253fb0a2728f592895ee6854fd9bc13f2ffda266ff1	https://static.crates.io/crates/ghash/ghash-0.5.1.crate
-h2	0.4.19	MIT	ef8e5e5a340588f4452631496976cf8636d4a7ecf600239fdc27615d2530bc16	https://static.crates.io/crates/h2/h2-0.4.19.crate
+h2	0.4.20	MIT	7d29020232d6aa3fb1daca64c1127cf662cf97f254ae16c18c05b8ab635fc118	https://static.crates.io/crates/h2/h2-0.4.20.crate
 hashbrown	0.17.1	MIT OR Apache-2.0	ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a	https://static.crates.io/crates/hashbrown/hashbrown-0.17.1.crate
 heck	0.5.0	MIT OR Apache-2.0	2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea	https://static.crates.io/crates/heck/heck-0.5.0.crate
 hkdf	0.13.0	MIT OR Apache-2.0	4aaa26c720c68b866f2c96ef5c1264b3e6f473fe5d4ce61cd44bbe913e553018	https://static.crates.io/crates/hkdf/hkdf-0.13.0.crate
@@ -140,7 +140,7 @@ proc-macro2	1.0.106	MIT OR Apache-2.0	8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7
 qrcode	0.14.1	MIT OR Apache-2.0	d68782463e408eb1e668cf6152704bd856c78c5b6417adaee3203d8f4c1fc9ec	https://static.crates.io/crates/qrcode/qrcode-0.14.1.crate
 quote	1.0.46	MIT OR Apache-2.0	dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368	https://static.crates.io/crates/quote/quote-1.0.46.crate
 r-efi	6.0.0	MIT OR Apache-2.0 OR LGPL-2.1-or-later	f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf	https://static.crates.io/crates/r-efi/r-efi-6.0.0.crate
-rand	0.10.2	MIT OR Apache-2.0	c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80	https://static.crates.io/crates/rand/rand-0.10.2.crate
+rand	0.10.3	MIT OR Apache-2.0	65c9fb96cbc91e3478eaae79a69fcd3f1ae4ad052e471fe6732fff548984b4af	https://static.crates.io/crates/rand/rand-0.10.3.crate
 rand_core	0.10.1	MIT OR Apache-2.0	63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69	https://static.crates.io/crates/rand_core/rand_core-0.10.1.crate
 rand_core	0.6.4	MIT OR Apache-2.0	ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c	https://static.crates.io/crates/rand_core/rand_core-0.6.4.crate
 rcgen	0.14.10	MIT OR Apache-2.0	8774e05a7d0de114588e6a28fe7e71694b82614ed569d86d8b389dfbc98b8ad8	https://static.crates.io/crates/rcgen/rcgen-0.14.10.crate
@@ -179,9 +179,9 @@ syn	3.0.3	MIT OR Apache-2.0	53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269
 sync_wrapper	1.0.2	Apache-2.0	0bf256ce5efdfa370213c1dabab5935a12e49f2c58d15e9eac2870d3b4f27263	https://static.crates.io/crates/sync_wrapper/sync_wrapper-1.0.2.crate
 synstructure	0.13.2	MIT	728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2	https://static.crates.io/crates/synstructure/synstructure-0.13.2.crate
 thiserror	1.0.69	MIT OR Apache-2.0	b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52	https://static.crates.io/crates/thiserror/thiserror-1.0.69.crate
-thiserror	2.0.20	MIT OR Apache-2.0	ec86235f5fcc2a73650310756d2ac5b138a5780bbbdfae3eeccec992c435ba4f	https://static.crates.io/crates/thiserror/thiserror-2.0.20.crate
+thiserror	2.0.21	MIT OR Apache-2.0	09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e	https://static.crates.io/crates/thiserror/thiserror-2.0.21.crate
 thiserror-impl	1.0.69	MIT OR Apache-2.0	4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1	https://static.crates.io/crates/thiserror-impl/thiserror-impl-1.0.69.crate
-thiserror-impl	2.0.20	MIT OR Apache-2.0	bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af	https://static.crates.io/crates/thiserror-impl/thiserror-impl-2.0.20.crate
+thiserror-impl	2.0.21	MIT OR Apache-2.0	fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524	https://static.crates.io/crates/thiserror-impl/thiserror-impl-2.0.21.crate
 tikv-jemalloc-sys	0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8	MIT/Apache-2.0	1a2825c78386b4ae0314074867860ba9577875de945f05992c38815cbec327f0	https://static.crates.io/crates/tikv-jemalloc-sys/tikv-jemalloc-sys-0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8.crate
 tikv-jemallocator	0.7.0	MIT/Apache-2.0	249f09e49ab1609436f34c776e84231bead18d6a955f119f939bdc1d847561bd	https://static.crates.io/crates/tikv-jemallocator/tikv-jemallocator-0.7.0.crate
 time	0.3.53	MIT OR Apache-2.0	18dfaaeddcb932337b5e7866ee7d0ce9b76d2fd092997146f187ec09b4558a50	https://static.crates.io/crates/time/time-0.3.53.crate
@@ -189,7 +189,7 @@ time-core	0.1.9	MIT OR Apache-2.0	9e1c906769ad99c88eaa54e728060edef082f8e358ff32
 time-macros	0.2.31	MIT OR Apache-2.0	c431b87111666e491a90baa837f914fb45cd5dc3c268591b0220ff5057f2085f	https://static.crates.io/crates/time-macros/time-macros-0.2.31.crate
 tokio	1.53.1	MIT	202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed	https://static.crates.io/crates/tokio/tokio-1.53.1.crate
 tokio-macros	2.7.0	MIT	385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496	https://static.crates.io/crates/tokio-macros/tokio-macros-2.7.0.crate
-tokio-rustls	0.26.5	MIT OR Apache-2.0	b0c85f2c3ef0b1cd58b36682f4b17aaa995f0e5db534d85692b4903abce21f67	https://static.crates.io/crates/tokio-rustls/tokio-rustls-0.26.5.crate
+tokio-rustls	0.26.6	MIT OR Apache-2.0	c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db	https://static.crates.io/crates/tokio-rustls/tokio-rustls-0.26.6.crate
 tokio-util	0.7.18	MIT	9ae9cec805b01e8fc3fd2fe289f89149a9b66dd16786abd8b19cfa7b48cb0098	https://static.crates.io/crates/tokio-util/tokio-util-0.7.18.crate
 tower	0.5.3	MIT	ebe5ef63511595f1344e2d5cfa636d973292adc0eec1f0ad45fae9f0851ab1d4	https://static.crates.io/crates/tower/tower-0.5.3.crate
 tower-layer	0.3.3	MIT	121c2a6cda46980bb0fcd1647ffaf6cd3fc79a013de288782836f6df9c48780e	https://static.crates.io/crates/tower-layer/tower-layer-0.3.3.crate

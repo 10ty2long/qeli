@@ -450,7 +450,7 @@ recipe/docs changes do not change `qeli/` source admission or the archive
 identity. See the [current qualification](../docs/eng/reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md).
 
 
-### Current local OpenWrt source cut (14 October 2026)
+### Historical local OpenWrt source cut (14 October 2026)
 
 The recipe now pins `ee2b74aafb2a57a2613541223c5522908cb71f71`, which includes the qualified bonded-slot core fix.
 The actual SDK24.10.4 source archive has SHA256 `6c82f2162ba9b4939c8d40393a157d5483ccdc6796e41706f0ec2672ee95fb16`
@@ -561,3 +561,21 @@ removed after evidence verification. Original CI404, GCC OOM and bounded
 partial outcomes retain their dates. Public source pin/hosted release
 qualification remain open; physical router USER_EXCLUDED.
 See the [qualified source compiler and SDK result](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Dependency integration source cut (16 October 2026)
+
+The recipe pins `084682e5f3efc05efaf4154b4d5a3eff2750a21d`, containing the updated
+Cargo lock, canonical isolated fuzz lock and the matching dependency notices. This immutable commit is available
+from the repository through the dependency integration PR; this does not publish a release.
+Stock SDK 24.10.4 download/prepare produced SHA256
+`df98f489de92b6738048973cc74e84dbf3ee829ef0f1b66badc0a7c091aab671`
+(27207208 bytes). A second empty download cache with a distinct private Git URL
+produced the same archive. All 3442 prepared tracked files match the exact pinned
+commit, including modes and contents; the SDK Git export script is unchanged.
+
+This check qualifies the source export and prepare phase. It does not rerun the
+Rust compiler bootstrap, the full SDK/IPK build, opkg runtime or physical-router
+networking. Earlier package results retain their original source and scope.
+The strict source gate still requires the actual SDK archive and rejects a changed
+`qeli/` tree. Build/Compile and Install are unchanged. Temporary SDK files were
+removed after saving the proof and verifying that the lab service was preserved.
