@@ -64,3 +64,11 @@ Three Qeli/baseline DNS cells retain their second195.93s attempt,whose overall o
 
 
 13 October: additional upstream source review confirms getdnsnetid still returns app_netid in the Android16 reference. No newer Android runtime was tested and changing DNS addresses/upgrading OS is not claimed to fix it. No safe transparent third-party workaround found; Q29 stays open, user has not accepted the limitation. [Primary source](https://android.googlesource.com/platform/packages/modules/DnsResolver/+/refs/tags/android-16.0.0_r1/DnsProxyListener.cpp).
+
+## 14 October: actual allowBypass together with lockdown
+
+One previously unexecuted cell used an independent minimal VpnService and a separate DNS sender UID, without building, installing or starting Qeli. The original six cells were not replayed. On the same Android14/API34/x86_64 `UE1A.230829.036.A1/11228894`, the control Builder's `allowBypass=true` with OS lockdown=1 produced actual `bypassable=false`: active VPN network102, getdnsnetid selected network100. Both selected-network IPv4/IPv6 socket binds returned EPERM; generic/null and generic/selected returned ENONET before DNS questions. Typed/null A/AAAA and generic/active returned the expected answers. Six family-check sockets and five DNS calls were checked. This workaround candidate is rejected; Q29 stays open, no safe transparent workaround for foreign apps was found and the user has not accepted the limitation.
+
+Two initial attempts retain their outcomes: absent physical default network caused NETID_UNSET, then the readiness guard refused before a DNS cell. The log localized the missing carrier to modem ::1 address resolution. The next private NET namespace restored loopback addresses from the previously qualified fixture and checked AI_ADDRCONFIG. The corrected cell completed while preserving original AVD config/userdata. Archives and outcomes were verified; all three owned roots/units were removed and host state preserved. Production allowBypass was not enabled. This qualifies observations on this image, not other Android/OEM versions or the whole release matrix.
+
+[Evidence](../../../release/certification/evidence/q29-bypass-lockdown-20261014.json). Raw: `audit-debt-20260924/q29-bypass-lockdown-20261014`, `q29-bypass-lockdown-r2-20261014`, `q29-bypass-lockdown-r3-20261014`. NO_PUSH_DEPLOY_RELEASE.

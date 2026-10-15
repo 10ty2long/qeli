@@ -62,3 +62,11 @@ NetId локальны для отдельной загрузки AVD; один�
 
 
 13 октября: дополнительно проверен upstream-код выбора сети. Команда getdnsnetid и в Android16 reference возвращает app_netid. Это не runtime нового Android; изменение DNS-адреса/обновление ОС не объявлены исправлением. Безопасный прозрачный обход для чужих приложений не найден; Q29 открыт, ограничение пользователем не принято. [Primary source](https://android.googlesource.com/platform/packages/modules/DnsResolver/+/refs/tags/android-16.0.0_r1/DnsProxyListener.cpp).
+
+## 14 октября: фактическая проверка allowBypass вместе с lockdown
+
+Выполнена одна ранее не проверенная ячейка на независимом минимальном VpnService и отдельном UID отправителя DNS, без сборки, установки или запуска Qeli. Исходные шесть ячеек не повторялись. На прежнем Android14/API34/x86_64 `UE1A.230829.036.A1/11228894` параметр контрольного Builder `allowBypass=true` вместе с системным lockdown=1 дал фактическое `bypassable=false`: активная VPN-сеть102, выбранная getdnsnetid сеть100. Две проверки привязки IPv4/IPv6 к выбранной сети вернули EPERM; generic/null и generic/selected вернули ENONET до DNS-вопроса. Typed/null A/AAAA и generic/active получили ожидаемые ответы. Проверены шесть family-check socket и пять DNS-вызовов. Кандидат обхода отклонён; Q29 остаётся открыт, прозрачный безопасный обход для чужих приложений не найден и ограничение пользователем не принято.
+
+Две исходные попытки сохранены отдельно: отсутствие физической default-сети дало NETID_UNSET, затем readiness guard отказал до DNS-ячейки. По журналу найден отказ модема при разрешении ::1; в следующем private NET namespace восстановлены адреса loopback из прежнего проверенного стенда и добавлена проверка AI_ADDRCONFIG. Исправленная ячейка завершилась, не изменив config/userdata исходного AVD. Архивы и результаты проверены; все три собственных root/unit удалены, состояние хоста сохранено. Производственный allowBypass не включался. Это результат данного образа, не квалификация остальных Android/OEM или всей release-матрицы.
+
+[Evidence](../../../release/certification/evidence/q29-bypass-lockdown-20261014.json). Raw: `audit-debt-20260924/q29-bypass-lockdown-20261014`, `q29-bypass-lockdown-r2-20261014`, `q29-bypass-lockdown-r3-20261014`. NO_PUSH_DEPLOY_RELEASE.
