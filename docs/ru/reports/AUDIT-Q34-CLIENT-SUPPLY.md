@@ -1,6 +1,8 @@
 # Q34: зависимости сборки клиентов и подписи Windows
 
-<!-- normative-sync: q34-client-supply-v8 -->
+<!-- normative-sync: q34-client-supply-v9 -->
+
+**Актуальный итог 15 октября: DONE в согласованном объёме; критерии и границы — в итоговом разделе ниже.**
 
 **Актуальный статус, 14 октября:** F459 / Q34-F013 закрыт для текущего исходного дерева: принятый граф Tailwind 4 не содержит braces, свежий npm audit возвращает 0. Датированные результаты ниже сохраняют прежние отказы; итоговая проверка описана в конце отчёта. Q34 остаётся IN_PROGRESS; полный план 34/37 (91,9%).
 
@@ -246,3 +248,48 @@ Q34 остаётся IN_PROGRESS: настоящий signed simulator Keychain, 
 Новый build input потребовал пересборки библиотек: независимые A/B совпали для Android arm64/x86_64, Windows x64 и universal macOS. Проверены 22 Windows ABI, 23 JNI и 2 packaged INI на Android14/API34/x86_64, экспорты и восемь canonical/consumer копий. macOS runtime не заявлен. Собственные roots/unit и временный swap удалены. Native digest `f89a6526de575a292d600cd77e4b3dae6ca8cfd6fd5a9d34001a959268edcfa3`. [Evidence](../../../release/certification/evidence/q31-native-atomic-cleanup-20261015.json).
 
 Существующие 20 Linux результатов сохранены по неизменности Rust product tree и 50 зависимостей matrix; новых Linux runtime не заявлено. Q29 DNS, source-built SDK consumer и public/hosted qualification открыты. 34/37 (91,9%); полного release PASS нет.
+
+
+## 15 октября: завершение Q34 в dev
+
+**Q34 DONE в согласованном объёме.** Все 19 обязательных jobs CI на точном
+`9fa0903a191aea54019a2ba293c709d740c661de` прошли; два scheduled fuzz jobs
+не запускались по условиям workflow. Подтверждены строгие dependency gates,
+сборки Windows/macOS/Android, настоящие signed iOS simulator/Keychain tests,
+Android API29/API35, четыре router target и пакеты. Это дополняет прежние
+проверки locking/checksum/license/source binding и отрицательные fixtures.
+
+В промежуточном CI API29 обнаружена гонка самого lifecycle-теста: действующий
+callback мог опубликовать carrier между записью sentinel и проверкой старого
+callback. Assertion теперь удерживает тот же lifecycle monitor, что и служба.
+Production callback и его проверки владельца не менялись; тест не отключён.
+Исправленный API29 job прошёл. Исходный FAIL и журнал сохранены. Пропуски
+live-VPN тестов в hosted jobs не считаются выполненными Q29 сценариями.
+
+После rustls0.23.46 выполнены новые native A/B, ABI/JNI/INI/APK и SDK/IPK
+проверки. Новый factory release CLI с jemalloc `dbf16592…` прошёл 20 Linux
+сертификационных случаев: 19 реальных запусков, 409 assertions, IPv4/IPv6,
+DNS, MTU/PTB, TAP/NDP/RA, legacy peer и по 100 TCP/UDP roaming flips.
+Старые бинарник, даты и результаты не переименованы. Это ограниченная
+функциональная матрица, а не новый восьмичасовой soak.
+
+| Критерий | Результат |
+| --- | --- |
+| Review и мёртвый код | Dependency/SDK/locks/notices/source/workflow/native/release reports и адресные исправления завершены |
+| Штатные, граничные и негативные сценарии | Все 19 текущих обязательных CI jobs, feature/package gates и новые Linux20 PASS |
+| Отказы и конкуренция | Сохранённые baseline/CI FAIL, atomic writer/publication checks и исправленный API29 fixture |
+| Интеграция и целевая платформа | Hosted Windows/Mac/iOS/Android/router, актуальные SDK/IPK и native A/B; физические исключения сохранены |
+| Исправления, повторная проверка и evidence | Публичная dev/source history, свежие runtime receipts, provenance и привязка certification |
+
+[Сводка критериев](../../../release/certification/evidence/q31-q34-dev-closure-20261015.json)
+и [новая Linux-матрица](../../../release/certification/evidence/q34-dev-linux-runtime-20261015.json)
+сохраняют точные SHA, даты, пределы и очистку. Ошибка redundant stop уже
+выгруженного systemd unit возникла после успешной сборки CLI и удаления
+его собственного root; отдельная read-only проверка подтвердила результат
+без повторной компиляции. Ошибки локальной подготовки матрицы также сохранены.
+
+Физические Mac/iOS/router/Windows network VM остаются USER_EXCLUDED; 21
+физическая строка certification не превращена в PASS. Теги, release и deploy
+не создавались. Текущий итог — 36/37 (97,3%); Q29 generic/null API34 ENONET
+остаётся открыт. Отменённый VPN bypass не возвращён. Исторические OPEN и
+счётчики выше не являются текущим остатком.

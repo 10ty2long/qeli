@@ -1,6 +1,6 @@
 # Q34 — native libraries after adopting the panel fixes
 
-<!-- normative-sync: audit-q34-adopted-native-v2 -->
+<!-- normative-sync: audit-q34-adopted-native-v3 -->
 
 13 October 2026. The panel CSS build fixes, unsafe legacy entrypoint removal
 and Bash marker fix were adopted locally in commit
@@ -66,7 +66,7 @@ Development continues on `dev`; the original dependency-update commit
 separate verification branch is no longer used for development. The rustls
 minimum and the only changed Cargo.lock package are now 0.23.46; license
 resources match that lockfile. Hosted cargo audit and the full default Rust
-suite passed: 2314 tests, 56 ignored; ignored tests are not counted as executed.
+suite passed: 2469 tests, 60 ignored; ignored tests are not counted as executed.
 The previous dev run separately confirmed 174 XCTest cases including Keychain.
 Final CI after integration is checked separately.
 
@@ -92,3 +92,8 @@ does not turn them into new executions. Overall release certification for the
 integrated tree requires completion of the next audit step. This commit does
 not close Q29, Q31 or Q34 as a whole; the plan remains 34/37. There is no Android
 VPN bypass mode.
+
+
+## Final October 15 reconciliation
+
+Final Q31/Q34 reconciliation completed after successful current hosted CI and fresh Linux20. See [Q34 result](AUDIT-Q34-CLIENT-SUPPLY.md). The current plan is 36/37, with Q29 generic/null API34 open. Previous timestamps and CLI artifacts were not renamed and no physical runtime was added.

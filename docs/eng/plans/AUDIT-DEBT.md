@@ -1,8 +1,8 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v138 -->
+<!-- normative-sync: audit-debt-v139 -->
 
-Current reconciliation: 12 October 2026. The original 15 obligation groups were dispositioned on 3 October: 14 DONE and D06 ACCEPTED_LIMITATION by user decision. The full audit continues; current total32/37 (86.5%), Q29/Q31/Q34/Q35/Q36 remain open. The historical register and subsequent actual checks are retained below; these groups are not15 confirmed bugs or the completion percentage of37 sections.
+Current reconciliation: 15 October 2026. The original 15 obligation groups were dispositioned on 3 October: 14 DONE and D06 ACCEPTED_LIMITATION by user decision. Full audit: 36/37 sections complete (97.3%); Q31/Q34 meet all five criteria and Q29 generic/null DnsResolver API34 remains open. The cancelled VPN bypass is not new implementation debt. The historical register and results retain their original dates below; they are not current OPEN items. [Q31/Q34 completion criteria](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
 `DONE` requires a fix/justification and the required verification. `BLOCKED` denotes an
 unavailable external prerequisite, never success. The user supplied Linux and an Android

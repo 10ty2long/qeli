@@ -10,17 +10,17 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v274 -->
+<!-- normative-sync: full-system-audit-v275 -->
 
-**15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains34/37 (91.9%).
+**15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains36/37 (97.3%).
 
-**Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
+**Historical checkpoint Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
-**Q34,14 October,iOS:** finite-number MDM source fix, corrected export/validate roaming test and prepared signed simulator CI with effective Keychain entitlement checks.17 portable methods,32 native DTO requests and5 shell fixtures PASS; fresh Swift/Keychain/Apple CI NOT run. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
+**Historical checkpoint Q34,14 October,iOS:** finite-number MDM source fix, corrected export/validate roaming test and prepared signed simulator CI with effective Keychain entitlement checks.17 portable methods,32 native DTO requests and5 shell fixtures PASS; fresh Swift/Keychain/Apple CI NOT run. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Q34,14 October:** Unix service-key helper race fixed and reproduced by the old implementation;28 Windows/Linux checks PASS, daemon/self-test share Mac RENAME_EXCL. Apple/current hosted runtime unqualified; iOS failures and public source pin remain open. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
+**Historical checkpoint Q34,14 October:** Unix service-key helper race fixed and reproduced by the old implementation;28 Windows/Linux checks PASS, daemon/self-test share Mac RENAME_EXCL. Apple/current hosted runtime unqualified; iOS failures and public source pin remain open. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Current result, 14 October: 34/37 sections complete within agreed scope (91.9%), 3 remain. Q35/Q36/Q37 five criteria complete; Q29/Q31/Q34 remain open. Q30: SOURCE REVIEW and portable checks complete; Swift/Xcode/Apple runtime USER_SKIPPED by user decision. Q28 complete within agreed scope: available managed/integration checks PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, service ownership and bounded API34 VPN matrices have scoped evidence. Historical SIGKILL FAIL is retained; current actual-Qeli SIGKILL recovery passes on API34. Auto/null DnsResolver ENONET remains open; the closure ledger below distinguishes completed checks from remaining work.**
+**Current result, 15 October: 36/37 sections complete within agreed scope (97.3%), with Q29 remaining. Q31/Q34 meet all five criteria after public source publication, successful CI on dev `9fa0903a…`, current SDK/native checks and fresh Linux20. [Q31 result](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md), [Q34 result](../reports/AUDIT-Q34-CLIENT-SUPPLY.md). Generic/null DnsResolver ENONET on tested API34 remains open; the cancelled bypass was not added. Physical exclusions and D06 are retained. Historical checkpoints below do not change this current total.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -180,10 +180,10 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | IN_PROGRESS |
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | DONE: SOURCE REVIEW; Apple USER_SKIPPED |
-| 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | IN_PROGRESS |
+| 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | DONE/PASS |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
 | 33 | Installation, updates, file permissions and hooks | H01, H04, H08 | DONE |
-| 34 | CI, dependencies, native provenance and release | H04, H06, H08 | IN_PROGRESS |
+| 34 | CI, dependencies, native provenance and release | H04, H06, H08 | DONE/PASS |
 | 35 | Fuzzing, concurrency, DoS and soak | H04, H06, H08 | DONE/PASS |
 | 36 | Benchmarks and measurement methodology | H07 | DONE |
 | 37 | Documentation, test harnesses and dead code | H06, H08–H09, H11 | DONE |
@@ -1981,10 +1981,10 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 - [x] Review and dead code.
 - [x] Positive, boundary and negative scenarios.
 - [x] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE within agreed scope.**
 
 **6 October, F307–F310:** [control/render/firewall packet](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):7 Node fixtures and10 real-shell fixtures in each BusyBox/dash PASS;37 recipe checks PASS after preexisting stale Android assertion correction. Commit-confirmed UCI intent, serialized controls, atomic0600 INI and checked firewall retry. Scoped fixtures only; full review/install/upgrade/build qualification remain open; actual router runtime USER_EXCLUDED. Overall28/37(75.7%) unchanged.
 
@@ -2153,13 +2153,13 @@ Feature/debug/release/jemalloc matrices, lockfiles, current advisories/licenses 
 
 **Existing harness/fixtures:** `scripts/test_native_recipes.py`, `scripts/test_native_repro.py`, `scripts/test_release_certification.py`, `scripts/release_certification.py`.
 
-- [ ] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Review and dead code.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE within agreed scope.**
 
 **Credential execution and feature isolation, 23 September 2026:**
 [Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):

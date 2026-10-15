@@ -1,6 +1,8 @@
 # Q34: client build dependencies and Windows signatures
 
-<!-- normative-sync: q34-client-supply-v8 -->
+<!-- normative-sync: q34-client-supply-v9 -->
+
+**Current October 15 result: DONE within agreed scope; criteria and limits are in the final section below.**
 
 **Current status, 14 October:** F459 / Q34-F013 is closed for the current source tree: the adopted Tailwind 4 graph contains no braces and fresh npm audit returns 0. Dated results below retain their original failures; final qualification is recorded at the end. Q34 remains IN_PROGRESS; full plan 34/37 (91.9%).
 
@@ -245,3 +247,48 @@ Fix 7df0ce1fc6daae6565cc1325d064956c82ef6189 records the temporary path before w
 The changed build input required fresh libraries: independent A/B builds matched for Android arm64/x86_64, Windows x64 and universal macOS. Qualification includes 22 Windows ABI cases, 23 JNI and 2 packaged INI tests on Android14/API34/x86_64, exact exports and eight canonical/consumer copies. macOS runtime is not claimed. Owned roots/unit and temporary swap were removed. Native digest `f89a6526de575a292d600cd77e4b3dae6ca8cfd6fd5a9d34001a959268edcfa3`. [Evidence](../../../release/certification/evidence/q31-native-atomic-cleanup-20261015.json).
 
 The existing 20 Linux results remain applicable because the Rust product tree and 50 matrix dependencies are unchanged; no new Linux runtime is claimed. Q29 DNS, the source-built SDK consumer and public/hosted qualification remain open. 34/37 (91.9%); no full release PASS.
+
+
+## October 15: Q34 completed on dev
+
+**Q34 DONE within agreed scope.** All 19 required CI jobs passed on exact commit
+`9fa0903a191aea54019a2ba293c709d740c661de`; two scheduled fuzz jobs did not
+run under workflow conditions. This confirmed strict dependency gates,
+Windows/macOS/Android builds, actual signed iOS simulator/Keychain tests,
+Android API29/API35, four router targets and packages. These results supplement
+the previous locking/checksum/license/source-binding and negative fixtures.
+
+Intermediate API29 CI exposed a race in the lifecycle test itself: a live callback
+could publish a carrier between the sentinel write and the retired-callback
+assertion. The assertion now holds the same lifecycle monitor as the service.
+Production callback ownership checks are unchanged and the test was not disabled.
+The corrected API29 job passed; the original FAIL and log are retained. Skipped
+live-VPN tests in hosted jobs are not counted as executed Q29 scenarios.
+
+After rustls0.23.46, fresh native A/B, ABI/JNI/INI/APK and SDK/IPK checks passed.
+A new factory release CLI with jemalloc, `dbf16592…`, passed 20 Linux certification
+cases: 19 actual executions, 409 assertions, IPv4/IPv6, DNS, MTU/PTB, TAP/NDP/RA,
+a legacy peer and 100 TCP/UDP roaming flips each. Previous binaries, dates and
+results were not renamed. This is a bounded functional matrix, not a new
+eight-hour soak.
+
+| Criterion | Result |
+| --- | --- |
+| Review and dead code | Dependency/SDK/locks/notices/source/workflow/native/release reports and targeted fixes completed |
+| Normal, boundary and negative cases | All 19 current required CI jobs, feature/package gates and fresh Linux20 PASS |
+| Failures and concurrency | Retained baseline/CI FAIL, atomic writer/publication checks and corrected API29 fixture |
+| Integration and target platform | Hosted Windows/Mac/iOS/Android/router, current SDK/IPK and native A/B; physical exclusions retained |
+| Fixes, rechecks and evidence | Public dev/source history, fresh runtime receipts, provenance and certification binding |
+
+[Criterion mapping](../../../release/certification/evidence/q31-q34-dev-closure-20261015.json)
+and [fresh Linux matrix](../../../release/certification/evidence/q34-dev-linux-runtime-20261015.json)
+retain exact hashes, dates, limits and cleanup. A redundant stop of an already
+unloaded systemd unit failed after the successful CLI build and owned root removal;
+separate read-only verification confirmed the result without recompiling. Local
+matrix preparation failures are retained as well.
+
+Physical Mac/iOS/router/Windows network VM remain USER_EXCLUDED; the 21 physical
+certification rows were not turned into PASS. No tags, releases or deployments
+were created. The current total is 36/37 (97.3%); Q29 generic/null API34 ENONET
+remains open. The cancelled VPN bypass was not restored. Historical OPEN entries
+and counts above are not the current remaining work.

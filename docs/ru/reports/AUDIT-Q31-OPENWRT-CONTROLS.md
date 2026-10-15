@@ -1,6 +1,8 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v49 -->
+<!-- normative-sync: q31-openwrt-controls-v50 -->
+
+**Актуальный итог 15 октября: DONE в согласованном объёме; критерии и границы — в итоговом разделе ниже.**
 
 **Актуальный checkpoint, 2026-10-15:** полный source LLVM/Rust bootstrap через Clang19 и следующий штатный SDK/IPK/opkg прогон квалифицированы. Q31 остаётся 3/5 IN_PROGRESS: public source pin и hosted release qualification открыты; physical router USER_EXCLUDED. Полный аудит34/37 (91,9%). Ранние результаты ниже сохраняют исходные даты и отказы.
 
@@ -2673,3 +2675,33 @@ Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.
 Следующий штатный package/qeli/compile использовал этот установленный source toolchain; PATH/sysroot/musl libraries, SHA инструментов и всей установленной копии Rust сверены с source-qualified backup. R8 реально собрал IPK, но его постпроверка отказала из-за второго install stamp; в исходном логе также сохранён проглоченный внешним Rust feed отказ повторного Host/Install из удалённого dist. R9 сохранил отказ на штатном обновлении .built_check; R10 учитывает это проверяемое обновление. В продолжении явно импортированы только метаданные этой проверенной установки из host в hostpkg namespace, после чего штатный граф прошёл без повторной установки/bootstrap и сохранил точный SHA уже собранного IPK. Это продолжение с квалифицированным cache handoff, а не чистый первый проход bootstrap-to-root graph. Исходный R8 FAIL не переименован в PASS. R10 отдельно сохранил runtime import error до первого теста; R11 исправил только импорт PurePosixPath из стандартного pathlib и выполнил реальные runtime-проверки. Зависимости загружены по Cargo.lock установленным source Cargo/Rust в собственный registry. R11/R12 сохранили отказы opkg из-за PATH systemd без /bin и /sbin; отдельная проба на том же IPK воспроизвела отказ с manager PATH и корректный разбор с PATH OpenWrt. R13 выполнил runtime в отдельном unit без make/Rust/Cargo, с явным PATH=/usr/sbin:/usr/bin:/sbin:/bin. Все7 opkg и9 CLI сценариев прошли за12 секунд. Установка /dev/null или procfs не потребовалась; ресурсные ограничения не вызывали отказ. Новый IPK 85c7b94498e438f0b598d03d2fbb9b4a0a7bc699c1b56a46ff70127865998574 и ELF 865c7118dd34927963b32a51d1f8efcec3c42eed483caf8c9a336aa1f5fa04a7 прошли7 настоящих opkg и9 userspace/CLI/INI сценариев. Использован точный исходный archive commit ee2b74aafb2a57a2613541223c5522908cb71f71; его product tree совпадает с текущим 8c50631e7c253ab6cacd0056098ecad83f393487. Это сохранённый архив с подтверждённой применимостью.
 
 Архивы и их inventory, этапы, исходные результаты, host/account/staged identities и очистка обоих собственных roots/unit сверены. Все большие SDK/compiler caches удалены; сохранены evidence archives. [Evidence](../../../release/certification/evidence/q31-clean-lab-source-sdk-20261015.json). Закрыт локальный source compiler/cold SDK долг. Public source pin/hosted release qualification остаются открыты; physical router USER_EXCLUDED. Q31 IN_PROGRESS;34/37(91,9%),NO_PUSH_DEPLOY_RELEASE.
+
+
+## 15 октября: завершение Q31 в согласованном объёме
+
+**Q31 DONE.** Публичный source pin `099258dc3719161154c7978347a017a8d90aba75`
+доступен и входит в историю `dev`. Два штатных SDK download/prepare дали
+одинаковый архив `c04a743e…`; feed закрепляет его полный SHA256. После
+обновления rustls заново выполнены Compile/Install/BuildPackage, семь opkg
+и девять CLI/INI-сценариев. IPK `adcbb4c6…` содержит актуальное дерево
+`qeli/`, musl ELF и все 533 лицензионных файла с проверенными правами.
+
+Полная source-сборка LLVM20/Rust1.89 и последующий квалифицированный cache
+handoff сохраняют прежние evidence. Это не переименование исходного R8 FAIL
+в успешный чистый bootstrap-to-SDK проход. Новый consumer использовал
+отдельный официальный Rust1.89; повторной сборки компилятора не было.
+Текущий CI `9fa0903a…` подтвердил все четыре router cross-build и остальные
+обязательные jobs. Очистка собственных ресурсов и сохранение хостов проверены.
+
+| Критерий | Результат |
+| --- | --- |
+| Review и мёртвый код | Завершённый review 28 файлов и последующие адресные исправления |
+| Штатные, граничные и негативные сценарии | ucode/rpcd/UCI/procd, INI, cross-target и opkg evidence PASS |
+| Отказы и конкуренция | Baseline-отказы, generation/owner/ABA, rollback и cleanup проверены |
+| Интеграция и целевая платформа | Source compiler/cache handoff, актуальный SDK/IPK и hosted cross-build PASS; физический router USER_EXCLUDED |
+| Исправления, повторная проверка и evidence | Публичные source pin/archive, текущий CI и проверенные receipts |
+
+[Итоговое evidence](../../../release/certification/evidence/q31-q34-dev-closure-20261015.json)
+сопоставляет все пять критериев. Физические роутеры не объявлены проверенными.
+Исторические OPEN выше относятся к указанным датам; актуальный итог —
+36/37 разделов (97,3%), открыт Q29 с generic/null DnsResolver API34.

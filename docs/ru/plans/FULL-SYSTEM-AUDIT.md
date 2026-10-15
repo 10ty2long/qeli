@@ -10,17 +10,17 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v274 -->
+<!-- normative-sync: full-system-audit-v275 -->
 
-**15 октября, политика Android:** отдельный DNS bypass-режим отклонён пользователем; сохраняются secure VpnService и системный kill switch. [Решение и границы DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET на проверенном API34 не объявлен исправленным. Отменённый режим не является новым техдолгом; общий итог остаётся34/37 (91,9%).
+**15 октября, политика Android:** отдельный DNS bypass-режим отклонён пользователем; сохраняются secure VpnService и системный kill switch. [Решение и границы DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET на проверенном API34 не объявлен исправленным. Отменённый режим не является новым техдолгом; общий итог остаётся36/37 (97,3%).
 
-**Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
+**Исторический checkpoint Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
-**Q34, 14 октября, iOS:** finite-number MDM source fix, исправлен тест export/validate roaming и подготовлен signed simulator CI с проверкой effective Keychain entitlements.17 portable methods,32 native DTO requests и5 shell fixtures PASS; свежие Swift/Keychain/Apple CI НЕ запускались. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
+**Исторический checkpoint Q34, 14 октября, iOS:** finite-number MDM source fix, исправлен тест export/validate roaming и подготовлен signed simulator CI с проверкой effective Keychain entitlements.17 portable methods,32 native DTO requests и5 shell fixtures PASS; свежие Swift/Keychain/Apple CI НЕ запускались. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Q34, 14 октября:** гонка Unix helper сервисного ключа исправлена и воспроизведена старым кодом;28 Windows/Linux checks PASS, daemon/self-test используют общий Mac RENAME_EXCL. Apple/current hosted runtime не подтверждён; iOS failures и public source pin остаются открыты. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
+**Исторический checkpoint Q34, 14 октября:** гонка Unix helper сервисного ключа исправлена и воспроизведена старым кодом;28 Windows/Linux checks PASS, daemon/self-test используют общий Mac RENAME_EXCL. Apple/current hosted runtime не подтверждён; iOS failures и public source pin остаются открыты. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Текущий итог, 14 октября: 34/37 разделов завершено в согласованном объёме (91,9%), осталось 3. Q35/Q36/Q37 завершены по пяти критериям; Q29/Q31/Q34 открыты. Q30: SOURCE REVIEW и portable checks завершены; Swift/Xcode/Apple runtime USER_SKIPPED по решению пользователя. Q28 завершён в согласованном объёме: доступные managed/integration проверки PASS; Swift SOURCE REVIEW, Mac/Xcode/runtime USER SKIPPED. Q29 IN_PROGRESS: storage, владельцы службы и ограниченные API34 VPN-матрицы имеют scoped evidence. Исторический SIGKILL FAIL сохранён; актуальное восстановление настоящего Qeli после SIGKILL PASS на API34. Auto/null DnsResolver ENONET ещё открыт; таблица завершения ниже отделяет выполненные проверки от остатка.**
+**Текущий итог, 15 октября: 36/37 разделов завершено в согласованном объёме (97,3%), остался Q29. Q31/Q34 закрыты по пяти критериям после публичного source pin, успешного CI на dev `9fa0903a…`, актуальных SDK/native и новых Linux20. [Итог Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md), [итог Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md). Generic/null DnsResolver ENONET на проверенном API34 остаётся открытым; отменённый bypass не добавлен. Физические исключения и D06 сохранены. Исторические checkpoint-записи ниже не меняют этот итог.**
 
 Дата инвентаризации: **22 сентября 2026**. База: ветка `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, разработка **0.8.2**.
@@ -185,10 +185,10 @@ actual `3deb3da9d8306e0eaf4fd3d3505a7ad8f4e822b7bd502e8e748f632a852baa52`.
 | 28 | macOS: daemon, utun, pf и Network Extension | H04, H08 | DONE/PASS |
 | 29 | Android: VpnService, JNI и lifecycle | H04, H06, H08 | IN_PROGRESS |
 | 30 | iOS: PacketTunnel, Swift и MDM | H04, H06, H08 | DONE: SOURCE REVIEW; Apple USER_SKIPPED |
-| 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | IN_PROGRESS |
+| 31 | OpenWrt, LuCI и Keenetic | H04, H06, H08 | DONE/PASS |
 | 32 | Метрики, usage, логи и уведомления | H02–H03, H08, H10 | DONE |
 | 33 | Установка, обновление, файловые права и hooks | H01, H04, H08 | DONE |
-| 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | IN_PROGRESS |
+| 34 | CI, зависимости, native provenance и релиз | H04, H06, H08 | DONE/PASS |
 | 35 | Fuzzing, concurrency, DoS и soak | H04, H06, H08 | DONE/PASS |
 | 36 | Бенчмарки и методика измерения | H07 | DONE |
 | 37 | Документация, тестовая обвязка и мёртвый код | H06, H08–H09, H11 | DONE |
@@ -1992,10 +1992,10 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 - [x] Review и мёртвый код.
 - [x] Штатные, граничные и негативные сценарии.
 - [x] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE в согласованном объёме.**
 
 **6 октября, F307–F310:** [пакет control/render/firewall](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):7 Node и10 shell fixtures в каждом BusyBox/dash PASS;37 проверок рецептов PASS после сверки устаревшего Android assertion. Применённое UCI-намерение, очередь кнопок, атомарный0600 INI, проверяемый повтор firewall. Только scoped fixtures; полный review/install/upgrade/build открыт; реальный router runtime USER_EXCLUDED. Всего28/37(75.7%) без изменений.
 
@@ -2164,13 +2164,13 @@ Feature/debug/release/jemalloc matrix, lockfiles, актуальные CVE/licen
 
 **Имеющаяся обвязка/fixtures:** `scripts/test_native_recipes.py`, `scripts/test_native_repro.py`, `scripts/test_release_certification.py`, `scripts/release_certification.py`.
 
-- [ ] Review и мёртвый код.
-- [ ] Штатные, граничные и негативные сценарии.
-- [ ] Отказы и конкуренция.
-- [ ] Интеграция и целевая платформа.
-- [ ] Исправления, повторная проверка и evidence.
+- [x] Review и мёртвый код.
+- [x] Штатные, граничные и негативные сценарии.
+- [x] Отказы и конкуренция.
+- [x] Интеграция и целевая платформа.
+- [x] Исправления, повторная проверка и evidence.
 
-**Статус: IN_PROGRESS.**
+**Статус: DONE в согласованном объёме.**
 
 **Поставщик пароля и изоляция features, 23 сентября 2026:**
 [Q25-F001 / Q33-F002 / Q14-F020 / Q34-F001](../reports/AUDIT-Q25-CREDENTIAL-COMMANDS.md):
