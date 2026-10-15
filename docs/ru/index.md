@@ -1,5 +1,8 @@
 # Документация qeli — карта
 
+> Лабораторные замеры производительности невыпущенной 0.8.2 сняты с публикации. Полные исходные данные и прежние отчёты сохранены локально для внутреннего аудита. Они не являются публичным бенчмарком релиза или основанием для сравнения скорости версий.
+
+
 Документация организована **по типам документов**. Русское и английское деревья имеют
 одинаковую структуру, а каждый актуальный документ доступен из этой карты.
 
@@ -157,6 +160,10 @@
 | [AUDIT.md](reports/AUDIT.md) | Актуальная модель безопасности и статус аудита |
 | [DPI-AUDIT.md](reports/DPI-AUDIT.md) | Анализ обнаружимости DPI и меры устранения |
 | [BENCHMARK.md](reports/BENCHMARK.md) | Методика нагрузочного тестирования и замеры по режимам |
+| [AUDIT-Q36-CURRENT-STATISTICS.md](reports/AUDIT-Q36-CURRENT-STATISTICS.md) | Замеры разработки сняты с публикации; исходные данные хранятся локально |
+| [AUDIT-Q36-MATCHED-LOAD.md](reports/AUDIT-Q36-MATCHED-LOAD.md) | Статус публикации лабораторных измерений |
+| [AUDIT-Q36-TUN-STAGE.md](reports/AUDIT-Q36-TUN-STAGE.md) | Статус публикации диагностических измерений |
+| [AUDIT-Q36-FINAL.md](reports/AUDIT-Q36-FINAL.md) | Границы публикации результатов аудита; не бенчмарк релиза |
 | [Qeli 0.8.0: 34 VPN-режима](reports/benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md) | Полный датированный сравнительный прогон, CPU/RSS и ограничения интерпретации |
 | [COMPARISON.md](reports/COMPARISON.md) | Сравнение с WireGuard, OpenVPN и V2Ray |
 
@@ -538,14 +545,4 @@
 
 - [Q35: итог пяти критериев](reports/AUDIT-Q35-FINAL.md) — 13 October 2026.
 
-- [Q36: TUN stage и overhead наблюдателя](reports/AUDIT-Q36-TUN-STAGE.md) — 13 October 2026.
-
-- [Q36: текущая статистическая популяция](reports/AUDIT-Q36-CURRENT-STATISTICS.md)
-
-- [Q36: итог пяти критериев аудита бенчмарков](reports/AUDIT-Q36-FINAL.md) — 14 октября 2026.
-
-
 Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 34/37 (91.9%); Q29 IN_PROGRESS.
-
-
-[Q36 matched-total load and TUN counters](reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. [Q36 DONE: итог и ограничения](reports/AUDIT-Q36-FINAL.md),34/37(91.9%).

@@ -1,9 +1,10 @@
 # Full Qeli audit: previous coverage and sequential test plan
 
+> Numerical 0.8.2 laboratory measurements and comparisons have been withdrawn from publication; original reports are retained locally for audit. Engineering-check status is not a release benchmark.
+
 **Status on 3 October:** [audit debt](AUDIT-DEBT.md) is dispositioned: 14 DONE
 and D06 ACCEPTED_LIMITATION by user decision. Full audit resumes; the 37 section
 statuses below require criterion-based reconciliation, not automatic PASS.
-
 
 **Completion workflow from 25 September:** [four batches and test-selection rules](AUDIT-DEBT.md)
 replace full-suite repetition after every fix. The levels below remain section coverage
@@ -13,8 +14,6 @@ for the full audit; existing obligations remain.
 <!-- normative-sync: full-system-audit-v276 -->
 
 **15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains37/37 (100%).
-
-**Historical checkpoint Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
 **Historical checkpoint Q34,14 October,iOS:** finite-number MDM source fix, corrected export/validate roaming test and prepared signed simulator CI with effective Keychain entitlement checks.17 portable methods,32 native DTO requests and5 shell fixtures PASS; fresh Swift/Keychain/Apple CI NOT run. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
@@ -358,7 +357,6 @@ and concurrent writers are closed; overall Q06 remains IN_PROGRESS for bandwidth
 measurement and remaining admission/access-issuance scenarios.
 [Report](../reports/AUDIT-Q06-USERS-ACCESS.md#third-batch-live-permissions-and-ini-publication-failures).
 
-
 **3 October, complete:** Q06-F012–F014 fixed: shared TCP/UDP admission, terminal session replacement, effective bandwidth/legacy burst and share-reset recovery. 387 Q06 checks, 2265 Linux units / 60 ignored, 118 JS groups, fresh matrix 18/327 and soak 100 TCP + 100 QUIC/33 PASS. Native A/B matches byte-for-byte; .11 preserved, .10 SDK PASS with explicit firewall-snapshot limitation. No physical qualification claimed. [Final report](../reports/AUDIT-Q06-USERS-ACCESS.md), [evidence](../../../release/certification/evidence/q06-users-access-complete-20261003.json).
 
 ### 07. Backup, restore and history
@@ -376,7 +374,6 @@ Fresh restore with custom paths, mixed user sources, identity and panel secret. 
 - [x] Fixes, retesting and evidence.
 
 **Status: PASS within the agreed available Linux/runtime scope.**
-
 
 **History, 3 October, first batch:** HTTP reproduction found exact rejection with nested locks, missing identity/TLS validation and archive UID retention. Fixes and current qualification are recorded in the [Q07 report](../reports/AUDIT-Q07-BACKUP-RESTORE.md). Overall Q07 remains open: crash/partial publication and recovery, filesystem faults, cross-process users/identity writers, mixed users/panel-secret, operational files/rotation and additional INI trust boundaries (historical list before batch two).
 
@@ -401,7 +398,6 @@ X25519/ML-KEM/HKDF/AEAD KAT and negative vectors; static binding, proof before c
 **Status: DONE.**
 
 **First Q08 batch:** Q08-F001–F003, shared bounded key reads, serialized legacy migration and low-order proof refusal. Previous release reproduces six filesystem failures; first-batch qualification is retained in the [report](../reports/AUDIT-Q08-CRYPTO-KEYS.md).
-
 
 **3 October, Q08 complete:** Q08-F004–F007, independent NIST/RFC/AEAD/HKDF vectors, seven-area review,31 key/rotation +25 restore/state checks with actual pinned clients,2279 units, matrix18/327, soak33 and native A/B PASS. All mandatory fix checks closed. Accepted limits and conditional REALITY TLS PQ scope are recorded in the [final report](../reports/AUDIT-Q08-CRYPTO-KEYS.md). Next Q09.
 
@@ -501,12 +497,9 @@ Derive supported runtime/Quick Start combinations: plain/fake-tls/reality/realit
 
 **4 October, Q13 DONE/PASS: ** removed both disabled UDP stealth branches; TCP-only policy retained. Final 2365 Linux units, 7 live cases, matrix 18/18, soak 33 and four native A/B PASS. Overall **13/37 (35.1%)**, 24 sections remain; next Q14. [Final evidence and limits](../reports/AUDIT-Q13-MORPHOLOGY.md).
 
-
 **4 October,morphology batch PASS:** four more padding/normalization/mux corrections,2365 Linux PASS,6 combined TCP/UDP cases,fresh matrix/soak/native A/B. [Evidence and remaining two UDP branches](../reports/AUDIT-Q13-MORPHOLOGY.md).
 
-
 **4 October, shaping batch PASS:** [five fixes and measurements](../reports/AUDIT-Q13-MORPHOLOGY.md):5 baseline FAIL,7 new tests,2359 Linux PASS,10 network cases/102 assertions,recordizer campaign,fresh matrix/soak/native A/B. Recordizer/padding/normalization review continues;overall remains12/37 (32.4%).
-
 
 **Source:** `qeli/src/protocol/recordizer.rs`, `qeli/src/protocol/shaper.rs`, `qeli/src/protocol/obfuscate.rs`.
 
@@ -525,7 +518,6 @@ Off/prefer/required and legacy peers; batch/reassembly caps, flush deadlines, ca
 ### 14. Supervisor, workers and profiles
 
 **4 October, Q14 DONE/PASS:** Q14-F039 fixed — supervisor owns background services and stops HTTP/HTTPS panel. 2368 Linux tests, 38 process checks, 4 panel stop/cancel cases, 5 privileged executions, stop during backoff, matrix18/18 and native A/B PASS. [Evidence and limits](../reports/AUDIT-Q14-CURRENT-LIFECYCLE.md).
-
 
 **4 October, current lifecycle batch PASS: ** 8/8 worker cases, 80 reloads, 22 recovery and14 multiprofile checks on the current release; host/service preserved. [Review and Q14 remaining scope](../reports/AUDIT-Q14-CURRENT-LIFECYCLE.md). Q14 IN_PROGRESS.
 
@@ -623,7 +615,6 @@ cleanup/post_down; core teardown errors terminate with failure and retain the en
 kill-switch while still attempting forwarding cleanup. Six new host regressions include
 real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-checked only.
 Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
-
 
 **TUN/route/DNS cleanup propagation, 23 September 2026:**
 [Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): explicit teardown and rollback guards
@@ -765,7 +756,6 @@ Q16-F002 keeps server tunnel endpoint delivery local with an exit /0.
 2374 units, real TCP/UDP/QUIC with IPv4/IPv6, matrix and native A/B — PASS.
 [Evidence and limits](../reports/AUDIT-Q16-ACL-ROUTES.md).
 
-
 **Source:** `qeli/src/server/acl.rs`, `qeli/src/config/users.rs`, `qeli/src/transport_core/network.rs`.
 
 User/group/profile precedence, longest prefixes, client_to_client, spoofed sources, overlaps, /0 and client_subnet return paths. Cover TCP/UDP and v4/v6. Server-side enforcement; revoke/route reassignment removes access from the previous session.
@@ -786,7 +776,6 @@ User/group/profile precedence, longest prefixes, client_to_client, spoofed sourc
 319 selected Q16 units plus source/hash-qualified prior backend/recovery evidence.
 Q17-F001 replaces the old gateway runner with private isolation. Historical open
 statuses below describe earlier snapshots; see [current results and accepted limits](../reports/AUDIT-Q17-IPV4-NETWORK.md).
-
 
 **Source:** `qeli/src/server/nat.rs`, `qeli/src/client/sysctl.rs`, `qeli/src/client/gateway.rs`.
 
@@ -1014,7 +1003,6 @@ after TCP TC. One production engine is tested locally: 22 DNS tests with UDP/TCP
 754 Rust tests overall — PASS. Linux lifecycle, advanced DNS types and load checks
 remain open; the overall section is not complete.
 
-
 **Cache and signed exchanges, 23 September 2026:**
 [Q19 follow-up](../reports/AUDIT-Q19-DNS-CACHE.md) closes Q19-F007–F010: a 16 MiB
 per-profile packet budget, byte-preserving uncached TSIG/SIG(0) relay, and request
@@ -1238,7 +1226,6 @@ Create/start/PREPARE/APPLY/COMMIT/stop/free, callbacks, buffers, queues and gene
 and order-dependent route-budget failures; removed obsolete Linux DNS test code.
 This validates the shared planner, not the entire module. DNS proxy/cache, actual
 OS apply/rollback and concurrent lifecycle checks remain open.
-
 
 **TCP and Linux path-monitor ownership, 23 September 2026:**
 [Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
@@ -1481,7 +1468,6 @@ fixes shared-pool starvation on both peers. 2407 units/60 ignored, strict Clippy
 release, 12 Linux scenarios/283 checks, 4 native A/B, 22 Windows ABI and 23 JNI
 checks PASS. Historical throughput is not rerun. Overall: 24/37 (64.9%); next Q25.
 
-
 **TCP and Linux path-monitor ownership, 23 September 2026:**
 [Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): the common owner closes admission before
 abort/join. TCP reader/writer/pipeline and producers finish before network cleanup;
@@ -1568,7 +1554,6 @@ cleanup/post_down; core teardown errors terminate with failure and retain the en
 kill-switch while still attempting forwarding cleanup. Six new host regressions include
 real ClientCore queue backpressure. 905 host Rust tests PASS; Linux is cross-checked only.
 Live Linux lifecycle/firewall tests and complete route/DNS rollback remain open.
-
 
 **Legacy resolver recovery, 23 September 2026:**
 [Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): failed unlink/chmod and invalid snapshot
@@ -1828,7 +1813,6 @@ trust and recovery/status/log/driver adapters next; user runtime SKIPPED retaine
 
 **5 October, service observation:** [Q27-F229–F232](../reports/AUDIT-Q27-WINDOWS-OBSERVATION.md): Registration command/account/type/owner/DACL and filesystem recheck before changes; stale/unknown status and terminal cleanup Error, bounded trusted log snapshots/atomic rotation. 273 Windows + 543 shared PASS,49 new assertions,7 baseline FAIL. Q27 IN_PROGRESS; next native loader/driver adapters and final reconciliation. Plan26/37 (70.3%).
 
-
 **5 October, Q27 complete:** [Windows final](../reports/AUDIT-Q27-WINDOWS-FINAL.md): F233–F239,325 Windows +549 shared PASS,52+6 new checks,12 baseline FAIL. Actual VM driver/network/LocalSystem boot/sleep/service reload user-excluded,not PASS. Available criteria reconciled with the three previous stages. Plan27/37 (73.0%); next Q28.
 
 ### 28. macOS daemon, utun, pf and Network Extension
@@ -1915,13 +1899,11 @@ Exactly-once start/stop completion, generation/cancellation, Keychain/app groups
 **Status: DONE within agreed scope: SOURCE REVIEW and portable checks. Swift/Xcode/Apple runtime USER_SKIPPED; XCTest, signed IPA, callbacks, RSS/leaks and network scenarios remain NOT_RUN.**
 **12 October reconciliation:** current92 Swift inputs are covered by the source review;91 are byte-identical. Only the `exit_node` test fixture changed to include required `gateway=false`; project.yml adds LICENSE/notices resources. Production Swift/MDM/header inputs are unchanged. Fresh6 Python IPA fixtures,10 plist parses and bindings PASS. The four remaining platform criteria are excluded by the direct user decision about the Mac/iOS lab. Earlier IN_PROGRESS/NOT_RUN entries below are historical checkpoints; they do not establish Swift execution. [Current reconciliation](../reports/AUDIT-Q30-IOS-SOURCE-MEMORY.md).
 
-
 [Scoped F290/F291 source fixes](../reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md):
 exact MDM numbers and stale provider-reply ownership. Six IPA-verifier fixture
 regressions PASS; six added Swift XCTest and Xcode/runtime NOT_RUN (user-excluded
 Apple runtime). Whole-section review remains open; no checklist item is closed yet.
 Q29 open observations retained; overall28/37(75.7%),9 remain.
-
 
 [Storage F292/F293 source fixes](../reports/AUDIT-Q30-IOS-KEYCHAIN.md): Keychain
 first-writer identity/TOFU arbitration, no silent ID rotation, explicit key sizes and
@@ -1987,7 +1969,6 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **F311–F313 continuation, 6 October:** same [Q31 report](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md),14 router-helper fault tests,10 JS caller/adapter fixtures and11 shell fixtures per interpreter PASS. Toolchain failure/false artifact PASS/connection leaks fixed; init-visible status bypasses form cache. Actual ucode/rpcd/rc.common and cross-build NOT_RUN; installation/upgrade and full review still OPEN. No section promoted.
 
-
 **F314–F315 continuation, 6 October:** [Q31 report](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): retryable owned installation defaults and start guard; shared managed-source replacement with incomplete-sync build guard. Baseline ignored failures/stale inputs reproduced.21 shell tests per BusyBox/dash,7 filesystem source-sync tests,14 router-helper tests,12 shared lab tests,37 native recipes and10 JS fixtures PASS. Real libuci/fw4/procd/package/cross-build NOT_RUN,router USER_EXCLUDED; full upgrade/concurrency/provenance/review remain OPEN. Q31 IN_PROGRESS,28/37 unchanged.
 
 **F316–F319 continuation, 6 October:** [Q31 report](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): checked secret deletion, retryable legacy scrub, failed UCI/duplicate-zone admission, callback status through standard rc.common hooks. Baseline/isolated pre-hooks dispatcher false success reproduced.37 shell/saved-dispatcher cases per BusyBox/dash,11 JS fixtures/37 recipes/docs/bindings PASS. Saved rc.common uses fake lib/UCI/procd; real daemon/ubus/opkg/flock lifecycle unqualified. Q31 IN_PROGRESS,28/37 unchanged; full upgrade/concurrency/build review OPEN.
@@ -2016,7 +1997,6 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 
 **7 October, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):28-file source review reconciled;first criterion complete. Shared SSH helper fixes stderr receive-window timeout reproduced in four callers;connection/probe failure close and installed-pin diagnostics fixed.16actual SSH checks,8actual probe commands,125Linux methods without skips,78local native contract/docs/bindings PASS. Native provenance was already STALE and remains release-blocking Q34;digest/artifacts not substituted. SDK/pipeline/concurrency limits retained. Q31 IN_PROGRESS,28/37(75.7%),9remain;Q29/Q30/D06 retained.
 
-
 **7 October, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission fails closed for missing Git/CI identity, bad queries and stale workflows.77router+18CI Linux methods without skips; actual read-only preflight aggregate refusal verified. Positive/boundary/negative criterion complete,2/5criteria; Q31 IN_PROGRESS28/37(75.7%),9remain. Native current/debt14/15+D06 accepted unchanged; SDK/release-cut/ndm boundaries and firmware exclusions retained. No push/release.
 
 **7 October,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): retire saved/partial OpkgTun addresses, preserve ownership across stop/start and stale-plan failure, check current local IPv4 for cached no-op/clearing.218methods per dash/ash without skips;14nonroot CI methods and old hook/init baseline regressions. Cooperative failure/concurrency criterion complete;3/5criteria,Q31IN_PROGRESS,28/37overall. Remaining cross-component/SDK/release integration and exclusions retained; no push/deploy.
@@ -2031,10 +2011,6 @@ UCI → INI escaping/shell injection, LuCI ACLs, flash secrets, init/procd and u
 **14 October: LLVM CI404 remedy executed.** One private-feed flag, prepare/configure/bootstrap and actual source LLVM C++ compilation verified; last Ninja indicator548/3710. Owned guard stopped partial attempt (time); full compiler/SDK graph still open. Root/cache/archive/unit removed, host preserved, original404 retained.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: long source compiler stopped by OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152MiB RAM/512MiB swap. Archive/cleanup qualified, host preserved, no SDK build started. Q31 remains IN_PROGRESS; no identical resource retry.33/37,NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: Q31/Q36 runtime checkpoint.** Second source compiler OOM: cc1plus, LLVM1929/3710, RAM1152MiB/swap1024MiB; owned7.04GB removed, no SDK build. Q36 current CLI:4windows/2sessions,731146 stock events without trace loss; first late observer retained as invalid and driver fixed. Incomplete ACK linkage and changed observed/control results prevent delay-stage closure. See AUDIT-Q31-OPENWRT-CONTROLS and AUDIT-Q36-TUN-STAGE;33/37 (89.2%), both IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: Q36 small-packet pilot.** New4windows/2sessions,69703stock events/trace loss0; small-copy coverage14558/6090, but no exact individual ACK linkage or observer neutrality. Short observed/control ACK p50+18.67/+66.08%; no repeated stock-trace variant merely for closure. See AUDIT-Q36-TUN-STAGE;33/37 (89.2%), Q36 IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: Q36 socket-buffer causal tests.** Two6session/12window series without kernel tracing: tiny send worsened unlimited ACK in all3pairs; separately tested stock/auto receive with held stock send. Actual tb/rb, single INI delta, workload/ACK/topology/host/SHA cleanup qualified; RU/EN CONFIG clarifies explicit0 versus absent key. Product defaults unchanged. Q36 IN_PROGRESS;33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
 
@@ -2076,7 +2052,6 @@ autostart ownership, config trust and Linux runtime E2E remain open.
 **8 October, F385–F388:** [Q32 logs and trace](../reports/AUDIT-Q32-LOGS-TRACE.md): descriptor-pinned log reads reject raced symlinks/FIFOs, four I/O slots survive caller cancellation, tail preserves complete boundary lines and trace uses atomic0600 publication outside Tokio workers with one admitted dump. Three baseline failures reproduced; extracted harness11/UID65534, real SIGUSR1 twice with65536 ordered rows,2434 library tests (60ignored), strictClippy/daemon and118 Node VM groups PASS. Four current native A/B, WindowsABI22/AndroidJNI23 and final gates in report evidence. Failed preparations/known legacy firewall drift retained; no wholehost claim for initial .10 baseline. Capture/HTTP/disk/physical scope limits retained. Q32 remains IN_PROGRESS; roaming, notification trust/secret-redaction and full integration remain open. Overall28/37(75.7%), nine remain.
 
 **8 October, F389–F394:** [notification INI and delivery](../reports/AUDIT-Q32-NOTIFICATIONS.md): trust enforced before read/save, complete bounded HTTP status and 2xx-only success, query/fragment parsing, conservative special-address guard, post-save cache invalidation and symlink-entry stamps. Three old helper failures plus two actual-library cache failures reproduced; six helper tests, 12 isolated HTTP checks and cache trust/recovery qualify the corrected source. Final library/native counts and guards are in machine evidence. Q32 and Q29/Q30/Q31 scopes remain open; 28/37 overall, nine remain; old debt14 DONE plus D06 accepted.
-
 
 **8 October, Q32 complete:** all five criteria reconciled across metrics/usage/logs/trace/notifications and unchanged roaming observations; final2439 library, strictClippy/daemon, actual HTTP12/cache, native A/B/ABI22/JNI23 and docs/provenance PASS. Source16 comparisons preserve prior execution scope; physical/TLS/Telegram/browser limits remain documented. Full plan29/37(78.4%),eight remain;Q29/Q30/Q31 and D06 retained.
 
@@ -2139,7 +2114,6 @@ final client task drain and Linux runtime/release checks remain open.
 
 **8 October,F445 / Q33-F048:** [Full installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): reproduced/repaired false sysctl success; private per-run snapshots/prior files/restore instructions, readback and early tuning path guards. Full QELI_BIN+QELI_SRC and production QELI_DEB:24PASS each with actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 and persistent files restoration. Linux136 regressions without skips/lint PASS, tuning CI added. Initial FAIL retained; host777/845/network/kernel unchanged. Full positive installer/partial kernel recovery gate closes, without global ten-key writes/BBR loading/reboot/empty-OS bootstrap claims; Docker/Actions and previous limits remainOPEN. Q33IN_PROGRESS29/37DONE78.4%,8remain; no push/deploy/release.
 
-
 **Q33 complete 8 October:** [final reconciliation](../reports/AUDIT-Q33-COMPLETION.md) maps all five criteria to evidence. F450 closes retained hooks and exact deletion; source/runtime limits remain.
 
 ### 34. CI, dependencies, native provenance and release
@@ -2185,7 +2159,6 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming with retained corpora
 
 **10 October,F504–F505:** [Stability gate](../reports/BENCHMARK.md): fixed false admission from incomplete/rounded/invalid measurements and removed host-wide cleanup.89Windows/19Linux methods,4workflow lint and actual read-only .11 refusal PASS;service777/845/CLI75bc preserved. No new throughput/soak or wholeQ34/Q35/Q36 completion.30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **10 October,Q35-V001:** [Actual bounded soak](../reports/AUDIT-Q34-RELEASE-SOAK.md):
 current isolated runners executed100TCP+100QUIC over440.95s;33assertions PASS,
 one session/original workers/TUN, stable fd and sampled RSS<32MiB. Actual
@@ -2195,7 +2168,6 @@ integration is complete;30–60min/8h,10k, tasks churn and other Q35 levels rema
 open. Whole section IN_PROGRESS, overall30/37(81.1%),7remain.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **10 October,F509/Q35-F006:** [Short control sockets and fault matrix](../reports/AUDIT-Q34-RELEASE-SOAK.md):
 actual deep-TMPDIR SUN_LEN fixed with private /run paths;TCP/UDP/bonding/secondary
 consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
@@ -2203,14 +2175,9 @@ consumers migrated.14case executions/320assertions,7liveconcurrent snapshots,
 failure retained. Whole Q35 IN_PROGRESS,30/37DONE81.1%,7remain.
 LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **13 October, Q35 final:** [five-criterion mapping](../reports/AUDIT-Q35-FINAL.md) combines actual fuzz, owning-module fault/limits audits, concurrency and current full endurance; original dates, failures and limitations are preserved. Q36 stage observation was executed separately and does not qualify its original cause. The plan is33/37 (89.2%), four sections remain open.
 
 ### 36. Benchmarks and measurement methodology
-
-**DONE,14 October:** [Q36 final](../reports/AUDIT-Q36-FINAL.md); five scoped criteria and current shipping control complete; historical checkpoint statuses retained.34/37(91.9%),Q29/Q31/Q34 open.
-
-**Current coverage, 11 October:** Q36-F012/F015/F016 complete TCP/UDP bidir P1/P4 for all 12 carriers in the three non-default outer/inner IPv4/IPv6 pairs. Each condition has three independent repeats, median/spread and raw files; previously successful cells stay separate. The family matrix is complete within these conditions. Q36-F017 completes outer6/inner6 RTT under TCP bidir P1/P4 for all12 carriers and direct, three sessions each. Q36-F019 completes functional native AUTH across all12 carriers (108 bursts/756 peers), using lto=false/codegen16. Q36-F027 completes current standard release AUTH/rate within finite-burst scope (108 bursts/756 peers,all12,source/profile/SHA/exit0); remaining: precise TCP asymmetry stage/current steady data-plane; .11 cleanup was completed in F024, and long soaks belong to Q35. Q36-F020/F021 reproduce asymmetry on one VM and test paired CPU placement: disjoint affinity did not eliminate it; these diagnostic series use the prior F010 CLI and do not test the current UDP fix. Q36-F022 confirms uplink sensitivity to downlink load: three paired separate iperf flows, downlink100M raises uplink by 2.05–2.14 times without increasing client drop counters; the mechanism remains OPEN. Q36-F023 measures ACK path: 169888 matched headers, delay p50 0.760/15.934ms at downlink100M/unlimited; 15 server-only headers, cause OPEN. Q36-F024 closes old .11 cleanup: original root/owned Cargo outputs archived/removed, services/full host gate PASS. Q36-F025 confirms kernel TUN TX drops in 3/3 unlimited windows with zero application/qdisc drops; exact driver-drop reason and delayed ACK stage remain OPEN, troubleshooting clarified. Q36-F026: queue4000 removes server kernel TX drops but reduces uplink34–49% and increases matched ACK p502.26–3.43 times; one4000 window has186 server application drops. This is not a fix; default1000 preserved, precise stage OPEN. Historical OPEN entries below describe their original checkpoints.
 
 **Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
@@ -2223,37 +2190,6 @@ Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and backgrou
 - [x] Failures and concurrency.
 - [x] Integration and target platform.
 - [x] Fixes, retesting and evidence.
-
-**10 October, Q36-F001:** the [benchmark runner](../reports/BENCHMARK.md) no
-longer substitutes sender `end.sum` for a missing receiver `sum_received`,
-and rejects truncated intervals or invalid TCP/UDP metrics. Five unit tests
-and all 35 archived raw iperf files PASS. Fresh repeated measurements and the
-P=4/IPv6/bidirectional matrix remain open; 30/37 DONE (81.1%).
-
-**Q36-F002:** historical `bench_bonding.py` now refuses ordinary invocation
-before SSH or host-state mutation, as `benchmark.py` already did. Unused
-`perf_combined_load.py`, with embedded credentials and production firewall
-changes, was removed. One subprocess test covers the two remaining refusals;
-the initial `.10` SSH refusal was later traced to getpass/PTY credential
-delivery; stdin restored access.
-
-**Q36-F003/F004:** [repeat methodology](../reports/BENCHMARK.md): binary
-provenance is distinct from the local checkout; P=4, governor/affinity/load,
-MTUs, raw counters and honest failure/cleanup publication are added. The offline
-report requires >=3 separate windows, identical conditions and revalidation of
-raw iperf/process/counters; duplicates, incomplete populations and mismatches
-refuse admission without discarding outliers.24 Windows/24 Linux methods PASS;
-actual Linux sampler/governor PASS. Both VMs are accessible through stdin; the
-earlier getpass/PTY refusal did not imply a changed password. Throughput repeats,
-current build/bidirectional/IPv6/latency/auth were still OPEN at this methodology
-stage; subsequent build/repeat qualification follows below. Q36 IN_PROGRESS,
-overall 30/37 DONE81.1%.
-
-**10 October, current Q36 CLI:** [repeat measurement](../reports/BENCHMARK.md): SHA `7769f43c` from 902 committed inputs; three independent full sweeps each P=1/P=4, 72 modes/210 phases, 600 raw JSON SHA, median/min/max without removing outliers. Primary core/available dumps match; separate2modes/9phases with every firewall backend PASS. Outer FAIL due to the known vpn-nat cycle retained. Q36-F005 captures all backends, checks structure and refuses empty archived core snapshots;35 Windows/35 Linux methods PASS. Owned roots SHA-archived/cleaned, services preserved. Bidir/IPv6/latency/auth-rate remain OPEN, Q36 IN_PROGRESS, 30/37 DONE (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 October, Q36-F006/F007:** [TCP bidir](../reports/BENCHMARK.md): three full P=1/P=4 sweeps of all 12 carriers, 78 phases/228 raw JSON. Both receiver and kernel-counter populations revalidated; uplink asymmetry retained. Four host gates COMPLETED, two FAIL from the known external NAT cycle; explicit MEASUREMENTS_ONLY never emits AGGREGATED or hides failures. 47 Windows/47 Linux methods PASS; 14 owned roots SHA-archived/cleaned, services preserved. TCP-bidir IPv4 measured; UDP-bidir/IPv6/latency/auth-rate/drop diagnosis/8-hour soak OPEN. Q36 IN_PROGRESS, 30/37 (81.1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F029:** [current stock data plane](../reports/BENCHMARK.md): CLI 35da83fd,36 fresh sessions/144 windows all12 outer4/inner4 TCP+UDP bidir P1/P4×3;433 raw JSON/72 logs, independent receiver/counters/process/admission, no F010 pooling. Measurement host gate PASS, cleanup PASS; all differences retained. Owned root SHA-archived/removed, services/staged CLI preserved. Finite2vCPU same-VM scope, not sustained capacity. Exact TCP asymmetry stage and Q35 full endurance OPEN; overall30/37 DONE81.1%.
 
 **Status: IN_PROGRESS.**
 
@@ -2445,15 +2381,11 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **5 October, Q28 sockets:** [fd lifetime and I/O budgets](../reports/AUDIT-Q28-MACOS-SOCKETS.md): F268–F270,18 new Swift cases SOURCE REVIEW / USER SKIPPED. Serial queue + cancel-handler release,nonblocking deadlines,atomic framework-write watchdog,zero UDP datagrams.1225 related managed PASS do not execute Swift. Q28 IN_PROGRESS;final integration/DNS-PF owner stamps remain. Plan27/37.
 
-
 **5 October, ordinary Android sockets:** [split/full × three transports](../reports/AUDIT-Q29-ANDROID-DATA.md):6freshPASS,72replies.5/6initialIPv4sources physical after observedCONNECTED;TUNready1–111ms,payload guarded bypreflight. Immediate first-packet andexternal/default routes unqualified;DNS/kill-switch/lifecycle next. ProductAPK/JNI unchanged,Q29IN_PROGRESS,28/37(75.7%).
-
 
 **5 October,Q29 off-pool/DNS:** [seven cases](../reports/AUDIT-Q29-ANDROID-DATA.md):7newPASS,72off-poolreplies and12systemDNS A/AAAA replies;full without includeRoutes,split without defaults. Valid full kill-switch rejected without OSlockdown. Initial wildcardUDPsink caused6timeouts,pcap confirms fixture wrongsource,fixedsinkPASS. ProductAPK/JNI unchanged;positive lockdown/systemlifecycle open,Q29IN_PROGRESS,28/37(75.7%).
 
-
 **5 October,Q29 system lifecycle(partial):** [Always-on/lockdown and external process death](../reports/AUDIT-Q29-ANDROID-SYSTEM.md):actual OS policy,separate UID,blocking after SIGKILL/force-stop, manual recovery and system revoke confirmed. Automatic SIGKILL redelivery FAIL (issue OPEN) despite startCommandResult=3;complete system gate is not PASS. Q29 IN_PROGRESS,28/37(75.7%).
-
 
 **5 October,Q29 independent Android control:** [minimal Java VpnService](../reports/AUDIT-Q29-ANDROID-SYSTEM.md):without TUN,restarted after17.40s with flags=1;with TUN,no new PID within45s at both lockdown=0 and lockdown=1. Failure reproduces without Qeli JNI/core;only TUN creation differs at the same lockdown=0. Exact framework implementation/other devices remain unqualified.Product recovery gate remains FAIL,Q29 IN_PROGRESS,28/37(75.7%).
 
@@ -2489,7 +2421,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **5 October, Q29 bounded Doze/flapping:** [report](../reports/AUDIT-Q29-ANDROID-ENDURANCE.md):TCP/UDP/QUIC,9power phases(30s+2×120s),18WiFiCellulartransitions,36wake/72posthandover payloads,1440burst samples/144poststopblocked,45DNSops/72answers;3PCAP/protectedphysical0/drop0. PID/TUN retained;settings/host/userdata/recovery/revoke PASS. Historical commit false-positive fixed in harness,5regression tests. Bounded AVD matrix covered;physical/OEM longsoak,strict trustedDoT/SIGKILLFAIL/ENONET remain,Q29IN_PROGRESS28/37(75.7%).
 
-
 **5 October, Q29 trusted DoT:** [Report](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md): TCP/UDP/QUIC strict untrusted/trusted/mismatch/recovery PASS;39DNS/12authenticated answers,36payloads,576bursts/144poststopblocked;3PCAP physicalleaks0/drop0. Temporary labCA/settings/host/userdata cleanup5attempts PASS;2harnessFAIL preserved;dynamicUID fixed/12helper3CLI fresh,product/native/managed unchanged. SIGKILLFAIL/ENONET/otherAPI-OEM-arm64 open;Q29 IN_PROGRESS28/37(75.7%).
 
 **6 October, Q29 F280:** [permission ownership](../reports/AUDIT-Q29-ANDROID-PERMISSIONS.md): same valid-profile adapter suite old3FAIL/fixed3PASS; cancel/profile snapshot/Activity recreation fixed. Fresh179JVM(7new), lint0errors55warnings; defaultR8 TCP real UI connect/reconnect,16payloads/192bursts/13DNS/strictDoT/capturephysical0drop0 PASS. Pending permission phase/result injected; Release instrumentation NOT RUN; four preliminary attempts unqualified, all seven cleanupPASS. Native/server/managed unchanged; SIGKILL/ENONET/otherAPI-OEM-arm64 remain,Q29IN_PROGRESS28/37(75.7%).
@@ -2504,12 +2435,9 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **6 October, Q29 F284–F285:** [profile editor/export](../reports/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md): early Save and missing-package/mode state corrected; unreadable store export reports failure, encryption/write/close moved to IO, failed sink cannot report success. Same corrected test APK old5/4expected FAIL,fixed5PASS; initial3FAIL/premature listener-read diagnostic preserved. Fresh188JVM(6new),lint0errors54warnings/defaultR8 TCP2handover/12full payloads/288socket samples/48poststopblocked,capturephysical0/drop0;5attempts host/userdata/address/server cleanupPASS;15helper6CLI. Private file exports qualified, external SAF/cloud providers not executed. Q29IN_PROGRESS28/37(75.7%);SIGKILLFAIL/ENONET/skips/D06 unchanged.
 
-
 **F326–F327 continuation, 6 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact saved-plan receipt for OpkgTun no-op/MTU changes, literal address matching; matching-zombie recheck after failed exe lookup.120 cases each BusyBox/dash (47 owned native-process,44 state,29 installer/hook),12 new;37 recipes/docs/bindings PASS. Old/current hook and deterministic zombie failures reproduced; initial dash FAIL and orphan NOT_REPRODUCED retained. No actual router/core network or generation/concurrency qualification; INI parity/package/build/source review OPEN. Q31 IN_PROGRESS,28/37 unchanged.
 
-
 **F328–F329, 6 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): isolated per-run verification checkout/target; shared source sync, no service operations; checked locked single-job host gate, forward normal/build graph, mandatory ELF/hash and meaningful exit/SSH-finally.19 gate tests Windows/Linux,7 real temp-file shared-sync,37 recipes/docs/bindings PASS; actual offline Cargo local-fixture positive/negative graphs PASS. Original forced-service calls, stale sync, false PASS/exit0 and connection leak reproduced with models/temp files. No Qeli build/router qualification; INI parity/OpkgTun concurrency/package/build provenance OPEN.Q31 IN_PROGRESS,28/37 unchanged.
-
 
 **F330–F331, 6 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): removed both shell INI parsers; client-bin-only core metadata inspection uses bounded loader/strict common parser. Quoted/case/BOM/on parity and exit_node ownership; cached validated preflight, unknown/error reply fails before launch. Fresh Rust1.97 client-bin host debug build/8unit/Clippy/fmt PASS;155cases each BusyBox/dash,16new owners with22actual inspector subcases;16old/current records each shell.37recipes/docs/bindings PASS. Default core outside gated addition unchanged; no FFI/release/cross rebuild or real router networking. Binary/template upgrade together; configuration path is reloaded, generation/concurrency not closed. Q29/Q30/D06 retained,Q31 IN_PROGRESS28/37.
 
@@ -2541,11 +2469,9 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **F356–F357, 7 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): real Cargo reproduces compiler-config and intermediate-directory overrides (same baseline4methods/9expected subtestFAIL). Shared pinned rustc lookup/output policy now covers both router helpers, host verification with Rust1.97.0/Clippy and router CI.59router methods(7real-Cargo)/19hostgate model methods without skips PASS; actual tiny test/Clippy/graph,16rendered bash-n steps,37recipes/14LuCI/docs9/bindings PASS.17Git/lab inputs,cleanup verified; private home only,.10/host services/network unchanged. No full Qeli/Zig/cross/SDK/GitHub Actions qualification; project core/ABI/artifacts unchanged. Full hermetic configs/profile/source/PATH/cache/A-B and existing Q31 remainder OPEN.41historic cases/acceptance preserved;Q31 IN_PROGRESS28/37(75.7%),9remain,Q29/Q30/D06 retained. No push/deploy.
 
-
 **October7,F370–F371:** [native preflight](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): real low-space baseline removes retained A/B fixture;fixed preserves it;36Linux/80local PASS. Isolated source roots,Cargo jobs1,installed pins inventory PASS. Native refresh blocked by disk;two local backups verified,auto-review rejected cleanup and no removal occurred. Native provenance STALE/Q34 OPEN;28/37(75.7%),9remain,Q31/Q29/Q30/D06 scopes retained.
 
 **October7, native/D11/D15:** [current-package reconciliation](../reports/AUDIT-Q25-NATIVE-REBUILD.md): four independent A/B,14 SHA/provenance,22 Windows ABI/325 platform/549 .NET/201 JVM/23 Android JNI,2417 Linux library and12 CLI tests/Clippy/debug builds PASS. Preparation failures retained;peak benchmark/VPN matrix/soak not rerun. Debt14/15 DONE+D06 ACCEPTED;full audit28/37(75.7%),9 remain;Q29/Q30/Q31 and exclusions retained.
-
 
 **October8,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): separate core/hook publication lock eliminates cooperative check-to-command race without lifecycle/startup deadlock. Three expected old-hook failures; four Rust/shell cases per dash/ash,196 existing methods per shell without skips,2444 Linux(60preexisting ignored),strictClippy/client PASS. Native refresh/ABI and raw guards are in scoped packet evidence. Mixed bundles/admin writes, sequential NDM/power loss, firmware exclusions and full SDK/release pipeline remain outside closure; Q31 remains3/5IN_PROGRESS. Full29/37(78.4%),8remain;old debt14DONE+D06ACCEPTED;Q29/Q30 unchanged.
 
@@ -2559,7 +2485,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **8 October,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): fixed branch latest publication, Cargo --locked, removed four destructive/status-ignoring legacy harnesses. Real Docker image/runtime26PASS: pinned H1 VPN fresh/recreation/known-image rollback, root0600/readonly volumes, protected-login readiness, bytes/UID/mode preservation, six exit0 without OOM/SIGKILL. Harness FAIL retained; host snapshots/AppArmor/PID777-845 restored, owned root SHA-backed-up/guard-cleaned. Runtime gate closed; compiler multiarch/registry/currentActions and final Q33 command/hook reconciliation OPEN.29/37DONE78.4%,8remain; historical debt14DONE+D06accepted/exclusions preserved; local dev without push/deploy/release.
 
-
 **8 October,F449/Q33-F052:** [Q33 final reconciliation](../reports/AUDIT-Q33-COMPLETION.md): fixed restore hook-file protection bypass through `..`, quotes and symlink aliases; unknown top-level managed literal variables/globs refuse publication. Exact original Linux collector expected FAIL;14 targeted production helper/gate checks PASS. Full server/native qualification PASS:CLI5/backup49/IO2/Clippy,freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS;overall29/37DONE78.4%,8remain. Previous runtime gates reused only for unchanged paths;Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED retained. No push/deploy/release.
 
 **8 October,F450/Q33-F053:** [Q33 complete](../reports/AUDIT-Q33-COMPLETION.md): actual two-HTTP-restore baseline executes a replaced harmless marker; fix retains startup/later worker hooks until supervisor exit and refuses exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; fresh native/ABI qualification and raw seal are in the report. Q33 5/5 DONE;30/37(81.1%),7remain. Q29/Q30/Q31/Q34/D06 historical limits preserved; no push/deploy/release.
@@ -2572,45 +2497,31 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): on
 
 **8 October,F463–F465/Q34-F017–F019:** [Android dependencies](../reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md): strict transitive project/early-plugin locks, three real lockfiles, SHA256 artifacts+metadata and missing-policy guards. 747 independent HTTPS files match; Windows/macOS AAPT2 checksum admission only. Actual debug/defaultR8/debug-release instrumentation assemblies, locked/offline/lint and fresh201productionJNI JVM PASS; five real default-mode refusals PASS. Initial partial-lock, harness Metaspace and alias404 trials retained; separate lint/in-process Kotlin/oneworker privateVM overrides. SHA-backup/proc-mountguard owned cleanup,777845 preserved; nativee3fb/14SHA/protected unchanged. No device VPN/currentJava17CI/otherOS builds claimed. Q34IN_PROGRESS30-37DONE81.1percent7remain;braces/packages-licenses/currentCI/sourcecut-release and historicalQ29Q30Q31D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 October,F466–F468/Q34-F020–F022:** [Maven security](../reports/AUDIT-Q34-MAVEN-SECURITY.md): shared early-plugin/project security versions, KGP2.4.21/Netty4.1.137/BC1.85 and remaining targeted fixes; all318 locked package/version records freshOSV0affected (initial326/19affected/50distinctadvisories). CI Maven fail-closed gate8fixtures/actualJDOMnegative-positive PASS; wrong-password test now AEADBadTagException, nullable reflection checked. Java17 officialSHA private qualification: debug/defaultR8/debug-release instrumentation assemblies/201JVMproductionJNI/lint0errors53warnings/offline-strict PASS;2actualoffline policy/driftrefusals+restoredpositive.104freshHTTPS checksums/626exactinheritedsealed records,obsolete admission removed. First unit compileFAIL and harness/API diagnostics preserved. SHA32720631byte backup/proc-mountguardcleanup777845 preserved; nativee3fb/14SHA/protectedfiles unchanged. License metadata318 obtained, actualNOTICE/native copyleft/source-cut/device runtime/currentActions remain OPEN; freshestCI37765333335 is anotherSHAf84a78d9. Q34IN_PROGRESS30-37DONE81.1percent7remain;F459braces/Q29SIGKILLFAIL-ENONET/Q30/Q31/D06accepted/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **8 October,F469/Q34-F023:** [Android licenses/NOTICE packaging](../reports/AUDIT-Q34-ANDROID-NOTICES.md): per-variant canonical project AGPL/MPL,Apache2,Maven runtime inventory,original archive identities and preserved JAR/AAR/nested notices; dedicated original-archive ArtifactView,identical variant visit deduplication. Independent extraction current-checksum-admitted63archives/44AAR/24resources PASS;76license declarations inherited sealed review. CI APK index/hash/coordinate/origin gate12negative fixtures. APK qualification/evidence in linked report; native dependency/upstream-source notices,matching source publication/signatures/currentActions/fullrelease remain OPEN. Native e3fb/protected files unchanged; no new nativeAB/JVM/deviceVPN claim. Q34IN_PROGRESS30/37DONE81.1percent7remain; historical Q29/Q30/Q31/F459/D06/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 October, F470/Q34-F024:** [Common Cargo legal resources](../reports/AUDIT-Q34-NATIVE-NOTICES.md): 235 checksum-locked packages,458 upstream resources, six exact-VCS supplements; one common bundle and packaging/CI checks. Actual qualification and limitations in linked report. Rust std/toolchain/.NET/upstream-source notices, source publication, OpenWrt immutable source cut and current Actions remain OPEN. Q34 IN_PROGRESS;30/37 DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/USER_EXCLUDED unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **8 October,F471–F472/Q34-F025–F026:** [Managed notices and Inter font](../reports/AUDIT-Q34-MANAGED-NOTICES.md):67 actual SDK-content-hash/official-catalog checked NuGet/runtime packages,187 shared resources; original upstream bytes and separate SIL OFL1.1/copyright for6 exact embedded fonts.35-lock/globalSDK/runtime binding,offline generator/checker,desktop/CI/app gates.19fixtures/final-source regeneration/four actual publishes/published negative/restored and shell gates PASS; scope and raw qualification in report. Toolchain notices,MicroCom exact source binding/sourcepublication/OpenWrt cut/finalActions/release OPEN. Nativee3fb/14SHA/protected unchanged,labs untouched;no new nativeAB/JVM/device claim. Q34 IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 October,F473/Q34-F027:** [Toolchain runtime/stdlib notices](../reports/AUDIT-Q34-TOOLCHAIN-NOTICES.md):65 original reviewed Rust/Zig/NDK/GCC-MinGW resources,69 embedded files;533 common native files. Offline policy/version/SHA binding,Gradle source InputFile,common CI and all packaging paths. Qualification and exact scope in report. Source publication,old GCC minor linkage/NDK whole archive/OpenWrt immutable source cut/final Actions-signatures-release remain OPEN. Nativee3fb/14SHA/protected preserved;Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F474–F477/Q34-F028–F031:** [Release publication gates](../reports/AUDIT-Q34-PUBLICATION-GATES.md):actual tag/clean-source/exact-commit CI admission beforebuild,shared Rust pin,Docker reviewed base digests/common notices,extractedDEB notices gate,allworkflow CI filters.86methods/baselineactualGit/CLI/YAMLparse PASS;official metadata and401/currentCIabsence limits in report. Fullsourcepublication/OpenWrt immutablecut/wholeDockerbuild/currentActions/signatures/release OPEN;nativee3fb/14SHA/protected unchanged,labs untouched. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F478–F479/Q34-F032–F033:** [Attestation/checksums](../reports/AUDIT-Q34-ATTESTATION-CHECKSUMS.md): removed unsupported build provenance for downloaded foreign assets; only actual CI-built DEB remains a subject. Atomic SHA256SUMS publication with consumer-compatible filename/regular-file admission and retained old manifest on failure. Linux11 no-skips/real GNU verify/baseline defect PASS;Windows7+4POSIXskips,release18,recipes38,YAML parse PASS (67distinct methods). SHA-backed-up/guard-cleaned own Python fixture;777845/service/network/native14SHA/protected unchanged. No Docker/native rebuild or hosted signing. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F480/Q34-F034:** [Full Docker build](../reports/AUDIT-Q34-DOCKER-BUILD.md): tag/Cargo/exact-commitCI gate before publication tools/login,fullref/history/actionsread;actual classifier mismatch baseline/refusal and64focusedmethods/YAML PASS. Full fresh amd64 defaultfatLTO/jemalloc pinnedRust/Debian build826.546s/no binaryoverride,exact533image notices/CLI/dependencies and26pinnedVPN/recreation/invalidimage rollback checks PASS. Originalhost restored,own image/source/fixtures archiveSHA-qualified before guarded cleanup;public cache/tools exclusion explicit. Harness refusals/profile restoration retained;explicitunconfined runtime is not defaultAppArmor qualification. Multiarch/currentActions/signatures/sourcepublication remainOPEN;Q34IN_PROGRESS30/37DONE81.1percent7remain;native14SHA/protected/historicalQ29Q30Q31F459D06exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F481/Q34-F035:** [Immutable Docker inputs](../reports/AUDIT-Q34-DOCKER-INPUTS.md): reviewed frontend digest matches previous whole build;fresh registry index/manifest/config SHA checked. Single signed Debian/security snapshot20261008T000000Z,live sources removed,source-scoped expiry only,archive authentication preserved. Actual SHA-pinned amd64 Debian rootfs APT3signatures/62new150total packages/13commands/check/repeat and4signature negatives PASS;66focused methods/2priorrecipe refusals. SHA-backed-up full installedrootfs/guardedcleanup/original777845/network/profiles preserved;initial harness failures retained. No fresh wholeimage/compiler/ARM/hostedActions/release;remaining Q34/historical limits preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F482/Q34-F036:** [OpenWrt source Git flags](../reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md): actualGit10hidden-input false-PASS reproduced on exactprior gate;scoped ls-files refuses assume-unchanged/skip-worktree on5inputs before pin/hash. Unrelatedflags keep existingboundary.37methodsPASS(25source/12preflight),3existingPOSIX-oldbaseline skips unchanged;sourcecut actualpin/tree mismatch OPEN,pin/hash/SDK untouched. Docs/native14/protected unchanged scope,no lab/network/newcompiler/runtime. Q34IN_PROGRESS30/37DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F483/Q34-F037:** [OpenWrt exact local source cut](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): stalepin/actual qelitree baseline refused;exact full local dev f4b80a9 pinned,actualSDK24.10.4 download+prepare and second emptyDL/differentURL samearchiveSHA PASS. All 3131 trackedfiles match originalcommit incllicenses/notices;no syntheticcommit. PublicURL unchanged,actualGitHubHTTP422 means publication prerequisite OPEN. Sourcegate/native14/protected/doc checks and scoped evidence in report;no newcompiler/bootstrap/IPK/router/nativeAB/hostedCI claims. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29SIGKILLFAIL-ENONET/Q30/Q31/F459braces/D06accepted/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F484/Q34-F038:** [Fuzz CI inventory](../reports/AUDIT-Q34-FUZZ-INVENTORY.md): actualCargo15targets butoldsmoke/nightly11 omitcontrol_v2/quic_envelope/realtls_client/websocket_frame. Sharedmanifesthelper drives bothconsumers,earlymetadatafailure blocks instead ofemptysmoke;nightlydynamicneeds/output matrix.69localmethodsPASS+10repeatLinuxunits+10actualCI Bash scenarios with controlledcargo receipts inclbaselinegap,15calls/early23failure/malformed/missing/outputpreservation/new16thtarget/externalsymlink refusal. ActualRust/libFuzzer/hostedActions and pinnedfuzztools remainseparate OPEN;no core/native/tree changes,previousOpenWrtcut retainsqelitree. SHA-backed-up fullownedfixture/procmountguards/service777845 preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q35TODO andhistoricalQ29/Q30/Q31/F459/D06/exclusions retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F485–F486/Q34-F039–F040:** [Reproducible fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): pinned nightly/cargo-fuzz,independent146-package lock,locked-fetch/offline/SHA and strict audit. All15 real ASan targets:85,930,590 executions,no crash artifacts;72 Windows+13 Linux methods and actual missing/stale/drift refusals PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash updated. Scope and retained harness failures in report.Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/historical limits preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
@@ -2657,49 +2568,7 @@ Q34/Q35IN_PROGRESS,30/37DONE81.1percent,7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_
 
 **10 October,F512/Q35-F010:** [Release-soak admission](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): old gate falsely passed in0.064s with eight silent children. It now requires eight phase results, final TCP10k/UDP10k+3×1k checkpoints and28800s on a monotonic clock. Seven Linux contract tests and Bash syntax PASS; silent child/missing checkpoint/eight hours minus1ns refuse. Actual eight-hour VPN soak remains OPEN,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-**10 October, Q36-F008:** [Bidir pressure](../reports/BENCHMARK.md): 36 phases/90 raw JSON, three windows at100/250/unlimited for plain/TLS/QUIC and baseline. Plain TCP restores symmetry under paced load, but low unlimited uplink also occurs with zero session drops: cause OPEN. Fixed paced raw admission into unlimited populations;49 Windows/49 Linux PASS, previous228 raw readmitted. Both owned roots SHA-archived/cleaned, services preserved. Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 October,Q36-F009:** [Client TCP uplink](../reports/BENCHMARK.md): four drop reasons recorded by core/Linux status; Full/Closed flow semantics preserved.9 Rust tests/release/fmt/2Clippy PASS.24 phases/96 raw JSON,3 fresh sessions old/new,fixed server; plain TCP asymmetry cause and downlink observability OPEN.915 source inputs checked,staged CLI restored,2owned roots SHA-archived/cleaned,services preserved.Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 October,Q36-F010:** [TCP downlink](../reports/BENCHMARK.md): mux pool/Full/Disconnected observability closed;five new Rust tests/release/fmt/2Clippy PASS.18 phases/72 raw JSON,3 fresh sessions plain/TLS/mux,negotiated mode confirmed.916 inputs checked,staged CLI restored,2owned roots SHA-archived/cleaned,services preserved.Asymmetry cause OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**10 October,Q36-F011:** [latency](../reports/BENCHMARK.md):3 fresh sessions per12 carriers+direct,78 windows/15600 ICMP probes;idle and100M TCP bidir,p50/p95/p99,raw tails/loss retained.53 Windows/4 Linux/9docs PASS;2own roots SHA-archived/removed,services preserved.Full Q36 matrix remains IN_PROGRESS,30/37DONE81.1percent;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**10 October,Q36-F012:** [UDP/IPv6](../reports/BENCHMARK.md):shared UDP-bidir runner/report,dual-family kernel counters,63 Windows/63 Linux/11 workflow/4 actionlint workflows/9docs PASS.69 fresh sessions/204 phases,all12 IPv4 UDP-bidir P1/P4;3core carriers independent outer/inner v6 TCP+UDP P1/P4.Original harness FAIL/4 partial windows retained;2baselines inherited;2own roots archived/removed,services preserved.Q36 IN_PROGRESS,30/37DONE81.1percent;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**11 October,Q36-F013:** [unpaced RTT](../reports/BENCHMARK.md):3 fresh sessions per12 carriers+direct,78 TCP-bidir P1/P4 loads and78 windows/15600 ICMP probes;p50/p95/p99/raw tails/loss/CPU/RSS/drops retained.Final counters saved before admission;ping oversend fixed,original 2FAIL/3partial windows/1inherited baseline retained.68 Windows/68 Linux/9docs PASS;2own roots SHA-archived/removed,services preserved.Physical saturation not established;auth-rate/remaining IPv6 combinations OPEN.Q36 IN_PROGRESS,30/37DONE81.1percent;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 fresh-server bursts,1/4/16 TCP/UDP/QUIC peers;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL and interrupted transfer retained,1partial peer separately;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October,Q36-F015:** [IPv6 carriers](../reports/BENCHMARK.md):27new sessions/108TCP+UDP bidir P1/P4 windows remaining9carriers outer6/inner6,324raw JSON +manifest;core3/direct inherited separately with sealed SHA,all12 now covered for this pair.916CLI inputs unchanged/no rebuild;73Windows/73Linux previous exact-input checks reused,9docs PASS.2owned roots SHA-archived/removed,services preserved,all host gates retained.Q36 registry TODO→IN_PROGRESS and historical debt queue corrected.Mixed-family/IPv6RTT/fullAUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F016:** [Mixed families](../reports/BENCHMARK.md):54 new sessions /216 TCP+UDP bidir P1/P4 windows remaining nine carriers outer4/inner6 and outer6/inner4;648 raw JSON +manifest. Prior core3/direct preserved separately with sealed SHA; with F015 all12 cover the three non-default pairs.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 owned roots SHA-archived/removed,services preserved; all host gates and final differences retained. IPv6 RTT/full AUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F017:** [IPv6 RTT](../reports/BENCHMARK.md):39 fresh sessions /78 TCP bidir P1/P4 ten-second windows all12 carriers+direct outer6/inner6;15600 probes,15573 received/27 lost. Per-window p50/p95/p99,loss and three-session median/spread independently recomputed from379 SHA-bound raw inputs; prior IPv4 retained separately.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 owned roots SHA-archived/removed,services unchanged,full host differences retained. Full carrier AUTH/rate and asymmetry cause OPEN;Q35 soaks separate;Q36 IN_PROGRESS;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): reproduced false failure on normal receive-pump cancellation and lost completed worker failures. Both paths fixed;38 exact-source Rust tests and77 benchmark methods on each Windows/Linux PASS. Small Linux fixture archived/removed;.10 service preserved,full host gate FAIL from three legacy rules. .11 issues no SSH banner;current CLI integration build/108 fresh AUTH/.11 cleanup OPEN. Q36 IN_PROGRESS,30/37 DONE81.1%,7remain. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F019:** [Functional native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 fresh bursts /756 peers across all12 carriers, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Current sources/features/jemalloc; private lto=false/codegen16 profile is not a release benchmark. Three capped release OOM failures retained; owned cache/fixture archived and removed, all host differences retained. Release AUTH/rate, TCP asymmetry and .11 state/cleanup OPEN; Q35 soaks separate. Q36 IN_PROGRESS;30/37 DONE81.1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F020:** [TCP state](../reports/BENCHMARK.md):6 fresh raw/mux sessions/12 windows in two namespaces on .10, prior F010 release; sampled inner/outer TCP_INFO and both endpoints checked by PID/ports/mode, raw/counters/CPU/SHA. Asymmetry reproduces; queues/RTT observable, cause OPEN, defaults unchanged. Separate two-vCPU diagnosis, not overall performance PASS. Owned root SHA-archived/removed, services preserved, host FAIL and first pre-load harness refusal retained. Q36/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F021:** [CPU affinity](../reports/BENCHMARK.md):6 fresh raw/mux sessions/12 paired shared0–1/split server0 client1 windows, unlimited TCP bidir P1 on .10. All TID/PID/CPU policy, raw/counters/TCP/SHA and archived INI verified; order alternates. Specific placement effect separate from causal proof; defaults unchanged. Owned root SHA-archived/removed, services and staged CLI preserved, all host gates/differences retained. Q36 cause/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F022:** [Downlink load](../reports/BENCHMARK.md):3 fresh raw sessions/6 paired windows, two simultaneous unidirectional TCP P1 flows; only downlink100M/unlimited at unlimited uplink. Uplink increases by 2.05–2.14 times in all three pairs; observed client drop counters/reconnects unchanged, mechanism OPEN. Raw/receiver/settings/ports/PID/CPU/TCP roles/status/SHA verified, INI/root SHA-archived/removed, services preserved, all host gates/differences retained. Defaults unchanged;Q36/release AUTH/.11 cleanup OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F023/F024:** [ACK path/recovery](../reports/BENCHMARK.md):3 fresh sessions/6 windows, matched-header timing only; delay/15 omitted-header causes OPEN. Old .11 cleanup closed, root/cache archived and removed; all full host gates PASS. Factory AUTH-rate/current UDP-fix performance/Q35 soak remain OPEN;30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F025:** [TUN counters](../reports/BENCHMARK.md):3 fresh sessions/6 windows; server kernel TX drops546/198/229 at unlimited downlink,0/0/0 at100M; client136/424/234 and396/171/261,app/qdisc drops0. Loss outside Qeli counters confirmed; exact reason/delayed stage OPEN. Counters/identity/SHA verified,root SHA-archived/removed,full host gate/differences retained. Encryption-owner comments corrected,troubleshooting clarified.30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October, Q36-F026:** [TUN queue intervention](../reports/BENCHMARK.md),3 fresh raw sessions/6 windows,both directions unlimited,server1000/4000/client500.Throughput/matched ACK/kernel/qdisc counters and policy/SHA verified; population separate from F025.Defaults/source unchanged,root SHA-archived/removed,full host gate retained.Mechanism/factory AUTH-rate and Q35 soak OPEN.30/37 DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 October,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md):unchanged fat-LTO Cargo/profile/features,916inputs,108fresh bursts/756peers all12,c1/4/16×3,proof/registry/108server exit0 PASS.Factory AUTH finite-burst block complete;sustained/current data-plane/precise TCP stage andQ35soak OPEN.Stale observer mtime0 cache reproduced/fixed,early marker gate6Windows+6Linux PASS;original failures retained.Own cache/root SHA-qualified cleanup,services/staged preserved.30/37DONE81.1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 **12 October, tested candidate adoption:** [wire pool and actual results](../reports/BENCHMARK.md): 916 inputs matched the qualified build at adoption; two explicitly verified spacing/line-break edits in one file then satisfied rustfmt without changing logic. Four strict feature profiles and 8+1 tests PASS. Twenty-four one-minute AUTH runs /34644 authentications, peak RSS 336320 KiB against the unchanged 524288 limit; composite20+4 evidence preserves the original file-budget refusal and host differences. Twelve fresh native sessions /48 functional IPv4 TCP/UDP P1/P4 windows. Source and CI warning gate adopted. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): five resource scenarios completed; upload6.8627%>5% FAIL, cross-node phase NOT_RUN. Android:23 JNI +2 packaged INI tests verified with the previous x86_64 native; original harness/signature/wlan0 refusals retained, no full VPN runtime claim. Q30 DONE in agreed scope;31/37 (83.8%), Q29/Q31/Q34/Q35/Q36/Q37 remain. Native refresh, hosted CI, performance/cross-node and the remaining criteria of these six sections stay open. `NO_PUSH_DEPLOY_RELEASE`.
-
 
 <!-- normative-sync: current-pool-native-20261012 -->
 
@@ -2887,36 +2756,29 @@ Network runs and large builds were not replayed; no new compiler caches were cre
 
 **12 October, Q31-V013:** current ARM/MIPS and client-only SDK compile/packaging qualified; fixed0664 license permissions and stale SDK/opkg assertions.54 scoped methods PASS,533 license files checked. The ELF was unchanged during corrected Install/repackaging. Owned roots removed, about3.6GiB released, original services preserved. [Full scope and remainder](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Total32/37 (86.5%),5 open sections.
 
-
 <!-- q29-current-vpn-20261012 -->
 
 **12 October:** [Q29: current VPN integrations/fixture reliability](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Fixed RAM admission, post-CONNECTED sampling, Profiles transition and ANR handling.23 helper methods/7 matching-R8 routed cases PASS,72 exact receipts/6 DNS names. Six cold attempts FAIL retained;last stopped at unpublished storage. SIGKILL/ENONET remain open;ordinary production-rules/current independent UID cold gate not qualified. Q29 IN_PROGRESS;32/37(86.5%),5 sections remain.
-
 
 <!-- q34-current-source-cut-20261012 -->
 
 **12 October:** Production OpenWrt pin/hash refreshed: two SDK downloads and prepare qualified,all 3272 tracked files matched Git. Actual source gate and25 methods PASS;3 previous skips preserved. Public pin/CI absent; no bootstrap/IPK executed. Q34 IN_PROGRESS;32/37(86.5%),5 sections open. [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md). NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-storage-startup-20261012 -->
 
 **12 October:** Q29 scoped current independent-UID cold UI/startup/lockdown/manual recovery gate qualified.8 fixture methods PASS,336 probes,241 correlated receipts,80/80 post-CONNECTED replies,stopped lockdown48/0. Storage readiness before APK/push fixes premature INI upload. DNS/null ENONET,SIGKILL and ordinary production-rules APK remain open;32/37(86.5%),5 sections. [Отчёт](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).NO_PUSH_DEPLOY_RELEASE.
-
 
 <!-- q29-production-runtime-20261012 -->
 
 **12 October:** Ordinary production R8 APK qualified via UI/SAF and independent UID without instrumentation: 80 post-CONNECTED sockets PASS,230 correlated receipts,stopped lockdown48/0 and manual recovery/DNS PASS. APK payload unchanged by lab signing;real release signing and physical platforms unqualified. DNS/null ENONET,first-post-APPLIED blocking and historical SIGKILL retained. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 October:** Q29 generic/null ENONET cause localized on the current API34 image. Authenticated dnsproxyd selection and independent platform TUN owner UID reproduce failure;bypassable control returns A+AAAA. Typed/null and explicit VPN DNS traverse TUN. Product APK/JNI/default kill-switch unchanged;compatibility failure retained,SIGKILL and first-post-APPLIED remain open. [Q29 DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-current-sigkill-20261012 -->
 
 Current production R8 SIGKILL recovery:FAIL;whole runtime FAIL. Plain/TUN platform controls ran once,45s window retained. Manual recovery/revoke and dead/force-stopped blocking PASS. Product APK/JNI and byte-identical restart policy unchanged;SIGKILL failure not overwritten. [Q29](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
-
 
 <!-- q29-publication-contract-20261012 -->
 
@@ -2944,60 +2806,13 @@ Q29 platform scope, Q31 bootstrap and Q36 diagnostics remain open.
 The overall count remains 32/37 (86.5%) without inferred module completion.
 `NO_PUSH_DEPLOY_RELEASE`.
 
-
 ### 13 October: actual Q36 TUN diagnostics
 
 <!-- normative-sync: q35-final-q36-stage-checkpoint-20261013 -->
 
-[Q35 complete](../reports/AUDIT-Q35-FINAL.md): 33/37 (89.2%).
-[Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): six measured phases, archive/host/cleanup verified; original --client guard failure retained. Server q0 has no successful read trace; observed ACK latency exceeds both controls by11.5356/5.7921. Neither loss nor the original delay stage is established. Next is current steady data plane without the observer; do not repeat this intrusive method to infer the original cause. Q29/Q31/Q34/Q36 remain open. NO_PUSH_DEPLOY_RELEASE.
-
 ### 13 October: current Q36 statistical population
 
-[Current data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 fresh sessions/144 eight-second windows of all12 TCP/UDP bidir P1/P4 modes×3; median/spread/raw receiver/CPU/RSS/counters qualified. Loss/outliers retained; full host/archive/cleanup PASS. Not saturation capacity; TCP/ACK cause and load limits OPEN. Q36 IN_PROGRESS,33/37 (89.2%), NO_PUSH_DEPLOY_RELEASE.
-
-
 Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
-
-
-[Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
-
-
-**13 October: directional control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 fresh sessions/9 TCPraw P1 up/down/bidir windows: upload-only median139.93Mbps at server16.33%/client19.67% CPU; download-only692.55Mbps. Asymmetry persists without concurrent payload; all6 unidirectional retransmits match sending TUN TX drops, client native drops0. Full host/source/archive/cleanup PASS; exact cause remains open. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%).
-
-
-**13 October: upload-duration and producer pacing:** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3paired8/32s controls: receiver173.19/165.15Mbps, second-half32s retransmits persist. Separate3pairs: unlimitedmedian145.99Mbps withTUNTXdrops vs producer300Mbps→receiver300.06Mbps and zeroTUNTXdrops/retransmits3/3. Onlyiperf pacing, no Qeli fix/defaults. UpstreamTUNfull-ring hypothesis, backpressure patch reverted upstream/notapplied. Full source/host/archive/cleanup PASS; CURRENT_PAIRED_TCP_PRODUCER_PACING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3pairedsessions/12windows fq_codel vsfq unlimitedTCPrawP1 up/bidir; pairedupload-15.46%,bidirsum-7.71%; TUNlossespersist,defaultunchanged. Controllerhandlecollision corrected distinct1/2+smoke3/3; originaltwoFAILs/4baselinewindows separate,autoloadcausewithdrawn. Fullhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 paired sessions /12 windows: pre-TUN fq maxrate300Mbit/flow, unlimited caller. Upload median137.51→288.60Mbps; capped upload TUN drops/retransmits0 in3/3. Paired bidir-sum median+2.19%, both TUNs still drop in3/3; defaults unchanged. Full host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows,3 matched recordizer off/required pairs. Negotiated legacy/packet_mux_v1 and archived INI verified; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review excludes current TunPacket retention during outer write. Defaults unchanged; source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: recordizer deadline control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows required recordizer default2–8ms vs fixed1ms. Paired median upload+2.92%,download-3.71%,bidir sum+0.34%,idleICMP average-64.28%. Interval TCP_INFO/30idle probes separate, reverse sender RTT N/A. Defaults unchanged; deadline randomization/DPI equivalence not replaced by throughput. Source/host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DELAY_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: fixed TCP-carrier control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 sessions/18 windows fixed1/2carriers, required recordizer default2–8ms. Paired median upload-98.28%,download+0.13%,bidir sum-7.57%. Actual PID/endpoint sockets mirrored/stable at42 boundaries; no guaranteed ACK/innerflow separation, bonded pools/queues also change. Native drops/RTT/raw retained. Defaults unchanged;source/host/archive/cleanup PASS. CURRENT_MATCHED_TCP_BONDING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: Q36-F030 Linux candidate validation** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): F030 candidate: actual4featurechecks/15tests/releaseCLI and6sessions/18windows fixed2carrier. Native client uplink/downlink0 all9candidate windows; upload median24.34→1278.97Mbps,paired52.91×;bidir sum+8.16% with one regression/kernel losses remain. Server exactbaseline,consumer/source adoption pending. Ownswap/cache/source/build/runtime roots/archives SHAcleaned,host/services/source PASS. CURRENT_MATCHED_BONDED_SLOT_FIX_RUNTIME_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
-
-**13 October: TCP-bidir harness fixed and validated** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86 tests +1independentlivewindowPASS, --get-server-output and endpointTX/RX maps enforced, raw rejection diagnostics retained, old/new policy not pooled. Native/sourcepatch pending, legacy QueueFull unresolved;33/37 unchanged.
-
-**13 October: exact slot-sizing patch adopted** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Current-tree/native rebuild and consumer qualification pending; old certification source identity not transferred across Rust delta. Legacy QueueFull/regressions retained;33/37 unchanged.
-
-**13 October: current core/native cohort refreshed locally** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: fresh current-core functional qualification completed.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 20 Linux criteria / 19 executions / 409 assertions PASS, including legacy and 100 TCP + 100 QUIC network flips; independent archive verification and full cleanup PASS. Certification updated using fresh current-core execution. F030 adoption qualification debt closed; legacy QueueFull and other performance results retained. Q29/Q31/Q34/Q36 remain open; 33/37 (89.2%). NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: OpenWrt source cut refreshed after Q36-F030.** [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): exact current commit,2actual SDK downloads/prepare/all tracked blobs PASS; pin/hash refreshed,Compile/Install unchanged;4committed source-gate probes andfullcleanup PASS. Public pin/hosted CI/bootstrap/current32bit package qualification remain open;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: current ARMv7/MIPS after F030 qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):2fresh client-only builds/907Git inputs/staticELF/SHA +32QEMU CLI/INI PASS;allownresourcesarchived/cleaned,productionpreserved. Original preparation/importFAIL retained;SDK/IPK-current-core refresh andbootstrap remainopen,physicalrouterUSER_EXCLUDED;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
@@ -3005,14 +2820,6 @@ Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/re
 
 **14 October: F459 / Q34-F013 closed for the current panel graph.** [Client supply](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): adopted Tailwind 4 compiler API removes braces/CLI/watcher chain. Fresh npm audit: old graph exit 1 / five affected entries; current exit 0 / zero. CSS/build/watch/template inputs and previous 29 Linux / 29 Windows, 36 variants / 96 states, 131 HTTP checks checked without rerunning. Cache removed; whole Q34 remains open, 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
 
-**14 October: current legacy/mux cohort qualified.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 fresh current-product sessions / 18 windows / 3 paired repeats; all 6 bidir endpoint-role checks, exact current CLI/source/host/archive/cleanup PASS. Historical invalid window and before/after results retained separately; no default change, rebuild or general performance PASS. 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: legacy queue component contract qualified.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): exact production functions/BufferPool/Tokio, 11 positive tests, two negative controls and two restored probes PASS. Burst 128 → 83 queued / 45 Full; all 252 slots returned; 16,602/16,603 bound checked. tcp_uplink_drops domain clarified; no new native/CLI/VPN runs. All owned resources removed, host preserved. Q36 open, 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
-
 **14 October: complete Rust feed preparation qualified.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): six SDK-pinned files, official source SHA, stock patch, host-prepare/host-configure and GNU-host/musl-target semantics PASS. Fixture feed omissions and host exports corrected; all owned resources removed. Compiler bootstrap/cold graph NOT_RUN, Q31 open,33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 October: actual public CI reviewed.** [Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): three failed published-e7 jobs;source pin404,current core unpublished. Keenetic fixture fixed and verified44/root +44/non-root, production owner guards intact. Mac/iOS diagnosis and exact-source hosted gate remain open;physical stands USER_EXCLUDED,33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: current CLI all12 statistical matrix.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):36 fresh sessions/144 windows/P1/P4 TCP+UDP×3,72 TCP role admissions, full source/host/archivecleanup PASS. Historical matrices not relabelled current; pre-measurement SUN_LEN/cleanup guard FAIL retained/cleaned. TUN/ACK stage OPEN;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
-
-**14 October: observed kernel TUN drop reason confirmed.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):9sessions/27windows,3490FULL_RING exactly matching9observed TX-drop windows,0trace-loss; native TCPdrops0,18controls have4751TUNdrops. Owned stock trace-instance/global controls/host/artifacts restored. Throughput−10.36…+21.83% versus flanking controls; no ACK-stage/no-overhead/performance PASS.

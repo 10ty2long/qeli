@@ -2762,7 +2762,7 @@ without establishing the driver drop reason or the lost TCP flow. Compare
 latency before increasing queues: larger buffers may increase delay.
 [Scoped experiment and evidence limits](../reports/BENCHMARK.md).
 
-In the current lab PACKET_MUX_V1/two-carrier series,3490 kernel FULL_RING events from tun_net_xmit exactly matched TX dropped deltas across9 observed windows. The internal TUN ring,filled by the network stack before Qeli reads packets,was exhausted; native handoff counters do not cover this stage. Aggregate TX dropped still cannot classify arbitrary failures on other systems. [Evidence and observation limits](../reports/AUDIT-Q36-MATCHED-LOAD.md).
+The internal TUN ring may overflow before Qeli reads a packet; native handoff counters do not cover this stage. Aggregate TX dropped cannot identify the cause of an arbitrary failure on another system. Development laboratory numbers are not published.
 
 
 <!-- normative-sync: q29-process-death-troubleshooting-v2 -->

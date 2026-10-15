@@ -1,9 +1,10 @@
 # Полный аудит Qeli: история проверок и пошаговый тестовый план
 
+> Численные лабораторные замеры 0.8.2 и их сравнения сняты с публикации; исходные отчёты сохранены локально для аудита. Статусы инженерных проверок не являются бенчмарком релиза.
+
 **Состояние на 3 октября:** [реестр техдолга](AUDIT-DEBT.md) завершён: 14 DONE
 и D06 ACCEPTED_LIMITATION по решению пользователя. Полный аудит возобновляется;
 статусы 37 разделов ниже сверяются по критериям, без автоматического PASS.
-
 
 **Режим завершения с 25 сентября:** [четыре пакета и правила выбора проверок](AUDIT-DEBT.md)
 заменяют повтор полного набора на каждую правку. Уровни ниже остаются критериями
@@ -13,8 +14,6 @@
 <!-- normative-sync: full-system-audit-v276 -->
 
 **15 октября, политика Android:** отдельный DNS bypass-режим отклонён пользователем; сохраняются secure VpnService и системный kill switch. [Решение и границы DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET на проверенном API34 не объявлен исправленным. Отменённый режим не является новым техдолгом; общий итог — 37/37 (100%).
-
-**Исторический checkpoint Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
 **Исторический checkpoint Q34, 14 октября, iOS:** finite-number MDM source fix, исправлен тест export/validate roaming и подготовлен signed simulator CI с проверкой effective Keychain entitlements.17 portable methods,32 native DTO requests и5 shell fixtures PASS; свежие Swift/Keychain/Apple CI НЕ запускались. См. [отчёт](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
@@ -363,7 +362,6 @@ writers проверены. Опасные legacy drivers заменены из�
 измерения bandwidth и оставшихся сценариев admission/выдачи доступа.
 [Отчёт](../reports/AUDIT-Q06-USERS-ACCESS.md#третий-пакет-live-права-и-отказы-публикации-ini).
 
-
 **3 октября, завершение:** Q06-F012–F014 исправлены; общий TCP/UDP admission, терминальная замена сессий, effective bandwidth/legacy burst и recovery share-reset. 387 Q06 checks, 2265 Linux units / 60 ignored, 118 JS-групп, свежие matrix 18/327 и soak 100 TCP + 100 QUIC/33 PASS. Native A/B побайтно совпадает; .11 сохранён, .10 SDK PASS с явно сохранённым ограничением firewall snapshots. Physical qualification не заявляется. [Итоговый отчёт](../reports/AUDIT-Q06-USERS-ACCESS.md), [evidence](../../../release/certification/evidence/q06-users-access-complete-20261003.json).
 
 ### 07. Backup, restore и history
@@ -381,7 +379,6 @@ Fresh restore с custom paths, inline+external users, identity и panel-secret. 
 - [x] Исправления, повторная проверка и evidence.
 
 **Статус: PASS в согласованном доступном Linux/runtime scope.**
-
 
 **История, 3 октября, первый пакет:** HTTP-воспроизведение выявило отказ exact при вложенных lock-файлах, отсутствие проверки identity/TLS и сохранение чужого UID из tar. Исправления и текущая квалификация описаны в [отчёте Q07](../reports/AUDIT-Q07-BACKUP-RESTORE.md). Полный Q07 остаётся открытым: crash/partial publication и recovery, файловые отказы, cross-process users/identity writers, mixed users и panel-secret, операционные файлы/rotation и дополнительные INI trust boundaries (исторический список до второго пакета).
 
@@ -406,7 +403,6 @@ X25519/ML-KEM/HKDF/AEAD KAT и negative vectors; static binding, proof до cred
 **Статус: DONE.**
 
 **Первый пакет Q08:** Q08-F001–F003, shared bounded key reads, serialized legacy migration, low-order proof refusal. Прежний release воспроизводит шесть файловых отказов; первый пакет и его квалификация сохранены в [отчёте](../reports/AUDIT-Q08-CRYPTO-KEYS.md).
-
 
 **3 октября, завершение Q08:** Q08-F004–F007, независимые NIST/RFC/AEAD/HKDF vectors, полный review семи направлений, 31 key/rotation + 25 restore/state checks с настоящими pinned-клиентами, 2279 units, matrix18/327, soak33 и native A/B PASS. Все обязательные проверки fixes закрыты. Принятые ограничения и корректная conditional REALITY TLS PQ-защита описаны в [финальном отчёте](../reports/AUDIT-Q08-CRYPTO-KEYS.md). Далее Q09.
 
@@ -506,12 +502,9 @@ teardown; flush отказа сохраняет pre-auth slot до освобо�
 
 **4 октября, Q13 DONE/PASS:** удалены две выключенные UDP stealth-ветви, сохранена действующая политика TCP. Прошли 2365 Linux-тестов, 7 сетевых сценариев, матрица 18/18, 33 проверки длительного прогона и четыре независимые сборки библиотек A/B. Общий план **13/37 (35,1%)**, осталось 24 раздела; далее Q14. [Итог и границы](../reports/AUDIT-Q13-MORPHOLOGY.md).
 
-
 **4 октября, morphology batch PASS:** ещё четыре исправления padding/normalization/mux,2365 Linux PASS,6 combined TCP/UDP cases,свежие matrix/soak/native A/B. [Evidence и оставшиеся две UDP ветви](../reports/AUDIT-Q13-MORPHOLOGY.md).
 
-
 **4 октября, shaping batch PASS:** [пять исправлений и замеры](../reports/AUDIT-Q13-MORPHOLOGY.md):5 baseline FAIL,7 новых тестов,2359 Linux PASS,10 network cases/102 assertions,recordizer campaign,свежие matrix/soak/native A/B. Review recordizer/padding/normalization продолжается;общий итог остаётся12/37 (32,4%).
-
 
 **Код:** `qeli/src/protocol/recordizer.rs`, `qeli/src/protocol/shaper.rs`, `qeli/src/protocol/obfuscate.rs`.
 
@@ -530,7 +523,6 @@ Off/prefer/required и legacy peer; batch/reassembly caps, flush deadlines, canc
 ### 14. Supervisor, workers и профили
 
 **4 октября, Q14 DONE/PASS:** исправлен Q14-F039 — supervisor владеет фоновыми задачами и останавливает HTTP/HTTPS-панель. 2368 Linux-тестов, 38 process checks, 4 panel stop/cancel cases, 5 privileged-прогонов, stop во время backoff, матрица 18/18 и native A/B PASS. [Итог и границы](../reports/AUDIT-Q14-CURRENT-LIFECYCLE.md).
-
 
 **Предыдущий пакет 4 октября, lifecycle PASS:** 8/8 сценариев worker, 80 reload, 22 проверки восстановления и 14 проверок нескольких профилей на текущем release. Состояние лабы и рабочий сервис сохранены. [Разбор и остаток Q14](../reports/AUDIT-Q14-CURRENT-LIFECYCLE.md). Q14 IN_PROGRESS.
 
@@ -628,7 +620,6 @@ cleanup/post_down; ошибка остановки завершается отк
 при этом очистка forwarding выполняется. Шесть новых host-регрессий, включая реальный отказ
 ClientCore при полной очереди. 905 host Rust tests PASS; Linux только cross-check.
 Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
-
 
 **Передача ошибок очистки TUN/маршрутов/DNS, 23 сентября 2026:**
 [Q25-F007–F009](../reports/AUDIT-Q25-TUN-CLEANUP.md): явная очистка и guards отката передают
@@ -773,7 +764,6 @@ Q16-F002 сохраняет локальную доставку к TUN-адре�
 2374 unit-теста, реальные TCP/UDP/QUIC с IPv4/IPv6, матрица и native A/B — PASS.
 [Отчёт и границы](../reports/AUDIT-Q16-ACL-ROUTES.md).
 
-
 **Код:** `qeli/src/server/acl.rs`, `qeli/src/config/users.rs`, `qeli/src/transport_core/network.rs`.
 
 User/group/profile precedence, longest prefix, client_to_client, spoofed source, overlap, /0 и client_subnet return path. Проверить TCP/UDP, v4/v6. Enforcement на сервере; revoke/смена владельца маршрута не сохраняет доступ старой сессии.
@@ -795,7 +785,6 @@ User/group/profile precedence, longest prefix, client_to_client, spoofed source,
 Q17-F001: старый gateway runner заменён безопасным изолированным. Исторические
 открытые статусы ниже относятся к прежним снимкам; текущие результаты и принятые
 границы — в [отчёте](../reports/AUDIT-Q17-IPV4-NETWORK.md).
-
 
 **Код:** `qeli/src/server/nat.rs`, `qeli/src/client/sysctl.rs`, `qeli/src/client/gateway.rs`.
 
@@ -1023,7 +1012,6 @@ DNS proxy/cache, реальные OS apply/rollback и конкурентный 
 754 Rust-теста суммарно — PASS. Linux lifecycle, расширенные DNS-типы и нагрузочные
 проверки остаются открытыми; общий статус раздела не закрыт.
 
-
 **Кеш и подписанные обмены, 23 сентября 2026:**
 [Продолжение Q19](../reports/AUDIT-Q19-DNS-CACHE.md) закрывает Q19-F007–F010:
 лимит пакетов кеша 16 МиБ на профиль, пересылка TSIG/SIG(0) без изменения байтов
@@ -1249,7 +1237,6 @@ Create/start/PREPARE/APPLY/COMMIT/stop/free, callbacks, buffers, queues, cancell
 и зависимость лимита маршрутов от порядка исключений; убрана устаревшая тестовая
 реализация Linux DNS. Это проверка общего планировщика, не завершение всего модуля.
 DNS proxy/cache, реальные OS apply/rollback и конкурентный lifecycle остаются открыты.
-
 
 **Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
 [Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
@@ -1492,7 +1479,6 @@ JOIN proof, stream caps, asymmetric RTT/loss, отказ одного/всех �
 Clippy, release, 12 Linux сценариев/283 проверки, 4 native A/B, 22 Windows ABI
 и 23 JNI проверки PASS. Исторический throughput не повторялся. Итог: 24/37 (64,9%); далее Q25.
 
-
 **Владение задачами TCP и Linux path monitor, 23 сентября 2026:**
 [Q25-F010/F011](../reports/AUDIT-Q25-TCP-TASKS.md): общий владелец закрывает создание задач
 до abort/join. TCP reader/writer/pipeline и producers завершаются до сетевой очистки;
@@ -1579,7 +1565,6 @@ cleanup/post_down; ошибка остановки завершается отк
 при этом очистка forwarding выполняется. Шесть новых host-регрессий, включая реальный отказ
 ClientCore при полной очереди. 905 host Rust tests PASS; Linux только cross-check.
 Live Linux lifecycle/firewall и полный rollback маршрутов/DNS ещё открыты.
-
 
 **Восстановление старого resolver, 23 сентября 2026:**
 [Q25-F006](../reports/AUDIT-Q25-DNS-RECOVERY.md): ошибки unlink/chmod и некорректный снимок
@@ -1839,7 +1824,6 @@ trust и recovery/status/log/driver adapters далее; user runtime SKIPPED с
 
 **5 октября, наблюдение службы:** [Q27-F229–F232](../reports/AUDIT-Q27-WINDOWS-OBSERVATION.md): Регистрация command/account/type/owner/DACL и filesystem recheck перед изменениями; stale/unknown status и terminal cleanup Error, bounded trusted log snapshot/atomic rotation. 273 Windows + 543 shared PASS, 49 новых assertions, 7 baseline FAIL. Q27 IN_PROGRESS; далее native loader/driver adapters и итоговая сверка. План 26/37 (70,3%).
 
-
 **5 октября, Q27 завершён:** [итог Windows](../reports/AUDIT-Q27-WINDOWS-FINAL.md): F233–F239, 325 Windows + 549 shared PASS, 52+6 новых проверок, 12 baseline FAIL. Реальные VM driver/network/LocalSystem boot/sleep/service reload исключены пользователем; не PASS. Остальные доступные критерии сверены с тремя предыдущими этапами. План 27/37 (73,0%); далее Q28.
 
 ### 28. macOS: daemon, utun, pf и Network Extension
@@ -1926,13 +1910,11 @@ Exactly-once start/stop completion, generation/cancel, Keychain/app groups, exte
 **Статус: DONE в согласованном объёме: SOURCE REVIEW и переносимые проверки. Swift/Xcode/Apple runtime USER_SKIPPED; результаты XCTest, signed IPA, callbacks, RSS/leaks и сетевых сценариев остаются NOT_RUN.**
 **Сверка 12 октября:** текущие92 Swift inputs охвачены исходным review;91 побайтно прежний. Изменён только test fixture `exit_node` с обязательным `gateway=false`; project.yml добавляет resources для LICENSE/notices. Production Swift/MDM/header inputs неизменны. Свежие6 Python IPA fixtures,10 plist parses и bindings PASS. Четыре оставшихся платформенных критерия исключены прямым решением пользователя о Mac/iOS-стенде. Ранние IN_PROGRESS/NOT_RUN ниже являются историческими checkpoints; фактическое исполнение Swift ими не подтверждается. [Текущая сверка](../reports/AUDIT-Q30-IOS-SOURCE-MEMORY.md).
 
-
 [Source fixes F290/F291](../reports/AUDIT-Q30-IOS-POLICY-SNAPSHOT.md):
 точные MDM-числа и владение устаревшими ответами расширения. Шесть IPA-verifier
 fixture-регрессий PASS; шесть новых Swift XCTest и Xcode/runtime NOT_RUN
 (Apple runtime исключён пользователем). Review всего раздела открыт, пункты пока
 не закрыты. Наблюдения Q29 сохранены; всего28/37(75.7%),осталось9.
-
 
 [Storage source fixes F292/F293](../reports/AUDIT-Q30-IOS-KEYCHAIN.md): первый
 Keychain writer для ID/TOFU, без тихой rotation, явные размеры ключей и удаление
@@ -1998,7 +1980,6 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **Продолжение F311–F313, 6 октября:** тот же [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md),14 router-helper fault tests,10 JS caller/adapter fixtures и11 shell fixtures на interpreter PASS. Ошибки toolchain, ложный artifact PASS и утечки соединений исправлены; init-visible статус обходит кэш формы. Настоящие ucode/rpcd/rc.common и cross-build NOT_RUN; установка/upgrade/полный review OPEN. Статус целого раздела не повышен.
 
-
 **Продолжение F314–F315, 6 октября:** [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): восстанавливаемые собственные install defaults и start guard; общий managed-source sync с запретом сборки после обрыва. Baseline ignored failures/stale inputs воспроизведены.21 shell test на BusyBox/dash,7 filesystem source-sync tests,14 router-helper,12 shared lab,37 native recipes и10 JS fixtures PASS. Настоящие libuci/fw4/procd/package/cross-build NOT_RUN,router USER_EXCLUDED; полные upgrade/concurrency/provenance/review OPEN. Q31 IN_PROGRESS,28/37 без изменений.
 
 **Продолжение F316–F319, 6 октября:** [отчёт Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): проверяемое удаление секретов, повтор legacy scrub, UCI/duplicate-zone admission, callback status через стандартные hooks rc.common. Baseline/изолированный pre-hooks dispatcher false success воспроизведён.37 shell/saved-dispatcher cases на BusyBox/dash,11 JS fixtures/37 recipes/docs/bindings PASS. Saved rc.common с подставными lib/UCI/procd; настоящий daemon/ubus/opkg/flock lifecycle не квалифицирован. Q31 IN_PROGRESS,28/37 без изменений; полный upgrade/concurrency/build review OPEN.
@@ -2027,7 +2008,6 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 
 **7 октября, F368–F369/Q31-V007:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): завершён source review28файлов; первый критерий закрыт. Общий SSH helper устраняет воспроизведённый четырьмя callers stderr receive-window timeout; connection/probe failure close и installed-pin diagnostics исправлены.16настоящих SSH checks,8actual probe commands,125Linux methods без skips,78local native contract/docs/bindings PASS. Native provenance был STALE до изменений и остаётся release-blocking Q34; digest/artifacts не подменялись. SDK/pipeline/concurrency ограничения сохранены. Q31 IN_PROGRESS,28/37(75.7%),9осталось;Q29/Q30/D06 сохранены.
 
-
 **7 октября, F372:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact-commit CI admission запрещает допуск при неизвестном Git/CI SHA, ошибке запросов и устаревшем workflow.77router+18CI Linux methods без пропусков; настоящий read-only preflight дошёл до общего отказа. Критерий штатных/граничных/негативных сценариев закрыт,2/5критериев; Q31 IN_PROGRESS28/37(75.7%),9остаются. Native current/долг14/15+D06 принят без изменений; SDK/release-cut/ndm и firmware exclusions сохранены. Без push/release.
 
 **7 октября,F373–F375:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): очистка saved/partial адресов OpkgTun, ownership после stop/start и ошибки смены плана, локальный IPv4 для cached no-op/сброса.218methods на dash/ash без пропусков;14nonroot CI methods и baseline-отказы старых hook/init. Критерий cooperative отказов/конкуренции закрыт;3/5критериев,Q31IN_PROGRESS,28/37всего. Межкомпонентная/SDK/release интеграция и exclusions сохранены; без push/deploy.
@@ -2042,10 +2022,6 @@ UCI → INI escaping/shell injection, LuCI ACL, secrets на flash, init/procd, 
 **14 октября: обход LLVM CI404 выполнен.** Один flag в частном feed, prepare/configure/bootstrap и реальная source LLVM C++ compilation проверены; последний Ninja indicator548/3710. Собственный guard остановил частичный прогон (time); full compiler/SDK graph не закрыт. Root/cache/archive/unit очищены, host сохранён; original404 прежний.33/37,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: длительный source compiler остановлен OOM.** LLVM1690/3710; kernel CONSTRAINT_MEMCG/llvm-tblgen, cgroup1152МиБ RAM/512МиБ swap. Архив и cleanup квалифицированы, host сохранён; SDK не запускался. Q31 остаётся IN_PROGRESS; одинаковый ресурсный retry не выполняется.33/37,NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: Q31/Q36 runtime checkpoint.** Второй source compiler OOM: cc1plus, LLVM1929/3710, RAM1152МиБ/swap1024МиБ; own7,04ГБ удалены, SDK не запускался. Q36: current CLI,4окна/2sessions,731146 stock events без trace loss; первый поздний observer сохранён как невалидный, driver исправлен. Неполное ACK соответствие и изменение observed/control результатов не позволяют закрыть стадию задержки. Подробности в AUDIT-Q31-OPENWRT-CONTROLS и AUDIT-Q36-TUN-STAGE;33/37 (89,2%), оба пункта IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: Q36 small-packet pilot.** Новые4окна/2sessions,69703stock events/trace loss0; small-copy coverage14558/6090, но individual ACK linkage и neutrality не подтверждены. Короткая observed/control ACK p50+18,67/+66,08%; ещё один stock-trace вариант для формального закрытия не повторяется. Подробности AUDIT-Q36-TUN-STAGE;33/37 (89,2%), Q36 IN_PROGRESS, NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: Q36 socket-buffer causal tests.** Две серии по6sessions/12windows без kernel trace: tiny send buffer ухудшил unlimited ACK во всех3парах; отдельно проверен stock/auto receive при held stock send. Actual tb/rb, единичный INI delta, workload/ACK/topology/host/SHA cleanup квалифицированы; CONFIG RU/EN уточняет0 против отсутствующего ключа. Defaults продукта неизменны. Q36 IN_PROGRESS;33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
 
@@ -2087,7 +2063,6 @@ autostart supervisor, доверие конфигу и Linux E2E ещё откр
 **8 октября, F385–F388:** [Q32: логи и trace](../reports/AUDIT-Q32-LOGS-TRACE.md): чтение через закреплённые fd отклоняет подменённые симлинки/FIFO, четыре I/O-слота удерживаются после отмены HTTP, tail сохраняет полные граничные строки, trace атомарно публикуется с0600 вне потоков Tokio с одним допуском. Три baseline-ошибки воспроизведены; harness11/UID65534, два настоящих SIGUSR1 с65536 упорядоченными строками,2434 library-теста (60ignored), строгийClippy/daemon и118 групп Node VM PASS. Четыре актуальных nativeA/B, WindowsABI22/AndroidJNI23 и финальные пороги — в evidence отчёта. Неудачная подготовка/прежний legacy firewall drift сохранены; неизменность всего host первоначального .10 baseline не заявляется. Ограничения покрытия/HTTP/диска/платформ сохранены. Q32IN_PROGRESS; roaming, доверие/маскирование секретов уведомлений и полная интеграция открыты. Общий план28/37(75,7%), остаётся девять.
 
 **8 октября, F389–F394:** [INI уведомлений и доставка](../reports/AUDIT-Q32-NOTIFICATIONS.md): доверие перед чтением/сохранением, полная ограниченная HTTP-строка и успех только 2xx, query/fragment, консервативная проверка специальных адресов, сброс кеша после записи и проверка записи симлинка. Воспроизведены три старых helper-ошибки и две ошибки кеша настоящей библиотеки; шесть helper tests, 12 изолированных HTTP-проверок и cache trust/recovery проверяют исправления. Финальные library/native результаты и guards — в machine evidence. Q32 и Q29/Q30/Q31 открыты; всего 28/37, осталось девять; старый долг14 DONE плюс принятое D06.
-
 
 **8 октября, Q32 завершён:** пять критериев сверены для metrics/usage/logs/trace/notifications и неизменных roaming observations; финальные2439 library, strictClippy/daemon, реальные HTTP12/cache, native A/B/ABI22/JNI23 и docs/provenance PASS. Сравнения16 сохраняют область прежнего выполнения; границы physical/TLS/Telegram/browser документированы. План29/37(78,4%),осталось восемь;Q29/Q30/Q31 и D06 сохранены.
 
@@ -2150,7 +2125,6 @@ Server-only check имеет 23 прежних transport dead-code warnings. Л�
 
 **8 октября,F445 / Q33-F048:** [Полный installer/kernel](../reports/AUDIT-Q33-INSTALLER-CONFIG.md): подтверждён и исправлен ложный sysctl success; private per-run snapshots/prior files/restore instructions, readback и early tuning path guards. Full QELI_BIN+QELI_SRC и production QELI_DEB: по24 PASS с actual manager/CLI/Argon2/MSS/pinned VPN; probing0→1→0 и persistent files restoration. Linux136 regressions без skips/lint PASS, CI tuning добавлен. Первые FAIL сохранены; root777/845/network/kernel не менялись. Full positive installer и partial kernel recovery gate закрыты, глобальная запись10keys/BBR load/reboot/пустой OS bootstrap не заявлены; Docker/Actions и прежние ограничения остаются OPEN. Q33IN_PROGRESS29/37DONE78.4%,осталось8; без push/deploy/release.
 
-
 **Q33 завершён 8 октября:** [итоговая сверка](../reports/AUDIT-Q33-COMPLETION.md) связывает все пять критериев с evidence. F450 закрывает retained hook и exact deletion; source/runtime ограничения сохранены.
 
 ### 34. CI, зависимости, native provenance и релиз
@@ -2196,7 +2170,6 @@ Fuzz INI/hello/packet/WS/realtls/QUIC/IP/fragments/roaming с сохранени
 
 **10 октября, F504–F505:** [Stability gate](../reports/BENCHMARK.md): исправлены ложный PASS по неполным/округлённым/некорректным замерам и host-wide cleanup. 89Windows/19Linux methods,4workflow lint и real read-only .11 refusal PASS; service777/845/CLI75bc сохранены. Нет нового throughput/soak или завершения Q34/Q35/Q36. 30/37DONE81,1%,7остается. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **10 октября,Q35-V001:** [Реальный bounded soak](../reports/AUDIT-Q34-RELEASE-SOAK.md):
 текущие изолированные runner выполнили100TCP+100QUIC за440,95с;33утверждения
 PASS, одна сессия/исходные workers/TUN, fd стабильны, sampled RSS<32МиБ.
@@ -2206,7 +2179,6 @@ inputs; новая компиляция не нужна. Журналы сохр
 30–60мин/8ч,10k, tasks churn и остальные уровни Q35 открыты. Полный статус
 IN_PROGRESS, общий итог30/37(81,1%),7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **10 октября,F509/Q35-F006:** [Короткие control sockets и матрица отказов](../reports/AUDIT-Q34-RELEASE-SOAK.md):
 реальный SUN_LEN при длинном TMPDIR исправлен private /run path; все consumers
 TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
@@ -2214,14 +2186,9 @@ TCP/UDP/bonding/secondary перенесены.14case executions/320assertions,
 FAIL и ошибка TCP-only наблюдателя сохранены. Общий Q35 IN_PROGRESS,
 30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **13 октября, итог Q35:** [матрица пяти критериев](../reports/AUDIT-Q35-FINAL.md) объединяет фактический fuzz, owning-module fault/limits audits, concurrency и полный актуальный endurance; прежние даты, FAIL и ограничения сохранены. Q36 stage-наблюдение выполнено отдельно и не квалифицирует исходную причину. Итог33/37 (89,2%), четыре раздела открыты.
 
 ### 36. Бенчмарки и методика измерения
-
-**DONE,14 October:** [Q36 final](../reports/AUDIT-Q36-FINAL.md); five scoped criteria and current shipping control complete; historical checkpoint statuses retained.34/37(91.9%),Q29/Q31/Q34 open.
-
-**Текущее покрытие, 11 октября:** Q36-F012/F015/F016 завершили TCP/UDP bidir P1/P4 для всех 12 транспортов в трёх недефолтных парах внешнего/внутреннего IPv4/IPv6. Каждое условие имеет три независимых повтора, median/spread и исходные файлы; старые успешные ячейки сохранены отдельно. Матрица семейств закрыта в этих условиях. Q36-F017 завершил RTT outer6/inner6 при TCP bidir P1/P4 для всех12 транспортов и direct, по три сессии. Q36-F019 завершил функциональную native AUTH-матрицу всех12 транспортов (108 серий/756 клиентов) с lto=false/codegen16. Q36-F027 закрыл текущий штатный release AUTH/rate в finite-burst scope (108 серий/756 peers, все12, source/profile/SHA/exit0); остаток: точная стадия TCP-асимметрии и steady current data-plane; очистка .11 завершена в F024, длительные soaks относятся к Q35. Q36-F020/F021 подтвердили асимметрию на одной VM и проверили парное закрепление CPU: раздельная affinity её не устранила; это диагностические серии прежнего F010 CLI, не проверка текущего UDP-исправления. Q36-F022 подтвердил зависимость uplink от downlink-нагрузки: три пары отдельных iperf потоков, при downlink100М uplink вырос в 2.05–2.14 раза без прироста счётчиков drops клиента; механизм остаётся OPEN. Q36-F023 измерил ACK path: 169888 matched headers, delay p50 0,760/15,934 мс при downlink100M/unlimited; 15 server-only headers, причина OPEN. Q36-F024 закрыл старую очистку .11: исходный root и принадлежащий ему Cargo output архивированы/удалены, службы/полный host gate PASS. Q36-F025 подтвердил kernel TUN TX drops в 3/3 unlimited окнах при нулевых прикладных/qdisc drops; конкретная причина driver drop и стадия ACK delay OPEN, руководство уточнено. Q36-F026: очередь4000 устранила server kernel TX drops, но uplink снизился на34–49%, matched ACK p50 вырос в2.26–3.43 раза; один4000 прогон имеет186 server application drops. Это не исправление, default1000 сохранён, точная стадия OPEN. Исторические OPEN ниже отражают состояние своих checkpoint.
 
 **Код:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
 
@@ -2234,36 +2201,6 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 - [x] Отказы и конкуренция.
 - [x] Интеграция и целевая платформа.
 - [x] Исправления, повторная проверка и evidence.
-
-**10 октября, Q36-F001:** [benchmark runner](../reports/BENCHMARK.md) больше не
-подставляет `end.sum` отправителя при отсутствии `sum_received` приёмника и
-отказывает при обрезанном интервале или неверных TCP/UDP метриках. Пять unit-
-тестов и все 35 архивных raw iperf-файлов PASS. Новых повторных измерений и
-матрицы P=4/IPv6/bidir пока нет; 30/37 DONE (81,1%).
-
-**Q36-F002:** исторический `bench_bonding.py` теперь отказывает при обычном
-запуске до SSH и изменения host-состояния, как уже делал `benchmark.py`.
-Неиспользуемый `perf_combined_load.py` с захардкоженными реквизитами и
-изменениями производственного firewall удалён. Subprocess-тест проверил
-оба оставшихся отказа. Первоначальный отказ SSH к `.10` позднее объяснён
-передачей пароля через getpass/PTY; stdin восстановил доступ.
-
-**Q36-F003/F004:** [методика повторов](../reports/BENCHMARK.md): происхождение
-бинарника отделено от локального checkout; добавлены P=4, governor/affinity/load,
-MTU, raw counters и честная публикация отказов/cleanup. Offline report требует
-≥3 отдельных окон, одинаковых условий и повторной сверки raw iperf/process/counters;
-дубликаты, неполная популяция и mismatch отказывают без исключения outliers.
-24 Windows/24 Linux метода PASS; реальные Linux sampler/governor PASS. SSH обеих
-VM восстановлен через stdin; прежний getpass/PTTY отказ не означает смену пароля.
-На этапе методической правки throughput/current-build/bidir/IPv6/latency/auth
-ещё оставались OPEN. Последующая квалификация сборки и повторов приведена ниже;
-Q36 IN_PROGRESS, общий итог 30/37 DONE81,1%.
-
-**10 октября, текущий Q36 CLI:** [повторный замер](../reports/BENCHMARK.md): SHA `7769f43c` из 902 файлов снимка Git; три отдельных полных прохода каждого P=1/P=4, 72 режима/210 фаз, 600 raw JSON SHA, median/min/max без удаления выбросов. Первичные core/доступные dumps совпали; отдельные 2 режима/9 фаз с полной матрицей firewall PASS. Внешний FAIL из-за известного vpn-nat цикла сохранён. Q36-F005: все backend и строгая структурная сверка, пустые core snapshots отказывают; 35 Windows/35 Linux методов PASS. Собственные каталоги SHA-архивированы/очищены, службы сохранены. Bidir/IPv6/latency/auth-rate остаются OPEN, Q36 IN_PROGRESS, 30/37 DONE (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 октября, Q36-F006/F007:** [TCP bidir](../reports/BENCHMARK.md): три полных P=1/P=4 прохода всех 12 транспортов, 78 фаз/228 raw JSON. Оба receiver и kernel counters сверены; асимметрия uplink сохранена. Четыре host gates COMPLETED, два FAIL из-за известного внешнего NAT-цикла; явный MEASUREMENTS_ONLY не даёт AGGREGATED и не скрывает ошибки. 47 Windows/47 Linux методов PASS, 14 own roots SHA-архивированы/очищены, службы сохранены. TCP-bidir IPv4 измерен; UDP-bidir/IPv6/latency/auth-rate/drop diagnosis/8 ч soak OPEN. Q36 IN_PROGRESS, 30/37 (81,1%). LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F029:** [текущий штатный data plane](../reports/BENCHMARK.md): CLI 35da83fd,36 свежих сессий/144 окна всех12 outer4/inner4 TCP+UDP bidir P1/P4×3;433 raw JSON/72 logs, receiver/counters/process/admission проверены, без объединения с F010. Measurement host gate PASS, cleanup PASS; все различия сохранены. Owned root SHA-архивирован/удалён, службы/staged CLI сохранены. Finite2vCPU same-VM scope, не sustained capacity. Точная стадия TCP асимметрии и Q35 full endurance OPEN; итог30/37 DONE81,1%.
 
 **Статус: IN_PROGRESS.**
 
@@ -2457,15 +2394,11 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **5 октября, Q28 sockets:** [fd lifetime и I/O бюджеты](../reports/AUDIT-Q28-MACOS-SOCKETS.md): F268–F270,20 новых Swift cases SOURCE REVIEW / USER SKIPPED. Serial queue + cancel-handler release,nonblocking deadlines,atomic framework-write watchdog,zero UDP datagrams.1225 связанных managed PASS не выполняют Swift. Q28 IN_PROGRESS;финальная интеграция/DNS-PF owner stamps остаются. План27/37.
 
-
 **5 октября, обычные Android sockets:** [split/full × три транспорта](../reports/AUDIT-Q29-ANDROID-DATA.md):6 свежих PASS,72 ответа. В5/6 запусков первый IPv4source физический после наблюдаемогоCONNECTED;TUN готов через1–111ms,до payload есть preflight. Немедленный первый пакет и внешние/default маршруты не квалифицированы;DNS/kill-switch/lifecycle далее. ProductAPK/JNI неизменны,Q29IN_PROGRESS,28/37(75,7%).
-
 
 **5 октября, Q29 off-pool/DNS:** [семь сценариев](../reports/AUDIT-Q29-ANDROID-DATA.md):7 новых PASS,72 ответа вне пула и12 системных DNS A/AAAA ответов;full без includeRoutes,split без default routes. Валидный full kill-switch отказал без OS lockdown. Первый wildcard UDP sink дал6 timeout;pcap подтверждает wrong-source стенда,исправленный sinkPASS. ProductAPK/JNI неизменны;положительный lockdown/system lifecycle ещё открыт,Q29IN_PROGRESS,28/37(75,7%).
 
-
 **5 октября,Q29 системный lifecycle (частично):** [Always-on/lockdown и внешнее завершение процесса](../reports/AUDIT-Q29-ANDROID-SYSTEM.md):настоящая OS-политика,независимый UID,блокировка после SIGKILL/force-stop, ручное восстановление и системный revoke подтверждены. Автоматическая redelivery после SIGKILL FAIL (вопрос открыт) несмотря на startCommandResult=3;полный system gate не PASS. Q29 IN_PROGRESS,28/37(75,7%).
-
 
 **5 октября,Q29 независимый Android-контроль:** [минимальный Java VpnService](../reports/AUDIT-Q29-ANDROID-SYSTEM.md):без TUN перезапущен за17,40s с flags=1;с TUN нет нового PID за45s как при lockdown=0,так и при lockdown=1. Отказ воспроизведён без JNI/ядра Qeli;при одинаковом lockdown=0 отличается только создание TUN. Точная framework реализация/другие устройства не квалифицированы;продуктовый recovery gate остаётся FAIL,Q29 IN_PROGRESS,28/37(75,7%).
 
@@ -2501,7 +2434,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **5 октября, Q29 ограниченный Doze/flapping:** [отчёт](../reports/AUDIT-Q29-ANDROID-ENDURANCE.md):TCP/UDP/QUIC,9power phases(30s+2×120s),18WiFiCellulartransitions,36wake/72posthandover payloads,1440burst samples/144poststopblocked,45DNSops/72answers;3PCAP/protectedphysical0/drop0. PID/TUN сохранены;settings/host/userdata/recovery/revoke PASS. Исправлен исторический commit false-positive в обвязке,5regression tests. Bounded AVD матрица закрыта;physical/OEM longsoak,strict trustedDoT/SIGKILLFAIL/ENONET остаются,Q29IN_PROGRESS28/37(75,7%).
 
-
 **5 октября, Q29 trusted DoT:** [Report](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md): TCP/UDP/QUIC strict untrusted/trusted/mismatch/recovery PASS;39DNS/12authenticated answers,36payloads,576bursts/144poststopblocked;3PCAP physicalleaks0/drop0. Temporary labCA/settings/host/userdata cleanup5attempts PASS;2harnessFAIL preserved;dynamicUID fixed/12helper3CLI fresh,product/native/managed unchanged. SIGKILLFAIL/ENONET/otherAPI-OEM-arm64 open;Q29 IN_PROGRESS28/37(75.7%).
 
 **6 октября, Q29 F280:** [владение запросом разрешений](../reports/AUDIT-Q29-ANDROID-PERMISSIONS.md): один корректный профиль/набор адаптерных тестов, старый3FAIL/новый3PASS; исправлены отмена/снимок профиля/пересоздание Activity. Свежие179JVM(7новых), lint0ошибок55предупреждений; defaultR8 TCP обычная UI-кнопка,16payload/192burst/13DNS/strictDoT/capturephysical0drop0 PASS. Стадия разрешения и ответ инъецированы; Release instrumentation NOT RUN; четыре предварительных запуска не засчитаны, все семь cleanupPASS. Native/server/managed неизменны; SIGKILL/ENONET/другиеAPI-OEM-arm64 остаются,Q29IN_PROGRESS28/37(75.7%).
@@ -2516,12 +2448,9 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **6 октября, Q29 F284–F285:** [редактор профиля/экспорт](../reports/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md): исправлены ранний Save и потеря отсутствующего пакета/состояния режима; ошибка чтения store отображается, encryption/write/close перенесены на IO, отказ sink не считается успехом. Один исправленный test APK старый5/4ожидаемых FAIL, исправленный5PASS; первые3FAIL/диагностика раннего чтения listener сохранены. Свежие188JVM(6новых),lint0errors54warnings/defaultR8 TCP2handover/12полных ответов/288socket samples/48poststopblocked,capturephysical0/drop0;5attempts host/userdata/address/server cleanupPASS;15helper6CLI. Private file exports подтверждены, сторонние SAF/cloud providers не исполнялись. Q29IN_PROGRESS28/37(75,7%);SIGKILLFAIL/ENONET/skips/D06 неизменны.
 
-
 **Продолжение F326–F327, 6 октября:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): exact saved-plan receipt for OpkgTun no-op/MTU changes, literal address matching; matching-zombie recheck after failed exe lookup.120 cases each BusyBox/dash (47 owned native-process,44 state,29 installer/hook),12 new;37 recipes/docs/bindings PASS. Old/current hook and deterministic zombie failures reproduced; initial dash FAIL and orphan NOT_REPRODUCED retained. No actual router/core network or generation/concurrency qualification; INI parity/package/build/source review OPEN. Q31 IN_PROGRESS,28/37 unchanged.
 
-
 **F328–F329, 6 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): isolated per-run verification checkout/target; shared source sync, no service operations; checked locked single-job host gate, forward normal/build graph, mandatory ELF/hash and meaningful exit/SSH-finally.19 gate tests Windows/Linux,7 real temp-file shared-sync,37 recipes/docs/bindings PASS; actual offline Cargo local-fixture positive/negative graphs PASS. Original forced-service calls, stale sync, false PASS/exit0 and connection leak reproduced with models/temp files. No Qeli build/router qualification; INI parity/OpkgTun concurrency/package/build provenance OPEN.Q31 IN_PROGRESS,28/37 unchanged.
-
 
 **F330–F331, 6 October:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): removed both shell INI parsers; client-bin-only core metadata inspection uses bounded loader/strict common parser. Quoted/case/BOM/on parity and exit_node ownership; cached validated preflight, unknown/error reply fails before launch. Fresh Rust1.97 client-bin host debug build/8unit/Clippy/fmt PASS;155cases each BusyBox/dash,16new owners with22actual inspector subcases;16old/current records each shell.37recipes/docs/bindings PASS. Default core outside gated addition unchanged; no FFI/release/cross rebuild or real router networking. Binary/template upgrade together; configuration path is reloaded, generation/concurrency not closed. Q29/Q30/D06 retained,Q31 IN_PROGRESS28/37.
 
@@ -2553,11 +2482,9 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **F356–F357, 7 октября:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): реальный Cargo воспроизвёл compiler-config и intermediate-directory overrides (тот же baseline4methods/9expected subtestFAIL). Общая политика pinned rustc lookup/output охватывает оба router helpers, host verification с Rust1.97.0/Clippy и router CI.59router methods(7real-Cargo)/19hostgate model methods без skips PASS; tiny test/Clippy/graph,16rendered bash-n steps,37recipes/14LuCI/docs9/bindings PASS.17Git/lab inputs,cleanup проверены; только private home,.10/host services/network неизменны. Full Qeli/Zig/cross/SDK/GitHub Actions не квалифицированы; project core/ABI/artifacts неизменны. Full hermetic config/profile/source/PATH/cache/A-B и прежний остаток Q31 OPEN.41historic cases/acceptance сохранены;Q31 IN_PROGRESS28/37(75.7%),9remain,Q29/Q30/D06 сохранены. Без push/deploy.
 
-
 **7 октября,F370–F371:** [native preflight](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): actual low-space baseline удаляет контрольную A/B пару, fixed сохраняет;36Linux/80local PASS. Source roots изолированы, Cargo jobs1, installed pins inventory PASS. Native refresh заблокирован диском; два локальных архива проверены, удаление отклонено auto-review и не выполнялось. Native provenance STALE/Q34 OPEN;28/37(75.7%),9осталось,Q31/Q29/Q30/D06 scopes сохранены.
 
 **7 октября, native/D11/D15:** [сверка текущего пакета](../reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре независимых A/B,14 SHA/provenance,22 Windows ABI/325 platform/549 .NET/201 JVM/23 Android JNI,2417 Linux library и12 CLI tests/Clippy/debug builds PASS. Ошибки подготовки сохранены; peak benchmark/VPN-матрица/soak не повторялись. Долг14/15 DONE+D06 ACCEPTED;полный аудит28/37(75,7%),9 впереди;Q29/Q30/Q31 и exclusions сохранены.
-
 
 **8октября,F395:** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): отдельный core/hook publication-lock закрывает гонку между проверкой и командой без deadlock lifecycle/startup. Три ожидаемых FAIL старого hook; четыре Rust/shell случая и196 прежних methods на каждой dash/ash без skips,2444 Linux(60прежних ignored),strictClippy/client PASS. Native refresh/ABI и raw guards записаны в scoped packet evidence. Смешанный комплект/admin writes, последовательный NDM/power loss, исключённая прошивка и полный SDK/release pipeline вне закрытия;Q31 остаётся3/5IN_PROGRESS. Общий29/37(78.4%),8осталось;старый долг14DONE+D06ACCEPTED;Q29/Q30 сохранены.
 
@@ -2571,7 +2498,6 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **8 октября,F446–F448:** [Docker runtime](../reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md): branch latest publication исправлена, Cargo --locked, четыре destructive/status-ignoring legacy harness удалены. Настоящий Docker image/runtime26PASS: pinned H1 VPN fresh/recreate/known-image rollback, root0600/readonly volumes, protected-login readiness, сохранение bytes/UID/mode, шесть exit0 без OOM/SIGKILL. Harness FAIL сохранены; host snapshots/профили AppArmor/PID777-845 восстановлены, own root SHA-backed-up/guard-cleaned. Runtime gate закрыт; compiler multiarch/registry/currentActions и итоговая command/hook сверка Q33 OPEN.29/37DONE78.4%,осталось8; исторический долг14DONE+D06accepted/exclusions сохранены; локальный dev без push/deploy/release.
 
-
 **8 октября,F449/Q33-F052:** [Итоговая сверка Q33](../reports/AUDIT-Q33-COMPLETION.md): исправлен обход защиты hook-файла при restore через `..`, кавычки и symlink aliases; literal variables/globs в неизвестном top-level managed entry отклоняются. Точный старый collector на Linux ожидаемо FAIL;14 targeted production helper/gate checks PASS. Полная серверная/native квалификация PASS:CLI5/backup49/IO2/Clippy, freshA-B/14SHA/provenance/WindowsABI22. Retained hook snapshot SOURCE REVIEW OPEN;Q33IN_PROGRESS; общий29/37DONE78.4%,8осталось. Прежние runtime gates переиспользуются только в неизменённой части; Q29/Q30/Q31/USER_EXCLUDED/D06ACCEPTED сохраняются. Без push/deploy/release.
 
 **8 октября,F450/Q33-F053:** [Q33 завершён](../reports/AUDIT-Q33-COMPLETION.md): actual baseline два HTTP restore исполняют заменённый harmless marker; фикс хранит hooks startup/последующих worker до завершения supervisor и запрещает exact deletion. Fixed8+later10 runtime, CLI5/backup50/lifecycle1/post_down3/privateIO2/Clippy PASS; свежая native/ABI квалификация и raw seal приведены в отчёте. Q33 5/5 DONE;30/37(81,1%),7осталось. Исторические ограничения Q29/Q30/Q31/Q34/D06 сохраняются; без push/deploy/release.
@@ -2584,45 +2510,31 @@ D05/D09: [Q25-F114 — TOFU worker](../reports/AUDIT-Q25-IDENTITY-WORKER.md): ф
 
 **8 October,F463–F465/Q34-F017–F019:** [Android dependencies](../reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md): strict transitive project/early-plugin locks, three real lockfiles, SHA256 artifacts+metadata and missing-policy guards. 747 independent HTTPS files match; Windows/macOS AAPT2 checksum admission only. Actual debug/defaultR8/debug-release instrumentation assemblies, locked/offline/lint and fresh201productionJNI JVM PASS; five real default-mode refusals PASS. Initial partial-lock, harness Metaspace and alias404 trials retained; separate lint/in-process Kotlin/oneworker privateVM overrides. SHA-backup/proc-mountguard owned cleanup,777845 preserved; nativee3fb/14SHA/protected unchanged. No device VPN/currentJava17CI/otherOS builds claimed. Q34IN_PROGRESS30-37DONE81.1percent7remain;braces/packages-licenses/currentCI/sourcecut-release and historicalQ29Q30Q31D06/exclusions preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 октября,F466–F468/Q34-F020–F022:** [Maven security](../reports/AUDIT-Q34-MAVEN-SECURITY.md): shared early-plugin/project security versions, KGP2.4.21/Netty4.1.137/BC1.85 and remaining targeted fixes; all318 locked package/version records freshOSV0affected (initial326/19affected/50distinctadvisories). CI Maven fail-closed gate8fixtures/actualJDOMnegative-positive PASS; wrong-password test now AEADBadTagException, nullable reflection checked. Java17 officialSHA private qualification: debug/defaultR8/debug-release instrumentation assemblies/201JVMproductionJNI/lint0errors53warnings/offline-strict PASS;2actualoffline policy/driftrefusals+restoredpositive.104freshHTTPS checksums/626exactinheritedsealed records,obsolete admission removed. First unit compileFAIL and harness/API diagnostics preserved. SHA32720631byte backup/proc-mountguardcleanup777845 preserved; nativee3fb/14SHA/protectedfiles unchanged. License metadata318 obtained, actualNOTICE/native copyleft/source-cut/device runtime/currentActions remain OPEN; freshestCI37765333335 is anotherSHAf84a78d9. Q34IN_PROGRESS30-37DONE81.1percent7remain;F459braces/Q29SIGKILLFAIL-ENONET/Q30/Q31/D06accepted/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **8 октября,F469/Q34-F023:** [Android licenses/NOTICE packaging](../reports/AUDIT-Q34-ANDROID-NOTICES.md): per-variant canonical project AGPL/MPL,Apache2,Maven runtime inventory,original archive identities and preserved JAR/AAR/nested notices; dedicated original-archive ArtifactView,identical variant visit deduplication. Independent extraction current-checksum-admitted63archives/44AAR/24resources PASS;76license declarations inherited sealed review. CI APK index/hash/coordinate/origin gate12negative fixtures. APK qualification/evidence in linked report; native dependency/upstream-source notices,matching source publication/signatures/currentActions/fullrelease remain OPEN. Native e3fb/protected files unchanged; no new nativeAB/JVM/deviceVPN claim. Q34IN_PROGRESS30/37DONE81.1percent7remain; historical Q29/Q30/Q31/F459/D06/exclusions unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 October, F470/Q34-F024:** [Common Cargo legal resources](../reports/AUDIT-Q34-NATIVE-NOTICES.md): 235 checksum-locked packages,458 upstream resources, six exact-VCS supplements; one common bundle and packaging/CI checks. Actual qualification and limitations in linked report. Rust std/toolchain/.NET/upstream-source notices, source publication, OpenWrt immutable source cut and current Actions remain OPEN. Q34 IN_PROGRESS;30/37 DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/USER_EXCLUDED unchanged. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **8 October,F471–F472/Q34-F025–F026:** [Managed notices and Inter font](../reports/AUDIT-Q34-MANAGED-NOTICES.md):67 actual SDK-content-hash/official-catalog checked NuGet/runtime packages,187 shared resources; original upstream bytes and separate SIL OFL1.1/copyright for6 exact embedded fonts.35-lock/globalSDK/runtime binding,offline generator/checker,desktop/CI/app gates.19fixtures/final-source regeneration/four actual publishes/published negative/restored and shell gates PASS; scope and raw qualification in report. Toolchain notices,MicroCom exact source binding/sourcepublication/OpenWrt cut/finalActions/release OPEN. Nativee3fb/14SHA/protected unchanged,labs untouched;no new nativeAB/JVM/device claim. Q34 IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **8 October,F473/Q34-F027:** [Toolchain runtime/stdlib notices](../reports/AUDIT-Q34-TOOLCHAIN-NOTICES.md):65 original reviewed Rust/Zig/NDK/GCC-MinGW resources,69 embedded files;533 common native files. Offline policy/version/SHA binding,Gradle source InputFile,common CI and all packaging paths. Qualification and exact scope in report. Source publication,old GCC minor linkage/NDK whole archive/OpenWrt immutable source cut/final Actions-signatures-release remain OPEN. Nativee3fb/14SHA/protected preserved;Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F474–F477/Q34-F028–F031:** [Release publication gates](../reports/AUDIT-Q34-PUBLICATION-GATES.md):actual tag/clean-source/exact-commit CI admission beforebuild,shared Rust pin,Docker reviewed base digests/common notices,extractedDEB notices gate,allworkflow CI filters.86methods/baselineactualGit/CLI/YAMLparse PASS;official metadata and401/currentCIabsence limits in report. Fullsourcepublication/OpenWrt immutablecut/wholeDockerbuild/currentActions/signatures/release OPEN;nativee3fb/14SHA/protected unchanged,labs untouched. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F478–F479/Q34-F032–F033:** [Attestation/checksums](../reports/AUDIT-Q34-ATTESTATION-CHECKSUMS.md): removed unsupported build provenance for downloaded foreign assets; only actual CI-built DEB remains a subject. Atomic SHA256SUMS publication with consumer-compatible filename/regular-file admission and retained old manifest on failure. Linux11 no-skips/real GNU verify/baseline defect PASS;Windows7+4POSIXskips,release18,recipes38,YAML parse PASS (67distinct methods). SHA-backed-up/guard-cleaned own Python fixture;777845/service/network/native14SHA/protected unchanged. No Docker/native rebuild or hosted signing. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29/Q30/Q31/F459/D06/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F480/Q34-F034:** [Full Docker build](../reports/AUDIT-Q34-DOCKER-BUILD.md): tag/Cargo/exact-commitCI gate before publication tools/login,fullref/history/actionsread;actual classifier mismatch baseline/refusal and64focusedmethods/YAML PASS. Full fresh amd64 defaultfatLTO/jemalloc pinnedRust/Debian build826.546s/no binaryoverride,exact533image notices/CLI/dependencies and26pinnedVPN/recreation/invalidimage rollback checks PASS. Originalhost restored,own image/source/fixtures archiveSHA-qualified before guarded cleanup;public cache/tools exclusion explicit. Harness refusals/profile restoration retained;explicitunconfined runtime is not defaultAppArmor qualification. Multiarch/currentActions/signatures/sourcepublication remainOPEN;Q34IN_PROGRESS30/37DONE81.1percent7remain;native14SHA/protected/historicalQ29Q30Q31F459D06exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F481/Q34-F035:** [Immutable Docker inputs](../reports/AUDIT-Q34-DOCKER-INPUTS.md): reviewed frontend digest matches previous whole build;fresh registry index/manifest/config SHA checked. Single signed Debian/security snapshot20261008T000000Z,live sources removed,source-scoped expiry only,archive authentication preserved. Actual SHA-pinned amd64 Debian rootfs APT3signatures/62new150total packages/13commands/check/repeat and4signature negatives PASS;66focused methods/2priorrecipe refusals. SHA-backed-up full installedrootfs/guardedcleanup/original777845/network/profiles preserved;initial harness failures retained. No fresh wholeimage/compiler/ARM/hostedActions/release;remaining Q34/historical limits preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F482/Q34-F036:** [OpenWrt source Git flags](../reports/AUDIT-Q34-OPENWRT-SOURCE-FLAGS.md): actualGit10hidden-input false-PASS reproduced on exactprior gate;scoped ls-files refuses assume-unchanged/skip-worktree on5inputs before pin/hash. Unrelatedflags keep existingboundary.37methodsPASS(25source/12preflight),3existingPOSIX-oldbaseline skips unchanged;sourcecut actualpin/tree mismatch OPEN,pin/hash/SDK untouched. Docs/native14/protected unchanged scope,no lab/network/newcompiler/runtime. Q34IN_PROGRESS30/37DONE81.1percent7remain;historical Q29/Q30/Q31/F459/D06/exclusions preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 October,F483/Q34-F037:** [OpenWrt exact local source cut](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): stalepin/actual qelitree baseline refused;exact full local dev f4b80a9 pinned,actualSDK24.10.4 download+prepare and second emptyDL/differentURL samearchiveSHA PASS. All 3131 trackedfiles match originalcommit incllicenses/notices;no syntheticcommit. PublicURL unchanged,actualGitHubHTTP422 means publication prerequisite OPEN. Sourcegate/native14/protected/doc checks and scoped evidence in report;no newcompiler/bootstrap/IPK/router/nativeAB/hostedCI claims. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q29SIGKILLFAIL-ENONET/Q30/Q31/F459braces/D06accepted/USER_EXCLUDED preserved.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F484/Q34-F038:** [Fuzz CI inventory](../reports/AUDIT-Q34-FUZZ-INVENTORY.md): actualCargo15targets butoldsmoke/nightly11 omitcontrol_v2/quic_envelope/realtls_client/websocket_frame. Sharedmanifesthelper drives bothconsumers,earlymetadatafailure blocks instead ofemptysmoke;nightlydynamicneeds/output matrix.69localmethodsPASS+10repeatLinuxunits+10actualCI Bash scenarios with controlledcargo receipts inclbaselinegap,15calls/early23failure/malformed/missing/outputpreservation/new16thtarget/externalsymlink refusal. ActualRust/libFuzzer/hostedActions and pinnedfuzztools remainseparate OPEN;no core/native/tree changes,previousOpenWrtcut retainsqelitree. SHA-backed-up fullownedfixture/procmountguards/service777845 preserved. Q34IN_PROGRESS30/37DONE81.1percent7remain;Q35TODO andhistoricalQ29/Q30/Q31/F459/D06/exclusions retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-
 **9 октября,F485–F486/Q34-F039–F040:** [Воспроизводимый fuzz CI](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): фиксированы nightly/cargo-fuzz и отдельный146-package lock; locked-fetch/offline/SHA и отдельный strict audit. Все15 настоящих ASan targets:85 930 590 выполнений,без crash artifacts;72 Windows+13 Linux regression methods и реальные missing/stale/drift отказы PASS. Exact SDK source recut/prepare3140files/second emptyDL identicalSHA PASS;pin/hash обновлены. Scope и сохранённые ошибки обвязки в отчёте. Q34 IN_PROGRESS30/37DONE81,1%,7осталось;Q35 TODO и прежние ограничения сохранены.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 
 **9 October,F487/Q34-F041:** [Fuzz Actions context correction](../reports/AUDIT-Q34-FUZZ-TOOLCHAIN.md): official SHA-qualified actionlint1.7.12 reproduces two invalid job-env references introduced in previous patch;export single pinned RUSTUP_TOOLCHAIN through GITHUB_ENV instead. Final semantic lint13 regressions/exact Bash export PASS. Previous real85,930,590-case ASan smoke recipe/environment unchanged,not rerun;sealed history preserved. Q34IN_PROGRESS30/37DONE81.1%,7remain;Q35TODO/hostedCI/historical limits retained.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
@@ -2669,49 +2581,7 @@ Q34/Q35IN_PROGRESS,30/37DONE81,1%,7остаётся.LOCAL_DEV_COMMIT;NO_PUSH_DEP
 
 **10 октября,F512/Q35-F010:** [Допуск release-soak](../reports/AUDIT-Q35-RELEASE-ADMISSION.md): исходный gate давал полный PASS за0,064с с8пустыми детьми. Теперь обязательны результаты восьми фаз, финальные точки TCP10k/UDP10k+3×1k и минимум28800с по монотонным часам.7Linux contract-тестов и Bash syntax PASS; пустой ребёнок/неполная точка/8ч−1нс отклоняются. Реальный8ч VPN-soak остаётся OPEN,Q35IN_PROGRESS30/37DONE.LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
-**10 октября, Q36-F008:** [Bidir pressure](../reports/BENCHMARK.md): 36 фаз/90 raw JSON, три окна на 100/250/unlimited для plain/TLS/QUIC и baseline. Plain TCP восстанавливает симметрию под paced-нагрузкой, но низкий unlimited uplink бывает при нулевых session drops: причина OPEN. Исправлен допуск paced raw в unlimited population;49 Windows/49 Linux PASS, прежние228 raw повторно сверены. Оба own roots SHA-архивированы/очищены, службы сохранены. Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 октября,Q36-F009:** [Клиентский TCP uplink](../reports/BENCHMARK.md): четыре причины drop теперь учитываются ядром/Linux status; Full/Closed flow semantics сохранены.9 Rust тестов/release/fmt/2Clippy PASS.24 фазы/96 raw JSON,3 fresh sessions old/new,сервер фиксирован; причина plain TCP асимметрии и downlink observability OPEN.915 source inputs сверены,staged CLI восстановлен,2own roots SHA-архивированы/очищены,службы сохранены.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**10 октября,Q36-F010:** [TCP downlink](../reports/BENCHMARK.md): закрыта наблюдаемость mux pool/Full/Disconnected, пять новых Rust тестов/release/fmt/2Clippy PASS.18 фаз/72 raw JSON,3 fresh sessions plain/TLS/mux,negotiated mode подтверждён.916 inputs сверены,staged CLI восстановлен,2own roots SHA-архивированы/очищены,службы сохранены.Причина асимметрии OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**10 октября,Q36-F011:** [latency](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 окон/15600 ICMP probes;idle и100M TCP bidir,p50/p95/p99,raw tails/loss retained.53 Windows/4 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Полная Q36 матрица остаётся IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**10 октября,Q36-F012:** [UDP/IPv6](../reports/BENCHMARK.md):общий UDP-bidir runner/report,dual-family kernel counters,63 Windows/63 Linux/11 workflow/4 actionlint workflows/9docs PASS.69 fresh sessions/204 phases,all12 IPv4 UDP-bidir P1/P4;3core carriers independent outer/inner v6 TCP+UDP P1/P4.Original harness FAIL/4 partial windows retained;2baselines inherited;2own roots archived/removed,services preserved.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-
-**11 октября,Q36-F013:** [unpaced RTT](../reports/BENCHMARK.md):3 fresh sessions всех12 carriers+direct,78 TCP-bidir P1/P4 нагрузок и78 окон/15600 ICMP probes;p50/p95/p99/raw tails/loss/CPU/RSS/drops retained.Конечные counters сохраняются до admission;ping oversend исправлен,original 2FAIL/3partial окна/1inherited baseline retained.68 Windows/68 Linux/9docs PASS;2own roots SHA-архивированы/удалены,службы сохранены.Физическое насыщение не доказано;auth-rate/остальные IPv6 сочетания OPEN.Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября,Q36-F014:** [AUTH bursts](../reports/BENCHMARK.md):27 свежих серверных серий,1/4/16 peers TCP/UDP/QUIC;189/189 verified AuthOK + registry + distinct pool + revoke.19456KiB/t2/p1 PHC;startup/keygen/TUN excluded,finite burst not sustained capacity.73 Windows/73 Linux/9docs PASS;916 CLI inputs reused,one generated peer input.Original setup/cleanup FAIL и interrupted transfer retained,1partial peer отдельно;892 raw files SHA bulk transfer,1own root archived/removed,services preserved.Other carriers/IPv6/sustained auth-rate OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября,Q36-F015:** [IPv6 carriers](../reports/BENCHMARK.md):27 новых сессий/108TCP+UDP bidir P1/P4 окон остальных9carriers outer6/inner6,324raw JSON +manifest;core3/direct inherited separately со sealed SHA,все12 теперь покрыты этой парой.916CLI inputs unchanged/no rebuild;73Windows/73Linux previous exact-input checks reused,9docs PASS.2own roots SHA-archived/removed,services preserved,all host gates retained.РеестрQ36 TODO→IN_PROGRESS и историческая debt queue исправлены.Mixed-family/IPv6RTT/fullAUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F016:** [Смешанные семейства](../reports/BENCHMARK.md):54 новые сессии /216 окон TCP+UDP bidir P1/P4 остальных девяти транспортов outer4/inner6 и outer6/inner4;648 raw JSON +manifest. Прежние core3/direct сохранены отдельно с sealed SHA; вместе с F015 все12 покрыты тремя недефолтными парами.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 собственных каталога SHA-архивированы/удалены,службы сохранены; все host gates и отличия финальной сверки retained. IPv6 RTT/full AUTH/asymmetry/soak OPEN;Q36 IN_PROGRESS,30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F017:** [RTT IPv6](../reports/BENCHMARK.md):39 свежих сессий /78 десятисекундных окон TCP bidir P1/P4 всех12 транспортов+direct outer6/inner6;15600 проб,15573 ответов/27 потерь. Оконные p50/p95/p99,потери и median/spread трёх сессий пересчитаны независимо из379 SHA-проверенных исходных файлов; прежний IPv4 отдельно.916 CLI inputs unchanged/no rebuild;73 Windows/73 Linux exact-input checks reused,9 docs PASS.2 собственных каталога SHA-архивированы/удалены,службы неизменны,полные отличия host gates сохранены. Полный carrier AUTH/rate и причина асимметрии OPEN;Q35 soaks отдельно;Q36 IN_PROGRESS;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F018:** [UDP shutdown](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): воспроизведён ложный аварийный выход при штатной отмене receive pump и потеря завершённых ошибок других workers. Исправлены оба пути; 38 точных Rust-тестов и 77 benchmark methods на каждой Windows/Linux PASS. Малый Linux fixture архивирован/удалён; служба .10 сохранена, полный host gate FAIL из-за трёх legacy-правил. .11 без SSH banner; текущая CLI integration build/108 fresh AUTH/очистка .11 OPEN. Q36 IN_PROGRESS,30/37 DONE81,1%,7осталось. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F019:** [Функциональный native AUTH](../reports/AUDIT-Q36-UDP-SHUTDOWN.md): 108 свежих серий /756 клиентов всех12 транспортов, c1/4/16×3; proof/AuthOK/registry/108 server exit0 PASS. Текущие исходники/features/jemalloc; частный профиль lto=false/codegen16: это не release-бенчмарк. Три capped release OOM сохранены; собственный кэш/fixture архивированы и удалены, все host differences сохранены. Release AUTH/rate, TCP-асимметрия и состояние/очистка .11 OPEN; Q35 soaks отдельно. Q36 IN_PROGRESS;30/37 DONE81,1%. LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F020:** [TCP state](../reports/BENCHMARK.md): 6 свежих raw/mux сессий/12 окон на двух namespace одной .10, прежний release F010; sampled TCP_INFO для inner/outer и обоих endpoint сверены по PID/портам/режиму, raw/counters/CPU/SHA. Асимметрия воспроизводится; очереди/RTT наблюдаемы, причина OPEN, defaults не менялись. Это отдельная двух-vCPU диагностика, не общий performance PASS. Own root SHA-архивирован/удалён, службы сохранены, host FAIL и первый harness отказ до нагрузки сохранены. Q36/release AUTH/очистка .11 OPEN;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F021:** [CPU affinity](../reports/BENCHMARK.md): 6 свежих raw/mux сессий/12 парных окон shared 0–1/split server0 client1, unlimited TCP bidir P1 на одной .10. Все TID/PID/CPU policy, raw/counters/TCP/SHA и архив INI сверены; порядок чередуется. Конкретный эффект размещения отдельно от доказательства причины; defaults не менялись. Own root SHA-архивирован/удалён, службы и staged CLI сохранены, все host gates/отличия retained. Q36 cause/release AUTH/.11 cleanup OPEN;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F022:** [Downlink load](../reports/BENCHMARK.md): 3 свежие raw сессии/6 парных окон, два одновременных unidirectional TCP P1 потока; только downlink100M/unlimited при uplink unlimited. Во всех трёх парах uplink вырос в 2.05–2.14 раза; наблюдаемые client drop counters/reconnects без прироста, механизм OPEN. Raw/receiver/settings/ports/PID/CPU/TCP roles/status/SHA сверены, INI/root SHA-архивированы и удалены, службы сохранены, все host gates/отличия retained. Defaults не менялись;Q36/release AUTH/.11 cleanup OPEN;30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F023/F024:** [ACK path и восстановление](../reports/BENCHMARK.md): 3 свежие сессии/6 окон, только matched-header timing; причины задержки/15 пропусков OPEN. Старая очистка .11 закрыта, root/cache архивированы и удалены; все full host gates PASS. Factory AUTH-rate/current UDP-fix performance/Q35 soak остаются OPEN; 30/37 DONE81,1%; LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F025:** [TUN counters](../reports/BENCHMARK.md): 3 fresh sessions/6 windows; server kernel TX drops546/198/229 при unlimited downlink, 0/0/0 при100M; client136/424/234 и396/171/261, app/qdisc drops0. Потери вне Qeli counters подтверждены, причина/точная стадия задержки OPEN. Счётчики/identity/SHA проверены, root SHA-архивирован и удалён, full host gate/отличия сохранены. Исправлены комментарии владельца шифрования, руководство уточнено. 30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября, Q36-F026:** [TUN queue intervention](../reports/BENCHMARK.md),3 fresh raw sessions/6 windows,обе стороны unlimited,server1000/4000/client500. Throughput/matched ACK/kernel/qdisc counters и policy/SHA сверены; результаты отдельно от F025. Defaults/source не менялись,root SHA-архивирован/удалён,full host gate сохранён. Механизм/factory AUTH-rate и Q35 soak OPEN.30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
-**11 октября,Q36-F027/F028:** [Current factory AUTH](../reports/BENCHMARK.md): неизменённый fat-LTO Cargo/profile/features,916 inputs,108 fresh bursts/756 peers всех12,c1/4/16×3,proof/registry/108 server exit0 PASS. Factory AUTH finite-burst блок закрыт; sustained/current data-plane/точная стадия TCP и Q35 soak OPEN. Stale observer cache mtime0 воспроизведён/исправлен, early marker gate6Windows+6Linux PASS; исходные отказы сохранены. Own cache/root SHA-qualified cleanup,службы/staged сохранены.30/37 DONE81,1%;LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
-
 **12 октября, перенос проверенного кандидата:** [wire pool и фактические результаты](../reports/BENCHMARK.md): при переносе 916 входов совпали с проверенной сборкой; затем только два явно проверенных изменения пробелов/переносов в одном файле для rustfmt, логика прежняя. Четыре строгих feature-профиля, 8+1 тестов PASS. 24 минутных AUTH-прогона / 34644 аутентификаций, пик RSS 336320 КиБ при прежнем лимите 524288; 20+4 составной результат, исходный отказ бюджета файлов и host differences сохранены. 12 новых native сессий /48 функциональных окон IPv4 TCP/UDP P1/P4. Исходники и CI warning gate перенесены. [Q35 endurance](../reports/AUDIT-Q35-LONG-SOAK.md): пять ресурсных сценариев завершены, upload 6,8627%>5% FAIL, межсерверный этап NOT_RUN. Android: 23 JNI +2 packaged INI теста подтверждены на прежнем x86_64 native; исходные harness/signature/wlan0 отказы сохранены, полный VPN runtime не заявляется. Q30 DONE в согласованном объёме; итог31/37 (83,8%), остаются Q29/Q31/Q34/Q35/Q36/Q37. Native refresh, hosted CI, performance/cross-node и оставшиеся критерии этих шести разделов открыты. `NO_PUSH_DEPLOY_RELEASE`.
-
 
 <!-- normative-sync: current-pool-native-20261012 -->
 
@@ -2901,36 +2771,29 @@ Q29/Q31/Q34/Q35/Q36. Полный аудит и релиз ещё не заве�
 
 **12 октября, Q31-V013:** текущие ARM/MIPS и SDK client-only compile/packaging подтверждены; исправлены0664 права лицензий и устаревшие SDK/opkg assertions.54 scoped методов PASS,533 license files проверены. Сам ELF не менялся при исправленной установке/перепаковке. Own roots удалены, около3,6GiB освобождено, исходные сервисы сохранены. [Полный scope и остаток](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md). Q31:3/5 IN_PROGRESS; bootstrap resource-deferred, physical router USER_EXCLUDED. Полный32/37 (86,5%),5 открытых разделов.
 
-
 <!-- q29-current-vpn-20261012 -->
 
 **12 октября:** [Q29: текущие VPN-интеграции и надёжность стенда](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Исправлены RAM admission, окно post-CONNECTED, Profiles transition и ANR handling.23 helper methods и7 matching-R8 routed cases PASS,72 exact receipts/6 DNS names. Шесть cold attempts FAIL сохранены; последняя остановилась на unpublished storage. SIGKILL/ENONET открыты, ordinary production-rules/current independent UID cold gate не квалифицирован. Q29 IN_PROGRESS;32/37(86,5%),5 разделов осталось.
-
 
 <!-- q34-current-source-cut-20261012 -->
 
 **12 октября:** Обновлён production OpenWrt pin/hash: два SDK download и prepare проверены, все 3272 tracked files совпали с Git. Настоящий source gate и25 методов PASS;3 прежних skips сохранены. Public pin/CI отсутствуют; bootstrap/IPK не запускались. Q34 IN_PROGRESS;32/37(86,5%),5 разделов открыты. [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md). NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-storage-startup-20261012 -->
 
 **12 октября:** Q29: закрыт scoped current independent-UID cold UI/startup/lockdown/manual recovery gate.8 fixture methods PASS,336 probes,241 correlated receipts,80/80 post-CONNECTED replies,stopped lockdown48/0. Ожидание storage до APK и push устранило прежний premature INI upload. DNS/null ENONET,SIGKILL и ordinary production-rules APK остаются открыты;общий32/37(86,5%),5 разделов. [Отчёт](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).NO_PUSH_DEPLOY_RELEASE.
-
 
 <!-- q29-production-runtime-20261012 -->
 
 **12 октября:** Обычный production R8 APK проверен через UI/SAF и отдельный UID без instrumentation: 80 post-CONNECTED sockets PASS,230 correlated receipts, stopped lockdown48/0 и manual recovery/DNS PASS. APK payload неизменен после lab signing; реальная release-подпись и физические платформы не квалифицированы. DNS/null ENONET, first-post-APPLIED blocking и historical SIGKILL сохраняются. [Q29](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-dns-selection-control-20261012 -->
 
 **12 октября:** Q29: причина generic/null ENONET локализована на текущем API34 image. Ответ dnsproxyd и отдельный platform TUN с другим owner UID воспроизводят отказ; bypassable control получает A+AAAA. Typed/null и explicit VPN DNS идут через TUN. Product APK/JNI/default kill-switch неизменны; compatibility FAIL сохранён, SIGKILL и first-post-APPLIED открыты. [Q29 DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
 
-
 <!-- q29-current-sigkill-20261012 -->
 
 Текущий production R8 SIGKILL recovery: FAIL; общий runtime FAIL. Plain/TUN platform-only controls выполнены один раз,45s window сохранён. Manual recovery/revoke и блокировка при dead/force-stopped VPN PASS. Product APK/JNI и byte-identical restart policy неизменны;SIGKILL FAIL не переписан. [Q29](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).32/37(86.5%),5 open.NO_PUSH_DEPLOY_RELEASE.
-
 
 <!-- q29-publication-contract-20261012 -->
 
@@ -2957,60 +2820,13 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 Общий итог без искусственного изменения статусов: 32/37 (86,5%).
 `NO_PUSH_DEPLOY_RELEASE`.
 
-
 ### 13 октября: реальная TUN-диагностика Q36
 
 <!-- normative-sync: q35-final-q36-stage-checkpoint-20261013 -->
 
-[Q35 завершён](../reports/AUDIT-Q35-FINAL.md): 33/37 (89,2%).
-[Q36 stage](../reports/AUDIT-Q36-TUN-STAGE.md): шесть фаз измерены, архив/host/cleanup проверены; исходный --client guard FAIL сохранён. Серверный q0 trace без успешных read; traced ACK latency выходит за оба контроля в 11,5356/5,7921 раза. Ни потери, ни исходная стадия задержки этим не установлены. Дальше current steady data plane без observer; этот intrusive метод для исходной причины не повторять. Q29/Q31/Q34/Q36 остаются открытыми. NO_PUSH_DEPLOY_RELEASE.
-
 ### 13 октября: текущая статистическая популяция Q36
 
-[Текущий data plane](../reports/AUDIT-Q36-CURRENT-STATISTICS.md):36 свежих сессий/144 восьмисекундных окна всех12 режимов TCP/UDP bidir P1/P4×3, медианы/разброс/raw receiver/CPU/RSS/counters квалифицированы. Потери и выбросы сохранены; полный host gate/архив/очистка PASS. Не saturation capacity; причина TCP/ACK и пределы нагрузки OPEN. Q36 IN_PROGRESS,33/37 (89,2%), NO_PUSH_DEPLOY_RELEASE.
-
-
 Восстановление Qeli после SIGKILL проверено на обычном production R8 APK; отключение/отзыв запрещают возврат служб в 30-секундных окнах. DNS/null остаётся открыт. [Q29 recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md). Plan: 33/37 (89.2%); Q29 IN_PROGRESS.
-
-
-[Q36 matched-total load and TUN counters](../reports/AUDIT-Q36-MATCHED-LOAD.md):6sessions/60load windows +3sessions/12boundary windows +3paired sessions/12queue-length windows; scoped qualification, full host/archive/cleanup PASS. Q36 IN_PROGRESS,33/37(89.2%).
-
-
-**13 October: directional control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 новые сессии/9 окон TCPraw P1 up/down/bidir: upload-only median139,93Mbps при CPU server16,33%/client19,67%; down-only692,55Mbps. Асимметрия сохраняется без встречного трафика; во всех6 unidirectional окнах retransmits совпали с отправляющим TUN TX drops, native client drops0. Полный host/source/archive/cleanup PASS; точная причина не закрыта. CURRENT_SAME_SESSION_TCP_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%).
-
-
-**13 октября: upload-duration и producer pacing:** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3 пары8/32с: uploadmedian173,19/165,15Mbps, retransmits сохраняются во второй половине32с. Другие3пары: unlimitedmedian145,99Mbps сTUNTXdrops против producer300Mbps→receiver300,06Mbps безTUNTXdrops/retransmits3/3. Только темп iperf, не Qeli fix/defaults. UpstreamTUNsource fullring-гипотеза; kernelbackpressure patch отменён upstream, здесь не применён. Full source/host/archive/cleanup PASS; CURRENT_PAIRED_TCP_PRODUCER_PACING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: client qdisc control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):3парные сессии/12окон fq_codel vsfq, unlimited TCPrawP1 up/bidir; paired upload-15.46%,bidir sum-7.71%; потериTUNсохранились,defaultнеизменён. Контроллерsamehandlecollisionисправлен distinct1/2+smoke3/3; дваисходныхFAIL/4baselineокна сохраненыотдельно, объяснениеавтозагрузкойотозвано. Полныеhost/source/globalqdisc/default/module/providerSHA/archivecleanupPASS. CURRENT_PAIRED_CLIENT_TUN_QDISC_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: pre-TUN per-flow rate control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 3 парные сессии /12 окон: fq maxrate300Mbit/поток перед TUN, iperf без лимита. Upload median137,51→288,60Mbps; capped upload TUN drops/retransmits0 в3/3. Bidir sum paired median+2.19%, но потери на обоих TUN остаются3/3; default не изменён. Все host/source/module/global qdisc/archive/cleanup gates PASS. CURRENT_PAIRED_PRE_TUN_PER_FLOW_MAXRATE_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: negotiated recordizer control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон,3 matched пары recordizer off/required. Переговоры legacy/packet_mux_v1 и оригинальные INI подтверждены; paired median upload+795.19%,download+120.53%,bidir sum+118.45%. Source review исключил удержание текущего TunPacket во время outer write. Defaults не изменены, source/full host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DIRECTION_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: recordizer deadline control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон required recordizer default2–8ms vs fixed1ms. Парный median upload+2.92%,download-3.71%,bidir sum+0.34%,idleICMP average-64.28%. Интервальные TCP_INFO/30idle probes разделены; reverse sender RTT N/A. Defaults не изменены; deadline randomization и DPI equivalence не подменены throughput. Source/host/archive/cleanup PASS. CURRENT_MATCHED_RECORDIZER_DELAY_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: fixed TCP-carrier control** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 сессий/18 окон fixed1/2carriers, required recordizer default2–8ms. Парный median upload-98.28%,download+0.13%,bidir sum-7.57%. Реальные сокеты поPID/endpoint зеркальны и стабильны на42 границах; не гарантированное разделение ACK/innerflows, bonded pools/queues также меняются. Native drops/RTT/raw сохранены. Default не изменён;source/host/archive/cleanup PASS. CURRENT_MATCHED_TCP_BONDING_CONTROL_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: Q36-F030 Linux candidate validation** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): F030 candidate: actual4featurechecks/15tests/releaseCLI и6runtime sessions/18windows приfixed2carrier. Native client uplink/downlink0 во всех9 candidate windows; upload median24,34→1278,97Mbps, paired52.91×;bidir sum+8.16% с одним ухудшением, kernel losses остаются. Сервер exactbaseline, consumer/source adoption pending. Ownswap/cache/source/build/runtime root/archives SHAочищены, host/services/source PASS. CURRENT_MATCHED_BONDED_SLOT_FIX_RUNTIME_QUALIFIED;33/37(89.2%),Q36 IN_PROGRESS.
-
-
-**13 October: Q36-F030 partial compatibility** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):12actualsessions/36attempts,35admitted+1iperfrole-invalid.3fullonecarrierpairs/native0;legacyupload paired+32.27%,download−6.63%,QueueFull remains,bidircandidateN2diagnostics only. Original900sTimeoutError androleFAIL retained,157rawJSON/24logs/bothhost/source/archivecleanup qualified;source/nativeadoption pending.Q36IN_PROGRESS,33/37(89.2%),NO_PUSH_DEPLOY_RELEASE.
-
-**13 октября: измеритель TCP-bidir исправлен и проверен** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 86тестов+1самостоятельное livewindowPASS: --get-server-output и противоположные endpointTX/RX обязательны, диагностика отказа сохраняется, старая/новая политика не смешиваются. Патч ядра/nativepending, legacy QueueFull остаётся;33/37 прежние.
-
-**13 октября: точный патч слотов перенесён** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): Свежие current-tree/native сборки и consumer checks ожидаются; исходная применимость certification не переносится через Rust delta. Legacy QueueFull/регрессии сохранены;33/37 прежние.
-
-**13 октября: новый core/native cohort установлен локально** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 4profiles/15Rusttests/currentCLI; desktopA+B byteequal/33exports/22ABI; AndroidA/B55exports,3APK/R8,23JNI/2INI;8nativecopies/provenancePASS. Originaldu/fixtureFAIL retained,allownresourcescleaned;new20Linuxcasespending,legacyQueueFull retained;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: свежая функциональная проверка нового ядра завершена.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 20 Linux-критериев / 19 запусков / 409 проверок PASS, включая legacy и 100 TCP + 100 QUIC смен сети; независимая проверка архива и полная очистка PASS. Сертификация текущего ядра обновлена по новому прогону. Долг переноса F030 закрыт; legacy QueueFull и остальные результаты производительности сохранены. Q29/Q31/Q34/Q36 остаются открытыми; 33/37 (89,2%). NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: OpenWrt source-cut обновлён после Q36-F030.** [Q34](../reports/AUDIT-Q34-OPENWRT-SOURCE-CUT.md): exact current commit,2actual SDK downloads/prepare/all tracked blobs PASS; pin/hash refreshed,Compile/Install unchanged;4committed source-gate probes andfullcleanup PASS. Public pin/hosted CI/bootstrap/current32bit package qualification remain open;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: актуальные ARMv7/MIPS после F030 проверены.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md):2fresh client-only builds/907Git inputs/staticELF/SHA +32QEMU CLI/INI PASS;allownresourcesarchived/cleaned,productionpreserved. Original preparation/importFAIL retained;SDK/IPK-current-core refresh andbootstrap remainopen,physicalrouterUSER_EXCLUDED;33/37 unchanged,NO_PUSH_DEPLOY_RELEASE.
 
@@ -3018,14 +2834,6 @@ Q29 platform-scope решение, Q31 bootstrap и Q36 диагностика �
 
 **14 октября: F459 / Q34-F013 закрыт для текущего графа панели.** [Client supply](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): принятый Tailwind 4 compiler API удалил braces/CLI/watcher цепочку. Свежий npm audit: старый граф exit 1 / пять затронутых записей; текущий exit 0 / ноль. CSS/build/watch/template входы и прежние 29 Linux / 29 Windows, 36 variants / 96 states, 131 HTTP checks сверены без повторного запуска. Cache удалён; Q34 целиком открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
 
-**14 октября: актуальный legacy/mux cohort проверен.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): 6 fresh current-product sessions / 18 windows / 3 paired repeats; all 6 bidir endpoint-role checks, exact current CLI/source/host/archive/cleanup PASS. Historical invalid window and before/after results retained separately; no default change, rebuild or general performance PASS. 33/37 unchanged, NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: компонентный контракт legacy-очереди проверен.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md): exact production functions/BufferPool/Tokio, 11 положительных тестов, два отрицательных контроля и две восстановленные проверки PASS. Burst 128 → 83 queued / 45 Full; все 252 слота возвращены; bound 16 602/16 603 подтверждён. Уточнена область tcp_uplink_drops; новых native/CLI/VPN прогонов нет. Все собственные ресурсы очищены, host сохранён. Q36 открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
-
 **14 октября: подготовка полного Rust feed проверена.** [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md): шесть файлов из SDK pin, официальный source SHA, штатный patch, host-prepare/host-configure и семантика GNU host/musl target PASS. Исправлены пропуски feed и host exports в стенде; все ресурсы очищены. Compiler bootstrap/cold graph NOT_RUN, Q31 открыт, 33/37 прежние, NO_PUSH_DEPLOY_RELEASE.
 
 **14 октября: проверен фактический публичный CI.** [Q34](../reports/AUDIT-Q34-CLIENT-SUPPLY.md): три failed jobs в опубликованном e7; source pin404, текущий core не опубликован. Keenetic fixture исправлена и проверена44/root +44/non-root с сохранением настоящих production owner guards. Mac/iOS причины и exact-source hosted gate остаются открыты; физические стенды USER_EXCLUDED,33/37 прежние,NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: current CLI all12 статистическая матрица.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):36 новых сессий/144 окна/P1/P4 TCP+UDP×3,72 TCP role admissions, полный source/host/archivecleanup PASS. Исторические матрицы не переименованы в current; SUN_LEN/cleanup guard FAIL до измерений сохранён/очищен. TUN/ACK стадия OPEN;33/37 прежние,NO_PUSH_DEPLOY_RELEASE.
-
-**14 октября: причина наблюдаемых kernel TUN drops подтверждена.** [Q36](../reports/AUDIT-Q36-MATCHED-LOAD.md):9сессий/27окон,3490FULL_RING с точным совпадением TX dropped в9наблюдаемых окнах,0trace-loss; native TCPdrops0,18контролей имеют4751TUNdrops. Собственный stock trace-instance и глобальные controls/host/owned artifacts восстановлены. Throughput−10,36…+21,83% от соседних контролей; ACK-stage/no-overhead/performance PASS не заявляется.

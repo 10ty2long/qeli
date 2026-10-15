@@ -106,14 +106,6 @@ requirement; `manual` does not enable external forwarding automatically.
 These are separate test populations, not a combined test count. Reports retain source
 and artifact identities, test conditions and original failures.
 
-Repeated performance measurements covered **12 modes**, throughput, ACK latency,
-queueing and overload behaviour. They identified ACK/data contention in the legacy
-shared FIFO and the latency tradeoff introduced by batching. Production measurements
-and private diagnostic builds are documented separately. TUN-ring and legacy-queue
-overflow remain possible under overload; these results do not establish a universal
-speed increase over 0.8.1 or zero packet loss.
-[Benchmark audit summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q36-FINAL.md).
-
 ### Known limits
 
 - On the measured Android 14/API34 emulator, the automatic-family `DnsResolver` call
@@ -253,14 +245,6 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
 Это отдельные наборы проверок, их числа не складываются в один счётчик тестов.
 В отчётах сохранены версии исполненных исходников и артефактов, условия
 и первоначальные отказы.
-
-Повторные измерения производительности охватили **12 режимов**, пропускную
-способность, задержки ACK, очереди и поведение под перегрузкой. Установлены конкуренция
-ACK и данных в общей legacy FIFO и влияние batching на задержку. Измерения штатного
-кода и отдельных диагностических сборок описаны раздельно. Переполнение TUN-ring
-и legacy-очереди при перегрузке остаётся возможным; эти результаты не устанавливают
-универсальный прирост скорости относительно 0.8.1 или отсутствие потерь пакетов.
-[Итог аудита бенчмарков](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q36-FINAL.md).
 
 ### Известные ограничения
 
