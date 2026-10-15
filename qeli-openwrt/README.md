@@ -564,13 +564,13 @@ See the [qualified source compiler and SDK result](../docs/eng/reports/AUDIT-Q31
 
 ### Dependency integration source cut (16 October 2026)
 
-The recipe pins `43a3ec907f952484aeef14aa616a8e940e32d265`, containing the updated
-Cargo lock and the matching dependency notices. This immutable commit is available
+The recipe pins `084682e5f3efc05efaf4154b4d5a3eff2750a21d`, containing the updated
+Cargo lock, canonical isolated fuzz lock and the matching dependency notices. This immutable commit is available
 from the repository through the dependency integration PR; this does not publish a release.
 Stock SDK 24.10.4 download/prepare produced SHA256
-`aead662b45bd57aa67e863cbb8a135b806b79c355adb88992da03eae68357fbc`
-(28660660 bytes). A second empty download cache with a distinct private Git URL
-produced the same archive. All 3441 prepared tracked files match the exact pinned
+`df98f489de92b6738048973cc74e84dbf3ee829ef0f1b66badc0a7c091aab671`
+(27207208 bytes). A second empty download cache with a distinct private Git URL
+produced the same archive. All 3442 prepared tracked files match the exact pinned
 commit, including modes and contents; the SDK Git export script is unchanged.
 
 This check qualifies the source export and prepare phase. It does not rerun the
