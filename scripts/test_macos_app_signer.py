@@ -40,6 +40,7 @@ if [[ "$1" == publish ]]; then
   done
   mkdir -p "$out/Legal/NativeRust/files/axum-core/0.5.6" "$out/Legal/DotNet"
   printf '#!/bin/sh\nexit 0\n' > "$out/QeliMac"
+  printf 'newer host-only CI core' > "$out/libqeli.dylib"
   cp "$QELI_TEST_PROJECT/LICENSE" "$out/Legal/MPL-2.0.txt"
   printf 'dependency license' > "$out/Legal/NativeRust/files/axum-core/0.5.6/LICENSE"
 elif [[ "$1" == run ]]; then
@@ -55,7 +56,7 @@ fi""")
     def signer(self, name, rc=0):
         self.tool(name, f'echo "{name} $*" >> "$QELI_TEST_EVENTS"\nexit {rc}')
 
-    def invoke(self, arch="arm64"):
+    def invoke(self, arch="arm64", native_override=None):
         self.events.unlink(missing_ok=True)
         archive = self.project / ("dist/Qeli-macos-" + arch + ".tar.gz")
         archive.parent.mkdir(exist_ok=True)
@@ -67,6 +68,9 @@ fi""")
                    QELI_TEST_PROJECT=self.posix + "/qeli-mac",
                    QELI_MAC_SIGN_IDENTITY="", QELI_MAC_HOST_PROFILE="",
                    QELI_MAC_EXTENSION_PROFILE="", QELI_MAC_NOTARY_PROFILE="")
+        env.pop("QeliNativeCorePath", None)
+        if native_override is not None:
+            env["QeliNativeCorePath"] = native_override
         result = subprocess.run([self.bash, "-c",
             'export PATH="$1/tools:/usr/bin:/bin"; "$1/qeli-mac/build_app.sh" "$2"',
             "fixture", self.posix, arch], capture_output=True, text=True, env=env, timeout=30)
@@ -105,6 +109,25 @@ fi""")
                     self.assertFalse(any(n.startswith("Qeli.app/Contents/MacOS/Legal") for n in incoming.getnames()))
                     self.assertEqual(incoming.extractfile("Qeli.app/Contents/Resources/Legal/MPL-2.0.txt").read(), b"fixture license")
                     self.assertEqual(incoming.extractfile("Qeli.app/Contents/Resources/Legal/NativeRust/files/axum-core/0.5.6/LICENSE").read(), b"dependency license")
+                    self.assertEqual(incoming.extractfile("Qeli.app/Contents/MacOS/libqeli.dylib").read(), b"controlled native")
+
+    def test_selected_native_override_replaces_newer_publish_core(self):
+        self.signer("codesign")
+        (self.root / "selected-native.dylib").write_bytes(b"selected universal core")
+        for arch in ("arm64", "x86_64"):
+            with self.subTest(arch=arch):
+                r, _, archive, _ = self.invoke(arch, self.posix + "/selected-native.dylib")
+                self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
+                with tarfile.open(archive, "r:gz") as incoming:
+                    self.assertEqual(incoming.extractfile("Qeli.app/Contents/MacOS/libqeli.dylib").read(), b"selected universal core")
+
+    def test_missing_explicit_native_input_refuses_before_publish(self):
+        self.signer("codesign")
+        r, events, archive, marker = self.invoke(native_override=self.posix + "/missing-native.dylib")
+        self.assertNotEqual(r.returncode, 0, r.stdout+r.stderr)
+        self.assertEqual(events, "")
+        self.assertEqual(archive.read_bytes(), b"old archive")
+        self.assertEqual(marker.read_bytes(), b"old bundle")
 
     def test_codesign_path_signs_before_actual_tar_packaging(self):
         self.successful("codesign")

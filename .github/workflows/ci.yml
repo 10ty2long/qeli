@@ -752,7 +752,9 @@ jobs:
           lipo "$QeliNativeCorePath" -verify_arch arm64 x86_64
           for arch in arm64 x86_64; do
             bash build_app.sh "$arch"
+            lipo dist/Qeli.app/Contents/MacOS/QeliMac -archs
             lipo dist/Qeli.app/Contents/MacOS/QeliMac -verify_arch "$arch"
+            lipo dist/Qeli.app/Contents/MacOS/libqeli.dylib -archs
             lipo dist/Qeli.app/Contents/MacOS/libqeli.dylib -verify_arch arm64 x86_64
             codesign --verify --deep --strict --verbose=2 dist/Qeli.app
             test -s "dist/Qeli-macos-$arch.tar.gz"

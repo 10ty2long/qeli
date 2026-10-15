@@ -52,18 +52,27 @@ else
   exit 1
 fi
 
-# 1. Native whole-client core (current ABI 1.15, compatibility floor 1.11 + realtls FFI) —
+# 1. Native whole-client core (current ABI 1.16, compatibility floor 1.11 + realtls FFI) —
 #    universal libqeli.dylib. Built once
 #    into QeliMac/native/ by build_dylib.sh (cargo + lipo on Mac, cargo-zigbuild on Linux).
-if [[ ! -f "$ROOT/QeliMac/native/libqeli.dylib" && -d "$ROOT/../qeli" ]]; then
+NATIVE_CORE="${QeliNativeCorePath:-$ROOT/QeliMac/native/libqeli.dylib}"
+if [[ ! -f "$NATIVE_CORE" && -z "${QeliNativeCorePath:-}" && -d "$ROOT/../qeli" ]]; then
   echo "==> Building native whole-client dylib…"
   "$ROOT/build_dylib.sh"
+fi
+if [[ ! -f "$NATIVE_CORE" ]]; then
+  echo "native whole-client dylib is missing: $NATIVE_CORE" >&2; exit 1
 fi
 
 # 2. Publish the self-contained .NET payload for the target RID.
 echo "==> Publishing self-contained ($RID)…"
 dotnet publish "$PROJ" -c Release -r "$RID" --self-contained true \
   -p:PublishSingleFile=false -o "$OUT"
+# A prior publish can contain a newer host-only CI core. MSBuild PreserveNewest
+# compares timestamps, so explicitly install the selected packaging input and
+# verify its bytes before signing (which legitimately changes Mach-O signatures).
+cp "$NATIVE_CORE" "$OUT/libqeli.dylib"
+cmp "$NATIVE_CORE" "$OUT/libqeli.dylib"
 
 # Legal sidecars must survive publish before an app/archive is assembled.
 PYTHON="${PYTHON:-python3}"
