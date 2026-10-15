@@ -168,12 +168,17 @@ internal static class ServiceControlSelfTest
 
     private static void RunCommandChecks(Action<string, bool> check)
     {
-        var info = new ProcessStartInfo(SystemPaths.PowerShell) { WorkingDirectory = SystemPaths.SystemDirectory };
-        info.ArgumentList.Add("-NoProfile"); info.ArgumentList.Add("-NonInteractive"); info.ArgumentList.Add("-Command");
-        info.ArgumentList.Add("[Console]::Out.Write(('o'*131072)); [Console]::Error.Write(('e'*131072)); exit 7");
+        // Exercise pipe backpressure without making a successful fixture depend on
+        // cold PowerShell/CLR startup on a busy host. Each pipe still exceeds 128 KiB.
+        string outputLine = new string('o', 1024) + Environment.NewLine;
+        string errorLine = new string('e', 1024) + Environment.NewLine;
+        var info = new ProcessStartInfo(SystemPaths.Resolve("cmd")) { WorkingDirectory = SystemPaths.SystemDirectory };
+        info.Arguments = "/d /q /c \"(for /L %i in (1,1,128) do @echo " + new string('o', 1024)
+            + ") & (for /L %i in (1,1,128) do @echo " + new string('e', 1024) + ">&2) & exit /b 7\"";
         var result = WindowsCommand.RunAsync(info, TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
         check("command: real dual-pipe output drains without deadlock and stays bounded",
-            result.ExitCode == 7 && result.Output == new string('o',4096) && result.Error == new string('e',4096));
+            result.ExitCode == 7 && result.Output == string.Concat(Enumerable.Repeat(outputLine, 4))[..4096]
+            && result.Error == string.Concat(Enumerable.Repeat(errorLine, 4))[..4096]);
         var stalled = new ProcessStartInfo(SystemPaths.PowerShell) { WorkingDirectory = SystemPaths.SystemDirectory };
         stalled.ArgumentList.Add("-NoProfile"); stalled.ArgumentList.Add("-NonInteractive"); stalled.ArgumentList.Add("-Command");
         stalled.ArgumentList.Add("Start-Sleep -Seconds 20");
