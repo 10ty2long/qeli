@@ -1,6 +1,6 @@
 # Q34: client build dependencies and Windows signatures
 
-<!-- normative-sync: q34-client-supply-v6 -->
+<!-- normative-sync: q34-client-supply-v7 -->
 
 **Current status, 14 October:** F459 / Q34-F013 is closed for the current source tree: the adopted Tailwind 4 graph contains no braces and fresh npm audit returns 0. Dated results below retain their original failures; final qualification is recorded at the end. Q34 remains IN_PROGRESS; full plan 34/37 (91.9%).
 
@@ -237,3 +237,11 @@ Keychain -34018 denotes an unavailable access group; Apple recommends checking [
 11 new portable signing-admission methods and6 existing IPA methods PASS. Real pinned actionlint accepted all workflows; five exact CI shell fixtures proved success order and refusal on selector/build/entitlement-check/test failures. Apple commands are explicit stand-ins in these fixtures. Initial wrapper quoting and Windows-CRLF projection failures remain recorded; both lab roots were cleaned with host/service/firewall/routes/resolver preserved. No new SDK/native/CLI/VPN build, real Apple signing or hosted dispatch.
 
 Q34 remains IN_PROGRESS: actual signed simulator Keychain, changed Swift tests, current Mac CI and public source pin remain unqualified. Q29/Q31/Q36 obligations are unchanged.33/37(89.2%),NO_PUSH_DEPLOY_RELEASE. Evidence: release/certification/evidence/q34-ios-ci-contracts-20261014.json. Raw: q34-ios-ci-contracts-20261014 and q34-ios-ci-shell-r2-20261014.
+
+## 15 October: qualified native atomic cleanup integrated
+
+Fix 7df0ce1fc6daae6565cc1325d064956c82ef6189 records the temporary path before write/flush/fsync and publishes evidence through the shared atomic helper. Failure preserves the previous destination and removes its own temporary. Fourteen project test methods passed on Windows and fourteen on Linux; successful serialization is unchanged.
+
+The changed build input required fresh libraries: independent A/B builds matched for Android arm64/x86_64, Windows x64 and universal macOS. Qualification includes 22 Windows ABI cases, 23 JNI and 2 packaged INI tests on Android14/API34/x86_64, exact exports and eight canonical/consumer copies. macOS runtime is not claimed. Owned roots/unit and temporary swap were removed. Native digest `f89a6526de575a292d600cd77e4b3dae6ca8cfd6fd5a9d34001a959268edcfa3`. [Evidence](../../../release/certification/evidence/q31-native-atomic-cleanup-20261015.json).
+
+The existing 20 Linux results remain applicable because the Rust product tree and 50 matrix dependencies are unchanged; no new Linux runtime is claimed. Q29 DNS, the source-built SDK consumer and public/hosted qualification remain open. 34/37 (91.9%); no full release PASS.

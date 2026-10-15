@@ -1,6 +1,6 @@
 # Q31: управление LuCI, публикация INI и ошибки firewall
 
-<!-- normative-sync: q31-openwrt-controls-v47 -->
+<!-- normative-sync: q31-openwrt-controls-v48 -->
 
 **Актуальный checkpoint, 14 октября:** вариант source LLVM/Rust с Clang19 дошёл до линковки LLVM и остановлен по защитному порогу диска. Полный bootstrap и следующий cold SDK не прошли; архив и очистка проверены. Q31 остаётся 3/5 IN_PROGRESS. Полный аудит 34/37 (91,9%). Public source/hosted qualification открыты; физический роутер USER_EXCLUDED. Ранние результаты ниже сохраняют исходные даты и отказы.
 
@@ -2653,3 +2653,13 @@ Evidence: `release/certification/evidence/q31-second-oom-20261014.json`.
 Последняя начатая операция Ninja — 3340/3710, линковка llvm-ar. Через 11472 секунд Host/Compile контроллер остановил сборку: свободно 1003.2 МиБ при пороге 1024 МиБ. Учтённый объём собственных файлов 7341742206 байт ещё не достиг лимита 8 ГиБ. Фактические cgroup peaks: RAM 1154.5 МиБ, swap 747.2 МиБ. Зафиксирован дисковый отказ; полного результата LLVM, Rust stage2/dist и Host/Install нет. Следующий SDK/IPK/opkg прогон не запускался.
 
 Архив 142834 байт сверён по SHA и полному inventory; удалено 7513146208 байт собственных файлов и собственный unit. Host/account/staged identities сохранены. [Evidence](../../../release/certification/evidence/q31-clang-disk-floor-20261014.json). Q31 IN_PROGRESS; 34/37 (91,9%), NO_PUSH_DEPLOY_RELEASE. Нужен другой запас диска перед следующим полным bootstrap; повтор с тем же ресурсным пределом не квалифицирован.
+
+## 15 октября: source compiler PASS, SDK остановился на defconfig
+
+Полная Clang19 source-сборка LLVM20.1.7/Rust1.89 завершила Host/Compile за 18519 секунд и Host/Install за 5,38 секунды. Проверены реальные LLVM CMake compiler IDs/paths, установленный Rust/Cargo и musl std. GNU host Clang, jobs=1, musl tools/linker и остальные поля сохранены в указанной границе. Это закрывает проверку самого source compiler, но не холодного графа Qeli SDK.
+
+Следующий consumer завершился отказом за 12,16 секунды на `make defconfig`, до компиляции Qeli. Причина в нашем audit harness: внешний PATH начинался с SDK staging_dir/host/bin; OpenWrt сохранял его как ORIG_PATH, и проверка находила собственные canonical symlinks вместо исходных утилит. Неизменённый macro SDK воспроизводит отказ для bash/cp/grep/python3 с прежним PATH и проходит с внешним PATH. FORCE не применялся.
+
+Дополнительная ошибка harness: безусловная очистка consumer удалила исправный установленный compiler SDK (около 2,8 ГБ). Исходные результаты, архивы и логи сохранены; сам toolchain не доступен для повтора. Новый consumer должен сохранять compiler до отдельного решения об очистке. SDK package/IPK/opkg/userspace этой source-built попыткой не проверены. Предыдущие результаты с готовым Rust сохраняют свой отдельный scope.
+
+[Evidence](../../../release/certification/evidence/q31-source-compiler-sdk-failure-20261015.json). Host/firewall/routes/resolver, аккаунты и staged CLI сохранены. Q31 IN_PROGRESS; 34/37 (91,9%); NO_PUSH_DEPLOY_RELEASE.

@@ -581,3 +581,42 @@ retrying, provide a materially larger disk reserve. The Rust compiler guide
 [recommends 30GB+ free disk](https://rustc-dev-guide.rust-lang.org/building/prerequisites.html);
 that is general guidance, not a measured minimum for this pinned dist build.
 See the [actual Clang disk failure](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+
+### Exact GNU-host Clang configuration for the qualified variant
+
+This configuration describes the x86_64 GNU build host and x86_64 musl target
+used in the qualified source-bootstrap campaign. Other build hosts, firmware
+and target architectures require separate validation.
+
+Use a private SDK/feed copy with the pinned Rust source version/hash. Set the
+Rust feed's existing `llvm.download-ci-llvm` argument to `false`, then complete
+Host/Prepare and Host/Configure. In the resolved `rustc-1.89.0-src` directory,
+edit the existing generated `config.toml` or `bootstrap.toml`; do not create a
+second configuration file. The recorded GNU-host executables are
+`/usr/bin/clang` and `/usr/bin/clang++`, both Clang 19.
+
+The following shows only the entries to add or change **inside the existing
+sections**, not a replacement for the complete configuration:
+
+```toml
+[build]
+jobs = 1
+
+[target.x86_64-unknown-linux-gnu]
+cc = "/usr/bin/clang"
+cxx = "/usr/bin/clang++"
+```
+
+Preserve all other configuration fields, including the GNU build/host triples,
+the target list and the entire `[target.x86_64-unknown-linux-musl]` section.
+The musl target keeps its SDK `x86_64-openwrt-linux-musl-gcc` / `g++` and gcc
+linker; the host Clang selection must not replace those target tools.
+Host/Configure can regenerate the file, so inspect the effective configuration
+again if it runs after these edits.
+
+Verify actual LLVM CMake compiler IDs/paths, completed Host/Compile and
+Host/Install, installed Rust/Cargo 1.89, and the installed musl standard library
+before using the toolchain for the Qeli SDK package. A successful intermediate
+compiler or `Dist` message alone does not establish the complete result.
+
+The 15 October source-bootstrap campaign completed LLVM/Rust Host/Compile and Host/Install. This qualifies the compiler configuration above, not a completed Qeli SDK package. The following SDK consumer failed at `defconfig`: its external PATH incorrectly prepended `staging_dir/host/bin`, causing OpenWrt prerequisite checks to resolve their own canonical symlinks. Enter the top-level SDK with external host tools in PATH (for example, private `deps/usr/bin:/usr/bin:/bin`), clear inherited `ORIG_PATH`, and let OpenWrt add its generated tools itself. Do not use `FORCE=1` to bypass these checks. The old consumer cleanup also deleted the installed compiler; logs remain, binaries are not reusable. See the dated Q31 report and source/compiler failure evidence.
