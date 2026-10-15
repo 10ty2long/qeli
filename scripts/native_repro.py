@@ -107,10 +107,10 @@ def atomic_write_bytes(path: str | os.PathLike[str], data: bytes) -> None:
         with tempfile.NamedTemporaryFile(
             "wb", dir=destination.parent, delete=False
         ) as stream:
+            temporary = Path(stream.name)
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-            temporary = Path(stream.name)
         os.replace(temporary, destination)
     finally:
         if temporary is not None and temporary.exists():
@@ -334,13 +334,9 @@ def write_evidence(
     output_dir = root / "native-libs" / "reproducibility"
     output_dir.mkdir(parents=True, exist_ok=True)
     output = output_dir / f"{name}.json"
-    with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", newline="\n", dir=output_dir, delete=False
-    ) as stream:
-        json.dump(document, stream, indent=2, sort_keys=True)
-        stream.write("\n")
-        temporary = Path(stream.name)
-    os.replace(temporary, output)
+    atomic_write_bytes(
+        output, (json.dumps(document, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    )
     return output
 
 
