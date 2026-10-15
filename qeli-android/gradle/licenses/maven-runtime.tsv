@@ -14,8 +14,8 @@ androidx.concurrent:concurrent-futures:1.1.0	Apache-2.0	https://api.deps.dev/v3/
 androidx.constraintlayout:constraintlayout:2.2.2	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support
 androidx.constraintlayout:constraintlayout-core:1.1.2	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support
 androidx.coordinatorlayout:coordinatorlayout:1.1.0	Apache-2.0	https://api.deps.dev/v3/systems/maven/packages/androidx.coordinatorlayout%3Acoordinatorlayout/versions/1.1.0
-androidx.core:core:1.19.0	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support
-androidx.core:core-ktx:1.19.0	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support
+androidx.core:core:1.19.1	Apache-2.0	https://dl.google.com/dl/android/maven2/androidx/core/core/1.19.1/core-1.19.1.pom
+androidx.core:core-ktx:1.19.1	Apache-2.0	https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/1.19.1/core-ktx-1.19.1.pom
 androidx.core:core-viewtree:1.0.0	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support
 androidx.cursoradapter:cursoradapter:1.0.0	Apache-2.0	https://api.deps.dev/v3/systems/maven/packages/androidx.cursoradapter%3Acursoradapter/versions/1.0.0
 androidx.customview:customview:1.2.0	Apache-2.0	https://cs.android.com/androidx/platform/frameworks/support

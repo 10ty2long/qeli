@@ -61,7 +61,10 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
   and secret-handling paths were reviewed and corrected.
 - **Verified build inputs.** Native libraries were refreshed and independently rebuilt A/B
   for reproducibility, ABI/JNI and configuration checks. Updates include rustls 0.23.46,
-  tokio-rustls 0.26.5 and h2 0.4.19. Publication tooling checks source identity, runtime
+  tokio-rustls 0.26.6 and h2 0.4.20. The TLS update restores propagation of deferred read
+  errors; h2 fixes framing, stream-limit and shutdown handling. Gradle 9.8.1 addresses
+  three high-severity build-tool vulnerabilities; its Kotlin locks/checksums and
+  AndroidX Core 1.19.1 runtime notices are aligned. Publication tooling checks source identity, runtime
   evidence, notices and exact-commit CI. Pending CI is now awaited instead of causing
   premature publication refusal.
 - **Less duplicate and obsolete code.** Besides client parsers, obsolete loading paths
@@ -96,7 +99,7 @@ requirement; `manual` does not enable external forwarding automatically.
   additional UDP adapters and predefined resource budgets.
   [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q35-FINAL.md)
   · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q35-LONG-SOAK.md).
-- The latest verified development snapshot, `fe6a61ae`, passed **all 19 required CI jobs**
+- The verified audit baseline, `fe6a61ae`, passed **all 19 required CI jobs**
   and source preflight. [CI result](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
   This identifies the checked source; it does not certify a later release build.
 
@@ -201,7 +204,11 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
   прав и секретов.
 - **Проверенные входы сборки.** Нативные библиотеки обновлены и независимо пересобраны
   A/B для проверки воспроизводимости, ABI/JNI и конфигурации. Обновлены зависимости,
-  включая rustls 0.23.46, tokio-rustls 0.26.5 и h2 0.4.19. Инструменты выпуска
+  включая rustls 0.23.46, tokio-rustls 0.26.6 и h2 0.4.20. TLS-обновление восстанавливает
+  передачу отложенных ошибок чтения; h2 исправляет обработку кадров, stream limits
+  и завершения соединения. Gradle 9.8.1 закрывает три уязвимости высокой серьёзности
+  в инструментах сборки; согласованы его Kotlin locks/checksums и лицензии
+  AndroidX Core 1.19.1. Инструменты выпуска
   проверяют исходники, результаты runtime-проверок, лицензии и CI точного коммита.
   Незавершённый CI теперь ожидается вместо преждевременного отказа публикации
   только из-за того, что проверки ещё идут.
@@ -238,7 +245,7 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
   UDP-адаптеры и заранее заданные бюджеты ресурсов.
   [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q35-FINAL.md)
   · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q35-LONG-SOAK.md).
-- Последний проверенный снимок разработки, `fe6a61ae`, прошёл **все 19 обязательных
+- Проверенный опорный снимок аудита, `fe6a61ae`, прошёл **все 19 обязательных
   заданий CI** и итоговую проверку исходников.
   [Результат CI](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
   Здесь указан проверенный код; результат не сертифицирует более позднюю сборку релиза.
