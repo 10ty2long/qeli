@@ -249,17 +249,22 @@ class TransportLifecycleInstrumentedTest {
                 val old = callbackField.get(service) as android.net.ConnectivityManager.NetworkCallback
                 if (replace) assertTrue(register.invoke(service) as Boolean)
                 else if (!stopping) unregister.invoke(service)
-                field(service, "stopping", stopping)
-                field(service, "currentNetwork", if (method == "lost") network else null)
-                when (method) {
-                    "available" -> old.onAvailable(network)
-                    "capabilities" -> old.onCapabilitiesChanged(network, caps)
-                    "links" -> old.onLinkPropertiesChanged(network, links)
-                    "lost" -> old.onLost(network)
-                    else -> error("unknown callback fixture")
+                // Before API31 the live replacement callback runs off the main looper.
+                // Hold the production lifecycle monitor so it cannot publish a legitimate
+                // carrier between our sentinel write and the retired-callback assertion.
+                synchronized(service) {
+                    field(service, "stopping", stopping)
+                    field(service, "currentNetwork", if (method == "lost") network else null)
+                    when (method) {
+                        "available" -> old.onAvailable(network)
+                        "capabilities" -> old.onCapabilitiesChanged(network, caps)
+                        "links" -> old.onLinkPropertiesChanged(network, links)
+                        "lost" -> old.onLost(network)
+                        else -> error("unknown callback fixture")
+                    }
+                    assertEquals("retired/stopped observer must not mutate the selected carrier ($method)",
+                        if (method == "lost") network else null, selectedCarrier(service))
                 }
-                assertEquals("retired/stopped observer must not mutate the selected carrier ($method)",
-                    if (method == "lost") network else null, selectedCarrier(service))
             }
         } finally {
             instrumentation.runOnMainSync { field(service, "stopping", true); unregister.invoke(service) }
