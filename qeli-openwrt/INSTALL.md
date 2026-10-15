@@ -549,8 +549,9 @@ source version/hash. Clean the Rust host package's own build state and reconfigu
 before compiling; changing a generated bootstrap.toml alone may be overwritten by
 Host/Configure. This selects bundled LLVM source compilation rather than the
 unavailable CI binary. It requires additional build resources and a separately
-validated Host/Compile/Host/Install and Qeli SDK package; that full remedy has not
-passed this audit yet. Do not silently substitute an unrelated LLVM binary or URL.
+validated Host/Compile/Host/Install and Qeli SDK package. The later qualified
+Clang-host result below records that completed variant; preserve the pinned
+source version/hash and explicit host/target configuration.
 
 The already-qualified SDK/IPK run used a private official prebuilt Rust/std1.89.
 That remains a package integration result, not proof of cold compiler bootstrap.
@@ -620,3 +621,37 @@ before using the toolchain for the Qeli SDK package. A successful intermediate
 compiler or `Dist` message alone does not establish the complete result.
 
 The 15 October source-bootstrap campaign completed LLVM/Rust Host/Compile and Host/Install. This qualifies the compiler configuration above, not a completed Qeli SDK package. The following SDK consumer failed at `defconfig`: its external PATH incorrectly prepended `staging_dir/host/bin`, causing OpenWrt prerequisite checks to resolve their own canonical symlinks. Enter the top-level SDK with external host tools in PATH (for example, private `deps/usr/bin:/usr/bin:/bin`), clear inherited `ORIG_PATH`, and let OpenWrt add its generated tools itself. Do not use `FORCE=1` to bypass these checks. The old consumer cleanup also deleted the installed compiler; logs remain, binaries are not reusable. See the dated Q31 report and source/compiler failure evidence.
+
+### Qualified Clang-host source bootstrap (2026-10-15)
+
+The later private SDK campaign completed LLVM source compilation, Rust1.89
+stage2/dist and Host/Install, followed by the normal package/qeli/compile graph,
+7 actual opkg and9 userspace/CLI/INI cases. It kept the pinned Rust source/feed
+and musl target compiler/linker. In addition to download-ci-llvm=false, it
+selected installed Clang19 as GNU host cc/cxx and jobs=1 in the generated
+bootstrap configuration after Host/Configure. Edit the existing build/host
+sections; a later Host/Configure can regenerate them. These are results from one controlled host, not a general minimum-resource promise.
+
+The direct host-* goals and the root graph use different Rust installation stamp
+locations (host versus hostpkg). R8 produced an IPK but exposed a masked
+upstream Host/Install failure after dist autoremove and a post-check refusal.
+The continuation verified the entire installed prefix against the qualified source-built
+backup, explicitly imported only cache metadata into the root graph namespace,
+and qualified normal graph reuse plus the same IPK runtime. The R9 refusal
+on the SDK .built_check timestamp update remains historical; R10 recognizes
+that normal metadata change while verifying contents and tool identity. This is an
+explicit cache handoff, not a clean first bootstrap-to-root-graph run. Original
+failures are retained. Future bootstrap/consumer runs must use a consistent
+SDK graph namespace; do not infer installation success from make exit alone.
+
+OpenWrt chroot checks require PATH=/usr/sbin:/usr/bin:/sbin:/bin. The lab
+systemd manager uses a merged-/usr PATH without /bin; under that environment
+opkg falsely reported malformed IPKs and timed out. A same-IPK negative and
+positive probe isolated the cause. R13 normalized only the child environment
+and passed all7 opkg and9 CLI cases; no host PATH, devices or procfs changed.
+
+Both owned compiler/runtime roots and their large caches were archived and
+removed after evidence verification. Original CI404, GCC OOM and bounded
+partial outcomes retain their dates. Public source pin/hosted release
+qualification remain open; physical router USER_EXCLUDED.
+See the [qualified source compiler and SDK result](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).

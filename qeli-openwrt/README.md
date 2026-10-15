@@ -491,8 +491,9 @@ Owned build/toolchain/cache/rootfs resources were archived and removed.
 The private Git fixture preserves the exact qeli tree, but is not the full original
 release commit. The production source cut remains separately qualified.
 A14October cold feed Host/Compile attempt compiled bootstrap but failed on four
-HTTP404 responses for its pinned LLVM CI artifact. Stage2/dist/Host/Install and the
-full cold dependency graph remain unqualified; see the INSTALL troubleshooting note. This package test does
+HTTP404 responses for its pinned LLVM CI artifact. That earlier attempt did not
+qualify stage2/dist/Host/Install or the cold graph; the later Clang-host result
+below provides a separately qualified source-toolchain campaign. This package test does
 not certify physical firmware, a public source pin, hosted CI or a release.
 See [current SDK scope](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
@@ -526,3 +527,37 @@ The exact GNU-host Clang TOML entries and the unchanged musl-target boundary
 are described in [the source-bootstrap configuration instructions](INSTALL.md#exact-gnu-host-clang-configuration-for-the-qualified-variant).
 
 The 15 October source-bootstrap campaign completed LLVM/Rust Host/Compile and Host/Install. This qualifies the compiler configuration above, not a completed Qeli SDK package. The following SDK consumer failed at `defconfig`: its external PATH incorrectly prepended `staging_dir/host/bin`, causing OpenWrt prerequisite checks to resolve their own canonical symlinks. Enter the top-level SDK with external host tools in PATH (for example, private `deps/usr/bin:/usr/bin:/bin`), clear inherited `ORIG_PATH`, and let OpenWrt add its generated tools itself. Do not use `FORCE=1` to bypass these checks. The old consumer cleanup also deleted the installed compiler; logs remain, binaries are not reusable. See the dated Q31 report and source/compiler failure evidence.
+
+### Qualified Clang-host source bootstrap (2026-10-15)
+
+The later private SDK campaign completed LLVM source compilation, Rust1.89
+stage2/dist and Host/Install, followed by the normal package/qeli/compile graph,
+7 actual opkg and9 userspace/CLI/INI cases. It kept the pinned Rust source/feed
+and musl target compiler/linker. In addition to download-ci-llvm=false, it
+selected installed Clang19 as GNU host cc/cxx and jobs=1 in the generated
+bootstrap configuration after Host/Configure. Edit the existing build/host
+sections; a later Host/Configure can regenerate them. These are results from one controlled host, not a general minimum-resource promise.
+
+The direct host-* goals and the root graph use different Rust installation stamp
+locations (host versus hostpkg). R8 produced an IPK but exposed a masked
+upstream Host/Install failure after dist autoremove and a post-check refusal.
+The continuation verified the entire installed prefix against the qualified source-built
+backup, explicitly imported only cache metadata into the root graph namespace,
+and qualified normal graph reuse plus the same IPK runtime. The R9 refusal
+on the SDK .built_check timestamp update remains historical; R10 recognizes
+that normal metadata change while verifying contents and tool identity. This is an
+explicit cache handoff, not a clean first bootstrap-to-root-graph run. Original
+failures are retained. Future bootstrap/consumer runs must use a consistent
+SDK graph namespace; do not infer installation success from make exit alone.
+
+OpenWrt chroot checks require PATH=/usr/sbin:/usr/bin:/sbin:/bin. The lab
+systemd manager uses a merged-/usr PATH without /bin; under that environment
+opkg falsely reported malformed IPKs and timed out. A same-IPK negative and
+positive probe isolated the cause. R13 normalized only the child environment
+and passed all7 opkg and9 CLI cases; no host PATH, devices or procfs changed.
+
+Both owned compiler/runtime roots and their large caches were archived and
+removed after evidence verification. Original CI404, GCC OOM and bounded
+partial outcomes retain their dates. Public source pin/hosted release
+qualification remain open; physical router USER_EXCLUDED.
+See the [qualified source compiler and SDK result](../docs/eng/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
