@@ -1,7 +1,7 @@
 {
   "status": "DEPENDABOT_LOCAL_QUALIFICATION_PASS_HOSTED_CI_REQUIRED",
-  "source_commit": "39d83966951478bcdfd52fc03a71d361d339ab36",
-  "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
+  "source_commit": "c8c7ef96a26dac23e3656f7e078cabf31e10879a",
+  "source_digest": "22d6511a9c3f84df4e7af92451bf7526ce5d6c069522cbdd3e6721769e32348a",
   "native_source_digest": "6546682de737e66d26656cdd72484ba8f68dcc1202cc80e246f193bc797a73ef",
   "qualification": {
     "status": "ALL_20_CURRENT_POOL_CLI_RUNTIME_CASES_QUALIFIED_CLEANUP_PENDING",
@@ -613,7 +613,8 @@
     "qeli-android/app/gradle.lockfile",
     "qeli-openwrt/Makefile",
     "qeli-openwrt/README.md",
-    "qeli/fuzz/Cargo.lock"
+    "qeli/fuzz/Cargo.lock",
+    "scripts/test_release_tag.py"
   ],
   "android_release_graph_adoption": {
     "status": "REAL_RELEASE_GRAPH_ADOPTED_AND_STRICT_RECHECK_PASS",
@@ -843,7 +844,7 @@
     "no_compiler_bootstrap_or_full_build": true,
     "no_publication_or_hosted_ci": true
   },
-  "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized.",
+  "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, withdrawn-release documentation and temporary-Git test fixture isolation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized.",
   "accepted_API34_ENONET_original_FAIL_and_physical_exclusions_unchanged": true,
   "release_published": false
 }
