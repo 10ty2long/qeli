@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -161,6 +162,43 @@ class NativeReproTests(unittest.TestCase):
         self.write_all()
         errors = native_repro.validate_evidence(self.root, "f" * 64)
         self.assertTrue(any("source digest" in error for error in errors))
+
+    def test_failed_artifact_sync_removes_temp_and_preserves_destination(self):
+        target = self.root / "artifact.bin"
+        for existing in (False, True):
+            with self.subTest(existing=existing):
+                if existing:
+                    target.write_bytes(b"previous artifact")
+                before = set(self.root.iterdir())
+                with mock.patch.object(
+                    native_repro.os, "fsync", side_effect=OSError("injected fsync failure")
+                ), self.assertRaisesRegex(OSError, "injected fsync failure"):
+                    native_repro.atomic_write_bytes(target, b"replacement artifact")
+                self.assertEqual(set(self.root.iterdir()), before)
+                self.assertEqual(target.exists(), existing)
+                if existing:
+                    self.assertEqual(target.read_bytes(), b"previous artifact")
+
+    def test_failed_evidence_replace_removes_temp_and_preserves_destination(self):
+        output_dir = self.root / "native-libs" / "reproducibility"
+        output_dir.mkdir(parents=True)
+        target = output_dir / "desktop.json"
+        for existing in (False, True):
+            with self.subTest(existing=existing):
+                if existing:
+                    target.write_bytes(b"previous evidence")
+                before = set(output_dir.iterdir())
+                with mock.patch.object(
+                    native_repro.os, "replace", side_effect=OSError("injected replace failure")
+                ), self.assertRaisesRegex(OSError, "injected replace failure"):
+                    native_repro.write_evidence(
+                        self.root, "desktop", self.identity,
+                        self.toolchain("desktop"), self.hashes("desktop"),
+                    )
+                self.assertEqual(set(output_dir.iterdir()), before)
+                self.assertEqual(target.exists(), existing)
+                if existing:
+                    self.assertEqual(target.read_bytes(), b"previous evidence")
 
     def test_atomic_binary_replace(self):
         target = self.root / "artifact.bin"
