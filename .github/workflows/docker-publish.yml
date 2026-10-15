@@ -37,7 +37,9 @@ jobs:
 
       - name: Validate publication ref
         id: ref
-        run: python3 -B scripts/docker_publish_ref.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -B scripts/docker_publish_ref.py --require-published-stable
 
       - name: Admit release tag, runtime certification and exact-commit CI
         if: steps.ref.outputs.release_tag == 'true'

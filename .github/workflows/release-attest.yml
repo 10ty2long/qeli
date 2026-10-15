@@ -25,6 +25,10 @@ concurrency:
 
 jobs:
   linux-package:
+    # Prereleases publish the already qualified candidate bytes. Rebuilding here
+    # would replace that package and its sealed checksums after publication.
+    # Explicit manual runs and stable releases retain the CI build/attest path.
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}

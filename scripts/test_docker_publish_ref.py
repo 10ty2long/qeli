@@ -6,7 +6,7 @@ import sys
 import tempfile
 from unittest.mock import patch
 import unittest
-from docker_publish_ref import classify, publication_outputs
+from docker_publish_ref import classify, publication_outputs, published_stable_release
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -58,6 +58,30 @@ class RefTests(unittest.TestCase):
         self.assertNotIn("!contains(github.ref_name, '-')", workflow)
         self.assertIn("concurrency:\n  group: docker-publish\n  cancel-in-progress: false", workflow)
         self.assertIn("fetch-depth: 0", workflow)
+        self.assertIn("scripts/docker_publish_ref.py --require-published-stable", workflow)
+
+    def test_release_workflow_preserves_prerelease_candidate_assets(self):
+        workflow = (ROOT / ".github/workflows/release-attest.yml").read_text(encoding="utf8")
+        self.assertIn("if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false", workflow)
+        self.assertLess(workflow.index("github.event.release.prerelease == false"),
+                        workflow.index("runs-on: ubuntu-latest"))
+
+    def test_numeric_beta_draft_and_missing_release_never_promote_latest(self):
+        import json
+        from types import SimpleNamespace
+        for draft, prerelease, expected in [(False, True, False), (True, False, False),
+                                            (True, True, False), (False, False, True)]:
+            response = SimpleNamespace(returncode=0, stdout=json.dumps(
+                dict(tagName="v0.8.2", isDraft=draft, isPrerelease=prerelease)))
+            with patch("docker_publish_ref.subprocess.run", return_value=response):
+                self.assertEqual(published_stable_release("owner/repo", "v0.8.2"), expected)
+        with patch("docker_publish_ref.subprocess.run", return_value=SimpleNamespace(returncode=1)):
+            self.assertFalse(published_stable_release("owner/repo", "v0.8.2"))
+        for record in [{}, {"tagName": "v0.8.1", "isDraft": False, "isPrerelease": False}]:
+            with patch("docker_publish_ref.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout=json.dumps(record))):
+                self.assertFalse(published_stable_release("owner/repo", "v0.8.2"))
+        with patch("docker_publish_ref.subprocess.run", side_effect=AssertionError("missing repo queried")):
+            self.assertFalse(published_stable_release(None, "v0.8.2"))
 
 
 class LatestTests(unittest.TestCase):
@@ -144,6 +168,19 @@ class LatestTests(unittest.TestCase):
         env["GITHUB_REF_NAME"] = "v1.4.0"
         self.assertNotEqual(subprocess.run(command, env=env, capture_output=True).returncode, 0)
         self.assertEqual(output.read_bytes(), before)
+
+    def test_cli_withholds_latest_for_numeric_github_prerelease(self):
+        self.tags("v0.8.2")
+        output = self.root / "outputs"
+        env = {**os.environ, "GITHUB_REF_TYPE": "tag", "GITHUB_REF_NAME": "v0.8.2",
+               "GITHUB_REPOSITORY": "owner/repo", "GITHUB_OUTPUT": str(output)}
+        from docker_publish_ref import main
+        for confirmed, expected in [(False, "false"), (True, "true")]:
+            output.write_bytes(b"existing=value\n")
+            with patch.dict(os.environ, env), patch("docker_publish_ref.published_stable_release", return_value=confirmed) as check:
+                self.assertEqual(main(["--repo", str(self.root), "--require-published-stable"]), 0)
+                check.assert_called_once_with("owner/repo", "v0.8.2")
+            self.assertIn(f"latest_release={expected}\n", output.read_text())
 
 
 if __name__ == "__main__":
