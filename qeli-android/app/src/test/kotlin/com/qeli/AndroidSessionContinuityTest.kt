@@ -122,4 +122,13 @@ class AndroidSessionContinuityTest {
         assertNotEquals(baseline, androidTunPlanFingerprint(config(), plan(), false, 33))
         assertNotEquals(baseline, androidTunPlanFingerprint(config(), plan(), true, 32))
     }
+
+    @Test
+    fun dnsCompatibilityChangeCannotReuseThePreviousSecurityPolicy() {
+        val secure = androidTunPlanFingerprint(config(), plan(), false, 34)
+        assertFalse(secure.dnsCompatibility)
+        val compatibility = androidTunPlanFingerprint(config(), plan(), false, 34, dnsCompatibility = true)
+        assertNotEquals(secure, compatibility)
+        assertTrue(compatibility.dnsCompatibility)
+    }
 }

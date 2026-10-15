@@ -67,6 +67,8 @@ class VpnServiceImpl : VpnService() {
     // join this Job before Android/UI can be told that routes and DNS are restored.
     @Volatile private var transportJob: Job? = null
     @Volatile private var activeConfig: VpnConfig? = null
+    // Snapshot once per generation; preference changes take effect through reconfiguration.
+    @Volatile private var activeDnsCompatibility = false
     @Volatile private var activePlanGeneration = 0L
     private var vpnPublicationJob: Job? = null // guarded by the service monitor
     private val pathUpdateSequence = AtomicLong(0)
@@ -629,7 +631,9 @@ class VpnServiceImpl : VpnService() {
 
     private fun showNotification(text: String): Boolean {
         return try {
-            val notification = VpnForegroundNotification.build(this, text)
+            val message = if (activeDnsCompatibility && vpnInterface != null)
+                "$text — ${s(R.string.dns_compatibility_active)}" else text
+            val notification = VpnForegroundNotification.build(this, message)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // A connected SSID is location-sensitive even though Qeli only compares it
                 // locally. Add the location type only during a user-visible Activity lifetime;
@@ -1066,9 +1070,12 @@ class VpnServiceImpl : VpnService() {
         // tearing down an existing generation and is repeated when the authenticated plan is
         // applied, closing the Settings-change race between connect and NetworkPlan ACK.
         val killSwitchReadiness = currentKillSwitchReadiness(config)
-        val killSwitchError = killSwitchError(killSwitchReadiness)
+        val dnsCompatibility = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
+            .getBoolean(AndroidDnsCompatibilityPolicy.PREFERENCE, AndroidDnsCompatibilityPolicy.DEFAULT_ENABLED)
+        val killSwitchError = dnsCompatibilityError(config, dnsCompatibility)
+            ?: killSwitchError(killSwitchReadiness)
         if (killSwitchError != null) {
-            Log.e("VpnSvc", "Refusing unprotected kill-switch connection: $killSwitchError")
+            Log.e("VpnSvc", "Refusing incompatible VPN security settings: $killSwitchError")
             broadcastLog("SECURITY: $killSwitchError")
             broadcastStatus(STATUS_ERROR, killSwitchError)
             // ACTION_CONNECT arrives through startForegroundService on current Android. Keep
@@ -1084,6 +1091,8 @@ class VpnServiceImpl : VpnService() {
             }
             return
         }
+        activeDnsCompatibility = dnsCompatibility
+        if (dnsCompatibility) broadcastLog(s(R.string.dns_compatibility_active))
         when (killSwitchReadiness) {
             AndroidKillSwitchReadiness.READY -> broadcastLog(s(R.string.kill_switch_active))
             AndroidKillSwitchReadiness.SPLIT_TUNNEL_IGNORED ->
@@ -1158,6 +1167,7 @@ class VpnServiceImpl : VpnService() {
         }
         if (transportCore == null) {
             activeConfig = null
+            activeDnsCompatibility = false
             rejectForegroundConnect("Native transport core unavailable")
             return
         }
@@ -1515,6 +1525,9 @@ class VpnServiceImpl : VpnService() {
             attachment = preparedAttachment
             val tun = preparedAttachment.descriptor
             vpnInterface = tun
+            dnsCompatibilityError(config, activeDnsCompatibility, requireEstablishedOwner = true)?.let {
+                throw IllegalStateException(it)
+            }
             if (plan.killSwitch) {
                 // Before establish(), Android's public isAlwaysOn/isLockdownEnabled calls
                 // deliberately return false because the app is not yet the current VPN owner.
@@ -1757,6 +1770,34 @@ class VpnServiceImpl : VpnService() {
             false
         }
         return prepared to (prepared && lockdownPolicy)
+    }
+
+    private fun dnsCompatibilityError(
+        config: VpnConfig,
+        requested: Boolean,
+        requireEstablishedOwner: Boolean = false,
+    ): String? {
+        val lockdown = if (!requested) null else runCatching {
+            if (requireEstablishedOwner && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                isLockdownEnabled
+            } else {
+                // Owner APIs return false before establish(). The system policy must be
+                // checked directly here; a read failure must not admit compatibility mode.
+                Settings.Secure.getInt(contentResolver, "always_on_vpn_lockdown", 0) == 1
+            }
+        }.getOrElse { error ->
+            Log.w("VpnSvc", "Cannot verify DNS compatibility lockdown policy", error)
+            null
+        }
+        return when (AndroidDnsCompatibilityPolicy.evaluate(requested, config.killSwitch, lockdown)) {
+            AndroidDnsCompatibilityPolicy.Readiness.PROFILE_KILL_SWITCH ->
+                s(R.string.dns_compatibility_profile_conflict)
+            AndroidDnsCompatibilityPolicy.Readiness.SYSTEM_LOCKDOWN ->
+                s(R.string.dns_compatibility_lockdown_conflict)
+            AndroidDnsCompatibilityPolicy.Readiness.LOCKDOWN_UNOBSERVABLE ->
+                s(R.string.dns_compatibility_lockdown_unknown)
+            else -> null
+        }
     }
 
     private fun currentKillSwitchReadiness(
@@ -2130,6 +2171,7 @@ class VpnServiceImpl : VpnService() {
         supervisor = null
         coroutineScope = null
         activeConfig = null
+        activeDnsCompatibility = false
         nativeFatalError = null
     }
 
@@ -3200,8 +3242,9 @@ class VpnServiceImpl : VpnService() {
         val effectiveAllowLan = plan.fullTunnel && (config.allowLan ||
             getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
                 .getBoolean(MainActivity.PREF_ALLOW_LAN, false))
+        dnsCompatibilityError(config, activeDnsCompatibility)?.let { throw IllegalStateException(it) }
         val fingerprint = androidTunPlanFingerprint(
-            config, plan, effectiveAllowLan, Build.VERSION.SDK_INT
+            config, plan, effectiveAllowLan, Build.VERSION.SDK_INT, activeDnsCompatibility
         )
         val previous = vpnInterface
         if (previous != null && previous.fd >= 0 && activeTunFingerprint == fingerprint) {
@@ -3216,13 +3259,15 @@ class VpnServiceImpl : VpnService() {
             broadcastLog("Android rejected TUN carrier refresh; rebuilding the interface")
         }
         val tun = try {
-            buildTunInterface(config, plan, withIpv6 = true, allowLan = effectiveAllowLan)
+            buildTunInterface(config, plan, withIpv6 = true, allowLan = effectiveAllowLan,
+                dnsCompatibility = activeDnsCompatibility)
         } catch (e: Exception) {
             // A negotiated IPv6 address is authoritative. Only the legacy synthetic
             // IPv6 black-hole used by an IPv4-only plan may degrade on broken ROMs.
             if (plan.addresses.any { it.family == "ipv6" }) throw e
             broadcastLog("TUN establish with IPv6 failed (${e.message}); retrying IPv4-only")
-            buildTunInterface(config, plan, withIpv6 = false, allowLan = effectiveAllowLan)
+            buildTunInterface(config, plan, withIpv6 = false, allowLan = effectiveAllowLan,
+                dnsCompatibility = activeDnsCompatibility)
         }
         if (previous != null && previous !== tun) {
             try { previous.close() } catch (_: Exception) {}
@@ -3254,6 +3299,7 @@ class VpnServiceImpl : VpnService() {
         plan: TransportCoreNetworkPlan,
         withIpv6: Boolean,
         allowLan: Boolean,
+        dnsCompatibility: Boolean = false,
     ): ParcelFileDescriptor {
         val tunnelMtu = plan.mtu
         val fullTunnel = plan.fullTunnel
@@ -3299,6 +3345,7 @@ class VpnServiceImpl : VpnService() {
             }
         }
         return Builder().apply {
+            if (dnsCompatibility) allowBypass()
             setMtu(tunnelMtu)
             // Initial establishment cannot use VpnService.setUnderlyingNetworks yet. Declare
             // the exact carrier already used by the protected, Network-bound socket here.

@@ -617,6 +617,35 @@ ipv6 = auto
             text = getString(R.string.allow_lan)
             isChecked = prefs.getBoolean(PREF_ALLOW_LAN, false)
         }
+        val originalDnsCompatibility = prefs.getBoolean(
+            AndroidDnsCompatibilityPolicy.PREFERENCE, AndroidDnsCompatibilityPolicy.DEFAULT_ENABLED,
+        )
+        var dnsCompatibilityConsent = originalDnsCompatibility
+        val cbDnsCompatibility = android.widget.CheckBox(this).apply {
+            text = getString(R.string.dns_compatibility)
+            isChecked = originalDnsCompatibility
+        }
+        val dnsCompatibilityWarning = android.widget.TextView(this).apply {
+            text = getString(R.string.dns_compatibility_warning)
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+        }
+        cbDnsCompatibility.setOnCheckedChangeListener { _, enabled ->
+            if (enabled && !dnsCompatibilityConsent) {
+                cbDnsCompatibility.isChecked = false
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.dns_compatibility)
+                    .setMessage(R.string.dns_compatibility_warning)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.dns_compatibility_enable) { _, _ ->
+                        dnsCompatibilityConsent = true
+                        cbDnsCompatibility.isChecked = true
+                    }
+                    .show()
+            } else if (!enabled) {
+                dnsCompatibilityConsent = false
+            }
+        }
         val cbTrustedWifi = android.widget.CheckBox(this).apply {
             text = getString(R.string.trusted_wifi)
             isChecked = prefs.getBoolean(PREF_TRUSTED_WIFI_ENABLED, false)
@@ -754,7 +783,13 @@ ipv6 = auto
         val box = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
             setPadding(dp(20), dp(12), dp(20), 0)
-            addView(cbLaunch); addView(cbBoot); addView(cbLan); addView(cbTrustedWifi)
+            addView(cbLaunch); addView(cbBoot); addView(cbLan)
+            addView(cbDnsCompatibility)
+            addView(dnsCompatibilityWarning, android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { marginStart = dp(26); topMargin = dp(4); bottomMargin = dp(8) })
+            addView(cbTrustedWifi)
             addView(trustedWifiField, android.widget.LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -783,6 +818,7 @@ ipv6 = auto
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.save) { _, _ ->
                 val lanChanged = prefs.getBoolean(PREF_ALLOW_LAN, false) != cbLan.isChecked
+                val dnsCompatibilityChanged = originalDnsCompatibility != cbDnsCompatibility.isChecked
                 val pickedLogFmt = logFmts.getOrElse(
                     logFmtButtons.indexOfFirst { it.id == rgLogFmt.checkedRadioButtonId },
                 ) { DEFAULT_LOG_TIME_FORMAT }
@@ -796,17 +832,25 @@ ipv6 = auto
                 val trustedSsids = TrustedWifiPolicy.serialize(
                     TrustedWifiPolicy.parse(trustedWifiInput.text?.toString()),
                 )
-                prefs.edit()
+                val saved = prefs.edit()
                     .putBoolean(PREF_AUTO_CONNECT_LAUNCH, cbLaunch.isChecked)
                     .putBoolean(PREF_AUTO_CONNECT_BOOT, cbBoot.isChecked)
                     .putBoolean(PREF_ALLOW_LAN, cbLan.isChecked)
+                    .putBoolean(AndroidDnsCompatibilityPolicy.PREFERENCE, cbDnsCompatibility.isChecked)
                     .putBoolean(PREF_TRUSTED_WIFI_ENABLED, cbTrustedWifi.isChecked)
                     .putString(PREF_TRUSTED_WIFI_SSIDS, trustedSsids)
                     .putBoolean(PREF_AUTO_PROBE, cbAutoProbe.isChecked)
                     .putInt(PREF_PROBE_INTERVAL_SECS, probeInterval)
                     .putString(PREF_LOG_TIME_FORMAT, pickedLogFmt)
                     .putString(PREF_LOG_LEVEL, pickedLogLevel)
-                    .apply()
+                    .commit()
+                if (!saved) {
+                    // SharedPreferences may already have updated its memory on a failed
+                    // disk commit. Roll back the opt-in before any service reconfiguration.
+                    prefs.edit().putBoolean(AndroidDnsCompatibilityPolicy.PREFERENCE, originalDnsCompatibility).apply()
+                    Toast.makeText(this, R.string.dns_compatibility_save_failed, Toast.LENGTH_LONG).show()
+                    return@setPositiveButton
+                }
                 if (cbTrustedWifi.isChecked && trustedSsids.isNotEmpty()) {
                     requestTrustedWifiPermissions()
                 } else {
@@ -819,8 +863,8 @@ ipv6 = auto
                 ) { QeliApp.DEFAULT_LANG }
                 // Routing is fixed at establish(); a live tunnel must reconnect to pick up
                 // the new LAN-bypass setting.
-                if (lanChanged && (isConnected || isConnecting)) {
-                    Toast.makeText(this, getString(R.string.reconnecting_lan), Toast.LENGTH_SHORT).show()
+                if ((lanChanged || dnsCompatibilityChanged) && (isConnected || isConnecting)) {
+                    Toast.makeText(this, getString(R.string.reconnecting_vpn_settings), Toast.LENGTH_SHORT).show()
                     reconnectForSettings()
                 }
                 // Strictly last: recreate() tears down this Activity, so any work above that

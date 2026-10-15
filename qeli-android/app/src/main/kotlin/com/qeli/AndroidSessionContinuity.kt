@@ -28,6 +28,7 @@ internal data class AndroidTunPlanFingerprint(
     val appsMode: String,
     val apps: List<String>,
     val modernRouteExclusionApi: Boolean,
+    val dnsCompatibility: Boolean,
 )
 
 internal fun androidTunPlanFingerprint(
@@ -35,6 +36,7 @@ internal fun androidTunPlanFingerprint(
     plan: TransportCoreNetworkPlan,
     effectiveAllowLan: Boolean,
     sdkInt: Int,
+    dnsCompatibility: Boolean = false,
 ): AndroidTunPlanFingerprint = AndroidTunPlanFingerprint(
     familyMode = plan.familyMode,
     addresses = plan.addresses.map {
@@ -56,4 +58,5 @@ internal fun androidTunPlanFingerprint(
     appsMode = config.appsMode,
     apps = config.apps.sorted(),
     modernRouteExclusionApi = sdkInt >= 33,
+    dnsCompatibility = dnsCompatibility,
 )

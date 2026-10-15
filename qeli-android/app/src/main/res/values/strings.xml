@@ -257,4 +257,13 @@
     <!-- Only a sample of the pushed routes is ever rendered; %2$d is what is left over. -->
     <string name="detail_routes_more">%1$s and %2$d more</string>
     <string name="detail_routes_partial">%1$s — only %2$d of %3$d installed</string>
+    <string name="dns_compatibility">DNS compatibility (allows VPN bypass)</string>
+    <string name="dns_compatibility_warning">Optional workaround for automatic DNS failures seen on Android 14. Apps can explicitly choose a network outside the VPN. This weakens VPN protection and cannot be used with Android “Block connections without VPN” or a profile kill switch. Keep it off if DNS works. Applies to this device only; saving reconnects the VPN.</string>
+    <string name="dns_compatibility_enable">Enable with bypass allowed</string>
+    <string name="dns_compatibility_active">DNS compatibility: apps may bypass VPN</string>
+    <string name="dns_compatibility_profile_conflict">DNS compatibility conflicts with this profile’s kill switch. Disable DNS compatibility to keep kill-switch protection.</string>
+    <string name="dns_compatibility_lockdown_conflict">DNS compatibility cannot work with Android “Block connections without VPN”. Disable DNS compatibility to keep Android protection.</string>
+    <string name="dns_compatibility_lockdown_unknown">Cannot verify Android lockdown policy. DNS compatibility was not started; disable it to use the secure default.</string>
+    <string name="dns_compatibility_save_failed">Could not save settings. DNS compatibility was not changed.</string>
+    <string name="reconnecting_vpn_settings">Reconnecting to apply VPN settings…</string>
 </resources>

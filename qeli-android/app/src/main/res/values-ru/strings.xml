@@ -267,4 +267,13 @@
     <string name="kill_switch_enable_lockdown">Kill switch требует «Блокировать соединения без VPN». Откройте системные настройки VPN, выберите Qeli и включите Always-on VPN вместе с блокировкой.</string>
     <string name="kill_switch_active">Kill switch активен: системная блокировка Android проверена</string>
     <string name="kill_switch_split_ignored">ПРИМЕЧАНИЕ: kill_switch не действует в split-tunnel; он защищает только full-tunnel профили</string>
+    <string name="dns_compatibility">Совместимость DNS (разрешает обход VPN)</string>
+    <string name="dns_compatibility_warning">Необязательный обход ошибки автоматического DNS, наблюдавшейся на Android 14. Приложения смогут явно выбирать сеть вне VPN. Это ослабляет защиту VPN и несовместимо с Android «Блокировать подключения без VPN» или kill switch профиля. Если DNS работает, оставьте режим выключенным. Настройка только для этого устройства; сохранение переподключает VPN.</string>
+    <string name="dns_compatibility_enable">Включить с разрешением обхода</string>
+    <string name="dns_compatibility_active">Совместимость DNS: приложения могут обходить VPN</string>
+    <string name="dns_compatibility_profile_conflict">Совместимость DNS несовместима с kill switch профиля. Выключите совместимость DNS, чтобы сохранить защиту kill switch.</string>
+    <string name="dns_compatibility_lockdown_conflict">Совместимость DNS не работает с Android «Блокировать подключения без VPN». Выключите совместимость DNS, чтобы сохранить защиту Android.</string>
+    <string name="dns_compatibility_lockdown_unknown">Не удалось проверить политику блокировки Android. Режим совместимости DNS не запущен; выключите его для обычного защищённого подключения.</string>
+    <string name="dns_compatibility_save_failed">Не удалось сохранить настройки. Режим совместимости DNS не изменён.</string>
+    <string name="reconnecting_vpn_settings">Переподключение для применения настроек VPN…</string>
 </resources>
