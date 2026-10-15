@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+  "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -33,13 +33,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -65,13 +65,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -97,13 +97,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -129,13 +129,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -161,13 +161,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -193,13 +193,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -225,13 +225,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -257,13 +257,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -289,13 +289,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -321,13 +321,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -353,13 +353,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -385,13 +385,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -417,13 +417,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -449,13 +449,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -481,13 +481,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -513,13 +513,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -545,13 +545,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -577,13 +577,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -609,13 +609,13 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+      "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -648,7 +648,7 @@
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
       "source_applicability_evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "acceptance_basis": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     },
     {
       "id": "android.wifi-to-cellular",
@@ -806,7 +806,7 @@
     "current_linux_matrix": {
       "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "source_applicability": "Actual new factory CLI; qeli/conformance trees match build commit. Native packaging, CI, OpenWrt and approved report withdrawal precede execution; opt-in Android Release instrumentation locks/CI guard follow execution without changing shipped runtime dependencies.",
+      "source_applicability": "Fresh factory CLI with unchanged production Rust/Cargo/build inputs. Native packaging, CI/OpenWrt and approved report withdrawal precede execution; isolated fuzz-lock reference formatting, its SDK source cut, Android test locks/CI guard and withdrawn-release banners follow execution without changing compiled production dependencies or native source digest.",
       "raw_execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "raw_execution_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84"
     },
@@ -822,9 +822,9 @@
     "whole_audit_complete": false,
     "push_deploy_release": false,
     "previous_manifest": {
-      "git_commit": "9bbbec7b6e7a089e0896284789c8a4fe7bb34e4b",
-      "git_blob": "69a92e1668e0fbef748b4d555391242dcf39ae94",
-      "sha256": "a559c59cd10274586bbd86551b8acd60fae0a589bd59d390da4cfca603c99c87",
+      "git_commit": "39d83966951478bcdfd52fc03a71d361d339ab36",
+      "git_blob": "b658c145e4b7621388521f4b526beba9445d7b94",
+      "sha256": "b14a4a7f75858ec523f949ad010c7137483df5bafd20af3687e8c66cc0649dd3",
       "scope": "Prior dependency set retained in Git; new rows use new actual executions"
     }
   },
@@ -1163,7 +1163,7 @@
     },
     {
       "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
+      "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized."
     }
   ]
 }

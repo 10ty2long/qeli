@@ -1,7 +1,7 @@
 {
   "status": "DEPENDABOT_LOCAL_QUALIFICATION_PASS_HOSTED_CI_REQUIRED",
-  "source_commit": "9bbbec7b6e7a089e0896284789c8a4fe7bb34e4b",
-  "source_digest": "25572bfde374cfdedcc8ca66b0c9459fa95c6e532c25144cc5842260c4c434ca",
+  "source_commit": "39d83966951478bcdfd52fc03a71d361d339ab36",
+  "source_digest": "0263672946345103db6b0b41281212bbeab8156df9b4dfb0cb10186383b6a147",
   "native_source_digest": "6546682de737e66d26656cdd72484ba8f68dcc1202cc80e246f193bc797a73ef",
   "qualification": {
     "status": "ALL_20_CURRENT_POOL_CLI_RUNTIME_CASES_QUALIFIED_CLEANUP_PENDING",
@@ -610,7 +610,10 @@
     "docs/ru/manuals/OPERATIONS.md",
     "docs/ru/manuals/PANEL.md",
     "docs/ru/manuals/TROUBLESHOOTING.md",
-    "qeli-android/app/gradle.lockfile"
+    "qeli-android/app/gradle.lockfile",
+    "qeli-openwrt/Makefile",
+    "qeli-openwrt/README.md",
+    "qeli/fuzz/Cargo.lock"
   ],
   "android_release_graph_adoption": {
     "status": "REAL_RELEASE_GRAPH_ADOPTED_AND_STRICT_RECHECK_PASS",
@@ -634,6 +637,15 @@
     },
     "verification_checksums_and_policy_unchanged": true,
     "root_buildscript_locks_unchanged": true
+  },
+  "fuzz_lock_canonicalization": {
+    "status": "CANONICAL_LOCK_REFERENCE_FORMAT_ONLY",
+    "before": "5a62fb0321f9cef5645c2244c64c8b3eaeef8288159758b00f814d256fb5cc8b",
+    "after": "382243d6621316dbd1148fe60a532a2f71db3b7c1223732768ee4efd1c9f3d4b",
+    "cause": "Copied main-lock entry retained a version qualifier although fuzz graph contains only one thiserror-impl version; Cargo build canonicalizes it",
+    "package_versions_checksums_and_resolved_dependency_edges_unchanged": true,
+    "packages": 146,
+    "no_production_lock_or_Rust_source_change": true
   },
   "android_osv_summary": {
     "queried_at_utc": "2026-10-15T21:45:06.024329+00:00",
@@ -813,14 +825,14 @@
   },
   "openwrt_source": {
     "status": "PASS_EXACT_CURRENT_COMMIT_TWO_SDK_DOWNLOADS_PREPARE",
-    "source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-    "source_tree": "dcb873894926e4b4eadb01d6934887be30e862d6",
-    "qeli_tree": "8ec765a894ce4a1f24a5040d07b07573236fdd96",
+    "source_commit": "084682e5f3efc05efaf4154b4d5a3eff2750a21d",
+    "source_tree": "d612b6b94d22f622d134428904001afd93b5d7da",
+    "qeli_tree": "1303f452bfdd0f69720001486e7bb87f871e4891",
     "archive": {
-      "sha256": "aead662b45bd57aa67e863cbb8a135b806b79c355adb88992da03eae68357fbc",
-      "bytes": 28660660
+      "sha256": "df98f489de92b6738048973cc74e84dbf3ee829ef0f1b66badc0a7c091aab671",
+      "bytes": 27207208
     },
-    "prepared_count": 3441,
+    "prepared_count": 3442,
     "all_prepared_blobs_verified_against_canonical_git": true,
     "unaltered_sdk_git_export": true,
     "private_recipe_only_url_pin_hash_changes": true,
@@ -831,7 +843,7 @@
     "no_compiler_bootstrap_or_full_build": true,
     "no_publication_or_hosted_ci": true
   },
-  "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only the opt-in Release instrumentation lock graph, its CI guard, and documentation banners/download commands for the withdrawn release changed; shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized.",
+  "scope": "Fresh dependency-qualified factory CLI and20 Linux cases (19 executions plus derived leak case); 100 TCP and UDP flips, not a new eight-hour run. Native Windows/macOS/Android A/B rebuilt; Android strict-verification debug and unsigned R8 Release plus lint and legal packaging checked. OpenWrt source export/prepare only, not a new full SDK/IPK/physical-router qualification. After Linux execution, only isolated fuzz-lock reference canonicalization (identical packages/checksums/resolved edges), the matching SDK source cut, opt-in Android Release test locks/CI guard, and withdrawn-release documentation changed. Production Rust sources/Cargo graph/build recipes and shipped Android runtime graphs remain identical. Hosted full CI is a separate mandatory PR merge gate. No release publication is authorized.",
   "accepted_API34_ENONET_original_FAIL_and_physical_exclusions_unchanged": true,
   "release_published": false
 }
