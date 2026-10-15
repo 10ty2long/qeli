@@ -1,8 +1,8 @@
 # Technical debt from started audits
 
-<!-- normative-sync: audit-debt-v139 -->
+<!-- normative-sync: audit-debt-v140 -->
 
-Current reconciliation: 15 October 2026. The original 15 obligation groups were dispositioned on 3 October: 14 DONE and D06 ACCEPTED_LIMITATION by user decision. Full audit: 36/37 sections complete (97.3%); Q31/Q34 meet all five criteria and Q29 generic/null DnsResolver API34 remains open. The cancelled VPN bypass is not new implementation debt. The historical register and results retain their original dates below; they are not current OPEN items. [Q31/Q34 completion criteria](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
+Current reconciliation: 15 October 2026. The full audit is complete within agreed scope: 37/37 (100%). Q29 closed by explicit user decision with the documented generic/null DnsResolver API34 limitation; the original ENONET remains FAIL and no fix is claimed. The original 15 obligation groups remain 14 DONE and D06 ACCEPTED_LIMITATION; previous platform coverage limits are retained. Historical OPEN entries and counts below refer to their stated dates. [Q29 decision and limits](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
 
 `DONE` requires a fix/justification and the required verification. `BLOCKED` denotes an
 unavailable external prerequisite, never success. The user supplied Linux and an Android

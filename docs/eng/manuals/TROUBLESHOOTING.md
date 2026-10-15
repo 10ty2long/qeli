@@ -2786,3 +2786,25 @@ During Android connection, `Native NetworkPlan APPLIED` means plan application a
 ### Android: recovery after process death
 
 Qeli SIGKILL recovery qualified on the ordinary production R8 APK; disconnect/revoke prevent service resurrection in 30-second windows. DNS/null remains open. [Details](../reports/AUDIT-Q29-ANDROID-RECOVERY.md).
+
+
+<!-- normative-sync: q29-dns-compatibility-troubleshooting-v1 -->
+
+### Android: ENONET in one application
+
+If VPN is already Connected and ordinary DNS works, but one application reports
+`DnsResolver` / `resNetworkQuery failed: ENONET`, retain the Android version,
+query time and that application's error. On tested Android14/API34, automatic
+address-family selection without an explicit network failed before DNS was
+sent; a minimal VPN without Qeli reproduced it. This is an observation of one
+image, not a general tunnel DNS failure.
+
+To repair that call, the application's developer can pass the VPN Network
+explicitly to DnsResolver.query or use A/AAAA queries. These variants and
+ordinary DNS have separate positive evidence on the measured image. The
+network parameter belongs to the caller application — see the
+[Android API contract](https://developer.android.com/reference/android/net/DnsResolver).
+Keep system Always-on VPN and Block connections without VPN enabled. Qeli
+has no separate mode permitting VPN bypass.
+
+[Facts, reproduction and limits](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).

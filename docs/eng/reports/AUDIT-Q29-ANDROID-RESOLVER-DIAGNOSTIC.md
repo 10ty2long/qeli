@@ -1,6 +1,8 @@
 # Q29: comparing Android DNS APIs
 
-<!-- normative-sync: q29-android-resolver-diagnostic-v3 -->
+<!-- normative-sync: q29-android-resolver-diagnostic-v4 -->
+
+**Current October 15 result: Q29 completed within agreed scope. The user accepted the documented generic/null DNS limitation of the measured API34 image. ENONET is not fixed and the original FAIL is retained; secure VPN and the system kill switch remain. Full audit: 37/37.**
 
 October5,2026. Q29 IN_PROGRESS;plan28/37(75.7%). One successful readonly API34 x86_64 Release/TCP run on .11 in private NET/MNT/PID;four preserved failed attempts. .10 untouched.
 
@@ -80,3 +82,47 @@ The user rejected a separate compatibility mode that permits VPN bypass. The pro
 A bypass compatibility mode is no longer an audit obligation; no additional builds or runtime of that cancelled mode are required. This choice does not fix the observed generic/null DnsResolver ENONET or turn it into PASS: the pre-query failure remains a scoped observation on this API34 image. Typed A/AAAA, an explicit VPN network, ordinary DNS cases and bypass blocking retain their separate positive evidence above.
 
 This policy decision supersedes the earlier pending user preference. The platform DNS observation remains explicit; Q29 is not automatically closed. No new Android/DNS runtime was executed here. Full audit:34/37 (91.9%); NO_PUSH_DEPLOY_RELEASE.
+
+
+## October 15: safe-candidate outcome and practical boundary
+
+On tested Android14/API34 the failure affects the generic overload
+`DnsResolver.query(network=null, …)` in a separate caller application. It fails
+before issuing DNS: Android selects a network different from the active VPN,
+and both family-check socket binds to the selected network return EPERM.
+An independent minimal VpnService with local DNS reproduces it without Qeli
+code. This is not a claim about other Android versions or OEMs.
+
+On the same image, ordinary DNS, typed/null A/AAAA and generic queries with an
+explicit VPN network have positive evidence. Qeli's 33 current production
+Java/Kotlin files contain no DnsResolver or allowBypass calls; VPN server names
+already resolve through an explicitly selected carrier. The same process-local
+API in Qeli cannot change a DNS call inside another application's process.
+
+The retained reviews cover allowFamily/addresses/routes, DNS addresses,
+underlying networks, HTTP proxy, process/native resolver binding, physical
+default, foreign-UID protect/permissions and TUN DNS interception. No new
+actionable candidate preserving secure VPN and the system kill switch was
+identified. This is a bounded source/API/runtime review, not proof against
+every possible future solution. The user-cancelled bypass is not restored.
+
+On API29+, the affected application's developer can pass the intended VPN
+Network explicitly to DnsResolver.query or use the typed A/AAAA overloads;
+these variants were qualified for the measured sender. This changes the caller
+application. No INI switch in Qeli was identified that repairs its call. The
+network parameter and overloads are documented by the
+[official DnsResolver API](https://developer.android.com/reference/android/net/DnsResolver).
+User-facing steps are in
+[ENONET troubleshooting](../manuals/TROUBLESHOOTING.md#android-enonet-in-one-application).
+
+[Consolidated evidence](../../../release/certification/evidence/q29-dns-final-review-20261015.json)
+binds eight retained review/runtime receipts and the current source snapshot.
+A local draft Android report includes the minimal reproduction arrangement
+and retained control-source references; it has not been submitted. No new
+build, runtime execution or platform change was performed.
+
+The user explicitly chose to accept the limitation and close Q29. Q29 is
+complete within agreed scope with this documented API34 fixture limitation.
+ENONET is neither fixed nor relabelled PASS; original results, secure VPN
+policy and coverage limits are retained. The full audit is 37/37 (100%)
+within agreed scope. No new executions were performed.

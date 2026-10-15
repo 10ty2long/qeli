@@ -1,6 +1,8 @@
 # Q29: current VPN integrations and Android fixture reliability
 
-<!-- normative-sync: q29-current-vpn-v6 -->
+<!-- normative-sync: q29-current-vpn-v7 -->
+
+**Current October 15 result: Q29 completed within agreed scope. The user accepted the documented generic/null DNS limitation of the measured API34 image. ENONET is not fixed and the original FAIL is retained; secure VPN and the system kill switch remain. Full audit: 37/37.**
 
 12 October2026. Q29 IN_PROGRESS;32/37 (86.5%),5 sections open.
 
@@ -196,3 +198,26 @@ For all four family/protocol combinations, the first sampled socket after APPLIE
 The first-post-APPLIED interpretation question is closed in this scope: early blocking during CONNECTING/lockdown does not establish a regression of an announced connected session. Delivery acceptance uses fresh sockets started after CONNECTED; failures after it remain FAIL. Sampled PASS does not prove the first possible socket, continuous zero loss, all UIDs, no leakage without lockdown, or physical/OEM behavior. The earlier historical CONNECTED publication without callback waiting had a separate defect and is not justified by this conclusion.
 
 Automatic SIGKILL recovery FAIL and generic/null DNS compatibility FAIL remain with platform localization. Q29 stays IN_PROGRESS;32/37(86.5%), five sections remain open. Product, fixtures, APK/JNI and original raw logs are unchanged; no lab execution or large builds/caches. [Evidence](../../../release/certification/evidence/q29-publication-contract-20261012.json). Raw: `audit-debt-20260924/q29-publication-contract-20261012`. NO_PUSH_DEPLOY_RELEASE.
+
+
+## October 15: Q29 completed with accepted DNS limitation
+
+The user accepted the known generic/null DnsResolver ENONET on the measured
+API34 image and authorized closing Q29 within agreed scope. This does not
+fix the error: the original FAIL, independent TUN control and image limits
+are retained. Secure VpnService and the system kill switch remain without
+a bypass mode.
+
+| Criterion | Result |
+| --- | --- |
+| Review and dead code | Source/lifetime review, subsequent settings/recovery fixes and current 33 production files reconciled |
+| Normal, boundary and negative cases | INI/Keystore/migration/backup/permissions/NetworkPlan/protect/publication and hosted API29/35 have scoped evidence |
+| Failures and concurrency | Stale owners/observers, teardown, storage failures and current SIGKILL recovery verified; original FAIL retained |
+| Integration and target platform | Bounded API34/R8/ordinary UID, dual stack/NAT64/per-app/DoT/power and ABI/JNI/INI; physical/OEM limits retained |
+| Fixes, rechecks and evidence | Published fixes and receipts; the only remaining scoped DNS FAIL explicitly accepted as a limitation |
+
+[Decision and evidence](../../../release/certification/evidence/q29-dns-final-review-20261015.json),
+[DNS reproduction](AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Historical statuses
+and counts above refer to their execution dates. No new VPN/runtime runs were
+performed for this decision. The full plan is complete: 37/37 within agreed
+scope; D06 and previous platform limits remain.

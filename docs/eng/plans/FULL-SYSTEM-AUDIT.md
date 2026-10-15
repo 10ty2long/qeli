@@ -10,9 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v275 -->
+<!-- normative-sync: full-system-audit-v276 -->
 
-**15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains36/37 (97.3%).
+**15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains37/37 (100%).
 
 **Historical checkpoint Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -20,7 +20,7 @@ for the full audit; existing obligations remain.
 
 **Historical checkpoint Q34,14 October:** Unix service-key helper race fixed and reproduced by the old implementation;28 Windows/Linux checks PASS, daemon/self-test share Mac RENAME_EXCL. Apple/current hosted runtime unqualified; iOS failures and public source pin remain open. See [report](../reports/AUDIT-Q34-CLIENT-SUPPLY.md).
 
-**Current result, 15 October: 36/37 sections complete within agreed scope (97.3%), with Q29 remaining. Q31/Q34 meet all five criteria after public source publication, successful CI on dev `9fa0903a…`, current SDK/native checks and fresh Linux20. [Q31 result](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md), [Q34 result](../reports/AUDIT-Q34-CLIENT-SUPPLY.md). Generic/null DnsResolver ENONET on tested API34 remains open; the cancelled bypass was not added. Physical exclusions and D06 are retained. Historical checkpoints below do not change this current total.**
+**Current result, 15 October: all 37/37 audit sections complete within agreed scope (100%). Q29 closed after explicit user acceptance of generic/null DnsResolver ENONET on the measured API34 image as a documented limitation; that FAIL is neither fixed nor relabelled PASS. [Q29 decision](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md), [criteria](../reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Q31/Q34 retain their previously qualified completion. Secure VPN, the system kill switch, D06 and physical platform limits are retained. Historical checkpoints below are not the current remaining work.**
 
 Inventory date: **22 September 2026**. Baseline: branch `dev`, commit
 `fc6f4a5dc8df7f119f2d99a6b72b08916ae7a268`, development **0.8.2**.
@@ -178,7 +178,7 @@ to section 1 and denote historical review/tests, not current PASS. Cross-cutting
 | 26 | Shared C# and managed/native boundary | H04, H06, H08 | DONE/PASS |
 | 27 | Windows GUI, service and drivers | H01, H04, H08 | DONE / PASS |
 | 28 | macOS daemon, utun, pf and Network Extension | H04, H08 | DONE/PASS |
-| 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | IN_PROGRESS |
+| 29 | Android VpnService, JNI and lifecycle | H04, H06, H08 | DONE / ACCEPTED_LIMITATION |
 | 30 | iOS PacketTunnel, Swift and MDM | H04, H06, H08 | DONE: SOURCE REVIEW; Apple USER_SKIPPED |
 | 31 | OpenWrt, LuCI and Keenetic | H04, H06, H08 | DONE/PASS |
 | 32 | Metrics, usage, logs and notifications | H02–H03, H08, H10 | DONE |
@@ -1870,12 +1870,12 @@ Protect/TUN retention/generations during reconnect/cancel/stop. Keystore, INI mi
 **Existing harness/fixtures:** `scripts/roaming_android_sleep_wake_gate.py`, `scripts/roaming_android_udp_grace_expiry_gate.py`.
 
 - [x] Review and dead code.
-- [ ] Positive, boundary and negative scenarios.
-- [ ] Failures and concurrency.
-- [ ] Integration and target platform.
-- [ ] Fixes, retesting and evidence.
+- [x] Positive, boundary and negative scenarios.
+- [x] Failures and concurrency.
+- [x] Integration and target platform.
+- [x] Fixes, retesting and evidence.
 
-**Status: IN_PROGRESS.**
+**Status: DONE within agreed scope; scoped API34 DNS — ACCEPTED_LIMITATION.**
 
 **5 October, storage/package:** [F273–F276](../reports/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md):167 JVM/18debug instrumentation PASS;2baseline failures;Release/R8 build andlint(0errors,55warnings),API28 exactness/legacy recovery/backup exclusions. Temporary read-only AVD;host/service/userdata preserved. R8 production UI smoke separately;debug-test APK onminified target unqualified. Q29 IN_PROGRESS;plan28/37(75.7%).
 
@@ -1893,13 +1893,10 @@ The section checklist is not a statement that every scenario below has passed.
 | Data, ordinary UID, dual stack, handover, NAT64, per-app/DoT, bounded Doze/flapping and stop blocking | [Release](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNTIME.md), [NAT64](../reports/AUDIT-Q29-ANDROID-NAT64.md), [per-app](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md), [power/flapping](../reports/AUDIT-Q29-ANDROID-ENDURANCE.md), [trusted DoT](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md) | Scoped PASS; source/readiness publication fixed by [F279](../reports/AUDIT-Q29-ANDROID-CONNECTED-GATE.md); physical long sessions not qualified |
 | R8 instrumentation | [matching runner](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNNER.md) | Opt-in matching runner PASS; default production UI smoke separately qualified; earlier runner FAIL retained |
 | External process death | [actual Qeli recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md), [historical independent control](../reports/AUDIT-Q29-ANDROID-SYSTEM.md) | Actual ordinary R8 Qeli recovered its authenticated NetworkPlan in2.985s after SIGKILL in the13 October run; blocking/manual recovery PASS. The previous automatic recovery FAIL remains historical; this is not new current-APK runtime |
-| Generic auto/null DnsResolver | [API diagnostic](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md) | ENONET retained; typed A/AAAA and system lookup have separate positive evidence |
+| Generic auto/null DnsResolver | [API diagnostic](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md) | User accepted the documented limitation of this API34 image. Original ENONET remains FAIL; independent VPN reproduces it, typed A/AAAA and explicit VPN work. Q29 complete within agreed scope. |
 | Whole-section source/dead-code and lifetime reconciliation | [F286–F288](../reports/AUDIT-Q29-ANDROID-SOURCE.md),31 Kotlin files, Manifest/resources/R8/22 JNI | Review criterion complete; [F289 fixed](../reports/AUDIT-Q29-ANDROID-SETTINGS.md), scoped pre-auth/UI and fresh Release checks. Reference screen alone is not liveness proof. |
 
-Q29 remains IN_PROGRESS. Open platform observations are not silently accepted or relabelled
-PASS; platform coverage limits are not new mandatory test permutations. User-skipped other
-platforms and D06 remain unchanged.
-
+Q29 is complete within agreed scope after explicit user acceptance of the documented API34 DNS limitation. Original FAIL results and platform coverage limits are retained; the known ENONET is not claimed fixed. Previous platform skips and D06 are unchanged.
 
 ### 30. iOS PacketTunnel, Swift and MDM
 
