@@ -1,6 +1,6 @@
 # Q29: comparing Android DNS APIs
 
-<!-- normative-sync: q29-android-resolver-diagnostic-v2 -->
+<!-- normative-sync: q29-android-resolver-diagnostic-v3 -->
 
 October5,2026. Q29 IN_PROGRESS;plan28/37(75.7%). One successful readonly API34 x86_64 Release/TCP run on .11 in private NET/MNT/PID;four preserved failed attempts. .10 untouched.
 
@@ -72,3 +72,11 @@ One previously unexecuted cell used an independent minimal VpnService and a sepa
 Two initial attempts retain their outcomes: absent physical default network caused NETID_UNSET, then the readiness guard refused before a DNS cell. The log localized the missing carrier to modem ::1 address resolution. The next private NET namespace restored loopback addresses from the previously qualified fixture and checked AI_ADDRCONFIG. The corrected cell completed while preserving original AVD config/userdata. Archives and outcomes were verified; all three owned roots/units were removed and host state preserved. Production allowBypass was not enabled. This qualifies observations on this image, not other Android/OEM versions or the whole release matrix.
 
 [Evidence](../../../release/certification/evidence/q29-bypass-lockdown-20261014.json). Raw: `audit-debt-20260924/q29-bypass-lockdown-20261014`, `q29-bypass-lockdown-r2-20261014`, `q29-bypass-lockdown-r3-20261014`. NO_PUSH_DEPLOY_RELEASE.
+
+## 15 October: ordinary secure VPN and Android system kill switch retained
+
+The user rejected a separate compatibility mode that permits VPN bypass. The production Android client retains the ordinary secure VpnService without allowBypass. INI/URI, defaults, the settings UI and native libraries are unchanged. A full-tunnel profile with kill_switch=true still requires Android Always-on VPN and “Block connections without VPN”; Qeli verifies this policy and does not switch it itself.
+
+A bypass compatibility mode is no longer an audit obligation; no additional builds or runtime of that cancelled mode are required. This choice does not fix the observed generic/null DnsResolver ENONET or turn it into PASS: the pre-query failure remains a scoped observation on this API34 image. Typed A/AAAA, an explicit VPN network, ordinary DNS cases and bypass blocking retain their separate positive evidence above.
+
+This policy decision supersedes the earlier pending user preference. The platform DNS observation remains explicit; Q29 is not automatically closed. No new Android/DNS runtime was executed here. Full audit:34/37 (91.9%); NO_PUSH_DEPLOY_RELEASE.
