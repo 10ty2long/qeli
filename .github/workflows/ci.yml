@@ -297,6 +297,28 @@ jobs:
             done
           ' "${{ steps.pkg.outputs.deb }}"
 
+      - name: Stage tested Linux candidate packages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/qeli-candidate-linux"
+          extracted="$(mktemp -d)"
+          trap 'rm -rf -- "$extracted"' EXIT
+          mkdir -p "$out"
+          cp "${{ steps.pkg.outputs.deb }}" "$out/"
+          dpkg-deb -x "${{ steps.pkg.outputs.deb }}" "$extracted"
+          cp "$extracted/usr/bin/qeli" "$out/qeli-linux-amd64"
+      - name: Retain tested Linux candidate packages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qeli-candidate-linux-${{ github.sha }}
+          path: ${{ runner.temp }}/qeli-candidate-linux/
+          if-no-files-found: error
+          retention-days: 7
+
   # Hard gate: the two installer scripts are the ONLY thing between a fresh VPS and a
   # running server, they run as root, and nothing ever linted them. (Audit 2026-07-27, G2)
   # The gate is severity `warning` and above — that is a threshold, not an exemption:
@@ -463,6 +485,9 @@ jobs:
       # (Audit 2026-07-29, #3.)
       - name: Android release APK builds
         working-directory: qeli-android
+        env:
+          # Candidate packages consume the qualified A/B release cores, not CI cores.
+          QELI_NATIVE_JNI_DIR: ${{ github.workspace }}/qeli-android/app/src/main/jniLibs
         run: ./gradlew --no-daemon assembleRelease
       - name: Test Android legal asset admission
         working-directory: .
@@ -472,6 +497,16 @@ jobs:
         run: |
           python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/debug/app-debug.apk
           python3 scripts/check_android_licenses.py --apk qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Retain unsigned Android candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qeli-candidate-android-unsigned-${{ github.sha }}
+          path: qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
   android-instrumented:
     name: Android runtime gates (API ${{ matrix.api-level }})
@@ -559,6 +594,8 @@ jobs:
       - name: Publish both Windows distributions with required third-party notices
         working-directory: qeli-win
         shell: pwsh
+        env:
+          QeliNativeCorePath: ${{ github.workspace }}/qeli-win/QeliWin/native/qeli.dll
         run: |
           dotnet publish QeliWin/QeliWin.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o dist/net-required
           if ($LASTEXITCODE -ne 0) { throw "framework-dependent Windows publication failed" }
@@ -589,6 +626,18 @@ jobs:
       - name: PacketCodec benchmark gate (managed Windows)
         working-directory: qeli-shared
         run: dotnet exec QeliConformance/bin/Release/net10.0/QeliConformance.dll packetbench --ci
+
+      - name: Retain tested Windows candidate distributions
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qeli-candidate-windows-${{ github.sha }}
+          path: |
+            qeli-win/dist/net-required/
+            qeli-win/dist/standalone/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
   macos-build:
     runs-on: macos-latest
@@ -674,6 +723,36 @@ jobs:
       - name: Build and test macOS per-app system extension
         working-directory: qeli-mac
         run: ./per-app/build.sh "$PWD/dist/per-app-arm64" arm64
+
+      - name: Package ad-hoc signed macOS candidates
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        working-directory: qeli-mac
+        shell: bash
+        env:
+          # A host-only CI core cannot run in the other RID; ship the qualified universal core.
+          QeliNativeCorePath: ${{ github.workspace }}/qeli-mac/QeliMac/native/libqeli.dylib
+          QELI_CONFIG_NATIVE_LIBRARY: ${{ github.workspace }}/qeli-mac/QeliMac/native/libqeli.dylib
+        run: |
+          set -euo pipefail
+          lipo -verify_arch arm64 x86_64 "$QeliNativeCorePath"
+          for arch in arm64 x86_64; do
+            bash build_app.sh "$arch"
+            lipo -verify_arch "$arch" dist/Qeli.app/Contents/MacOS/QeliMac
+            lipo -verify_arch arm64 x86_64 dist/Qeli.app/Contents/MacOS/libqeli.dylib
+            codesign --verify --deep --strict --verbose=2 dist/Qeli.app
+            test -s "dist/Qeli-macos-$arch.tar.gz"
+          done
+      - name: Retain signed macOS candidate archives
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qeli-candidate-macos-${{ github.sha }}
+          path: |
+            qeli-mac/dist/Qeli-macos-arm64.tar.gz
+            qeli-mac/dist/Qeli-macos-x86_64.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
   # iOS had NO CI at all: the Swift client (QeliCore crypto/protocol + the packet-tunnel
   # extension) could stop compiling and nothing would notice until a manual Xcode build.
@@ -838,6 +917,15 @@ jobs:
           print(validate_router_elf(data, target))
           print('sha256:', hashlib.sha256(data).hexdigest(), 'bytes:', len(data))
           PY
+
+      - name: Retain validated router candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qeli-candidate-router-${{ matrix.arch }}-${{ github.sha }}
+          path: qeli/target/${{ matrix.target }}/release/qeli-client
+          if-no-files-found: error
+          retention-days: 7
 
   # Hard gate: build the fuzz harnesses and run a short smoke on each. Catches a
   # build break / API drift in the untrusted-input parsers (ClientHello, packet

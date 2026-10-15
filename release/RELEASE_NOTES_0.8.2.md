@@ -80,6 +80,16 @@ checksums, signing and build provenance must be prepared and verified through
 the corresponding platform release paths. A successful source CI run alone
 does not provide a downloadable release asset set.
 
+Development pushes to `dev` marked `[candidate]` in the commit message retain
+tested candidate outputs in CI for seven days,
+with the source commit in each artifact name. These are preparation artifacts,
+not GitHub Release assets. Windows outputs include the required legal sidecars.
+The macOS packaging path produces separate arm64 and x86_64 ad-hoc-signed archives;
+the per-app extension requires separate Developer ID/provisioning and notarization.
+The retained Android APK is unsigned and requires the release signing key before
+it can serve as an upgrade package. Desktop/Android candidate packaging uses the
+qualified committed native libraries rather than the development CI overrides.
+
 ## Русский
 
 ### Основные изменения относительно 0.8.1
@@ -154,3 +164,13 @@ DNS bypass-режима нет. На проверенном эмуляторе A
 суммы, подписи и происхождение сборок необходимо подготовить и проверить через
 соответствующие платформенные процедуры выпуска. Успешный CI исходников сам по
 себе не предоставляет набор скачиваемых релизных артефактов.
+
+Push в `dev` с пометкой `[candidate]` в сообщении коммита сохраняет проверенные
+результаты сборки в CI на семь дней; имя каждого
+артефакта содержит commit исходников. Это подготовительные файлы, а не assets
+GitHub Release. Windows-комплект включает необходимые лицензионные файлы.
+Для macOS упаковка создаёт отдельные ad-hoc-подписанные архивы arm64 и x86_64;
+per-app extension требует отдельных Developer ID/provisioning и notarization.
+Сохраняемый Android APK не подписан: для пакета обновления нужен релизный ключ.
+При упаковке desktop/Android используются квалифицированные нативные библиотеки
+из Git, а не временные development CI overrides.
