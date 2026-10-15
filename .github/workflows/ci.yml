@@ -734,6 +734,7 @@ jobs:
             -configuration Debug \
             -destination "id=$dest" \
             -derivedDataPath build/ci-tests \
+            QELI_KEYCHAIN_GROUP=FAKETEAMID.ru.qeli.app.shared \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES
           python3 -B ../scripts/verify_ios_simulator.py \
@@ -744,6 +745,7 @@ jobs:
             -configuration Debug \
             -destination "id=$dest" \
             -derivedDataPath build/ci-tests \
+            QELI_KEYCHAIN_GROUP=FAKETEAMID.ru.qeli.app.shared \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES
 
