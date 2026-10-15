@@ -150,7 +150,7 @@ regex-syntax	0.8.11	MIT OR Apache-2.0	d6f6ff9a378485b298a5286656da665ba74413d36d
 ring	0.17.14	Apache-2.0 AND ISC	a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7	https://static.crates.io/crates/ring/ring-0.17.14.crate
 rustc_version	0.4.1	MIT OR Apache-2.0	cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92	https://static.crates.io/crates/rustc_version/rustc_version-0.4.1.crate
 rusticata-macros	4.1.0	MIT/Apache-2.0	faf0c4a6ece9950b9abdb62b1cfcf2a68b3b67a10ba445b3bb85be2a293d0632	https://static.crates.io/crates/rusticata-macros/rusticata-macros-4.1.0.crate
-rustls	0.23.45	Apache-2.0 OR ISC OR MIT	0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634	https://static.crates.io/crates/rustls/rustls-0.23.45.crate
+rustls	0.23.46	Apache-2.0 OR ISC OR MIT	48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf	https://static.crates.io/crates/rustls/rustls-0.23.46.crate
 rustls-pki-types	1.15.0	MIT OR Apache-2.0	764899a24af3980067ee14bc143654f297b22eaebfe3c7b6b211920a5a59b046	https://static.crates.io/crates/rustls-pki-types/rustls-pki-types-1.15.0.crate
 rustls-webpki	0.103.15	ISC	f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2	https://static.crates.io/crates/rustls-webpki/rustls-webpki-0.103.15.crate
 rustversion	1.0.22	MIT OR Apache-2.0	b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d	https://static.crates.io/crates/rustversion/rustversion-1.0.22.crate
