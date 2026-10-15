@@ -10,7 +10,9 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v273 -->
+<!-- normative-sync: full-system-audit-v274 -->
+
+**15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains34/37 (91.9%).
 
 **Q36,14 October,F031/F032:** six unused perf scenarios retired; partial raw-phase duplication no longer creates false n3.22 methods per OS PASS,18 retained current raw identities checked by the new guard without new load. Q36 queue/TUN/asymmetry acceptance remains open. [Report](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -1890,7 +1892,7 @@ The section checklist is not a statement that every scenario below has passed.
 | Actual service commands and Activity permission request ownership | [F278](../reports/AUDIT-Q29-ANDROID-SERVICE.md), [F280](../reports/AUDIT-Q29-ANDROID-PERMISSIONS.md) | Scoped PASS; permission waiting/result injection is distinct from OS dialog automation |
 | Data, ordinary UID, dual stack, handover, NAT64, per-app/DoT, bounded Doze/flapping and stop blocking | [Release](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNTIME.md), [NAT64](../reports/AUDIT-Q29-ANDROID-NAT64.md), [per-app](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md), [power/flapping](../reports/AUDIT-Q29-ANDROID-ENDURANCE.md), [trusted DoT](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md) | Scoped PASS; source/readiness publication fixed by [F279](../reports/AUDIT-Q29-ANDROID-CONNECTED-GATE.md); physical long sessions not qualified |
 | R8 instrumentation | [matching runner](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNNER.md) | Opt-in matching runner PASS; default production UI smoke separately qualified; earlier runner FAIL retained |
-| External process death | [minimal independent VpnService control](../reports/AUDIT-Q29-ANDROID-SYSTEM.md) | Automatic recovery FAIL on this image, including the independent TUN control; blocking/manual recovery PASS; no causal JNI defect proven |
+| External process death | [actual Qeli recovery](../reports/AUDIT-Q29-ANDROID-RECOVERY.md), [historical independent control](../reports/AUDIT-Q29-ANDROID-SYSTEM.md) | Actual ordinary R8 Qeli recovered its authenticated NetworkPlan in2.985s after SIGKILL in the13 October run; blocking/manual recovery PASS. The previous automatic recovery FAIL remains historical; this is not new current-APK runtime |
 | Generic auto/null DnsResolver | [API diagnostic](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md) | ENONET retained; typed A/AAAA and system lookup have separate positive evidence |
 | Whole-section source/dead-code and lifetime reconciliation | [F286–F288](../reports/AUDIT-Q29-ANDROID-SOURCE.md),31 Kotlin files, Manifest/resources/R8/22 JNI | Review criterion complete; [F289 fixed](../reports/AUDIT-Q29-ANDROID-SETTINGS.md), scoped pre-auth/UI and fresh Release checks. Reference screen alone is not liveness proof. |
 

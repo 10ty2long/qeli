@@ -10,7 +10,9 @@
 покрытия раздела; отдельный отчёт на каждый небольшой шаг не обязателен. Новые
 некритичные гипотезы ждут полного аудита, текущие обязательства сохраняются.
 
-<!-- normative-sync: full-system-audit-v273 -->
+<!-- normative-sync: full-system-audit-v274 -->
+
+**15 октября, политика Android:** отдельный DNS bypass-режим отклонён пользователем; сохраняются secure VpnService и системный kill switch. [Решение и границы DNS](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET на проверенном API34 не объявлен исправленным. Отменённый режим не является новым техдолгом; общий итог остаётся34/37 (91,9%).
 
 **Q36, 14 октября, F031/F032:** шесть неиспользуемых perf-сценариев выведены из эксплуатации; partial raw-phase duplication больше не даёт ложного n3.22 метода на каждой ОС PASS,18 прежних current raw identities проверены новым guard без новых нагрузок. Q36 остаётся открыт по queue/TUN/asymmetry acceptance. [Отчёт](../reports/AUDIT-Q36-MATCHED-LOAD.md).
 
@@ -1901,7 +1903,7 @@ Checklist раздела не утверждает, что каждый сцен
 | Настоящие команды службы и владелец Activity permission request | [F278](../reports/AUDIT-Q29-ANDROID-SERVICE.md), [F280](../reports/AUDIT-Q29-ANDROID-PERMISSIONS.md) | Scoped PASS; инъекция ожидания/ответа permissions отличается от автоматизации OS-диалога |
 | Data, ordinary UID, dual stack, handover, NAT64, per-app/DoT, bounded Doze/flapping и блокировка после stop | [Release](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNTIME.md), [NAT64](../reports/AUDIT-Q29-ANDROID-NAT64.md), [per-app](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md), [power/flapping](../reports/AUDIT-Q29-ANDROID-ENDURANCE.md), [trusted DoT](../reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md) | Scoped PASS; публикация готовности исправлена [F279](../reports/AUDIT-Q29-ANDROID-CONNECTED-GATE.md); physical long sessions не подтверждены |
 | R8 instrumentation | [matching runner](../reports/AUDIT-Q29-ANDROID-RELEASE-RUNNER.md) | Opt-in matching runner PASS; обычный production UI smoke подтверждён отдельно; прежний runner FAIL сохранён |
-| Внешняя смерть процесса | [независимый минимальный VpnService](../reports/AUDIT-Q29-ANDROID-SYSTEM.md) | Automatic recovery FAIL на этом image, включая независимый TUN control; blocking/manual recovery PASS; causal JNI defect не доказан |
+| Внешняя смерть процесса | [актуальное восстановление Qeli](../reports/AUDIT-Q29-ANDROID-RECOVERY.md), [исторический независимый control](../reports/AUDIT-Q29-ANDROID-SYSTEM.md) | Реальный обычный R8 Qeli после SIGKILL восстановил authenticated NetworkPlan за 2,985s в прогоне13 октября; blocking/manual recovery PASS. Прежний automatic recovery FAIL сохранён как история; это не новый runtime текущего APK |
 | Generic auto/null DnsResolver | [API diagnostic](../reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md) | ENONET сохранён; typed A/AAAA и system lookup имеют отдельные положительные результаты |
 | Итоговая сверка source/dead-code и lifetime всего раздела | [F286–F288](../reports/AUDIT-Q29-ANDROID-SOURCE.md),31 Kotlin files, Manifest/resources/R8/22 JNI | Review завершён; [F289 исправлен](../reports/AUDIT-Q29-ANDROID-SETTINGS.md), scoped pre-auth/UI and fresh Release checks. Reference screen сам по себе не доказывает liveness. |
 
