@@ -479,6 +479,22 @@ jobs:
       # Pinned by SHA like every other action here. (Audit 2026-08-04.)
       - name: Validate the Gradle wrapper
         uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Resolve opt-in release test dependencies under strict locking
+        working-directory: qeli-android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          report="$RUNNER_TEMP/qeli-release-test-dependencies.log"
+          if ! ./gradlew --no-daemon --dependency-verification strict -PqeliTestBuildType=release :app:dependencies >"$report" 2>&1; then
+            cat "$report"
+            exit 1
+          fi
+          if grep -n 'FAILED' "$report"; then
+            cat "$report"
+            exit 1
+          fi
+          grep -q '^releaseAndroidTestRuntimeClasspath' "$report"
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: 1.97.0
