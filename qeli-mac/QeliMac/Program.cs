@@ -97,9 +97,9 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        // A self-test is explicitly side-effect free (no network and no root). Dispatch it
-        // before startup recovery so CI cannot restore host DNS/firewall state merely by
-        // validating the binary.
+        // Self-tests and asset renderers require no network or root. Dispatch them
+        // before startup recovery so validation or rendering a build icon cannot
+        // restore host DNS/firewall state or require daemon control directories.
         if (args.Length > 0 &&
             (string.Equals(args[0], "selftest", StringComparison.OrdinalIgnoreCase) ||
              string.Equals(args[0], "storage-selftest", StringComparison.OrdinalIgnoreCase) ||
@@ -107,7 +107,9 @@ public static class Program
              string.Equals(args[0], "network-selftest", StringComparison.OrdinalIgnoreCase) ||
              string.Equals(args[0], "perapp-selftest", StringComparison.OrdinalIgnoreCase) ||
              string.Equals(args[0], "forwarding-selftest", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(args[0], "pf-selftest-rules", StringComparison.OrdinalIgnoreCase)))
+             string.Equals(args[0], "pf-selftest-rules", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(args[0], "genassets", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(args[0], "genicns", StringComparison.OrdinalIgnoreCase)))
             return CliRunner.Run(args[0], args.Skip(1).ToArray());
 
         // Before the elevated helper spawns a child process — see the method above.

@@ -80,6 +80,9 @@ echo "==> Assembling Qeli.app…"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp -R "$OUT/." "$APP/Contents/MacOS/"
+# Legal files are resources, not nested code. In MacOS/, codesign interprets
+# dotted version directories (for example axum-core/0.5.6) as malformed bundles.
+mv "$APP/Contents/MacOS/Legal" "$APP/Contents/Resources/Legal"
 cp "$ROOT/dist/Qeli.icns" "$APP/Contents/Resources/Qeli.icns"
 sed "s/__ARCH__/$ARCH/g" "$ROOT/Info.plist.in" > "$APP/Contents/Info.plist"
 chmod +x "$APP/Contents/MacOS/QeliMac"

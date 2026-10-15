@@ -38,9 +38,10 @@ if [[ "$1" == publish ]]; then
     if [[ "$1" == -o ]]; then out="$2"; break; fi
     shift
   done
-  mkdir -p "$out/Legal/NativeRust" "$out/Legal/DotNet"
+  mkdir -p "$out/Legal/NativeRust/files/axum-core/0.5.6" "$out/Legal/DotNet"
   printf '#!/bin/sh\nexit 0\n' > "$out/QeliMac"
   cp "$QELI_TEST_PROJECT/LICENSE" "$out/Legal/MPL-2.0.txt"
+  printf 'dependency license' > "$out/Legal/NativeRust/files/axum-core/0.5.6/LICENSE"
 elif [[ "$1" == run ]]; then
   for icon do :; done
   printf 'controlled icon' > "$icon"
@@ -101,6 +102,9 @@ fi""")
                 self.assertLess(events.index(signer+" "),events.index("tar "))
                 with tarfile.open(archive,"r:gz") as incoming:
                     self.assertIn("Qeli.app/Contents/MacOS/QeliMac",incoming.getnames())
+                    self.assertFalse(any(n.startswith("Qeli.app/Contents/MacOS/Legal") for n in incoming.getnames()))
+                    self.assertEqual(incoming.extractfile("Qeli.app/Contents/Resources/Legal/MPL-2.0.txt").read(), b"fixture license")
+                    self.assertEqual(incoming.extractfile("Qeli.app/Contents/Resources/Legal/NativeRust/files/axum-core/0.5.6/LICENSE").read(), b"dependency license")
 
     def test_codesign_path_signs_before_actual_tar_packaging(self):
         self.successful("codesign")

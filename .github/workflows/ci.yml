@@ -661,6 +661,21 @@ jobs:
       - name: Self-test QeliMac platform adapters
         working-directory: qeli-mac
         run: dotnet exec QeliMac/bin/Release/net10.0/QeliMac.dll selftest
+      - name: Render macOS build assets without privileged recovery
+        working-directory: qeli-mac
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets="$(mktemp -d)"
+          trap 'rm -rf "$assets"' EXIT
+          dotnet exec QeliMac/bin/Release/net10.0/QeliMac.dll genicns "$assets/Qeli.icns" 2>"$assets/icns-errors.log"
+          cat "$assets/icns-errors.log"
+          test ! -s "$assets/icns-errors.log"
+          test -s "$assets/Qeli.icns"
+          dotnet exec QeliMac/bin/Release/net10.0/QeliMac.dll genassets "$assets/png" 2>"$assets/png-errors.log"
+          cat "$assets/png-errors.log"
+          test ! -s "$assets/png-errors.log"
+          test -n "$(find "$assets/png" -name '*.png' -type f -print -quit)"
       - name: Build managed conformance runner (macOS)
         working-directory: qeli-shared
         run: dotnet build QeliConformance/QeliConformance.csproj -c Release

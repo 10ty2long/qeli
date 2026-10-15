@@ -327,7 +327,7 @@ WinDivert strict gate использует DROP (0x0002); журнал восс�
 Publish includes the common reviewed NuGet graphs/runtime-pack notices in
 `Legal/DotNet/`, alongside `Legal/NativeRust/` and the client MPL text.
 Keep the complete `Legal` directory when packaging a distribution. macOS app
-assembly copies it into `Contents/MacOS/Legal/` and validates both bundles before
+assembly places it in `Contents/Resources/Legal/` and validates both bundles before
 assembly (Python 3.11+, select executable with `PYTHON`). Embedded Inter fonts
 have their own SIL OFL 1.1/copyright, separate from Avalonia code MIT.
 Validate and update the bundle as described in [LICENSING](../LICENSING.md).

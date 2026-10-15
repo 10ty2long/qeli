@@ -173,7 +173,7 @@ lock-графов desktop-клиентов и четырёх runtime-пакет�
 Debug/tools/Linux/другие RID; это не перечень linkage каждого executable.
 Windows/macOS publish сохраняет весь каталог как `Legal/DotNet/`, рядом с
 `Legal/NativeRust/` и MPL клиента. При создании Windows архивов сохранять весь
-`Legal`; macOS app включает его в `Contents/MacOS/Legal/`. CI проверяет оба
+`Legal`; macOS app включает его в `Contents/Resources/Legal/`. CI проверяет оба
 RID/Windows-варианта после publish; `build_app.sh` проверяет notices до сборки app.
 
 Проверка без SDK/сети: `python3 scripts/managed_licenses.py`. Она связывает bundle
