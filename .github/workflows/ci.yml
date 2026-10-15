@@ -734,11 +734,11 @@ jobs:
           QELI_CONFIG_NATIVE_LIBRARY: ${{ github.workspace }}/qeli-mac/QeliMac/native/libqeli.dylib
         run: |
           set -euo pipefail
-          lipo -verify_arch arm64 x86_64 "$QeliNativeCorePath"
+          lipo "$QeliNativeCorePath" -verify_arch arm64 x86_64
           for arch in arm64 x86_64; do
             bash build_app.sh "$arch"
-            lipo -verify_arch "$arch" dist/Qeli.app/Contents/MacOS/QeliMac
-            lipo -verify_arch arm64 x86_64 dist/Qeli.app/Contents/MacOS/libqeli.dylib
+            lipo dist/Qeli.app/Contents/MacOS/QeliMac -verify_arch "$arch"
+            lipo dist/Qeli.app/Contents/MacOS/libqeli.dylib -verify_arch arm64 x86_64
             codesign --verify --deep --strict --verbose=2 dist/Qeli.app
             test -s "dist/Qeli-macos-$arch.tar.gz"
           done
