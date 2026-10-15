@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -21,6 +22,11 @@ class LegacyProfileRecoveryInstrumentedTest {
     }
     @After fun cleanup() {
         legacy.edit().clear().commit(); current.edit().clear().commit(); resetCache()
+    }
+    @Before fun prepare() {
+        // Other instrumentation classes may have cached an empty production store.
+        // Both migration cases need a cold open of their own legacy preferences.
+        cleanup()
     }
     @Test fun unreadableLegacyStillExposesVersionAndBlocksOrdinaryWrites() {
         legacy.edit()

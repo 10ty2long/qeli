@@ -56,6 +56,13 @@ printf 'qeli:x:234:\\n' >> /etc/group
         source = Path(cls.workspace.name) / 'src/qeli'
         shutil.copytree(DEBIAN, source / 'debian')
         shutil.copytree(CONFIG, source / 'config')
+        # Exercise the real packaging gate and ship its actual legal bundle.
+        # deb-prebuilt invokes scripts/native_licenses.py from the source root.
+        shutil.copytree(ROOT / 'scripts', source.parent / 'scripts',
+                        ignore=shutil.ignore_patterns('__pycache__'))
+        shutil.copytree(ROOT / 'qeli/third-party-notices', source / 'third-party-notices')
+        shutil.copy2(ROOT / 'qeli/Cargo.lock', source / 'Cargo.lock')
+        shutil.copy2(ROOT / 'LICENSE', source.parent / 'LICENSE')
         binary = source / 'inert-qeli'
         binary.write_text('''#!/bin/bash
 printf '%s\\n' "$*" >> /records/qeli-command

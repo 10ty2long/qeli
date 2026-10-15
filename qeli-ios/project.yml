@@ -145,6 +145,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(QELI_APP_BUNDLE_ID).tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   QeliIOS:
     build:
