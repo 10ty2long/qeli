@@ -39,11 +39,14 @@ class OpkgTests(unittest.TestCase):
     def command(self, *args, success=True, target=False):
         self.step += 1
         log = self.run/'logs'/f'{self.id().split(".")[-1]}-{self.step}.log'
+        # The host may use a merged /usr PATH (for example under systemd),
+        # while the OpenWrt rootfs keeps busybox utilities in /bin and /sbin.
+        env = dict(os.environ, PATH='/usr/sbin:/usr/bin:/sbin:/bin')
         try:
             result = subprocess.run(['unshare', '--mount', '--net', '--pid', '--fork',
                                      '--kill-child=KILL',
                                      'chroot', str(self.root if target else self.wrapper), *args],
-                                    capture_output=True, timeout=40)
+                                    env=env, capture_output=True, timeout=40)
         except subprocess.TimeoutExpired as error:
             log.write_bytes((error.stdout or b'') + (error.stderr or b''))
             raise
