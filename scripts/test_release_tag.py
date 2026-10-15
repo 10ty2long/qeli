@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import release_tag as gate
@@ -96,6 +97,108 @@ class TagTests(GitFixture):
         for error in [FileNotFoundError('git'),subprocess.TimeoutExpired('git',30)]:
             with patch.object(gate.subprocess,'run',side_effect=error):rc,text=self.cli()
             self.assertEqual(rc,1)
+
+
+class CIWaitTests(GitFixture):
+    def setUp(self):
+        super().setUp()
+        self.tag()
+        self.elapsed = 0
+        self.delays = []
+        self.timer = SimpleNamespace(monotonic=lambda: self.elapsed, sleep=self.sleep)
+        self.output = self.root.parent / (self.root.name + '-outputs')
+        self.addCleanup(lambda: self.output.unlink(missing_ok=True))
+        self.output.write_bytes(b'existing=kept\n')
+
+    def sleep(self, seconds):
+        self.delays.append(seconds)
+        self.elapsed += seconds
+
+    def wait_cli(self, seconds='90'):
+        return self.cli(['--require-ci', '--wait-ci', seconds,
+                         '--github-output', str(self.output)])
+
+    def test_real_ci_reader_waits_for_same_commit_push_before_outputs(self):
+        import release_ci_gate as ci
+        real_query = ci._query
+        statuses = iter(['queued', 'in_progress', 'completed'])
+        queries = []
+
+        def query(root, command, timeout):
+            if command[0] == 'gh':
+                queries.append(command)
+                status = next(statuses)
+                return json.dumps([dict(event='push', headSha=self.head, status=status,
+                    conclusion='success' if status == 'completed' else '', databaseId=123)])
+            return real_query(root, command, timeout)
+
+        with patch.object(gate, 'time', self.timer), patch.object(ci, '_query', side_effect=query):
+            rc, text = self.wait_cli()
+        self.assertEqual(rc, 0, text)
+        self.assertEqual(self.delays, [30, 30])
+        self.assertEqual(len(queries), 3)
+        for command in queries:
+            self.assertEqual(command[command.index('--commit') + 1], self.head)
+        self.assertEqual(self.output.read_text(), 'existing=kept\n' +
+            f'commit={self.head}\nversion=0.8.2\nrust_toolchain={DEFAULT_RUST_TOOLCHAIN}\n')
+
+    def test_timeout_is_bounded_and_preserves_output(self):
+        with patch.object(gate, 'time', self.timer), patch.object(gate, 'check_release_ci',
+                return_value=['CI still running (in_progress)']) as query:
+            rc, text = self.wait_cli('5')
+        self.assertEqual(rc, 1, text)
+        self.assertIn('Timed out', text)
+        self.assertEqual(self.delays, [5])
+        self.assertEqual(query.call_count, 1)
+        self.assertEqual(self.output.read_bytes(), b'existing=kept\n')
+
+    def test_failed_missing_unknown_and_mismatched_ci_never_wait(self):
+        failures = [
+            ['CI conclusion=failure'], ['CI conclusion=cancelled'],
+            ['CI admission failed: no push CI run found'],
+            ['CI still running (unexpected_status)'],
+            ['CI ran on another commit', 'CI still running (queued)'],
+            ['CI admission failed: release coverage requires a push CI run'],
+        ]
+        for errors in failures:
+            with self.subTest(errors=errors), patch.object(gate, 'time', self.timer), \
+                    patch.object(gate, 'check_release_ci', return_value=errors) as query:
+                rc, text = self.wait_cli()
+            self.assertEqual(rc, 1, text)
+            self.assertEqual(query.call_count, 1)
+            self.assertEqual(self.delays, [])
+            self.assertEqual(self.output.read_bytes(), b'existing=kept\n')
+
+    def test_changed_source_during_wait_refuses_before_requery(self):
+        def change(seconds):
+            self.sleep(seconds)
+            (self.root / 'qeli/Cargo.toml').write_text('changed')
+        self.timer.sleep = change
+        with patch.object(gate, 'time', self.timer), patch.object(gate, 'check_release_ci',
+                return_value=['CI still running (queued)']) as query:
+            rc, text = self.wait_cli()
+        self.assertEqual(rc, 1, text)
+        self.assertIn('clean', text)
+        self.assertEqual(query.call_count, 1)
+        self.assertEqual(self.output.read_bytes(), b'existing=kept\n')
+
+    def test_default_remains_immediate_refusal_for_pending_ci(self):
+        with patch.object(gate, 'time', self.timer), patch.object(gate, 'check_release_ci',
+                return_value=['CI still running (queued)']) as query:
+            rc, text = self.cli(['--require-ci', '--github-output', str(self.output)])
+        self.assertEqual(rc, 1, text)
+        self.assertEqual(query.call_count, 1)
+        self.assertEqual(self.delays, [])
+        self.assertEqual(self.output.read_bytes(), b'existing=kept\n')
+
+    def test_invalid_wait_refuses_before_git(self):
+        for args in (['--wait-ci', '-1', '--require-ci'], ['--wait-ci', '3601', '--require-ci'],
+                     ['--wait-ci', '10']):
+            with self.subTest(args=args), patch.object(gate, 'admit_tag',
+                    side_effect=AssertionError('Git queried')):
+                with self.assertRaises(SystemExit) as error:
+                    self.cli(args)
+                self.assertEqual(error.exception.code, 2)
 
 
 class PublisherCertificationTests(GitFixture):
@@ -301,6 +404,7 @@ class WorkflowTests(unittest.TestCase):
             start=source.index("python3 scripts/release_tag.py")
             command=source[start:].splitlines()[0]
             self.assertIn("--require-ci",command)
+            self.assertIn("--wait-ci 1800",command)
             self.assertIn("--require-certification",command)
             self.assertLess(start,source.index(boundary))
 

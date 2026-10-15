@@ -43,7 +43,7 @@ jobs:
         id: meta
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/release_tag.py --tag "$TAG" --require-ci --require-certification --github-output "$GITHUB_OUTPUT"
+        run: python3 scripts/release_tag.py --tag "$TAG" --require-ci --wait-ci 1800 --require-certification --github-output "$GITHUB_OUTPUT"
 
       - name: Validate common native legal resources before building
         run: python3 scripts/native_licenses.py

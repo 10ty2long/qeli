@@ -45,7 +45,9 @@ jobs:
         if: steps.ref.outputs.release_tag == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci --require-certification
+        # A tag starts CI and publication together. Wait for that exact CI;
+        # failed/missing/mismatched CI still refuses before login or image push.
+        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci --wait-ci 1800 --require-certification
 
       - name: Validate native legal resources before Docker publication
         run: python3 scripts/native_licenses.py
