@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+  "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -31,15 +31,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -63,15 +63,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -95,15 +95,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -127,15 +127,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -159,15 +159,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -191,15 +191,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -223,15 +223,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -255,15 +255,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -287,15 +287,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -319,15 +319,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -351,15 +351,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -383,15 +383,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -415,15 +415,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -447,15 +447,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -479,15 +479,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -511,15 +511,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -543,15 +543,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -575,15 +575,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -607,15 +607,15 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2ab27de3b51311ee722e371a509619a92302d57029da239095d95c6292fa0a3a",
+      "source_digest": "ee418bb8b65243bf343d919c897e14c67f370e7ee198afbf3d353c8ede586948",
       "artifact_sha256": "dbf16592b8cf3c6a5dfd937b76740012c5242960459ebc3c3b3243c3bc5abafa",
       "environment": "Debian 13.5 amd64; lab 10.66.116.11; private mount/network/PID namespaces; actual DNS tools/dependencies; production identities preserved",
       "executed_at": "2026-10-15T15:00:49.752840+00:00",
@@ -646,9 +646,9 @@
       },
       "execution_source_commit": "9fa0903a191aea54019a2ba293c709d740c661de",
       "execution_release_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516",
-      "source_applicability_evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
+      "source_applicability_evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
       "actual_CLI_build_source_commit": "c6587b8140a99bf8facbf18a8a0b897b4fe29d0e",
-      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run."
+      "acceptance_basis": "Fresh rustls0.23.46 factory CLI execution: 19 executions/409 assertions certify 20 required cases, including the derived leak case. Same qeli/conformance build tree after one unrelated Android test fix; subsequent ten Markdown reports only. Bounded 100 TCP and UDP flips, not a new eight-hour endurance run. Q29 accepted-limitation completion adds ten Markdown files only; see release/certification/evidence/q29-completion-docs-applicability-20261015.json."
     },
     {
       "id": "android.wifi-to-cellular",
@@ -811,7 +811,7 @@
       "raw_execution_source_digest": "037934fd42b544a7a9d69d8df0638eb7068d9f1a578814c4b21d387d680ae516"
     },
     "lab_integrity": "Archive, full host and cleanup gates PASS; production PID/start ticks/executable, staged CLI, DNS tools/dependencies and passwd/group preserved; owned root/archive/unit removed.",
-    "scope": "Full audit 36/37 within agreed scope: Q31/Q34 complete, Q29 generic/null API34 unresolved. Physical exclusions and D06 retained. No tags/releases/deployments created.",
+    "scope": "Full audit 37/37 complete within agreed scope. Q29 generic/null API34 ENONET explicitly accepted by user as a documented limitation, not fixed or relabelled PASS. Q31/Q34 and D06 qualifications and physical exclusions retained. No tags/releases/deployments.",
     "superseded_manifest": {
       "git_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
       "git_blob": "edf8a160bb363b6c3be15d1696833bee444a7b52",
@@ -1116,6 +1116,10 @@
     {
       "evidence": "release/certification/evidence/q34-dev-docs-applicability-20261015.json",
       "scope": "Ten RU/EN reports and plan/debt ledgers only; product, dependency graphs, recipes, workflows, fixtures and runtime harness unchanged since the successful exact-SHA CI and fresh Linux20 execution. Actual execution source, timestamp, CLI hash and rows retained."
+    },
+    {
+      "evidence": "release/certification/evidence/q29-completion-docs-applicability-20261015.json",
+      "scope": "Ten RU/EN Markdown files document explicit human acceptance of the measured API34 generic/null DNS limitation and complete audit 37/37 in agreed scope. No product/native/workflow/runtime change or new execution. Original ENONET FAIL, actual Linux20 execution at 9fa0903a, all artifact/timestamp/qualification facts and 21 physical rows retained. Not full release or universal platform certification."
     }
   ]
 }
