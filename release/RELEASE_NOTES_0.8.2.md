@@ -83,8 +83,12 @@ does not provide a downloadable release asset set.
 Development pushes to `dev` marked `[candidate]` in the commit message retain
 tested candidate outputs in CI for seven days,
 with the source commit in each artifact name. These are preparation artifacts,
-not GitHub Release assets. Windows outputs include the required legal sidecars.
-The macOS packaging path produces separate arm64 and x86_64 ad-hoc-signed archives;
+not GitHub Release assets. Windows distribution archives are
+`QeliWin-standalone.zip` and `QeliWin-net-required.zip`. Extract the chosen archive
+in full and run its `QeliWin.exe`; retain `Legal/` and the driver notices beside it.
+The macOS archives are `Qeli-macos-arm64.tar.gz` and `Qeli-macos-x86_64.tar.gz`.
+Choose the matching architecture and extract with `tar -xzf <archive>` to preserve
+executable permissions. Both bundles are ad-hoc signed;
 the per-app extension requires separate Developer ID/provisioning and notarization.
 The retained Android APK is unsigned and requires the release signing key before
 it can serve as an upgrade package. Desktop/Android candidate packaging uses the
@@ -168,8 +172,12 @@ DNS bypass-режима нет. На проверенном эмуляторе A
 Push в `dev` с пометкой `[candidate]` в сообщении коммита сохраняет проверенные
 результаты сборки в CI на семь дней; имя каждого
 артефакта содержит commit исходников. Это подготовительные файлы, а не assets
-GitHub Release. Windows-комплект включает необходимые лицензионные файлы.
-Для macOS упаковка создаёт отдельные ad-hoc-подписанные архивы arm64 и x86_64;
+GitHub Release. Windows поставляется в `QeliWin-standalone.zip` и
+`QeliWin-net-required.zip`. Распакуйте выбранный архив целиком и запустите его
+`QeliWin.exe`, сохраняя `Legal/` и notices драйверов рядом.
+Архивы macOS — `Qeli-macos-arm64.tar.gz` и `Qeli-macos-x86_64.tar.gz`.
+Выберите нужную архитектуру и распакуйте `tar -xzf <archive>`, чтобы сохранить
+права запуска. Оба пакета имеют ad-hoc подпись;
 per-app extension требует отдельных Developer ID/provisioning и notarization.
 Сохраняемый Android APK не подписан: для пакета обновления нужен релизный ключ.
 При упаковке desktop/Android используются квалифицированные нативные библиотеки

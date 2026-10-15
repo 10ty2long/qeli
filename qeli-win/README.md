@@ -37,7 +37,7 @@ qeli-win/
 │   ├── Branding.cs    логотип + иконки (GDI+), NativeLoader (вшитый Wintun)
 │   ├── wintun/wintun.dll  (встраивается в exe как ресурс)
 │   └── windivert/         WinDivert.dll + WinDivert64.sys (встраиваются в exe)
-├── dist/              готовые сборки — QeliWin-standalone.exe / QeliWin-net-required.exe
+├── dist/              publish-каталоги и QeliWin-standalone.zip / QeliWin-net-required.zip
 └── ../qeli-shared/    production lifecycle/model + отдельный QeliConformance runner
 ```
 
@@ -45,21 +45,25 @@ qeli-win/
 
 VPN требует прав администратора (создание Wintun-адаптера, изменение маршрутов/DNS).
 
-Из релиза приходят **два варианта приложения** — выберите один. Рядом лежат общие
-`Wintun-LICENSE.txt`, `WinDivert-LICENSE.txt` и `WinDivert-NOTICE.txt`; они являются обязательной частью поставки встроенных драйверов:
+Для поставки 0.8.2 подготовлены **два ZIP-варианта приложения** — выберите один.
+Каждый содержит `QeliWin.exe`, каталог `Legal/`, `Wintun-LICENSE.txt`,
+`WinDivert-LICENSE.txt` и `WinDivert-NOTICE.txt`. Лицензионные материалы являются
+обязательной частью поставки; сохраняйте весь распакованный комплект.
+В прежних релизах отдельно публиковались файлы с суффиксом `.exe`.
 
-| Файл | Размер | Что нужно на машине |
-|---|---|---|
-| `QeliWin-standalone.exe` | ~77 МБ | **ничего** — рантайм вшит (проще всего) |
-| `QeliWin-net-required.exe` | ~11 МБ | **.NET 10 Desktop Runtime** |
+| Архив | Что нужно на машине |
+|---|---|
+| `QeliWin-standalone.zip` | Рантайм включён в комплект |
+| `QeliWin-net-required.zip` | **.NET 10 Desktop Runtime** |
 
 1. Только для `net-required`: `winget install Microsoft.DotNet.DesktopRuntime.10`.
    Для `standalone` этот шаг пропускается.
-2. Скопируйте выбранный файл куда угодно — он самодостаточный (`wintun.dll` вшита и
+2. Распакуйте выбранный ZIP целиком в отдельный каталог. Запускайте `QeliWin.exe`
+   из этого каталога, сохраняя `Legal/` и остальные файлы рядом. `wintun.dll` вшита и
    распаковывается перед загрузкой: elevated-приложение и служба используют защищённый
    `%ProgramData%\QeliWin\native`, диагностический запуск без elevation —
-   `%LOCALAPPDATA%\QeliWin\native`).
-3. Запустите его (по запросу UAC согласитесь на повышение прав).
+   `%LOCALAPPDATA%\QeliWin\native`.
+3. Запустите `QeliWin.exe` (по запросу UAC согласитесь на повышение прав).
 4. Нажмите **Импорт** → вставьте `qeli://`-ссылку или **INI-конфиг** (`[qeli]`-секция) →
    **Подключить**.
 
@@ -234,24 +238,18 @@ dotnet build QeliWin\QeliWin.csproj -c Debug
 # он наследуется QeliShared через ProjectReference, и NuGet видит два проекта с одним именем.
 dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained false `
   -p:PublishSingleFile=true -o dist\net-required
-Copy-Item dist\net-required\QeliWin.exe dist\QeliWin-net-required.exe
-Copy-Item dist\net-required\Legal dist\ -Recurse -Force
-Copy-Item dist\net-required\Wintun-LICENSE.txt dist\
-Copy-Item dist\net-required\WinDivert-LICENSE.txt dist\
-Copy-Item dist\net-required\WinDivert-NOTICE.txt dist\
+if ($LASTEXITCODE -ne 0) { throw "net-required publish failed" }
+Compress-Archive -Path dist\net-required\* -DestinationPath dist\QeliWin-net-required.zip -Force
 
 # ── вариант B: сжатый self-contained (~77 МБ, без установки .NET) ──
 dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -o dist\standalone
-Copy-Item dist\standalone\QeliWin.exe dist\QeliWin-standalone.exe
-Copy-Item dist\standalone\Legal dist\ -Recurse -Force
-Copy-Item dist\standalone\Wintun-LICENSE.txt dist\
-Copy-Item dist\standalone\WinDivert-LICENSE.txt dist\
-Copy-Item dist\standalone\WinDivert-NOTICE.txt dist\
+if ($LASTEXITCODE -ne 0) { throw "standalone publish failed" }
+Compress-Archive -Path dist\standalone\* -DestinationPath dist\QeliWin-standalone.zip -Force
 ```
 
-Распространять весь publish-каталог либо executable вместе с `Legal/`,
+Распространять весь publish-каталог, упакованный в выбранный ZIP, включая `Legal/`,
 `Wintun-LICENSE.txt` и notices WinDivert. `Legal/` содержит MPL клиента, AGPL ядра
 и общий Cargo.lock комплект; он сохраняется отдельно при single-file publish.
 Проверка: из корня репозитория `python scripts/native_licenses.py --bundle qeli-win/dist/standalone/Legal/NativeRust`.
