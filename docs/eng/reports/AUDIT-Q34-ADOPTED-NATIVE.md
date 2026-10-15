@@ -1,6 +1,6 @@
 # Q34 — native libraries after adopting the panel fixes
 
-<!-- normative-sync: audit-q34-adopted-native-v1 -->
+<!-- normative-sync: audit-q34-adopted-native-v2 -->
 
 13 October 2026. The panel CSS build fixes, unsafe legacy entrypoint removal
 and Bash marker fix were adopted locally in commit
@@ -57,3 +57,38 @@ The native copy/provenance debt caused by patch adoption is closed.
 Q34 remains IN_PROGRESS: global release certification applicability to the new
 tree, the public source cut and hosted CI are not qualified by this result.
 The plan remains 32/37 (86.5%). `NO_PUSH_DEPLOY_RELEASE`.
+
+
+## October 15 update: rustls and development on dev
+
+Development continues on `dev`; the original dependency-update commit
+`099258dc3719161154c7978347a017a8d90aba75` is included in its history. The
+separate verification branch is no longer used for development. The rustls
+minimum and the only changed Cargo.lock package are now 0.23.46; license
+resources match that lockfile. Hosted cargo audit and the full default Rust
+suite passed: 2314 tests, 56 ignored; ignored tests are not counted as executed.
+The previous dev run separately confirmed 174 XCTest cases including Keychain.
+Final CI after integration is checked separately.
+
+Fresh independent A/B builds produced identical pairs for all four libraries.
+The four canonical and four consumed copies, SHA256SUMS and provenance were
+updated. Qualification covered 22 Windows ABI cases, exact exports, three new
+Android APKs, 23 JNI checks and two installed INI tests on API34. The telemetry
+failure after the successful second Android build is preserved as an original
+failure; artifacts were independently verified against both builds, source
+inputs and the archive.
+
+OpenWrt is pinned to this public commit: two standard SDK download/prepare
+passes produced identical archives. Separate Compile/Install/BuildPackage with
+Rust 1.89 and SDK 24.10.4 passed seven opkg checks, nine CLI/INI cases and
+verification of 533 license files. Owned lab roots, processes and temporary
+swap were removed; running services were preserved. No repeated LLVM/Rust
+compiler bootstrap was needed.
+
+[Update evidence](../../../release/certification/evidence/q34-rustls-native-refresh-20261015.json)
+records exact hashes and qualification limits. The previous 20 Linux cases
+retain their original timestamps, CLI and source digest: the dependency update
+does not turn them into new executions. Overall release certification for the
+integrated tree requires completion of the next audit step. This commit does
+not close Q29, Q31 or Q34 as a whole; the plan remains 34/37. There is no Android
+VPN bypass mode.
