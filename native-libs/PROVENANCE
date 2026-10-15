@@ -7,8 +7,8 @@ the GUI clients silently carried an older realtls/FFI core than the repository d
 Nothing in review or CI could have caught that. This file records what the current
 binaries were actually built from, so the question has an answer.
 
-source-digest : 2e94d94ca30041f6834a49fdcc06df76546c82b1c3129696c07abbdc11a46cda
-base-commit   : 35abbef6e5bd47abdccf33f9a8358c40bf3bc857
+source-digest : 6546682de737e66d26656cdd72484ba8f68dcc1202cc80e246f193bc797a73ef
+base-commit   : 43a3ec907f952484aeef14aa616a8e940e32d265
 dirty-sources : 0 file(s) modified vs base-commit at build time
 built-on      : lab .11; isolated Android and Windows/macOS A/B jobs, 2026-10-15
 toolchain     : pinned inventories in native-libs/reproducibility/{desktop,android}.json
