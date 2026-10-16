@@ -2,7 +2,7 @@
 
 Run from the local machine (paramiko) against the 2-VM lab:
     SERVER 10.66.116.10   CLIENT 10.66.116.11
-Produces release/benchmark_results.json and prints a summary.
+Produces docs/data/benchmarks/benchmark_results.json and prints a summary.
 
 Per mode: bring up a dedicated tunnel, ping (latency/jitter/loss), then TCP
 throughput up+down (iperf3, retransmits + iperf CPU + sampled qeli process
@@ -409,9 +409,10 @@ def main():
     # sweep destroyed the previous one — that is how a clean 0.7.12 baseline was
     # nearly lost under two noisy 0.7.13 runs. A repeat run of the same version
     # gets a numbered suffix instead of overwriting its predecessor.
-    rel = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "release")
+    rel = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "docs", "data", "benchmarks")
     ver = (results["meta"].get("version") or "unknown").replace("qeli ", "v").strip()
     day = time.strftime("%Y-%m-%d")
+    os.makedirs(rel, exist_ok=True)
     base = os.path.join(rel, f"benchmark_{ver}_{day}")
     path, n = base + ".json", 1
     while os.path.exists(path):
@@ -422,7 +423,7 @@ def main():
     latest = os.path.normpath(os.path.join(rel, "benchmark_results.json"))
     open(latest, "w", encoding="utf-8").write(blob)
     print(f"\n===== saved {os.path.normpath(path)}")
-    print(f"      (and refreshed release/benchmark_results.json as 'latest') =====")
+    print(f"      (and refreshed docs/data/benchmarks/benchmark_results.json as 'latest') =====")
 
 if __name__ == "__main__":
     main()

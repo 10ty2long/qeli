@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "cWVsaVNhbHRWYWw$CCYuTv8pvqQrvhrBQW3KjPpEN0MZaFfTKv3HOcGqB8w"
     )
     RESULT_PATH = Path(
-        os.environ.get("QELI_PANEL_IPV6_RESULT", "release/panel_ipv6_e2e_current.json")
+        os.environ.get("QELI_PANEL_IPV6_RESULT", "docs/data/validation/panel_ipv6_e2e_current.json")
     )
 
     CASES = (

@@ -47,7 +47,7 @@
 | H03 | 11–12 июля: trust boundary hooks/restore/client-save, session teardown, quota/iroute, clients и backup | Запись `project_qeli_audit_2026-07-11.md`; исторические fixes/build gates, не свежий E2E |
 | H04 | 23–27 июля: core/data plane, UDP auth/HOL, pool races, max_clients, NAT tags, routes, парсеры, все клиенты и supply chain | Память core/client audits 24/25 июля и [сводка 27 июля](../../archive/audits/AUDIT-2026-07-27-FIXES.md); часть платформенных проверок была compile-only |
 | H05 | 4 августа: общий аудит core, клиентов, панели и scripts | Запись `project_qeli_audit_2026-08-04.md`; перечень исторических кандидатов, не реестр текущих дефектов |
-| H06 | Август–сентябрь: IPv6/TAP/NetworkPlan/PMTU/DATA_FRAG, roaming/CONTROL_V2, native/core parity | [План IPv6](IPV6-IMPLEMENTATION-PLAN.md), [роуминг](ROAMING.md), [transport core](../reference/TRANSPORT-CORE.md), `release/ipv6_lab_matrix_dev.json`; применимость evidence к текущему SHA перепроверяется |
+| H06 | Август–сентябрь: IPv6/TAP/NetworkPlan/PMTU/DATA_FRAG, roaming/CONTROL_V2, native/core parity | [План IPv6](IPV6-IMPLEMENTATION-PLAN.md), [роуминг](ROAMING.md), [transport core](../reference/TRANSPORT-CORE.md), `docs/data/validation/ipv6_lab_matrix_dev.json`; применимость evidence к текущему SHA перепроверяется |
 | H07 | 26 августа — 1 сентября: REALITY/H2 PCAP, обнаружимость и throughput/CPU/RSS | [DPI](../reports/DPI-AUDIT.md), [сравнительный бенчмарк](../reports/benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md); измерения 0.8.0, не 0.8.2 |
 | H08 | 16 сентября: общий многослойный аудит A01–A14 и fixes | Локальные `audit-vpn-20260916/AUDIT.md` и `FIX-VERIFICATION.md`; Rust/managed builds, probes и Linux tests; не физические платформенные E2E |
 | H09 | 16–17 сентября: углублённый аудит панели/парсеров A01–A14 | Локальные `audit-panel-20260916/AUDIT.md`, `panel-fixes-20260917/RESULT.md`; Rust/JS probes, сохранение, ACL-поля, секреты, черновики и INI roundtrip |
@@ -2192,7 +2192,7 @@ FAIL и ошибка TCP-only наблюдателя сохранены. Общ�
 
 ### 36. Бенчмарки и методика измерения
 
-**Код:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
+**Код:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `docs/data/benchmarks/benchmark_results.json`.
 
 Зафиксировать SHA/binaries, CPU/governor/affinity/VM contention, MTU/mode и background load. P=1/P=4, up/down/bidir, inner/outer v4/v6, TCP/UDP goodput, p50/p95/p99, loss/jitter, CPU/RSS/auth rate. ≥3 независимых повтора, median+spread/raw results; dev не подменяется числами 0.8.0.
 

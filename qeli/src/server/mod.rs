@@ -6444,7 +6444,7 @@ async fn run_profile_generation(
                         // loop and never re-zeroed it.
                         //
                         // Measured, not guessed (scripts/ab_crossver_downlink.py,
-                        // scripts/ab_memset_fix.py; raw data in release/ab_*.json):
+                        // scripts/ab_memset_fix.py; raw data in docs/data/benchmarks/ab_*.json):
                         //   S14/C14 721 | S14/C15 734 (+1.7%) | S15/C14 631 (-12.5%)
                         //     -> the regression follows the SERVER, the client is innocent
                         //   fixed vs 0.7.15: plain +10.9%, fake-tls +12.5%, obfs +18.2%

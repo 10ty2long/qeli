@@ -22,7 +22,7 @@ import sys
 import tempfile
 import time
 
-OUT = Path(__file__).resolve().parents[1] / "release/stability_gate_last.json"
+OUT = Path(__file__).resolve().parents[1] / "docs/data/benchmarks/stability_gate_last.json"
 
 
 def settings(environ):

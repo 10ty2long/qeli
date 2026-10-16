@@ -172,6 +172,48 @@ def check_links(files: list[Path]) -> None:
                     fail("links", f"{f.relative_to(ROOT)} -> {t}: missing Markdown anchor")
 
 
+def catalog_linked_documents(index: Path, document_root: Path) -> set[str]:
+    """Follow explicit README/index catalogs, not arbitrary article backlinks.
+
+    Large collections belong in their own catalog. Every document must still
+    be reachable from the main index; an orphan catalog cannot hide orphans.
+    Stay within one language tree, ignore code examples and terminate cycles.
+    """
+    from urllib.parse import unquote
+
+    document_root = document_root.resolve()
+    pending = [index.resolve()]
+    visited: set[Path] = set()
+    linked: set[str] = set()
+    while pending:
+        catalog = pending.pop()
+        if catalog in visited:
+            continue
+        visited.add(catalog)
+        body = strip_code(catalog.read_text(encoding="utf-8", errors="replace"))
+        for raw_target in LINK_RE.findall(body):
+            target = raw_target.strip()
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target = unquote(target.split("#", 1)[0].split("?", 1)[0])
+            if not target:
+                continue
+            resolved = (catalog.parent / target).resolve()
+            try:
+                resolved.relative_to(document_root)
+            except ValueError:
+                continue
+            if resolved.is_dir():
+                resolved = next((resolved / name for name in ("README.md", "index.md")
+                                 if (resolved / name).is_file()), resolved)
+            if not resolved.is_file() or resolved.suffix != ".md":
+                continue
+            linked.add(resolved.relative_to(document_root).as_posix())
+            if resolved.name in {"README.md", "index.md"}:
+                pending.append(resolved)
+    return linked
+
+
 def check_index_coverage() -> None:
     allowed_roots = {"manuals", "reference", "plans", "reports", "archive"}
     for lang in LANGS:
@@ -180,20 +222,7 @@ def check_index_coverage() -> None:
         if not index.exists():
             fail("index", f"docs/{lang}/index.md is missing")
             continue
-        body = strip_code(index.read_text(encoding="utf-8", errors="replace"))
-        linked: set[str] = set()
-        for raw_target in LINK_RE.findall(body):
-            target = raw_target.strip()
-            if target.startswith(("http://", "https://", "mailto:", "#")):
-                continue
-            target = target.split("#", 1)[0]
-            if not target:
-                continue
-            resolved = (index.parent / target).resolve()
-            try:
-                linked.add(resolved.relative_to(d.resolve()).as_posix())
-            except ValueError:
-                continue
+        linked = catalog_linked_documents(index, d)
 
         for doc in sorted(d.rglob("*.md")):
             rel = doc.relative_to(d)
@@ -209,7 +238,7 @@ def check_index_coverage() -> None:
             elif len(rel.parts) > 1 and rel.parts[0] not in allowed_roots:
                 fail("index", f"docs/{lang}/{rel_posix} uses an unknown document category")
             if rel_posix not in linked:
-                fail("index", f"docs/{lang}/{rel_posix} is not linked from index.md")
+                fail("index", f"docs/{lang}/{rel_posix} is not reachable from index.md through linked catalogs")
 
 
 def check_parity() -> None:

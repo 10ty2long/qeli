@@ -111,7 +111,8 @@ qeli_vpn/
 ├── qeli-mac/             — macOS client (C#/Avalonia, .NET 10 + libqeli.dylib)
 ├── qeli-shared/          — shared C# code for win+mac (crypto/protocol/model, VpnTunnel core, RealTls, Loc; .NET 10)
 ├── native-libs/          — built native realtls libs (.so/.dll/.dylib)
-├── release/              — built binary + benchmark_results.json + reality-tls/ configs
+├── release/              — release notes, distributions and packaging
+├── docs/data/            — shared benchmark, audit and validation data
 ├── scripts/              — paramiko: deploy, benchmark, debugging, cross-building libs
 └── docs/                 — this documentation
 ```

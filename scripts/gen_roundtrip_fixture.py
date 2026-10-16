@@ -265,7 +265,8 @@ def main():
             raise SystemExit(1)
         print("PASS: all key names/families covered; embedded Rust fixture matches generator")
         return
-    out = ROOT / "release/roundtrip_fixture_server.ini"
+    out = ROOT / "test/fixtures/roundtrip_fixture_server.ini"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(fixture, encoding="utf-8")
     print(f"fixture written -> {out}")
 

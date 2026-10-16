@@ -46,7 +46,7 @@ These records do not establish an independent external cryptographic audit.
 | H03 | 11–12 July: hooks/restore/client-save trust boundaries, session teardown, quota/iroute, clients and backups | `project_qeli_audit_2026-07-11.md` memory record; historical fixes/build gates, not fresh E2E |
 | H04 | 23–27 July: core/data plane, UDP auth/HOL, pool races, max_clients, NAT tags, routes, parsers, all clients and supply chain | Core/client audit memory from 24/25 July and [27 July summary](../../archive/audits/AUDIT-2026-07-27-FIXES.md); some platform checks were compile-only |
 | H05 | 4 August: broad core/client/panel/script audit | `project_qeli_audit_2026-08-04.md`; historical candidate list, not a current defect register |
-| H06 | August–September: IPv6/TAP/NetworkPlan/PMTU/DATA_FRAG, roaming/CONTROL_V2 and native/core parity | [IPv6 plan](IPV6-IMPLEMENTATION-PLAN.md), [roaming](ROAMING.md), [transport core](../reference/TRANSPORT-CORE.md), `release/ipv6_lab_matrix_dev.json`; evidence applicability to current SHA must be checked |
+| H06 | August–September: IPv6/TAP/NetworkPlan/PMTU/DATA_FRAG, roaming/CONTROL_V2 and native/core parity | [IPv6 plan](IPV6-IMPLEMENTATION-PLAN.md), [roaming](ROAMING.md), [transport core](../reference/TRANSPORT-CORE.md), `docs/data/validation/ipv6_lab_matrix_dev.json`; evidence applicability to current SHA must be checked |
 | H07 | 26 August–1 September: REALITY/H2 captures, detectability and throughput/CPU/RSS | [DPI](../reports/DPI-AUDIT.md), [comparative benchmark](../reports/benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md); measurements are for 0.8.0, not 0.8.2 |
 | H08 | 16 September: broad A01–A14 audit and fixes | Local `audit-vpn-20260916/AUDIT.md` and `FIX-VERIFICATION.md`; Rust/managed builds, probes and Linux tests, not physical platform E2E |
 | H09 | 16–17 September: detailed panel/parser A01–A14 audit | Local `audit-panel-20260916/AUDIT.md`, `panel-fixes-20260917/RESULT.md`; Rust/JS probes, saves, ACL fields, secrets, drafts and INI round trips |
@@ -2181,7 +2181,7 @@ LOCAL_DEV_COMMIT;NO_PUSH_DEPLOY_RELEASE.
 
 ### 36. Benchmarks and measurement methodology
 
-**Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `release/benchmark_results.json`.
+**Source:** `scripts/benchmark.py`, `qeli/src/packet_bench_main.rs`, `test`, `docs/data/benchmarks/benchmark_results.json`.
 
 Pin source/binaries, CPU/governor/affinity/VM contention, MTU/modes and background load. P=1/P=4, up/down/bidirectional, inner/outer v4/v6, TCP/UDP goodput, latency percentiles, loss/jitter, CPU/RSS/auth rate. ≥3 independent runs, median/spread/raw results; 0.8.0 numbers do not represent current development.
 
