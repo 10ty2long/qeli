@@ -453,7 +453,7 @@ identity. See the [current qualification](../docs/eng/reports/audit-0.8.2/AUDIT-
 
 ### Historical local OpenWrt source cut (14 October 2026)
 
-The recipe now pins `ee2b74aafb2a57a2613541223c5522908cb71f71`, which includes the qualified bonded-slot core fix.
+The recipe then pinned `ee2b74aafb2a57a2613541223c5522908cb71f71`, which includes the qualified bonded-slot core fix.
 The actual SDK24.10.4 source archive has SHA256 `6c82f2162ba9b4939c8d40393a157d5483ccdc6796e41706f0ec2672ee95fb16`
 (28375941 bytes). Two downloads from empty caches and distinct private Git URLs
 produced identical bytes. SDK prepare verified the archive; all 3348 tracked files
@@ -581,9 +581,9 @@ The strict source gate still requires the actual SDK archive and rejects a chang
 `qeli/` tree. Build/Compile and Install are unchanged. Temporary SDK files were
 removed after saving the proof and verifying that the lab service was preserved.
 
-### Documentation and DNS-comment source cut (16 October 2026)
+### Historical documentation and DNS-comment source cut (16 October 2026)
 
-The recipe now pins `81269a0fd31b74e73174c5aa8fef4d675a1420b6`. This snapshot contains the
+The recipe then pinned `81269a0fd31b74e73174c5aa8fef4d675a1420b6`. This snapshot contains the
 audit-report relocation, corrected documentation and three DNS comment corrections;
 executable Rust lines and their line numbers are unchanged. Independent native A/B
 builds of the corrected source match the previously qualified four native artifacts.
@@ -595,3 +595,21 @@ files and modes match the exact Git commit. The actual SDK archive is retained f
 the strict source gate. This is an export/prepare check, not a fresh full SDK/IPK,
 compiler-bootstrap or physical-router run. Earlier runtime evidence retains its
 original source and scope.
+
+### Current 0.8.2 release-preparation source cut (16 October 2026)
+
+The recipe now pins `b96d45dbf784f2b3a4c1a76c603fd147c296520d`, which is available on
+`dev` and includes the current Rust source, panel and route-import fixes. One fresh
+stock SDK 24.10.4 `download`/`prepare` produced SHA-256
+`1701ee2851410b0a7c96264191788d401bf4b793b780e9179b3843c02a7e9c31`
+(27252315 bytes). All 3454 prepared tracked file contents match that exact commit.
+The actual SDK archive is retained locally for the strict release source gate.
+This qualifies source export/prepare, not a repeated compiler bootstrap, full SDK/IPK
+build or physical router test. It does not publish a tag or GitHub Release.
+
+Текущий пакет закреплён на `b96d45dbf784f2b3a4c1a76c603fd147c296520d`, доступном в `dev`:
+актуальные Rust-исходники, панель и исправления импорта маршрутов. Свежие `download`/`prepare`
+в штатном SDK 24.10.4 дали указанный выше SHA-256; содержимое всех 3454 подготовленных
+отслеживаемых файлов сверено с этим commit. Сам SDK-архив сохранён локально для строгой
+проверки источника релиза. Это не повторная сборка компилятора, полного SDK/IPK и не
+проверка физического роутера. Тег и GitHub Release этим действием не публикуются.
