@@ -122,7 +122,7 @@ sudo env QELI_DEB=/path/qeli.deb ./update-qeli-server.sh
 
 The local path must exist; a typo refuses instead of downloading. Local input skips release checksum/attestation lookup and needs neither curl nor jq; use a trusted package. Updater-owned downloads are cleaned on normal exit/failure/INT/TERM; the supplied local file stays. The service-owned legacy `/var/lib/qeli/packages` is preserved and ignored, never imported into the root rollback cache.
 
-SHA256SUMS from the same release establish integrity against its metadata, not independent provenance. Set `QELI_VERIFY_ATTESTATION=1` to require `gh attestation verify` for a remote package; missing gh or failed verification aborts. Keep separate backups of configs/users/identity/client links before major upgrades: the updater preserves them but does not back them up. See [§4](#4-what-to-back-up) and [the scoped updater audit](../reports/AUDIT-Q33-SERVER-UPDATER.md).
+SHA256SUMS from the same release establish integrity against its metadata, not independent provenance. Set `QELI_VERIFY_ATTESTATION=1` to require `gh attestation verify` for a remote package; missing gh or failed verification aborts. Keep separate backups of configs/users/identity/client links before major upgrades: the updater preserves them but does not back them up. See [§4](#4-what-to-back-up) and [the scoped updater audit](../reports/audit-0.8.2/AUDIT-Q33-SERVER-UPDATER.md).
 
 To verify a downloaded amd64 package before manual installation, use GitHub CLI against this repository. The filename below follows the latest published release in this guide; failed verification means the package has not passed this provenance check.
 
@@ -158,25 +158,25 @@ Three things worth knowing up front:
   (the package has no `postrm`) — keys and password hashes stay on disk; remove them by
   hand if you don't want that.
 
-The package now rejects linked/non-directory state roots and linked/nonregular default users.conf before unpack; it leaves those paths for the administrator to repair. A new users.conf is empty0600; existing regular files retain their content and mode. On a booted systemd host, failure to apply the selected service user leaves the package half-configured; fix the reported cause and retry `sudo dpkg --configure qeli`. In a nonbooted chroot/container, an unconfirmed user change is warned and must be retried after boot. Removal refuses if the service cannot be stopped on a booted host; purge removes packaged examples but retains unmanaged config/users/identity. [Executed scope and limitations](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
+The package now rejects linked/non-directory state roots and linked/nonregular default users.conf before unpack; it leaves those paths for the administrator to repair. A new users.conf is empty0600; existing regular files retain their content and mode. On a booted systemd host, failure to apply the selected service user leaves the package half-configured; fix the reported cause and retry `sudo dpkg --configure qeli`. In a nonbooted chroot/container, an unconfirmed user change is warned and must be retried after boot. Removal refuses if the service cannot be stopped on a booted host; purge removes packaged examples but retains unmanaged config/users/identity. [Executed scope and limitations](../reports/audit-0.8.2/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
 
-With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The dependency phase now skips apt when prerequisites are available; a local payload alone does not qualify the entire first installation as disconnected. [Executed scope](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The dependency phase now skips apt when prerequisites are available; a local payload alone does not qualify the entire first installation as disconnected. [Executed scope](../reports/audit-0.8.2/AUDIT-Q33-BINARY-INSTALLER.md).
 
-Installer dependency setup invokes apt only for missing prerequisites, then verifies commands/CA availability. For QELI_BIN+complete QELI_SRC or a local QELI_DEB, provide PUBLIC_HOST and preinstall OS/package dependencies to avoid dependency downloads; this stage check does not qualify the entire disconnected install. QELI_DEB is an absolute local .deb path, not a URL. Package=qeli, host architecture/all and exact installed status/version/architecture are required before config generation. QELI_VERIFY_ATTESTATION=1 requires successful gh verification for the Debian install path, including a local package. Failed install/repair is fatal, with no automatic package rollback. [Executed admission scope](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md).
+Installer dependency setup invokes apt only for missing prerequisites, then verifies commands/CA availability. For QELI_BIN+complete QELI_SRC or a local QELI_DEB, provide PUBLIC_HOST and preinstall OS/package dependencies to avoid dependency downloads; this stage check does not qualify the entire disconnected install. QELI_DEB is an absolute local .deb path, not a URL. Package=qeli, host architecture/all and exact installed status/version/architecture are required before config generation. QELI_VERIFY_ATTESTATION=1 requires successful gh verification for the Debian install path, including a local package. Failed install/repair is fatal, with no automatic package rollback. [Executed admission scope](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-ADMISSION.md).
 
 Installer-generated links, summary and backups are private0600 and published through temporary files; existing kept links retain their bytes through a private copy. Linked/nonregular generated names refuse before dependency changes. Backups have a random suffix after the timestamp to avoid collisions. The web helper replaces its config atomically, preserving ownership and setting0600. This does not make the entire forced reconfiguration transactional.
 
-If user/link creation fails, the old CONNECTION-STRINGS.txt remains and a root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` journal retains generated passwords, recorded before add-client. Read it as root, compare its users with users.conf, and use the recovered passwords/links for the affected client configurations; a pending entry may not have created an account. Do not blindly repeat add-client for an existing user. Accounts/individual links may already change; there is no automatic rollback. After successful summary publication the current journal is removed; journals from earlier failures remain until you verify recovery and remove them. These are plaintext secrets; include them in protected backups and remove obsolete copies after recovery. Power-loss durability is not qualified. [Audit scope](../reports/AUDIT-Q33-INSTALLER-SECRETS.md).
+If user/link creation fails, the old CONNECTION-STRINGS.txt remains and a root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` journal retains generated passwords, recorded before add-client. Read it as root, compare its users with users.conf, and use the recovered passwords/links for the affected client configurations; a pending entry may not have created an account. Do not blindly repeat add-client for an existing user. Accounts/individual links may already change; there is no automatic rollback. After successful summary publication the current journal is removed; journals from earlier failures remain until you verify recovery and remove them. These are plaintext secrets; include them in protected backups and remove obsolete copies after recovery. Power-loss durability is not qualified. [Audit scope](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-SECRETS.md).
 
-Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and the selected service-user helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. The installer explicitly applies QELI_RUN_AS, including the default qeli choice, after validation; qeli removes a previous root override while preserving installer receipts/backups. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and the selected service-user helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. The installer explicitly applies QELI_RUN_AS, including the default qeli choice, after validation; qeli removes a previous root override while preserving installer receipts/backups. [Audit and limits](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CONFIG.md).
 
-Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN remained outside that earlier qualification; the default-unit ownership/drop-in transition is covered by the [subsequent service-user audit](../reports/AUDIT-Q33-SERVICE-USER.md). [Evidence and limits](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN remained outside that earlier qualification; the default-unit ownership/drop-in transition is covered by the [subsequent service-user audit](../reports/audit-0.8.2/AUDIT-Q33-SERVICE-USER.md). [Evidence and limits](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CLI.md).
 
 ### Service reload and root-owned configuration
 
-`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
-Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
 
 ### 3.2. Docker
@@ -376,8 +376,8 @@ normal recovery. Multiple workers require separate network namespaces and
 config/state/control paths; additional profiles within one worker do not. The normal
 supervisor + worker pair is supported. Old binaries do not participate: stop the
 previous worker before upgrading.
-[Ownership](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md) ·
-[forced cancellation](../reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md).
+[Ownership](../reports/audit-0.8.2/AUDIT-Q14-WORKER-NETWORK-LEASE.md) ·
+[forced cancellation](../reports/audit-0.8.2/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md).
 
 The socket directory must belong to the worker user, have mode `0700`, and not be a
 symlink. Qeli creates new directories privately and never chmods existing directories.
@@ -428,7 +428,7 @@ Limits are 8 MiB, 32768 rules and 64 namespace groups. Foreign groups remain unt
 valid records from a previous boot no longer supply commands. Historical rules from
 older binaries without journals still depend on tagged sweeps and available listing.
 Stop the old worker before upgrading.
-[Checks and limits](../reports/AUDIT-Q14-FIREWALL-JOURNAL.md).
+[Checks and limits](../reports/audit-0.8.2/AUDIT-Q14-FIREWALL-JOURNAL.md).
 
 ## Client DNS recovery
 
@@ -455,7 +455,7 @@ check is not atomic with the next command and cannot distinguish another root's
 identical route. Confirmed physical entries are persisted for the next start after
 SIGKILL; uncertain intents require manual investigation. Do not flush the entire route
 table; verify the origin of an exact entry before removing it manually.
-[Validation and limits](../reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
 
 ## Client physical route recovery
 
@@ -478,7 +478,7 @@ aborts startup and retains records. Repair the cause and retry; follow
 Do not delete the journal or lock to bypass refusal. Empty state and a stable lock after
 clean stop are normal. The journal does not adopt leftovers of older unjournaled versions.
 Limits are 8 MiB, 128 groups and 8192 records. Attach does not manage these routes.
-[Validation and limits](../reports/AUDIT-Q25-ROUTE-JOURNAL.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-JOURNAL.md).
 
 ## Persistent TUN/TAP after a client crash
 
@@ -530,7 +530,7 @@ unreadable files grant no DNS allowances; exceeding the merged list limit aborts
 The `nameserver` token must be separate, with whitespace before a trailing comment.
 Scoped IPv6 with `%interface`/`%index` grants no unrestricted interface-independent
 allowance and does not discard other valid entries. Later DNS changes do not refresh
-firewall rules automatically. [Resolver-file reads](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+firewall rules automatically. [Resolver-file reads](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-FILES.md).
 
 [§6.86](TROUBLESHOOTING.md#686-linux-resolver-files-and-kill-switch-dns-allowances).
 
@@ -545,7 +545,7 @@ cancellation before ACK does not run `post_up`. Cleanup failure prevents a succe
 Sending a signal alone does not make a TUN ready for reuse. Wait for process exit and
 verify cleanup. Forcibly dropping a future may synchronously wait for the worker join;
 there is no single hard shutdown deadline yet.
-[Validation and limits](../reports/AUDIT-Q25-NETWORK-TASK.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-NETWORK-TASK.md).
 
 ## Stopping an established Linux tunnel
 
@@ -558,7 +558,7 @@ On `network resource cleanup reported failure`, automatic reconnect is prohibite
 an enabled kill-switch is retained. A successful guard retry does not turn the initial
 failure into successful exit. Retain logs and investigate before a new explicit start.
 Forced Drop may synchronously await completion; there is still no single hard shutdown
-deadline. [Design and checks](../reports/AUDIT-Q25-TUN-TEARDOWN.md).
+deadline. [Design and checks](../reports/audit-0.8.2/AUDIT-Q25-TUN-TEARDOWN.md).
 
 ## Stopping during kill-switch setup, refresh or removal
 
@@ -572,7 +572,7 @@ has not been confirmed. Qeli preserves its contents, including DROP, and returns
 Do not manually flush that chain before inspecting its hooks. Another firewall family
 may already have been removed; one retained chain does not establish host-wide protection.
 After resolving the cause, a new explicit start performs ordinary recovery.
-[Validation and limits](../reports/AUDIT-Q25-FIREWALL-TASK.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-FIREWALL-TASK.md).
 
 ## UDP servers with multiple local addresses
 
@@ -580,7 +580,7 @@ With wildcard `bind.address = 0.0.0.0` or `::`, replies use the local address th
 the client packet. This covers handshake, data and control messages without a new INI
 option. Clients using different addresses cannot change each other's source. If the OS
 does not provide valid pktinfo, the server does not substitute another address.
-[Checks and limits](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
+[Checks and limits](../reports/audit-0.8.2/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
 
 ## Stopping during Linux client startup recovery
 
@@ -593,7 +593,7 @@ solely from a stored marker.
 
 Wait for client exit and inspect the final error before restarting. The 15-second route
 operation budget is not a single hard shutdown deadline; forced Drop may synchronously
-join the worker. [Validation and limits](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
+join the worker. [Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
 
 ## Linux TUN packet-worker startup failure
 
@@ -605,7 +605,7 @@ cleanup failure.
 
 Successful `post_up` confirms NetworkPlan application, not completed pump startup.
 Failure to create a cleanup worker or forced Drop can still cause synchronous fallback
-waiting. [Validation and limits](../reports/AUDIT-Q25-PUMP-START.md).
+waiting. [Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-PUMP-START.md).
 
 ## Linux client diagnostics on slow storage
 
@@ -616,7 +616,7 @@ appear in the file. Schema 1 and `0600` permissions are unchanged.
 Ordinary exit awaits terminal publication after stopping the sampler. Slow fsync keeps
 neighboring async tasks responsive but can delay process exit; there is no hard overall
 deadline. Diagnostics failures do not change the VPN result. If a write fails, the file
-may be stale: inspect exit status and logs. [Validation and limits](../reports/AUDIT-Q25-STATUS-WRITER.md).
+may be stale: inspect exit status and logs. [Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-STATUS-WRITER.md).
 
 ## TCP client queue drops
 
@@ -677,8 +677,8 @@ repairing it. New pins use atomic publication with `0600`. TOFU file I/O runs on
 separate joined worker. Stop/timeout stop handshake waiting; an admitted write completes
 before reconnect or exit. A late error preserves `failed`; successful persistence may
 finish after cancellation. The 15-second flock bound is not an overall shutdown limit.
-[Worker and cancellation](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
-[Design and validation](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+[Worker and cancellation](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-WORKER.md).
+[Design and validation](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-FILES.md).
 
 ## Reading INI during Linux client startup
 
@@ -872,8 +872,8 @@ before WAN rename/delete/recreate; then change the interface and restart the pro
 
 On 3 October 2026 production BPF protection was excluded by user decision; current
 Qeli requires no additional CAP_BPF or bpffs.
-[Known P2 and disposition](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+[Known P2 and disposition](../reports/audit-0.8.2/AUDIT-Q25-WAN-NAME-REUSE.md).
 
-DEB update qualification: package downgrade restored the configured DB and service after two faults in an isolated fixture. Remove/purge preserved operator data. This does not guarantee every profile is healthy: updater checks supervisor PID stability; verify a client connection and logs after updating. Details and limits: [Q33 DEB/update](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
+DEB update qualification: package downgrade restored the configured DB and service after two faults in an isolated fixture. Remove/purge preserved operator data. This does not guarantee every profile is healthy: updater checks supervisor PID stability; verify a client connection and logs after updating. Details and limits: [Q33 DEB/update](../reports/audit-0.8.2/AUDIT-Q33-PACKAGE-MANAGER.md).
 
-Additional release package qualification confirms VPN traffic through systemd after install, upgrade and both rollbacks with a pinned server key. Each stage uses a new client connection; uninterrupted sessions during restart are not guaranteed. IPv4/IPv6, TCP/UDP, DNS and MTU matrix also passed. [Scope and evidence](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
+Additional release package qualification confirms VPN traffic through systemd after install, upgrade and both rollbacks with a pinned server key. Each stage uses a new client connection; uninterrupted sessions during restart are not guaranteed. IPv4/IPv6, TCP/UDP, DNS and MTU matrix also passed. [Scope and evidence](../reports/audit-0.8.2/AUDIT-Q33-PACKAGE-MANAGER.md).

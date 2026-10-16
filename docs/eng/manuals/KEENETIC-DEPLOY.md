@@ -80,7 +80,7 @@ builds both helpers. Encoded/ambient RUSTFLAGS cannot override the recipe; MIPS
 keeps its explicit soft-float linker argument. Compiler overrides are cleared and
 Rust wrappers disabled for Qeli compilation. Global Cargo config, PATH, shared
 cache/tool installations and local changes during upload still prevent a claim
-of hermetic or reproducible builds. The SDK uses its own Rust feed policy. See [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+of hermetic or reproducible builds. The SDK uses its own Rust feed policy. See [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ---
@@ -126,7 +126,7 @@ errors stop publication. Existing INI content is preserved and restricted to0600
 Copies are prepared first and each file is renamed atomically; the bundle is not
 an atomic transaction. Correct an installation error and retry; no automatic VPN
 restart occurs. Optional ip6tables failure requires checking IPv6 support.
-[Q31 fixture evidence](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md) does not qualify real
+[Q31 fixture evidence](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md) does not qualify real
 opkg, ELF/ABI, power-loss or firmware runtime.
 
 ---
@@ -289,7 +289,7 @@ inspect the old rules and forwarding values. An old checkpoint without version2
 requires manual ownership review and recovery; the new script preserves it and
 refuses automatic cleanup. Keep its original values until recovery is verified.
 Do not delete it to bypass the failure. Matching untagged administrator rules are
-not automatically removed. See [Q31 evidence and remaining limits](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+not automatically removed. See [Q31 evidence and remaining limits](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Process lifecycle and PID records
 
@@ -308,17 +308,17 @@ The wrapper delegates TUN lifetime to core/kernel/ndm, including persistent TUNs
 A successful start confirms a live executable, not authentication or connectivity.
 Shell/proc checks do not provide atomic pidfd identity or serialize all operations.
 Linux native-helper tests qualify the wrapper's order; actual router integration
-is excluded. See [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+is excluded. See [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## OpkgTun plan application receipt
 
-The hook writes `/opt/var/run/qeli.opkgtun.applied` (0600) only after all ndm commands and save succeed. A changed plan, including MTU alone, or missing receipt forces reapplication. Connected/address matches alone cannot skip it. Publication/removal errors preserve `.apply-pending`; correct the cause and retry. Successful stop clears both records after client exit. This is a command receipt, not a lock or full readback: concurrent events, external setting changes and real firmware remain unqualified. See [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+The hook writes `/opt/var/run/qeli.opkgtun.applied` (0600) only after all ndm commands and save succeed. A changed plan, including MTU alone, or missing receipt forces reapplication. Connected/address matches alone cannot skip it. Publication/removal errors preserve `.apply-pending`; correct the cause and retry. Successful stop clears both records after client exit. This is a command receipt, not a lock or full readback: concurrent events, external setting changes and real firmware remain unqualified. See [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## Maintainer host verification
 
-`python scripts/keenetic_verify.py` uses `QELI_LAB_PASS`, optional `QELI_LAB_SERVER` (default10.66.116.11) and `QELI_LAB_USER` (defaultroot). It builds in a new private `/var/tmp/qeli-keenetic-verify.*` directory with its own target, locked dependencies and one compiler job; services remain running. The printed directory is retained for inspection and should be removed after use. Exit0 means host build/tests/Clippy/graph/ELF/hash passed; exit1 means verification/connect/close failure; exit2 means credentials missing. Host success does not certify MIPS/ARM ABI or firmware. [Audit details](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+`python scripts/keenetic_verify.py` uses `QELI_LAB_PASS`, optional `QELI_LAB_SERVER` (default10.66.116.11) and `QELI_LAB_USER` (defaultroot). It builds in a new private `/var/tmp/qeli-keenetic-verify.*` directory with its own target, locked dependencies and one compiler job; services remain running. The printed directory is retained for inspection and should be removed after use. Exit0 means host build/tests/Clippy/graph/ELF/hash passed; exit1 means verification/connect/close failure; exit2 means credentials missing. Host success does not certify MIPS/ARM ABI or firmware. [Audit details](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## Gateway ownership through the core INI parser
@@ -341,7 +341,7 @@ cannot start the compatibility gateway path. Core ownership suppresses wrapper
 LAN NAT, including exit-node operation. Legacy ownership preserves the fallback
 when core flags are absent/false. The init templates now inspect and launch from
 one private copy described below. Use restart to admit edited INI. Actual router
-firmware and concurrent generation handling remain unqualified. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+firmware and concurrent generation handling remain unqualified. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Serialized lifecycle and upgrade (development0.8.2)
 
@@ -441,7 +441,7 @@ This is scoped environment isolation, not a fully hermetic build. Cargo home/anc
 configuration, forced environment, profile/source/linker overrides, PATH/shared
 registry/tool caches and clean independent Qeli A/B still require qualification.
 7 real-Cargo methods use dependency-free Linux fixtures; they do not certify a fresh
-Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+Qeli cross build, Zig invocation, SDK Rust toolchain or router ABI/runtime. See [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## NetworkPlan publication and NDM application
 

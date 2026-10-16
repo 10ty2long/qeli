@@ -4,7 +4,7 @@
 > Дополнение аудита 23 сентября 2026: Linux route adapter использует owner lease на
 > подключение; cleanup закрывает приём новых мутаций. `dev_attach=true` не предоставляет
 > `ROAMING_PATH`, поскольку маршруты принадлежат внешнему управляющему. `auto` использует
-> reconnect, `required` недоступен. [Q25-F027/F028 и границы](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
+> reconnect, `required` недоступен. [Q25-F027/F028 и границы](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-SCOPE.md).
 > Приведённые ниже live результаты относятся к прежним проходам; этот фикс проверен
 > host-тестами и Linux cross-check, без нового запуска на устройствах.
 
@@ -1263,7 +1263,7 @@ Release запрещён, если хотя бы одна поддерживае
 Feature не считается готовой, пока не пройдены все обязательные release gates, даже если
 happy-path смены Wi-Fi/cellular уже визуально работает.
 
-Soak admission: параметры counts канонические decimal1..2147483647, без ведущих нулей; sample_every<=iterations. Standalone UDP matrix ниже10kQUIC/1kadapters выдаёт SMOKE и exit0 при успехе детей, а не endurance PASS. Полный roaming_resource_release_gate.sh отклоняет downgraded counts до первой фазы. Отдельный bounded release100 остаётся обязательным. Детали и evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+Soak admission: параметры counts канонические decimal1..2147483647, без ведущих нулей; sample_every<=iterations. Standalone UDP matrix ниже10kQUIC/1kadapters выдаёт SMOKE и exit0 при успехе детей, а не endurance PASS. Полный roaming_resource_release_gate.sh отклоняет downgraded counts до первой фазы. Отдельный bounded release100 остаётся обязательным. Детали и evidence: [Q35](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).
 
 ### Обязательная изоляция Linux TCP/UDP runner
 
@@ -1280,7 +1280,7 @@ CI проверяет `test_roaming_netns_isolation.py` без привилег�
 `test_roaming_netns_isolation_kernel.py` требует независимый внешний лабораторный
 стенд и проверяет parent namespace identities до создания sentinel-процессов.
 Полная квалификация, реальные kernel проверки и границы наследования описаны в
-[отчёте Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+[отчёте Q35](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).
 
 ### Control socket и длинный TMPDIR
 
@@ -1291,4 +1291,4 @@ Linux TCP/UDP runners автоматически размещают control sock
 путь. Изоляция обязательна: одинаковые socket names соседних запусков принадлежат
 разным mount/PID namespaces. Каталог /run и sockets исчезают с запуском; WORK
 с INI и журналами сохраняется в TMPDIR для анализа. Передавать control socket
-через WORK больше не требуется. [Проверка F509](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+через WORK больше не требуется. [Проверка F509](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).

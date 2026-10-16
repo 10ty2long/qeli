@@ -1,5 +1,7 @@
 # Qeli — an obfuscated VPN
 
+> 0.8.2 is under development and has not been released. The latest published release is 0.8.1. [Audit status and qualification limits](plans/FULL-SYSTEM-AUDIT.md).
+
 **Qeli** (Quick Easy Link IP) is a self-hosted VPN with its own L4 protocol and
 built-in obfuscation, running over TCP or UDP. The goal is resilience against
 passive/signature-based DPI while keeping the convenience of classic TUN/TAP
@@ -33,7 +35,7 @@ probing tells. It is not a universal indistinguishability or censorship-bypass g
 REALITY/real TLS 1.3 are written **from scratch in Rust**: this is **NOT** the use
 of off-the-shelf REALITY libraries and **NOT** a wrapper over Xray/sing-box. Our
 own fake-TLS, our own hand-rolled TLS 1.3 (`realtls`) with cert-borrowing (the target's certificate and JA3S shape,
-without claiming full Xray/browser parity), our own crypto channel (X25519 + ML-KEM-768 PQ hybrid,
+without claiming full Xray/browser parity), our own crypto channel (X25519, ML-KEM-768 in legacy camouflage,
 ChaCha20-Poly1305, channel-binding, key-pinning, PRP-nonce). Full control and
 auditability of the code, with no dependency on third-party proxy cores.
 
@@ -68,8 +70,10 @@ are written in this repository from scratch:
 - **Genuine HTTP/2 carrier** — authenticated `reality-tls` uses ALPN `h2`, one long-lived
   bidirectional `POST /v1/events/stream`, real SETTINGS/HEADERS/DATA/flow-control and randomized
   2–8 ms batching. There is no user-facing H2 switch and no second inner fake-TLS handshake.
-- **Crypto channel** — X25519 + **ML-KEM-768** (PQ hybrid X25519MLKEM768),
-  HKDF-SHA256, ChaCha20-Poly1305 / AES-GCM, Argon2id for passwords.
+- **Crypto channel** — X25519; inner X25519MLKEM768 is mandatory in legacy camouflage,
+  while `plain` and inner `reality-tls` use classical X25519. Outer TLS PQ depends on
+  the negotiated group. PacketCodec uses ChaCha20-Poly1305; outer TLS uses AES-GCM.
+  HKDF derives keys; Argon2id verifies passwords.
 - **Channel-binding authentication** — the server's proof is bound to the
   handshake transcript + key-pinning: a MITM cannot intercept the password before
   it is even sent.

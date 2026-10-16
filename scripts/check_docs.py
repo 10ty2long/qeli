@@ -31,9 +31,12 @@ Exit code 0 = all good, 1 = something to fix. Intended for CI and pre-release.
 from __future__ import annotations
 
 import re
+import html
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 LANGS = ("ru", "eng")
@@ -97,6 +100,32 @@ def strip_code(text: str) -> str:
     return CODE_SPAN_RE.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
 
 
+def markdown_anchors(text: str) -> set[str]:
+    """GitHub-style heading fragments plus explicit HTML anchors, outside fences."""
+    text = re.sub(r"```.*?```|~~~.*?~~~", "", text, flags=re.DOTALL)
+    anchors = set(re.findall(r'''\b(?:id|name)=["']([^"']+)["']''', strip_code(text)))
+    heading_ids: set[str] = set()
+    headings: list[str] = []
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$", line)
+        if match:
+            headings.append(match[1])
+        elif i and re.fullmatch(r" {0,3}(?:=+|-+)\s*", line) and lines[i-1].strip():
+            headings.append(lines[i-1].strip())
+    for title in headings:
+        title = LINK_RE.sub(lambda m: m.group(0)[1:m.group(0).index("]")], title)
+        title = html.unescape(re.sub(r"<[^>]*>", "", title)).lower().replace("`", "")
+        base = "".join(c for c in title if c in "-_ " or unicodedata.category(c)[0] in "LN").replace(" ", "-")
+        slug, suffix = base, 0
+        while slug in heading_ids:
+            suffix += 1
+            slug = f"{base}-{suffix}"
+        heading_ids.add(slug)
+        anchors.add(slug)
+    return anchors
+
+
 def check_links(files: list[Path]) -> None:
     for f in files:
         try:
@@ -112,7 +141,7 @@ def check_links(files: list[Path]) -> None:
         )
         for target in LINK_RE.findall(text):
             t = target.strip()
-            if t.startswith(("http://", "https://", "mailto:", "#")):
+            if t.startswith(("http://", "https://", "mailto:")):
                 if release_match and t.startswith(
                     "https://github.com/litvinovtd/qeli/blob/"
                 ):
@@ -127,16 +156,20 @@ def check_links(files: list[Path]) -> None:
                             f"v{release_match.group(1)}",
                         )
                 continue
-            if release_match:
+            if release_match and not t.startswith("#"):
                 fail(
                     "links",
                     f"{f.relative_to(ROOT)} -> {t}: GitHub Release bodies require "
                     "an absolute repository URL pinned to the release tag",
                 )
                 continue
-            path = (f.parent / t.split("#", 1)[0]).resolve()
+            relative, _, fragment = t.partition("#")
+            path = (f.parent / relative).resolve() if relative else f.resolve()
             if not path.exists():
                 fail("links", f"{f.relative_to(ROOT)} -> {t}")
+            elif fragment and path.suffix == ".md":
+                if unquote(fragment) not in markdown_anchors(path.read_text(encoding="utf-8")):
+                    fail("links", f"{f.relative_to(ROOT)} -> {t}: missing Markdown anchor")
 
 
 def check_index_coverage() -> None:

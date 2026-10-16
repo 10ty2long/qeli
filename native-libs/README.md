@@ -12,9 +12,9 @@
 > `/var/tmp/qeli-native-repro/android-source` на .11 перед сборкой. Каталоги исходников
 > работающих сервисов не используются.
 
-Предыдущая [сверка 7 октября 2026](../docs/ru/reports/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
+Предыдущая [сверка 7 октября 2026](../docs/ru/reports/audit-0.8.2/AUDIT-Q25-NATIVE-REBUILD.md): четыре свежих независимых A/B, все копии/SHA и PROVENANCE PASS; Windows C ABI и Android JNI проверены на пересобранных библиотеках. Mac runtime остаётся исключённым пользователем.
 
-Текущая [квалификация 8 октября, F451–F454](../docs/ru/reports/AUDIT-Q34-DEPENDENCY-POLICY.md): source1751a44f, свежие независимые A/B четырёх native targets, export gates/14SHA/copies/provenance и Windows ABI22 PASS. В пакет входят Rust dependency/CI policy и PEM TLS; Linux unit2445+60ignored/CLI5/14HTTPS/feature/release-checks PASS. Reproducibility проверена внутри собственного CargoHome; новый Android полный runtime и Mac/iOS runtime не заявлены. Q34 остаётся IN_PROGRESS; [завершённый Q33](../docs/ru/reports/AUDIT-Q33-COMPLETION.md) сохранён.
+Текущая [квалификация 8 октября, F451–F454](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-DEPENDENCY-POLICY.md): source1751a44f, свежие независимые A/B четырёх native targets, export gates/14SHA/copies/provenance и Windows ABI22 PASS. В пакет входят Rust dependency/CI policy и PEM TLS; Linux unit2445+60ignored/CLI5/14HTTPS/feature/release-checks PASS. Reproducibility проверена внутри собственного CargoHome; новый Android полный runtime и Mac/iOS runtime не заявлены. Q34 остаётся IN_PROGRESS; [завершённый Q33](../docs/ru/reports/audit-0.8.2/AUDIT-Q33-COMPLETION.md) сохранён.
 
 ## Содержимое
 

@@ -78,7 +78,7 @@ Zig0.13.0 и cargo-zigbuild0.23.0. Неверная версия вызывае�
 MIPS сохраняет явный soft-float linker argument. Compiler overrides очищаются,
 Rust wrappers отключаются для компиляции Qeli. Global Cargo config, PATH, общие
 cache/tool installations и изменения файлов при upload пока не позволяют заявлять
-герметичную или воспроизводимую сборку. SDK использует собственный Rust feed. См. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+герметичную или воспроизводимую сборку. SDK использует собственный Rust feed. См. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ---
@@ -124,7 +124,7 @@ sh install-keenetic.sh
 Копии готовятся заранее, файлы публикуются атомарным rename по отдельности; весь
 bundle не является транзакцией. Ошибку устранить и повторить установку; VPN сам
 не перезапускается. Отказ optional ip6tables требует проверить IPv6 support.
-[Q31 fixture evidence](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md) не квалифицирует
+[Q31 fixture evidence](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md) не квалифицирует
 настоящие opkg/ELF/ABI/power-loss/firmware runtime.
 
 ---
@@ -300,7 +300,7 @@ forwarding checkpoint version2 с сохранёнными интерфейса�
 требует ручной сверки владения и восстановления: новый скрипт сохраняет его и
 отказывается от автоматической очистки. Сохранить исходные значения до проверки
 восстановления; не удалять checkpoint для обхода отказа. Совпадающие нетегированные
-правила администратора автоматически не удаляются. См. [результаты и оставшиеся ограничения Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+правила администратора автоматически не удаляются. См. [результаты и оставшиеся ограничения Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Процесс клиента и формат PID
 
@@ -318,17 +318,17 @@ KILL escalation нет. Status codes:0 running,3 stopped,4 unverified. Врем�
 включая persistent TUN, оставлено core/kernel/ndm. Успешный start подтверждает живой
 executable, не authentication/connectivity. Shell/proc checks не дают atomic pidfd
 identity и сериализации всех операций. Linux native-helper tests проверяют порядок
-wrapper; настоящий router integration исключён. См. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+wrapper; настоящий router integration исключён. См. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## Запись о применении плана OpkgTun
 
-Хук пишет `/opt/var/run/qeli.opkgtun.applied` (0600) только после всех успешных команд ndm и save. Изменение плана, включая один MTU, или отсутствие записи требует повторной настройки. Совпадения connected/адресов недостаточно для пропуска. Ошибка публикации/удаления сохраняет `.apply-pending`; устранить причину и повторить. Успешный stop удаляет обе записи после завершения клиента. Запись подтверждает команды, не является блокировкой или чтением всех настроек: параллельные события, внешние изменения и настоящая прошивка не квалифицированы. См. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+Хук пишет `/opt/var/run/qeli.opkgtun.applied` (0600) только после всех успешных команд ndm и save. Изменение плана, включая один MTU, или отсутствие записи требует повторной настройки. Совпадения connected/адресов недостаточно для пропуска. Ошибка публикации/удаления сохраняет `.apply-pending`; устранить причину и повторить. Успешный stop удаляет обе записи после завершения клиента. Запись подтверждает команды, не является блокировкой или чтением всех настроек: параллельные события, внешние изменения и настоящая прошивка не квалифицированы. См. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## Проверка host-сборки для мейнтейнера
 
-`python scripts/keenetic_verify.py` использует `QELI_LAB_PASS`, необязательные `QELI_LAB_SERVER` (default10.66.116.11) и `QELI_LAB_USER` (defaultroot). Сборка идёт в новом приватном `/var/tmp/qeli-keenetic-verify.*` с собственным target, locked dependencies и одной compiler job; сервисы продолжают работать. Напечатанный каталог сохраняется для разбора, после использования его нужно удалить. Exit0 означает успех host build/tests/Clippy/graph/ELF/hash; exit1 — verification/connect/close failure; exit2 — нет credentials. Host success не подтверждает MIPS/ARM ABI или firmware. [Подробности аудита](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+`python scripts/keenetic_verify.py` использует `QELI_LAB_PASS`, необязательные `QELI_LAB_SERVER` (default10.66.116.11) и `QELI_LAB_USER` (defaultroot). Сборка идёт в новом приватном `/var/tmp/qeli-keenetic-verify.*` с собственным target, locked dependencies и одной compiler job; сервисы продолжают работать. Напечатанный каталог сохраняется для разбора, после использования его нужно удалить. Exit0 означает успех host build/tests/Clippy/graph/ELF/hash; exit1 — verification/connect/close failure; exit2 — нет credentials. Host success не подтверждает MIPS/ARM ABI или firmware. [Подробности аудита](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 
 ## Владелец gateway через INI-парсер ядра
@@ -351,7 +351,7 @@ legacy ownership query не требуется.
 числе для exit-node. Legacy ownership сохраняет fallback при false/отсутствующих
 core flags. Init теперь проверяет и запускает одну приватную копию, описанную ниже.
 Для применения изменённого INI используй restart. Настоящая firmware и
-параллельное владение поколениями не квалифицированы. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+параллельное владение поколениями не квалифицированы. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Общая блокировка lifecycle и обновление (development0.8.2)
 
@@ -454,7 +454,7 @@ Wrapper/encoded Rust flags подчиняются общей политике.
 profile/source/linker overrides, PATH/shared registry/tool caches и clean независимые
 Qeli A/B ещё не квалифицированы.7 real-Cargo methods используют маленькие Linux
 fixtures без зависимостей; fresh Qeli cross build, Zig invocation, SDK Rust toolchain
-и router ABI/runtime ими не подтверждаются. См. [Q31](../reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+и router ABI/runtime ими не подтверждаются. См. [Q31](../reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Публикация NetworkPlan и применение NDM
 

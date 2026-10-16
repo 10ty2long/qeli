@@ -127,13 +127,15 @@ The strongest barrier for a public bind: a list of CIDRs / bare IPs allowed to
 reach the panel; everyone else gets `403`. Edit it in Config → Web → "Source-IP
 allowlist". **Include your own current IP**, or you'll 403 yourself.
 
-**Allowing any source.** All three of these are equivalent — surrounding quotes are
+**How to allow access from everywhere.** Choose one of the three alternatives below. They are equivalent — surrounding quotes are
 stripped by the config parser, so `""` is simply an explicit way to write "empty":
 
 ```ini
 # allowed_ips = …    ; key omitted entirely
-allowed_ips =        ; present but empty
-allowed_ips = ""     ; identical to the line above
+# present but empty
+allowed_ips =
+# identical to the line above
+allowed_ips = ""
 ```
 
 With no entries there is no IP filter and security rests on TLS + password + rate-limit.
@@ -263,7 +265,7 @@ at once, including Quick Start IPv6 discovery. These two pages skip the probe wh
 no profile requests NAT. `Could not verify iptables availability` reports a failed
 check, such as timeout or denied access; Transport health presents it as a warning.
 Confirmed tool absence remains critical. Finding the tool does not verify NAT rules.
-[Responsiveness checks and limitations](../reports/AUDIT-Q05-HEALTH-PROBES.md).
+[Responsiveness checks and limitations](../reports/audit-0.8.2/AUDIT-Q05-HEALTH-PROBES.md).
 
 The projection selects safe fields individually: obfs/reality credentials, passwords, identity
 private keys and session keys are never returned by `/api/transport/health`.
@@ -509,7 +511,7 @@ leak verification are documented in the [IPv6 guide](IPV6.md).
 Save/restart network preflight runs asynchronously before acquiring the write lock.
 Probes share 15 seconds; after observation, five seconds remain for config-lock admission
 and candidate preparation. Busy or expired preflight asks for a retry; revision and users
-are re-read under the lock. [Details](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
+are re-read under the lock. [Details](../reports/audit-0.8.2/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 > **`Apply & Restart` needs permission to restart the service.** It runs
 > `systemctl restart <unit>`. A **root** service can do this directly; the hardened

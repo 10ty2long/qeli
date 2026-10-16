@@ -34,6 +34,18 @@ def check_examples(text: str) -> None:
 
 
 class ServerConfigExampleTests(unittest.TestCase):
+    def test_all_user_manual_ini_examples_use_whole_line_comments(self):
+        for lang in ("ru", "eng"):
+            for path in (ROOT / "docs" / lang / "manuals").glob("*.md"):
+                text = path.read_text(encoding="utf-8")
+                if ini_examples(text):
+                    with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                        check_examples(text)
+
+    def test_inline_allowlist_comment_is_rejected(self):
+        with self.assertRaisesRegex(AssertionError, "inline comment"):
+            check_examples('```ini\n[web]\nallowed_ips = 203.0.113.4 # my IP\n```\n')
+
     def test_ru_and_english_examples_are_unambiguous_ini(self):
         for lang in ("ru", "eng"):
             text = (ROOT / f"docs/{lang}/manuals/CONFIG.md").read_text(encoding="utf-8")

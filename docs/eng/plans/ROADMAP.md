@@ -3,6 +3,16 @@
 
 Priorities: **P1** — noticeably affects security/functionality, **P2** — quality,
 **P3** — long-term/experimental.
+## 0.8.2 — in development, unpublished
+
+The internal audit is complete 37/37 within the agreed scope: shared INI/URI parsers, panel, `manual` + NDP, lifecycle/rollback and supply checks. API34 ENONET and D06 remain accepted, unfixed limitations; physical exclusions are retained. [Plan and result](FULL-SYSTEM-AUDIT.md) · [Draft changes](../../../release/RELEASE_NOTES_0.8.2.md).
+
+## 0.8.1 — latest published release
+
+[Release description](../../../release/RELEASE_NOTES_0.8.1.md).
+
+The dated planning and test history below does not replace the [current threat model](../reference/THREAT-MODEL.md) or qualify a new build.
+
 ## 0.8.0 (released, 2026-09-02) — genuine H2 carrier for Reality
 
 - ✅ `reality-tls` now carries the private qeli record stream in one long-lived genuine HTTP/2
@@ -61,8 +71,8 @@ Wire-compatible with 0.7.2; config defaults unchanged.
   capture address at `establish()` (was `Cannot set address` → no connect).
 - ✅ **Linux kill-switch nftables → iptables** (single firewall backend; works on
   Keenetic), netns-tested.
-- ✅ **Security hygiene** (external audit 2026-06-25): FFI/JNI handle-registry (C-1),
-  web-token HKDF (H-4), serde route-JSON (C-3), AES-GCM zeroize (H-5), CRLF log-escape
+- ✅ **Security hygiene** (internal code review 2026-06-25): FFI/JNI handle-registry (C-1),
+  web-token HKDF (H-4), serde route-JSON (C-3), memory-hygiene review (H-5; AES key-schedule limits remain), CRLF log-escape
   (H-8), parse-or warn (M-9).
 - ✅ **Web panel** UI polish + **Docker** install option. Versions → 0.7.3.
 
@@ -89,7 +99,7 @@ Wire-compatible with 0.7.1; no config defaults changed. Tracker — the internal
 
 ## 0.7.1 (2026-06-12) — security hardening (2026-06-12 audit)
 
-External-audit fixes; the default wire was unchanged **except H-1**, which is now
+Historical internal-review fixes; the default wire was unchanged **except H-1**, which is now
 **on by default** (wire-breaking — upgrade the server and all clients in lockstep).
 Tracker — [AUDIT-2026-06-12.md](../archive/audits/AUDIT-2026-06-12.md).
 
@@ -107,7 +117,7 @@ Tracker — [AUDIT-2026-06-12.md](../archive/audits/AUDIT-2026-06-12.md).
 - ✅ **PQ hybrid X25519+ML-KEM-768** in the inner handshake on all clients
   (Rust/C#/Kotlin); the server requires PQ for non-plain modes.
 - ✅ Persistent TOFU; reality requires non-empty `short_ids` (strict config validation).
-- ✅ External-audit fixes 2026-06-10/11. Versions → 0.7.0; Android `versionCode=700`.
+- ✅ Internal-review fixes 2026-06-10/11. Versions → 0.7.0; Android `versionCode=700`.
 
 ## 0.6.0 (2026-06-10) — the refactoring release
 

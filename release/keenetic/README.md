@@ -67,7 +67,7 @@ rm -rf /opt/etc/qeli
 готовятся до замены; каждый файл публикуется атомарно, но весь bundle не является
 транзакцией. После отказа публикации устранить ошибку и повторить установщик.
 Работающий VPN автоматически не перезапускается. Это проверено shell/filesystem
-fixtures, не настоящим opkg/прошивкой/ELF. См. [Q31](../../docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+fixtures, не настоящим opkg/прошивкой/ELF. См. [Q31](../../docs/ru/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 Legacy gateway использует правила с тегом `qeli-keenetic-legacy` и forwarding
 checkpoint `version=2`. Ошибка очистки сохраняет состояние и блокирует перезапуск.
@@ -190,7 +190,7 @@ Wrapper/encoded Rust flags подчиняются общей политике.
 profile/source/linker overrides, PATH/shared registry/tool caches и clean независимые
 Qeli A/B ещё не квалифицированы.7 real-Cargo methods используют маленькие Linux
 fixtures без зависимостей; fresh Qeli cross build, Zig invocation, SDK Rust toolchain
-и router ABI/runtime ими не подтверждаются. См. [Q31](../../docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+и router ABI/runtime ими не подтверждаются. См. [Q31](../../docs/ru/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 ## Поколение сетевого плана (development0.8.2)
 

@@ -416,7 +416,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: docs checks
-        run: python3 scripts/check_docs.py
+        run: |
+          python3 -B -m unittest discover -s scripts -p 'test_check_docs.py'
+          python3 scripts/check_docs.py
       - name: Server INI example and default contracts
         run: python3 -B -m unittest discover -s scripts -p 'test_server_config*.py'
       - name: Release publication admission contracts

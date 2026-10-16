@@ -298,9 +298,9 @@ no download. From the repo root:
 sudo QELI_BIN=qeli/target/release/qeli QELI_SRC=. ./install-qeli-server.sh <public-ip>
 ```
 
-Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and the selected service-user helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. The installer explicitly applies QELI_RUN_AS, including the default qeli choice, after validation; qeli removes a previous root override while preserving installer receipts/backups. [Audit and limits](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+Installer validates explicit endpoint/panel options and nonempty boolean opt-ins (0/1) before dependency/payload changes. Auto-host is checked before config/identity, but dependencies/binary may already change. Complete INI is prepared privately beside server.conf; CLI/web/final check-config use that stage. After validation and the selected service-user helper, the old live config is backed up and replaced by rename, then restarted. Before-publication errors retain the old config; fresh failed installation publishes no partial config. Users/identity/links/tuning/dependencies/binary/drop-in can already change; use the password recovery journal if present. Restart/health failure after publication does not restore the old config automatically. The installer explicitly applies QELI_RUN_AS, including the default qeli choice, after validation; qeli removes a previous root override while preserving installer receipts/backups. [Audit and limits](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CONFIG.md).
 
-Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN remained outside that earlier qualification; the default-unit ownership/drop-in transition is covered by the [subsequent service-user audit](../reports/AUDIT-Q33-SERVICE-USER.md). [Evidence and limits](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+Version-number discovery in installer/updater uses `qeli --version`, also supported by older installations. Current `qeli version --check` remains an opt-in update query. Actual CLI writers create a sibling lock for the temporary INI; installer removes that unique stage lock after writers finish, while keeping the live config/users locks. Three profile installation flows have passed with real CLI parsing/keys/Argon2/links; service startup/kernel/VPN remained outside that earlier qualification; the default-unit ownership/drop-in transition is covered by the [subsequent service-user audit](../reports/audit-0.8.2/AUDIT-Q33-SERVICE-USER.md). [Evidence and limits](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CLI.md).
 
 `QELI_BIN` selects the from-binary branch; `QELI_SRC=.` copies the unit and examples
 straight from this checkout; the OS dependency phase uses apt only for missing prerequisites. See §2's **"Two install branches"**. This also
@@ -308,11 +308,11 @@ installs the polkit rule, so the panel's `Apply & Restart` works without the ext
 
 Installer-generated links, summary and backups are private0600 and published through temporary files; existing kept links retain their bytes through a private copy. Linked/nonregular generated names refuse before dependency changes. Backups have a random suffix after the timestamp to avoid collisions. The web helper replaces its config atomically, preserving ownership and setting0600. This does not make the entire forced reconfiguration transactional.
 
-If user/link creation fails, the old CONNECTION-STRINGS.txt remains and a root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` journal retains generated passwords, recorded before add-client. Read it as root, compare its users with users.conf, and use the recovered passwords/links for the affected client configurations; a pending entry may not have created an account. Do not blindly repeat add-client for an existing user. Accounts/individual links may already change; there is no automatic rollback. After successful summary publication the current journal is removed; journals from earlier failures remain until you verify recovery and remove them. These are plaintext secrets; include them in protected backups and remove obsolete copies after recovery. Power-loss durability is not qualified. [Audit scope](../reports/AUDIT-Q33-INSTALLER-SECRETS.md).
+If user/link creation fails, the old CONNECTION-STRINGS.txt remains and a root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` journal retains generated passwords, recorded before add-client. Read it as root, compare its users with users.conf, and use the recovered passwords/links for the affected client configurations; a pending entry may not have created an account. Do not blindly repeat add-client for an existing user. Accounts/individual links may already change; there is no automatic rollback. After successful summary publication the current journal is removed; journals from earlier failures remain until you verify recovery and remove them. These are plaintext secrets; include them in protected backups and remove obsolete copies after recovery. Power-loss durability is not qualified. [Audit scope](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-SECRETS.md).
 
-Installer dependency setup invokes apt only for missing prerequisites, then verifies commands/CA availability. For QELI_BIN+complete QELI_SRC or a local QELI_DEB, provide PUBLIC_HOST and preinstall OS/package dependencies to avoid dependency downloads; this stage check does not qualify the entire disconnected install. QELI_DEB is an absolute local .deb path, not a URL. Package=qeli, host architecture/all and exact installed status/version/architecture are required before config generation. QELI_VERIFY_ATTESTATION=1 requires successful gh verification for the Debian install path, including a local package. Failed install/repair is fatal, with no automatic package rollback. [Executed admission scope](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md).
+Installer dependency setup invokes apt only for missing prerequisites, then verifies commands/CA availability. For QELI_BIN+complete QELI_SRC or a local QELI_DEB, provide PUBLIC_HOST and preinstall OS/package dependencies to avoid dependency downloads; this stage check does not qualify the entire disconnected install. QELI_DEB is an absolute local .deb path, not a URL. Package=qeli, host architecture/all and exact installed status/version/architecture are required before config generation. QELI_VERIFY_ATTESTATION=1 requires successful gh verification for the Debian install path, including a local package. Failed install/repair is fatal, with no automatic package rollback. [Executed admission scope](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-ADMISSION.md).
 
-With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The dependency phase now skips apt when prerequisites are available; a local payload alone does not qualify the entire first installation as disconnected. [Executed scope](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+With QELI_BIN, an explicit QELI_SRC must contain all eight examples, qeli.service and49-qeli.rules; missing files refuse rather than falling back to GitHub. These files are admitted in private staging before replacing the binary. Without QELI_SRC, the requested release payload is selected by host architecture and verified; QELI_VERIFY_ATTESTATION=1 also requires successful gh verification. Linked/nonregular state paths refuse; INT/TERM stop installation after cleanup. Subsequent publication is sequential, so final installation errors are not an automatic rollback. The dependency phase now skips apt when prerequisites are available; a local payload alone does not qualify the entire first installation as disconnected. [Executed scope](../reports/audit-0.8.2/AUDIT-Q33-BINARY-INSTALLER.md).
 
 > ⚠️ **Non-.deb install + web panel:** the panel's **`Apply & Restart`** button runs
 > `systemctl restart` on the service. A **non-root** `User=qeli` service is only allowed
@@ -703,16 +703,23 @@ What the server actually pushes (`server/handler.rs`):
 
 | `dns.push_servers` | `dns.enabled` | Client receives | Effect |
 |---|---|---|---|
-| set (e.g. `1.1.1.1`) | — | the first address in the list | client queries it **directly**, bypassing the proxy (no cache/blocklist) |
-| empty | `true` | `dns.listen` (the proxy address) | client → proxy on the server → upstream. **This is the default.** |
-| empty | `false` | nothing | client keeps its own resolvers |
+| set (e.g. `1.1.1.1`) | — | the list for negotiated families; the legacy field carries the first address | client queries it **directly**, bypassing the proxy (no cache/blocklist) |
+| negotiated-family list empty | `true` | `dns.listen` and/or `dns.listen_ipv6` for negotiated families | client → proxy on the server → upstream. The example explicitly enables the proxy; `dns.enabled` defaults to `false`. |
+| negotiated-family list empty | `false` | nothing | subsequent behavior follows client DNS policy, see below |
+Client `dns_servers` overrides the push in `dns = tunnel` mode. If filtering by negotiated
+families leaves no pushed resolvers, an enabled proxy supplies its active listeners.
+Without a push, configured/platform fallback resolvers are considered; a full tunnel
+with `dns = tunnel` and no available resolver is refused rather than silently retaining
+host DNS. `dns = off`/`system` leaves device resolvers unchanged. [DNS contract](CONFIG.md).
+
 
 ```ini
 # in [profile:tcp] — "clients go through my proxy" (recommended)
 dns.enabled  = true
 dns.upstream = 1.1.1.1, 8.8.8.8
 # dns.blocklist = ads.example.com, track.example.com   # answer with 0.0.0.0 (ad blocking)
-dns.push_servers = ""        # empty → clients get the proxy address (dns.listen)
+# empty → clients get the proxy address (dns.listen)
+dns.push_servers = ""
 
 # ...or "hand clients a ready resolver directly" (LAN / AdGuard / NextDNS):
 # dns.push_servers = 192.168.50.10        # the proxy need not even be enabled
@@ -849,7 +856,8 @@ enabled = true
 bind = 0.0.0.0
 port = 8080
 tls  = true
-allowed_ips = 203.0.113.4          # REQUIRED here — your own address(es)
+# REQUIRED here — your own address(es)
+allowed_ips = 203.0.113.4
 # public_host = vpn.example.com
 ```
 
@@ -1056,7 +1064,7 @@ sudo qeli set-service-user root --unit qeli-server.service   # non-standard unit
 sudo systemctl restart qeli          # required for either to take effect
 ```
 
-`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
 **What `set-service-user` actually does.** It never edits the packaged unit file
 (`/lib/systemd/system/qeli.service`) — dpkg overwrites that on every upgrade and your

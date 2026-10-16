@@ -3995,12 +3995,12 @@ pub(crate) fn build_auth_ok_for_addresses_with_udp_roaming(
     };
     let routes: serde_json::Value =
         serde_json::from_str(routes_json).unwrap_or_else(|_| serde_json::json!([]));
-    // DNS pushed to the client: an explicit `dns.push_servers` (first entry) wins and
-    // works WITHOUT the in-tunnel proxy — hand clients a chosen resolver (a LAN /
-    // AdGuard / NextDNS box) directly. Otherwise push the proxy's listen IP only when
-    // the proxy runs (its default 10.9.0.1 resolves nowhere — pushing it would black-
-    // hole client name resolution). Empty => the client keeps its own resolvers. The
-    // client strict-IP-validates the pushed value before touching resolv.conf.
+    // Filter explicit DNS pushes to negotiated inner families, independently of
+    // the proxy. If none remain, an enabled proxy supplies its active listeners.
+    // Typed plans carry the complete list; the legacy field below carries the first
+    // address. Client planning prefers explicit client resolvers, then server push,
+    // then configured/platform fallbacks; a full tunnel in `dns = tunnel` mode
+    // refuses an empty resolver plan instead of silently retaining host DNS.
     let family_is_active = |address: std::net::IpAddr| {
         (address.is_ipv4() && assigned.ipv4.is_some())
             || (address.is_ipv6() && assigned.ipv6.is_some())

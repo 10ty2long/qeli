@@ -121,7 +121,7 @@ sudo env QELI_DEB=/path/qeli.deb ./update-qeli-server.sh
 
 Путь должен существовать; опечатка вызывает отказ, а не загрузку. Локальный файл не проверяется по release checksum/attestation и не требует curl/jq; используйте доверенный пакет. Собственные загрузки updater удаляются при завершении/ошибке/INT/TERM; переданный файл остаётся. Legacy `/var/lib/qeli/packages` сервисного пользователя сохраняется и игнорируется, не импортируется в root-кэш отката.
 
-SHA256SUMS того же релиза подтверждает соответствие метаданным, а не независимое происхождение. `QELI_VERIFY_ATTESTATION=1` требует `gh attestation verify` для удалённого пакета; отсутствующий gh или ошибка проверки останавливают установку. Перед крупным обновлением отдельно копируйте конфиги/users/identity/client links: updater сохраняет их, но не делает бэкап. См. [§4](#4-что-бэкапить) и [проверенный объём updater](../reports/AUDIT-Q33-SERVER-UPDATER.md).
+SHA256SUMS того же релиза подтверждает соответствие метаданным, а не независимое происхождение. `QELI_VERIFY_ATTESTATION=1` требует `gh attestation verify` для удалённого пакета; отсутствующий gh или ошибка проверки останавливают установку. Перед крупным обновлением отдельно копируйте конфиги/users/identity/client links: updater сохраняет их, но не делает бэкап. См. [§4](#4-что-бэкапить) и [проверенный объём updater](../reports/audit-0.8.2/AUDIT-Q33-SERVER-UPDATER.md).
 
 Для проверки скачанного amd64-пакета перед ручной установкой используйте GitHub CLI с указанием репозитория. Имя файла ниже соответствует последнему опубликованному релизу в этом руководстве; ошибка проверки означает, что пакет не прошёл эту проверку происхождения.
 
@@ -156,25 +156,25 @@ release-build. Команда выше должна отклонять этот 
   (в пакете нет `postrm`) — то есть ключи и хеши паролей остаются на диске; удаляйте
   вручную, если этого не хотите.
 
-Пакет отклоняет linked/non-directory state roots и linked/nonregular default users.conf до распаковки; исправление этих путей остаётся администратору. Новый users.conf пустой0600; обычные существующие файлы сохраняют байты/режим. На загруженном systemd-хосте ошибка применения выбранного service-user оставляет пакет half-configured: исправьте указанную причину и повторите `sudo dpkg --configure qeli`. В незагруженном chroot/container неподтверждённое изменение сопровождается предупреждением и требует повтора после boot. Если служба загруженного хоста не останавливается, удаление пакета отклоняется. Purge удаляет packaged examples, но сохраняет рабочие config/users/identity. [Проверенный объём и ограничения](../reports/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
+Пакет отклоняет linked/non-directory state roots и linked/nonregular default users.conf до распаковки; исправление этих путей остаётся администратору. Новый users.conf пустой0600; обычные существующие файлы сохраняют байты/режим. На загруженном systemd-хосте ошибка применения выбранного service-user оставляет пакет half-configured: исправьте указанную причину и повторите `sudo dpkg --configure qeli`. В незагруженном chroot/container неподтверждённое изменение сопровождается предупреждением и требует повтора после boot. Если служба загруженного хоста не останавливается, удаление пакета отклоняется. Purge удаляет packaged examples, но сохраняет рабочие config/users/identity. [Проверенный объём и ограничения](../reports/audit-0.8.2/AUDIT-Q33-DEBIAN-LIFECYCLE.md).
 
-При QELI_BIN явный QELI_SRC должен содержать все восемь примеров, qeli.service и49-qeli.rules: missing files вызывают отказ без fallback на GitHub. Этот набор допускается в private staging до замены бинарника. Без QELI_SRC release payload выбирается по архитектуре хоста и проверяется; QELI_VERIFY_ATTESTATION=1 также требует успешного gh. Linked/nonregular state paths отклоняются; INT/TERM завершают установку после cleanup. Последующая публикация последовательная: ошибка final install не означает автоматический rollback. Этап зависимостей теперь пропускает apt при наличии prerequisites; локальный payload сам по себе не квалифицирует всю first install отключённого хоста. [Проверенный объём](../reports/AUDIT-Q33-BINARY-INSTALLER.md).
+При QELI_BIN явный QELI_SRC должен содержать все восемь примеров, qeli.service и49-qeli.rules: missing files вызывают отказ без fallback на GitHub. Этот набор допускается в private staging до замены бинарника. Без QELI_SRC release payload выбирается по архитектуре хоста и проверяется; QELI_VERIFY_ATTESTATION=1 также требует успешного gh. Linked/nonregular state paths отклоняются; INT/TERM завершают установку после cleanup. Последующая публикация последовательная: ошибка final install не означает автоматический rollback. Этап зависимостей теперь пропускает apt при наличии prerequisites; локальный payload сам по себе не квалифицирует всю first install отключённого хоста. [Проверенный объём](../reports/audit-0.8.2/AUDIT-Q33-BINARY-INSTALLER.md).
 
-Этап зависимостей installer запускает apt только при отсутствии prerequisites и затем проверяет команды/CA availability. Для QELI_BIN+полного QELI_SRC либо локального QELI_DEB укажите PUBLIC_HOST и заранее установите OS/package dependencies, чтобы избежать dependency downloads; проверка этапа не квалифицирует всю установку отключённого хоста. QELI_DEB — абсолютный путь к локальному .deb, не URL. До генерации конфига обязательны Package=qeli, host architecture/all и точные installed status/version/architecture. QELI_VERIFY_ATTESTATION=1 требует успешного gh в Debian install path, включая локальный пакет. Failed install/repair завершает скрипт без автоматического package rollback. [Проверенный объём допуска](../reports/AUDIT-Q33-INSTALLER-ADMISSION.md).
+Этап зависимостей installer запускает apt только при отсутствии prerequisites и затем проверяет команды/CA availability. Для QELI_BIN+полного QELI_SRC либо локального QELI_DEB укажите PUBLIC_HOST и заранее установите OS/package dependencies, чтобы избежать dependency downloads; проверка этапа не квалифицирует всю установку отключённого хоста. QELI_DEB — абсолютный путь к локальному .deb, не URL. До генерации конфига обязательны Package=qeli, host architecture/all и точные installed status/version/architecture. QELI_VERIFY_ATTESTATION=1 требует успешного gh в Debian install path, включая локальный пакет. Failed install/repair завершает скрипт без автоматического package rollback. [Проверенный объём допуска](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-ADMISSION.md).
 
 Созданные installer links, summary и backups имеют0600 и публикуются через временные файлы; сохранённые ссылки существующих пользователей копируются с прежними байтами в private-файл. Linked/nonregular generated names отклоняются до изменений зависимостей. Backup получает случайный suffix после timestamp, чтобы не перезаписать предыдущую копию. Web helper атомарно заменяет конфиг, сохраняя владельца и выставляя0600. Вся forced reconfiguration от этого не становится транзакцией.
 
-При ошибке создания пользователя/ссылки старый CONNECTION-STRINGS.txt сохраняется, а root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` содержит сгенерированные пароли, записанные до add-client. Прочитайте файл от root, сопоставьте пользователей с users.conf и используйте восстановленные пароли/ссылки в соответствующих клиентских конфигах: pending entry не гарантирует создания аккаунта. Не повторяйте add-client вслепую для существующего пользователя. Аккаунты/отдельные ссылки уже могут измениться; автоматического rollback нет. После успешной публикации summary текущий journal удаляется; journals прошлых отказов остаются до проверки восстановления и ручного удаления. Это plaintext secrets: включайте их в защищённые backups и удаляйте устаревшие копии после восстановления. Power-loss durability не квалифицирована. [Объём проверки](../reports/AUDIT-Q33-INSTALLER-SECRETS.md).
+При ошибке создания пользователя/ссылки старый CONNECTION-STRINGS.txt сохраняется, а root0600 `/etc/qeli/client-links/INSTALL-PENDING-<timestamp>-<suffix>` содержит сгенерированные пароли, записанные до add-client. Прочитайте файл от root, сопоставьте пользователей с users.conf и используйте восстановленные пароли/ссылки в соответствующих клиентских конфигах: pending entry не гарантирует создания аккаунта. Не повторяйте add-client вслепую для существующего пользователя. Аккаунты/отдельные ссылки уже могут измениться; автоматического rollback нет. После успешной публикации summary текущий journal удаляется; journals прошлых отказов остаются до проверки восстановления и ручного удаления. Это plaintext secrets: включайте их в защищённые backups и удаляйте устаревшие копии после восстановления. Power-loss durability не квалифицирована. [Объём проверки](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-SECRETS.md).
 
-Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и применения выбранного пользователя службы старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Installer явно применяет QELI_RUN_AS после валидации, включая default qeli: прежний root override удаляется с сохранением installer receipts/backups. [Аудит и ограничения](../reports/AUDIT-Q33-INSTALLER-CONFIG.md).
+Installer проверяет явные endpoint/panel options и непустые boolean opt-ins (0/1) до изменений dependencies/payload. Auto-host проверяется до config/identity, но dependencies/binary уже могут измениться. Полный INI готовится приватно рядом с server.conf; CLI/web/final check-config используют этот stage. После проверки и применения выбранного пользователя службы старый live config сохраняется и заменяется через rename, затем выполняется restart. Отказ до публикации сохраняет старый конфиг; fresh failed installation не публикует partial config. Users/identity/links/tuning/dependencies/binary/drop-in могут уже измениться; при наличии используйте password recovery journal. Ошибка restart/health после публикации не откатывает конфиг автоматически. Installer явно применяет QELI_RUN_AS после валидации, включая default qeli: прежний root override удаляется с сохранением installer receipts/backups. [Аудит и ограничения](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CONFIG.md).
 
-Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN той ранней проверкой не закрывались; default-unit ownership/drop-in transition проверен [последующим service-user аудитом](../reports/AUDIT-Q33-SERVICE-USER.md). [Доказательства и ограничения](../reports/AUDIT-Q33-INSTALLER-CLI.md).
+Installer/updater читают номер версии через `qeli --version`, который работает и в старых установках. Current `qeli version --check` остаётся opt-in запросом обновлений. Настоящий CLI создаёт соседний lock временного INI; installer удаляет unique stage lock после завершения writers, сохраняя live config/users locks. Три profile installation flows прошли с настоящими CLI parsing/keys/Argon2/links; service startup/kernel/VPN той ранней проверкой не закрывались; default-unit ownership/drop-in transition проверен [последующим service-user аудитом](../reports/audit-0.8.2/AUDIT-Q33-SERVICE-USER.md). [Доказательства и ограничения](../reports/audit-0.8.2/AUDIT-Q33-INSTALLER-CLI.md).
 
 ### Reload службы и конфигурация владельца root
 
-`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
+`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
-Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
 
 ### 3.2. Docker
@@ -374,8 +374,8 @@ worker разделите network namespaces и config/state/control пути; �
 профили одного worker не требуют такого разделения. Обычная пара supervisor +
 worker поддерживается. Старые бинарники не участвуют в этой блокировке — остановите
 прежний worker перед обновлением.
-[Владение](../reports/AUDIT-Q14-WORKER-NETWORK-LEASE.md) ·
-[аварийная отмена](../reports/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md).
+[Владение](../reports/audit-0.8.2/AUDIT-Q14-WORKER-NETWORK-LEASE.md) ·
+[аварийная отмена](../reports/audit-0.8.2/AUDIT-Q25-SERVER-FORCED-DROP-LEASE.md).
 
 Каталог сокета должен принадлежать пользователю worker, иметь режим `0700` и не быть
 символической ссылкой. Новый каталог Qeli создаёт закрытым; права существующего не
@@ -426,7 +426,7 @@ NAT/FORWARD/MSS/DNS INPUT/REDIRECT правила до выполнения ко
 нетронутыми; после смены boot ID валидные прежние записи больше не исполняются.
 Исторические правила старых бинарников без журнала по-прежнему зависят от tagged
 sweep и доступного listing. Остановите старый worker перед обновлением.
-[Проверки и границы](../reports/AUDIT-Q14-FIREWALL-JOURNAL.md).
+[Проверки и границы](../reports/audit-0.8.2/AUDIT-Q14-FIREWALL-JOURNAL.md).
 
 ## Восстановление клиентского DNS
 
@@ -453,7 +453,7 @@ Managed DNS на Linux также требует `SO_NETNS_COOKIE` и довер
 Подтверждённые физические записи сохраняются в постоянном журнале для следующего
 запуска после SIGKILL; неопределённый intent требует ручного разбора. Не очищайте
 таблицу маршрутов целиком; перед ручным удалением установите происхождение записи.
-[Проверки и ограничения](../reports/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
+[Проверки и ограничения](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-ATTRIBUTES.md).
 
 ## Восстановление физических маршрутов клиента
 
@@ -476,7 +476,7 @@ DNS resolution/handshake. Оно удаляет только подтвержд�
 Не удаляйте журнал и lock для обхода отказа. Пустой файл состояния и lock после чистой
 остановки нормальны. Журнал не усыновляет остатки версий, которые его не записывали.
 Лимиты: 8 MiB, 128 групп, 8192 записи. Attach не управляет этими маршрутами.
-[Проверки и границы](../reports/AUDIT-Q25-ROUTE-JOURNAL.md).
+[Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-JOURNAL.md).
 
 ## Persistent TUN/TAP после аварии клиента
 
@@ -528,7 +528,7 @@ Linux kill-switch заранее читает `/run/systemd/resolve/resolv.conf`
 Нужен отдельный токен `nameserver`, комментарий после адреса отделяется пробелом.
 Scoped IPv6 с `%interface`/`%index` не создаёт разрешение без привязки к интерфейсу и
 не мешает другим корректным записям. Изменения DNS после снимка не обновляют firewall
-автоматически. [Чтение resolver-файлов](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+автоматически. [Чтение resolver-файлов](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-FILES.md).
 
 [§6.86](TROUBLESHOOTING.md#686-linux-resolver-файл-и-разрешения-dns-в-kill-switch).
 
@@ -543,7 +543,7 @@ Linux применяет NetworkPlan в отдельном потоке и со�
 Не считайте готовностью к повторному использованию TUN сам факт отправки сигнала.
 Дождитесь выхода и проверьте итог очистки. Принудительное уничтожение future может
 синхронно ждать присоединения worker; единого предельного срока shutdown пока нет.
-[Проверки и границы](../reports/AUDIT-Q25-NETWORK-TASK.md).
+[Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-NETWORK-TASK.md).
 
 ## Остановка установленного Linux-туннеля
 
@@ -557,7 +557,7 @@ TCP и UDP используют общий порядок: остановить 
 не превращает первоначальный отказ в успешный выход. Сохраните журналы и проверьте
 причину перед новым явным запуском. Принудительный Drop может синхронно ждать завершения;
 единого жёсткого срока shutdown пока нет.
-[Устройство и проверки](../reports/AUDIT-Q25-TUN-TEARDOWN.md).
+[Устройство и проверки](../reports/audit-0.8.2/AUDIT-Q25-TUN-TEARDOWN.md).
 
 ## Остановка во время установки, обновления или снятия kill-switch
 
@@ -571,7 +571,7 @@ TCP и UDP используют общий порядок: остановить 
 Не очищайте такую цепочку вручную, пока её переходы не проверены. Другую семью firewall
 к этому моменту уже могли снять; одна сохранённая цепочка не подтверждает защиту всего
 хоста. После устранения причины новый явный запуск выполняет штатный recovery.
-[Проверки и границы](../reports/AUDIT-Q25-FIREWALL-TASK.md).
+[Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-FIREWALL-TASK.md).
 
 ## UDP-сервер с несколькими локальными адресами
 
@@ -579,7 +579,7 @@ TCP и UDP используют общий порядок: остановить 
 пакет клиента. Это относится к handshake, данным и контрольным сообщениям; отдельной
 INI-настройки не требуется. Соседние клиенты на разных адресах не меняют источник друг
 друга. Если ОС не предоставляет корректный pktinfo, сервер не подбирает другой адрес.
-[Проверки и ограничения](../reports/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
+[Проверки и ограничения](../reports/audit-0.8.2/AUDIT-Q15-UDP-LOCAL-ADDRESS.md).
 
 ## Остановка во время стартового recovery Linux-клиента
 
@@ -593,7 +593,7 @@ DNS остаётся. Recovery не переключает живой resolver �
 Дождитесь выхода клиента и проверьте итоговую ошибку перед повторным запуском.
 15-секундный бюджет route-операции не является общим жёстким сроком shutdown;
 принудительный Drop может синхронно ждать worker.
-[Проверки и границы](../reports/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
+[Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-STARTUP-RECOVERY-TASK.md).
 
 ## Отказ запуска TUN packet workers в Linux-клиенте
 
@@ -605,7 +605,7 @@ DNS остаётся. Recovery не переключает живой resolver �
 
 Успешный `post_up` подтверждает применение NetworkPlan, но не завершение запуска pump.
 При невозможности создать cleanup worker или принудительном Drop аварийное ожидание
-может оставаться синхронным. [Проверки и границы](../reports/AUDIT-Q25-PUMP-START.md).
+может оставаться синхронным. [Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-PUMP-START.md).
 
 ## Диагностика Linux-клиента на медленном хранилище
 
@@ -616,7 +616,7 @@ DNS остаётся. Recovery не переключает живой resolver �
 Штатный выход ждёт итоговую запись после остановки sampler. Медленный fsync не блокирует
 соседние async-задачи, но может задержать выход процесса; общего жёсткого срока нет.
 Ошибки диагностики не меняют результат VPN. Если запись не удалась, файл может быть
-устаревшим: проверяйте код выхода и журнал. [Проверки и границы](../reports/AUDIT-Q25-STATUS-WRITER.md).
+устаревшим: проверяйте код выхода и журнал. [Проверки и границы](../reports/audit-0.8.2/AUDIT-Q25-STATUS-WRITER.md).
 
 ## Сбросы в очереди TCP-клиента
 
@@ -678,8 +678,8 @@ TOFU-файл `/var/lib/qeli/known_hosts` (`QELI_KNOWN_HOSTS`) должен бы
 присоединяемом worker. Stop/timeout прекращают ожидание handshake; уже принятая запись
 завершается до reconnect или выхода. Поздняя ошибка сохраняет результат `failed`,
 успешная запись может сохранить пин после отмены. 15 секунд ограничивают flock, а не
-весь shutdown. [Worker и отмена](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
-[Устройство и проверки](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+весь shutdown. [Worker и отмена](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-WORKER.md).
+[Устройство и проверки](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-FILES.md).
 
 ## Чтение INI при запуске Linux-клиента
 
@@ -876,8 +876,8 @@ WAN остановите профиль и подтвердите успешну
 
 3 октября 2026 production BPF-защита снята с плана по решению пользователя;
 дополнительный CAP_BPF или bpffs для нынешней Qeli не требуется.
-[Известный P2 и решение](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+[Известный P2 и решение](../reports/audit-0.8.2/AUDIT-Q25-WAN-NAME-REUSE.md).
 
-Проверка обновлений DEB: package downgrade восстановил configured DB и службу после двух отказов в изолированном стенде. Remove/purge сохранили пользовательские данные. Это не гарантия здоровья всех профилей: updater проверяет стабильность supervisor PID; после обновления проверьте подключение клиента и журналы. Подробности и границы — [Q33 DEB/update](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
+Проверка обновлений DEB: package downgrade восстановил configured DB и службу после двух отказов в изолированном стенде. Remove/purge сохранили пользовательские данные. Это не гарантия здоровья всех профилей: updater проверяет стабильность supervisor PID; после обновления проверьте подключение клиента и журналы. Подробности и границы — [Q33 DEB/update](../reports/audit-0.8.2/AUDIT-Q33-PACKAGE-MANAGER.md).
 
-Дополнительная проверка release-пакета подтвердила VPN-трафик через службу systemd после установки, обновления и обоих откатов с pinned server key. Клиентские соединения в каждом этапе новые; непрерывность сессий при restart не гарантируется. Матрица IPv4/IPv6, TCP/UDP, DNS и MTU также прошла. [Область проверки и доказательства](../reports/AUDIT-Q33-PACKAGE-MANAGER.md).
+Дополнительная проверка release-пакета подтвердила VPN-трафик через службу systemd после установки, обновления и обоих откатов с pinned server key. Клиентские соединения в каждом этапе новые; непрерывность сессий при restart не гарантируется. Матрица IPv4/IPv6, TCP/UDP, DNS и MTU также прошла. [Область проверки и доказательства](../reports/audit-0.8.2/AUDIT-Q33-PACKAGE-MANAGER.md).

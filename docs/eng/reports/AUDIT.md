@@ -115,7 +115,7 @@ fragmentation, a mode-dependent idle heartbeat with jitter (forced off in Realit
   a hybrid X25519MLKEM768 inner exchange. Current `reality-tls` uses classic X25519
   with static identity binding inside H2. Its outer TLS negotiates hybrid or classic
   X25519; PQ protection is conditional on the outer group. `plain` is classic.
-  [Q08](AUDIT-Q08-CRYPTO-KEYS.md) records the corrected scope and primitive vectors.
+  [Q08](audit-0.8.2/AUDIT-Q08-CRYPTO-KEYS.md) records the corrected scope and primitive vectors.
 - **The `obfs` keystream** is limited to 256 GiB per direction per session — on exceeding
   it the connection fail-safe reconnects (without reusing the keystream).
 - **TOFU by default.** If the client hasn't pinned the key and the server doesn't require

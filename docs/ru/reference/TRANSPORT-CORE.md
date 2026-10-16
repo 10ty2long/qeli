@@ -10,14 +10,8 @@ multipath, автоматический fallback и обработку конф�
 
 Легенда статуса: ⬜ не начато · 🟦 в работе · ✅ сделано · 🧪 ждёт сборки/e2e.
 
-**Текущее состояние (2026-09-22): исходники используют ABI 1.16.** К общему transport
-добавлен чистый API конфигурации `qeli_config_request` и Android `ConfigCore` JNI. Импорт,
-редактор, проверка, экспорт и переносимые политики теперь принадлежат Rust;
-[границы и миграция](../plans/CLIENT-CONFIG-CORE.md). Минимальная версия новых адаптеров — 1.16.
-Закоммиченные релизные `.so`/`.dll`/`.dylib` относятся к предыдущей пересборке ABI 1.15:
-после этого изменения необходимы новые A/B evidence и provenance. Dev/CI собирают ядро из
-текущих исходников. Apple build/test, финальные пакеты и физические acceptance gates остаются
-обязательными перед выпуском; прежние успешные проверки не удостоверяют новую версию.
+**Текущее состояние, 16 октября 2026: ABI 1.16.** Транспорт, `qeli_config_request`, Android `ConfigCore` JNI и переносимые политики используют общее Rust-ядро. Минимальная версия новых адаптеров — 1.16. Закоммиченные Windows/macOS/Android библиотеки пересобраны с независимыми A/B, ABI/JNI, хешами и provenance; [актуальный пакет проверки](../../../release/certification/evidence/dependabot-integration-20261016.json). Физические платформы, исключённые из согласованного аудита, не сертифицированы. История ABI и датированные этапы ниже сохраняют прежние промежуточные статусы.
+
 **Правило доставки Reality/H2.** Актуальный H2 carrier режима `reality-tls` принадлежит этому
 общему Rust-ядру, а не платформенному UI-коду. Платформа получает его только после пересборки
 native `.so`/`.dll`/`.dylib` либо XCFramework из обновлённых исходников, упаковки в приложение
@@ -53,34 +47,34 @@ Native-адаптер также обязан объявить platform capabili
 TCP lifetime (23 сентября 2026): общий TaskGroup владеет stream-задачами и producers;
 штатный finish закрывает spawn и ждёт задачи до очистки сети. Linux path monitor регистрирует
 blocking-работы у того же владельца; UDP также использует группу всего соединения. ABI остаётся 1.16.
-Принудительная отмена и вложенные transport workers ещё требуют проверки; [TCP-отчёт](../reports/AUDIT-Q25-TCP-TASKS.md).
+Принудительная отмена и вложенные transport workers ещё требуют проверки; [TCP-отчёт](../reports/audit-0.8.2/AUDIT-Q25-TCP-TASKS.md).
 
 
 UDP lifetime (23 сентября 2026): тот же владелец объединяет active/candidate/draining receive,
 candidate-connect и Linux-монитор. Перемещаемый TaskHandle отменяет отдельную задачу,
 а группа сохраняет join; освобождение ресурсов ожидается до отката пути. Ранняя ошибка
-управляющего события проходит штатный teardown. ABI не меняется; [UDP-отчёт](../reports/AUDIT-Q25-UDP-TASKS.md).
+управляющего события проходит штатный teardown. ABI не меняется; [UDP-отчёт](../reports/audit-0.8.2/AUDIT-Q25-UDP-TASKS.md).
 
 TUN lifetime (23 сентября 2026): общий TunWorkers сохраняет reader/writer handles Unix
 TUN и Wintun при отмене shutdown. Drop ждёт уже выполняемый join либо делает его сам,
 если blocking-помощник ещё в очереди. Это гарантия уничтожения pump, не подтверждение
-всего платформенного rollback. ABI 1.16 сохранён; [отчёт](../reports/AUDIT-Q25-TUN-WORKERS.md).
+всего платформенного rollback. ABI 1.16 сохранён; [отчёт](../reports/audit-0.8.2/AUDIT-Q25-TUN-WORKERS.md).
 
 H2 lifetime (23 сентября 2026): группа TCP-поколения создаётся до connect и сохраняет join
 для driver/bridge основного и дополнительных carriers. TaskScope закрывает spawn/abort до
 уничтожения отменённой попытки; внешний native runner ждёт группу до finish_generation.
-ABI 1.16; [клиентский отчёт](../reports/AUDIT-Q25-H2-TASKS.md).
+ABI 1.16; [клиентский отчёт](../reports/audit-0.8.2/AUDIT-Q25-H2-TASKS.md).
 Серверный accept_owned использует слабый ProfileSpawner: driver/bridge и bounded flush
 отказа входят в join профиля. Flush сохраняет pre-auth permit до освобождения I/O, а
 успешный accept возвращает его внутренней AUTH. Public standalone accept/connect сохраняют
-прежний контракт отмены; [серверный отчёт](../reports/AUDIT-Q14-H2-TASKS.md).
+прежний контракт отмены; [серверный отчёт](../reports/audit-0.8.2/AUDIT-Q14-H2-TASKS.md).
 
 
 Linux system commands (23 сентября 2026): общий адаптер TUN и клиентский resolvectl
 используют один runner с 15-секундным deadline, полным выводом до 16 МиБ на поток и
 владением Child до завершения. DNS marker сохраняется при timeout/ошибке. Это Linux
 setup/rollback слой, без изменения ABI и GUI native-библиотек; маршруты/firewall ещё
-требуют переноса. [Отчёт](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+требуют переноса. [Отчёт](../reports/audit-0.8.2/AUDIT-Q25-SYSTEM-COMMANDS.md).
 
 ---
 
@@ -90,15 +84,15 @@ Authenticated `KICK` сохраняет `reconnect_allowed` при одновр�
 остановке TUN и отказе доставки события платформе. Pipeline обрабатывает конечную
 очередь уже прочитанных records до уведомления о потере stream. Это не гарантирует
 доставку непрочитанных/потерянных bytes или показ события неисправным UI. Обычный EOF
-без KICK сохраняет штатную reconnect policy. [Проверки](../reports/AUDIT-Q09-FINAL.md).
+без KICK сохраняет штатную reconnect policy. [Проверки](../reports/audit-0.8.2/AUDIT-Q09-FINAL.md).
 
 <!-- normative-sync: core-management-receipts-v1 -->
 
-ACK management-сообщения требует полного корректного payload. Повтор фрагмента до завершения сборки, неверный KICK и конфликт содержимого под прежним ID не подтверждаются. Точный повтор принятого сообщения подтверждается снова; повтор отправляется в новом authenticated PacketCodec record, поскольку повтор ciphertext отсекает replay window. [Проверки Q10](../reports/AUDIT-Q10-CODEC-CONTROL.md).
+ACK management-сообщения требует полного корректного payload. Повтор фрагмента до завершения сборки, неверный KICK и конфликт содержимого под прежним ID не подтверждаются. Точный повтор принятого сообщения подтверждается снова; повтор отправляется в новом authenticated PacketCodec record, поскольку повтор ciphertext отсекает replay window. [Проверки Q10](../reports/audit-0.8.2/AUDIT-Q10-CODEC-CONTROL.md).
 
 <!-- normative-sync: core-realtls-policy-v1 -->
 
-REALITY-TLS использует общий строгий ServerHello decoder и post-handshake policy в async/sans-IO. Уже проверенные application bytes выдаются перед фатальной ошибкой следующей записи; после ошибки сеанс не принимает/не отправляет новые записи. Fragmented NewSessionTicket ограниченно собирается и пропускается; KeyUpdate не поддерживается и требует переподключения. В старом `qeli_realtls_open` предшествующий plaintext выдаётся с `0`, затем следующий вызов получает terminal `-1`; close_notify использует тот же terminal код, поскольку отдельного EOF-кода в ABI нет. [Q11](../reports/AUDIT-Q11-REALITY-TLS-H2.md).
+REALITY-TLS использует общий строгий ServerHello decoder и post-handshake policy в async/sans-IO. Уже проверенные application bytes выдаются перед фатальной ошибкой следующей записи; после ошибки сеанс не принимает/не отправляет новые записи. Fragmented NewSessionTicket ограниченно собирается и пропускается; KeyUpdate не поддерживается и требует переподключения. В старом `qeli_realtls_open` предшествующий plaintext выдаётся с `0`, затем следующий вызов получает terminal `-1`; close_notify использует тот же terminal код, поскольку отдельного EOF-кода в ABI нет. [Q11](../reports/audit-0.8.2/AUDIT-Q11-REALITY-TLS-H2.md).
 
 ## 1. Вердикт: чем это оправдано, а чем — нет
 
@@ -718,12 +712,12 @@ CLI/cross-language KAT. UI reachability теперь вызывает Rust ABI 1
 
 <!-- normative-sync: core-ws-write-v1 -->
 
-Общий WS writer принимает максимум 16384 байта данных за poll,учитывает owned bytes один раз и допускает отмену Pending с заменой входного буфера. Flush/shutdown отправляют owned frames и bounded control replies; outbound write/flush fault остаётся terminal. Handshake,ACK и data/cover record границы daemon/native core используют один write-all-and-flush helper перед ожиданием ответа или фиксацией доставки. [Q12](../reports/AUDIT-Q12-TRANSPORTS.md).
+Общий WS writer принимает максимум 16384 байта данных за poll,учитывает owned bytes один раз и допускает отмену Pending с заменой входного буфера. Flush/shutdown отправляют owned frames и bounded control replies; outbound write/flush fault остаётся terminal. Handshake,ACK и data/cover record границы daemon/native core используют один write-all-and-flush helper перед ожиданием ответа или фиксацией доставки. [Q12](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).
 
 <!-- normative-sync: core-ws-read-v1 -->
 
-HTTP Upgrade использует общий bounded parser: head до 4096 байт включая CRLFCRLF,GET/HTTP/1.1,Host,версия13,однозначные ключ/accept;body запрещён кроме Content-Length0. Клиент не принимает незапрошенные extensions/subprotocol. Inbound WS lengths минимальны при payload cap16384;незавершённая фрагментация при EOF — UnexpectedEof. Уже готовые данные выдаются до сохранённой ошибки следующего кадра;дальнейший разбор не возобновляется. Inner AEAD обязателен. [Проверки Q12](../reports/AUDIT-Q12-TRANSPORTS.md).
+HTTP Upgrade использует общий bounded parser: head до 4096 байт включая CRLFCRLF,GET/HTTP/1.1,Host,версия13,однозначные ключ/accept;body запрещён кроме Content-Length0. Клиент не принимает незапрошенные extensions/subprotocol. Inbound WS lengths минимальны при payload cap16384;незавершённая фрагментация при EOF — UnexpectedEof. Уже готовые данные выдаются до сохранённой ошибки следующего кадра;дальнейший разбор не возобновляется. Inner AEAD обязателен. [Проверки Q12](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).
 
 <!-- normative-sync: core-ws-control-v1 -->
 
-Общий core отвечает на Ping/Close при простое, включая pre-auth nonce/junk. Valid Close проверяет status/UTF-8, имеет приоритет над bounded/coalesced Pong, запрещает следующие данные; EOF выдаётся после echo/flush/shutdown. Отменённый Pending flush сохраняется до завершения. Одни reader/writer состояния используются daemon и native clients. Матрица INI wire-режимов и границы QUIC/AWG приведены в [Q12](../reports/AUDIT-Q12-TRANSPORTS.md).
+Общий core отвечает на Ping/Close при простое, включая pre-auth nonce/junk. Valid Close проверяет status/UTF-8, имеет приоритет над bounded/coalesced Pong, запрещает следующие данные; EOF выдаётся после echo/flush/shutdown. Отменённый Pending flush сохраняется до завершения. Одни reader/writer состояния используются daemon и native clients. Матрица INI wire-режимов и границы QUIC/AWG приведены в [Q12](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).

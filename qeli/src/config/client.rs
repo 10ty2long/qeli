@@ -774,9 +774,9 @@ impl ClientConfig {
         if let Some(d) = q.get("dns").filter(|s| !s.is_empty()) {
             cfg.dns.mode = d.to_string();
         }
-        // dns_servers = <ip>[, <ip>…] → resolver(s) to install when `dns = tunnel` and the
-        // server pushes none. Without this key the flat INI could set the MODE but never a
-        // SERVER, so the "configure a resolver" advice was impossible to follow from an INI.
+        // dns_servers = <ip>[, <ip>…] selects explicit resolvers for `dns = tunnel`.
+        // A nonempty client list overrides typed and legacy server DNS pushes;
+        // planned_dns_servers validates the list against the negotiated families.
         if let Some(s) = q.get("dns_servers").filter(|s| !s.trim().is_empty()) {
             cfg.dns.servers = s
                 .split(',')

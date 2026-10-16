@@ -226,7 +226,7 @@ StartPending и StopPending не считаются подтверждением
 явного `-p:QeliUpdateDependencyLocks=true --force-evaluate` на restore с теми же
 RID и publish-параметрами; изменённые lockfiles проверяются и коммитятся вместе с
 исходниками. Single-file варианты используют отдельный lock с SDK ILLink package.
-Подробнее: [SDK и dependency locks](../docs/ru/reports/AUDIT-Q34-SDK-LOCKS.md).
+Подробнее: [SDK и dependency locks](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-SDK-LOCKS.md).
 
 ```powershell
 # нужен .NET SDK 10.0.401: точная версия закреплена в ../global.json
@@ -309,7 +309,7 @@ INI/URI, проверки, defaults и переносимые политики �
 Ошибки чтения SCM/невалидный или устаревший service status означают неизвестное
 состояние, а не успешное отключение. Ошибка незавершённой очистки остаётся видимой
 после SCM Stopped. Лог и его GUI view ограничены 256 КиБ, длинные строки — 4096 chars;
-после rotation отображается текущая история. Детали: [Q27 service observation](../docs/ru/reports/AUDIT-Q27-WINDOWS-OBSERVATION.md).
+после rotation отображается текущая история. Детали: [Q27 service observation](../docs/ru/reports/audit-0.8.2/AUDIT-Q27-WINDOWS-OBSERVATION.md).
 
 Остановка адаптера считается завершённой после подтверждённого выхода его потоков
 и закрытия принадлежащих Qeli handles. Ошибка/timeout сохраняет ownership для Stop
@@ -317,7 +317,7 @@ retry и отображается как Error. Ошибка восстанов�
 kill-switch. Незавершённый prewarm не применяется как готовый адаптер.
 WinDivert strict gate использует DROP (0x0002); журнал восстановления удаляется
 после успешного закрытия всех поколений gate. Подробности и ограничения проверки:
-[итог Q27](../docs/ru/reports/AUDIT-Q27-WINDOWS-FINAL.md).
+[итог Q27](../docs/ru/reports/audit-0.8.2/AUDIT-Q27-WINDOWS-FINAL.md).
 
 
 ## .NET legal resources

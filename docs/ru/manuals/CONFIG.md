@@ -500,8 +500,8 @@ NAT44, IPv4 forwarding и управляемая IPv6-маршрутизация
 на setup, включая очередь и команды. Ошибка запускает точный rollback с отдельными
 общими 15 секундами; неполный rollback сохраняет записи и возвращает ошибку.
 DNS INPUT и REDIRECT делят общий срок setup 15 секунд; их откаты имеют отдельные сроки.
-[Границы и проверка](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).
-[Описание и проверки](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
+[Границы и проверка](../reports/audit-0.8.2/AUDIT-Q14-NAT-SETUP-BUDGET.md).
+[Описание и проверки](../reports/audit-0.8.2/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
 
 Установка одного DNS INPUT ruleset получает 15 секунд вместе с очередью и очисткой
 прежнего поколения. UDP/TCP делят этот срок. Drop/очистка lease получают отдельные
@@ -509,7 +509,7 @@ DNS INPUT и REDIRECT делят общий срок setup 15 секунд; их
 установки. Завершение поколения отмечается до ожидания mutex: timeout не оставляет
 осиротевшую активную запись. Неподтверждённые правила сохраняются до явного retry
 в том же worker. Сроки не означают гарантии времени всей настройки DNS или shutdown.
-[Описание и ограничения](../reports/AUDIT-Q14-DNS-INPUT-BUDGET.md).
+[Описание и ограничения](../reports/audit-0.8.2/AUDIT-Q14-DNS-INPUT-BUDGET.md).
 
 ## Многоядерность сервера (`tun.queues`)
 
@@ -662,7 +662,7 @@ mtu = 1280
 | `client_ip` / `server_ip` / `prefix` | проекция IPv4 либо единственного IPv6-адреса IPv6-only плана | backward-compatible поля; v2-клиент проверяет их согласованность с `addresses` |
 | `mtu` | `tun.mtu` профиля | клиент с `mtu = 0` (дефолт, auto) **принимает**; клиент со своим `mtu > 0` оставляет своё |
 | `dns_servers` | `dns.push_servers` либо активные IPv4/IPv6 listeners прокси | типизированный список, только для согласованных families и только при `dns = tunnel` |
-| `dns` | первый совместимый resolver | legacy-проекция резолвера Linux проверяет фактические `nameserver` в `/etc/resolv.conf`: только stub `127.0.0.53`/`127.0.0.54`, без внешнего fallback; имя symlink и комментарий не подтверждают этот путь. Файл regular, до 64 KiB. [Контракт](../reports/AUDIT-Q25-RESOLVER-CONFIG.md). |
+| `dns` | первый совместимый resolver | legacy-проекция резолвера Linux проверяет фактические `nameserver` в `/etc/resolv.conf`: только stub `127.0.0.53`/`127.0.0.54`, без внешнего fallback; имя symlink и комментарий не подтверждают этот путь. Файл regular, до 64 KiB. [Контракт](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-CONFIG.md). |
 | `dns_port` | всегда **53** | клиенты не умеют другой порт (ни `VpnService.Builder`, ни `NEDNSSettings` его не принимают), поэтому пушится строго 53; если прокси слушает не на 53, туннель сам перенаправляет 53 → `dns.port` правилом iptables |
 | `routes` | **персональные** маршруты юзера, иначе профильные `route =` | ставит маршруты (с 0.7.12 — **всегда**) |
 | `obfuscation` | `obf.padding.*`, `obf.heartbeat.*`, `obf.traffic_normalization.*`, `obf.traffic_shaping.*` | применяет параметры обфускации на лету |
@@ -1344,11 +1344,11 @@ key = 33f399e6…d532450
 повреждённая запись целевого сервера или конфликт дубликатов запрещает подключение
 при обоих значениях `allow_unpinned_tofu`. Отсутствующий файл допускает первое доверие;
 новый пин сохраняется атомарно. Это ограничение локального Linux-хранилища, не INI.
-[Подробности](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+[Подробности](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-FILES.md).
 
 Linux ограничивает ожидание TOFU значением `timeout` для TCP и UDP. Уже начатая запись
 завершается до reconnect/выхода, поэтому `timeout` не является общим сроком shutdown.
-[Отмена и сохранение ошибок](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
+[Отмена и сохранение ошибок](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-WORKER.md).
 
 После `rotate-identity` публичный ключ меняется → всем клиентам этого профиля
 нужно раздать новый hex (иначе `SERVER KEY MISMATCH`).
@@ -1572,7 +1572,7 @@ max_sessions = 5
 повторно не начисляется. Квота ограничивает download и проверяется периодически,
 поэтому между проверками возможен перерасход. Crash/SIGKILL может потерять изменения
 после последней успешной записи. `usage.json` — служебная статистика, а не формат
-конфигурации; конфиги остаются INI. См. [аудит worker и учёта](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md).
+конфигурации; конфиги остаются INI. См. [аудит worker и учёта](../reports/audit-0.8.2/AUDIT-Q14-Q15-WORKER-USAGE.md).
 
 **Ключи `[group:<name>]`** — шаблон, наследуемый членами через ключ `group` юзера (положительные лимиты и непустая ACL юзера переопределяют группу):
 
@@ -1732,7 +1732,7 @@ UDP/QUIC-настройки нет. Возможность активна тол
 невыбранные в `include` или исключённые в `exclude` приложения используют обычную сеть.
 При включённом Android lockdown эти UID блокируются: исключение из VPN не разрешает
 обход системной блокировки. На API34 проверены IPv4/IPv6 TCP/UDP и DNS, включая stop,
-ручное восстановление и снятие политики. [Результаты и ограничения](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md).
+ручное восстановление и снятие политики. [Результаты и ограничения](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-APP-POLICY.md).
 
 **Детали desktop per-app.** При `apps_mode = all` Windows сохраняет нативный zero-copy
 путь Wintun, а macOS — обычные глобальные маршруты/DNS через utun. `include` или `exclude`
@@ -2086,7 +2086,7 @@ MASQUERADE`), и правила слетали при реконнекте/ре�
 до включения forwarding. Если лучший IPv6 default route неоднозначен между
 разными интерфейсами, настройка прекращается до изменения sysctl/firewall.
 На LAN-only хосте без IPv6 default route этот путь остаётся допустимым.
-[Проверка ECMP](../reports/AUDIT-Q25-WAN-ECMP.md).
+[Проверка ECMP](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
 
 Все правила помечены комментом `qeli-gw-nat` и проверяются через `iptables -C`.
 В работающем процессе Qeli учитывает попытки установки по TUN, семейству IP и
@@ -2100,7 +2100,7 @@ LAN-подсети; очистка удаляет сохранённые вар�
 Новые и повторно используемые FORWARD-permit проверяют порядок обнаруженного
 Qeli kill-switch. Ошибка проверки не разрешает вставку перед ним. MSS-clamp остаётся
 best-effort: ошибка даёт предупреждение и требует работающего Path-MTU Discovery.
-[Проверки и оставшиеся ограничения](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md).
+[Проверки и оставшиеся ограничения](../reports/audit-0.8.2/AUDIT-Q25-GATEWAY-ROLLBACK.md).
 
 **Пример — Mikrotik-контейнер как шлюз для `192.168.254.0/24`:**
 
@@ -2145,14 +2145,14 @@ Linux kill-switch заранее читает `/run/systemd/resolve/resolv.conf`
 Нужен отдельный токен `nameserver`, комментарий после адреса отделяется пробелом.
 Scoped IPv6 с `%interface`/`%index` не создаёт разрешение без привязки к интерфейсу и
 не мешает другим корректным записям. Изменения DNS после снимка не обновляют firewall
-автоматически. [Чтение resolver-файлов](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+автоматически. [Чтение resolver-файлов](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-FILES.md).
 
 Системное разрешение имён для kill-switch, подключений и UDP-диагностики использует
 общий модуль ядра: максимум четыре незавершённых DNS/NSS-вызова или чтения resolver-файлов на экземпляр ядра
 в процессе, очередь входит в срок запроса. Отмена не освобождает занятый слот до
 фактического завершения вызова. Числовые IP обходят очередь; адреса, предоставленные
 платформенным адаптером, сохраняют приоритет. Новых INI-параметров нет.
-[Ожидание DNS и остановка](../reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
+[Ожидание DNS и остановка](../reports/audit-0.8.2/AUDIT-Q25-SYSTEM-RESOLVER.md).
 
 Установка kill-switch (`engage`) получает общий срок 15 секунд: время resolver,
 очередь operation mutex, поиск утилит, admission и команды IPv4/IPv6. Для отката частичной
@@ -2165,7 +2165,7 @@ Scoped IPv6 с `%interface`/`%index` не создаёт разрешение б
 защиты. Ожидание DNS/NSS ограничено сроком и отменяется при остановке; сам системный
 вызов может продолжаться в отдельном ограниченном потоке. Другие синхронные границы
 не прерываются таймером: это не обещание завершения за 30 секунд.
-[Проверки и ограничения](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).
+[Проверки и ограничения](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-SETUP.md).
 
 Linux `disengage` делит 15 секунд между ожиданием operation mutex и очисткой IPv4/IPv6.
 После истечения срока новые команды не запускаются, ошибка сохраняет owner для
@@ -2173,14 +2173,14 @@ Linux `disengage` делит 15 секунд между ожиданием opera
 подтверждает ни полное снятие, ни сохранение всей защиты. Устраните причину задержки
 firewall и повторите очистку; после выхода процесса проверьте остатки в исходном
 namespace по инструкциям восстановления. Это не предел времени всей остановки.
-[Подробности и проверки](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
+[Подробности и проверки](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
 
 Обновление IP сервера перед reconnect также делит 15 секунд между resolver, очередью
 и командами обеих семей. Истечение срока или остановка прекращают ожидание DNS/NSS;
 поздний ответ отбрасывается без изменения firewall. Неопределённая проверка существующего разрешения не разрешает его вставку.
 Ошибка refresh останавливает reconnect с сохранением защиты; неподтверждённая замена
 не удаляет прежний адрес. Это не жёсткий срок всего подключения.
-[Проверки и ограничения](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
+[Проверки и ограничения](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
 
 На Linux включённый kill-switch снимается после успешной остановки transport core
 и очистки forwarding для gateway/exit-node при отсутствии зарегистрированных ошибок
@@ -2384,7 +2384,7 @@ full-tunnel запускается только после того, как `Vpn
 даже у минимального Java VpnService без ядра Qeli; отрицательные IPv4 UDP-пробы
 при lockdown оставались заблокированы. Это ограничение данного стенда, а не
 подтверждение поведения всех устройств. Подробности и точный fingerprint:
-[аудит системного lifecycle Android](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).
+[аудит системного lifecycle Android](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-SYSTEM.md).
 
 На iOS `kill_switch` **не поддерживается**; роль fail-closed играет системный on-demand
 (см. сноски по iOS в таблице клиентских ключей выше).
@@ -2484,8 +2484,8 @@ MASQUERADE: остановка одного не удаляет правило �
 обновлении этого пути: нужен отдельный внешний WAN.
 При ECMP через разные интерфейсы или одинаковой минимальной метрике
 разных WAN exit-node откажет в автоматическом выборе: назначьте одному
-внешнему WAN меньшую метрику. [Проверка](../reports/AUDIT-Q25-WAN-ECMP.md).
-[Проверка монитора](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` нельзя совмещать
+внешнему WAN меньшую метрику. [Проверка](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
+[Проверка монитора](../reports/audit-0.8.2/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` нельзя совмещать
 с `gateway_nat = true` или `forward = true` на том же TUN: эти режимы требуют
 разного поведения для неотмеченного трафика из туннеля.
 
@@ -2495,7 +2495,7 @@ MASQUERADE: остановка одного не удаляет правило �
 выбранный физический WAN: старые firewall-правила привязаны к его имени и
 применятся к новому устройству с тем же именем даже без refresh. Остановите
 профиль, подтвердите успешную очистку правил, затем измените WAN и запустите
-профиль снова. [Проверка rename/reuse](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+профиль снова. [Проверка rename/reuse](../reports/audit-0.8.2/AUDIT-Q25-WAN-NAME-REUSE.md).
 
 Очистка берёт только WAN, запомненные при установке, включая предыдущие uplinks;
 без записи владения текущий default route не даёт права удалить правило.
@@ -2503,7 +2503,7 @@ MASQUERADE: остановка одного не удаляет правило �
 остановки её старых владельцев требуется ручная проверка и точечное восстановление.
 Учёт WAN находится в памяти; восстановление после краша не следует считать успешным
 только по результату cleanup нового процесса.
-[Проверки и ограничения](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).
+[Проверки и ограничения](../reports/audit-0.8.2/AUDIT-Q25-EXIT-OWNERSHIP.md).
 
 ### Как это работает и что программирует флаг
 
@@ -2532,8 +2532,8 @@ WAN и управляющее соединение. Пакет сразу поп
   Только при отсутствии пригодного default route используется `ip route get 1.1.1.1`;
   этот fallback не доказывает пригодность всех policy routes. IPv6 ищет uplink
   отдельно через `ip -6 route` и может выбрать другой интерфейс.
-  [Метрика](../reports/AUDIT-Q25-WAN-METRIC.md) и
-  [ECMP](../reports/AUDIT-Q25-WAN-ECMP.md).
+  [Метрика](../reports/audit-0.8.2/AUDIT-Q25-WAN-METRIC.md) и
+  [ECMP](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
 
 Правила снимаются на **чистой** остановке; **краш оставляет их на месте** — как у
 kill-switch, это fail-safe, а не забывчивость. Ручная чистка после падения — в
@@ -2583,7 +2583,7 @@ Qeli ничего не менял и может освободить запис�
 вручную и не удаляйте журнал ради запуска. Совместная работа разных версий журнала
 не поддерживается. Пользовательские конфиги остаются INI; новых ключей нет.
 V3 возвращает `legacy v3 host sysctl journal lacks durable namespace generation`.
-[Контракт v4, миграция и ограничения](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).
+[Контракт v4, миграция и ограничения](../reports/audit-0.8.2/AUDIT-Q25-NAMESPACE-GENERATION.md).
 
 На Unix общая атомарная запись и удаление последнего sysctl-журнала завершаются
 синхронизацией родительского каталога. `published ... persistence is uncertain`
@@ -2593,7 +2593,7 @@ V3 возвращает `legacy v3 host sysctl journal lacks durable namespace g
 Sysctl использует реальный абсолютный каталог состояния: `STATE_DIRECTORY`
 либо `/var/lib/qeli`. Symlink/`..` в пути и group/world write запрещены; операции
 закреплены за одним открытым каталогом. Совместная работа root и владельца каталога
-сервиса сохраняется. [Политика доступа](../reports/AUDIT-Q25-STATE-DIRECTORY.md).
+сервиса сохраняется. [Политика доступа](../reports/audit-0.8.2/AUDIT-Q25-STATE-DIRECTORY.md).
 
 ### Оговорки
 
@@ -2760,20 +2760,20 @@ policy routing, дополнительные firewall/mangle-правила, и�
   pipeline и задачи обслуживания соединения до восстановления DNS и очистки TUN. Ошибка
   управляющего события проходит тот же путь. Linux-монитор путей в TCP/UDP также ждёт свои
   уже запущенные blocking-операции. Это не задаёт срок системным командам и не гарантирует
-  async join при принудительной отмене всей future; [границы проверки](../reports/AUDIT-Q25-TCP-TASKS.md).
+  async join при принудительной отмене всей future; [границы проверки](../reports/audit-0.8.2/AUDIT-Q25-TCP-TASKS.md).
 - UDP использует того же владельца задач: active/candidate/draining receive, подключение
   кандидата и Linux-монитор завершаются до проверки и отката платформенного пути, затем
   выполняется очистка DNS/TUN. Ошибка управляющего события не обходит эту последовательность.
   При отмене отдельного кандидата его приём завершается, а active путь продолжает работу;
-  [подробности и пределы проверки](../reports/AUDIT-Q25-UDP-TASKS.md).
+  [подробности и пределы проверки](../reports/audit-0.8.2/AUDIT-Q25-UDP-TASKS.md).
 - При отмене уже начатого shutdown Unix TUN/Wintun pump сохраняет владение рабочими
   потоками и ждёт их завершения при уничтожении. Это ожидание может быть синхронным;
   оно не подтверждает завершение остальных задач или восстановление сети при отмене
-  всего клиента. [Контракт и проверка](../reports/AUDIT-Q25-TUN-WORKERS.md).
+  всего клиента. [Контракт и проверка](../reports/audit-0.8.2/AUDIT-Q25-TUN-WORKERS.md).
 - Для `reality-tls` группа клиента владеет также внутренними HTTP/2 driver/bridge с этапа
   подключения. Штатный TCP teardown ждёт их до DNS/TUN cleanup; native runner при отмене
   попытки ждёт TCP-группу до finish_generation. Это не подтверждает завершение раннего
-  платформенного rollback или UDP cleanup; [пределы проверки](../reports/AUDIT-Q25-H2-TASKS.md).
+  платформенного rollback или UDP cleanup; [пределы проверки](../reports/audit-0.8.2/AUDIT-Q25-H2-TASKS.md).
 - Если ни один план не был применён, `post_down` всё равно может выполниться: тогда
   `QELI_PLAN_AVAILABLE=false`, зависящие от плана значения пусты, а в JSON поле
   `network_plan` равно `null`.
@@ -3070,9 +3070,9 @@ set -eu
 Частичный отказ сохраняет lease поколения; его последующий `revert` имеет отдельный
 срок 15 секунд, поэтому исчерпанный setup не отменяет возможность отката. Синхронный
 файловый I/O, spawn и kill/reap не получают жёсткой верхней границы этим бюджетом.
-[Проверки общего срока DNS](../reports/AUDIT-Q25-DNS-BUDGET.md).
+[Проверки общего срока DNS](../reports/audit-0.8.2/AUDIT-Q25-DNS-BUDGET.md).
 
-Для `dns = tunnel` нужен `busctl` и уже работающий systemd-resolved в той же сети; брокер D-Bus должен быть в том же PID namespace. Команды адресованы конкретному unique owner на шине с закреплённым AUTH GUID. Смена службы/шины прерывает операцию и сохраняет lease. Автоактивация и fallback к networkd отсутствуют; `LinkBusy` требует настроить владение TUN или выбрать `dns = off`/`system`. Нестандартный порт из NetworkPlan требует `SetLinkDNSEx`, порт 53 использует `SetLinkDNS`. [Контекст и проверка](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
+Для `dns = tunnel` нужен `busctl` и уже работающий systemd-resolved в той же сети; брокер D-Bus должен быть в том же PID namespace. Команды адресованы конкретному unique owner на шине с закреплённым AUTH GUID. Смена службы/шины прерывает операцию и сохраняет lease. Автоактивация и fallback к networkd отсутствуют; `LinkBusy` требует настроить владение TUN или выбрать `dns = off`/`system`. Нестандартный порт из NetworkPlan требует `SetLinkDNSEx`, порт 53 использует `SetLinkDNS`. [Контекст и проверка](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-CONTEXT.md).
 
 Managed DNS на Linux также требует `SO_NETNS_COOKIE` и доверенного `/var/lib/qeli` без symlink и group/world write. Per-link DNS state не переносится через `STATE_DIRECTORY`. Перед обновлением штатно остановите старый клиент; оставшиеся v1-маркеры требуют ручного разбора, если совпадают с новым link. [Формат v2 и восстановление](TROUBLESHOOTING.md#650-linux-владение-dns-lease-и-восстановление-маркеров).
 
@@ -3080,15 +3080,15 @@ Managed DNS на Linux также требует `SO_NETNS_COOKIE` и довер
 
 Managed Linux-клиент сохраняет физические bypass/exclude и blackhole в `/var/lib/qeli/client-routes.state`. Поэтому `SO_NETNS_COOKIE` и доверенный writable state каталог обязательны также при `dns = off`/`system`. `STATE_DIRECTORY` не меняет этот путь; клиенты одной сети должны видеть общий журнал и lock. Нового INI-параметра нет. [Recovery и ограничения](OPERATIONS.md#восстановление-физических-маршрутов-клиента).
 
-Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Внутри NetworkPlan/cleanup действует также остаток общего командного бюджета; внутренний I/O не прерывается. [Подробности](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+Gateway/exit-node setup, refresh и cleanup получают по 15 секунд на очередь router mutex, discovery, WAN и firewall-команды. Cleanup делит срок между обеими семьями; неполные записи сохраняются для новой попытки. Внутри NetworkPlan/cleanup действует также остаток общего командного бюджета; внутренний I/O не прерывается. [Подробности](../reports/audit-0.8.2/AUDIT-Q25-GATEWAY-BUDGET.md).
 
-Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Внутри NetworkPlan/cleanup этот предел ограничен остатком общего командного бюджета. [Контракт](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+Клиентские route setup/prepare/COMMIT/cleanup делят по 15 секунд между operation mutex и всеми командами обеих семей. Rollback COMMIT получает отдельные общие 15 секунд; неизвестные изменения сохраняются для verified retry. Внутри NetworkPlan/cleanup этот предел ограничен остатком общего командного бюджета. [Контракт](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-BUDGET.md).
 
 Это внутренние пределы, без нового ключа INI. Сроки пользовательских hooks не меняются.
 Эти 15 секунд не задают общий срок shutdown. Текущее состояние последовательностей
 routes/firewall и оставшиеся ограничения отражены в [реестре техдолга](../plans/AUDIT-DEBT.md).
 Preflight IPv4/IPv6 делит один бюджет 15 секунд между четырьмя пробами; панель выполняет
-их асинхронно до config lock. [Транзакции панели](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
+их асинхронно до config lock. [Транзакции панели](../reports/audit-0.8.2/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 ### Серверные hooks
 
@@ -3096,7 +3096,7 @@ Preflight IPv4/IPv6 делит один бюджет 15 секунд между 
 отправки отказов до освобождения ресурсов профиля. Отклонённое H2-соединение сохраняет
 слот pre-auth до освобождения I/O; flush по-прежнему ограничен одной секундой. При
 успешном H2 accept слот передаётся внутренней аутентификации и освобождается после AUTH.
-Это не задаёт общий deadline остановки; [подробности и пределы](../reports/AUDIT-Q14-H2-TASKS.md).
+Это не задаёт общий deadline остановки; [подробности и пределы](../reports/audit-0.8.2/AUDIT-Q14-H2-TASKS.md).
 
 Серверные хуки остаются отдельным per-profile контрактом:
 
@@ -3782,6 +3782,6 @@ INI, ссылки, проверки и defaults теперь обрабатыв�
 
 ### Reload службы и конфигурация владельца root
 
-`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/AUDIT-Q33-SYSTEMD.md).
+`systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
-Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).

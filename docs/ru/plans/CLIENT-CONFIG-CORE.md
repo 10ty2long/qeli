@@ -1,8 +1,10 @@
 # Общая конфигурация и политики клиентов
 
-<!-- normative-sync: client-config-core-v2 -->
+<!-- normative-sync: client-config-core-v3 -->
 
-Статус на **22 сентября 2026**: перенос исходников в Rust выполнен; проверка Apple и
+**Сверка 16 октября 2026:** общее ядро ABI 1.16 и клиентские адаптеры реализованы. Закоммиченные Windows/macOS/Android библиотеки прошли независимые A/B-сборки, ABI/JNI, хеши и provenance; платформенные сборки и доступные runtime-сценарии проверены. [Пакет после обновления зависимостей](../../../release/certification/evidence/dependabot-integration-20261016.json). Исключённые физические стенды не объявлены PASS; 0.8.2 остаётся неопубликованной. Ниже сохранены датированные этапы миграции, включая первоначально открытые gates.
+
+Исторический статус на **22 сентября 2026**: перенос исходников в Rust выполнен; проверка Apple и
 пересборка закоммиченных релизных библиотек ещё обязательны перед выпуском.
 Связано: [полный аудит](FULL-SYSTEM-AUDIT.md), [матрица ключей](../reference/CLIENT-CONFIG-MATRIX.md),
 [transport core](../reference/TRANSPORT-CORE.md).
@@ -69,7 +71,7 @@ Defaults серверных профилей этим не меняются.
 | Crypto/Protocol в managed/Swift | Сначала проверен production reachability: часть файлов — независимые conformance/benchmark-эталоны. Они не являются резервным production transport и не удаляются как мёртвый код |
 | UI protection summary | Общие факты маршрутизации вынесены; отображение платформенных возможностей остаётся в UI. iOS не заявляет применение per-app правил без MDM |
 
-## ABI, сборка и проверки
+## ABI, сборка и проверки: этап 22 сентября
 
 `qeli_config_request` — чистая функция без сессии, DNS, чтения файлов, сети и запуска
 `password_command`. C ABI использует буферы вызывающей стороны, ограничивает запрос 2 МиБ,
@@ -161,7 +163,7 @@ INI без зависимости от регистра ключей и деко
 читают профиль тем же парсером. Определение и автозапись dev учитывают BOM и регистр,
 не удаляют комментарии. Запреты панели на команды и опасные пути сохранены.
 Linux unit-тест этой границы требует исполнения; cross-Clippy подтверждает компиляцию.
-Подробности: [реестр Q02](../reports/AUDIT-Q02-CLIENT-PARSERS.md).
+Подробности: [реестр Q02](../reports/audit-0.8.2/AUDIT-Q02-CLIENT-PARSERS.md).
 
 ## Подтверждённый локальный прогон — 22 сентября 2026
 
@@ -180,7 +182,7 @@ Linux unit-тест этой границы требует исполнения;
 Эти результаты подтверждают перенос исходников и работу C ABI/JNI на хосте;
 они не закрывают платформенную сертификацию и выпуск пакетов.
 
-D08/D11/D12: [Android JNI и emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.
+D08/D11/D12: [Android JNI и emulator runtime](../reports/audit-0.8.2/AUDIT-Q34-ANDROID-RUNTIME.md): исправлены cwd/API flag cargo-ndk, удалён устаревший JSON-config harness; 154 JVM + 6 instrumentation PASS. Свежий dev x86_64 APK проверен по SHA. Release A/B, полный конфигурационный/runtime контракт и остальные платформы открыты.
 
 Сверка 2 октября: Q25-F210 закрывает доступный D08 — владельцы store, 511 .NET/167 JVM/12 Android instrumentation; iOS read-only fix проверен статически, Apple runtime SKIPPED по решению пользователя. Старые ограничения выше исторические; окончательное обновление native/certification остаётся D15.
 

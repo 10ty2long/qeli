@@ -557,7 +557,7 @@ copy/link or readonly storage refuses instead of leaving a partial final file. T
 is not fsync/power-loss durability, and SIGKILL can leave a temporary file. Administrator
 changes to parent paths are outside the cooperative publication boundary.
 
-[Q33 audit](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md) records34 shell/chroot
+[Q33 audit](../../docs/eng/reports/audit-0.8.2/AUDIT-Q33-DOCKER-ENTRYPOINT.md) records34 shell/chroot
 scenarios. These checks use an argv-recording executable and do not qualify Docker
 image builds, daemon networking, health or recreation.
 
@@ -577,7 +577,7 @@ On 2026-10-08 the actual amd64 runtime stage was built with a SHA-verified exist
 0.8.2 release ELF supplied via the named `build` context, then passed26 local
 runtime/volume/recreation/fault-recovery checks on Debian13/Docker29.8.2. This did
 not rerun the Rust compiler stage, multiarch publication, Internet NAT or old
-throughput benchmarks. See the [scoped audit report](../../docs/eng/reports/AUDIT-Q33-DOCKER-ENTRYPOINT.md).
+throughput benchmarks. See the [scoped audit report](../../docs/eng/reports/audit-0.8.2/AUDIT-Q33-DOCKER-ENTRYPOINT.md).
 
 ## Release source and legal resources
 
@@ -612,7 +612,7 @@ tags. Missing, failed or stale CI refuses release publication; this gate needs
 python3 scripts/release_tag.py --tag v0.8.2
 ```
 
-[Q34 compiler/image qualification](../../docs/eng/reports/AUDIT-Q34-DOCKER-BUILD.md)
+[Q34 compiler/image qualification](../../docs/eng/reports/audit-0.8.2/AUDIT-Q34-DOCKER-BUILD.md)
 records an actual amd64 build with the pinned Rust/Debian bases, default release
 fat LTO/jemalloc and no prebuilt binary override; exact image notices and compact
 VPN/recreation/rollback checks passed. This is scoped amd64 evidence. ARM images,
@@ -637,5 +637,5 @@ together with the Rust/Debian base and frontend pins as needed. Keep the Debian
 and Debian-security dates identical, check signed metadata and package installation,
 then qualify the affected image. Do not add live mirrors as a fallback.
 These pins fix the selected inputs; they do not establish byte-for-byte image
-reproducibility. [Q34 input qualification](../../docs/eng/reports/AUDIT-Q34-DOCKER-INPUTS.md)
+reproducibility. [Q34 input qualification](../../docs/eng/reports/audit-0.8.2/AUDIT-Q34-DOCKER-INPUTS.md)
 records the exact scope of the frontend and amd64 APT checks.

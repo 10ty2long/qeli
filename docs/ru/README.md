@@ -1,5 +1,7 @@
 # Qeli — обфусцированный VPN 
 
+> 0.8.2 — ветка разработки, релиз не опубликован. Последний опубликованный релиз — 0.8.1. [Статус аудита и границы проверок](plans/FULL-SYSTEM-AUDIT.md).
+
 **Qeli** (Quick Easy Link IP) — self-host VPN с собственным L4-протоколом и
 встроенной обфускацией, поверх TCP или UDP. Цель — устойчивость к пассивному/
 сигнатурному DPI при удобстве классических TUN/TAP-VPN, со встроенной веб-админкой.
@@ -33,7 +35,7 @@ REALITY/настоящий TLS 1.3 написаны **с нуля на Rust**: �
 готовых REALITY-библиотек и **НЕ** обёртка над Xray/sing-box. Свой fake-TLS, свой
 hand-rolled TLS 1.3 (`realtls`) с cert-borrowing (сертификат и форма JA3S target'а,
 без заявления полного паритета с Xray/браузером),
-свой крипто-канал (X25519 + ML-KEM-768 PQ-гибрид, ChaCha20-Poly1305,
+свой крипто-канал (X25519, ML-KEM-768 в legacy camouflage, ChaCha20-Poly1305,
 channel-binding, key-pinning, PRP-nonce). Полный контроль и аудируемость кода,
 без зависимости от чужих proxy-ядер.
 
@@ -67,8 +69,10 @@ VPN — не self-hosted. Qeli = self-host full-TUN VPN + REALITY-style маск
   долгоживущий двунаправленный `POST /v1/events/stream`, настоящие SETTINGS/HEADERS/DATA/
   flow-control и случайный batching 2–8 мс. Пользовательского H2-переключателя и второго
   внутреннего fake-TLS handshake больше нет.
-- **Крипто-канал** — X25519 + **ML-KEM-768** (PQ-гибрид X25519MLKEM768), HKDF-SHA256,
-  ChaCha20-Poly1305 / AES-GCM, Argon2id для паролей.
+- **Крипто-канал** — X25519; внутренний X25519MLKEM768 обязателен в legacy camouflage,
+  `plain` и внутренний `reality-tls` используют классический X25519. PQ внешнего TLS зависит
+  от согласованной группы. PacketCodec — ChaCha20-Poly1305; внешний TLS — AES-GCM.
+  HKDF выводит ключи, Argon2id проверяет пароли.
 - **Channel-binding аутентификация** — proof сервера привязан к транскрипту
   рукопожатия + key-pinning: MITM не перехватит пароль ещё до его отправки.
 - **PRP-nonce** — 96-битный Feistel-PRP маскирует счётчик пакетов: на проводе нет

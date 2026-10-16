@@ -1,7 +1,11 @@
 # Full IPv6 support — implementation plan
 
+**Reconciled 16 October 2026:** 0.8.2 remains in development. The agreed audit is complete 37/37; available Linux runtime checks, native A/B and CI are recorded in the [current evidence packet](../../../release/certification/evidence/dependabot-integration-20261016.json). Physical Mac/iOS, router and Windows network-VM platforms were excluded by the user; their rows remain advisory, not ongoing qualification or PASS. The full physical matrix below remains the criterion for broader coverage.
+
+**Historical snapshot, 10 September 2026 (0.8.1):**
+
 Status: source implementation complete; the qeli 0.8.1 automated release certification passed;
-cross-platform physical qualification continues for the planned full-IPv6 0.8.2 release. Updated:
+cross-platform physical qualification was then planned for the full-IPv6 0.8.2 release. Updated:
 2026-09-10.
 
 The runtime gate and authenticated capability negotiation are enabled. ABI 1.15 native cores passed

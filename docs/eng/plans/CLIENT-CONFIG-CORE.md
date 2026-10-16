@@ -1,8 +1,10 @@
 # Shared client configuration and policies
 
-<!-- normative-sync: client-config-core-v2 -->
+<!-- normative-sync: client-config-core-v3 -->
 
-Status on **2026-09-22**: source migration to Rust implemented; Apple verification and
+**Reconciled 16 October 2026:** the shared ABI 1.16 core and client adapters are implemented. Committed Windows/macOS/Android libraries passed independent A/B builds, ABI/JNI, hashes and provenance; platform builds and available runtime scenarios were checked. [Post-dependency-update evidence](../../../release/certification/evidence/dependabot-integration-20261016.json). Excluded physical platforms are not PASS; 0.8.2 remains unpublished. The dated migration stages below retain their initially open gates.
+
+Historical state on **2026-09-22**: source migration to Rust implemented; Apple verification and
 rebuilding committed release libraries remain mandatory before release.
 Related: [system audit](FULL-SYSTEM-AUDIT.md), [key matrix](../reference/CLIENT-CONFIG-MATRIX.md),
 [transport core](../reference/TRANSPORT-CORE.md).
@@ -67,7 +69,7 @@ old values. Server-profile defaults are unchanged.
 | Managed/Swift Crypto/Protocol | Production reachability was checked first. Some code is an independent conformance/benchmark reference, not a fallback production transport; it is retained deliberately |
 | Protection summary UI | Shared routing facts moved; platform capability presentation stays in UI. iOS never claims unmanaged per-app rules are enforced |
 
-## ABI, builds and verification
+## ABI, builds and verification: 22 September stage
 
 `qeli_config_request` has no session, DNS, file I/O, network or `password_command` execution.
 C ABI uses caller-owned buffers, 2 MiB request/4 MiB response/256 KiB document limits and
@@ -153,7 +155,7 @@ local `_` names remain supported. The panel's old pre-validator is removed; save
 summaries and device discovery use the same parser. Explicit/automatic dev handling
 honors BOM and client case rules while retaining comments. Command/path restrictions
 remain enforced. The Linux boundary unit test still needs execution; cross-Clippy
-confirms compilation. See the [Q02 register](../reports/AUDIT-Q02-CLIENT-PARSERS.md).
+confirms compilation. See the [Q02 register](../reports/audit-0.8.2/AUDIT-Q02-CLIENT-PARSERS.md).
 
 ## Verified local run — 22 September 2026
 
@@ -172,7 +174,7 @@ confirms compilation. See the [Q02 register](../reports/AUDIT-Q02-CLIENT-PARSERS
 These results verify the source migration and host C ABI/JNI integration;
 they do not complete platform certification or package delivery.
 
-D08/D11/D12: [Android JNI and emulator runtime](../reports/AUDIT-Q34-ANDROID-RUNTIME.md): fixed cargo-ndk cwd/API flag, removed the obsolete JSON-config harness; 154 JVM + 6 instrumentation tests PASS. The fresh dev x86_64 APK is SHA-verified. Release A/B, the full config/runtime contract and other platforms remain open.
+D08/D11/D12: [Android JNI and emulator runtime](../reports/audit-0.8.2/AUDIT-Q34-ANDROID-RUNTIME.md): fixed cargo-ndk cwd/API flag, removed the obsolete JSON-config harness; 154 JVM + 6 instrumentation tests PASS. The fresh dev x86_64 APK is SHA-verified. Release A/B, the full config/runtime contract and other platforms remain open.
 
 Reconciliation on 2 October: Q25-F210 closes available D08 — store ownership, 511 .NET/167 JVM/12 Android instrumentation; iOS read-only fix reviewed statically, Apple runtime SKIPPED by user decision. Earlier limitations above are historical; final native/certification refresh remains D15.
 

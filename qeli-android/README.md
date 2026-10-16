@@ -129,7 +129,7 @@ plaintext preferences, удалён. Служебные JSON-контейнер�
 app-owned хранилища не меняются. Release A/B, arm64 и остальные runtime-режимы
 проверяются отдельно от этой тестовой сборки.
 
-Результаты прогона 24 сентября: [154 JVM + 6 Android instrumentation tests](../docs/ru/reports/AUDIT-Q34-ANDROID-RUNTIME.md).
+Результаты прогона 24 сентября: [154 JVM + 6 Android instrumentation tests](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-ANDROID-RUNTIME.md).
 
 Сверка store 2 октября: [Q25-F210](../docs/ru/plans/AUDIT-DEBT.md). Прямая запись внешнего процесса в encrypted store в обход координации не поддерживается; после правки активного INI требуется явное переподключение.
 
@@ -141,7 +141,7 @@ app-owned хранилища не меняются. Release A/B, arm64 и ост
 Системный cloud/device-transfer исключён явными правилами; для нового устройства нужен
 экспорт/импорт backup. Потерянный Keystore key без backup не восстанавливается.
 minSdk28 сохраняется; active index использует совместимый точный BigDecimal conversion.
-[Q29 store/manifest/package](../docs/ru/reports/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md):
+[Q29 store/manifest/package](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md):
 167 JVM,18 debug instrumentation PASS;Release/R8 build иlint с0errors/55warnings.
 Debug test APK не является подходящим тестовым variant для minified Release. Production
 signing,полный Release VPN и другие lifecycle режимы проверяются отдельно.
@@ -159,7 +159,7 @@ ACK запускает native packet pump, а CONNECTED ждёт Android Network
 адресами текущего плана и MTU на API29+. Новый observer работает и на прежнем TUN,
 в том числе при исключённом UID владельца. При timeout генерация останавливается
 для retry; TUN/системный lockdown сохраняются.
-[Q29 F279: проверки и ограничения](../docs/ru/reports/AUDIT-Q29-ANDROID-CONNECTED-GATE.md).
+[Q29 F279: проверки и ограничения](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-CONNECTED-GATE.md).
 
 
 ## Инструментированный Release с R8
@@ -196,7 +196,7 @@ DEX-проверка проверяет три метода Trace и досту�
 запуск тестов. Запускайте `connectedReleaseAndroidTest` на выделенном устройстве;
 сетевым сценариям Q29 дополнительно нужен изолированный серверный fixture.
 
-[Q29: проверка Release runner и границы результата](../docs/ru/reports/AUDIT-Q29-ANDROID-RELEASE-RUNNER.md).
+[Q29: проверка Release runner и границы результата](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-RELEASE-RUNNER.md).
 
 
 ## Per-app UID и Private DNS: лабораторная проверка
@@ -214,7 +214,7 @@ Private DNS off/Automatic и отрицательный strict-provider сцен
 матрицы использует `kill_switch=false`, чтобы пользователь мог менять OS lockdown;
 это отдельная проверка от `kill_switch=true`. Прямой трафик исключённого UID без
 lockdown ожидаем; с lockdown он блокируется. Доверенный strict DoT проверяется отдельной матрицей ниже.
-[Q29: результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-APP-POLICY.md).
+[Q29: результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-APP-POLICY.md).
 
 
 ## Doze и повторные переключения сети: ограниченный прогон
@@ -227,7 +227,7 @@ lockdown ожидаем; с lockdown он блокируется. Доверен
 IPv4/IPv6 TCP/UDP и системный DNS после пробуждений/переходов, stop/lockdown/recovery/revoke.
 IDLE/экран наблюдаются каждые15s; receiver не запускается во сне. Это ограниченная
 проверка AVD, без гарантии physical suspend, многочасового сна или всех API/OEM.
-[Q29: результаты и оставшиеся ограничения](../docs/ru/reports/AUDIT-Q29-ANDROID-ENDURANCE.md).
+[Q29: результаты и оставшиеся ограничения](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-ENDURANCE.md).
 
 
 ## Доверенный strict Private DNS / DoT: лабораторная проверка
@@ -239,7 +239,7 @@ IDLE/экран наблюдаются каждые15s; receiver не запус
 и Private DNS settings восстанавливаются. Product trust/TLS не меняются.
 System lookup подтверждается A/AAAA, правильным SNI и TUN peer в TLS receipts; raw UDP
 проверяется отдельно и не заменяет DoT. Bootstrap provider не смешивается с app nonce.
-[Q29: результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-TRUSTED-DOT.md).
+[Q29: результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-TRUSTED-DOT.md).
 
 
 ## Разрешения подключения: отмена и пересоздание Activity
@@ -257,7 +257,7 @@ Activity удерживает первоначально проверенный 
 отключения/подключения после OS lockdown bootstrap на выделенном readonly AVD.
 Нужны закреплённые APK/manifest и частные namespaces; остальные suites/варианты
 отклоняют этот opt-in до изменения стенда.
-[Q29: результаты и ограничения](../docs/ru/reports/AUDIT-Q29-ANDROID-PERMISSIONS.md).
+[Q29: результаты и ограничения](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-PERMISSIONS.md).
 
 
 ## Доверенный Wi-Fi: проверка сервиса в лабе
@@ -270,7 +270,7 @@ namespaces и off-pool TCP/UDP ответчики. Location/nearby Wi-Fi permiss
 отмена отложенного resume и отказ kill-switch без OS lockdown. Сокеты явно используют
 VPN Network; это не Release/default-network/leak проверка. Другие варианты/транспорт
 и несовместимые opt-in отклоняются до изменения стенда.
-[Q29: результаты и открытые границы](../docs/ru/reports/AUDIT-Q29-ANDROID-TRUSTED-WIFI.md).
+[Q29: результаты и открытые границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-TRUSTED-WIFI.md).
 
 
 ## Доверенный Wi-Fi и lockdown
@@ -288,7 +288,7 @@ VPN Network; это не Release/default-network/leak проверка. Друг
 от отдельного UID; matching Release instrumentation не запускается. Нужны закреплённые
 APK/manifest, private namespaces и временный readonly AVD. Несовместимые suites,
 варианты и per-app режимы отклоняются до изменений.
-[Q29 F281: результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-TRUSTED-LOCKDOWN.md).
+[Q29 F281: результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-TRUSTED-LOCKDOWN.md).
 
 
 ## Владелец protect и потеря видимости SSID
@@ -305,7 +305,7 @@ framework trusted-Wi-Fi сценариев, три protect owner/stop/monitor ad
 выдаются извне, SSID settings задаются локально тестом. Location-switch redaction
 не равна отзыву permission с возможным убийством процесса; queued pause/disconnect
 не подтверждает точную точку внутри native join.
-[Q29 F282–F283: результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-CONTROLLER.md).
+[Q29 F282–F283: результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-CONTROLLER.md).
 
 Сетевые callbacks принимаются только от текущего зарегистрированного наблюдателя,
 под монитором lifecycle. При обычной остановке они отклоняются; намеренная trusted-пауза
@@ -331,18 +331,18 @@ private diagnostic journal / bounded stream на disposable readonly AVD.
 Тестовая инспекция dialog roots использует reflection; экспорт идёт в реальные private
 `file:` destinations, не в сторонний SAF/cloud provider. Нет VPN payload в этой debug suite.
 Другие варианты/транспорт отклоняются до изменения стенда.
-[Q29 F284–F285: результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md).
+[Q29 F284–F285: результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-STORAGE-PACKAGE.md).
 
 Update metadata ограничены4MiB; журнал при восстановлении читает ограниченный хвост.
 Все imports используют общий bounded reader с прежними INI/archive budgets.
-[Q29 F286–F288: source review, исправления и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-SOURCE.md).
+[Q29 F286–F288: source review, исправления и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-SOURCE.md).
 
 Изменение LAN bypass в Settings запрашивает reconfiguration активного соединения;
 обычный Connect сохраняет прежний guard. Ожидающий permission result не перехватывается.
 `audit_android_data_plane_lab.py --suite settings-ui --variant debug --transport tcp`
 выполняет три real-settings/native-pre-auth сценария без Auth/TUN/payload. Connected UI
 и pending permission phase введены тестом; это не проверка LAN route reachability.
-[Q29 F289: результат и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-SETTINGS.md).
+[Q29 F289: результат и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-SETTINGS.md).
 
 Служба завершает прежний native runner/TUN перед explicit reconfiguration; Disconnect,
 revoke и destroy отменяют отложенный config. Ordinary Connect не обходит generation guard.
@@ -371,7 +371,7 @@ Linux-generation не добавляет автоматически SHA AAPT2 д
 macOS classifier JAR сверены с Google Maven; при смене AGP сверяйте их заново.
 Не добавляйте write-флаги в CI или broad trusted-artifact исключения.
 Неизвестный checksum требует проверки происхождения, а не отключения verification.
-[Результаты и ограничения Q34](../docs/ru/reports/AUDIT-Q34-ANDROID-DEPENDENCIES.md).
+[Результаты и ограничения Q34](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-ANDROID-DEPENDENCIES.md).
 
 
 ## Security versions и Maven CVE gate
@@ -394,7 +394,7 @@ Gate опрашивает OSV по всем трём lockfile, включая bu
 При обновлении versions выполните матрицу генерации выше, удалите старые неиспользуемые
 checksum entries и независимо проверьте новые файлы. Затем повторите gate и штатные
 сборки без write-флагов. Изменение Kotlin требует JVM/R8/lint/instrumentation проверки.
-[Результаты Q34](../docs/ru/reports/AUDIT-Q34-MAVEN-SECURITY.md).
+[Результаты Q34](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-MAVEN-SECURITY.md).
 
 
 ## APK licenses and Maven notices
@@ -436,9 +436,9 @@ full release admission remain separate checks.
 
 ### Восстановление после смерти процесса
 
-Qeli сохраняет зашифрованный INI текущего соединения и использует закрытую запись восстановления Android. На API34 после SIGKILL проверено восстановление аутентифицированного VPN; Disconnect и отзыв разрешения останавливают запись. Ограниченные окна наблюдения и оставшийся DNS/null: [результаты и границы](../docs/ru/reports/AUDIT-Q29-ANDROID-RECOVERY.md).
+Qeli сохраняет зашифрованный INI текущего соединения и использует закрытую запись восстановления Android. На API34 после SIGKILL проверено восстановление аутентифицированного VPN; Disconnect и отзыв разрешения останавливают запись. Ограниченные окна наблюдения и оставшийся DNS/null: [результаты и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-RECOVERY.md).
 
 
 ### Готовность подключения
 
-`Native NetworkPlan APPLIED` подтверждает передачу TUN ядру. Пользовательский CONNECTED публикуется отдельно после Android VPN callbacks. Проверяйте новые сокеты после статуса «Подключено»; ранние отказы при CONNECTING/lockdown сохраняются как отдельное наблюдение. [Граница и результаты](../docs/ru/reports/AUDIT-Q29-ANDROID-CURRENT-VPN.md).
+`Native NetworkPlan APPLIED` подтверждает передачу TUN ядру. Пользовательский CONNECTED публикуется отдельно после Android VPN callbacks. Проверяйте новые сокеты после статуса «Подключено»; ранние отказы при CONNECTING/lockdown сохраняются как отдельное наблюдение. [Граница и результаты](../docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-CURRENT-VPN.md).

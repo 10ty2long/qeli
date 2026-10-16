@@ -40,7 +40,7 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
 - **Authentication and key handling.** Panel and VPN password checks share a bounded
   Argon2 budget. TCP authentication has time/input limits; retained hybrid key material
   is wiped, and degenerate static-key binding is rejected.
-  [Cryptographic review](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q08-CRYPTO-KEYS.md).
+  [Cryptographic review](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q08-CRYPTO-KEYS.md).
 - **Controlled network recovery.** Route, firewall, DNS and forwarding operations have
   stronger ownership, rollback and crash-recovery checks. NetworkPlan setup and cleanup
   each have a shared 15-second budget. Incomplete cleanup retains the protective block
@@ -97,11 +97,14 @@ requirement; `manual` does not enable external forwarding automatically.
 - **15 ASan fuzz targets** exercised parser/protocol boundaries. A complete endurance
   run lasted approximately **13 hours**, including 10,000 TCP and 10,000 QUIC cycles,
   additional UDP adapters and predefined resource budgets.
-  [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q35-FINAL.md)
-  · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q35-LONG-SOAK.md).
-- The verified audit baseline, `fe6a61ae`, passed **all 19 required CI jobs**
-  and source preflight. [CI result](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
-  This identifies the checked source; it does not certify a later release build.
+  [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
+  · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
+- After the dependency updates, candidate `a7694288` passed **all 20 required CI jobs**
+  in both the [push run](https://github.com/litvinovtd/qeli/actions/runs/38816216951)
+  and [PR run](https://github.com/litvinovtd/qeli/actions/runs/38816225427).
+  Merge `a5fb2834` in `dev` has the same file tree. These results precede this documentation
+  review and do not certify a later release build. The earlier audit baseline `fe6a61ae`
+  retains its separate [19-job CI result](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
 
 These are separate test populations, not a combined test count. Reports retain source
 and artifact identities, test conditions and original failures.
@@ -113,7 +116,7 @@ and artifact identities, test conditions and original failures.
   minimal VPN reproduced it. Ordinary DNS, typed A/AAAA and explicit VPN-network queries
   worked in the tested scenarios. This accepted limitation remains unfixed. Secure VPN
   and the system kill switch are retained; no DNS bypass mode is added.
-  [DNS investigation](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
+  [DNS investigation](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
 - Continuous identity across replacement of a selected WAN interface remains an accepted
   limitation, D06. Stop the profile and confirm cleanup before replacing that interface.
   [Details](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/plans/AUDIT-DEBT.md).
@@ -173,7 +176,7 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
   общий ограниченный бюджет Argon2. TCP-аутентификация ограничена по времени и размеру
   входа; сохраняемый материал гибридных ключей очищается из памяти, вырожденная привязка
   статического ключа отклоняется.
-  [Разбор криптографии](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q08-CRYPTO-KEYS.md).
+  [Разбор криптографии](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q08-CRYPTO-KEYS.md).
 - **Управляемое восстановление сети.** Усилены проверки владельцев маршрутов,
   firewall, DNS и forwarding, отката и восстановления после аварии. Настройка
   NetworkPlan и очистка получили отдельные общие бюджеты по 15 секунд. Незавершённая
@@ -235,12 +238,14 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
 - **15 ASan fuzz-целей** проверяли границы парсеров и протокола. Полный длительный
   прогон занял около **13 часов**: 10 000 циклов TCP и 10 000 QUIC, дополнительные
   UDP-адаптеры и заранее заданные бюджеты ресурсов.
-  [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q35-FINAL.md)
-  · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q35-LONG-SOAK.md).
-- Проверенный опорный снимок аудита, `fe6a61ae`, прошёл **все 19 обязательных
-  заданий CI** и итоговую проверку исходников.
-  [Результат CI](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
-  Здесь указан проверенный код; результат не сертифицирует более позднюю сборку релиза.
+  [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
+  · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
+- После обновления зависимостей кандидат `a7694288` прошёл **все 20 обязательных
+  заданий CI** в [push-прогоне](https://github.com/litvinovtd/qeli/actions/runs/38816216951)
+  и [PR-прогоне](https://github.com/litvinovtd/qeli/actions/runs/38816225427).
+  Merge-коммит `a5fb2834` в `dev` содержит то же дерево файлов. Результаты получены до этой
+  сверки документации и не сертифицируют более позднюю сборку релиза. Предыдущий снимок
+  `fe6a61ae` сохраняет отдельный [результат 19 заданий CI](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
 
 Это отдельные наборы проверок, их числа не складываются в один счётчик тестов.
 В отчётах сохранены версии исполненных исходников и артефактов, условия
@@ -254,7 +259,7 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
   A/AAAA и запросы через явно выбранную VPN-сеть работали в проверенных сценариях.
   Принятое ограничение остаётся неисправленным. Сохраняются защищённый VPN
   и системный kill switch; DNS bypass-режим не добавляется.
-  [Расследование DNS](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
+  [Расследование DNS](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
 - Непрерывная идентичность при замене выбранного WAN-интерфейса остаётся принятым
   ограничением D06. Перед заменой интерфейса нужно остановить профиль
   и подтвердить очистку. [Подробности](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/plans/AUDIT-DEBT.md).

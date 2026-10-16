@@ -502,8 +502,8 @@ may return after the deadline. NAT44, IPv4 forwarding and managed IPv6 routing e
 including queue time and commands. An error starts exact rollback with a separate shared
 15 seconds; incomplete rollback retains records and returns an error. DNS INPUT and
 REDIRECT share 15 seconds for setup; their cleanup operations have separate deadlines.
-[Limits and validation](../reports/AUDIT-Q14-NAT-SETUP-BUDGET.md).
-[Description and validation](../reports/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
+[Limits and validation](../reports/audit-0.8.2/AUDIT-Q14-NAT-SETUP-BUDGET.md).
+[Description and validation](../reports/audit-0.8.2/AUDIT-Q14-NAT-CLEANUP-BUDGET.md).
 
 Setup of one DNS INPUT ruleset receives 15 seconds including admission and cleanup of
 previous retired generations. UDP/TCP share this deadline. Lease Drop/cleanup receives
@@ -511,7 +511,7 @@ a separate 15 seconds including locks and both transports; this is also the roll
 budget after partial setup. Retirement is published before waiting for a mutex, so a
 timeout cannot strand an active entry without its lease. Unverified rules remain for
 explicit retry in the same worker. These budgets do not guarantee whole-DNS-setup or
-shutdown time. [Description and limits](../reports/AUDIT-Q14-DNS-INPUT-BUDGET.md).
+shutdown time. [Description and limits](../reports/audit-0.8.2/AUDIT-Q14-DNS-INPUT-BUDGET.md).
 
 ## Server multi-core (`tun.queues`)
 
@@ -668,7 +668,7 @@ be changed on the server **without re-issuing links** (see "What is NOT pushed" 
 | `client_ip` / `server_ip` / `prefix` | projection of IPv4, or the sole IPv6 address in an IPv6-only plan | backward-compatible fields; a v2 client verifies that they agree with `addresses` |
 | `mtu` | the profile's `tun.mtu` | a client on `mtu = 0` (default, auto) **adopts** it; a client with its own `mtu > 0` keeps it |
 | `dns_servers` | `dns.push_servers` or the active IPv4/IPv6 proxy listeners | typed resolver list, restricted to negotiated families and applied only with `dns = tunnel` |
-| `dns` | first compatible resolver | legacy resolver projection Linux checks actual `nameserver` entries in `/etc/resolv.conf`: only stub `127.0.0.53`/`127.0.0.54`, without external fallback; symlink names/comments do not prove this path. Regular file, up to 64 KiB. [Contract](../reports/AUDIT-Q25-RESOLVER-CONFIG.md). |
+| `dns` | first compatible resolver | legacy resolver projection Linux checks actual `nameserver` entries in `/etc/resolv.conf`: only stub `127.0.0.53`/`127.0.0.54`, without external fallback; symlink names/comments do not prove this path. Regular file, up to 64 KiB. [Contract](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-CONFIG.md). |
 | `dns_port` | always **53** | no client platform can express another port (neither `VpnService.Builder` nor `NEDNSSettings` takes one), so 53 is pushed unconditionally; when the proxy listens elsewhere the tunnel redirects 53 → `dns.port` with an iptables rule |
 | `routes` | the user's **personal** routes, otherwise the profile's `route =` | installs the routes (since 0.7.12 — **always**) |
 | `obfuscation` | `obf.padding.*`, `obf.heartbeat.*`, `obf.traffic_normalization.*`, `obf.traffic_shaping.*` | applies the obfuscation parameters live |
@@ -1355,11 +1355,11 @@ On Linux, the TOFU store must be a regular UTF-8 file of at most 1 MiB. Read err
 malformed target records or conflicting duplicates reject connection with either value
 of `allow_unpinned_tofu`. A missing file permits first trust; new pins are published
 atomically. This bounds the local Linux store, not INI configuration.
-[Details](../reports/AUDIT-Q25-IDENTITY-FILES.md).
+[Details](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-FILES.md).
 
 Linux bounds TOFU waiting by `timeout` for TCP and UDP. An admitted write completes
 before reconnect/exit, so this is not an overall shutdown deadline.
-[Cancellation and retained errors](../reports/AUDIT-Q25-IDENTITY-WORKER.md).
+[Cancellation and retained errors](../reports/audit-0.8.2/AUDIT-Q25-IDENTITY-WORKER.md).
 
 After `rotate-identity` the public key changes → all clients of that profile must
 receive the new hex (otherwise `SERVER KEY MISMATCH`).
@@ -1612,7 +1612,7 @@ advances active-session baselines, so earlier unswept traffic is not charged aga
 The quota applies to download and is enforced periodically, so it may be exceeded
 between checks. A crash/SIGKILL can lose changes since the last successful write.
 `usage.json` is internal accounting state, not a configuration format; configuration
-files remain INI. See [worker/accounting audit](../reports/AUDIT-Q14-Q15-WORKER-USAGE.md).
+files remain INI. See [worker/accounting audit](../reports/audit-0.8.2/AUDIT-Q14-Q15-WORKER-USAGE.md).
 
 **`[group:<name>]` keys** — a template inherited by members via the user's `group` key (positive user limits and a nonempty user ACL override the group):
 
@@ -1773,7 +1773,7 @@ apps omitted from `include` or listed in `exclude` use the ordinary network.
 With Android lockdown enabled those UIDs are blocked: excluding an app from VPN
 does not permit bypassing system blocking. API34 coverage includes IPv4/IPv6 TCP/UDP
 and DNS, stop, manual recovery and policy removal.
-[Results and limits](../reports/AUDIT-Q29-ANDROID-APP-POLICY.md).
+[Results and limits](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-APP-POLICY.md).
 
 **Desktop per-app details.** With `apps_mode = all`, Windows keeps its native Wintun
 zero-copy path and macOS keeps its ordinary global utun routes/DNS. `include` or `exclude`
@@ -2127,7 +2127,7 @@ For negotiated IPv6 the client gateway preserves `accept_ra` on the external
 WAN before enabling forwarding. If the preferred IPv6 default route is
 ambiguous across interfaces, setup stops before changing sysctl/firewall.
 A LAN-only host without an IPv6 default route remains supported.
-[ECMP verification](../reports/AUDIT-Q25-WAN-ECMP.md).
+[ECMP verification](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
 
 All rules carry a `qeli-gw-nat` comment and are verified with `iptables -C`.
 Within the running process, Qeli records attempted rules by TUN, IP family and LAN
@@ -2141,7 +2141,7 @@ manual recovery; cleanup of an old subnet across process restarts is not guarant
 New and reused FORWARD permits check the order of the detected Qeli kill-switch.
 An inspection failure cannot authorize insertion ahead of it. MSS-clamp remains
 best-effort: failure logs a warning and requires working Path-MTU Discovery.
-[Validation and remaining limits](../reports/AUDIT-Q25-GATEWAY-ROLLBACK.md).
+[Validation and remaining limits](../reports/audit-0.8.2/AUDIT-Q25-GATEWAY-ROLLBACK.md).
 
 **Example — a Mikrotik container as the gateway for `192.168.254.0/24`:**
 
@@ -2186,14 +2186,14 @@ unreadable files grant no DNS allowances; exceeding the merged list limit aborts
 The `nameserver` token must be separate, with whitespace before a trailing comment.
 Scoped IPv6 with `%interface`/`%index` grants no unrestricted interface-independent
 allowance and does not discard other valid entries. Later DNS changes do not refresh
-firewall rules automatically. [Resolver-file reads](../reports/AUDIT-Q25-RESOLVER-FILES.md).
+firewall rules automatically. [Resolver-file reads](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-FILES.md).
 
 System name resolution for kill-switch, connections and UDP diagnostics uses one core
 module: at most four unfinished DNS/NSS calls or resolver-file reads per core instance in a process, with queue
 time included in the request deadline. Cancellation does not release a live call's slot.
 Numeric IPs bypass admission; addresses supplied by platform adapters remain authoritative.
 There are no new INI parameters.
-[DNS waiting and shutdown](../reports/AUDIT-Q25-SYSTEM-RESOLVER.md).
+[DNS waiting and shutdown](../reports/audit-0.8.2/AUDIT-Q25-SYSTEM-RESOLVER.md).
 
 Kill-switch setup (`engage`) receives a shared 15-second deadline: resolver time,
 operation-mutex admission, tool discovery, policy admission and IPv4/IPv6 commands.
@@ -2206,7 +2206,7 @@ Some rules may already be gone, so incomplete rollback does not establish intact
 DNS/NSS waiting is deadline-bound and cancelled on stop; the underlying system call
 may continue in a separate capacity-limited thread. Other synchronous boundaries cannot
 be interrupted by the timer: this is not a promise to finish within 30 seconds.
-[Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-SETUP.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-SETUP.md).
 
 Linux `disengage` shares 15 seconds across operation-mutex admission and IPv4/IPv6
 cleanup. Expired attempts start no new commands and retain ownership for retry in the
@@ -2214,14 +2214,14 @@ same process. Some rules may already be gone: timeout establishes neither comple
 removal nor intact protection. Resolve the firewall delay and retry cleanup; after
 process exit inspect leftovers in the original namespace using the recovery instructions.
 This is not a whole-client shutdown bound.
-[Details and validation](../reports/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
+[Details and validation](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-BUDGET.md).
 
 Server-IP refresh before reconnect also shares 15 seconds across resolver, queue and
 both families' commands. Expiry or stop cancels DNS/NSS waiting; late answers are
 discarded without firewall work. Unknown inspection of an allowance does not authorize insertion. Refresh failure
 stops reconnect while retaining protection; an unverified replacement does not remove
 the previous address. This is not a hard whole-connection time bound.
-[Validation and limits](../reports/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-KILL-SWITCH-REFRESH.md).
 
 On Linux, successful transport-core teardown and gateway/exit-node forwarding cleanup,
 with no recorded DNS/route/TUN cleanup failures, are required before releasing an enabled
@@ -2424,7 +2424,7 @@ Android14/API34 image,external SIGKILL prevented automatic restart even for a
 minimal Java VpnService without Qeli core;negative IPv4 UDP probes remained
 blocked under lockdown. This is a boundary of that fixture,not established behavior
 for every device. Details and exact fingerprint:
-[Android system lifecycle audit](../reports/AUDIT-Q29-ANDROID-SYSTEM.md).
+[Android system lifecycle audit](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-SYSTEM.md).
 
 On iOS `kill_switch` is **not supported**; the system on-demand plays the fail-closed role
 (see the iOS footnotes in the client-keys table above).
@@ -2524,8 +2524,8 @@ If the default route points back to the exit TUN, the exit node rejects setup
 or refresh of that path: it needs a separate external WAN.
 For ECMP across different interfaces or equal best metrics on different WANs,
 the exit node rejects automatic selection; give one external WAN a lower
-metric. [Verification](../reports/AUDIT-Q25-WAN-ECMP.md).
-[Monitor verification](../reports/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` cannot be combined
+metric. [Verification](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
+[Monitor verification](../reports/audit-0.8.2/AUDIT-Q25-EXIT-WAN-MONITOR.md). `exit_node = true` cannot be combined
 with `gateway_nat = true` or `forward = true` on the same TUN: those modes
 require different handling of unmarked traffic arriving from the tunnel.
 
@@ -2535,14 +2535,14 @@ already forward packets. Do not rename, remove, or replace the selected
 physical WAN while an exit node is active: old firewall rules match its name
 and will apply to a new device reusing that name even without refresh.
 Stop the profile, verify successful rule cleanup, change the WAN, and then
-start it again. [Rename/reuse evidence](../reports/AUDIT-Q25-WAN-NAME-REUSE.md).
+start it again. [Rename/reuse evidence](../reports/audit-0.8.2/AUDIT-Q25-WAN-NAME-REUSE.md).
 
 Cleanup uses only WANs remembered during installation, including previous uplinks;
 without ownership records, the current default route cannot authorize deletion.
 An old MASQUERADE with an unsuffixed comment is preserved. After confirming its old
 owners have stopped, inspect and recover it explicitly. WAN records are in memory:
 successful cleanup in a new process does not prove recovery of pre-crash rules.
-[Validation and limits](../reports/AUDIT-Q25-EXIT-OWNERSHIP.md).
+[Validation and limits](../reports/audit-0.8.2/AUDIT-Q25-EXIT-OWNERSHIP.md).
 
 ### How it works and what the flag programs
 
@@ -2571,8 +2571,8 @@ cleaned before releasing the original TUN and reinstalled on full reconnect):
   usable default route does it fall back to `ip route get 1.1.1.1`; that fallback
   does not prove every policy route is suitable. IPv6 selects its uplink
   separately through `ip -6 route` and may use a different interface.
-  [Route metrics](../reports/AUDIT-Q25-WAN-METRIC.md) and
-  [ECMP](../reports/AUDIT-Q25-WAN-ECMP.md).
+  [Route metrics](../reports/audit-0.8.2/AUDIT-Q25-WAN-METRIC.md) and
+  [ECMP](../reports/audit-0.8.2/AUDIT-Q25-WAN-ECMP.md).
 
 The rules are removed on a **clean** stop; **a crash leaves them in place** — like the
 kill-switch this is fail-safe, not forgetfulness. Manual cleanup after a crash is in
@@ -2622,7 +2622,7 @@ state allows transition; old values are not replayed after reboot. Do not manual
 change version/boot-id or remove the journal to force startup. Mixed journal versions
 are unsupported. User configs remain INI; no new keys were added.
 V3 reports `legacy v3 host sysctl journal lacks durable namespace generation`.
-[V4 contract, migration and limits](../reports/AUDIT-Q25-NAMESPACE-GENERATION.md).
+[V4 contract, migration and limits](../reports/audit-0.8.2/AUDIT-Q25-NAMESPACE-GENERATION.md).
 
 On Unix shared atomic writes and removal of the final sysctl journal sync the
 parent directory. `published ... persistence is uncertain` means the file was
@@ -2632,7 +2632,7 @@ retrying. [Troubleshooting](TROUBLESHOOTING.md#661-published--persistence-is-unc
 Sysctl requires a real absolute state directory: `STATE_DIRECTORY` or `/var/lib/qeli`.
 Symlinks/`..` in the path and group/world write are rejected; operations stay bound
 to one open directory. Root and the service-directory owner retain shared access.
-[Access policy](../reports/AUDIT-Q25-STATE-DIRECTORY.md).
+[Access policy](../reports/audit-0.8.2/AUDIT-Q25-STATE-DIRECTORY.md).
 
 ### Caveats
 
@@ -2794,19 +2794,19 @@ notifications. It runs through `/bin/sh -c` with the same privileges as the qeli
   pipeline and connection-maintenance tasks before DNS restoration and TUN cleanup.
   Management-event errors follow the same path. The Linux TCP/UDP path monitor also waits
   for its running blocking jobs. This does not bound system commands or guarantee async
-  joining on forced cancellation of the entire future; see [validation limits](../reports/AUDIT-Q25-TCP-TASKS.md).
+  joining on forced cancellation of the entire future; see [validation limits](../reports/audit-0.8.2/AUDIT-Q25-TCP-TASKS.md).
 - UDP uses the same task owner: active/candidate/draining receive, candidate connection
   and the Linux monitor finish before platform-path inspection/rollback, followed by DNS/TUN
   cleanup. Management-event errors follow this sequence too. Cancelling a candidate stops
-  its receiver while the active path keeps running; see [details and validation limits](../reports/AUDIT-Q25-UDP-TASKS.md).
+  its receiver while the active path keeps running; see [details and validation limits](../reports/audit-0.8.2/AUDIT-Q25-UDP-TASKS.md).
 - Cancelling an already-started Unix TUN/Wintun shutdown retains worker ownership and
   waits for worker termination during pump destruction. This wait can be synchronous;
   it does not confirm completion of other tasks or network recovery when cancelling
-  the whole client. See [the contract and validation](../reports/AUDIT-Q25-TUN-WORKERS.md).
+  the whole client. See [the contract and validation](../reports/audit-0.8.2/AUDIT-Q25-TUN-WORKERS.md).
 - For `reality-tls`, the client group also owns internal HTTP/2 drivers/bridges from the
   connection stage. Normal TCP teardown joins them before DNS/TUN cleanup; the native runner
   joins the TCP group before finish_generation after attempt cancellation. This does not
-  validate early platform rollback or UDP cleanup; see [limits](../reports/AUDIT-Q25-H2-TASKS.md).
+  validate early platform rollback or UDP cleanup; see [limits](../reports/audit-0.8.2/AUDIT-Q25-H2-TASKS.md).
 - If no plan was ever applied, `post_down` may still run. `QELI_PLAN_AVAILABLE=false`,
   plan-dependent values are empty, and JSON `network_plan` is `null`.
 - SIGKILL, process crashes and power loss cannot run `post_down`. A script must be idempotent and
@@ -3097,9 +3097,9 @@ second command receives only the remaining time; no new command starts after exp
 Partial failure preserves the generation lease; its later `revert` has a separate
 15-second deadline, so setup expiry does not prevent owned rollback. This budget does
 not give synchronous file I/O, spawn or kill/reap a hard upper bound.
-[DNS shared deadline validation](../reports/AUDIT-Q25-DNS-BUDGET.md).
+[DNS shared deadline validation](../reports/audit-0.8.2/AUDIT-Q25-DNS-BUDGET.md).
 
-`dns = tunnel` requires `busctl` and an already running systemd-resolved in the same network namespace; the D-Bus broker must share the caller PID namespace. Commands target a specific unique owner on a bus with a pinned AUTH GUID. Replacing the service/bus aborts the operation and retains the lease. There is no autoactivation or networkd fallback; `LinkBusy` requires adjusting TUN ownership or selecting `dns = off`/`system`. Nonstandard NetworkPlan ports require `SetLinkDNSEx`; port 53 uses `SetLinkDNS`. [Context and validation](../reports/AUDIT-Q25-RESOLVER-CONTEXT.md).
+`dns = tunnel` requires `busctl` and an already running systemd-resolved in the same network namespace; the D-Bus broker must share the caller PID namespace. Commands target a specific unique owner on a bus with a pinned AUTH GUID. Replacing the service/bus aborts the operation and retains the lease. There is no autoactivation or networkd fallback; `LinkBusy` requires adjusting TUN ownership or selecting `dns = off`/`system`. Nonstandard NetworkPlan ports require `SetLinkDNSEx`; port 53 uses `SetLinkDNS`. [Context and validation](../reports/audit-0.8.2/AUDIT-Q25-RESOLVER-CONTEXT.md).
 
 Managed DNS on Linux also requires `SO_NETNS_COOKIE` and trusted `/var/lib/qeli` without symlinks or group/world write. `STATE_DIRECTORY` does not relocate per-link DNS state. Stop the old client cleanly before upgrading; retained v1 markers require administrator recovery when they match the new link. [V2 format and recovery](TROUBLESHOOTING.md#650-linux-dns-lease-ownership-and-recovery-markers).
 
@@ -3111,7 +3111,7 @@ These are internal bounds, with no new INI key. User-hook deadlines are unchange
 does not define total shutdown time. Current route/firewall sequence coverage and remaining
 limits are tracked in the [debt register](../plans/AUDIT-DEBT.md). IPv4/IPv6 preflight shares
 one 15-second budget across four probes; the panel runs them asynchronously before the
-config lock. [Panel transactions](../reports/AUDIT-Q05-PANEL-TRANSACTIONS.md).
+config lock. [Panel transactions](../reports/audit-0.8.2/AUDIT-Q05-PANEL-TRANSACTIONS.md).
 
 ### Server hooks
 
@@ -3119,7 +3119,7 @@ Normal shutdown of a `reality-tls` profile joins internal H2 drivers/bridges and
 flush tasks before releasing profile resources. A rejected H2 connection retains its
 pre-auth slot until its I/O is released; the flush still has a one-second limit. Successful
 H2 accept hands admission to inner authentication, which releases it after AUTH.
-This does not set an overall shutdown deadline; [details and limits](../reports/AUDIT-Q14-H2-TASKS.md).
+This does not set an overall shutdown deadline; [details and limits](../reports/audit-0.8.2/AUDIT-Q14-H2-TASKS.md).
 
 Server hooks remain a separate per-profile contract:
 
@@ -3798,9 +3798,9 @@ defaults are `gateway=true`, padding `0..255`, `heartbeat_jitter=2000` ms. Set
 See [shared client configuration](../plans/CLIENT-CONFIG-CORE.md) for migration, platform
 constraints and build instructions.
 
-Gateway/exit-node setup, refresh and cleanup each share 15 seconds across router mutex admission, discovery, WAN and firewall commands. Cleanup includes both families; partial records remain for a fresh attempt. Inside NetworkPlan/cleanup the remaining shared command budget also applies; internal I/O is not preempted. [Details](../reports/AUDIT-Q25-GATEWAY-BUDGET.md).
+Gateway/exit-node setup, refresh and cleanup each share 15 seconds across router mutex admission, discovery, WAN and firewall commands. Cleanup includes both families; partial records remain for a fresh attempt. Inside NetworkPlan/cleanup the remaining shared command budget also applies; internal I/O is not preempted. [Details](../reports/audit-0.8.2/AUDIT-Q25-GATEWAY-BUDGET.md).
 
-Client route setup/prepare/COMMIT/cleanup each share 15 seconds across the operation mutex and commands of both families. COMMIT rollback receives a separate shared 15 seconds; unknown changes remain reserved for verified retry. Inside NetworkPlan/cleanup this limit is capped by the remaining shared command budget. [Contract](../reports/AUDIT-Q25-ROUTE-BUDGET.md).
+Client route setup/prepare/COMMIT/cleanup each share 15 seconds across the operation mutex and commands of both families. COMMIT rollback receives a separate shared 15 seconds; unknown changes remain reserved for verified retry. Inside NetworkPlan/cleanup this limit is capped by the remaining shared command budget. [Contract](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-BUDGET.md).
 
 Linux NetworkPlan commands share 15 seconds; rollback/cleanup receives separate shared 15 seconds, including subsequent stages and automatic Drop. [Contract and limits](OPERATIONS.md#shared-networkplan-and-cleanup-command-deadline).
 
@@ -3814,6 +3814,6 @@ Saving INI does not replace the configuration of an existing session. Reconnect 
 
 ### Service reload and root-owned configuration
 
-`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+`systemctl reload qeli` sends SIGHUP to the supervisor, which validates and reloads users/authentication and asks the worker to reload without replacing either process. Invalid INI/users are rejected without publishing new authentication state. Profile/listener/TUN and panel startup settings still need a full service restart. SIGHUP preserves the panel login lockout tracker. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
-Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/AUDIT-Q33-SYSTEMD.md).
+Root mode can read qeli-owned private state, but panel config publication still requires a trusted file owned by root or the running user, without group/other write permissions and without a symlink. Root will therefore refuse a panel save of a qeli-owned INI. Review the configuration as administrator, then use `sudo chown root:root /etc/qeli/server.conf` and `sudo chmod 600 /etc/qeli/server.conf` if root is the intended service account. Do not change ownership of password receipts to qeli. To refresh an older root drop-in, rerun `sudo qeli set-service-user root` with the current binary and restart the service. This grants three filesystem capabilities, not an unrestricted capability set. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).

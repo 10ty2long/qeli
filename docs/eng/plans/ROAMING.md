@@ -4,7 +4,7 @@
 > Audit update, 23 September 2026: the Linux route adapter uses a connection owner lease;
 > cleanup closes admission for new mutations. `dev_attach=true` does not supply
 > `ROAMING_PATH` because an external manager owns routes. `auto` uses reconnect;
-> `required` is unavailable. [Q25-F027/F028 and limits](../reports/AUDIT-Q25-ROUTE-SCOPE.md).
+> `required` is unavailable. [Q25-F027/F028 and limits](../reports/audit-0.8.2/AUDIT-Q25-ROUTE-SCOPE.md).
 > Live results below belong to earlier passes; this fix was checked with host tests
 > and Linux cross-checks, without a new device run.
 
@@ -956,7 +956,7 @@ documentation, and lab is approximately **20–30 engineering weeks**.
 Primary risks are cross-worker UDP state, TCP orphan/JOIN/reaper races, nonce reuse,
 platform binding rollback, outer-family PMTU changes, iOS behavior, and interactions
 
-Soak admission: canonical decimal counts1..2147483647 without leading zeros;sample_every<=iterations. Standalone UDP below10kQUIC/1kadapters emits SMOKE and exits0 when children succeed, not endurance PASS. Full roaming_resource_release_gate.sh refuses downgraded counts before its first phase. Separate mandatory bounded release100 is retained. Details/evidence: [Q35](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+Soak admission: canonical decimal counts1..2147483647 without leading zeros;sample_every<=iterations. Standalone UDP below10kQUIC/1kadapters emits SMOKE and exits0 when children succeed, not endurance PASS. Full roaming_resource_release_gate.sh refuses downgraded counts before its first phase. Separate mandatory bounded release100 is retained. Details/evidence: [Q35](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).
 
 ### Mandatory isolation for Linux TCP/UDP runners
 
@@ -973,7 +973,7 @@ CI executes unprivileged `test_roaming_netns_isolation.py`. Separate
 `test_roaming_netns_isolation_kernel.py` requires an independent outer lab and
 verifies parent namespace identities before creating sentinels. Qualification,
 real kernel execution and inherited boundaries are in the
-[Q35 report](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+[Q35 report](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).
 
 ### Control sockets and deep TMPDIR
 
@@ -984,4 +984,4 @@ WORK paths. Soak statistics and bonding control API use that same path.
 Mandatory isolation gives simultaneous socket names separate mount/PID namespaces.
 Private /run/sockets disappear with the job;WORK with INI/logs remains under
 TMPDIR for inspection. Control sockets no longer depend on WORK.
-[F509 qualification](../reports/AUDIT-Q34-RELEASE-SOAK.md).
+[F509 qualification](../reports/audit-0.8.2/AUDIT-Q34-RELEASE-SOAK.md).

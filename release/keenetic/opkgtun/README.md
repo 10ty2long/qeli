@@ -152,7 +152,7 @@ Hook принимает marker только вида `opkgtun` + цифры, м�
 каждой команды. Нет interface/плана — диагностическое ожидание следующего события.
 IPv4/IPv6/MTU читаются одним snapshot опубликованного файла. Stop/generation races,
 параллельные обновления и настоящая firmware behavior этим не квалифицированы.
-[Текущий Q31 audit](../../../docs/ru/reports/AUDIT-Q31-OPENWRT-CONTROLS.md).
+[Текущий Q31 audit](../../../docs/ru/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 После частичного отказа хук сохраняет `/opt/var/run/qeli.opkgtun.apply-pending`
 до успешного применения и сохранения конфигурации. Следующий вызов повторяет

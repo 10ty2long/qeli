@@ -10,13 +10,8 @@ every item has an ID, a size, an approach and an **acceptance criterion**.
 
 Status legend: ⬜ not started · 🟦 in progress · ✅ done · 🧪 awaiting build/e2e.
 
-**Current state (2026-09-22): source uses ABI 1.16.** The shared transport now includes
-pure `qeli_config_request` and Android `ConfigCore` JNI. Import, editing, validation,
-export and portable policies are owned by Rust; see [migration and boundaries](../plans/CLIENT-CONFIG-CORE.md).
-New adapters require ABI 1.16. Committed release `.so`/`.dll`/`.dylib` files belong to the
-previous ABI 1.15 rebuild and need fresh A/B evidence/provenance after this change.
-Dev/CI builds use current source. Apple build/tests, final packages and physical acceptance
-remain required before release; prior successful checks do not certify this revision.
+**Current state, 16 October 2026: ABI 1.16.** Transport, `qeli_config_request`, Android `ConfigCore` JNI and portable policies use the shared Rust core. New adapters require ABI 1.16. Committed Windows/macOS/Android libraries were rebuilt with independent A/B, ABI/JNI, hashes and provenance; [current qualification packet](../../../release/certification/evidence/dependabot-integration-20261016.json). Physical platforms excluded from the agreed audit are not certified. The ABI history and dated stages below retain their earlier intermediate statuses.
+
 **Reality/H2 delivery rule.** The current `reality-tls` H2 carrier is owned by this common Rust
 core, not by platform UI code. A platform receives it only when its native `.so`/`.dll`/`.dylib`
 or XCFramework is rebuilt from the updated source, packaged into the app and installed. A server
@@ -52,34 +47,34 @@ TCP lifetime (23 September 2026): a shared TaskGroup owns stream tasks and produ
 normal finish closes admission and joins before network cleanup. The Linux path monitor
 registers blocking work with that owner; UDP also uses its whole-connection group.
 ABI remains 1.16. Forced cancellation and nested transport workers still need review; see
-[the report](../reports/AUDIT-Q25-TCP-TASKS.md).
+[the report](../reports/audit-0.8.2/AUDIT-Q25-TCP-TASKS.md).
 
 
 UDP lifetime (23 September 2026): the same owner groups active/candidate/draining receive,
 candidate-connect and the Linux monitor. A movable TaskHandle cancels an individual task
 while the group retains join ownership; resource release precedes path rollback.
-Management-event errors follow normal teardown. ABI is unchanged; see [the UDP report](../reports/AUDIT-Q25-UDP-TASKS.md).
+Management-event errors follow normal teardown. ABI is unchanged; see [the UDP report](../reports/audit-0.8.2/AUDIT-Q25-UDP-TASKS.md).
 
 TUN lifetime (23 September 2026): shared TunWorkers retains Unix TUN and Wintun reader/writer
 handles across cancelled shutdown. Drop waits for an ongoing join or performs it itself
 when the blocking helper is queued. This guarantees pump destruction ordering, not complete
-platform rollback. ABI remains 1.16; see [the report](../reports/AUDIT-Q25-TUN-WORKERS.md).
+platform rollback. ABI remains 1.16; see [the report](../reports/audit-0.8.2/AUDIT-Q25-TUN-WORKERS.md).
 
 H2 lifetime (23 September 2026): the TCP-generation group starts before connect and retains
 joins for primary/additional carrier drivers and bridges. TaskScope closes admission and
 requests abort before destroying a cancelled attempt; the native runner joins before
-finish_generation. ABI 1.16; [client report](../reports/AUDIT-Q25-H2-TASKS.md).
+finish_generation. ABI 1.16; [client report](../reports/audit-0.8.2/AUDIT-Q25-H2-TASKS.md).
 Server accept_owned uses a weak ProfileSpawner: drivers/bridges and bounded rejection flushes
 are joined by the profile. A flush retains pre-auth admission until I/O release, while a
 successful accept returns it to inner AUTH. Public standalone accept/connect retain their
-previous cancellation contract; [server report](../reports/AUDIT-Q14-H2-TASKS.md).
+previous cancellation contract; [server report](../reports/audit-0.8.2/AUDIT-Q14-H2-TASKS.md).
 
 
 Linux system commands (23 September 2026): the shared TUN adapter and client resolvectl
 use one runner with a 15-second deadline, complete output up to 16 MiB per stream and
 Child ownership through termination. DNS markers survive timeout/failure. This is the
 Linux setup/rollback layer, with no ABI or GUI native-library changes; route/firewall
-migration remains open. [Report](../reports/AUDIT-Q25-SYSTEM-COMMANDS.md).
+migration remains open. [Report](../reports/audit-0.8.2/AUDIT-Q25-SYSTEM-COMMANDS.md).
 
 ---
 
@@ -89,15 +84,15 @@ Authenticated `KICK` retains `reconnect_allowed` across simultaneous TCP EOF, TU
 stop and platform-event delivery failure. The pipeline processes its finite already-read
 record queue before stream-loss notification. This cannot guarantee unread/lost byte
 delivery or event presentation by a failing UI. Ordinary EOF without KICK keeps normal
-reconnect policy. [Validation](../reports/AUDIT-Q09-FINAL.md).
+reconnect policy. [Validation](../reports/audit-0.8.2/AUDIT-Q09-FINAL.md).
 
 <!-- normative-sync: core-management-receipts-v1 -->
 
-A management ACK requires a complete valid payload. Repeating an unfinished fragment, malformed KICK or conflicting contents under an old ID receives no receipt. An exact repeat of an accepted message is ACKed again; it must use a newly authenticated PacketCodec record, because the replay window rejects repeated ciphertext. [Q10 validation](../reports/AUDIT-Q10-CODEC-CONTROL.md).
+A management ACK requires a complete valid payload. Repeating an unfinished fragment, malformed KICK or conflicting contents under an old ID receives no receipt. An exact repeat of an accepted message is ACKed again; it must use a newly authenticated PacketCodec record, because the replay window rejects repeated ciphertext. [Q10 validation](../reports/audit-0.8.2/AUDIT-Q10-CODEC-CONTROL.md).
 
 <!-- normative-sync: core-realtls-policy-v1 -->
 
-REALITY-TLS uses common strict ServerHello decoding and post-handshake policy in async/sans-IO. Validated application bytes precede a later record fatal error; the failed session accepts/sends no new records. Fragmented NewSessionTicket is accumulated within bounds and ignored; unsupported KeyUpdate requires reconnection. Legacy `qeli_realtls_open` returns earlier plaintext with `0`, then terminal `-1` on the next call; close_notify uses that terminal code because the ABI has no separate EOF result. [Q11](../reports/AUDIT-Q11-REALITY-TLS-H2.md).
+REALITY-TLS uses common strict ServerHello decoding and post-handshake policy in async/sans-IO. Validated application bytes precede a later record fatal error; the failed session accepts/sends no new records. Fragmented NewSessionTicket is accumulated within bounds and ignored; unsupported KeyUpdate requires reconnection. Legacy `qeli_realtls_open` returns earlier plaintext with `0`, then terminal `-1` on the next call; close_notify uses that terminal code because the ABI has no separate EOF result. [Q11](../reports/audit-0.8.2/AUDIT-Q11-REALITY-TLS-H2.md).
 
 ## 1. The verdict: what justifies this, and what does not
 
@@ -721,12 +716,12 @@ pass.
 
 <!-- normative-sync: core-ws-write-v1 -->
 
-The shared WS writer accepts at most16384 data bytes per poll,reports owned bytes once,and permits cancelling Pending with a changed input slice. Flush/shutdown drain owned frames and bounded control replies;outbound write/flush faults remain terminal. Daemon/native-core handshake,ACK and data/cover record boundaries use one write-all-and-flush helper before waiting for a response or recording delivery. [Q12](../reports/AUDIT-Q12-TRANSPORTS.md).
+The shared WS writer accepts at most16384 data bytes per poll,reports owned bytes once,and permits cancelling Pending with a changed input slice. Flush/shutdown drain owned frames and bounded control replies;outbound write/flush faults remain terminal. Daemon/native-core handshake,ACK and data/cover record boundaries use one write-all-and-flush helper before waiting for a response or recording delivery. [Q12](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).
 
 <!-- normative-sync: core-ws-read-v1 -->
 
-HTTP Upgrade uses a shared bounded parser:4096-byte head including CRLFCRLF,GET/HTTP/1.1,Host,version13,unambiguous key/accept;body forbidden except Content-Length0. Client rejects unoffered extensions/subprotocols. Inbound WS lengths are minimal under the16384-byte payload cap;unfinished fragmentation at EOF is UnexpectedEof. Earlier payloads drain before a latched later-frame error;parsing cannot resume. Inner AEAD remains mandatory. [Q12 checks](../reports/AUDIT-Q12-TRANSPORTS.md).
+HTTP Upgrade uses a shared bounded parser:4096-byte head including CRLFCRLF,GET/HTTP/1.1,Host,version13,unambiguous key/accept;body forbidden except Content-Length0. Client rejects unoffered extensions/subprotocols. Inbound WS lengths are minimal under the16384-byte payload cap;unfinished fragmentation at EOF is UnexpectedEof. Earlier payloads drain before a latched later-frame error;parsing cannot resume. Inner AEAD remains mandatory. [Q12 checks](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).
 
 <!-- normative-sync: core-ws-control-v1 -->
 
-The shared core answers idle Ping/Close,including pre-auth nonce/junk. Valid Close checks status/UTF-8,takes priority over bounded/coalesced Pongs,refuses later data;EOF follows echo/flush/shutdown. Cancelled Pending flush state persists until completion. Daemon and native clients use the same reader/writer states. INI wire-mode matrix and QUIC/AWG scope are in [Q12](../reports/AUDIT-Q12-TRANSPORTS.md).
+The shared core answers idle Ping/Close,including pre-auth nonce/junk. Valid Close checks status/UTF-8,takes priority over bounded/coalesced Pongs,refuses later data;EOF follows echo/flush/shutdown. Cancelled Pending flush state persists until completion. Daemon and native clients use the same reader/writer states. INI wire-mode matrix and QUIC/AWG scope are in [Q12](../reports/audit-0.8.2/AUDIT-Q12-TRANSPORTS.md).

@@ -77,7 +77,7 @@ Linux-host Skia assets. Отсутствующий lock не создаётся 
 Обновлять графы нужно явно через `dotnet restore` с
 `-p:QeliUpdateDependencyLocks=true --force-evaluate` и соответствующими параметрами;
 коммитить lockfiles вместе с изменением зависимостей.
-Подробнее: [SDK и dependency locks](../docs/ru/reports/AUDIT-Q34-SDK-LOCKS.md).
+Подробнее: [SDK и dependency locks](../docs/ru/reports/audit-0.8.2/AUDIT-Q34-SDK-LOCKS.md).
 
 `build_app.sh` — кросс-платформенный: собирает **готовый к запуску архив**
 `dist/Qeli-macos-<arch>.tar.gz` целиком в лабе (Linux/CI), без macOS под рукой.
@@ -195,7 +195,7 @@ qeli-win. Есть два способа держать туннель:
 
 `QeliMac storage-selftest` проверяет этот слой в изолированных временных
 каталогах, без обращения к пользовательскому Keychain, профилям и сети.
-[Результат этапа Q28](../docs/ru/reports/AUDIT-Q28-MACOS-STORAGE.md).
+[Результат этапа Q28](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-STORAGE.md).
 
 Импорт: кнопка **Импорт** → вставьте `qeli://`-ссылку или **INI** (`[qeli]`-секция).
 Кнопки **Новый/Изм.** открывают прокручиваемую форму с логическими разделами подключения,
@@ -291,7 +291,7 @@ Load daemon не генерирует ключ при отсутствии и н
 замена неизвестного ключа запрещена. Устаревший статус означает неизвестное состояние,
 а не подтверждённое отключение. Изменение текста launchctl может дать безопасный отказ.
 
-[Проверки и границы Q28 daemon/control](../docs/ru/reports/AUDIT-Q28-MACOS-CONTROL.md).
+[Проверки и границы Q28 daemon/control](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-CONTROL.md).
 Windows host selftests не подтверждают launchd, Darwin locks, utun/pf, Keychain или
 Swift Network Extension на Mac; runtime исключён пользователем из текущего аудита.
 
@@ -308,7 +308,7 @@ Qeli anchors, глобальный pf остаётся включённым дл
 DNS journal сериализует recovery/claim/release, сохраняет более новую внешнюю настройку
 и допускает повтор cleanup при ошибке. Удаление адресов и carrier routes подтверждает
 ownership/отсутствие; ошибка запроса не означает отсутствие.
-[Отчёт Q28 network и границы проверки](../docs/ru/reports/AUDIT-Q28-MACOS-NETWORK.md).
+[Отчёт Q28 network и границы проверки](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-NETWORK.md).
 Генератор pf-selftest-rules не выполняет startup recovery и не трогает firewall.
 
 ## per-app: ошибки остановки и handoff
@@ -321,7 +321,7 @@ perapp-selftest проверяет C# controller/fake helper и настоящи
 processes, не запускает NetworkExtension. Для запуска native policy/registry tests
 нужен Mac/Xcode; в текущем аудите это USER SKIPPED.
 Сборка per-app принимает только точный dist/per-app-ARCH и отказывает при symlink paths.
-[Проверки и оставшийся scope](../docs/ru/reports/AUDIT-Q28-MACOS-PERAPP.md).
+[Проверки и оставшийся scope](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-PERAPP.md).
 
 ## Forwarding: один владелец и recovery
 
@@ -332,7 +332,7 @@ processes, не запускает NetworkExtension. Для запуска nativ
 закрытие utun отказывает. Root startup восстанавливает только мёртвого владельца.
 Не удаляйте recovery journal вслепую. Per-app не приобретает этот глобальный lease.
 forwarding-selftest проверяет managed coordinator и временный файл с подменённым sysctl;
-это не Darwin runtime. [Проверки и границы](../docs/ru/reports/AUDIT-Q28-MACOS-FORWARDING.md).
+это не Darwin runtime. [Проверки и границы](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-FORWARDING.md).
 
 ## Guardian: подтверждение готовности и generation
 
@@ -342,7 +342,7 @@ Guardian проверяет parent перед claim и публикует exact 
 готовности до 5 секунд; живой child без ack не считается готовым. Heartbeat и manager
 operations проверяют owner generation; завершённый stop остаётся tombstone. Если join
 отказал после stop, retry только завершает child; новое подключение ждёт retirement.
-[Upgrade, проверки и ограничения](../docs/ru/reports/AUDIT-Q28-MACOS-GUARDIAN.md).
+[Upgrade, проверки и ограничения](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-GUARDIAN.md).
 Swift/Xcode/runtime текущим C# selftest не подтверждены и остаются USER SKIPPED.
 
 ## Per-app relay: sockets и бюджеты I/O
@@ -352,7 +352,7 @@ Native fd/source операции сериализованы одной очер
 асинхронно. TCP connect с DNS/кандидатами — 10 секунд; TCP send и весь UDP batch — 5;
 DNS query — 2 внутри внешнего бюджета; framework-write watchdog — 10 секунд.
 Пустые UDP датаграммы сохраняются. После частичной TCP отправки с timeout нужен новый
-stream. Новых INI-ключей нет. [Проверка и ограничения](../docs/ru/reports/AUDIT-Q28-MACOS-SOCKETS.md).
+stream. Новых INI-ключей нет. [Проверка и ограничения](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-SOCKETS.md).
 Swift/Xcode/runtime USER SKIPPED: 20 новых native cases добавлены, но не исполнены.
 
 
@@ -364,7 +364,7 @@ Legacy state с живым PID сохраняется даже при измен
 не слепое удаление journal. Downgrade с активным новым state не поддержан.
 TCP app EOF передаёт SHUT_WR, сохраняя server response; remote EOF завершает flow write,
 сохраняя outbound. Полный stop — оба EOF или error/cancel/write timeout. Idle timeout
-не добавлен. [Итог Q28 и проверки](../docs/ru/reports/AUDIT-Q28-MACOS-INTEGRATION.md):
+не добавлен. [Итог Q28 и проверки](../docs/ru/reports/audit-0.8.2/AUDIT-Q28-MACOS-INTEGRATION.md):
 1248 managed PASS;8 новых Swift directional cases добавлены, но не исполнены.
 Mac/Xcode/NE runtime USER SKIPPED;managed selftest не подтверждает физический half-close.
 

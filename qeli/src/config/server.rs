@@ -1279,12 +1279,12 @@ pub struct DnsConfig {
     pub timeout_secs: u64,
     #[serde(default)]
     pub blocklist: Vec<String>,
-    /// Resolver IP(s) pushed to clients — the client applies the FIRST entry in its
-    /// `tunnel` DNS mode, INDEPENDENTLY of the in-tunnel proxy. Set this to hand
-    /// clients a specific resolver (a LAN / AdGuard / NextDNS box) without running
-    /// the full `dns.enabled` proxy. Empty = fall back to the proxy's listen IP when
-    /// `enabled`, else push nothing. Must be a bare IP (the client strict-IP-validates
-    /// the pushed value before applying platform DNS).
+    /// Resolver IPs pushed independently of the in-tunnel proxy. Typed plans carry
+    /// the list filtered to negotiated inner families; the legacy field carries
+    /// its first address. If no compatible entries remain, an enabled proxy supplies
+    /// its active listeners; otherwise no resolver is pushed. Entries must be bare
+    /// IPs. In `dns = tunnel` mode an explicit client `dns_servers` list takes priority
+    /// over the push; client planning validates addresses against active families.
     #[serde(default)]
     pub push_servers: Vec<String>,
 }
