@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+  "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -31,15 +31,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -63,15 +63,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -95,15 +95,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -127,15 +127,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -159,15 +159,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -191,15 +191,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -223,15 +223,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -255,15 +255,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -287,15 +287,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -319,15 +319,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -351,15 +351,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -383,15 +383,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -415,15 +415,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -447,15 +447,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -479,15 +479,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -511,15 +511,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -543,15 +543,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -575,15 +575,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -607,15 +607,15 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "ab3f155b9b03427a348c9dfeb257f768506cbc6e1f53ca1ba04b968f369022e6",
+      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
       "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
       "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
       "executed_at": "2026-10-15T21:30:49.646442+00:00",
@@ -646,9 +646,9 @@
       },
       "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
       "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/documentation-20261016.json",
+      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     },
     {
       "id": "android.wifi-to-cellular",
@@ -832,6 +832,13 @@
         "evidence": "release/certification/evidence/documentation-20261016.json",
         "source_commit": "2407207a9bb953f4647516c40624d908a187a0a9",
         "scope": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+      }
+    ],
+    "managed_reconnect_source_applicability": [
+      {
+        "evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
+        "source_commit": "1d5f39ac61926354717a1df0316bc8cee0bd6713",
+        "scope": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
       }
     ]
   },
@@ -1175,6 +1182,10 @@
     {
       "evidence": "release/certification/evidence/documentation-20261016.json",
       "scope": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
+    },
+    {
+      "evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
+      "scope": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
     }
   ]
 }
