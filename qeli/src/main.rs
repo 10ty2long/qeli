@@ -293,7 +293,7 @@ enum Commands {
 /// Read just the `logging` section from a config file so the logger can be set
 /// up before the rest of the config is parsed. Falls back to (info, stderr) on
 /// any error — the real parse later will surface config problems.
-fn peek_logging(path: &PathBuf) -> (String, Option<String>, String) {
+fn peek_logging(path: &PathBuf) -> (String, Option<String>, String, String) {
     if let Ok(source) = server::read_config_source(path) {
         // The only config format is flat INI: read its `[logging]` section.
         if let Ok(doc) = config::format::IniDoc::parse(source.text()) {
@@ -313,59 +313,21 @@ fn peek_logging(path: &PathBuf) -> (String, Option<String>, String) {
                         },
                     );
                 let time_format = log.get_or("time_format", "datetime").to_string();
-                return (level, file, time_format);
+                return (
+                    level,
+                    file,
+                    time_format,
+                    log.get_or("format", "plain").to_string(),
+                );
             }
         }
     }
-    ("info".to_string(), None, "datetime".to_string())
-}
-
-// The timestamp renderer lives in `qeli::util::log_timestamp` so the server and the
-// router/headless client (`client_main.rs`) honour the same `[logging] time_format`.
-
-/// Initialise env_logger at `level`, writing to `file` if given (creating its
-/// parent directory), otherwise to stderr (captured by journald under systemd).
-/// `RUST_LOG` still overrides the level when set.
-fn init_logging(level: &str, file: Option<&str>, time_format: &str) {
-    let mut builder =
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(level));
-    // `time_format = none` drops the prefix entirely (journald/logread/logcat already
-    // stamp the line) — emit no leading space in that case.
-    let tf = time_format.to_string();
-    builder.format(move |buf, record| {
-        use std::io::Write;
-        let ts = qeli::util::log_timestamp(&tf);
-        if ts.is_empty() {
-            writeln!(
-                buf,
-                "{:<5} {}: {}",
-                record.level(),
-                record.target(),
-                record.args()
-            )
-        } else {
-            writeln!(
-                buf,
-                "{} {:<5} {}: {}",
-                ts,
-                record.level(),
-                record.target(),
-                record.args()
-            )
-        }
-    });
-    if let Some(path) = file {
-        match qeli::client::open_log_file(std::path::Path::new(path)) {
-            Ok(f) => {
-                builder.target(env_logger::Target::Pipe(Box::new(f)));
-            }
-            Err(e) => eprintln!(
-                "qeli: cannot open log file {}: {} — logging to stderr",
-                path, e
-            ),
-        }
-    }
-    builder.init();
+    (
+        "info".to_string(),
+        None,
+        "datetime".to_string(),
+        "plain".to_string(),
+    )
 }
 
 #[tokio::main]
@@ -374,12 +336,20 @@ async fn main() -> anyhow::Result<()> {
 
     // Configure logging from the config's `logging` section (level + optional
     // file) so server/client logs land where the operator expects.
-    let (level, log_file, time_format) = match &cli.command {
+    let (level, log_file, time_format, log_format) = match &cli.command {
         Commands::Server { config } | Commands::Worker { config } => peek_logging(config),
-        Commands::Client { config } => qeli::client::peek_logging(config),
-        _ => ("info".to_string(), None, "datetime".to_string()),
+        Commands::Client { config } => {
+            let (level, file, time) = qeli::client::peek_logging(config);
+            (level, file, time, "plain".to_string())
+        }
+        _ => (
+            "info".to_string(),
+            None,
+            "datetime".to_string(),
+            "plain".to_string(),
+        ),
     };
-    init_logging(&level, log_file.as_deref(), &time_format);
+    qeli::logging::init(&level, log_file.as_deref(), &time_format, &log_format);
     // After logging, so arming announces itself. No-op unless QELI_TRACE is set.
     #[cfg(all(target_os = "linux", any(feature = "client", feature = "server")))]
     qeli::trace::init();
@@ -1748,14 +1718,20 @@ mod tests {
         std::fs::create_dir(&dir).unwrap();
         let config = dir.join("server.conf");
         let target = dir.join("unwanted.log");
-        std::fs::write(&config, format!("[logging]\nfile = {}\n", target.display())).unwrap();
+        std::fs::write(
+            &config,
+            format!("[logging]\nfile = {}\nformat = json\n", target.display()),
+        )
+        .unwrap();
         std::fs::set_permissions(&config, std::fs::Permissions::from_mode(0o666)).unwrap();
-        let (_, file, _) = super::peek_logging(&config);
+        let (_, file, _, format) = super::peek_logging(&config);
         assert!(file.is_none());
+        assert_eq!(format, "json");
         assert!(!target.exists());
         std::fs::set_permissions(&config, std::fs::Permissions::from_mode(0o600)).unwrap();
-        let (_, file, _) = super::peek_logging(&config);
+        let (_, file, _, format) = super::peek_logging(&config);
         assert_eq!(file.as_deref(), target.to_str());
+        assert_eq!(format, "json");
         std::fs::remove_dir_all(dir).unwrap();
     }
 

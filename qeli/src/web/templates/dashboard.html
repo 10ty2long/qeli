@@ -527,8 +527,8 @@ function dashboard() {
       await this.load();
       if (this.destroyed) return;
       this.loadMetrics();
-      this.refreshTimer = setInterval(() => { if (!document.hidden) this.load(true); }, 10000);
-      this.metricsTimer = setInterval(() => { if (!document.hidden) this.loadMetrics(true); }, 2000);
+      this.refreshTimer = qeliPoll(async () => { await this.load(true); return !this.loadError; }, 10000);
+      this.metricsTimer = qeliPoll(async () => { await this.loadMetrics(true); return !this.metricsErr; }, 2000);
       this.visibilityHandler = () => {
         if (!this.destroyed && !document.hidden) { this.load(true); this.loadMetrics(true); }
       };
@@ -538,7 +538,7 @@ function dashboard() {
       this.destroyed = true;
       this.loadSequence++; this.metricsSequence++;
       this.loading = false;
-      clearInterval(this.refreshTimer); clearInterval(this.metricsTimer);
+      qeliStopPoll(this.refreshTimer); qeliStopPoll(this.metricsTimer);
       if (this.visibilityHandler) document.removeEventListener('visibilitychange', this.visibilityHandler);
       this.refreshTimer = this.metricsTimer = this.visibilityHandler = null;
     },

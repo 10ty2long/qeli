@@ -298,6 +298,7 @@
               <label class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer text-xs" style="background:var(--bg-2);border:1px solid var(--line)">
                 <input type="checkbox" :checked="(form.profiles || []).includes(p.name)" @change="toggleProfile(p.name)">
                 <span class="text-slate-300" x-text="p.name"></span>
+                <span x-show="p.enabled === false" class="text-amber-400" x-text="qeliT('Disabled')"></span>
                 <span class="badge" :class="p.transport === 'udp' ? 'badge-udp' : 'badge-tcp'" x-text="p.transport"></span>
               </label>
             </template>
@@ -476,9 +477,10 @@
             <label class="block text-xs font-medium text-slate-400 mb-1.5">Profile</label>
             <select class="inp" x-model="share.profile">
               <template x-for="p in profiles" :key="p.name">
-                <option data-i18n-skip :value="p.name" x-text="p.name + ' (' + p.transport + '/' + p.port + ')'"></option>
+                <option data-i18n-skip :value="p.name" x-text="profileLabel(p)"></option>
               </template>
             </select>
+            <p x-show="shareProfileDisabled" class="text-xs text-amber-400 mt-2" x-text="qeliT('This profile is disabled. The configuration can be prepared, but connections will work only after the profile is enabled and the server is restarted.')"></p>
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1.5">Public host <span class="text-red-400">*</span></label>
@@ -785,14 +787,14 @@ function usersPage() {
     async init() {
       await this.load();
       if (this.destroyed) return;
-      this.refreshTimer = setInterval(() => { if (!document.hidden) this.refreshLive(); }, 10000);
+      this.refreshTimer = qeliPoll(async () => { await this.refreshLive(); return !this.readErrors.users && !this.readErrors.usage; }, 10000);
       this.visibilityHandler = () => { if (!this.destroyed && !document.hidden) this.refreshLive(); };
       document.addEventListener('visibilitychange', this.visibilityHandler);
     },
     destroy() {
       this.destroyed = true; this.loadSequence++;
       this.loading = false;
-      clearInterval(this.refreshTimer);
+      qeliStopPoll(this.refreshTimer);
       if (this.visibilityHandler) document.removeEventListener('visibilitychange', this.visibilityHandler);
       this.refreshTimer = this.visibilityHandler = null;
     },
@@ -840,7 +842,7 @@ function usersPage() {
     async loadProfiles(background = false) {
       await this.readSection('profiles', background, () => apiFetch('api/config'), d => {
         if (!d.config || !Array.isArray(d.config.profiles)) throw new Error(this.qeliT('Request failed'));
-        this.profiles = d.config.profiles.map(p => ({ name: p.name, transport: p.bind?.transport || 'tcp', port: p.bind?.port || 443 }));
+        this.profiles = d.config.profiles.map(p => ({ name: p.name, enabled: p.enabled !== false, transport: p.bind?.transport || 'tcp', port: p.bind?.port || 443 }));
         this.publicHost = d.config.web?.public_host || '';
       });
     },
@@ -854,6 +856,14 @@ function usersPage() {
       this.share = {};
     },
 
+    profileLabel(profile) {
+      return profile.name + ' (' + profile.transport + '/' + profile.port + ')'
+        + (profile.enabled === false ? ' — ' + this.qeliT('Disabled') : '');
+    },
+    get shareProfileDisabled() {
+      return this.profiles.some(p => p.name === this.share.profile && p.enabled === false);
+    },
+
     toggleProfile(name) {
       const i = this.form.profiles.indexOf(name);
       if (i >= 0) this.form.profiles.splice(i, 1); else this.form.profiles.push(name);
@@ -865,7 +875,7 @@ function usersPage() {
       try { host = host || localStorage.getItem('qeli_share_host') || ''; } catch (e) {}
       this.share = {
         user: u.username,
-        profile: this.profiles[0]?.name || 'default',
+        profile: (this.profiles.find(p => p.enabled !== false) || this.profiles[0])?.name || 'default',
         host, label: '',
         uri: '', qr: '', error: '', loading: false,
         needsReset: false, resetMsg: '', reset: false, newPassword: '',

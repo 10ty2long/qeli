@@ -9,13 +9,19 @@ function component(file, factory, overrides = {}) {
   const html = fs.readFileSync(path.join(templates, file), 'utf8');
   const events = [];
   const context = {
-    clearInterval() {}, clearTimeout() {},
+    clearInterval() {}, clearTimeout() {}, setTimeout() { return 0; },
     console, document: { readyState: 'loading', hidden: false, addEventListener() {}, removeEventListener() {}, getElementById() { return null; } }, window: {},
     qeliT: s => s, qeliTf: s => s, qeliConfirm: async () => true,
     apiFetch: async () => ({ ok: true }), fetch: async () => ({ json: async () => ({ ok: false }) }),
     ...overrides,
   };
   vm.createContext(context);
+  if (file !== 'layout.html') {
+    const layout = fs.readFileSync(path.join(templates, 'layout.html'), 'utf8');
+    const helpers = [...layout.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].find(m => m[1].includes('function qeliPoll'))[1];
+    new vm.Script(helpers).runInContext(context);
+    context.apiFetch = overrides.apiFetch || (async () => ({ok:true}));
+  }
   for (const match of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]).runInContext(context);
   if (file === 'layout.html') context.apiFetch = overrides.apiFetch || (async () => ({ok:true}));
   if (file === 'quickstart.html') context.window.location ||= {hostname:'fixture'};
@@ -25,6 +31,95 @@ function component(file, factory, overrides = {}) {
 }
 async function check(name, fn) { await fn(); passed++; console.log('PASS ' + name); }
 async function main() {
+  await check('background polls back off, reset after success, skip hidden tabs and stop after an in-flight read', async () => {
+    const timers = new Map(); let id = 0, calls = 0, outcome = false, finish;
+    const {context} = component('layout.html', 'app', {
+      setTimeout(fn, delay) { timers.set(++id, {fn, delay}); return id; },
+      clearTimeout(key) { timers.delete(key); },
+    });
+    const poll = context.qeliPoll(async () => { calls++; return outcome; }, 2000);
+    async function tick(delay) {
+      assert.equal(timers.size, 1);
+      const [key, timer] = timers.entries().next().value;
+      assert.equal(timer.delay, delay); timers.delete(key); await timer.fn();
+    }
+    for (const delay of [2000, 4000, 8000, 16000, 32000, 60000, 60000]) await tick(delay);
+    outcome = true; await tick(60000); assert.equal([...timers.values()][0].delay, 2000);
+    const count = calls; context.document.hidden = true; await tick(2000); assert.equal(calls, count);
+    context.document.hidden = false; poll.stop(); assert.equal(timers.size, 0);
+    const pending = context.qeliPoll(() => new Promise(resolve => { finish = resolve; }), 5000);
+    const [key, timer] = timers.entries().next().value; timers.delete(key);
+    const running = timer.fn(); assert.equal(timers.size, 0); pending.stop(); finish(false); await running;
+    assert.equal(timers.size, 0);
+  });
+  await check('GET timeout covers the response body and leaves writes and caller cancellation untouched', async () => {
+    const timers = new Map(); let id = 0, request, bodyStarted = false;
+    const {context} = component('layout.html', 'app', {
+      AbortController,
+      setTimeout(fn, delay) { timers.set(++id, {fn, delay}); return id; },
+      clearTimeout(key) { timers.delete(key); },
+    });
+    // component() supplies a fake API; run the real head helper for this check.
+    const html = fs.readFileSync(path.join(templates, 'layout.html'), 'utf8');
+    new vm.Script([...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].find(m => m[1].includes('async function apiFetch'))[1]).runInContext(context);
+    context.fetch = async (_url, options) => {
+      request = options;
+      return {text: () => new Promise((_resolve, reject) => {
+        bodyStarted = true;
+        options.signal.addEventListener('abort', () => reject(new Error('timeout')));
+      })};
+    };
+    const read = context.apiFetch('api/status');
+    for (let n=0; n<10 && !bodyStarted; n++) await Promise.resolve();
+    assert(bodyStarted);
+    assert.equal([...timers.values()][0].delay, 15000); [...timers.values()][0].fn();
+    assert.equal((await read).ok, false); assert.equal(timers.size, 0); assert(request.signal.aborted);
+    context.fetch = async (_url, options) => { request = options; return {ok:true, text:async () => '{"ok":true}'}; };
+    await context.apiFetch('api/users', {method:'POST'}); assert.equal(request.signal, undefined); assert.equal(timers.size, 0);
+    const signal = new AbortController().signal; await context.apiFetch('api/status', {signal}); assert.equal(request.signal, signal); assert.equal(timers.size, 0);
+  });
+  await check('disabled profiles are labelled, remain exportable and are not preferred for new shares', async () => {
+    const {model, html} = component('users.html', 'usersPage', {apiFetch:async () => ({ok:true, config:{profiles:[
+      {name:'disabled',enabled:false,bind:{port:443}}, {name:'active',enabled:true,bind:{port:8443}}
+    ]}}), window:{location:{hostname:'fixture.invalid'}}});
+    await model.loadProfiles(); model.openShare({username:'alice'});
+    assert.equal(model.share.profile, 'active'); assert.equal(model.shareProfileDisabled, false);
+    model.share.profile = 'disabled'; assert.equal(model.shareProfileDisabled, true);
+    assert.match(model.profileLabel(model.profiles[0]), /Disabled/); assert.equal(model.profiles.length, 2);
+    assert(html.includes('x-show="shareProfileDisabled"'));
+    assert(html.includes('x-show="p.enabled === false"'));
+  });
+  await check('structured log levels do not come from words inside the JSON message', () => {
+    const {model} = component('logs.html','logsPage');
+    assert.equal(model.parseLevel('{"level":"INFO","message":"ERROR happened before"}'), 'INFO');
+    assert.equal(model.parseLevel('{"message":"WARN"}'), '');
+    assert.equal(model.parseLevel('{broken ERROR text'), '');
+  });
+  await check('every polling page reports failed reads to the shared backoff and still permits manual refresh', async () => {
+    for (const [file, factory, read] of [
+      ['layout.html','app','fetchStatus'], ['dashboard.html','dashboard','load'],
+      ['users.html','usersPage','load'], ['client.html','clientPage','refresh'],
+      ['logs.html','logsPage','load'], ['blocked.html','blockedPage','load'],
+      ['transport.html','transportHealthPage','refresh'],
+    ]) {
+      const timers = new Map(); let next = 0, calls = 0;
+      const {model} = component(file, factory, {
+        URLSearchParams,
+        setTimeout(fn, delay) { timers.set(++next,{fn,delay}); return next; },
+        clearTimeout(id) { timers.delete(id); }, setInterval() { return null; },
+        apiFetch:async () => { calls++; return {ok:false,error:'offline'}; },
+      });
+      model.scrollBottom = () => {};
+      if (factory === 'logsPage') { await model.load(); model.autoRefresh = true; model.handleAutoRefresh(); }
+      else await model.init();
+      for (let n=0; n<30; n++) await Promise.resolve();
+      const first = [...timers.entries()]; assert(first.length > 0, factory);
+      for (const [id, timer] of first) { timers.delete(id); await timer.fn(); }
+      assert.deepEqual([...timers.values()].map(t => t.delay).sort(), first.map(([,t]) => t.delay*2).sort(), factory);
+      const before = calls; await model[read](); assert(calls > before, factory);
+      model.destroy(); assert.equal(timers.size, 0, factory);
+    }
+  });
   await check('user bandwidth displays the effective group cap and ignores legacy burst', async () => {
     const {model, html} = component('users.html', 'usersPage');
     model.groups = [{name:'limited', bandwidth_limit_mbps:3}];
@@ -321,10 +416,12 @@ async function main() {
       const callbacks = [], cleared = []; let calls = 0;
       const { model } = component(file, factory, {
         URLSearchParams, setInterval: fn => { callbacks.push(fn); return callbacks.length; },
-        clearInterval: id => { if (id != null) cleared.push(id); }, apiFetch: async () => { calls++; return { ok: true, lines: [], blocked: {}, profiles: [] }; },
+        setTimeout: fn => { callbacks.push(fn); return callbacks.length; },
+        clearInterval: id => { if (id != null) cleared.push(id); }, clearTimeout: id => { if (id != null) cleared.push(id); }, apiFetch: async () => { calls++; return { ok: true, lines: [], blocked: {}, profiles: [] }; },
       });
       model.loadPolicy = async () => {}; model.scrollBottom = () => {};
       if (factory === 'logsPage') { model.autoRefresh = true; model.handleAutoRefresh(); } else await model.init();
+      assert(callbacks.length > 0);
       model.destroy(); const before = calls;
       for (const fn of callbacks) fn(); await Promise.resolve();
       assert.equal(calls, before); assert.equal(cleared.length, callbacks.length);

@@ -34,27 +34,6 @@ pub fn peek_logging(path: &Path) -> (String, Option<String>, String) {
     (logging.level, file, logging.time_format)
 }
 
-/// Open a regular append sink without blocking on a configured FIFO.
-/// The caller has already authorized the INI snapshot selecting this path.
-pub fn open_log_file(path: &Path) -> std::io::Result<std::fs::File> {
-    use std::os::unix::fs::OpenOptionsExt;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-    let file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .custom_flags(libc::O_NONBLOCK)
-        .open(path)?;
-    if !file.metadata()?.is_file() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "logging.file must be a regular file",
-        ));
-    }
-    Ok(file)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -175,14 +154,14 @@ mod tests {
         let name = std::ffi::CString::new(path.as_os_str().as_bytes()).unwrap();
         assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
         let start = Instant::now();
-        assert!(open_log_file(&path).is_err());
+        assert!(crate::logging::RotatingLog::open(&path).is_err());
         let _reader = std::fs::OpenOptions::new()
             .read(true)
             .custom_flags(libc::O_NONBLOCK)
             .open(&path)
             .unwrap();
         assert_eq!(
-            open_log_file(&path).unwrap_err().kind(),
+            crate::logging::RotatingLog::open(&path).unwrap_err().kind(),
             std::io::ErrorKind::InvalidInput
         );
         assert!(start.elapsed() < Duration::from_secs(1));
@@ -193,8 +172,11 @@ mod tests {
         use std::io::Write;
         let fixture = Fixture::new();
         let path = fixture.0.join("logs/client.log");
-        open_log_file(&path).unwrap().write_all(b"first\n").unwrap();
-        open_log_file(&path)
+        crate::logging::RotatingLog::open(&path)
+            .unwrap()
+            .write_all(b"first\n")
+            .unwrap();
+        crate::logging::RotatingLog::open(&path)
             .unwrap()
             .write_all(b"second\n")
             .unwrap();

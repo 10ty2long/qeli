@@ -577,7 +577,7 @@
       'chacha20-poly1305 (recommended)': 'chacha20-poly1305 (рекомендуется)',
       'datetime — 2026-07-18 18:10:03.259 (local)': 'datetime — 2026-07-18 18:10:03.259 (локальное)',
       'epoch — 1782000603.259 (unix)': 'epoch — 1782000603.259 (unix)',
-      'json (structured) — not implemented yet': 'json (структурированный) — пока не реализован',
+      'json (structured)': 'json (структурированный)',
       'none — journald/syslog stamps it already': 'none — journald/syslog уже добавляет время',
       'plain (human-readable)': 'plain (для чтения человеком)',
       'rfc3339 — 2026-07-18T18:10:03.259Z (UTC)': 'rfc3339 — 2026-07-18T18:10:03.259Z (UTC)',
@@ -675,7 +675,7 @@
       'Log format': 'Формат логов',
       'Output format for log lines': 'Формат строк лога',
       'Log file path': 'Путь к файлу логов',
-      'Leave empty to use stderr / journald': 'Пусто — использовать stderr / journald',
+      'Leave empty to use stderr / journald. Files rotate at 10 MiB with 3 archives.': 'Пусто — stderr / journald. Файлы ротируются при 10 МиБ с тремя архивами.',
 
       // ── config: identity ──
       "Each profile has its own pinned public key. Set it as": 'У каждого профиля свой пиннингованный публичный ключ. Задайте его как',
@@ -1274,8 +1274,11 @@
       // ── config: logging ──
       'Log timestamp': 'Метка времени в журнале',
       'Shape of the timestamp in front of each line': 'Формат метки времени перед каждой строкой',
-      'Shape of the line itself — not implemented yet, the line is always plain':
-        'Формат самой строки — пока не реализовано, строка всегда простая',
+      'Line format for server logs: readable text or one JSON object per line':
+        'Формат серверного лога: текст или один JSON-объект на строку',
+      '10s · ≤60s on error': '10 с · до 60 с при ошибке',
+      'This profile is disabled. The configuration can be prepared, but connections will work only after the profile is enabled and the server is restarted.':
+        'Профиль выключен. Конфигурацию можно подготовить, но подключение заработает после включения профиля и рестарта сервера.',
 
       // ── config: profiles / listeners ──
       'Duplicate': 'Дублировать',

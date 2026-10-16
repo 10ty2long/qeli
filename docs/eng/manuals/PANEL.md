@@ -25,6 +25,15 @@ every browser/version has been tested. See the
 > Full `[web]` key reference — [CONFIG.md](CONFIG.md#web-panel-web). This page is
 > how to bring it up and how to use it.
 
+
+Failed background reads double the polling interval up to 60 seconds; a successful
+read restores the normal interval. Hidden tabs do not poll; manual refresh remains
+immediate. API reads have a 15-second timeout.
+
+Share/QR profile selectors label disabled profiles. The first enabled profile is
+preferred; a disabled one remains selectable for preparing configuration, but it
+will accept connections only after being enabled and the server restarted.
+
 ---
 
 ## 1. Install / enable

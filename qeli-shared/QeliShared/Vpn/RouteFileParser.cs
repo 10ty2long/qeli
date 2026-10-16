@@ -3,7 +3,8 @@ using System.Text;
 namespace Qeli.Shared.Vpn;
 
 /// <summary>Parser for desktop split-route files. It accepts both qeli's one-CIDR-per-line
-/// form and the common OpenVPN exports (<c>route network netmask [gateway] [metric]</c>).</summary>
+/// form and common OpenVPN inclusion exports (<c>route network netmask [gateway] [metric]</c>).
+/// The shared core rejects <c>net_gateway</c> bypasses; use explicit INI exclusions.</summary>
 internal static class RouteFileParser
 {
     private const int MaxRoutes = 250_000;

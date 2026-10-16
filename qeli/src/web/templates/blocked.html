@@ -212,9 +212,9 @@ function blockedPage() {
 
     startAuto() {
       if (this.destroyed) return;
-      clearInterval(this.refreshTimer);
+      qeliStopPoll(this.refreshTimer);
       clearInterval(this.countdownTimer);
-      this.refreshTimer = setInterval(() => { if (!document.hidden) this.load(true); }, 5000);
+      this.refreshTimer = qeliPoll(async () => { await this.load(true); return !this.error; }, 5000);
       this.countdownTimer = setInterval(() => this.tick(), 1000);
     },
 
@@ -222,7 +222,7 @@ function blockedPage() {
       this.destroyed = true;
       this.loadSequence++;
       this.loading = false;
-      clearInterval(this.refreshTimer);
+      qeliStopPoll(this.refreshTimer);
       clearInterval(this.countdownTimer);
       this.refreshTimer = this.countdownTimer = null;
     },

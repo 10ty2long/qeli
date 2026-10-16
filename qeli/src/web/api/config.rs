@@ -240,6 +240,7 @@ pub(super) fn needs_full_restart_for_config(
         || current.logging.level != next.logging.level
         || current.logging.file != next.logging.file
         || current.logging.time_format != next.logging.time_format
+        || current.logging.format != next.logging.format
 }
 
 pub async fn get_config(
@@ -2737,12 +2738,13 @@ mod raw_secret_tests {
             &current_config,
             &next_config
         ));
-        for change in ["level", "file", "time_format"] {
+        for change in ["level", "file", "time_format", "format"] {
             let mut next_config = current_config.clone();
             match change {
                 "level" => next_config.logging.level = "debug".into(),
                 "file" => next_config.logging.file = Some("/var/log/qeli/alternate.log".into()),
                 "time_format" => next_config.logging.time_format = "none".into(),
+                "format" => next_config.logging.format = "json".into(),
                 _ => unreachable!(),
             }
             assert!(
@@ -2750,12 +2752,6 @@ mod raw_secret_tests {
                 "logging.{change} must restart the supervisor too"
             );
         }
-        next_config = current_config.clone();
-        next_config.logging.format = "json".into();
-        assert!(
-            !needs_full_restart_for_config(&current_config, &next_config),
-            "logging.format is a documented inert compatibility field"
-        );
     }
 
     #[test]

@@ -761,38 +761,20 @@ profiles, no `gmt_unix_time`, no arbitrary extension composition.
 
 ### Backlog (audits 2026-07-17: two external + one self-audit)
 
-- 🔵 **Two settings exist but do nothing** — deliberately kept and marked "not
-  implemented" in CONFIG.md; the other 15 dead keys were removed in 0.7.12.
+- **Former placeholder settings:** DoT remains unimplemented; server log formatting
+  is fixed in 0.8.2. The other 15 dead keys were removed in 0.7.12.
   - `dns.upstream_protocol = tls` (DoT) — **`tcp` now works** (0.7.14: it forces TCP to
     the upstream, and a truncated UDP answer is retried over TCP either way), and `tls` is
     REJECTED at config load rather than silently downgraded. What remains is implementing
     DoT itself: upstream queries would stop being visible to the operator's ISP. Until
     then, **the resolver offers no privacy against whoever can see your link to the
     upstream**.
-  - `logging.format` — the field is parsed (default `plain`) but `init_logging` **never
-    reads it**: the log is always the hard-coded `{ts} {LEVEL:<5} {target}: {msg}`, and
-    that custom formatter sits behind `#[cfg(target_os = "linux")]`, so other platforms
-    already get a different shape. **Plan (worked out 2026-07-18):** 5 variants, shared by
-    server / Rust client / desktop / Android:
-    `text` (today's, default) · `compact` (no date, 1-char level — routers, mobile) ·
-    `plain` (level+message only — when journald / logread / logcat already stamps it;
-    kills the double timestamp) · `logfmt` (`k=v`, human + machine) ·
-    `json` (NDJSON — Loki/ELK/SIEM; lets the panel render logs as a filterable table).
-    One field schema for `json`/`logfmt`: `v` (schema version), `ts` (RFC3339 UTC),
-    `level`, **`comp`** (`server|client|panel|gui` — who emitted it), `target`, `msg`.
-    Override via the `QELI_LOG_FORMAT` env var.
-    **Two phases:** (1) cheap — the formatter starts honouring the field, `msg` stays the
-    already-formatted string, no call-site changes (80% of the value: parseable,
-    shippable, filterable); (2) later — move the hot paths (auth / sessions / errors / NAT)
-    to structured fields (`user`/`profile`/`peer`/`err`), possibly `env_logger` → `tracing`.
-    Bonus: JSON string escaping closes log-injection more robustly than the hand-rolled
-    CRLF escape (H-8 from 0.7.3).
-    NB: the **time** format is split out and is already **done** in 0.7.12
-    (`[logging] time_format` plus the choice in Windows / macOS / Android / LuCI) —
-    only the shape of the line itself, described above, is left.
-  - 🔵 **No log-file rotation** — at `level = debug` the file grows unbounded (a real
-    disk-filling risk on a router/VPS). Either `[logging] max_size_mb` + `keep`, or
-    document handing it to logrotate explicitly.
+  - ✅ **Server logging, 0.8.2:** supervisor and worker honour `logging.format = plain|json`;
+    JSON includes `level`, `target`, `message`, `pid`, `timestamp`. Linux server/client
+    log files rotate at 10 MiB with three archives and a shared process lock.
+    See [CONFIG.md](../manuals/CONFIG.md#logging). Future extensions remain `compact`/`logfmt`,
+    structured auth/session fields and GUI/Android format alignment; those formats and
+    fields are not implemented.
 
 Everything Medium-and-above from the three audits is fixed in 0.7.12 (**released 2026-07-21**) (see CHANGELOG). What
 follows was deliberately deferred.

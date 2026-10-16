@@ -31,19 +31,45 @@
      NB: never write a placeholder name in a comment — the Rust side substitutes with
      str::replace, which rewrites EVERY occurrence, including ones inside comments. -->
 <script>
+// One request cycle at a time; failed reads double the delay up to one minute.
+// Callers return their read outcome because their UI already handles errors.
+// Manual refresh is independent, and hidden tabs make no background requests.
+function qeliPoll(read, interval) {
+  let stopped = false, timer = null, delay = interval;
+  const schedule = () => { if (!stopped) timer = setTimeout(tick, delay); };
+  const tick = async () => {
+    if (stopped) return;
+    if (!document.hidden) {
+      let ok = false;
+      try { ok = (await read()) !== false; } catch {}
+      delay = ok ? interval : Math.min(60000, delay * 2);
+    }
+    schedule();
+  };
+  schedule();
+  return { stop() { stopped = true; clearTimeout(timer); } };
+}
+function qeliStopPoll(poll) { if (poll) poll.stop(); }
+
 async function apiFetch(url, opts = {}) {
   let resp;
-  try { resp = await fetch(url, opts); }
-  catch { return { ok: false, error: 'Network error — the server may be restarting' }; }
-  const text = await resp.text().catch(() => '');
-  try { return JSON.parse(text); }
-  catch {
+  const boundedRead = (!opts.method || opts.method.toUpperCase() === 'GET') && !opts.signal;
+  const controller = boundedRead ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), 15000) : null;
+  try {
+    resp = await fetch(url, controller ? { ...opts, signal: controller.signal } : opts);
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch {}
     return {
       ok: false,
       error: resp.status === 401
         ? 'Session expired — please reload the page'
         : `Server error (${resp.status})`,
     };
+  } catch {
+    return { ok: false, error: 'Network error — the server may be restarting' };
+  } finally {
+    clearTimeout(timer);
   }
 }
 </script>
@@ -178,7 +204,7 @@ async function apiFetch(url, opts = {}) {
       <span>Inbound sessions: <strong class="text-white" x-text="activeInboundSessions">0</strong></span>
       <span class="flex items-center gap-1.5">
         <span class="w-1.5 h-1.5 rounded-full" style="background:#16c8b6"></span>
-        Auto-refresh <strong class="text-white">10s</strong>
+        Auto-refresh <strong class="text-white">10s · ≤60s on error</strong>
       </span>
     </div>
   </header>
@@ -323,12 +349,12 @@ function app() {
 
     init() {
       this.fetchStatus();
-      this.statusTimer = setInterval(() => { if (!document.hidden) this.fetchStatus(true); }, 10000);
+      this.statusTimer = qeliPoll(async () => { await this.fetchStatus(true); return !this.statusError; }, 10000);
     },
 
     destroy() {
       this.destroyed = true; this.statusSequence++; this.confirmSequence++;
-      clearInterval(this.statusTimer); clearTimeout(this.toast._t);
+      qeliStopPoll(this.statusTimer); clearTimeout(this.toast._t);
       this.statusTimer = null;
       this.confirmResolve(false);
     },

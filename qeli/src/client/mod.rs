@@ -14261,4 +14261,4 @@ mod q13_stealth_writer_tests {
 #[cfg(target_os = "linux")]
 mod logging_bootstrap;
 #[cfg(target_os = "linux")]
-pub use logging_bootstrap::{open_log_file, peek_logging, read_config_text};
+pub use logging_bootstrap::{peek_logging, read_config_text};

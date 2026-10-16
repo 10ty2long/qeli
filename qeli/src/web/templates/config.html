@@ -431,19 +431,15 @@
           </div>
           <div>
             <label class="field-label">Log format</label>
-            <p class="field-desc">Shape of the line itself — not implemented yet, the line is always plain</p>
+            <p class="field-desc">Line format for server logs: readable text or one JSON object per line</p>
             <select class="inp" x-model="cfg.logging.format" @change="markDirty()">
               <option value="plain">plain (human-readable)</option>
-              <!-- DISABLED until the logger actually emits JSON. The key parses and
-                   survives a restart, so leaving it selectable let an operator switch to
-                   "json", see it stick, and build log shipping around a format that is
-                   never produced. (Audit 2026-07-27, P6.) -->
-              <option value="json" disabled>json (structured) — not implemented yet</option>
+              <option value="json">json (structured)</option>
             </select>
           </div>
           <div>
             <label class="field-label">Log file path</label>
-            <p class="field-desc">Leave empty to use stderr / journald</p>
+            <p class="field-desc">Leave empty to use stderr / journald. Files rotate at 10 MiB with 3 archives.</p>
             <input class="inp" type="text" x-model="cfg.logging.file" @input="markDirty()" placeholder="/var/log/qeli/server.log">
           </div>
         </div>

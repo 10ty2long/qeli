@@ -154,13 +154,13 @@ function transportHealthPage() {
     qeliT(value) { return window.qeliT ? window.qeliT(value) : value; },
     init() {
       this.refresh();
-      this.timer = setInterval(() => { if (!document.hidden) this.refresh(true); }, 5000);
+      this.timer = qeliPoll(async () => { await this.refresh(true); return !this.error; }, 5000);
     },
     destroy() {
       this.destroyed = true;
       this.loadSequence++;
       this.loading = false;
-      clearInterval(this.timer);
+      qeliStopPoll(this.timer);
       this.timer = null;
     },
     async refresh(background = false) {

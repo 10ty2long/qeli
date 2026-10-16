@@ -4782,6 +4782,9 @@ fn sighup_startup_only_fields(
     if startup.logging.time_format != candidate.logging.time_format {
         changed.push("logging.time_format");
     }
+    if startup.logging.format != candidate.logging.format {
+        changed.push("logging.format");
+    }
     changed
 }
 
@@ -9693,7 +9696,10 @@ pool.cidr = 10.{net}.0.0/24
         );
         candidate = startup.clone();
         candidate.logging.format = "json".into();
-        assert!(sighup_startup_only_fields(&startup, &candidate).is_empty());
+        assert_eq!(
+            sighup_startup_only_fields(&startup, &candidate),
+            vec!["logging.format"]
+        );
     }
 
     #[tokio::test]

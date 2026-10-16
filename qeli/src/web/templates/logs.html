@@ -152,7 +152,7 @@ function logsPage() {
       this.destroyed = true;
       this.loadSequence++;
       this.loading = false;
-      clearInterval(this.autoRefreshTimer);
+      qeliStopPoll(this.autoRefreshTimer);
       this.autoRefreshTimer = null;
     },
 
@@ -167,6 +167,12 @@ function logsPage() {
       // A qeli log line is <timestamp> LEVEL target: message (or starts with
       // LEVEL when timestamps are disabled). Use the first severity token only:
       // words such as "ERROR" inside an INFO message must not change its level.
+      if (line.trimStart().startsWith('{')) {
+        try {
+          const level = JSON.parse(line).level;
+          return ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].includes(level) ? level : '';
+        } catch { return ''; }
+      }
       const match = line.match(/(?:^|\s)(ERROR|WARN|INFO|DEBUG|TRACE)(?=\s)/);
       return match ? match[1] : '';
     },
@@ -192,14 +198,13 @@ function logsPage() {
     },
 
     handleAutoRefresh() {
-      clearInterval(this.autoRefreshTimer);
+      qeliStopPoll(this.autoRefreshTimer);
       this.autoRefreshTimer = null;
       if (this.autoRefresh && !this.destroyed) {
-        this.autoRefreshTimer = setInterval(() => {
-          if (document.hidden || this.destroyed) return;
-          this.load(true).then(() => {
-            if (this.autoRefresh && !this.destroyed) this.scrollBottom();
-          });
+        this.autoRefreshTimer = qeliPoll(async () => {
+          await this.load(true);
+          if (this.autoRefresh && !this.destroyed) this.scrollBottom();
+          return !this.error;
         }, 5000);
       }
     },

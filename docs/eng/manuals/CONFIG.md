@@ -338,6 +338,17 @@ Exported OpenVPN `[gateway] [metric]` fields may follow an IPv4 netmask, for exa
 `route 172.16.0.0 255.255.0.0 vpn_gateway 10`. They are accepted for compatibility but do not
 select the next hop: the client always uses the authenticated tunnel gateway.
 
+<!-- normative-sync: route-file-net-gateway-issue69-v2 -->
+
+`net_gateway` in `route`/`route-ipv6` lines is rejected by the shared parser with
+its filename and line number (case-insensitive). In OpenVPN this means bypassing
+VPN through the ordinary gateway; importing it as a tunnel inclusion would reverse
+its meaning. Remove, for example, `route 192.0.2.0 255.255.255.0 net_gateway` from
+the route file and, if bypass is intended, explicitly set `exclude = 192.0.2.0/24`
+under `[qeli]`. For IPv6 use, for example, `exclude = 2001:db8::/32`. Import never
+creates exclusions automatically: on failure the entire route-file set is not
+applied and connection fails. `net_gateway` inside a comment has no effect.
+
 Blank lines and full-line or inline `#`/`;` comments are ignored:
 
 ```text
@@ -360,6 +371,49 @@ long Unicode comments cannot overflow the service request. Reading checks cancel
 between 4096-character chunks, including before a long line ends.
 Reading and installation can be interrupted with Disconnect. In full-tunnel mode `route_file` is unnecessary and is not applied (except desktop
 per-app mode).
+
+#### OpenVPN `net_gateway`: moving VPN bypasses to `exclude`
+
+VPN bypasses use the existing `exclude` setting. A `route_file` contains tunnel
+inclusions; the shared import check applies to Windows/macOS. For example, an
+original OpenVPN `routes.txt` contains:
+
+```text
+route 10.20.0.0 255.255.0.0 vpn_gateway
+route 192.0.2.0 255.255.255.0 net_gateway
+route-ipv6 2001:db8:ffff::/48 net_gateway
+```
+
+Connecting stops the import at line two:
+
+```text
+routes.txt:2: net_gateway routes bypass the VPN and cannot be imported into route_file; move this network to [qeli] exclude instead
+```
+
+Line numbers start at the beginning of the corresponding file, including comments
+and blank lines. The check also recognizes `NET_GATEWAY`, `"net_gateway"`, and
+`'net_gateway'`. Even valid lines from this file set are not partially installed;
+the connection fails.
+
+To migrate, keep only the first line in `routes.txt`. Add exclusions to the
+existing client profile, preserving its other connection settings:
+
+```ini
+[qeli]
+gateway = false
+route_file = C:\qeli\routes.txt
+exclude = 192.0.2.0/24, 2001:db8:ffff::/48
+```
+
+Save and reconnect: `10.20.0.0/16` goes through VPN, while excluded networks use
+the physical path of the corresponding IP family. Those networks must already be
+reachable through the physical network; `exclude` does not create external
+connectivity. Append to an existing `exclude` list using commas.
+
+Full-tunnel (`gateway = true`) uses the same exclusions; `route_file` is normally
+not read (except desktop per-app mode). With desktop `kill_switch` enabled in
+system full-tunnel mode, excluded traffic is blocked rather than permitted outside
+VPN. Import never changes the kill switch or creates exclusions automatically.
 
 #### Distinguishing service routes from `route_file`
 
@@ -3159,7 +3213,7 @@ Beyond pinning / H-1 (above), the `[auth]` section carries:
 
 If the external `users_file` is genuinely absent and the server INI has no inline users or groups, first startup and `qeli check-config` use an empty database. A malformed or unreadable existing file remains an error. If inline entries exist, they are used without the external file. A non-default `auth.users_file` is accepted only from a trusted server INI (regular file, owned by root or the effective UID, with no group/world write and no symlink). This is checked by `check-config`, worker/supervisor startup, panel user operations, and CLI operations that write users. Use `chmod 600 server.conf` after choosing a custom path. Changing `auth.users_file` requires a full supervisor restart: SIGHUP and a worker-only restart retain the startup path.
 
-In the VPN worker, `SIGHUP` applies the users database and `auth.brute_force.*` policy without a full restart. Changes to `auth.require_client_key_proof`, `auth.bind_static_to_session`, `logging.level`, `logging.file`, `logging.time_format`, and enabled-profile settings require a restart; the server logs them. Edits to profiles that remain disabled do not produce a warning about live profiles.
+In the VPN worker, `SIGHUP` applies the users database and `auth.brute_force.*` policy without a full restart. Changes to `auth.require_client_key_proof`, `auth.bind_static_to_session`, `logging.level`, `logging.file`, `logging.time_format`, `logging.format`, and enabled-profile settings require a restart; the server logs them. Edits to profiles that remain disabled do not produce a warning about live profiles.
 
 > **Removed from here: `password_hash` and `token_ttl_secs`.** Both are listed in `RETIRED_KEYS`
 > (`config/mod.rs`) and are not honoured; `qeli check-config` names them as stale (rather than
@@ -3710,7 +3764,10 @@ and QR codes stay absolute in either mode.
 
 ## Logging
 
-The `[logging]` section (in server.conf and client.conf):
+<!-- normative-sync: logging-rotation-format-issue69-v1 -->
+
+The `[logging]` section: `level`, `file`, `time_format` apply to Linux server/client;
+`format` below applies only to the server (`server` and `_worker`).
 
 ```ini
 [logging]
@@ -3721,7 +3778,7 @@ level = info
 file = /var/log/qeli/server.log
 # shape of the timestamp prefix (default datetime)
 time_format = datetime
-# plain | json — PARSED BUT NOT APPLIED YET (see below)
+# server.conf: plain | json — log line format; configuration remains INI
 format = plain
 ```
 
@@ -3730,19 +3787,19 @@ not create the directory or file; it reports the refusal on stderr and logs
 there instead. Level and timestamp settings remain readable without a file
 write. This applies to Linux server/worker/client before main validation.
 
-Changing `level`, `file`, or `time_format` on a running server requires a full
+Changing `level`, `file`, `time_format`, or `format` on a running server requires a full
 process restart: restarting only the VPN worker does not reconfigure supervisor logging.
 
 | Key | Default | Purpose |
 |---|---|---|
 | `level` | `info` | `error` \| `warn` \| `info` \| `debug` \| `trace`. The `RUST_LOG` env var takes priority |
-| `file` | — (stderr) | log file path; the directory is created. Without it, stderr — i.e. journald under systemd. There is no rotation (see ROADMAP) |
+| `file` | — (stderr) | log file path; the directory is created. Without it, stderr — i.e. journald under systemd. rotates at 10 MiB with three archives `.1`–`.3` |
 | `time_format` | `datetime` | shape of the timestamp: `datetime` \| `rfc3339`/`iso8601` \| `time` \| `epoch`/`unix` \| `none`/`off`. Examples in the table below |
-| `format` | `plain` | shape of the line itself. **Parsed but not applied yet** — the line is always flat |
+| `format` | `plain` | `plain` — text; `json` — one JSON object per server log line |
 
 ### `time_format` — the timestamp prefix
 
-A log line is always `<timestamp> LEVEL target: message`; this key controls only
+In `plain`, a log line is `<timestamp> LEVEL target: message`; this key controls only
 the shape of the timestamp. It applies to both the server (`qeli`) and the
 router client (`qeli-client`).
 
@@ -3765,10 +3822,23 @@ and `qeli-client` logs. The defaults differ on purpose: `datetime` on the server
 and desktop, `time` on Android (narrow screen), `none` on OpenWrt (syslog stamps
 the line already).
 
-> **`format` (the LINE format, not the time) does not work yet.** The value is
-> parsed and shown in the panel, but `init_logging` never applies it: there are
-> no JSON/logfmt logs, the line is always flat. The full set of formats is
-> tracked in the ROADMAP.
+Server `format = json` emits `level`, `target`, `message`, `pid`, and `timestamp`
+(omitted with `time_format = none/off`). Quotes and newlines inside messages are
+escaped; the panel filters severity using the `level` field. Unknown formats warn
+on stderr and fall back to `plain`. Client applications retain their own logging
+preferences; client INI does not gain a `format` key.
+
+Linux server/client file output rotates before exceeding 10 MiB: the active file
+becomes `.1`, and older archives shift up to `.3`. Supervisor and worker share a
+`.lock` file and reopen the active path for every write. Do not delete `.lock`
+while running. Size and archive count have no separate configuration keys.
+New files occupy at most 40 MiB in total; a pre-existing oversized file is kept
+intact on first rotation and expires after three more rotations. The directory
+must allow file creation and renames. Symlinks, FIFOs, and files with multiple
+hard links are rejected for log/lock/archive paths; write or rotation failures
+send affected records to stderr. A single record larger than 10 MiB also goes to
+stderr. The panel displays the active file; archives must be read separately.
+System policy controls stderr/journald rotation; Qeli does not change it.
 
 At the `info` level the log records all key events: profile and listener
 start/stop, connection establishment (`New TCP connection`,
@@ -3778,8 +3848,7 @@ administrative commands via the control socket (`CONTROL action=… user=…` �
 kick/disable/enable/set-bandwidth), SIGHUP reload. Data-plane-side teardown reasons
 are written at the `debug` level.
 
-For diagnostics, `level: "info"` with a set `file` is the minimum sufficient.
-```
+For diagnostics, `level = info` with a set `file` is the minimum sufficient.
 
 > **`QELI_TRACE` — a packet-shape timeline (obfuscation diagnostics).** Not an INI key but
 > an environment variable: `QELI_TRACE=<file> qeli client …` enables opt-in recording of

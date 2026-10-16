@@ -317,12 +317,12 @@ function clientPage() {
     importSequence: 0, importSaving: false,
     init() {
       this.load();
-      this.timer = setInterval(() => { if (!document.hidden) this.refresh(true); }, 5000);
+      this.timer = qeliPoll(async () => { await this.refresh(true); return !this.loadError; }, 5000);
     },
     destroy() {
       this.destroyed = true; this.loadSequence++; this.editorSequence++; this.importSequence++;
       this.loading = false;
-      clearInterval(this.timer); this.timer = null;
+      qeliStopPoll(this.timer); this.timer = null;
       for (const timer of this.connectTimers) clearTimeout(timer);
       this.connectTimers = [];
     },

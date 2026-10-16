@@ -14,6 +14,8 @@ pub mod protocol;
 pub mod transport_core;
 // Cross-platform helpers (atomic file writes etc.); builds everywhere, including
 // the realtls FFI cdylib for Android/Windows/macOS.
+#[cfg(all(target_os = "linux", any(feature = "server", feature = "client")))]
+pub mod logging;
 pub mod util;
 
 // Resolver wire/cache/upstream code has no Linux dependencies. Compile it in host tests
