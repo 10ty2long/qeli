@@ -1,9 +1,10 @@
 # qeli for OpenWrt (client)
 
-> **Status: tested on real OpenWrt hardware.** The full-IPv6 line uses public version 0.8.0;
-> there is no public 0.7.17 release. The client and gateway path have been verified on a
-> real router and work. Use artifacts attached to the exact release tag, and still verify
-> the target architecture, TUN support and firewall/interface names for your model.
+> **0.8.2 audit scope.** Physical router tests were excluded from the agreed audit.
+> Source/SDK and isolated lifecycle checks do not certify the package on your hardware;
+> earlier hardware results do not qualify this revision. Use artifacts from an exact
+> published release tag and verify target architecture, TUN and firewall/interface names.
+> [Current audit evidence and limits](../docs/eng/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 A native **OpenWrt** package for the qeli **client**, so an OpenWrt router can dial
 out to a qeli server and route its LAN through the tunnel — managed the OpenWrt way
@@ -562,9 +563,9 @@ partial outcomes retain their dates. Public source pin/hosted release
 qualification remain open; physical router USER_EXCLUDED.
 See the [qualified source compiler and SDK result](../docs/eng/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
-### Dependency integration source cut (16 October 2026)
+### Historical dependency integration source cut (16 October 2026)
 
-The recipe pins `084682e5f3efc05efaf4154b4d5a3eff2750a21d`, containing the updated
+The recipe then pinned `084682e5f3efc05efaf4154b4d5a3eff2750a21d`, containing the updated
 Cargo lock, canonical isolated fuzz lock and the matching dependency notices. This immutable commit is available
 from the repository through the dependency integration PR; this does not publish a release.
 Stock SDK 24.10.4 download/prepare produced SHA256
@@ -579,3 +580,18 @@ networking. Earlier package results retain their original source and scope.
 The strict source gate still requires the actual SDK archive and rejects a changed
 `qeli/` tree. Build/Compile and Install are unchanged. Temporary SDK files were
 removed after saving the proof and verifying that the lab service was preserved.
+
+### Documentation and DNS-comment source cut (16 October 2026)
+
+The recipe now pins `81269a0fd31b74e73174c5aa8fef4d675a1420b6`. This snapshot contains the
+audit-report relocation, corrected documentation and three DNS comment corrections;
+executable Rust lines and their line numbers are unchanged. Independent native A/B
+builds of the corrected source match the previously qualified four native artifacts.
+
+Unmodified stock SDK 24.10.4 download/prepare produced SHA256
+`afcd57ea32c6743198c7f51e92baadbaf686c54a7886fe2d4f1ca5ba0def1a08` (27231668 bytes). Two empty download
+caches with distinct private Git URLs produced the same bytes; all 3447 prepared
+files and modes match the exact Git commit. The actual SDK archive is retained for
+the strict source gate. This is an export/prepare check, not a fresh full SDK/IPK,
+compiler-bootstrap or physical-router run. Earlier runtime evidence retains its
+original source and scope.

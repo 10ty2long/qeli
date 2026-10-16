@@ -1,9 +1,9 @@
 # Installing the qeli client on OpenWrt
 
-> **Tested integration.** The full-IPv6 line uses public version 0.8.0; there is no
-> public 0.7.17 release. The client has been verified on real OpenWrt hardware and works.
-> Install an artifact from the exact release tag and verify the target architecture,
-> TUN support and firewall/interface names for your router.
+> **0.8.2 audit scope.** Physical router tests were excluded from the agreed audit.
+> SDK and isolated lifecycle evidence does not replace testing on your firmware.
+> Install an artifact from an exact published release tag and verify architecture,
+> TUN support and firewall/interface names. [Audit scope](../docs/eng/reports/audit-0.8.2/AUDIT-Q31-OPENWRT-CONTROLS.md).
 
 Two ways to install: **A) prebuilt binary** (fastest — hand-install + opkg deps) or
 **B) from source** (proper feed package + `.ipk`). Both end with the same UCI/LuCI

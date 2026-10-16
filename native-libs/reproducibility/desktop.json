@@ -21,9 +21,9 @@
   },
   "recipe": "qeli-native-repro-v1",
   "schema": 1,
-  "source_commit": "d850feab85bfc27413eb4d82f40bce4dccb7b9af",
-  "source_date_epoch": 1792096947,
-  "source_digest": "6546682de737e66d26656cdd72484ba8f68dcc1202cc80e246f193bc797a73ef",
+  "source_commit": "81269a0fd31b74e73174c5aa8fef4d675a1420b6",
+  "source_date_epoch": 1792130276,
+  "source_digest": "1c9df80ebd95f6bd1d2c827b42d4fdd85aa02e1060209a180863a260a6dbffe3",
   "source_dirty": false,
   "toolchain": {
     "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
