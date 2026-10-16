@@ -1,654 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
+  "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner4.tcp.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner4.tcp.full.log",
-        "log_sha256": "422a773351c2b9e0c120a6f8df008b3cdc63e35351be49e9162a31e4edc455bc",
-        "seconds": 6.008407883000473,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner6.tcp.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner6.tcp.full.log",
-        "log_sha256": "a452a364c22577c2108e66b01fc4d4b4716c106ab6134d72a3d97070f576d1d8",
-        "seconds": 6.008113920999676,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner4.tcp.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner4.tcp.full.log",
-        "log_sha256": "5c0985b471f5da9f85ab9e662326cd8cbf55dcc375ca0ede5943548b226ec53a",
-        "seconds": 6.007870732000811,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner6.tcp.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner6.tcp.full.log",
-        "log_sha256": "726bd203d55db85e9159f3a64224af5fb5abc1d497fbca27782920db8fb2c5e8",
-        "seconds": 6.008850587000779,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner4.udp-fake-tls.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner4.udp-fake-tls.full.log",
-        "log_sha256": "5ee8bb15b4159b9aab679a5a75012a7a7d380901055910efaa1bba5c744166b4",
-        "seconds": 6.011170118999871,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner6.udp-fake-tls.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner6.udp-fake-tls.full.log",
-        "log_sha256": "a1a53cf52c1046876ef6f2db81da944cbad0b84c72d129c8032448715cfa406a",
-        "seconds": 6.0121550570002,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner4.udp-fake-tls.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner4.udp-fake-tls.full.log",
-        "log_sha256": "20f8e689f3884a50fd90cdc9c48ac7f12b8f1198f89fa1aa6c9029e6306ba198",
-        "seconds": 6.013099409999995,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner6.udp-fake-tls.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner6.udp-fake-tls.full.log",
-        "log_sha256": "e77f0900cf0b51c5eaa9b4aae9e37fe224652170b28df1b7ccf938f672057e5f",
-        "seconds": 6.012819103001675,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner4.udp-quic.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner4.udp-quic.full.log",
-        "log_sha256": "79a9bef43c9f232a884422c39829965738c4fd34145200391ec632f34f18cab2",
-        "seconds": 6.012739475001581,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer4.inner6.udp-quic.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer4.inner6.udp-quic.full.log",
-        "log_sha256": "f5a18228a8293d3c9ab423f14c63256478674a884932ed12ac0b44a8dcbb2bb3",
-        "seconds": 6.0120403679993615,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner4.udp-quic.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner4.udp-quic.full.log",
-        "log_sha256": "472fdff4d958e27647a0f0cdfa73897c0820bfa8d04e11dfccf18ed572b9c0dc",
-        "seconds": 6.01222054200116,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.outer6.inner6.udp-quic.full",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 13,
-        "log": "linux.outer6.inner6.udp-quic.full.log",
-        "log_sha256": "9fc70024100f256ae6b7261c11f19064d57ae096ba303fd71cbb72c27836530a",
-        "seconds": 6.013457699000355,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.dual.tcp.split",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 19,
-        "log": "linux.dual.tcp.split.log",
-        "log_sha256": "cb69d7295ef730df0ef44b61a9734c7f5dcff0a722e6a899d45f2ba2e0958773",
-        "seconds": 8.015349264000179,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.dual.udp.split",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 19,
-        "log": "linux.dual.udp.split.log",
-        "log_sha256": "9d6c566404da8f901837ab40db8bf58bce7c79520bddce84c797ee9b71c313ce",
-        "seconds": 8.015815763999854,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.tap.ndp-ra",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 15,
-        "log": "linux.tap.ndp-ra.log",
-        "log_sha256": "2d96cb3c6ce6d1859ca96560d1b9c233cf074fc14e8f3c24f95274af0b4804b3",
-        "seconds": 8.016059227998994,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.dns.ipv4-ipv6",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 105,
-        "log": "linux.dns.ipv4-ipv6.log",
-        "log_sha256": "0ee884c61d2bef6cfb2b7ea472e96de561ff5ff44d05b2f17af310bea0e267cd",
-        "seconds": 26.057868167999914,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.mtu.1280-pmtu-ptb",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 36,
-        "log": "linux.mtu.1280-pmtu-ptb.log",
-        "log_sha256": "9e90111c1b198a53058179d2e6090f14b45aada7d90a274287c86d25ea0f34c9",
-        "seconds": 18.04696971299927,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.legacy-peer",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 26,
-        "log": "linux.legacy-peer.log",
-        "log_sha256": "c9d23964196cd75b46f7cf1cfb96bd9270af8d01ee91b3d0df057736f5159c88",
-        "seconds": 12.035389347000091,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.roaming-flap-soak",
-        "status": "passed",
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-        "checks_passed": 33,
-        "log": "linux.roaming-flap-soak.log",
-        "log_sha256": "ee8e4ed172545d7970c33939b3a92a4b2fc96cb3ad342825e78625a54d372f90",
-        "seconds": 441.24242194199905,
-        "namespaces": {
-          "mnt": "mnt:[4026532321]",
-          "net": "net:[4026532323]",
-          "pid": "pid:[4026532322]"
-        }
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "8210820071b9f317ed6f92dca7f9e7876246be1e3149d40b0ba7bd0c1d77e068",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "environment": "Debian13.5 amd64; lab10.66.116.11; private mount/network/PID namespaces; unchanged production/accounts/DNS identities",
-      "executed_at": "2026-10-15T21:30:49.646442+00:00",
-      "timestamp_basis": "Actual fresh matrix launch; per-case order/durations/log hashes retained in qualification rows",
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "qualification_row": {
-        "id": "linux.leak.ipv4-ipv6",
-        "status": "passed",
-        "derived_from": [
-          "linux.dual.tcp.split",
-          "linux.dual.udp.split",
-          "linux.outer4.inner4.tcp.full",
-          "linux.outer4.inner4.udp-fake-tls.full",
-          "linux.outer4.inner4.udp-quic.full",
-          "linux.outer4.inner6.tcp.full",
-          "linux.outer4.inner6.udp-fake-tls.full",
-          "linux.outer4.inner6.udp-quic.full",
-          "linux.outer6.inner4.tcp.full",
-          "linux.outer6.inner4.udp-fake-tls.full",
-          "linux.outer6.inner4.udp-quic.full",
-          "linux.outer6.inner6.tcp.full",
-          "linux.outer6.inner6.udp-fake-tls.full",
-          "linux.outer6.inner6.udp-quic.full"
-        ],
-        "source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-        "release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-        "cli_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e"
-      },
-      "execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "execution_release_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84",
-      "source_applicability_evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-      "actual_CLI_build_source_commit": "43a3ec907f952484aeef14aa616a8e940e32d265",
-      "acceptance_basis": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-16T17:42:06.677911+00:00",
+      "evidence": "release/certification/evidence/release-082-final-20261016.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -799,48 +352,29 @@
     }
   ],
   "acceptance": {
-    "status": "required_automated_linux_cases_qualified_full_release_not_certified",
+    "status": "actual_release_cli_20_linux_cases_qualified_final_CI_preflight_pending",
     "automated_cases_passed": 20,
     "actual_ordinary_executions": 19,
     "runtime_assertions": 409,
     "current_linux_matrix": {
-      "evidence": "release/certification/evidence/dependabot-integration-20261016.json",
-      "artifact_sha256": "3d32e2b62f756b757c7cd6273a03005b73e604afc99401a4ecf3c4bf943a784e",
-      "source_applicability": "Fresh factory CLI with unchanged production Rust/Cargo/build inputs. Native packaging, CI/OpenWrt and approved report withdrawal precede execution; isolated fuzz-lock reference formatting, its SDK source cut, Android test locks/CI guard and withdrawn-release banners follow execution without changing compiled production dependencies or native source digest.",
-      "raw_execution_source_commit": "4b9d42c9e1144ac84d8b82e10a90aca1f216a748",
-      "raw_execution_source_digest": "4477d3cb6a0c99948c38b708f576d2ffbb4cd85242efc35829e700343e3fef84"
+      "evidence": "release/certification/evidence/release-082-final-20261016.json",
+      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
+      "source_commit": "1a154fbd20bfeefc40fc862b49a31611fbc3e320",
+      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+      "source_applicability": "Fresh execution of the actual candidate CI/deb binary, not rebinding an older CLI across changed Rust sources."
     },
-    "lab_integrity": "Archive, full host and cleanup gates PASS; production PID/start ticks/executable, staged CLI, DNS tools/dependencies and passwd/group preserved; owned root/archive/unit removed.",
-    "scope": "Full audit 37/37 complete within agreed scope. Q29 generic/null API34 ENONET explicitly accepted by user as a documented limitation, not fixed or relabelled PASS. Q31/Q34 and D06 qualifications and physical exclusions retained. No tags/releases/deployments.",
-    "superseded_manifest": {
-      "git_commit": "55eb810865e290e427f6cd2b5838e4278aa304bf",
-      "git_blob": "edf8a160bb363b6c3be15d1696833bee444a7b52",
-      "sha256": "8bc5f77632d06228ebb7db4afbb066842827789c8a36e0440ffb4487381a2379",
-      "evidence": "release/certification/evidence/q36-pre-slot-certification-20261014.json"
+    "lab_integrity": "Three legacy IPv4 rules varied due to pre-existing independently running vpn-nat.service. Original host guard FAIL is retained; all other captured host fields match. No full host-unchanged claim. Each case used distinct mount/network/PID namespaces. Private diagnostic workspace is retained; cleanup is not claimed.",
+    "scope": "Internal audit 37/37 complete within agreed scope. Accepted API34 ENONET remains unfixed; D06 and physical exclusions remain unchanged. Functional release matrix is not a performance benchmark or a new eight-hour endurance run.",
+    "previous_manifest": {
+      "git_commit": "1a154fbd20bfeefc40fc862b49a31611fbc3e320",
+      "git_blob": "3d08f35150598d5a9428c4f5a3b0dee7be765088",
+      "sha256": "78c6f1a450ed5c9391f2c19f24ea895e6c93bc2683a41347ebca3f68e4c49d8f",
+      "scope": "Historical execution and source-applicability records remain in Git and their original evidence files."
     },
     "full_release_preflight_qualified": false,
-    "whole_audit_complete": false,
-    "push_deploy_release": false,
-    "previous_manifest": {
-      "git_commit": "c8c7ef96a26dac23e3656f7e078cabf31e10879a",
-      "git_blob": "08db6a16cf927143f36a4998d24620902cac7bbc",
-      "sha256": "ec326fe1d24b0fe7e05d2e4f88326359182725bd6f9999e435243971261379b2",
-      "scope": "Prior dependency set retained in Git; new rows use new actual executions"
-    },
-    "documentation_source_applicability": [
-      {
-        "evidence": "release/certification/evidence/documentation-20261016.json",
-        "source_commit": "2407207a9bb953f4647516c40624d908a187a0a9",
-        "scope": "Documentation relocation/corrections and validation guards; exactly three standalone DNS comments changed, with executable lines and source line numbers unchanged. Cargo/build inputs, generated configuration contracts, conformance and platform product sources are unchanged. Fresh pinned native A/B builds on the corrected source produce exactly the same four canonical binaries as the previously executed dependency-qualified baseline. Actual stock-SDK export/prepare is independently repeated and its exact source pin/hash updated. Existing CLI/Linux/Android runtime identities, times, raw results and original failures are retained; this is source-applicability reconciliation, not a new runtime, benchmark, endurance or device qualification. Hosted final CI is still required; release publication is forbidden."
-      }
-    ],
-    "managed_reconnect_source_applicability": [
-      {
-        "evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
-        "source_commit": "1d5f39ac61926354717a1df0316bc8cee0bd6713",
-        "scope": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
-      }
-    ]
+    "audit_complete_within_agreed_scope": true,
+    "physical_qualification_complete": false,
+    "push_deploy_release": false
   },
   "source_qualification_supplements": [
     {
@@ -1186,6 +720,10 @@
     {
       "evidence": "release/certification/evidence/reconnect-recovery-20261016.json",
       "scope": "Managed Windows/macOS reconnect lifecycle and conformance tests plus explanatory documentation only. The entire Rust qeli tree, Linux/native build inputs, platform adapters, native artifacts and existing Linux runtime fixture sources are byte-identical to the qualified dev baseline. The 20 retained automated cases are Linux cases and do not execute the changed C# lifecycle. Their original execution commits, times, artifact hashes, raw results and failures are preserved; this is source-applicability reconciliation, not a new Linux runtime or benchmark. Managed conformance adds 18 recovery checks; local SDK 10.0.300 passes 305 checks, and exact-candidate hosted CI with pinned SDK 10.0.401 is still required. No physical Windows/macOS sleep/wake qualification is claimed. Accepted API34 ENONET and physical exclusions are unchanged. Release publication is forbidden."
+    },
+    {
+      "evidence": "release/certification/evidence/release-082-final-20261016.json",
+      "scope": "Fresh actual-release-binary execution of all 20 mandatory Linux cases. Original historical evidence is retained without relabelling its source, failures or scope. Native A/B and OpenWrt export are separately qualified. Final exact-commit CI/preflight remain mandatory; no publication."
     }
   ]
 }
