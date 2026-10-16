@@ -125,6 +125,11 @@ def assemble(root, lipo="/usr/bin/llvm-lipo-19"):
             shutil.copy2(path, output)
         if rel in arm_machos and architectures(lipo, output) != REQUIRED_ARCHES:
             raise RuntimeError(f"assembled Mach-O is not universal2: {rel}")
+    # Match build_app.sh: versioned license directories are resources, not code bundles.
+    # Leaving Legal under MacOS makes strict bundle signing reject dotted directory names.
+    legal = macos / "Legal"
+    if legal.is_dir():
+        shutil.move(str(legal), str(app / "Contents/Resources/Legal"))
     print(f"[assemble] lipo={len(merge)} copy={len(arm)-len(merge)}; all Mach-O arm64+x86_64")
     return {"merged": len(merge), "copied": len(arm)-len(merge)}
 

@@ -58,6 +58,9 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
   Windows/macOS retry transient network restoration before reconnecting, with bounded
   failures and cancellation. Incomplete cleanup retains the kill-switch and resource
   ownership; unexpected reconnect-loop faults reach a visible Error state.
+  Android and iOS clear the saved log after a completed VPN disconnect by default;
+  the new setting can be disabled to retain diagnostics. Reconnects and network pauses
+  preserve the log.
 - **More useful administration.** Responsive host-load cards, interactive log-level filters
   and refreshed user bandwidth limits improve the panel. Linux/OpenWrt/Keenetic lifecycle
   hooks receive the applied network/connection context. Installer, updater, permissions
@@ -137,10 +140,12 @@ sidecar. On Windows, refusal of an untrusted legacy service-profile store requir
 explicit reconfiguration from an elevated GUI after preserving the required user data.
 
 Windows ZIPs must be extracted in full, retaining `Legal/` and driver notices beside
-`QeliWin.exe`. Choose the matching macOS architecture and extract TAR archives with
-`tar -xzf` to preserve executable permissions; these builds use ad-hoc signatures,
-without Developer ID notarization. The prepared Android update uses the existing release
-certificate; update from 0.8.1 and cold launch passed on the tested API34 x86_64 emulator.
+`QeliWin.exe`. The macOS universal ZIP includes both Apple Silicon and Intel code;
+extract the complete `Qeli.app` on macOS, preserving executable permissions. It uses
+ad-hoc signatures, without Developer ID notarization or the per-app system extension.
+The Android update retains the existing release certificate; package signatures,
+alignment and the included current JNI libraries are checked. This does not replace
+installation and upgrade testing on your physical device.
 
 Full change list: [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/CHANGELOG.md).
 
@@ -198,6 +203,9 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
   Windows/macOS повторяют временно неудачное восстановление сети до нового подключения,
   с ограничением отказов и поддержкой отмены. Незавершённая очистка сохраняет kill-switch
   и владение ресурсами; неожиданные ошибки цикла переподключения приводят к видимому Error.
+  Android и iOS по умолчанию очищают сохранённый журнал после завершённого отключения
+  VPN; новую настройку можно выключить для сохранения диагностики. Переподключения
+  и сетевые паузы историю не стирают.
 - **Удобнее администрирование.** В панели появились адаптивные карточки нагрузки
   хоста, интерактивные фильтры уровней журнала и обновление лимитов полосы
   пользователей. Lifecycle-хуки Linux/OpenWrt/Keenetic получают контекст применённой
@@ -284,9 +292,11 @@ legacy-файл. Если Windows отказывает в доверии ста�
 с правами администратора.
 
 Windows ZIP нужно распаковывать целиком, сохраняя `Legal/` и notices драйверов
-рядом с `QeliWin.exe`. Для macOS выберите свою архитектуру и распакуйте TAR через
-`tar -xzf` для сохранения прав запуска; сборки имеют ad-hoc подпись без Developer ID
-notarization. Подготовленный Android-пакет использует прежний релизный сертификат;
-обновление с 0.8.1 и холодный запуск прошли на проверенном эмуляторе API34 x86_64.
+рядом с `QeliWin.exe`. Universal ZIP для macOS содержит код Apple Silicon и Intel;
+распакуйте весь `Qeli.app` на macOS с сохранением прав запуска. Подпись — ad-hoc,
+без Developer ID notarization и системного расширения per-app.
+Android-обновление сохраняет прежний релизный сертификат; проверяются подпись пакета,
+выравнивание и включённые актуальные JNI-библиотеки. Это не заменяет проверку установки
+и обновления на вашем физическом устройстве.
 
 Полный список изменений — [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/CHANGELOG.md).

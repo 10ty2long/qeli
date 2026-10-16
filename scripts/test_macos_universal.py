@@ -87,6 +87,17 @@ class AssemblyTests(unittest.TestCase):
         self.assertEqual((self.root / 'Qeli.app/Contents/MacOS/QeliMac').read_bytes(), expected)
         self.assertFalse(any('-create' in c for c in self.calls))
 
+    def test_legal_sidecars_are_resources_not_nested_code(self):
+        for folder in (self.arm, self.x64):
+            notice = folder / 'Legal/NativeRust/example/0.1.2/LICENSE'
+            notice.parent.mkdir(parents=True)
+            notice.write_bytes(b'license text')
+        self.invoke()
+        contents = self.root / 'Qeli.app/Contents'
+        self.assertFalse((contents / 'MacOS/Legal').exists())
+        self.assertEqual((contents / 'Resources/Legal/NativeRust/example/0.1.2/LICENSE').read_bytes(),
+                         b'license text')
+
     def test_missing_x64_partner_refuses_before_output_replacement(self):
         (self.x64 / 'QeliMac').unlink()
         with self.assertRaises(Exception): self.invoke()

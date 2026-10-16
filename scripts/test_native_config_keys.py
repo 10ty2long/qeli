@@ -176,7 +176,8 @@ class ClientConfigKeyContractTests(unittest.TestCase):
             examples = [m[1] for m in re.finditer(r"^```[^\n]*\n(.*?)^```\s*$", text,
                                                 re.MULTILINE | re.DOTALL)
                         if re.search(r"^\[qeli\]", m[1], re.MULTILINE)]
-            self.assertEqual(len(examples), 9, lang)
+            # The net_gateway migration adds a separate valid client INI block.
+            self.assertEqual(len(examples), 10, lang)
             for example in examples:
                 for line in example.splitlines():
                     if line.lstrip().startswith(("#", ";")):

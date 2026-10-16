@@ -27,6 +27,7 @@ class ForegroundServiceLifecycleInstrumentedTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val prefs get() = context.getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
+    private var originalClearLog: Boolean? = null
     @Suppress("DEPRECATION")
     private fun service() = context.getSystemService(ActivityManager::class.java)
         .getRunningServices(100).firstOrNull { it.service.className == VpnServiceImpl::class.java.name }
@@ -39,6 +40,8 @@ class ForegroundServiceLifecycleInstrumentedTest {
         FileInputStream(it.fileDescriptor).use { input -> input.readBytes().toString(Charsets.UTF_8) }
     }
     @Before fun prepare() {
+        originalClearLog = if (prefs.contains(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT))
+            prefs.getBoolean(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT, true) else null
         assertNull("grant ACTIVATE_VPN on the disposable AVD", VpnService.prepare(context))
         context.stopService(Intent(context, VpnServiceImpl::class.java))
         waitFor("preceding service still running") { service() == null }
@@ -51,6 +54,10 @@ class ForegroundServiceLifecycleInstrumentedTest {
             .setAction(VpnServiceImpl.ACTION_DISCONNECT))
         waitFor("service did not stop during cleanup", 15_000) { service() == null }
         assertTrue(prefs.edit().putBoolean(MainActivity.PREF_CONNECTION_DESIRED, false).commit())
+        val editor = prefs.edit()
+        originalClearLog?.let { editor.putBoolean(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT, it) }
+            ?: editor.remove(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT)
+        assertTrue(editor.commit())
         VpnServiceImpl.liveStatus = VpnServiceImpl.STATUS_DISCONNECTED
     }
     private class StallPeer : Closeable {
@@ -135,6 +142,8 @@ class ForegroundServiceLifecycleInstrumentedTest {
         StallPeer().use { peer -> connect(peer); disconnect(peer) }
     }
     @Test fun exhaustedRetryStopsServiceAndPublishesTerminalError() {
+        // This case inspects retained diagnostics. Default-on cleanup is covered separately.
+        assertTrue(prefs.edit().putBoolean(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT, false).commit())
         StallPeer().use { peer -> connect(peer) } // Server EOF causes the real handshake to fail.
         waitFor("disabled reconnect did not finish teardown", 15_000) {
             service() == null && VpnServiceImpl.liveStatus == VpnServiceImpl.STATUS_ERROR
