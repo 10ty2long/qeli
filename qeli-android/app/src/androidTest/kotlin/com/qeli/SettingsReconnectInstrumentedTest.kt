@@ -51,6 +51,7 @@ class SettingsReconnectInstrumentedTest {
             .putBoolean(MainActivity.PREF_AUTO_PROBE, false)
             .putBoolean(MainActivity.PREF_TRUSTED_WIFI_ENABLED, false)
             .putBoolean(MainActivity.PREF_CONNECTION_DESIRED, false)
+            .putBoolean(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT, true)
             .putBoolean(MainActivity.PREF_ALLOW_LAN, false).commit())
         VpnServiceImpl.liveStatus = VpnServiceImpl.STATUS_DISCONNECTED
     }
@@ -117,6 +118,7 @@ timeout = 30
     @Test fun lanSettingsSaveReplacesAnActiveConnectionAttempt() {
         StallPeer().use { peer ->
             launch(config(peer.port))
+            DiagnosticLogStore.append(context.noBackupFilesDir, "settings reconnect history")
             scenario!!.onActivity { call(it, "connect") }
             assertTrue("initial native hello missing", peer.firstHello.await(15, TimeUnit.SECONDS))
             scenario!!.onActivity { owner ->
@@ -127,6 +129,8 @@ timeout = 30
             instrumentation.waitForIdleSync()
             assertTrue(prefs.getBoolean(MainActivity.PREF_ALLOW_LAN, false))
             assertTrue("LAN Save never restarted the native connection", peer.secondHello.await(15, TimeUnit.SECONDS))
+            assertTrue("settings reconnect cleared history before a final disconnect",
+                DiagnosticLogStore.read(context.noBackupFilesDir).any { it.message == "settings reconnect history" })
         }
     }
     @Test fun disconnectCancelsSettingsReconfiguration() {

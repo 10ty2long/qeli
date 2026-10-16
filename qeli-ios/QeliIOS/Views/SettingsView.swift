@@ -117,6 +117,9 @@ struct SettingsView: View {
                             Text(LocalizedStringKey(level.title)).tag(level)
                         }
                     }
+                    Toggle("Clear log after disconnect", isOn: setting(\.clearLogOnDisconnect))
+                    Text("Clear saved history when VPN stops, including after an error. Disable to keep diagnostics. Reconnects do not clear the log.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Backup and restore") {
                     SecureField("Passphrase (optional for export)", text: $passphrase)

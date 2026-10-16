@@ -181,6 +181,8 @@ class MainActivity : AppCompatActivity() {
         const val DEFAULT_LOG_TIME_FORMAT = "time"
         const val PREF_LOG_LEVEL = "log_level"
         const val DEFAULT_LOG_LEVEL = "info"
+        const val PREF_CLEAR_LOG_ON_DISCONNECT = "clear_log_on_disconnect"
+        const val DEFAULT_CLEAR_LOG_ON_DISCONNECT = true
         const val PREF_AUTO_PROBE = "auto_probe_profiles"
         const val PREF_PROBE_INTERVAL_SECS = "probe_interval_secs"
         /** True only while this process has a started Activity. The VPN service uses this
@@ -278,6 +280,9 @@ ipv6 = auto
             val logSessionId = intent.getStringExtra(VpnServiceImpl.EXTRA_LOG_SESSION_ID).orEmpty()
             val logLevel = intent.getStringExtra(VpnServiceImpl.EXTRA_LOG_LEVEL) ?: "info"
             runOnUiThread {
+                if (intent.getBooleanExtra(VpnServiceImpl.EXTRA_LOG_CLEARED, false)) {
+                    clearDisplayedLog()
+                }
                 log?.let {
                     appendLog(
                         msg = it,
@@ -360,8 +365,7 @@ ipv6 = auto
         binding.btnLogClear.setOnClickListener {
             runCatching { DiagnosticLogStore.clear(noBackupFilesDir) }
                 .onFailure { error -> Log.w("VpnMain", "Unable to clear diagnostic log", error) }
-            binding.tvLog.text = ""
-            logLineCount = 0
+            clearDisplayedLog()
         }
         binding.btnLogCopy.setOnClickListener {
             val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -743,6 +747,15 @@ ipv6 = auto
             }.also { rgLogLevel.addView(it) }
         }
         rgLogLevel.check(logLevelButtons[logLevels.indexOf(currentLogLevel).takeIf { it >= 0 } ?: 0].id)
+        val cbClearLog = android.widget.CheckBox(this).apply {
+            text = getString(R.string.clear_log_on_disconnect)
+            isChecked = prefs.getBoolean(PREF_CLEAR_LOG_ON_DISCONNECT, DEFAULT_CLEAR_LOG_ON_DISCONNECT)
+        }
+        val tvClearLog = android.widget.TextView(this).apply {
+            text = getString(R.string.clear_log_on_disconnect_desc)
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+        }
         val btnBackup = outlined().apply {
             text = getString(R.string.backup_profiles)
             setOnClickListener { backupLauncher.launch("qeli-profiles.json") }
@@ -771,6 +784,11 @@ ipv6 = auto
             addView(tvLang); addView(rgLang)
             addView(tvLogFmt); addView(rgLogFmt)
             addView(tvLogLevel); addView(rgLogLevel)
+            addView(cbClearLog)
+            addView(tvClearLog, android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { marginStart = dp(26); bottomMargin = dp(8) })
             addView(android.widget.Space(context), android.widget.LinearLayout.LayoutParams(0, dp(12)))
             addView(btnBackup); addView(btnRestore)
         }
@@ -806,6 +824,7 @@ ipv6 = auto
                     .putInt(PREF_PROBE_INTERVAL_SECS, probeInterval)
                     .putString(PREF_LOG_TIME_FORMAT, pickedLogFmt)
                     .putString(PREF_LOG_LEVEL, pickedLogLevel)
+                    .putBoolean(PREF_CLEAR_LOG_ON_DISCONNECT, cbClearLog.isChecked)
                     .apply()
                 if (cbTrustedWifi.isChecked && trustedSsids.isNotEmpty()) {
                     requestTrustedWifiPermissions()
@@ -2469,9 +2488,13 @@ ipv6 = auto
             .getString(PREF_DIAGNOSTIC_SESSION_ID, "")
             .orEmpty()
 
-    private fun restoreDiagnosticLog() {
+    private fun clearDisplayedLog() {
         binding.tvLog.text = ""
         logLineCount = 0
+    }
+
+    private fun restoreDiagnosticLog() {
+        clearDisplayedLog()
         runCatching { DiagnosticLogStore.read(noBackupFilesDir) }
             .onFailure { error -> Log.w("VpnMain", "Unable to restore diagnostic log", error) }
             .getOrDefault(emptyList())

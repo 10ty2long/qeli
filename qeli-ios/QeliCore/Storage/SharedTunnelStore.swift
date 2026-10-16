@@ -3,6 +3,7 @@ import Foundation
 final class SharedTunnelStore: @unchecked Sendable {
     private let defaults: UserDefaults
     private let lock = NSLock()
+    private var logSessionClosed = false
     private let snapshotKey = "tunnel.snapshot.v1"
     private let logKey = "tunnel.log.v1"
     static let maximumLogLines = 500
@@ -58,6 +59,7 @@ final class SharedTunnelStore: @unchecked Sendable {
 
     func appendLog(_ message: String, date: Date = Date()) {
         lock.withLock {
+            guard !logSessionClosed else { return }
             var lines = readLogLines()
             lines.append(TunnelLogLine(date: date, message: Self.boundedLogMessage(message)))
             if lines.count > Self.maximumLogLines { lines.removeFirst(lines.count - Self.maximumLogLines) }
@@ -75,6 +77,17 @@ final class SharedTunnelStore: @unchecked Sendable {
     }
 
     func clearLog() { lock.withLock { defaults.removeObject(forKey: logKey) } }
+
+    /// Each provider start owns a separate store instance. Seal that writer even when
+    /// retaining history: delayed callbacks from an old engine must not write into the
+    /// next session. Repeated completion must not erase a newer session's journal.
+    func finishLogSession(clear: Bool) {
+        lock.withLock {
+            guard !logSessionClosed else { return }
+            logSessionClosed = true
+            if clear { defaults.removeObject(forKey: logKey) }
+        }
+    }
 }
 
 private extension JSONEncoder {

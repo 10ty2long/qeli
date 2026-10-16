@@ -93,10 +93,22 @@ nested causes appear as `  <- …` lines.
 
 The VPN service keeps a private persistent journal even while the Activity is closed or its
 process UI is recreated. The newest 1,000 events are retained, capped at 512 KiB, and restored
-into the **in-app Log tab** (index 3) when Qeli opens. Disconnect and a new connection do not
-erase it; only **Clear** removes the durable history. **Copy** therefore includes events emitted
-while the screen was off. The file is held in Android's private no-backup directory and never
-contains the password, private keys, or the complete profile.
+into the **in-app Log tab** (index 3) when Qeli opens. The file is held in Android's private
+no-backup directory and never contains the password, private keys, or the complete profile.
+
+<!-- normative-sync: android-disconnect-log-settings-v1 -->
+
+**Settings → Clear log after disconnect** is **enabled by default**, including after an
+upgrade when no choice has been saved. Once VPN shutdown completes, the service removes
+the saved journal and clears the visible tab, even if the app was backgrounded or closed.
+A connection ending with an error also clears the journal; the error remains on the main screen.
+
+For diagnostics, turn this option off beforehand and tap **Save**: history survives disconnect
+and is restored when the app opens again; **Copy log** includes events emitted while the
+screen was off. The setting applies to the next disconnect without requiring a reconnect;
+saving it does not erase existing entries immediately. Cancel does not change the choice.
+Automatic reconnects, network changes, active connection reconfiguration and trusted-Wi-Fi
+pauses do not clear the journal. The manual **Clear** button remains available independently.
 
 The default Info level records session boundaries, stop reasons, network loss/reconnect,
 Android service redelivery/revoke and battery-optimization warnings. Debug/Trace additionally
@@ -114,6 +126,25 @@ adb logcat -s VpnSvc VpnMain
 ```
 `VpnSvc` is the VPN service and `VpnMain` is the Activity. Uncaught Android runtime crash lines
 can still exist only in logcat; Qeli's own service diagnostics are written to the durable tab.
+
+### iOS client log
+
+<!-- normative-sync: ios-disconnect-log-settings-v1 -->
+
+**Settings → Appearance → Clear log after disconnect** is **on by default**, including
+after upgrades. Unlike Android's Save button, iOS applies this switch immediately to the
+next stop of the current session; changing it does not erase the journal right away.
+Disable it before reproducing a problem to keep the shared App Group history across
+disconnects and app launches. The log retains at most 500 entries, 4 KiB per message and
+1 MiB of encoded history.
+
+The VPN extension clears history after a terminal stop or start failure, even while the
+app UI is closed; the error status remains available. Reconnects inside the running
+extension and settings reloads do not clear it. Stops reported by iOS as network loss,
+network change, sleep or app update retain history, as do unspecified On Demand stops
+while the desired connection remains armed (including trusted-Wi-Fi waiting).
+Late callbacks from a completed session cannot refill the journal. Manual **Clear**
+remains independent. A forced process kill may prevent the extension from cleaning up.
 
 ### 1.4 Packet trace (`QELI_TRACE`, Rust server and Rust client)
 

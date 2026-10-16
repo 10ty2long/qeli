@@ -26,6 +26,16 @@ every other client, not because a build of it was released.
 ## Current implementation
 
 - SwiftUI application shell with connection, profile and live-log tabs.
+- **Settings → Appearance → Clear log after disconnect** is on by default, including
+  after upgrades. Changes save immediately and apply to the current session's next stop;
+  toggling does not erase existing entries. Turn it off before reproducing a problem to
+  retain diagnostic history across disconnects and app launches. The packet extension
+  clears the shared journal after a terminal stop or start failure, even when the app UI
+  is closed; the error status remains available. Old-session callbacks cannot refill it.
+  In-process reconnects/settings reloads retain history. Provider stops for network loss,
+  network change, sleep or an app update also retain it, as do unspecified On Demand
+  stops while the desired connection remains armed (including trusted-Wi-Fi waiting).
+  Manual **Clear** remains independent. A forced process kill may prevent cleanup.
 - Encrypted profile storage shared with the tunnel extension (App Group + Keychain).
   An encrypted archive with no profiles is rejected before legacy ID normalization;
   existing bytes remain available for recovery.

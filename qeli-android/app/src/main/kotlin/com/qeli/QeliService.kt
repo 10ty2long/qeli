@@ -127,6 +127,10 @@ class VpnServiceImpl : VpnService() {
 
     @Volatile
     private var userRequestedDisconnect = false
+    // Serialize the final clear with service log writes so a late callback or
+    // onDestroy diagnostic cannot recreate the journal after shutdown.
+    private val diagnosticLogLock = Any()
+    private var diagnosticLogClosed = false
 
     @Volatile
     private var stopping = false
@@ -188,6 +192,7 @@ class VpnServiceImpl : VpnService() {
         const val EXTRA_LOG_TIME_MS = "log_time_ms"
         const val EXTRA_LOG_SESSION_ID = "log_session_id"
         const val EXTRA_LOG_LEVEL = "log_level"
+        const val EXTRA_LOG_CLEARED = "log_cleared"
         const val EXTRA_IP = "ip"
         const val EXTRA_GATEWAY = "gateway"
         const val STATUS_CONNECTING = "connecting"
@@ -759,6 +764,7 @@ class VpnServiceImpl : VpnService() {
     }
 
     private fun prepareDiagnosticSession(origin: String, redelivered: Boolean) {
+        synchronized(diagnosticLogLock) { diagnosticLogClosed = false }
         val prefs = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
         val existing = diagnosticSessionId()
         val hasLiveController = transportCore != null || vpnInterface != null ||
@@ -2950,17 +2956,34 @@ class VpnServiceImpl : VpnService() {
                 }
                 disarmRecoveryRecord()
                 stopForeground(STOP_FOREGROUND_REMOVE)
+                val logsCleared = clearDiagnosticLogAfterDisconnect()
                 if (finalError == null) {
-                    broadcastStatus(STATUS_DISCONNECTED)
+                    broadcastStatus(STATUS_DISCONNECTED, logsCleared = logsCleared)
                 } else {
-                    broadcastStatus(STATUS_ERROR, finalError)
+                    broadcastStatus(STATUS_ERROR, finalError, logsCleared = logsCleared)
                 }
                 stopSelf()
             }
         }
     }
 
-    private fun broadcastStatus(status: String, error: String? = null) {
+    private fun clearDiagnosticLogAfterDisconnect(): Boolean = synchronized(diagnosticLogLock) {
+        val prefs = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(
+                MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT,
+                MainActivity.DEFAULT_CLEAR_LOG_ON_DISCONNECT,
+            )) return@synchronized false
+        try {
+            DiagnosticLogStore.clear(noBackupFilesDir)
+            diagnosticLogClosed = true
+            true
+        } catch (error: Exception) {
+            Log.w("VpnSvc", "Unable to clear diagnostic log after disconnect", error)
+            false
+        }
+    }
+
+    private fun broadcastStatus(status: String, error: String? = null, logsCleared: Boolean = false) {
         if (status != STATUS_STATS) {
             liveStatus = status
             if (status != STATUS_CONNECTED) {
@@ -2971,11 +2994,13 @@ class VpnServiceImpl : VpnService() {
         sendBroadcast(Intent(BROADCAST_STATUS).apply {
             setPackage(packageName)
             putExtra(EXTRA_STATUS, status)
+            if (logsCleared) putExtra(EXTRA_LOG_CLEARED, true)
             error?.let { putExtra(EXTRA_ERROR, it) }
         })
     }
 
-    private fun broadcastLog(msg: String, level: String = "info") {
+    private fun broadcastLog(msg: String, level: String = "info") = synchronized(diagnosticLogLock) {
+        if (diagnosticLogClosed) return@synchronized
         val entry = runCatching {
             DiagnosticLogStore.append(
                 directory = noBackupFilesDir,

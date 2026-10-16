@@ -182,3 +182,5 @@
 "%1$@ and %2$lld more" = "%1$@ и ещё %2$lld";
 "No saved profiles are available. Open Qeli to create a profile before connecting." = "Нет сохранённых профилей. Откройте Qeli и создайте профиль перед подключением.";
 "The profile encryption key is missing. Restore a backup to recover your profiles." = "Ключ шифрования профилей отсутствует. Восстановите профили из резервной копии.";
+"Clear log after disconnect" = "Очищать лог после отключения";
+"Clear saved history when VPN stops, including after an error. Disable to keep diagnostics. Reconnects do not clear the log." = "Очищать сохранённую историю после остановки VPN, включая завершение с ошибкой. Выключите для сохранения диагностики. Переподключения не очищают журнал.";

@@ -7,6 +7,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     let settingsGate = ProviderOperationGate()
     let packetReadGate = ProviderOperationGate()
     private var engine: QeliNativeTunnelEngine?
+    private var sessionLogStore: SharedTunnelStore?
     private var startTask: Task<Void, Never>?
     private var startCompletion: ProviderStartCompletion?
     private var lifecycleGeneration: UInt64 = 0
@@ -20,10 +21,14 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             generation: UInt64,
             previousTask: Task<Void, Never>?,
             previousCompletion: ProviderStartCompletion?,
-            previousEngine: QeliNativeTunnelEngine?
+            previousEngine: QeliNativeTunnelEngine?,
+            logStore: SharedTunnelStore
         ) in
             lifecycleGeneration &+= 1
-            let value = (lifecycleGeneration, startTask, startCompletion, engine)
+            sessionLogStore?.finishLogSession(clear: false)
+            let logStore = SharedTunnelStore()
+            sessionLogStore = logStore
+            let value = (lifecycleGeneration, startTask, startCompletion, engine, logStore)
             startTask = nil
             startCompletion = completion
             engine = nil
@@ -65,7 +70,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                     profile: profile,
                     config: config,
                     logLevel: configuredLogLevel ?? config.loggingLevel ?? "info",
-                    sharedStore: sharedStore
+                    sharedStore: state.logStore
                 )
                 startedEngine = engine
                 guard install(engine: engine, generation: state.generation) else {
@@ -119,10 +124,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             generation: UInt64,
             task: Task<Void, Never>?,
             completion: ProviderStartCompletion?,
-            engine: QeliNativeTunnelEngine?
+            engine: QeliNativeTunnelEngine?,
+            logStore: SharedTunnelStore?
         ) in
             lifecycleGeneration &+= 1
-            let value = (lifecycleGeneration, startTask, startCompletion, engine)
+            let value = (lifecycleGeneration, startTask, startCompletion, engine, sessionLogStore)
             startTask = nil
             startCompletion = nil
             engine = nil
@@ -133,9 +139,28 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         state.completion?.finish(CancellationError())
         Task {
             await state.engine?.stop()
-            let finalSnapshot = state.engine?.currentSnapshot() ?? TunnelSnapshot()
+            var finalSnapshot = state.engine?.currentSnapshot() ?? sharedStore.snapshot()
+            if state.engine == nil && finalSnapshot.phase != .error {
+                finalSnapshot = TunnelSnapshot()
+            }
             lifecycleLock.withLock {
                 if lifecycleGeneration == state.generation, engine == nil {
+                    let settings = SettingsStore().load()
+                    // Network changes/sleep are resumable interruptions. NE does not
+                    // identify the matching On Demand rule; retain diagnostics for its
+                    // unspecified stops while the desired connection remains armed.
+                    let resuming: Bool
+                    switch reason {
+                    case .noNetworkAvailable, .unrecoverableNetworkChange, .sleep, .appUpdate:
+                        resuming = true
+                    case .none:
+                        resuming = settings.onDemandEnabled && settings.connectionDesired
+                    default:
+                        resuming = false
+                    }
+                    let retainForResume = resuming && finalSnapshot.phase != .error
+                    state.logStore?.finishLogSession(clear: settings.clearLogOnDisconnect && !retainForResume)
+                    sessionLogStore = nil
                     sharedStore.save(finalSnapshot)
                 }
             }
@@ -155,7 +180,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                     try await activeEngine.reloadNetworkSettings()
                     completionHandler?(Data("ok".utf8))
                 } catch {
-                    sharedStore.appendLog("ERROR reloading settings: \(error.localizedDescription)")
+                    lifecycleLock.withLock {
+                        if engine === activeEngine {
+                            sessionLogStore?.appendLog("ERROR reloading settings: \(error.localizedDescription)")
+                        }
+                    }
                     completionHandler?(Data("error:\(error.localizedDescription)".utf8))
                 }
             }
@@ -166,7 +195,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func sleep(completionHandler: @escaping () -> Void) {
-        sharedStore.appendLog("Device sleeping")
+        lifecycleLock.withLock { sessionLogStore?.appendLog("Device sleeping") }
         completionHandler()
     }
 
@@ -212,7 +241,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             snapshot.liveConnectionProperties = nil
             snapshot.updatedAt = Date()
             sharedStore.save(snapshot)
-            sharedStore.appendLog("ERROR: \(error.localizedDescription)")
+            sessionLogStore?.appendLog("ERROR: \(error.localizedDescription)")
+            sessionLogStore?.finishLogSession(clear: SettingsStore().load().clearLogOnDisconnect)
+            sessionLogStore = nil
         }
     }
 
@@ -237,6 +268,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     func cancelEngineTunnel(_ error: Error, owner: QeliNativeTunnelEngine) {
         lifecycleLock.withLock {
             guard engine === owner else { return }
+            // Cover provider-initiated terminal cancellation too; cleanup must not
+            // depend on a later system stop callback. Security holds do not call here.
+            sessionLogStore?.finishLogSession(clear: SettingsStore().load().clearLogOnDisconnect)
+            sessionLogStore = nil
             cancelTunnelWithError(error)
         }
     }
