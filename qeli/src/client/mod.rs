@@ -8893,6 +8893,20 @@ fn setup_tunnel(
             client_ip
         );
     } else {
+        // Local Linux adapter policy, deliberately not supplied by the server or
+        // a share link. Apply before link-up and only to the device we created;
+        // the transaction guard releases it if setup fails.
+        if let Some(queue_len) = config.tun.owned_linux_tx_queue_len() {
+            route_owner.verify_plan()?;
+            TunInterface::set_queue_len_strict(&if_name, queue_len).map_err(|error| {
+                anyhow::anyhow!(
+                    "failed to set client TUN TX queue length on '{}': {}",
+                    if_name,
+                    error
+                )
+            })?;
+            log::info!("Client TUN TX queue length: {} packets", queue_len);
+        }
         if is_tap {
             route_owner.verify_plan()?;
             TunInterface::set_mac(&if_name, planned_tap_mac)?;

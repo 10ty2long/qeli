@@ -508,11 +508,13 @@ public static class WireConformance
             foreach (var field in coverageFields)
             {
                 string key = field.GetProperty("key").GetString()!;
-                if (key.Contains('.') != (section == "logging")) continue;
+                if (key.StartsWith("logging.", StringComparison.Ordinal) != (section == "logging")) continue;
                 string value = key switch { "server" => "vpn.example.com:443", "pass" => "secret",
+                    "tun.tx_queue_len" => "500",
                     "logging.file" => "/tmp/coverage.log", "logging.time_format" => "rfc3339",
                     _ => field.GetProperty("default").GetString()! };
-                coverageText.AppendLine($"{key.Split('.').Last()} = {value}");
+                string localKey = section == "logging" ? key["logging.".Length..] : key;
+                coverageText.AppendLine($"{localKey} = {value}");
             }
         }
         var coverageModel = Model.VpnConfig.FromIni(coverageText.ToString()).Clone();
@@ -520,8 +522,9 @@ public static class WireConformance
         var coverageRaw = Model.ConfigCore.Call(new { version = 1, op = "import", source = coverageModel.ToIni() }).GetProperty("raw");
         var coverageMissing = coverageFields.Select(f => f.GetProperty("key").GetString()!)
             .Where(key => !coverageRaw.TryGetProperty(key, out _)).ToArray();
-        check("schema: all 84 fields survive clone/edit; missing=" + string.Join(",", coverageMissing),
-            coverageFields.Length == 84 && coverageMissing.Length == 0);
+        check("schema: all 85 fields survive clone/edit; missing=" + string.Join(",", coverageMissing),
+            coverageFields.Length == 85 && coverageMissing.Length == 0);
+        check("schema: literal client TUN queue survives model clone", coverageRaw.GetProperty("tun.tx_queue_len")[0].GetString() == "500");
         check("schema: editing the model updates its name", coverageRaw.GetProperty("name")[0].GetString() == "edited");
         check("schema: logging.file survives model clone", coverageRaw.GetProperty("logging.file")[0].GetString() == "/tmp/coverage.log");
         check("schema: logging.time_format survives model clone", coverageRaw.GetProperty("logging.time_format")[0].GetString() == "rfc3339");

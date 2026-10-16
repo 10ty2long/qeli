@@ -137,7 +137,17 @@ opkg, ELF/ABI, power-loss or firmware runtime.
 vi /opt/etc/qeli/client.conf
 ```
 
-Substitute the values from Step 2. For a gateway router two keys matter:
+Substitute the values from Step 2.
+
+In ordinary mode Qeli creates the TUN and an updated Linux client sets its queue
+to `1000` packets. Optional `[qeli] tun.tx_queue_len = 1000` (`1..32767`, no auto)
+belongs in `/opt/etc/qeli/client.conf`; stop/start the client itself after editing.
+The installed binary must contain this development 0.8.2 change; Linux amd64
+checks do not replace testing a new build on the actual router.
+With OpkgTun/`dev_attach=true`, **omit the key**: `ndm` owns the queue and an
+explicit value is rejected. [Full contract](CONFIG.md#client-tun-tx-queue).
+
+For a gateway router, note `gateway` and `dns` in the example below:
 
 ```ini
 [qeli]

@@ -532,3 +532,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [MicroCom source identity and compatibility](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
 
 - [Q37: documentation and test harnesses](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
+
+- [Linux client TUN queue size: 250–2000, IPv6 and three transports](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.

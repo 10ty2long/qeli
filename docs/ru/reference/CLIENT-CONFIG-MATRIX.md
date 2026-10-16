@@ -1,6 +1,6 @@
 # Клиентский конфиг: актуальный контракт и миграция 0.7.14 → 0.7.15
 
-Эта таблица фиксирует **актуальный контракт 81 допустимого ключа** секции `[qeli]`
+Эта таблица фиксирует **актуальный контракт 82 допустимых ключей** секции `[qeli]`
 для всех пяти клиентов и сохраняет историю рефакторинга. «До» означает поведение
 выпущенной 0.7.14; «после» начиналось как контракт 0.7.15 и расширяется здесь вместе
 с текущим кодом (включая NetworkPlan v2 и полный IPv6).
@@ -39,6 +39,7 @@ fail-closed. Текущие GUI-клиенты сохраняют любой и�
 | `dev` | A→A | A→A | C→C | D→C | D→C | Linux применяет `dev` как имя TUN/TAP. Windows использует явный `dev`, приоритет имеет `dev_node`; без обоих ключей сохраняется уникальное имя профиля. macOS получает `utunN` от ядра, телефоны — системный TUN. |
 | `device_type` | R→A | C→C | C→C | C→C | C→C | Linux выбирает `tun` или `tap`; остальные клиенты сохраняют переносимый ключ и отклоняют TAP при подключении, потому что их системные VPN-интерфейсы работают только на L3. |
 | `dev_attach` | A→A | C→C | C→C | C→C | C→C | Подключение к готовому TUN остаётся функцией CLI; остальные редакторы не теряют ключ. Требуются NO_PI без VNET_HDR и защищённый attach; см. [CONFIG](../manuals/CONFIG.md). |
+| `tun.tx_queue_len` | N→A | N→C | N→C | N→C | N→C | Development 0.8.2: Linux задаёт TX-очередь собственного TUN/TAP, default `1000` пакетов, явный диапазон `1..32767`, без auto. Только локальный INI, не push/ссылка/QR; нужен обновлённый клиент. При `dev_attach=true` ключ отсутствует, иначе Linux отказывает. Другие ОС сохраняют без применения. [Полный контракт](../manuals/CONFIG.md#client-tun-tx-queue). |
 | `dev_node` `metric` | R→R | A→A | C→C | D→C | D→C | Wintun-ключи применяет только Windows, остальные GUI сохраняют их. |
 | `persist_tun` `route_file` | R→R | A→A | A→A | D→C | D→C | Desktop lifecycle/маршруты не применимы телефоном, но больше не исчезают после mobile round-trip. |
 | `kill_switch` | A→A | A→A | A→A | C→A | D→C | Android реализует fail-closed через системный Always-on VPN + lockdown и отказывается подключаться без подтверждённой политики. iOS сохраняет ключ, но применяет отдельную системную политику VPN On Demand. |
@@ -66,7 +67,7 @@ fail-closed. Текущие GUI-клиенты сохраняют любой и�
 - Android `kill_switch` теперь означает проверяемый системный lockdown, а не неработающий
   флаг в профиле.
 
-Секция `[logging]` добавляет **3 поля** к 81 ключу `[qeli]` и сохраняется всеми GUI.
+Секция `[logging]` добавляет **3 поля** к 82 ключам `[qeli]` и сохраняется всеми GUI.
 CLI применяет `level`, `file`, `time_format`. Windows/macOS используют `level` в профиле
 службы/демона; GUI может задать его из настроек приложения. `file` и `time_format` desktop
 сохраняет в документе, но не применяет. Android/iOS сохраняют все три поля, используя
@@ -80,19 +81,20 @@ CLI применяет `level`, `file`, `time_format`. Windows/macOS испол�
 Экспорт C# больше не теряет пустые/повторные `route_file`; пути с разным регистром
 сохраняются отдельно. Неизменённые bool/int из `carriedKeys` сравниваются по типу:
 дубликаты больше не исчезают при сохранении формы. Разбор имени `qeli://` на Android
-также делегирован ядру. Проверки моделей охватывают все 84 поля, включая `[logging]`.
+также делегирован ядру. На момент этой сверки проверки моделей охватывали 84 поля,
+включая `[logging]`; актуальное покрытие с `tun.tx_queue_len` приведено ниже.
 
 Матрица описывает исходники после исправлений. Для установленного приложения нужны
 новые native-библиотеки ABI 1.16; Apple/device и release A/B проверки не подменяются
 локальным C#/JVM прогоном. См. [статус переноса](../plans/CLIENT-CONFIG-CORE.md).
 
 <!-- generated-model-coverage -->
-## Покрытие моделей: все 84 поля
+## Покрытие моделей: все 85 полей
 
 Этот блок генерируется из `editor/schema.rs`; M — типизированное свойство модели,
 S — значение сохраняется в исходном документе ядра и/или `carriedKeys`.
 Это не перечень контролов формы: поле без отдельного UI остаётся доступно через INI.
-Все 81 ключ `[qeli]` и 3 ключа `[logging]` распознаются общим парсером.
+Общий парсер распознаёт ключи: `[qeli]` — 82, `[logging]` — 3.
 
 Ключей с типизированным представлением: C# 62, Kotlin 58, Swift 57; остальные поля сохраняются как S.
 
@@ -102,5 +104,5 @@ S — значение сохраняется в исходном докумен
 | `name` `persist_tun` `forward` `local` `lport` `metric` `dev_node` | M | S | S |
 | `kill_switch` | M | M | S |
 | `allow_lan` `logging.file` `logging.time_format` | S | M | M |
-| `dev` `device_type` `dev_attach` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |
+| `dev` `device_type` `dev_attach` `tun.tx_queue_len` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |
 <!-- /generated-model-coverage -->

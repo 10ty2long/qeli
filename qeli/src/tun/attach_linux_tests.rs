@@ -2,6 +2,47 @@
 //! a disposable OS thread before opening or creating any TUN/TAP.
 use super::*;
 
+#[test]
+fn client_queue_policy_is_strict_without_changing_server_compatibility() {
+    use crate::system_command::test_support::{arguments, with_commands, Action};
+    use std::os::unix::process::ExitStatusExt;
+    use std::process::{ExitStatus, Output};
+
+    for strict in [false, true] {
+        for (success, stderr) in [
+            (true, ""),
+            (false, "Operation not supported"),
+            (false, "Operation not permitted"),
+        ] {
+            with_commands(
+                move |command| {
+                    assert_eq!(command.get_program(), "ip");
+                    assert_eq!(
+                        arguments(command),
+                        ["link", "set", "dev", "vpn0", "txqueuelen", "1000"]
+                    );
+                    Action::Reply(Ok(Output {
+                        status: ExitStatus::from_raw(if success { 0 } else { 256 }),
+                        stdout: vec![],
+                        stderr: stderr.as_bytes().to_vec(),
+                    }))
+                },
+                || {
+                    let result = if strict {
+                        TunInterface::set_queue_len_strict("vpn0", 1000)
+                    } else {
+                        TunInterface::set_queue_len("vpn0", 1000)
+                    };
+                    assert_eq!(
+                        result.is_ok(),
+                        success || !strict && stderr == "Operation not supported"
+                    );
+                },
+            );
+        }
+    }
+}
+
 fn isolated(test: fn() -> io::Result<()>) -> io::Result<()> {
     std::thread::spawn(move || {
         // SAFETY: only this fresh thread changes its network namespace. No descriptor
@@ -13,6 +54,25 @@ fn isolated(test: fn() -> io::Result<()>) -> io::Result<()> {
     })
     .join()
     .expect("isolated TUN test thread panicked")
+}
+
+#[test]
+#[ignore = "requires Linux CAP_SYS_ADMIN/CAP_NET_ADMIN and /dev/net/tun; isolated netns"]
+fn owned_queue_policy_changes_kernel_txqlen() -> io::Result<()> {
+    isolated(|| {
+        let tun = TunInterface::create("qeli-queue0", 1400)?;
+        for length in [500, 1000, 2000] {
+            TunInterface::set_queue_len_strict(&tun.name, length)?;
+            let output = std::process::Command::new("ip")
+                .args(["-j", "link", "show", "dev", &tun.name])
+                .output()?;
+            assert!(output.status.success());
+            let interfaces: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(interfaces[0]["txqlen"], serde_json::json!(length));
+        }
+        assert!(TunInterface::set_queue_len_strict("qeli-missing0", 1000).is_err());
+        Ok(())
+    })
 }
 
 #[test]

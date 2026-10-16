@@ -238,13 +238,22 @@ impl TunInterface {
     }
 
     pub fn set_queue_len(ifname: &str, len: u32) -> io::Result<()> {
+        Self::set_queue_len_impl(ifname, len, true)
+    }
+
+    /// Client policy must not report a configured queue if the kernel rejected it.
+    pub fn set_queue_len_strict(ifname: &str, len: u32) -> io::Result<()> {
+        Self::set_queue_len_impl(ifname, len, false)
+    }
+
+    fn set_queue_len_impl(ifname: &str, len: u32, allow_unsupported: bool) -> io::Result<()> {
         let output = crate::system_command::Command::new("ip")
             .args(["link", "set", "dev", ifname, "txqueuelen", &len.to_string()])
             .output()?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            if !stderr.contains("Operation not supported") {
+            if !allow_unsupported || !stderr.contains("Operation not supported") {
                 return Err(io::Error::other(stderr.to_string()));
             }
         }

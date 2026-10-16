@@ -759,6 +759,13 @@ only / Unix / none). If you plan to compare the app log against the server's, se
 
 ### 8.2. Linux CLI client
 
+Updated development 0.8.2 clients set their owned Linux TUN queue to `1000`
+packets without extra configuration. To select a value, add `tun.tx_queue_len = 1000`
+(or `500` for the previous lab size) to `[qeli]` in the client file itself.
+Stop/start that client after editing; a server reload does not apply it.
+Omit the key with `dev_attach=true`. Older binaries need an update first;
+there is no auto mode. [Contract and verification](CONFIG.md#client-tun-tx-queue).
+
 ```bash
 sudo cp /etc/qeli/client.conf.example /etc/qeli/client.conf
 sudo nano /etc/qeli/client.conf

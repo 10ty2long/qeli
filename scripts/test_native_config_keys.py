@@ -34,7 +34,7 @@ def without_comments(text: str) -> str:
 
 
 def quoted_keys(text: str) -> set[str]:
-    return set(re.findall(r'"([a-z][a-z0-9_]*)"', without_comments(text)))
+    return set(re.findall(r'"([a-z][a-z0-9_.]*)"', without_comments(text)))
 
 
 def rust_runtime_contract() -> set[str]:
@@ -43,7 +43,7 @@ def rust_runtime_contract() -> set[str]:
     )
     return set(
         re.findall(
-            r'q\s*\.(?:get|get_or|parse_or|bool_or)\(\s*"([a-z0-9_]+)"',
+            r'q\s*\.(?:get|get_or|parse_or|bool_or)\(\s*"([a-z0-9_.]+)"',
             client,
         )
     )
@@ -64,7 +64,7 @@ def rust_contract() -> set[str]:
 def editor_contract() -> set[str]:
     import json
     fields = [json.loads("[" + row + "]") for row in re.findall(r'field!\(([^\n]+)\)', source("qeli/src/config/editor/schema.rs")) if row.startswith('"')]
-    return {row[0] for row in fields if "." not in row[0]}
+    return {row[0] for row in fields if not row[0].startswith("logging.")}
 
 
 def documented_defaults(text: str) -> dict[str, str]:
@@ -143,7 +143,7 @@ def documented_client_matrix(relative: str) -> dict[str, tuple[str, ...]]:
         cells = [cell.strip() for cell in line.strip("|").split("|")]
         if len(cells) != 7:
             raise AssertionError(f"malformed client-matrix row in {relative}: {line}")
-        keys = re.findall(r"`([a-z][a-z0-9_]*)`", cells[0])
+        keys = re.findall(r"`([a-z][a-z0-9_.]*)`", cells[0])
         if not keys:
             raise AssertionError(f"client-matrix row has no keys in {relative}: {line}")
         states = tuple(cells[1:6])
@@ -165,7 +165,7 @@ class ClientConfigKeyContractTests(unittest.TestCase):
             r'field!\(([^\n]+)\)', source("qeli/src/config/editor/schema.rs"))
             if row.startswith('"')]
         expected = {row[0]: row[2] for row in fields}
-        self.assertEqual(len(expected), 84)
+        self.assertEqual(len(expected), 85)
         for lang in ("ru", "eng"):
             self.assertEqual(documented_defaults(source(f"docs/{lang}/manuals/CONFIG.md")),
                              expected, lang)
@@ -176,7 +176,7 @@ class ClientConfigKeyContractTests(unittest.TestCase):
             examples = [m[1] for m in re.finditer(r"^```[^\n]*\n(.*?)^```\s*$", text,
                                                 re.MULTILINE | re.DOTALL)
                         if re.search(r"^\[qeli\]", m[1], re.MULTILINE)]
-            self.assertEqual(len(examples), 9, lang)
+            self.assertEqual(len(examples), 10, lang)
             for example in examples:
                 for line in example.splitlines():
                     if line.lstrip().startswith(("#", ";")):
@@ -199,11 +199,11 @@ class ClientConfigKeyContractTests(unittest.TestCase):
         fixture = between(body, 'let fixture = r####"', '"####;')
         qeli_section = between(fixture, "[qeli]", "[logging]")
         fixture_keys = set(
-            re.findall(r"^\s*([a-z][a-z0-9_]*)\s*=", qeli_section, re.MULTILINE)
+            re.findall(r"^\s*([a-z][a-z0-9_.]*)\s*=", qeli_section, re.MULTILINE)
         )
         token_block = between(body, "let qeli_tokens = [", "];\n\n        for t")
         asserted_keys = set(
-            re.findall(r'"([a-z][a-z0-9_]*)\s*=', token_block)
+            re.findall(r'"([a-z][a-z0-9_.]*)\s*=', token_block)
         )
         expected = rust_runtime_contract()
         self.assertEqual(fixture_keys, expected)
@@ -219,7 +219,27 @@ class ClientConfigKeyContractTests(unittest.TestCase):
         # plus all generated/maintained mirrors must not make the equality checks vacuous.
         # Full IPv6 adds ipv6/leak controls/lan_subnet_ipv6 and the shared REALITY core adds
         # its three transport-owned settings; roaming adds one shared session-policy key.
-        self.assertEqual(len(expected), 81)
+        self.assertEqual(len(expected), 82)
+
+    def test_literal_dotted_queue_key_is_carried_without_logging_aliases(self):
+        self.assertIn("tun.tx_queue_len", rust_runtime_contract())
+        self.assertIn("tun.tx_queue_len", editor_contract())
+        self.assertNotIn("logging.level", editor_contract())
+        self.assertEqual(quoted_keys('"tun.tx_queue_len" "logging.level"'),
+                         {"tun.tx_queue_len", "logging.level"})
+        for keys in (android_contract()[0], csharp_contract(), swift_contract()):
+            self.assertIn("tun.tx_queue_len", keys)
+
+    def test_model_coverage_fixtures_keep_literal_queue_key_in_qeli(self):
+        fixtures = {
+            "qeli-shared/QeliShared/Protocol/WireConformance.cs": 'key.StartsWith("logging.", StringComparison.Ordinal)',
+            "qeli-android/app/src/test/kotlin/com/qeli/ConfigHardeningTest.kt": 'key.startsWith("logging.")',
+            "qeli-ios/QeliIOSTests/ConfigHardeningTests.swift": 'key.hasPrefix("logging.")',
+        }
+        for relative, section_test in fixtures.items():
+            text = source(relative)
+            self.assertIn(section_test, text, relative)
+            self.assertIn('"tun.tx_queue_len"', text, relative)
 
     def test_android_has_no_silently_unsupported_shared_security_keys(self):
         _recognized, unsupported = android_contract()

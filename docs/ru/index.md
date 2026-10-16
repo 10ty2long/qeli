@@ -532,3 +532,5 @@
 - [Источник и совместимость MicroCom](reports/AUDIT-Q34-SOURCE-BINDING.md) — Q34/F489, 9October2026.
 
 - [Q37: документация и тестовая обвязка](reports/AUDIT-Q37-DOCUMENTATION.md) — 11 October 2026.
+
+- [Размер клиентской TUN-очереди Linux: 250–2000, IPv6 и три транспорта](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 октября 2026.

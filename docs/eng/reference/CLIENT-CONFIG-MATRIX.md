@@ -1,6 +1,6 @@
 # Client config: current contract and the 0.7.14 → 0.7.15 migration
 
-This table records the **current 81-key `[qeli]` contract** for all five clients while
+This table records the **current 82-key `[qeli]` contract** for all five clients while
 retaining the refactor history. “Before” is released 0.7.14 behaviour; “after” began as
 the 0.7.15 shared-core contract and is extended here with current code, including
 NetworkPlan v2 and complete IPv6.
@@ -39,6 +39,7 @@ can apply it; separately exposed controls are identified in the notes.
 | `dev` | A→A | A→A | C→C | D→C | D→C | Linux applies `dev` to its TUN/TAP name. Windows uses an explicit `dev`, with `dev_node` taking precedence; omitting both retains the unique per-profile name. macOS receives kernel-assigned `utunN`; phones use system TUN devices. |
 | `device_type` | R→A | C→C | C→C | C→C | C→C | Linux can select `tun` or `tap`; other clients preserve the portable key and reject TAP at connect time because their system VPN devices are L3-only. |
 | `dev_attach` | A→A | C→C | C→C | C→C | C→C | Attaching an existing TUN remains CLI-only; every editor preserves the key. Requires NO_PI without VNET_HDR and guarded attachment; see [CONFIG](../manuals/CONFIG.md). |
+| `tun.tx_queue_len` | N→A | N→C | N→C | N→C | N→C | Development 0.8.2: Linux sets its owned TUN/TAP TX queue, default `1000` packets, explicit range `1..32767`, no auto mode. Local INI only, not push/link/QR; requires an updated client. Omit with `dev_attach=true`; an explicit value fails on Linux. Other OSes preserve without applying it. [Full contract](../manuals/CONFIG.md#client-tun-tx-queue). |
 | `dev_node` `metric` | R→R | A→A | C→C | D→C | D→C | Only Windows applies the Wintun fields; other GUIs preserve them. |
 | `persist_tun` `route_file` | R→R | A→A | A→A | D→C | D→C | Desktop lifecycle/routes do not apply to phones, but no longer vanish after a mobile round trip. |
 | `kill_switch` | A→A | A→A | A→A | C→A | D→C | Android implements fail-closed behavior through verified system Always-on VPN + lockdown and refuses to connect without it. iOS preserves the key but uses the separate system VPN On Demand policy. |
@@ -64,7 +65,7 @@ core did not read. All of these gaps were closed before release:
 - `allow_unpinned_tofu` is uniform and can never bypass a mismatch with an existing pin;
 - Android `kill_switch` now means verified system lockdown instead of an ineffective profile flag.
 
-The `[logging]` section adds **3 fields** to the 81 `[qeli]` keys and survives every GUI.
+The `[logging]` section adds **3 fields** to the 82 `[qeli]` keys and survives every GUI.
 The CLI applies `level`, `file`, and `time_format`. Windows/macOS use `level` in service/
 daemon profiles; the GUI can supply it from application settings. Desktop preserves
 `file` and `time_format` in the document without applying them. Android/iOS preserve
@@ -78,19 +79,20 @@ Fixed missing CLI `reconnect*` reads and explicit Windows `dev` application.
 C# export no longer drops empty/repeated `route_file` entries; case-distinct paths
 remain separate. Unchanged bool/int entries in `carriedKeys` are compared by type,
 so saving a form no longer erases duplicate declarations. Android `qeli://` label
-decoding also delegates to the core. Model tests cover all 84 fields, including `[logging]`.
+decoding also delegates to the core. At that cross-check, model tests covered 84 fields,
+including `[logging]`; current coverage with `tun.tx_queue_len` is listed below.
 
 This matrix describes the updated source. Installed applications require rebuilt
 ABI 1.16 native libraries; local C#/JVM checks do not replace Apple/device or release
 A/B verification. See the [migration status](../plans/CLIENT-CONFIG-CORE.md).
 
 <!-- generated-model-coverage -->
-## Model coverage: all 84 fields
+## Model coverage: all 85 fields
 
 This block is generated from `editor/schema.rs`: M is a typed model property;
 S is preserved in the core source document and/or `carriedKeys`.
 This is not a form-control inventory: fields without a dedicated UI remain available through INI.
-All 81 `[qeli]` keys and 3 `[logging]` keys are recognized by the shared parser.
+All 82 `[qeli]` keys and 3 `[logging]` keys are recognized by the shared parser.
 
 Keys mapped to typed properties: C# 62, Kotlin 58, Swift 57; remaining fields are preserved as S.
 
@@ -100,5 +102,5 @@ Keys mapped to typed properties: C# 62, Kotlin 58, Swift 57; remaining fields ar
 | `name` `persist_tun` `forward` `local` `lport` `metric` `dev_node` | M | S | S |
 | `kill_switch` | M | M | S |
 | `allow_lan` `logging.file` `logging.time_format` | S | M | M |
-| `dev` `device_type` `dev_attach` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |
+| `dev` `device_type` `dev_attach` `tun.tx_queue_len` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |
 <!-- /generated-model-coverage -->

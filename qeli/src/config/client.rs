@@ -134,6 +134,11 @@ pub struct ClientTunConfig {
     /// TCP transports (the kernel does PMTUD there) or when `mtu > 0` (explicit).
     #[serde(default = "default_true")]
     pub mtu_probe: bool,
+    /// Linux-owned TUN/TAP TX queue length in packets. Omitted = 1000, not an
+    /// adaptive mode. Explicit values round-trip; external attach-mode devices
+    /// remain under their owner's control. Other platforms preserve but ignore it.
+    #[serde(default)]
+    pub tx_queue_len: Option<u32>,
     #[serde(default = "default_device_type")]
     pub device_type: String,
     /// Attach to a PRE-EXISTING interface (`name`/`dev`) that an external manager
@@ -146,6 +151,21 @@ pub struct ClientTunConfig {
     /// retries. Default false (create and own the interface).
     #[serde(default = "default_false")]
     pub attach_existing: bool,
+}
+
+pub const CLIENT_TUN_TX_QUEUE_LEN_DEFAULT: u32 = 1000;
+/// Match Linux's S16_MAX tx_queue_len cap before attempting platform setup.
+pub const CLIENT_TUN_TX_QUEUE_LEN_MAX: u32 = 32_767;
+
+impl ClientTunConfig {
+    /// Only the Linux adapter applies this policy; borrowed devices are untouched.
+    pub fn owned_linux_tx_queue_len(&self) -> Option<u32> {
+        if self.attach_existing {
+            None
+        } else {
+            Some(self.tx_queue_len.unwrap_or(CLIENT_TUN_TX_QUEUE_LEN_DEFAULT))
+        }
+    }
 }
 
 /// Client policy for accepting an inner IPv6 plan from the server.
@@ -718,6 +738,14 @@ impl ClientConfig {
         // Attach to an existing, externally-owned interface named `dev` instead of
         // creating our own. See ClientTunConfig::attach_existing.
         cfg.tun.attach_existing = q.bool_or("dev_attach", cfg.tun.attach_existing);
+        if let Some(raw) = q.get("tun.tx_queue_len") {
+            cfg.tun.tx_queue_len = Some(raw.trim().parse::<u32>().map_err(|_| {
+                anyhow::anyhow!(
+                    "invalid 'tun.tx_queue_len': expected an integer in 1..={}",
+                    CLIENT_TUN_TX_QUEUE_LEN_MAX
+                )
+            })?);
+        }
 
         // TUN MTU. Omitted or 0 = auto (adopt the server-pushed MTU); a positive
         // value is an explicit override.
@@ -1316,6 +1344,22 @@ impl ClientConfig {
             &self.tun.device_type.to_ascii_lowercase(),
             &["tun", "tap"],
         )?;
+        if let Some(queue_len) = self.tun.tx_queue_len {
+            if queue_len == 0 || queue_len > CLIENT_TUN_TX_QUEUE_LEN_MAX {
+                anyhow::bail!(
+                    "invalid 'tun.tx_queue_len' {}: expected 1..={} packets (no auto mode)",
+                    queue_len,
+                    CLIENT_TUN_TX_QUEUE_LEN_MAX
+                );
+            }
+            #[cfg(target_os = "linux")]
+            if self.tun.attach_existing {
+                anyhow::bail!(
+                    "'tun.tx_queue_len' cannot be set with 'dev_attach = true': \
+                     the external interface owner controls its queue length"
+                );
+            }
+        }
         #[cfg(not(target_os = "linux"))]
         if self.tun.device_type.eq_ignore_ascii_case("tap") {
             anyhow::bail!(
@@ -1701,6 +1745,9 @@ impl ClientConfig {
         // Emit only when enabled (default false = own the interface).
         if self.tun.attach_existing {
             q.set("dev_attach", "true");
+        }
+        if let Some(queue_len) = self.tun.tx_queue_len {
+            q.set("tun.tx_queue_len", queue_len.to_string());
         }
         // Emit mtu only when explicitly overridden (>0). 0/absent = auto = adopt
         // the server-pushed MTU.
@@ -2268,6 +2315,78 @@ sni    = www.cloudflare.com
         assert_eq!(back.tun.name, "vpn7");
     }
 
+    #[test]
+    fn client_tun_tx_queue_len_defaults_and_explicit_values_round_trip() {
+        let base = "[qeli]\nserver = h:443\nuser = u\npass = p\nbind_static = false\n";
+        let defaults = ClientConfig::from_ini(&IniDoc::parse(base).unwrap()).unwrap();
+        assert_eq!(defaults.tun.tx_queue_len, None);
+        assert_eq!(defaults.tun.owned_linux_tx_queue_len(), Some(1000));
+        assert!(!defaults.to_ini_string().contains("tun.tx_queue_len"));
+        let derived = ClientTunConfig::default();
+        let deserialized: ClientTunConfig = serde_json::from_str("{}").unwrap();
+        assert_eq!(derived.owned_linux_tx_queue_len(), Some(1000));
+        assert_eq!(deserialized.owned_linux_tx_queue_len(), Some(1000));
+        for value in [1, 500, 1000, 2000, CLIENT_TUN_TX_QUEUE_LEN_MAX] {
+            let source = format!("{base}tun.tx_queue_len = {value}\n");
+            let config = ClientConfig::from_ini(&IniDoc::parse(&source).unwrap()).unwrap();
+            config.validate().unwrap();
+            assert_eq!(config.tun.owned_linux_tx_queue_len(), Some(value));
+            let reparsed =
+                ClientConfig::from_ini(&IniDoc::parse(&config.to_ini_string()).unwrap()).unwrap();
+            assert_eq!(reparsed.tun.tx_queue_len, Some(value));
+            // Queue policy is local to this machine, never exported to share links.
+            assert_eq!(
+                ClientConfig::from_link(&config.to_link(None))
+                    .tun
+                    .tx_queue_len,
+                None
+            );
+        }
+    }
+
+    #[test]
+    fn client_tun_tx_queue_len_rejects_auto_zero_overflow_and_bad_values() {
+        let base = "[qeli]\nserver = h:443\nuser = u\npass = p\nbind_static = false\n";
+        for value in [
+            "auto",
+            "-1",
+            "0",
+            "1.5",
+            "32768",
+            "65535",
+            "65536",
+            "4294967296",
+            "abc",
+            "",
+        ] {
+            let source = format!("{base}tun.tx_queue_len = {value}\n");
+            let result = ClientConfig::from_ini(&IniDoc::parse(&source).unwrap())
+                .and_then(|config| config.validate());
+            assert!(result.is_err(), "{value} must not silently use the default");
+            assert!(result.unwrap_err().to_string().contains("tun.tx_queue_len"));
+        }
+    }
+
+    #[test]
+    fn client_tun_tx_queue_len_does_not_take_over_external_interfaces() {
+        let base = "[qeli]\nserver = h:443\nuser = u\npass = p\nbind_static = false\ndev = ext0\ndev_attach = true\n";
+        let inherited = ClientConfig::from_ini(&IniDoc::parse(base).unwrap()).unwrap();
+        assert_eq!(inherited.tun.owned_linux_tx_queue_len(), None);
+        #[cfg(target_os = "linux")]
+        inherited.validate().unwrap();
+        let explicit = ClientConfig::from_ini(
+            &IniDoc::parse(&format!("{base}tun.tx_queue_len = 1000\n")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(explicit.tun.owned_linux_tx_queue_len(), None);
+        #[cfg(target_os = "linux")]
+        assert!(explicit
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("external interface owner"));
+    }
+
     #[cfg(target_os = "linux")]
     #[test]
     fn linux_dev_name_validation_prevents_tunsetiff_truncation_and_path_names() {
@@ -2800,6 +2919,7 @@ dns_servers = 9.9.9.9, 149.112.112.112
 dev = mytun0
 device_type = tap
 dev_attach = true
+tun.tx_queue_len = 2000
 mtu = 1380
 mtu_probe = false
 autostart = true
@@ -2882,6 +3002,7 @@ file = /tmp/client.log
             "dev = mytun0",
             "device_type = tap",
             "dev_attach = true",
+            "tun.tx_queue_len = 2000",
             "mtu = 1380",
             "mtu_probe = false",
             "autostart = true",

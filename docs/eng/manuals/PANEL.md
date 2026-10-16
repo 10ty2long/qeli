@@ -720,6 +720,17 @@ connecting *to* this machine.
   start, `route_local` and full-tunnel. The **Raw INI ↦** toggle in the same dialog gives
   the full config, and keys the form doesn't manage survive a round-trip through it.
 
+Set the Linux client TUN queue size here through **Raw INI**:
+`tun.tx_queue_len = 1000` under `[qeli]` (default `1000` packets, range `1..32767`,
+no auto mode). There is no dedicated form control; the key is local, absent from
+links/QR and not configured in a server profile. It requires a client containing
+the development 0.8.2 change. Omit it with `dev_attach=true`, where an external
+system owns the queue. Save, then Disconnect and Connect; do not reload the server.
+The binary serving this panel must also support the key: an old editor can reject
+the INI before starting a new client. This concerns the local panel host, not a
+mandatory remote VPN-server upgrade for a standalone client.
+[Full contract](CONFIG.md#client-tun-tx-queue).
+
 Creating or importing requires an unused name; an existing client profile is never
 silently replaced. The editor saves with the exact INI revision it loaded. If another
 tab or a manual edit changes the file, the save is rejected: reopen the profile,

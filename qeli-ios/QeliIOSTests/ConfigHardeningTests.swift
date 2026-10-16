@@ -423,24 +423,27 @@ final class ConfigHardeningTests: XCTestCase {
             source += "[\(section)]\n"
             for field in fields {
                 let key = try XCTUnwrap(field["key"] as? String)
-                if key.contains(".") != (section == "logging") { continue }
+                if key.hasPrefix("logging.") != (section == "logging") { continue }
                 let value: String
                 switch key {
                 case "server": value = "vpn.example.com:443"
                 case "pass": value = "secret"
+                case "tun.tx_queue_len": value = "500"
                 case "logging.file": value = "/tmp/coverage.log"
                 case "logging.time_format": value = "rfc3339"
                 default: value = try XCTUnwrap(field["default"] as? String)
                 }
-                source += "\(key.split(separator: ".").last!) = \(value)\n"
+                let localKey = section == "logging" ? String(key.dropFirst("logging.".count)) : key
+                source += "\(localKey) = \(value)\n"
             }
         }
         var config = try VPNConfig.fromINI(source)
         config.password = "edited"
         let raw = try XCTUnwrap(ConfigCore.call(["version":1,"op":"import","source":config.toINI()])["raw"] as? [String:[String]])
-        XCTAssertEqual(fields.count,84)
+        XCTAssertEqual(fields.count,85)
         for field in fields { XCTAssertNotNil(raw[field["key"] as! String]) }
         XCTAssertEqual(raw["pass"],["edited"])
+        XCTAssertEqual(raw["tun.tx_queue_len"],["500"])
         XCTAssertEqual(raw["logging.file"],["/tmp/coverage.log"])
         XCTAssertEqual(raw["logging.time_format"],["rfc3339"])
     }

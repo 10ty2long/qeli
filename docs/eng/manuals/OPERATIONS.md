@@ -655,6 +655,33 @@ counter udp_drops_tun_write; its historical name also covers TCP TUN writes.
 [Validation and limits](../reports/BENCHMARK.md).
 <!-- normative-sync: manual-tcp-downlink-drops-v1 -->
 
+<a id="client-tun-tx-queue"></a>
+
+## Client TUN queue size: applying and verifying
+
+In a build supporting this setting, put `tun.tx_queue_len` under `[qeli]` in
+the client INI (`1000` packets by default; `1..32767`, no auto mode), then
+stop/start the client to reread the file. Do not restart the server for this local
+setting. With `dev_attach=true`, remove the key: an external system owns the
+queue and Qeli does not apply even its default `1000` to that interface.
+[Syntax, compatibility and limits](CONFIG.md#client-tun-tx-queue).
+
+In the client's namespace, inspect `ip link show dev vpn0` (`qlen`) and the log
+`Client TUN TX queue length: <N> packets`; use the actual `dev` name.
+Compare `ip -s -s link show dev vpn0` and `tc -s qdisc show dev vpn0` before/after
+one window. TX here means kernel → Qeli reader, not physical NIC TX.
+Compare the same ifindex: restarting an owned TUN recreates the interface and its
+counters; an attached interface remains with its external owner.
+
+These kernel drops are not `stats.tcp_uplink_drops`/`tcp_downlink_drops`:
+the latter cover internal application handoff queues. Neither increasing TX drops
+nor an empty queue at the end of a window proves `FULL_RING`, ACK delays or H2
+window exhaustion by itself. A causal conclusion requires matched observations.
+Do not confuse `tun.tx_queue_len` with the `tun.queues` count,
+`perf.tun.read_buffer_size` or socket UDP auto-grow. A larger queue may reduce burst
+loss while increasing RTT and memory; assess throughput, retransmissions and latency together.
+[Separate queue-size series with IPv6 and three transports](../reports/TUN-QUEUE-SIZE-2026-10-16.md).
+
 ## Linux client identity files
 
 `/var/lib/qeli/device-id` (`QELI_DEVICE_ID_FILE`) is loaded once before connecting.

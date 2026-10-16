@@ -1718,6 +1718,7 @@ failed roam.
 | `dev` | CLI: `vpn0`; Win: generated interface name | ✓ | ✓ | — | — | — | explicit interface name; Linux reserves it for the entire client session, including `dev_attach`; Windows gives `dev_node` precedence and uses a unique `Qeli-…` name when omitted; mac/iOS/Android use system names |
 | `device_type` | `tun` | ✓ | — | — | — | — | Linux interface kind: `tun` (L3) or `tap` (local L2 emulation); non-Linux clients preserve the key but reject TAP at connect time |
 | `dev_attach` | `false` | ✓ | — | — | — | — | attach to a pre-existing interface (don't create one) |
+| `tun.tx_queue_len` | `1000` | ✓ | — | — | — | — | Owned Linux TUN/TAP TX queue, in packets (`1..32767`); local `[qeli]` setting, not server-pushed or exported in `qeli://`. No adaptive mode. Set `500` for the previous size. Leave unset with `dev_attach=true`: the external owner controls the queue; an explicit combination is rejected. Other OSes preserve but do not apply it |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
 | `mtu_probe` | `true` | ✓\* | ✓\* | ✓\* | ✓\* | ✓\* | active path-MTU probe — **UDP with `mtu=0` only** |
 | `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel; common CLI/GUI default `true`; `gateway=false` explicitly selects split tunnel |
@@ -1844,6 +1845,93 @@ leading comment line (`# Name`). A `qeli://` link carries the label correctly ei
 `mtu_probe` is parsed and stored but, as everywhere
 else, only takes effect on UDP with `mtu = 0`.
 
+<a id="client-tun-tx-queue"></a>
+
+### Linux client TUN queue size (`tun.tx_queue_len`)
+
+In development 0.8.2 builds that support this key, set it **locally in the client
+INI's `[qeli]` section**, for example in `/etc/qeli/client.conf`:
+
+```ini
+[qeli]
+tun.tx_queue_len = 1000
+```
+
+This is a client config fragment, not a new `[tun]` section or a CLI flag.
+In the panel, edit the client connection's INI, not a server profile.
+`qeli client --config <file>` and standalone `qeli-client --config <file>` use the
+same key. It is neither carried in `qeli://`/QR nor supplied by server push.
+
+- The unit is **packets**, not bytes. With the key absent Qeli sets `1000`;
+  explicit `500` restores the previous size observed in the lab.
+- Accepted values are integers `1..32767`. `0`, `auto`, negative/fractional and
+  out-of-range values are rejected. There is no automatic adjustment mode.
+- The policy applies only to a **Linux TUN/TAP created by the client**, before
+  bringing the interface up, across supported transports and both IPv4/IPv6 on
+  that device. A queue-setting failure aborts connection setup rather than
+  reporting success after a kernel refusal. Other OSes preserve but do not apply it.
+- With `dev_attach = true`, **remove** the key instead of setting it to `1000`:
+  the external owner, such as Keenetic `ndm`, controls the interface and its queue.
+  Omission leaves the external queue untouched; an explicit value is incompatible
+  with Linux attach mode and is rejected.
+
+After saving the file, stop/start the client itself (or its client service/panel
+connection) so it reads the new config. This is not hot reload: a server-profile
+reload or reconnect using the old in-memory config does not apply the file edit.
+Updating only the server cannot change an installed client binary either.
+Older builds, even with the same version number, may not recognize this key;
+install a client containing this change before adding it.
+When editing through the Client tab, the Qeli binary serving the **local panel**
+must also recognize the key because it validates the INI with its own parser.
+This does not require updating a remote VPN server to change a standalone client queue.
+
+On Linux this is the **kernel → Qeli TUN reader** queue (`TX` on the device).
+It also carries outgoing TCP ACKs during downloads; it is not an upload-only rate limiter.
+It is not the multiqueue descriptor count `tun.queues`, socket buffers, Qeli/
+Recordizer internal queues or the H2 flow-control window. The same-named server
+key under `[profile:<name>]` controls a different TUN and does not set the client queue.
+
+After connecting, check the following in the client's network namespace,
+replacing `vpn0` with the actual `dev`:
+
+```sh
+ip link show dev vpn0
+ip -s -s link show dev vpn0
+tc -s qdisc show dev vpn0
+```
+
+The first output should contain `qlen 1000` or the configured value; the log says
+`Client TUN TX queue length: 1000 packets`. A larger queue may absorb bursts, but
+does not guarantee zero loss or higher throughput and may increase latency/memory
+use. Compare drop/retransmission deltas and RTT under the same load; do not grow
+buffers indefinitely instead of investigating a slow reader.
+[Diagnostics and counter boundaries](OPERATIONS.md#client-tun-tx-queue).
+
+#### Increasing and decreasing the queue
+
+The queue size limits room for an **already arriving burst**, not the TUN reader's
+processing rate. If the reader is consistently slower than the source, a larger
+queue only postpones overflow; it does not remove CPU limits or processing pauses.
+On an idle interface, increasing the limit need not change RTT.
+
+| Change | Possible benefit | Tradeoff under load |
+|---|---|---|
+| Decrease, for example `1000 → 500 → 250` | Fewer packets can accumulate before the reader, reducing potential queued memory and delay | Bursts hit the limit earlier; packet loss can reduce TCP cwnd and useful throughput. Loss-recovery delays may outweigh the benefit of a shorter queue |
+| Keep `1000` | Baseline for an updated Linux client, not auto or a measured optimum for every link | Drops remain possible; the result depends on transport, load and device |
+| Increase, for example `1000 → 2000` | More room for short bursts; potentially fewer drops/retransmissions | More packets can wait when the queue fills; RTT and memory use may rise without additional throughput |
+
+`1..32767` is the accepted input range, **not a recommended operating range**.
+The upper bound accounts for Linux's current `S16_MAX` cap on `tx_queue_len`;
+the lab rejected `65535` during interface setup.
+[Linux change](https://kernel.googlesource.com/pub/scm/linux/kernel/git/netdev/net/+/66ab4c59b74db7ab53a1c9083feaaede393a96a0).
+Do not select its upper bound merely because the config accepts it. Compare
+several values on the same binary with otherwise identical settings: throughput,
+TUN TX drops separately from qdisc, retransmissions, cwnd and loaded RTT.
+Keep the server queue constant and check IPv4/IPv6, upload/download and the
+transports you actually use separately. Select the smallest queue that preserves
+the required throughput with acceptable loss/latency, not the largest queue.
+[VM300/301 measurements at 250/500/1000/2000 and their limits](../reports/TUN-QUEUE-SIZE-2026-10-16.md).
+
 ### Precedence: which source wins
 
 A client has three sources of values — its `[qeli]` file, what the server pushes on connect,
@@ -1852,6 +1940,7 @@ flags**: `qeli client` takes only `--config <file>`, so "CLI vs file" never aris
 
 | Setting | Winner | Rule |
 |---|---|---|
+| `tun.tx_queue_len` | local client | explicit `[qeli]` value → else `1000` for an owned Linux TUN/TAP; not push or link. With `dev_attach=true` the external owner retains the queue and an explicit key is rejected |
 | `mtu` | client | an explicit `mtu > 0` in `[qeli]` → else the server push (its profile's `tun.mtu`) → else `1400`. With `mtu = 0` over UDP, path-MTU probing refines it further |
 | DNS resolver | client | the push applies only if this client manages the resolver at all. With `dns = off` the pushed DNS is **ignored** (a `warn` line says so and names the fix) |
 | routes (`route`) | server | pushed CIDRs are **always** applied; local `route_local` / `include` / `exclude` add to them rather than cancelling them |
@@ -3512,12 +3601,14 @@ assigned to an authenticated VPN session; enabling it does not replace AUTH.
 
 ## Performance tuning (`perf.*`, `tun.tx_queue_len`)
 
-All per-profile. Values depend on the link/load — see the general note in "Profile
-defaults".
+The following table contains **server** parameters under `[profile:<name>]`, all
+per-profile. Values depend on the link/load — see the general note in "Profile defaults".
+The same-named client `tun.tx_queue_len` under `[qeli]` is independent and is not
+server-pushed: [Linux client queue](#client-tun-tx-queue).
 
 | Key | Default | Purpose |
 |---|---|---|
-| `tun.tx_queue_len` | `1000` | TX queue length of the TUN device |
+| `tun.tx_queue_len` | `1000` | **Server** TUN TX queue length in packets; neither the client queue setting nor `tun.queues` |
 | `perf.tcp.nodelay` | `true` | `TCP_NODELAY` (disable Nagle) |
 | `perf.tcp.keepalive_secs` | `60` | TCP keepalive |
 | `perf.tcp.send_buffer_size` / `recv_buffer_size` | `262144` | socket buffer sizes|

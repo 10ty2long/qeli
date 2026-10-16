@@ -248,23 +248,26 @@ class ConfigHardeningTest {
                 append("[$section]\n")
                 for (field in entries) {
                     val key = field.getString("key")
-                    if (key.contains('.') != (section == "logging")) continue
+                    if (key.startsWith("logging.") != (section == "logging")) continue
                     val value = when (key) {
                         "server" -> "vpn.example.com:443"
                         "pass" -> "secret"
+                        "tun.tx_queue_len" -> "500"
                         "logging.file" -> "/tmp/coverage.log"
                         "logging.time_format" -> "rfc3339"
                         else -> field.getString("default")
                     }
-                    append("${key.substringAfter('.')} = $value\n")
+                    val localKey = if (section == "logging") key.removePrefix("logging.") else key
+                    append("$localKey = $value\n")
                 }
             }
         }
         val saved = VpnConfig.fromIni(source).copy(password="edited").toIni()
         val raw = ConfigCore.call(org.json.JSONObject().put("version",1).put("op","import").put("source",saved)).getJSONObject("raw")
-        assertEquals(84, entries.size)
+        assertEquals(85, entries.size)
         for (field in entries) assertTrue(field.getString("key"), raw.has(field.getString("key")))
         assertEquals("edited", raw.getJSONArray("pass").getString(0))
+        assertEquals("500", raw.getJSONArray("tun.tx_queue_len").getString(0))
         assertEquals("/tmp/coverage.log", raw.getJSONArray("logging.file").getString(0))
         assertEquals("rfc3339", raw.getJSONArray("logging.time_format").getString(0))
     }
