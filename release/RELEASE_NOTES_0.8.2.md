@@ -55,6 +55,9 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
   and recovery, Windows GUI/service transitions and trusted DLL/profile loading, macOS
   helper/storage ownership, and iOS profile/Keychain/MDM handling. Native startup, protected
   storage and cleanup errors are reported instead of appearing as successful connections.
+  Windows/macOS retry transient network restoration before reconnecting, with bounded
+  failures and cancellation. Incomplete cleanup retains the kill-switch and resource
+  ownership; unexpected reconnect-loop faults reach a visible Error state.
 - **More useful administration.** Responsive host-load cards, interactive log-level filters
   and refreshed user bandwidth limits improve the panel. Linux/OpenWrt/Keenetic lifecycle
   hooks receive the applied network/connection context. Installer, updater, permissions
@@ -192,6 +195,9 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
   DLL/профиля Windows, владение helper и хранилищами macOS, работа профилей,
   Keychain и MDM в iOS. Ошибки запуска ядра, защищённого хранилища и очистки
   сообщаются пользователю и не маскируются успешным подключением.
+  Windows/macOS повторяют временно неудачное восстановление сети до нового подключения,
+  с ограничением отказов и поддержкой отмены. Незавершённая очистка сохраняет kill-switch
+  и владение ресурсами; неожиданные ошибки цикла переподключения приводят к видимому Error.
 - **Удобнее администрирование.** В панели появились адаптивные карточки нагрузки
   хоста, интерактивные фильтры уровней журнала и обновление лимитов полосы
   пользователей. Lifecycle-хуки Linux/OpenWrt/Keenetic получают контекст применённой

@@ -114,6 +114,7 @@ public static class Program
         RoamingPathConformance.Run(Check);
         ManagementEventConformance.Run(Check);
         NativeLifecycleConformance.Run(Check);
+        ReconnectRecoveryConformance.Run(Check);
         UpdateMetadataConformance.Run(Check);
         RouteReaderConformance.Run(Check);
 

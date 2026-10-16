@@ -555,6 +555,10 @@ Reality/H2 принудительно выключает qeli heartbeat даже
 | `Reconnect attempt N in Xs` | обычный backoff-ретрай |
 | `Max retries reached, giving up` | достигнут заданный лимит ретраев (по умолчанию бесконечно) |
 | `Reconnect disabled, giving up` | `reconnect = false` в конфиге |
+| `WARN: could not prepare a safe reconnect: …; retrying recovery N/5 in Xs` | Windows/macOS повторяет восстановление предыдущего сетевого состояния **до** нового подключения. Учитываются настроенная политика ретраев и отмена; успешное восстановление сбрасывает счётчик последовательных отказов |
+| `[SECURITY] could not prepare a safe reconnect: …; recovery stopped …` / `recovery retry policy exhausted` | достигнут предел последовательных отказов или политики ретраев либо не удалось безопасно подготовить классификатор/firewall. Клиент прекращает переподключение и показывает Error |
+| `platform cleanup failed; egress remains fail-closed` | Windows/macOS не завершила очистку. Kill-switch/временная защита и владение ресурсами сохраняются для повторной попытки; после устранения указанной ошибки платформы повторите отключение |
+| `ERR: reconnect loop faulted: …` | внешняя обработка поймала неожиданную ошибку жизненного цикла. Выполняется завершающая очистка и публикуется Error; отказ очистки не снимает защитную блокировку |
 | `Connection closed cleanly` | сервер закрыл соединение чисто |
 | `ERR: [<Класс>] <msg>` + `  <- <причина>` | обобщённая ошибка цикла (сокет/хендшейк) — читать вложенные `<-` причины |
 

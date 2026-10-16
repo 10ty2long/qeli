@@ -461,6 +461,7 @@ public abstract class VpnTunnelBase
     private const int SettlingWindowMs = 30_000;
     private const int CarrierReplacementWaitMs = 5_000;
     private const int SettlingAttemptCap = 3;   // ≤ base·2² — 4 s at the default base of 1 s
+    internal const int MaxConsecutiveRecoveryFailures = 5;
     private long _settlingUntilTick;
     // Invalidates an older settle task when a newer address event, Stop or Start wins.
     private long _networkObservationRevision;
@@ -540,19 +541,28 @@ public abstract class VpnTunnelBase
     // on Windows/macOS: TUN up → "network changed" → reconnect → TUN up → …).
     private volatile string _lastNetSig = "";
 
-    private static string PhysicalNetSignature()
+    private static string PhysicalNetSignature() => ReadPhysicalNetSignature(
+        System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces);
+
+    // A resume can invalidate either enumeration or an individual interface object.
+    // Unknown is not a stable topology and must never justify persisted-TUN reuse.
+    internal static string ReadPhysicalNetSignature(
+        Func<System.Net.NetworkInformation.NetworkInterface[]> enumerate)
     {
+        System.Net.NetworkInformation.NetworkInterface[] interfaces;
+        try { interfaces = enumerate(); }
+        catch { return ""; }
         var addrs = new List<string>();
-        foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+        foreach (var ni in interfaces)
         {
-            if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
-            var t = ni.NetworkInterfaceType;
-            if (t == System.Net.NetworkInformation.NetworkInterfaceType.Loopback
-                || t == System.Net.NetworkInformation.NetworkInterfaceType.Tunnel) continue;
-            var name = (ni.Name + " " + ni.Description).ToLowerInvariant();
-            if (name.Contains("qeli") || name.Contains("wintun") || name.Contains("utun")) continue; // our TUN
             try
             {
+                if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                var t = ni.NetworkInterfaceType;
+                if (t == System.Net.NetworkInformation.NetworkInterfaceType.Loopback
+                    || t == System.Net.NetworkInformation.NetworkInterfaceType.Tunnel) continue;
+                var name = (ni.Name + " " + ni.Description).ToLowerInvariant();
+                if (name.Contains("qeli") || name.Contains("wintun") || name.Contains("utun")) continue;
                 var props = ni.GetIPProperties();
                 foreach (var ua in props.UnicastAddresses)
                     if (ua.Address.AddressFamily is AddressFamily.InterNetwork
@@ -568,8 +578,8 @@ public abstract class VpnTunnelBase
             }
             catch
             {
-                // Interfaces can disappear while NetworkAddressChanged is being
-                // delivered. The next event/reconnect samples the settled state.
+                // Do not publish a partial table as a known, reusable physical network.
+                return "";
             }
         }
         addrs.Sort(StringComparer.Ordinal);
@@ -840,6 +850,7 @@ public abstract class VpnTunnelBase
         string currentNetSig = PhysicalNetSignature();
         string currentPlanFingerprint = NetworkPlanFingerprint(config, session, serverIp);
         if (KeepTunDuringReconnect(config)
+            && currentNetSig.Length > 0
             && _persistedClientIp == session.ClientIp
             && _persistedPlanFingerprint == currentPlanFingerprint
             && _persistedNetSig == currentNetSig)
@@ -912,10 +923,15 @@ public abstract class VpnTunnelBase
     /// the requested network rebuild and can leave a per-app classifier marked tunnel-up.</summary>
     private void PreparePlatformForRetry(VpnConfig config)
     {
-        OnTransportInterrupted(config);
-        bool physicalNetworkUnchanged = _persistedNetSig == PhysicalNetSignature();
+        try { OnTransportInterrupted(config); }
+        catch (Exception error)
+        {
+            throw new SecurityException("could not make the interrupted adapter fail-closed", error);
+        }
+        string currentNetSig = PhysicalNetSignature();
+        bool physicalNetworkUnchanged = currentNetSig.Length > 0 && _persistedNetSig == currentNetSig;
         bool networkRebuildRequested =
-            Interlocked.Exchange(ref _forcedNetworkRebuild, 0) == 1;
+            Volatile.Read(ref _forcedNetworkRebuild) == 1;
         bool networkPlanMustBeRebuilt =
             networkRebuildRequested || !physicalNetworkUnchanged;
         bool persistRequested = KeepTunDuringReconnect(config);
@@ -933,13 +949,80 @@ public abstract class VpnTunnelBase
         }
         if (networkPlanMustBeRebuilt && _persistedClientIp != null
             && persistRequested && !retainedPerAppCanReconfigure)
-            PlanReplacementGuardEngage(config);
+        {
+            try { PlanReplacementGuardEngage(config); }
+            catch (Exception error)
+            {
+                throw new SecurityException("could not prepare a fail-closed reconnect firewall", error);
+            }
+        }
         CloseTransports(persistRequested && !_userRequestedDisconnect
                         && _persistedClientIp != null
                         && (!networkPlanMustBeRebuilt || retainedPerAppCanReconfigure));
+        // A refused cleanup has not consumed this request. Keep it across recovery
+        // retries even when the compact physical-network signature is unchanged.
+        if (networkRebuildRequested) Interlocked.Exchange(ref _forcedNetworkRebuild, 0);
     }
 
     private void ConnectWithRetry(VpnConfig config, CancellationToken ct)
+    {
+        string? failure = null;
+        try { failure = RunReconnectLoop(config, ct); }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch (Exception error)
+        {
+            Log($"ERR: reconnect loop faulted: [{error.GetType().Name}] {error.Message}");
+            failure = $"reconnect loop failed: {FirstSentence(error.Message)}";
+        }
+        finally { FinishReconnect(failure); }
+    }
+
+    // Recovery is completed here, before the next RunVpnConnection can touch platform
+    // state. In particular, a retry must not dial first and only then retry cleanup.
+    private bool RecoverPlatformForRetry(VpnConfig config, CancellationToken ct, out string? failure)
+    {
+        failure = null;
+        for (int failures = 0; ;)
+        {
+            ct.ThrowIfCancellationRequested();
+            long startedAt = Environment.TickCount64;
+            try
+            {
+                PreparePlatformForRetry(config);
+                failure = null;
+                return true;
+            }
+            catch (Exception error)
+            {
+                ct.ThrowIfCancellationRequested();
+                failure = $"could not prepare a safe reconnect: {FirstSentence(error.Message)}";
+                failures++;
+                if (error is SecurityException || _stoppedForSecurityReason
+                    || failures >= MaxConsecutiveRecoveryFailures)
+                {
+                    Log($"[SECURITY] {failure}; recovery stopped after {failures} failed teardown attempts");
+                    return false;
+                }
+                var decision = Model.ConfigCore.Policy("retry_decision", new {
+                    attempt = (long)failures, enabled = config.ReconnectEnabled,
+                    max_retries = config.ReconnectMaxRetries,
+                    @base = config.ReconnectBaseDelaySecs * 1000,
+                    cap = config.ReconnectMaxDelaySecs * 1000,
+                    elapsed_ms = Environment.TickCount64 - startedAt
+                }).GetProperty("value");
+                if (decision.GetProperty("reason").GetString() != null)
+                {
+                    Log($"[SECURITY] {failure}; recovery retry policy exhausted");
+                    return false;
+                }
+                long delayMs = decision.GetProperty("delay_ms").GetInt64();
+                Log($"WARN: {failure}; retrying recovery {failures}/{MaxConsecutiveRecoveryFailures} in {delayMs / 1000.0:F1}s");
+                if (ct.WaitHandle.WaitOne((int)delayMs)) ct.ThrowIfCancellationRequested();
+            }
+        }
+    }
+
+    private string? RunReconnectLoop(VpnConfig config, CancellationToken ct)
     {
         long attempt = 0;         // consecutive UNSTABLE attempts → backoff + max-retries
         bool firstAttempt = true; // very first connect: no reconnect gating / delay / status change
@@ -985,17 +1068,7 @@ public abstract class VpnTunnelBase
                 attempt = NextAttempt(attempt, cleanWasEstablished, cleanForced);
                 if (!cleanForced && cleanWasEstablished)
                     NotifyConnectionDropped("Connection closed");
-                try
-                {
-                    PreparePlatformForRetry(config);
-                }
-                catch (Exception recoveryError)
-                {
-                    reconnectStateFailure =
-                        $"could not prepare a safe reconnect: {FirstSentence(recoveryError.Message)}";
-                    Log($"[SECURITY] {reconnectStateFailure}");
-                    break;
-                }
+                if (!RecoverPlatformForRetry(config, ct, out reconnectStateFailure)) break;
             }
             catch (ServerKickException e) when (!ct.IsCancellationRequested)
             {
@@ -1053,26 +1126,18 @@ public abstract class VpnTunnelBase
                 // alone also "persisted" failures that happened BEFORE or DURING SetupTun,
                 // which skipped CleanupPlatform() — the only disposer of a half-built adapter
                 // and of a prewarmed Wintun adapter the failed attempt never consumed.
-                try
-                {
-                    PreparePlatformForRetry(config);
-                }
-                catch (Exception recoveryError)
-                {
-                    // Guard engagement and stale carrier cleanup are themselves fallible. Keep
-                    // the error inside the retry lifecycle so terminal cleanup and UI state are
-                    // still completed instead of faulting the run task without an Error edge.
-                    reconnectStateFailure =
-                        $"could not prepare a safe reconnect: {FirstSentence(recoveryError.Message)}";
-                    Log($"[SECURITY] {reconnectStateFailure}");
-                    break;
-                }
+                if (!RecoverPlatformForRetry(config, ct, out reconnectStateFailure)) break;
             }
             catch (Exception)
             {
                 break; // cancelled
             }
         }
+        return reconnectStateFailure;
+    }
+
+    private void FinishReconnect(string? reconnectStateFailure)
+    {
         // Gave up retrying: the "reconnect disabled" / "max retries" breaks above leave the
         // loop WITHOUT passing through any teardown, while persist-tun may have deliberately
         // kept the TUN + routes + DNS override up for a next attempt that will now never come

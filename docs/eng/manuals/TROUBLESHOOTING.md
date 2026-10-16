@@ -552,6 +552,10 @@ is exponential (cap 60s), retries are infinite by default.
 | `Reconnect attempt N in Xs` | a normal backoff retry |
 | `Max retries reached, giving up` | the configured retry cap was hit (infinite by default) |
 | `Reconnect disabled, giving up` | `reconnect = false` in the config |
+| `WARN: could not prepare a safe reconnect: …; retrying recovery N/5 in Xs` | Windows/macOS is retrying restoration of the previous network state **before** another connection. The configured retry policy and cancellation still apply; one successful recovery resets the consecutive-failure counter |
+| `[SECURITY] could not prepare a safe reconnect: …; recovery stopped …` / `recovery retry policy exhausted` | recovery reached its consecutive-failure limit or retry policy, or a classifier/firewall safety operation was refused. The client stops reconnecting and reports Error |
+| `platform cleanup failed; egress remains fail-closed` | Windows/macOS could not finish cleanup. The kill-switch/replacement guard and resource ownership remain available for a retry; retry Disconnect after resolving the reported platform failure |
+| `ERR: reconnect loop faulted: …` | an unexpected lifecycle error reached the outer handler. Terminal cleanup is attempted and Error is published; a cleanup failure does not release the protective block |
 | `Connection closed cleanly` | the server closed the connection cleanly |
 | `ERR: [<Class>] <msg>` + `  <- <cause>` | a generic loop error (socket/handshake) — read the nested `<-` causes |
 
