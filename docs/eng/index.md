@@ -21,6 +21,10 @@ English and Russian, and every active page is linked from this map.
 
 Practical installation, configuration and operations guides.
 
+[Short release test](manuals/RELEASE-SHORT-TEST.md) — fixed Linux transport and performance checks.
+
+[16 October 2026 pilot](reports/RELEASE-SHORT-PILOT-2026-10-16.md) — publication status and qualification limits.
+
 | Document | What it covers |
 |---|---|
 | [GETTING-STARTED.md](manuals/GETTING-STARTED.md) | Installation and first run, step by step |

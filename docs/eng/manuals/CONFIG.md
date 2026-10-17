@@ -1993,7 +1993,8 @@ TUN TX drops separately from qdisc, retransmissions, cwnd and loaded RTT.
 Keep the server queue constant and check IPv4/IPv6, upload/download and the
 transports you actually use separately. Select the smallest queue that preserves
 the required throughput with acceptable loss/latency, not the largest queue.
-[VM300/301 measurements at 250/500/1000/2000 and their limits](../reports/TUN-QUEUE-SIZE-2026-10-16.md).
+[VM300/301 report for queue sizes 250/500/1000/2000](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
+and [queue-size recommendations](../reports/TUN-QUEUE-SIZE-2026-10-16.md#choosing-a-size).
 
 ### Precedence: which source wins
 

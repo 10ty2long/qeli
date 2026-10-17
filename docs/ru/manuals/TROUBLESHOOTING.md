@@ -2885,3 +2885,5 @@ Android14/API34 автоматический выбор семейства ад�
 kernel TX drops отдельно от qdisc/прикладных drops, а также retransmits и RTT.
 [Полный контракт](CONFIG.md#client-tun-tx-queue),
 [операционная проверка](OPERATIONS.md#client-tun-tx-queue).
+[Отчёт с измерениями потерь, retransmits и задержек](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
+и [рекомендации по выбору размера очереди](../reports/TUN-QUEUE-SIZE-2026-10-16.md#как-выбирать-размер).

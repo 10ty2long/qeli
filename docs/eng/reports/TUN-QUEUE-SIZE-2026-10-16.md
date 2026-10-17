@@ -96,7 +96,7 @@ delay distribution or a complete real-WAN latency-under-load test.
 
 Qdisc drops totalled zero. All 24 UDP300 windows had 0% packet loss; this does not
 confirm 600 Mbit/s or new UDP ceilings. Full family/direction, repetition and
-metric detail is in the [compact evidence](../../../release/tun_queue_size_2026-10-16.json).
+metric detail is in the [compact evidence](../../../release/certification/evidence/tun-queue-size-20261016.json).
 
 Observed throughput versus the mean of the two controls was −6.72% for FakeTLS,
 −2.18% for Reality and −4.97% for QUIC. These are single calibrations per profile,

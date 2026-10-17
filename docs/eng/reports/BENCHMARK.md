@@ -1,5 +1,8 @@
 # qeli load testing
 
+The [short laboratory test](../manuals/RELEASE-SHORT-TEST.md) provides a fixed
+routine transport/performance method; its pilot is not a release qualification.
+
 Development performance measurements for unreleased 0.8.2 have been withdrawn from publication. Complete original data and reports are retained locally for internal audit. They are not a public release benchmark or a basis for comparing version performance.
 
 The current published comparative report is [qeli 0.8.0 — 1 September 2026](benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md).

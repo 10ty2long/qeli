@@ -693,7 +693,8 @@ window exhaustion by itself. A causal conclusion requires matched observations.
 Do not confuse `tun.tx_queue_len` with the `tun.queues` count,
 `perf.tun.read_buffer_size` or socket UDP auto-grow. A larger queue may reduce burst
 loss while increasing RTT and memory; assess throughput, retransmissions and latency together.
-[Separate queue-size series with IPv6 and three transports](../reports/TUN-QUEUE-SIZE-2026-10-16.md).
+[Report: queue sizes, IPv6 and three transports](../reports/TUN-QUEUE-SIZE-2026-10-16.md).
+[Queue-size recommendations and the throughput/latency trade-off](../reports/TUN-QUEUE-SIZE-2026-10-16.md#choosing-a-size).
 
 ## Linux client identity files
 

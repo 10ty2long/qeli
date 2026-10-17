@@ -773,6 +773,8 @@ packets without extra configuration. To select a value, add `tun.tx_queue_len = 
 Stop/start that client after editing; a server reload does not apply it.
 Omit the key with `dev_attach=true`. Older binaries need an update first;
 there is no auto mode. [Contract and verification](CONFIG.md#client-tun-tx-queue).
+[Lab report](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
+and [queue-size recommendations](../reports/TUN-QUEUE-SIZE-2026-10-16.md#choosing-a-size).
 
 ```bash
 sudo cp /etc/qeli/client.conf.example /etc/qeli/client.conf

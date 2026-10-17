@@ -2869,3 +2869,5 @@ fix every asymmetry: compare kernel TX drops separately from qdisc/application
 drops, along with retransmissions and RTT.
 [Full contract](CONFIG.md#client-tun-tx-queue),
 [operational verification](OPERATIONS.md#client-tun-tx-queue).
+[Report with loss, retransmission and latency measurements](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
+and [queue-size recommendations](../reports/TUN-QUEUE-SIZE-2026-10-16.md#choosing-a-size).

@@ -776,6 +776,8 @@ Full-tunnel и «маршрутизировать локальные сети» 
 именно клиентского файла. После правки остановите/запустите клиент; server reload
 не применяет её. С `dev_attach=true` ключ не задаётся. Старому бинарнику сначала
 нужно обновление; auto-режима нет. [Контракт и проверка](CONFIG.md#client-tun-tx-queue).
+[Лабораторный отчёт](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
+и [рекомендации по выбору размера](../reports/TUN-QUEUE-SIZE-2026-10-16.md#как-выбирать-размер).
 
 ```bash
 sudo cp /etc/qeli/client.conf.example /etc/qeli/client.conf

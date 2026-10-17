@@ -234,7 +234,28 @@ Configuration details and verification:
 Queue-size, IPv6 and three-transport results:
 [lab report and limitations](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-QUEUE-SIZE-2026-10-16.md).
 
+### A repeatable short pre-release check
+
+A controller, observer and analyzer now define a fixed Linux test for transport
+compatibility, inner IPv4/IPv6, transfer directions and separate mixed TCP/UDP load.
+The harness checks complete results and lab-state restoration; incomplete or failed
+runs do not become PASS. Its 24 unit tests pass, but the historical pilot does not
+qualify newly built release binaries. Development measurements remain local rather
+than being published as a release benchmark.
+[Method and limitations](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/manuals/RELEASE-SHORT-TEST.md).
+
 ## Русский
+
+### Короткая повторяемая проверка перед выпуском
+
+Добавлены контроллер, наблюдатель и анализатор фиксированного Linux-теста:
+совместимость транспортов, внутренние IPv4/IPv6, направления передачи и отдельная
+смешанная TCP/UDP-нагрузка. Обвязка проверяет полноту результатов и восстановление
+состояния стенда, не превращает неполный или неудачный прогон в PASS.
+Её 24 unit-теста проходят; исторический пилот не квалифицирует новые бинарники.
+Исходные замеры разработки сохраняются локально, а не публикуются как бенчмарк релиза.
+[Методика и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/manuals/RELEASE-SHORT-TEST.md).
+
 
 ### Что мы делали и зачем
 
