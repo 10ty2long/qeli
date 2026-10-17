@@ -7,14 +7,13 @@ Deploying the qeli VPN client on a Keenetic router (Entware) as a gateway for th
 LAN. The architecture and rationale of the port — [KEENETIC-PORT.md](../reference/KEENETIC-PORT.md).
 The bundle files — in `release/keenetic/`.
 
-> 🛜 **On OpenWrt?** The native OpenWrt client (procd service + UCI config + a LuCI page)
-> is available and verified on real hardware. It reuses the exact same client core as
-> here, so it inherits every fix automatically — the iptables kill-switch and the
-> UDP-handshake fragmentation that fixes UDP on an LTE/CGNAT WAN.
+> **OpenWrt:** its native client shares this core. Fixes require updating the client
+> binary; upgrading the server alone does not update the router.
 
-> ✅ The client has been tested on a live Keenetic and works. The bundle scripts remain
-> **templates**: the commands are universal, but interface names and interaction with the
-> KeeneticOS firewall depend on the model and firmware version — verify them on site.
+> **0.8.2 scope:** physical Keenetic/OpenWrt tests were excluded from the agreed audit.
+> Earlier hardware results do not qualify these new files. Source, target ELF, SDK
+> export/prepare and isolated lifecycle checks retain the limits recorded in their
+> reports. Verify interface names and firewall behaviour on your firmware.
 
 ---
 
@@ -37,7 +36,7 @@ The bundle files — in `release/keenetic/`.
 opkg print-architecture | grep -E 'aarch64|mipsel|mips'   # the package arch
 cat /proc/cpuinfo | grep -E 'cpu model|FPU|system type'   # CPU/FPU
 ls -l /dev/net/tun                                         # must exist
-df -h /opt                                                 # space (need ~5-10 MB)
+df -h /opt                                                 # reserve for binary, dependencies, old and staged copies
 ```
 
 - `mipsel-…` → the binary `qeli-client-mipsel` (MT7621/7628, etc.).
@@ -46,7 +45,29 @@ df -h /opt                                                 # space (need ~5-10 M
 
 ---
 
-## Step 1. Build the binaries (on the dev/lab, not on the router)
+## Step 1. Obtain the prepared distribution (on your workstation)
+
+After publication choose an exact version on [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
+Download `qeli-keenetic-files.tar.gz`, the matching `qeli-client-keenetic-aarch64` or
+`qeli-client-keenetic-mipsel`, and `SHA256SUMS` from that same release. The ELF occupies
+8.90 MiB (aarch64) or 10.85 MiB (mipsel); also reserve space for dependencies, the
+previous binary and a staged update.
+
+For example, for aarch64 on a workstation with `sha256sum`:
+
+```sh
+grep -E ' [ *](qeli-keenetic-files[.]tar[.]gz|qeli-client-keenetic-aarch64)$' SHA256SUMS > selected.sha256
+test "$(wc -l < selected.sha256)" -eq 2
+sha256sum -c selected.sha256
+tar -xzf qeli-keenetic-files.tar.gz
+cp qeli-client-keenetic-aarch64 qeli-keenetic/
+```
+
+For mipsel replace the binary name in both the filter and `cp`. The archive contains
+integration files and examples; place the ELF beside `install-keenetic.sh` inside
+`qeli-keenetic/`. The separately downloadable installer does not replace the other files.
+
+### Optional: maintainer source build
 
 ```sh
 python scripts/build_keenetic.py --sync
@@ -100,14 +121,16 @@ From the link/output you'll need: `server` (host:port), `proto` (tcp/udp), `user
 
 ---
 
-## Step 3. Copy the bundle to the router (from the dev)
+## Step 3. Copy the prepared directory to the router
 
 ```sh
-scp -r release/keenetic <user>@<router-ip>:/opt/tmp/keenetic
+scp -r qeli-keenetic <user>@<router-ip>:/opt/tmp/keenetic
 # <user> — the router account with access to /opt (usually admin/root). An alternative is USB.
 ```
 
 ---
+
+After a maintainer helper build, copy `release/keenetic` with its ELF instead of `qeli-keenetic`.
 
 ## Step 4. Installation (on the router)
 

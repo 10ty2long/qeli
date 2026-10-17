@@ -25,7 +25,7 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
 At the qualified release-preparation snapshot [`3acf33f0`](https://github.com/litvinovtd/qeli/commit/3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
 on 17 October, development since 0.8.1 comprised **1,233 commits: 1,208 non-merge
 commits and 25 merge commits**. This includes product changes, refactoring, tests,
-build tooling and documentation—not 1,228 separate defects. The audit covered
+build tooling and documentation; it is not a count of individual defects. The audit covered
 **37 system areas**, with **323 audit reports**, each available in English and Russian;
 translations are not counted as additional investigations.
 [Changes since 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
@@ -196,7 +196,8 @@ verification must refuse when no matching attestation is available. Docker publi
 the versioned `0.8.2` image separately after tag admission; a beta does not replace
 the stable `latest` tag. Uploading download files alone does not create that image.
 
-The macOS universal ZIP includes both Apple Silicon and Intel code;
+The macOS universal ZIP requires macOS 15 or newer, following the .NET 10 supported
+OS baseline, and includes both Apple Silicon and Intel code;
 extract the complete `Qeli.app` on macOS, preserving executable permissions. It uses
 ad-hoc signatures, without Developer ID notarization or the per-app system extension.
 The Android update retains the existing release certificate; package signatures,
@@ -207,7 +208,13 @@ Full change list: [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/
 
 ### Linux client TUN queue size
 
-The client INI now accepts the local `tun.tx_queue_len` setting in `[qeli]`, as shown above.
+The client INI now accepts the local `tun.tx_queue_len` setting in `[qeli]`:
+
+```ini
+[qeli]
+tun.tx_queue_len = 1000
+```
+
 It controls the kernel-to-Qeli packet queue for a Linux client-owned TUN/TAP interface.
 The default is `1000` packets; valid integer values are `1..32767`. There is no automatic
 adjustment. Set `500` explicitly to restore the previous laboratory queue size.
@@ -275,7 +282,7 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
 На проверенном снимке подготовки релиза [`3acf33f0`](https://github.com/litvinovtd/qeli/commit/3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
 от 17 октября разработка после 0.8.1 включает **1 233 коммита: 1 208 обычных
 и 25 merge-коммитов**. Это изменения продукта, рефакторинг, тесты, инструменты сборки
-и документация, а не 1 228 отдельных дефектов. Аудит охватил **37 направлений системы**;
+и документация; это не счётчик отдельных дефектов. Аудит охватил **37 направлений системы**;
 подготовлены **323 отчёта**, каждый на русском и английском языках. Переводы
 не считаются дополнительными независимыми проверками.
 [Изменения после 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
@@ -457,7 +464,8 @@ universal ZIP macOS, Linux-бинарник и DEB, шесть роутерны�
 Одна загрузка файлов релиза сама по себе не создаёт Docker-образ.
 
 Universal ZIP для macOS содержит код Apple Silicon и Intel;
-распакуйте весь `Qeli.app` на macOS с сохранением прав запуска. Подпись — ad-hoc,
+требуется macOS 15 или новее согласно поддерживаемой матрице .NET 10;
+распакуйте весь `Qeli.app` с сохранением прав запуска. Подпись — ad-hoc,
 без Developer ID notarization и системного расширения per-app.
 Android-обновление сохраняет прежний релизный сертификат; проверяются подпись пакета,
 выравнивание и включённые актуальные JNI-библиотеки. Это не заменяет проверку установки

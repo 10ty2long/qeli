@@ -4,24 +4,52 @@
 **Подробный пошаговый гайд (по шагам, с проверкой туннеля) — [docs/*/manuals/KEENETIC-DEPLOY.md](../../docs/ru/manuals/KEENETIC-DEPLOY.md).**
 План и обоснование порта — [docs/*/reference/KEENETIC-PORT.md](../../docs/ru/reference/KEENETIC-PORT.md).
 
-> ✅ Клиент проверен на живом Keenetic и работает. Скрипты в этой папке остаются
-> **шаблонами**: проверь имена интерфейсов и поведение firewall под свою
-> модель и версию прошивки.
+> **Границы проверки 0.8.2:** физические роутеры исключены из согласованного аудита.
+> Прежние аппаратные результаты не подтверждают новую сборку. Текущие проверки исходников,
+> ELF, SDK и изолированного lifecycle сохраняют свою область. Скрипты остаются
+> **шаблонами**: проверь имена интерфейсов и firewall своей модели/прошивки.
 
 ## Предусловия на роутере
 - Установлен **Entware** (opkg, `/opt`).
 - Включён компонент **VPN** в KeeneticOS (чтобы был `/dev/net/tun`).
 - Есть SSH-доступ.
+- Бинарник занимает 8,90 МиБ (aarch64) или 10,85 МиБ (mipsel). Помимо него нужны
+  место для зависимостей, старой копии и временного файла при обновлении.
 
-## Сборка бинарей (на лабе .10)
+## Готовый комплект из релиза (основной способ)
+
+После публикации выбери точную версию на [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
+Скачай `qeli-keenetic-files.tar.gz`, `qeli-client-keenetic-aarch64` **или**
+`qeli-client-keenetic-mipsel` по архитектуре роутера и `SHA256SUMS` из того же релиза.
+Архив содержит интеграцию и примеры, но не бинарник. На рабочем компьютере, например
+для aarch64, проверь две выбранные загрузки и собери каталог:
+
+```sh
+grep -E ' [ *](qeli-keenetic-files[.]tar[.]gz|qeli-client-keenetic-aarch64)$' SHA256SUMS > selected.sha256
+test "$(wc -l < selected.sha256)" -eq 2
+sha256sum -c selected.sha256
+tar -xzf qeli-keenetic-files.tar.gz
+cp qeli-client-keenetic-aarch64 qeli-keenetic/
+scp -r qeli-keenetic <user>@<router-ip>:/opt/tmp/keenetic
+```
+
+Для mipsel замени имя бинарника в обеих командах. Затем на роутере выполни шаг
+установки ниже из `/opt/tmp/keenetic`. Отдельный `install-keenetic.sh` в загрузках —
+тот же installer; без `S99qeli`, `lifecycle.sh`, примеров и подходящего ELF он не заменяет архив.
+
+## Сборка бинарей для мейнтейнера (приватная лаба .10)
+
+Этот helper требует доступа к приватной лабе; пользователям готовых файлов он не нужен.
 ```sh
 python scripts/build_keenetic.py --sync
 # → release/keenetic/qeli-client-keenetic-aarch64 и qeli-client-keenetic-mipsel
 ```
 
 ## Установка (на роутере)
-Скопируй всю папку `release/keenetic/` на роутер (scp) и запусти:
+Для готового комплекта каталог уже скопирован по инструкции выше. После собственной
+сборки скопируй `release/keenetic/` вместе с ELF. На роутере:
 ```sh
+cd /opt/tmp/keenetic
 sh install-keenetic.sh      # определит арку, поставит ip-full/iptables, разложит файлы
 vi /opt/etc/qeli/client.conf
 /opt/etc/init.d/S99qeli start

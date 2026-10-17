@@ -35,12 +35,13 @@ binary is not part of this image.
 
 ### Easiest — pull the published image (no build)
 
-CI (`.github/workflows/docker-publish.yml`) builds the multi-arch image and pushes
-it to GHCR on **every release tag**, so `:latest` always tracks the newest release:
+CI (`.github/workflows/docker-publish.yml`) builds a versioned multi-arch image
+after release-tag admission. `:latest` is promoted only for the highest stable Git
+version with a published, non-prerelease GitHub Release; it does not follow beta releases.
 
 ```sh
-docker pull ghcr.io/litvinovtd/qeli:latest     # newest release (recommended)
-docker pull ghcr.io/litvinovtd/qeli:0.7.11      # or pin a specific release tag
+docker pull ghcr.io/litvinovtd/qeli:latest     # stable channel; may be older than a beta
+docker pull ghcr.io/litvinovtd/qeli:0.8.2      # beta, only after its Docker workflow succeeds
 ```
 
 Use that image name anywhere `qeli:latest` appears below. Build locally only to
@@ -58,10 +59,10 @@ modify the source or if the registry is unreachable.
 >
 > The Dockerfile is **version-agnostic** — it builds whatever source is checked
 > out, so the image's `qeli --version` equals the `qeli/Cargo.toml` of your
-> checkout. **A stale checkout builds an old version.** `main` gives the latest dev
-> build; for the newest **release** run
-> `git pull && git checkout "$(git describe --tags --abbrev=0)"` (or a specific tag,
-> e.g. `git checkout v0.7.4`) before building.
+> checkout. **A stale checkout builds an old version.** Development is on `dev`.
+> Fetch the repository and select the exact reviewed commit or published release tag
+> before building (for example `git fetch origin --tags`, then `git checkout v0.8.2`
+> once that tag is published). The nearest tag is not necessarily the newest release.
 
 Multi-arch (one tag, three arches):
 
@@ -70,7 +71,7 @@ docker buildx create --use --name qeli-builder   # once
 # A multi-arch build cannot `--load` into the local daemon — it must `--push` to a
 # registry, so the tag has to be registry-qualified.
 docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
-  -f release/docker/Dockerfile -t ghcr.io/litvinovtd/qeli:latest --push .
+  -f release/docker/Dockerfile -t ghcr.io/YOUR_ACCOUNT/qeli:local-build --push .
 ```
 
 Single arch you can `--load` into the local daemon (e.g. amd64 for a Linux box,

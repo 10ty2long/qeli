@@ -95,6 +95,7 @@ mv "$APP/Contents/MacOS/Legal" "$APP/Contents/Resources/Legal"
 cp "$ROOT/dist/Qeli.icns" "$APP/Contents/Resources/Qeli.icns"
 sed "s/__ARCH__/$ARCH/g" "$ROOT/Info.plist.in" > "$APP/Contents/Info.plist"
 chmod +x "$APP/Contents/MacOS/QeliMac"
+"$PYTHON" "$ROOT/../scripts/check_macos_deployment.py" "$APP"
 
 # 5. A usable Network Extension cannot be ad-hoc signed. When Developer-ID inputs are
 # supplied on a Mac, build/embed the transparent+DNS system extension and sign every nested

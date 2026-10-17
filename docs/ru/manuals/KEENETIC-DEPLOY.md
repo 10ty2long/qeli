@@ -7,14 +7,13 @@
 Архитектура и обоснование порта — [KEENETIC-PORT.md](../reference/KEENETIC-PORT.md). Файлы бандла —
 в `release/keenetic/`.
 
-> 🛜 **У тебя OpenWrt?** Нативный OpenWrt-клиент (procd-сервис + UCI-конфиг + LuCI-страница)
-> доступен и проверен на реальном оборудовании. Он использует то же клиентское ядро, что и здесь,
-> поэтому наследует все фиксы автоматически — iptables kill-switch и фрагментацию
-> UDP-хендшейка, которая чинит UDP на LTE/CGNAT-WAN.
+> **OpenWrt:** нативный клиент использует то же ядро. Исправления появляются после
+> обновления клиентского бинарника; обновление одного сервера их не переносит на роутер.
 
-> ✅ Клиент проверен на живом Keenetic и работает. Скрипты бандла остаются
-> **шаблонами**: команды универсальны, но имена интерфейсов и взаимодействие с firewall
-> KeeneticOS зависят от модели и версии прошивки — проверяй их по месту.
+> **Границы 0.8.2:** физические Keenetic/OpenWrt исключены из согласованного аудита.
+> Прежние аппаратные результаты не квалифицируют эти новые файлы. Проверены исходники,
+> целевые ELF, SDK export/prepare и изолированные lifecycle-сценарии, с указанными
+> в отчётах ограничениями. Имена интерфейсов и firewall проверь под свою прошивку.
 
 ---
 
@@ -35,7 +34,7 @@
 opkg print-architecture | grep -E 'aarch64|mipsel|mips'   # арка пакетов
 cat /proc/cpuinfo | grep -E 'cpu model|FPU|system type'   # CPU/FPU
 ls -l /dev/net/tun                                         # должен существовать
-df -h /opt                                                 # место (нужно ~5-10 МБ)
+df -h /opt                                                 # запас для бинарника, зависимостей, старой и временной копий
 ```
 
 - `mipsel-…` → бинарь `qeli-client-mipsel` (MT7621/7628 и т.п.).
@@ -44,7 +43,29 @@ df -h /opt                                                 # место (нуж�
 
 ---
 
-## Шаг 1. Собрать бинари (на деве/лабе, не на роутере)
+## Шаг 1. Получить готовый комплект (на рабочем компьютере)
+
+После публикации выбери точную версию на [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
+Скачай `qeli-keenetic-files.tar.gz`, подходящий `qeli-client-keenetic-aarch64` или
+`qeli-client-keenetic-mipsel` и `SHA256SUMS` из того же релиза. ELF занимает 8,90 МиБ
+(aarch64) или 10,85 МиБ (mipsel); нужны дополнительное место для зависимостей,
+старого бинарника и временного файла обновления.
+
+Например, для aarch64 на компьютере с `sha256sum`:
+
+```sh
+grep -E ' [ *](qeli-keenetic-files[.]tar[.]gz|qeli-client-keenetic-aarch64)$' SHA256SUMS > selected.sha256
+test "$(wc -l < selected.sha256)" -eq 2
+sha256sum -c selected.sha256
+tar -xzf qeli-keenetic-files.tar.gz
+cp qeli-client-keenetic-aarch64 qeli-keenetic/
+```
+
+Для mipsel замени имя бинарника в фильтре и `cp`. Архив содержит интеграцию и примеры,
+а ELF нужно положить рядом с `install-keenetic.sh` внутри `qeli-keenetic/`.
+Отдельный installer из загрузок не заменяет остальные файлы архива.
+
+### Необязательно: собственная сборка для мейнтейнера
 
 ```sh
 python scripts/build_keenetic.py --sync
@@ -98,14 +119,16 @@ qeli show-identity
 
 ---
 
-## Шаг 3. Скопировать бандл на роутер (с дева)
+## Шаг 3. Скопировать подготовленный каталог на роутер
 
 ```sh
-scp -r release/keenetic <user>@<router-ip>:/opt/tmp/keenetic
+scp -r qeli-keenetic <user>@<router-ip>:/opt/tmp/keenetic
 # <user> — аккаунт роутера с доступом к /opt (обычно admin/root). Альтернатива — USB.
 ```
 
 ---
+
+После собственной сборки helper вместо `qeli-keenetic` копируй `release/keenetic` вместе с ELF.
 
 ## Шаг 4. Установка (на роутере)
 

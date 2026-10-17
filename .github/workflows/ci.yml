@@ -136,6 +136,7 @@ jobs:
           python3 -B -m unittest discover -s scripts -p 'test_macos_app_signer.py'
           python3 -B -m unittest discover -s scripts -p 'test_macos_universal.py'
           python3 -B -m unittest discover -s scripts -p 'test_macos_packager.py'
+          python3 -B -m unittest discover -s scripts -p 'test_check_macos_deployment.py'
           python3 -m unittest discover -s scripts -p 'test_keenetic_probe.py'
           python3 -m unittest discover -s scripts -p 'test_keenetic_address_retirement.py'
           python3 -m unittest discover -s scripts -p 'test_openwrt_source_gate.py'

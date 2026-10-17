@@ -20,6 +20,8 @@ Usage:
 Run from the repository root.
 """
 import os
+import json
+from datetime import datetime, timezone
 import subprocess
 import sys
 
@@ -73,10 +75,15 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-        # Rewrites only the digest/commit lines; the explanatory text is kept.
-        base = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True
-        ).stdout.strip()
+        # Use the actual A/B source commits, not the possibly newer documentation HEAD.
+        evidence = {}
+        for platform in ("desktop", "android"):
+            with open(f"native-libs/reproducibility/{platform}.json", encoding="utf-8") as stream:
+                evidence[platform] = json.load(stream)
+        commits = {value["source_commit"] for value in evidence.values()}
+        base = next(iter(commits)) if len(commits) == 1 else ", ".join(
+            f"{platform}={value['source_commit']}" for platform, value in evidence.items()
+        )
         dirty = subprocess.run(
             ["git", "status", "--porcelain", "--", "qeli/src", *BUILD_INPUTS],
             capture_output=True,
@@ -105,8 +112,18 @@ def main() -> int:
                     "toolchain     : pinned inventories in "
                     "native-libs/reproducibility/{desktop,android}.json\n"
                 )
+            elif line.startswith("built-on"):
+                # source_date_epoch is a reproducibility input, not a wall-clock build time.
+                # Do not keep a stale hard-coded date or guess a compilation time on refresh.
+                out.append("built-on      : lab .10/.11; independent Windows/macOS and Android A/B jobs; execution timestamps are retained in build journals\n")
+            elif line.startswith(("recorded-at", "source-epoch")):
+                continue
             else:
                 out.append(line)
+        out.append("\nrecorded-at   : " + datetime.now(timezone.utc).isoformat() + " (provenance refresh, not compilation time)\n")
+        out.append("source-epoch  : " + ", ".join(
+            f"{platform}={value['source_date_epoch']}" for platform, value in evidence.items()
+        ) + " (reproducibility input, not build time)\n")
         with open(PROVENANCE, "w", encoding="utf-8", newline="\n") as fh:
             fh.writelines(out)
         print(f"recorded source-digest {actual}")

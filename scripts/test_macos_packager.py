@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import io
 import os
+import plistlib
 from pathlib import Path
 import tarfile
 import tempfile
@@ -22,7 +23,8 @@ class PackagerTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.dist = self.root / 'qeli-mac/dist'; self.dist.mkdir(parents=True)
         self.native = self.root / 'libqeli.dylib'; self.native.write_bytes(b'canonical native')
-        self.info = self.root / 'Info.plist.in'; self.info.write_bytes(b'__ARCH__')
+        self.info = self.root / 'Info.plist.in'
+        self.info.write_bytes(plistlib.dumps({'LSMinimumSystemVersion': '15.0'}))
         self.icon = self.dist / 'Qeli.icns'; self.icon.write_bytes(b'icon')
         for arch in ('osx-arm64', 'osx-x64'): self.archive(arch)
         self.previous = self.dist / 'Qeli-macOS-universal.zip'

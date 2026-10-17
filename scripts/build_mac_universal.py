@@ -21,6 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from native_lab import connect_lab, pull_verified_artifact, remote_sha256
 from native_repro import DEFAULT_RCODESIGN, require_lab_password, sha256_file
+from check_macos_deployment import declared_minimum
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "qeli-mac" / "dist"
@@ -30,6 +31,8 @@ CANONICAL_DYLIB = ROOT / "qeli-mac" / "QeliMac" / "native" / "libqeli.dylib"
 HOST = ("10.66.116.10", os.environ.get("QELI_LAB_USER", "root"))
 LIPO = "/usr/bin/llvm-lipo-19"
 RCS = "/usr/local/bin/rcodesign"
+DEPLOYMENT_CHECK = Path(__file__).with_name('check_macos_deployment.py')
+MACHO_READER = Path(__file__).with_name('macho_repro.py')
 
 
 def conn():
@@ -143,7 +146,9 @@ if __name__ == "__main__":
 
 REMOTE_SIGN_PY = r'''
 import os, subprocess, sys
+from check_macos_deployment import check_bundle
 RDIR=sys.argv[1]; APP=RDIR+"/Qeli.app"; MACOS=APP+"/Contents/MacOS"
+print(f"[deployment] {check_bundle(APP)} Mach-O files satisfy Info.plist minimum")
 RCS=sys.argv[2]
 MACHO_MAGICS={
     b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf",
@@ -198,6 +203,7 @@ def inspect_payload(local, arch, native_sha):
 
 
 def prepare_inputs():
+    declared_minimum(INFO_PLIST_IN.read_bytes())
     native_sha = sha256_file(CANONICAL_DYLIB)
     files = []
     for arch in ("osx-arm64", "osx-x64"):
@@ -207,7 +213,7 @@ def prepare_inputs():
         if sha256_file(local) != digest:
             raise RuntimeError(f"macOS payload changed during admission: {local}")
         files.append((local, digest))
-    for local in (INFO_PLIST_IN, ICNS):
+    for local in (INFO_PLIST_IN, ICNS, DEPLOYMENT_CHECK, MACHO_READER):
         files.append((local, sha256_file(local)))
     return files, native_sha
 

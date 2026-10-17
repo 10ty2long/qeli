@@ -6,6 +6,11 @@ DNS/connect, handshake, crypto, TCP/UDP/QUIC/Reality, heartbeat/shaping, bonding
 utun payload; C# управляет lifecycle/reconnect, созданием интерфейса,
 маршрутами/DNS/pf, trust и UI.
 
+Готовый комплект 0.8.2 требует **macOS 15 или новее**, Intel x86_64 либо Apple Silicon.
+Минимум соответствует [поддерживаемым ОС .NET 10](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md).
+Он задаётся в `Info.plist`; упаковщик также проверяет deployment target каждого Mach-O.
+Это требование совместимости, а не заявление о выполненном физическом тесте на каждой ОС.
+
 Режим **`reality-tls`** использует браузероподобный TLS 1.3 и настоящий HTTP/2 carrier:
 один streaming POST с ALPN `h2` и случайным batching, без прежнего внутреннего fake-TLS
 handshake/framing. Внешний TLS и внутренний qeli AEAD сохраняются. Transport выполняет общее
@@ -124,8 +129,8 @@ Developer ID Application, provisioning profiles для host и system extension 
 созданного `xcrun notarytool store-credentials`: скрипт отправит временный ZIP в Apple,
 дождётся результата и выполнит `stapler staple/validate` до упаковки `.tar.gz`.
 Ad-hoc сборка намеренно не содержит helper и отклоняет per-app-профиль fail-closed.
-Per-app режим требует macOS 13 или новее; обычный `apps_mode = all` сохраняет прежний
-минимум macOS приложения.
+Для готового комплекта 0.8.2 минимум macOS 15 действует и для per-app, и для
+`apps_mode = all`; per-app дополнительно требует корректно подписанного system extension.
 
 На Mac полученный архив:
 

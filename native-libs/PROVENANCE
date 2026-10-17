@@ -8,9 +8,9 @@ Nothing in review or CI could have caught that. This file records what the curre
 binaries were actually built from, so the question has an answer.
 
 source-digest : 42672aca87de8e95b2e289cad35b576196f88e92874d121e1804e7845152976b
-base-commit   : 088a44e271472d44e1c31d0029dbfe84653d31d4
+base-commit   : 2d6fcfd5bbecfe68d91299bb40cb3a5c53ffd4a8
 dirty-sources : 0 file(s) modified vs base-commit at build time
-built-on      : lab .10/.11; isolated Windows/macOS and Android A/B jobs, 2026-10-16
+built-on      : lab .10/.11; independent Windows/macOS and Android A/B jobs; execution timestamps are retained in build journals
 toolchain     : pinned inventories in native-libs/reproducibility/{desktop,android}.json
 panic         : CARGO_PROFILE_RELEASE_PANIC=unwind  (REQUIRED — the catch_unwind guards in
                 protocol/realtls/{ffi,jni}.rs are inert under panic=abort)
@@ -24,3 +24,6 @@ native recipes listed in `scripts/native_repro.py` (`BUILD_INPUTS`), paths sorte
 Recompute it with
 `python native-libs/provenance.py --check`: a mismatch means the cores are stale relative
 to the source in this tree and must be rebuilt before release.
+
+recorded-at   : 2026-10-17T22:46:50.129933+00:00 (provenance refresh, not compilation time)
+source-epoch  : desktop=1792253423, android=1792253423 (reproducibility input, not build time)

@@ -67,9 +67,10 @@ journalctl -u qeli -f
 самое настраивается в приложениях: «Настройки → Время в логе» (Windows, macOS, Android)
 и `log_time_format` в UCI/LuCI на OpenWrt.
 
-> ⚠️ **`format = json` — заглушка.** Не путать с `time_format` выше: `format` отвечает за
-> форму самой строки, парсится и показывается в панели, но `init_logging` его **не читает** —
-> лог всегда плоский. Не рассчитывайте на JSON-логи.
+> **Формат серверного журнала:** `[logging] format = plain|json` выбирает текст или
+> один JSON-объект на запись. `time_format` отдельно задаёт время. После изменения
+> нужен полный рестарт сервера: worker restart не перенастраивает logger supervisor.
+> Конфигурация остаётся INI. Подробнее — [журналирование](CONFIG.md).
 
 Точечная фильтрация (меньше шума): `RUST_LOG=qeli::server::handler=debug,qeli::server::udp_handler=debug,info`.
 

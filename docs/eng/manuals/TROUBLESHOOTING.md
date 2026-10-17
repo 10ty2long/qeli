@@ -67,9 +67,10 @@ The full table of variants is in [CONFIG.md](CONFIG.md#time_format--the-timestam
 The same choice exists in the apps: Settings → Log timestamp (Windows, macOS, Android)
 and `log_time_format` in UCI/LuCI on OpenWrt.
 
-> ⚠️ **`format = json` is a stub.** Not to be confused with `time_format` above: `format`
-> controls the shape of the line itself. It is parsed and shown in the panel, but
-> `init_logging` **never reads it** — the log is always flat. Don't rely on JSON logs.
+> **Server log format:** `[logging] format = plain|json` selects text or one JSON object
+> per record. `time_format` controls timestamps separately. Changing either setting
+> requires a full server restart; a worker restart does not reconfigure the supervisor's
+> logger. Configuration files remain INI. See [logging](CONFIG.md).
 
 Targeted filtering (less noise): `RUST_LOG=qeli::server::handler=debug,qeli::server::udp_handler=debug,info`.
 

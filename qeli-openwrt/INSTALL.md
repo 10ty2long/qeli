@@ -19,8 +19,10 @@ opkg install kmod-tun ip-full iptables ip6tables ca-bundle
 ls -l /dev/net/tun        # must exist (kmod-tun provides it)
 ```
 
-- **Disk space:** the client binary is ~2.5–8 MB depending on arch. On 8/16 MB-flash
-  devices use **extroot** or install to a USB/`/opt` overlay.
+- **Disk space:** the 0.8.2 client ELF is 8.90 MiB (aarch64), 9.05 MiB (armv7),
+  9.63 MiB (x86_64) or 10.85 MiB (mipsel). Also reserve space for dependencies,
+  the previous binary and staging the replacement; the binary size alone is not
+  an installation-space budget. On small-flash devices use **extroot** or a USB/`/opt` overlay.
 - **Wire mode by CPU:** low-end **mipsel** (MT7621/7628) → `fake-tls` / `obfs` / `plain`
   (ChaCha20). `reality-tls` (double AEAD) is sane only on **aarch64** routers.
 
