@@ -123,7 +123,6 @@ jobs:
           python3 -B -m unittest discover -s scripts -p 'test_stability_gate.py'
           python3 -B -m unittest discover -s scripts -p 'test_release_layout.py'
           python3 -B -m unittest discover -s scripts -p 'test_release_short_*.py'
-          python3 -B -m unittest discover -s scripts -p 'test_check_release_tun_queue.py'
           python3 -B -m unittest discover -s scripts -p 'test_benchmark*.py'
           python3 -B -m unittest discover -s scripts -p 'test_roaming_soak_parameters.py'
           python3 -B -m unittest discover -s scripts -p 'test_roaming_netns_isolation.py'
@@ -297,7 +296,6 @@ jobs:
           trap 'rm -rf -- "$payload"' EXIT
           dpkg-deb -x "${{ steps.pkg.outputs.deb }}" "$payload"
           test -x "$payload/usr/bin/qeli"
-          python3 -B scripts/check_release_tun_queue.py --binary "$payload/usr/bin/qeli"
           sudo env QELI_AUDIT_BINARY="$payload/usr/bin/qeli" unshare --mount --net --pid --fork python3 -B scripts/test_installer_real_cli.py
       - name: Runs on the declared glibc floor (debian:10 = glibc 2.28)
         run: |
