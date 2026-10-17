@@ -1843,7 +1843,8 @@ the reply. Non-DNS traffic remains governed by `apps_mode`.
 Windows captures/classifies with the bundled WinDivert driver. macOS uses a signed system
 extension containing both `NETransparentProxyProvider` and `NEDNSProxyProvider`; an ad-hoc or
 cross-built macOS archive therefore rejects an app-filtered profile until a Developer-ID build
-with the required Network Extension entitlements is installed and approved on macOS 13+.
+with the required Network Extension entitlements is installed and approved. The underlying
+APIs exist on macOS 13+, but the 0.8.2 .NET 10 application requires macOS 15 or newer.
 Public distribution also requires Apple notarization and stapling; `qeli-mac/build_app.sh`
 performs it when `QELI_MAC_NOTARY_PROFILE` is supplied.
 
