@@ -1015,7 +1015,7 @@ jobs:
           case "${{ matrix.arch }}" in
             aarch64) runner=(qemu-aarch64) ;;
             mipsel) runner=(qemu-mipsel) ;;
-            armv7) runner=(qemu-arm) ;;
+            armv7) runner=(qemu-arm -cpu cortex-a15) ;;
           esac
           binary="target/${{ matrix.target }}/release/qeli-client"
           exported="$RUNNER_TEMP/qeli-router-license-export"

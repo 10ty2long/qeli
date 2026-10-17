@@ -75,7 +75,7 @@ def main():
     if args.update:
         from native_repro import atomic_write_bytes
         atomic_write_bytes(path, expected.encode('utf8'))
-    if not path.is_file() or path.read_bytes() != expected.encode('utf8'):
+    if not path.is_file() or path.read_bytes().replace(b'\r\n', b'\n') != expected.encode('utf8'):
         raise SystemExit('Embedded license catalogue stale/missing; run scripts/embedded_licenses.py --update')
     print('Embedded CLI license catalogue: PASS')
 

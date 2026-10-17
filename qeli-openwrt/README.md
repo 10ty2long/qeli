@@ -596,20 +596,22 @@ the strict source gate. This is an export/prepare check, not a fresh full SDK/IP
 compiler-bootstrap or physical-router run. Earlier runtime evidence retains its
 original source and scope.
 
-### Current 0.8.2 release-preparation source cut (16 October 2026)
+### Current 0.8.2 embedded-license source cut (17 October 2026)
 
-The recipe now pins `b96d45dbf784f2b3a4c1a76c603fd147c296520d`, which is available on
-`dev` and includes the current Rust source, panel and route-import fixes. One fresh
+The recipe now pins `c20e3c2c4219f239ae10ec2c9e9a428269f9afff`, included in the
+`dev` preparation history, with original legal resources embedded in the CLI and
+the `licenses` read/export command. One fresh
 stock SDK 24.10.4 `download`/`prepare` produced SHA-256
-`1701ee2851410b0a7c96264191788d401bf4b793b780e9179b3843c02a7e9c31`
-(27252315 bytes). All 3454 prepared tracked file contents match that exact commit.
+`333d40b96782cc9c343fd75a4bdca92edeb03fe0cff90f7f408cb361ffcb6cff`
+(27288347 bytes). All 3465 prepared tracked file contents match that exact commit.
 The actual SDK archive is retained locally for the strict release source gate.
 This qualifies source export/prepare, not a repeated compiler bootstrap, full SDK/IPK
 build or physical router test. It does not publish a tag or GitHub Release.
 
-Текущий пакет закреплён на `b96d45dbf784f2b3a4c1a76c603fd147c296520d`, доступном в `dev`:
-актуальные Rust-исходники, панель и исправления импорта маршрутов. Свежие `download`/`prepare`
-в штатном SDK 24.10.4 дали указанный выше SHA-256; содержимое всех 3454 подготовленных
+Текущий пакет закреплён на `c20e3c2c4219f239ae10ec2c9e9a428269f9afff` из истории подготовки `dev`:
+в CLI встроены оригинальные лицензионные ресурсы и команда `licenses` для чтения/экспорта.
+Свежие `download`/`prepare` в штатном SDK 24.10.4 дали указанный выше SHA-256;
+содержимое всех 3465 подготовленных
 отслеживаемых файлов сверено с этим commit. Сам SDK-архив сохранён локально для строгой
 проверки источника релиза. Это не повторная сборка компилятора, полного SDK/IPK и не
 проверка физического роутера. Тег и GitHub Release этим действием не публикуются.
