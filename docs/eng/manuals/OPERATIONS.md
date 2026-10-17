@@ -1,9 +1,9 @@
 # Qeli — operations: compatibility, upgrades, rollback, backup
 
 > **Documentation status:** current development tree **0.8.2**; planned full-IPv6 release **0.8.2**;
-> latest published release **0.8.1**. There will be no public 0.7.17 release.
+> package version covered by this guide **0.8.2**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
-> This guide is prepared for **0.8.2 Beta**. Until publication opens, the published-package links below remain on 0.8.1.
+> **0.8.2 Beta** materials: downloads become available upon publication. See [GitHub Releases](https://github.com/litvinovtd/qeli/releases) for current availability.
 
 Installation is covered in [GETTING-STARTED.md](GETTING-STARTED.md), config keys in
 [CONFIG.md](CONFIG.md), error decoding in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
@@ -128,7 +128,7 @@ SHA256SUMS from the same release establish integrity against its metadata, not i
 To verify a downloaded amd64 package before manual installation, use GitHub CLI against this repository. The filename below follows the latest published release in this guide; failed verification means the package has not passed this provenance check.
 
 ```bash
-gh attestation verify qeli_0.8.1_amd64.deb --repo litvinovtd/qeli
+gh attestation verify qeli_0.8.2_amd64.deb --repo litvinovtd/qeli
 ```
 
 The 0.8.2 prerelease preserves its qualified candidate package without a new

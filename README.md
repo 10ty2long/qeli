@@ -110,11 +110,11 @@ Something went wrong? → **[Troubleshooting (EN)](docs/eng/manuals/TROUBLESHOOT
 
 ## Status
 
-**qeli 0.8.2 Beta is prepared for publication**, following a 37-area internal audit focused on
+Release materials for **qeli 0.8.2 Beta**, following a 37-area internal audit focused on
 consistent configuration, controlled network recovery and reliable client operation.
 See the [bilingual release notes](release/RELEASE_NOTES_0.8.2.md) for the audit scope,
-upgrade steps, packaging and accepted limitations. It remains an unpublished GitHub draft;
-the latest published beta is [0.8.1](https://github.com/litvinovtd/qeli/releases/tag/v0.8.1).
+upgrade steps, packaging and accepted limitations. Publication status and available
+downloads are shown in [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
 
 Pre-1.0 / beta — the data plane is stable and covered by unit + end-to-end tests, but the
 protocol may still change between minor versions. Release builds are published on the

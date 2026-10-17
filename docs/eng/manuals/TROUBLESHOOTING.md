@@ -1,9 +1,9 @@
 # Qeli — connection diagnostics and error reference
 
 > **Documentation status:** current development tree **0.8.2**; planned full-IPv6 release **0.8.2**;
-> latest published release **0.8.1**. There will be no public 0.7.17 release.
+> package version covered by this guide **0.8.2**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
-> This guide is prepared for **0.8.2 Beta**. Until publication opens, the published-package links below remain on 0.8.1.
+> **0.8.2 Beta** materials: downloads become available upon publication. See [GitHub Releases](https://github.com/litvinovtd/qeli/releases) for current availability.
 
 A detailed, practical guide: how to enable debug logging, how to read the log by
 connection stage, what every server and client (Windows / macOS / Android) error

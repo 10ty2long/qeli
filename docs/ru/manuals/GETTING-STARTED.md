@@ -1,9 +1,9 @@
 # Qeli — установка и начало работы (пошагово)
 
 > **Статус документации:** текущая ветка разработки **0.8.2**; планируемый full-IPv6 релиз **0.8.2**;
-> последний опубликованный релиз **0.8.1**. Публичного релиза 0.7.17 не будет.
+> версия пакетов в этом руководстве **0.8.2**. Публичного релиза 0.7.17 не будет.
 > Фактическую версию установленного бинарника показывает `qeli --version`.
-> Руководство подготовлено для **0.8.2 Beta**. До открытия публикации ссылки на опубликованные пакеты ниже остаются на 0.8.1.
+> Материалы **0.8.2 Beta**: загрузки открываются после публикации. Актуальный статус — в [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
 
 Полное руководство «с нуля»: от поднятия сервера до заведения пользователей с
 маршрутами и подключения первого клиента — **и через CLI, и через веб-панель**.
@@ -166,15 +166,15 @@
 
 ```bash
 cd /tmp
-curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.1/qeli_0.8.1_amd64.deb
-# или scp с рабочей машины:  scp qeli_0.8.1_amd64.deb root@server:/tmp/
+curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.2/qeli_0.8.2_amd64.deb
+# или scp с рабочей машины:  scp qeli_0.8.2_amd64.deb root@server:/tmp/
 ```
 
 > **Почему `/tmp`.** `apt` скачивает и распаковывает от имени служебного пользователя
 > `_apt`, а `/root` и домашние каталоги ему недоступны. Из `/root` установка проходит, но
 > с предупреждением:
 > ```
-> N: Download is performed unsandboxed as root as file '/root/qeli_0.8.1_amd64.deb'
+> N: Download is performed unsandboxed as root as file '/root/qeli_0.8.2_amd64.deb'
 >    couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
 > ```
 > Это именно предупреждение (apt откатывается на работу от root), но из `/tmp` его
@@ -183,14 +183,14 @@ curl -fLO https://github.com/litvinovtd/qeli/releases/download/v0.8.1/qeli_0.8.1
 #### A.2. Установить
 
 ```bash
-sudo apt install /tmp/qeli_0.8.1_amd64.deb     # ставит и подтягивает зависимости
+sudo apt install /tmp/qeli_0.8.2_amd64.deb     # ставит и подтягивает зависимости
 ```
 
 Указывайте **полный путь** (или `./имя.deb`) — без слэша apt будет искать пакет с таким
 именем в репозиториях. Альтернатива, если apt по какой-то причине недоступен:
 
 ```bash
-sudo dpkg -i /tmp/qeli_0.8.1_amd64.deb
+sudo dpkg -i /tmp/qeli_0.8.2_amd64.deb
 sudo apt-get -f install -y          # доустановить зависимости (iproute2, iptables, libcap2-bin)
 ```
 
@@ -211,7 +211,7 @@ sudo apt-get -f install -y          # доустановить зависимо�
   `qeli set-service-user`. Неинтерактивно (автоматизация / preseed):
   ```bash
   echo "qeli qeli/run-as select root" | sudo debconf-set-selections
-  sudo apt install /tmp/qeli_0.8.1_amd64.deb
+  sudo apt install /tmp/qeli_0.8.2_amd64.deb
   ```
   Изменить можно в любой момент позже — `sudo qeli set-service-user root|qeli` (§10.4),
   там же расписаны размены варианта `root`.
