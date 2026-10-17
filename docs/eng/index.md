@@ -126,3 +126,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - **[../../SECURITY.md](../../SECURITY.md)** — security policy and reporting.
 - **[../../CONTRIBUTING.md](../../CONTRIBUTING.md)** — how to contribute.
 - **[../../release/docker/README.md](../../release/docker/README.md)** — running the server in Docker.
+
+- [Linux client TUN queue size](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.

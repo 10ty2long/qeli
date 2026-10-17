@@ -126,3 +126,5 @@
 - **[../../SECURITY.md](../../SECURITY.md)** — политика безопасности и приём отчётов.
 - **[../../CONTRIBUTING.md](../../CONTRIBUTING.md)** — как участвовать в разработке.
 - **[../../release/docker/README.md](../../release/docker/README.md)** — запуск сервера в Docker.
+
+- [Размер клиентской TUN-очереди Linux](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.

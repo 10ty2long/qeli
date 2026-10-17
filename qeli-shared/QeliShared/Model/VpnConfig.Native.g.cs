@@ -3,7 +3,7 @@
 using System.Text.Json;
 namespace Qeli.Shared.Model;
 public sealed partial class VpnConfig {
-    private static readonly HashSet<string> NativeCarriedKeys = new() { "allow_lan","dev","device_type","dev_attach","autostart","exit_node","gateway_nat","lan_subnet","lan_subnet_ipv6","post_up","post_down","password_file","password_command","keepalive","tcp_nodelay","recv_buffer_size","send_buffer_size","reality_compact","reality_split","reality_split_delay" };
+    private static readonly HashSet<string> NativeCarriedKeys = new() { "allow_lan","dev","device_type","dev_attach","tun.tx_queue_len","autostart","exit_node","gateway_nat","lan_subnet","lan_subnet_ipv6","post_up","post_down","password_file","password_command","keepalive","tcp_nodelay","recv_buffer_size","send_buffer_size","reality_compact","reality_split","reality_split_delay" };
     private Dictionary<string, object?> NativeValues() => new() {
         ["$host"] = ServerAddress, ["$port"] = Port, ["$routing_mode"] = RoutingMode,
         ["name"] = Name ?? "",

@@ -2844,3 +2844,28 @@ Keep system Always-on VPN and Block connections without VPN enabled. Qeli
 has no separate mode permitting VPN bypass.
 
 [Facts, reproduction and limits](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
+
+### Linux: client TUN queue size was not applied
+
+Set `tun.tx_queue_len` in `[qeli]` in the client file, not a new `[tun]` section
+or only on the server. A build containing this change uses `1000` packets when
+the key is absent for an owned Linux TUN/TAP. Save the INI, stop/start the client
+itself and inspect `qlen` using `ip link show dev vpn0` in its namespace.
+Use the actual `dev` name; the confirming log line is
+`Client TUN TX queue length: <N> packets`. Reloading the server does not change the client queue.
+
+If the key is unknown, check the installed **client binary**: earlier builds
+with the same 0.8.2 version number need not contain this change. Updating only
+the server does not help. If saving through the panel fails, also check whether
+its local editor supports the key. Accepted values are integers `1..32767`;
+`0` and `auto` do not enable automatic adjustment. With `dev_attach=true`, remove
+the key completely and configure the queue through the external interface owner.
+
+`failed to set client TUN TX queue length` means the kernel setup was refused:
+connection setup aborts without silently falling back to the old length. Check
+the `ip` tool, process permissions, interface name/ownership and namespace;
+do not bypass the error by weakening config validation. A larger queue does not
+fix every asymmetry: compare kernel TX drops separately from qdisc/application
+drops, along with retransmissions and RTT.
+[Full contract](CONFIG.md#client-tun-tx-queue),
+[operational verification](OPERATIONS.md#client-tun-tx-queue).

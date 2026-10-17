@@ -26,7 +26,11 @@ fn default_value(f: &schema::Field) -> Value {
     }
 }
 fn key_parts(key: &str) -> (&str, &str) {
-    key.split_once('.').unwrap_or(("qeli", key))
+    if key == "tun.tx_queue_len" {
+        ("qeli", key)
+    } else {
+        key.split_once('.').unwrap_or(("qeli", key))
+    }
 }
 fn safe(value: &str) -> anyhow::Result<()> {
     anyhow::ensure!(
@@ -114,6 +118,7 @@ fn bounds(key: &str) -> (i64, i64) {
         "reconnect_retries" => (-1, i32::MAX as i64),
         "reconnect_base_delay" | "reconnect_max_delay" => (1, 86400),
         "lport" => (0, 65535),
+        "tun.tx_queue_len" => (1, super::client::CLIENT_TUN_TX_QUEUE_LEN_MAX as i64),
         "recv_buffer_size" | "send_buffer_size" => (0, 64 * 1024 * 1024),
         "heartbeat_size" | "shaping_min_size" | "shaping_max_size" => (0, 65535),
         "heartbeat_interval"
@@ -216,10 +221,10 @@ fn inspect(mut doc: IniDoc) -> anyhow::Result<Document> {
         }
         for (k, v) in &sec.entries {
             safe(v)?;
-            let key = if sec.kind == "qeli" && !k.contains('.') {
+            let key = if sec.kind == "qeli" && (!k.contains('.') || k == "tun.tx_queue_len") {
                 k.clone()
             } else {
-                // Dotted schema names denote a section plus its local key. A literal
+                // Other dotted schema names denote a section plus its local key. A literal
                 // `logging.level` under [qeli] must not alias [logging] level.
                 format!("{}.{}", sec.kind, k)
             };
@@ -714,3 +719,6 @@ pub fn parse_runtime(source: &str) -> anyhow::Result<ClientConfig> {
     validate(&d)?;
     ClientConfig::from_ini(&materialize(&d)?)
 }
+
+#[cfg(test)]
+mod tun_queue_tests;

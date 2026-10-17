@@ -67,6 +67,7 @@ pub const FIELDS: &[Field] = &[
     field!("dev", "string", "vpn0", "-", "-", "-"),
     field!("device_type", "string", "tun", "-", "-", "-"),
     field!("dev_attach", "bool", "false", "-", "-", "-"),
+    field!("tun.tx_queue_len", "int", "1000", "-", "-", "-"),
     field!("autostart", "bool", "false", "-", "-", "-"),
     field!("exit_node", "bool", "false", "-", "-", "-"),
     field!("gateway_nat", "bool", "false", "-", "-", "-"),

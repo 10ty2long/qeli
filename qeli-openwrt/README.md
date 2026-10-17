@@ -13,8 +13,8 @@ out to a qeli server and route its LAN through the tunnel — managed the OpenWr
 ## Design — what's new and what's reused
 
 The client logic is **not reimplemented**. OpenWrt runs the exact same
-`qeli client` binary the Linux/Keenetic clients use, so it **inherits every
-core-side fix automatically**:
+`qeli client` logic the Linux/Keenetic clients use, so it **inherits core-side
+fixes after rebuilding/updating the client binary**, not from a server upgrade alone:
 
 | Fix (release) | Why it matters on a router |
 |---|---|
@@ -95,6 +95,24 @@ Or use **LuCI → Services → qeli VPN**. The password fields are write-only an
 whether a volatile secret exists; an empty field leaves the current value unchanged.
 
 ## Notes / compatibility
+
+### Client TUN TX queue (development 0.8.2)
+
+A client binary containing the queue-setting change uses `1000` packets for its
+owned Linux TUN/TAP even when the INI omits `tun.tx_queue_len`. This is a core
+default, not a server push, and an old installed binary does not acquire it from
+a server upgrade. Current UCI/LuCI has **no queue-size option**, and the init
+renderer does not emit this key: editing its tmpfs-generated INI is not a persistent
+override and is lost on the next render. Do not invent a UCI setting for it.
+
+When running a standalone client with an administrator-owned INI, put
+`tun.tx_queue_len = 1000` (explicit `1..32767`, no auto mode) under `[qeli]`, then
+stop/start that client. Omit it with `dev_attach=true`; the external owner controls
+that queue. A larger queue may increase latency. Linux amd64 functional checks
+do not qualify a new MIPS/ARM package on real OpenWrt hardware.
+[Full contract](../docs/eng/manuals/CONFIG.md#client-tun-tx-queue).
+
+### Other compatibility notes
 
 - Wire mode by CPU: on low-end **mipsel** prefer `fake-tls` / `obfs` / `plain` (ChaCha20);
   `reality-tls` (double AEAD) is sane only on ARM (aarch64) routers.
