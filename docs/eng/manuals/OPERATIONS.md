@@ -3,6 +3,7 @@
 > **Documentation status:** current development tree **0.8.2**; planned full-IPv6 release **0.8.2**;
 > latest published release **0.8.1**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
+> This guide is prepared for **0.8.2 Beta**. Until publication opens, the published-package links below remain on 0.8.1.
 
 Installation is covered in [GETTING-STARTED.md](GETTING-STARTED.md), config keys in
 [CONFIG.md](CONFIG.md), error decoding in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
@@ -133,8 +134,12 @@ gh attestation verify qeli_0.8.1_amd64.deb --repo litvinovtd/qeli
 The 0.8.2 prerelease preserves its qualified candidate package without a new
 release-build attestation. The command above is therefore expected to refuse
 that package unless a matching attestation is separately published. Its
-`SHA256SUMS`, `PROVENANCE.json` and `QUALIFICATION.json` describe integrity and
-the executed qualification; they do not replace a GitHub build attestation.
+`SHA256SUMS` describes the integrity of the downloads. The source-side
+[release certification](../../../release/certification/0.8.2.json) and
+[native build provenance](../../../native-libs/PROVENANCE) record their respective
+qualification scopes; they do not replace a GitHub build attestation.
+Separate `PROVENANCE.json` and `QUALIFICATION.json` downloads are not included in
+the final 0.8.2 asset set.
 An installation requiring `QELI_VERIFY_ATTESTATION=1` must remain blocked when
 the required attestation is unavailable.
 

@@ -1,7 +1,5 @@
 # Qeli 0.8.2 — consistent configuration and reliable operation / единые конфиги и надёжность
 
-**Draft for review. The release is prepared locally; publication awaits approval.**
-**Черновик для согласования. Релиз подготовлен локально; публикация ожидает подтверждения.**
 The 0.8 line remains beta. Линейка 0.8 остаётся бета-версией.
 
 **Language / Язык:** [English](#english) · [Русский](#русский).
@@ -24,13 +22,13 @@ platforms remain recorded in the [audit debt register](https://github.com/litvin
 
 ### Scale and main outcomes of the audit
 
-At the release-preparation snapshot [`6b20ea2a`](https://github.com/litvinovtd/qeli/commit/6b20ea2a0059e48786c9f6cd7120faf6890807fe)
-on 16 October, development since 0.8.1 comprised **1,228 commits: 1,203 non-merge
+At the qualified release-preparation snapshot [`3acf33f0`](https://github.com/litvinovtd/qeli/commit/3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
+on 17 October, development since 0.8.1 comprised **1,233 commits: 1,208 non-merge
 commits and 25 merge commits**. This includes product changes, refactoring, tests,
 build tooling and documentation—not 1,228 separate defects. The audit covered
 **37 system areas**, with **323 audit reports**, each available in English and Russian;
 translations are not counted as additional investigations.
-[Changes since 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+[Changes since 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
 · [Audit report catalogue](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/README.md).
 
 The most important results are stronger rules for how the system behaves:
@@ -143,13 +141,15 @@ requirement; `manual` does not enable external forwarding automatically.
   campaign was rerun for each subsequent release candidate.
   [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- Packaged candidate `1a154fbd` passed **all 20 required CI jobs** in its
-  [candidate run](https://github.com/litvinovtd/qeli/actions/runs/38941015737).
-  The final preparation snapshot `6b20ea2a` also passed **20 required jobs** in its
-  [CI run](https://github.com/litvinovtd/qeli/actions/runs/38944909120); two scheduled
-  fuzz jobs were skipped, not counted as passed. The two snapshots have identical
-  product sources; the later commit records Linux release certification. These CI
-  results identify those snapshots, not future edits to the release notes.
+- The embedded-license candidate `e90bf0c2` passed **all 20 required CI jobs** in its
+  [candidate run](https://github.com/litvinovtd/qeli/actions/runs/39030207942).
+  Its qualified preparation snapshot `3acf33f0` also passed **20 required jobs** in
+  [CI](https://github.com/litvinovtd/qeli/actions/runs/39031424452); two scheduled
+  fuzz jobs were skipped, not counted as passed. The later commit records the fresh
+  20-case Linux qualification; it changes no product sources. APK and macOS app
+  bytes were retained only after confirming unchanged app/build inputs and freshly
+  A/B-rebuilt native payloads (macOS packaging signatures have their own scope).
+  These results identify those snapshots, not subsequent documentation edits.
 
 These are separate test populations, not a combined test count. Reports retain source
 and artifact identities, test conditions and original failures.
@@ -187,6 +187,16 @@ router executables provide `licenses --list`, `licenses --file PATH` and
 remain available inside the binaries. This does not replace source availability
 or other license obligations.
 
+The download set contains 16 files including `SHA256SUMS`: Android APK, two Windows
+EXEs, the macOS universal ZIP, Linux executable and DEB, six router executables,
+and three router installation/feed files. Qualification records are kept in the
+[source repository](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json),
+not as separate `PROVENANCE.json` / `QUALIFICATION.json` downloads. This beta retains
+the qualified DEB without a new release-build attestation; strict attestation
+verification must refuse when no matching attestation is available. Docker publishes
+the versioned `0.8.2` image separately after tag admission; a beta does not replace
+the stable `latest` tag. Uploading download files alone does not create that image.
+
 The macOS universal ZIP includes both Apple Silicon and Intel code;
 extract the complete `Qeli.app` on macOS, preserving executable permissions. It uses
 ad-hoc signatures, without Developer ID notarization or the per-app system extension.
@@ -214,13 +224,13 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
 
 ### Масштаб и главные результаты аудита
 
-На снимке подготовки релиза [`6b20ea2a`](https://github.com/litvinovtd/qeli/commit/6b20ea2a0059e48786c9f6cd7120faf6890807fe)
-от 16 октября разработка после 0.8.1 включает **1 228 коммитов: 1 203 обычных
+На проверенном снимке подготовки релиза [`3acf33f0`](https://github.com/litvinovtd/qeli/commit/3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
+от 17 октября разработка после 0.8.1 включает **1 233 коммита: 1 208 обычных
 и 25 merge-коммитов**. Это изменения продукта, рефакторинг, тесты, инструменты сборки
 и документация, а не 1 228 отдельных дефектов. Аудит охватил **37 направлений системы**;
 подготовлены **323 отчёта**, каждый на русском и английском языках. Переводы
 не считаются дополнительными независимыми проверками.
-[Изменения после 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+[Изменения после 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...3acf33f0af881ecd762fa2c5ec2dc70fc327460c)
 · [Каталог отчётов аудита](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/README.md).
 
 Главные результаты — более строгие правила поведения системы:
@@ -340,13 +350,15 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
   для каждого последующего кандидата релиза.
   [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- Упакованный кандидат `1a154fbd` прошёл **все 20 обязательных заданий CI**
-  в [прогоне кандидата](https://github.com/litvinovtd/qeli/actions/runs/38941015737).
-  Итоговый снимок подготовки `6b20ea2a` также прошёл **20 обязательных заданий**
-  в [CI](https://github.com/litvinovtd/qeli/actions/runs/38944909120); два задания fuzz
-  по расписанию пропущены, а не засчитаны как PASS. Исходники продукта у этих снимков
-  одинаковые; поздний коммит фиксирует Linux-квалификацию релиза. Эти результаты CI
-  относятся к указанным снимкам, а не к будущим правкам описания релиза.
+- Кандидат со встроенными лицензиями `e90bf0c2` прошёл **все 20 обязательных заданий CI**
+  в [прогоне кандидата](https://github.com/litvinovtd/qeli/actions/runs/39030207942).
+  Его проверенный снимок подготовки `3acf33f0` также прошёл **20 обязательных заданий**
+  в [CI](https://github.com/litvinovtd/qeli/actions/runs/39031424452); два задания fuzz
+  по расписанию пропущены, а не засчитаны как PASS. Поздний коммит фиксирует свежую
+  Linux-квалификацию из 20 сценариев и не меняет исходники продукта. Готовые APK и
+  macOS-приложение сохранены только после сверки неизменности входов приложений/сборки
+  и свежих A/B-пересборок native payload; подпись упаковки macOS имеет отдельный объём.
+  Эти результаты относятся к указанным снимкам, а не к последующим правкам документации.
 
 Это отдельные наборы проверок, их числа не складываются в один счётчик тестов.
 В отчётах сохранены версии исполненных исходников и артефактов, условия
@@ -386,6 +398,16 @@ Windows снова распространяется отдельными single-
 Отдельный `qeli-native-legal.zip` убран из загрузок релиза; исходные тексты и индексы
 доступны внутри бинарников. Это не заменяет доступность исходников и остальные
 условия лицензий.
+
+Комплект загрузок — 16 файлов вместе с `SHA256SUMS`: APK Android, два Windows EXE,
+universal ZIP macOS, Linux-бинарник и DEB, шесть роутерных бинарников и три файла
+установки/feed для роутеров. Данные квалификации хранятся в
+[исходном репозитории](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json),
+а не в отдельных загрузках `PROVENANCE.json` / `QUALIFICATION.json`. Beta сохраняет
+проверенный DEB без новой release-build аттестации; строгая проверка происхождения
+обязана отказать, если соответствующей аттестации нет. Docker отдельно публикует
+образ с тегом `0.8.2` после допуска Git-тега; beta не заменяет stable-тег `latest`.
+Одна загрузка файлов релиза сама по себе не создаёт Docker-образ.
 
 Universal ZIP для macOS содержит код Apple Silicon и Intel;
 распакуйте весь `Qeli.app` на macOS с сохранением прав запуска. Подпись — ad-hoc,

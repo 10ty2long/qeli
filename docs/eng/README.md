@@ -1,6 +1,6 @@
 # Qeli — an obfuscated VPN
 
-> 0.8.2 is under development and has not been released. The latest published release is 0.8.1. [Audit status and qualification limits](plans/FULL-SYSTEM-AUDIT.md).
+> 0.8.2 Beta is prepared for publication and remains an unpublished GitHub draft. The latest published release is 0.8.1. [0.8.2 release notes](../../release/RELEASE_NOTES_0.8.2.md) · [Audit status and qualification limits](plans/FULL-SYSTEM-AUDIT.md).
 
 **Qeli** (Quick Easy Link IP) is a self-hosted VPN with its own L4 protocol and
 built-in obfuscation, running over TCP or UDP. The goal is resilience against

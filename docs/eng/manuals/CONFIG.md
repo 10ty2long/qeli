@@ -3,6 +3,7 @@
 > **Documentation status:** current development tree **0.8.2**; planned full-IPv6 release **0.8.2**;
 > latest published release **0.8.1**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
+> This guide is prepared for **0.8.2 Beta**. Until publication opens, the published-package links below remain on 0.8.1.
 
 ## Format: flat-INI (the only one; TOML/JSON have been dropped)
 

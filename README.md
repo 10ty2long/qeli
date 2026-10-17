@@ -110,9 +110,11 @@ Something went wrong? → **[Troubleshooting (EN)](docs/eng/manuals/TROUBLESHOOT
 
 ## Status
 
-Current beta release: **qeli 0.8.1** — a consolidation of the 0.8 network architecture focused on
-UDP throughput, continuity across network changes, deployable IPv6 and safer operational state.
-See the [bilingual release notes](release/RELEASE_NOTES_0.8.1.md) for the outcome, upgrade steps and artifacts.
+**qeli 0.8.2 Beta is prepared for publication**, following a 37-area internal audit focused on
+consistent configuration, controlled network recovery and reliable client operation.
+See the [bilingual release notes](release/RELEASE_NOTES_0.8.2.md) for the audit scope,
+upgrade steps, packaging and accepted limitations. It remains an unpublished GitHub draft;
+the latest published beta is [0.8.1](https://github.com/litvinovtd/qeli/releases/tag/v0.8.1).
 
 Pre-1.0 / beta — the data plane is stable and covered by unit + end-to-end tests, but the
 protocol may still change between minor versions. Release builds are published on the
