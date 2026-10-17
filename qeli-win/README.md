@@ -37,7 +37,7 @@ qeli-win/
 │   ├── Branding.cs    логотип + иконки (GDI+), NativeLoader (вшитый Wintun)
 │   ├── wintun/wintun.dll  (встраивается в exe как ресурс)
 │   └── windivert/         WinDivert.dll + WinDivert64.sys (встраиваются в exe)
-├── dist/              publish-каталоги и QeliWin-standalone.zip / QeliWin-net-required.zip
+├── dist/              publish-каталоги и QeliWin-standalone.exe / QeliWin-net-required.exe
 └── ../qeli-shared/    production lifecycle/model + отдельный QeliConformance runner
 ```
 
@@ -45,25 +45,23 @@ qeli-win/
 
 VPN требует прав администратора (создание Wintun-адаптера, изменение маршрутов/DNS).
 
-Для поставки 0.8.2 подготовлены **два ZIP-варианта приложения** — выберите один.
-Каждый содержит `QeliWin.exe`, каталог `Legal/`, `Wintun-LICENSE.txt`,
-`WinDivert-LICENSE.txt` и `WinDivert-NOTICE.txt`. Лицензионные материалы являются
-обязательной частью поставки; сохраняйте весь распакованный комплект.
-В прежних релизах отдельно публиковались файлы с суффиксом `.exe`.
+Для поставки 0.8.2 используются **два single-file EXE** — выберите один.
+Оригинальные лицензии Cargo/.NET, MPL/AGPL и Wintun/WinDivert notices встроены
+в каждый EXE. Просмотр: **О программе → Лицензии**; там же можно сохранить
+комплект текстов в ZIP. Отдельные `Legal/` и license ZIP для запуска не нужны.
 
-| Архив | Что нужно на машине |
+| Файл | Что нужно на машине |
 |---|---|
-| `QeliWin-standalone.zip` | Рантайм включён в комплект |
-| `QeliWin-net-required.zip` | **.NET 10 Desktop Runtime** |
+| `QeliWin-standalone.exe` | Рантайм включён в EXE |
+| `QeliWin-net-required.exe` | **.NET 10 Desktop Runtime** |
 
 1. Только для `net-required`: `winget install Microsoft.DotNet.DesktopRuntime.10`.
    Для `standalone` этот шаг пропускается.
-2. Распакуйте выбранный ZIP целиком в отдельный каталог. Запускайте `QeliWin.exe`
-   из этого каталога, сохраняя `Legal/` и остальные файлы рядом. `wintun.dll` вшита и
+2. Сохраните выбранный EXE в удобный каталог. `wintun.dll` вшита и
    распаковывается перед загрузкой: elevated-приложение и служба используют защищённый
    `%ProgramData%\QeliWin\native`, диагностический запуск без elevation —
    `%LOCALAPPDATA%\QeliWin\native`.
-3. Запустите `QeliWin.exe` (по запросу UAC согласитесь на повышение прав).
+3. Запустите выбранный EXE (по запросу UAC согласитесь на повышение прав).
 4. Нажмите **Импорт** → вставьте `qeli://`-ссылку или **INI-конфиг** (`[qeli]`-секция) →
    **Подключить**.
 
@@ -239,20 +237,21 @@ dotnet build QeliWin\QeliWin.csproj -c Debug
 dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained false `
   -p:PublishSingleFile=true -o dist\net-required
 if ($LASTEXITCODE -ne 0) { throw "net-required publish failed" }
-Compress-Archive -Path dist\net-required\* -DestinationPath dist\QeliWin-net-required.zip -Force
+Copy-Item -LiteralPath dist\net-required\QeliWin.exe -Destination dist\QeliWin-net-required.exe
 
 # ── вариант B: сжатый self-contained (~77 МБ, без установки .NET) ──
 dotnet publish QeliWin\QeliWin.csproj -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -o dist\standalone
 if ($LASTEXITCODE -ne 0) { throw "standalone publish failed" }
-Compress-Archive -Path dist\standalone\* -DestinationPath dist\QeliWin-standalone.zip -Force
+Copy-Item -LiteralPath dist\standalone\QeliWin.exe -Destination dist\QeliWin-standalone.exe
 ```
 
-Распространять весь publish-каталог, упакованный в выбранный ZIP, включая `Legal/`,
-`Wintun-LICENSE.txt` и notices WinDivert. `Legal/` содержит MPL клиента, AGPL ядра
-и общий Cargo.lock комплект; он сохраняется отдельно при single-file publish.
-Проверка: из корня репозитория `python scripts/native_licenses.py --bundle qeli-win/dist/standalone/Legal/NativeRust`.
+Распространяется только выбранный EXE: полный комплект текстов встроен в сборку.
+Просмотр без VPN: `QeliWin-standalone.exe licenses --list` и `licenses --file PATH`.
+Экспорт в новый каталог: `QeliWin-standalone.exe licenses --export NEW_DIRECTORY`.
+Проверка экспорта из корня: `python scripts/embedded_licenses.py --windows --verify-export NEW_DIRECTORY`.
+CI также проверяет точные ресурсы внутри каждого готового EXE, а не только publish-каталог.
 См. [обновление комплекта](../LICENSING.md).
 
 ## Headless-режимы (для отладки/CI)
@@ -322,16 +321,17 @@ WinDivert strict gate использует DROP (0x0002); журнал восс�
 
 ## .NET legal resources
 
-Publish includes the common reviewed NuGet graphs/runtime-pack notices in
-`Legal/DotNet/`, alongside `Legal/NativeRust/` and the client MPL text.
-Keep the complete `Legal` directory when packaging a distribution. macOS app
+Windows single-file EXEs embed the reviewed NuGet/runtime-pack, Cargo, driver and
+client/core legal resources. **About → Licenses** reads and exports them offline;
+`licenses --export NEW_DIRECTORY` exports their original bytes without starting VPN.
+No external `Legal` directory or release license ZIP is needed for Windows. macOS app
 assembly places it in `Contents/Resources/Legal/` and validates both bundles before
 assembly (Python 3.11+, select executable with `PYTHON`). Embedded Inter fonts
 have their own SIL OFL 1.1/copyright, separate from Avalonia code MIT.
 Validate and update the bundle as described in [LICENSING](../LICENSING.md).
 This is a full reviewed dependency superset, not a per-executable linkage list.
 
-The common `Legal/NativeRust/toolchains/` layer also preserves reviewed Rust
+The common native `rust/toolchains/` layer also preserves reviewed Rust
 stdlib, Zig, NDK and GCC/MinGW resources. Keep the entire native bundle. Its
 source/version catalog is checked offline; matching-source publication and
 per-binary runtime linkage remain separate qualification. See [maintenance](../LICENSING.md).

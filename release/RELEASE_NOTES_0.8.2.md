@@ -1,7 +1,7 @@
 # Qeli 0.8.2 — consistent configuration and reliable operation / единые конфиги и надёжность
 
-**Draft for review. Publication is withdrawn; no release date is set.**
-**Черновик для согласования. Публикация отменена; дата выпуска не назначена.**
+**Draft for review. The release is prepared locally; publication awaits approval.**
+**Черновик для согласования. Релиз подготовлен локально; публикация ожидает подтверждения.**
 The 0.8 line remains beta. Линейка 0.8 остаётся бета-версией.
 
 **Language / Язык:** [English](#english) · [Русский](#русский).
@@ -21,6 +21,37 @@ code review, normal and invalid inputs, failures and concurrency, available inte
 tests, and verification of fixes. All 37 sections are complete within the agreed scope.
 This was an internal engineering audit; accepted limitations and excluded physical
 platforms remain recorded in the [audit debt register](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/plans/AUDIT-DEBT.md).
+
+### Scale and main outcomes of the audit
+
+At the release-preparation snapshot [`6b20ea2a`](https://github.com/litvinovtd/qeli/commit/6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+on 16 October, development since 0.8.1 comprised **1,228 commits: 1,203 non-merge
+commits and 25 merge commits**. This includes product changes, refactoring, tests,
+build tooling and documentation—not 1,228 separate defects. The audit covered
+**37 system areas**, with **323 audit reports**, each available in English and Russian;
+translations are not counted as additional investigations.
+[Changes since 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+· [Audit report catalogue](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/README.md).
+
+The most important results are stronger rules for how the system behaves:
+
+- **Failure must not silently remove protection.** Audited network operations track
+  resource ownership and verify rollback; incomplete cleanup retains the protective
+  block and the information needed to retry recovery.
+- **Verify the server before sending credentials.** The shared core rejects invalid
+  server proofs and degenerate static keys in the reviewed authentication paths.
+  Key-file errors no longer silently replace an existing identity with a new one.
+- **One interpretation of configuration.** Clients share the native INI/URI contract,
+  while panel transactions detect stale edits and validate configuration before
+  applying changes.
+- **Evidence beyond a successful build.** Native A/B rebuilds, ABI/JNI checks,
+  source/artifact hashes and exact-commit CI tie checks to identified inputs.
+  Historical results and unavailable physical platforms are not silently counted
+  as fresh successful tests.
+
+For Qeli, this means a more predictable foundation: fewer client-specific differences,
+explicit failures instead of false success, and more controlled recovery after an
+interrupted operation. It does not mean that every possible failure has been eliminated.
 
 ### Main changes since 0.8.1
 
@@ -100,17 +131,25 @@ requirement; `manual` does not enable external forwarding automatically.
 - Retained evidence covers **20 required Linux runtime cases**, including network
   application/recovery and IPv4/IPv6. ABI/JNI checks and Android emulator tests
   complemented platform builds.
-- **15 ASan fuzz targets** exercised parser/protocol boundaries. A complete endurance
-  run lasted approximately **13 hours**, including 10,000 TCP and 10,000 QUIC cycles,
-  additional UDP adapters and predefined resource budgets.
+- Cryptographic checks included **60 NIST ML-KEM-768 known-answer cases**, RFC vectors
+  for X25519 and ChaCha20-Poly1305, and independent HKDF checks.
+  These check implementation consistency, not external security certification.
+  [Cryptographic checks and limits](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q08-CRYPTO-KEYS.md).
+- During the audit, **15 ASan fuzz targets** exercised parser/protocol boundaries;
+  their original pinned run completed **85,930,590 iterations**. A complete
+  eight-phase endurance run lasted approximately **13 hours 4 minutes**, including
+  10,000 TCP and 10,000 QUIC cycles, additional UDP adapters and predefined resource
+  budgets. These are retained audit-campaign executions, not claims that the full
+  campaign was rerun for each subsequent release candidate.
   [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- After the dependency updates, candidate `a7694288` passed **all 20 required CI jobs**
-  in both the [push run](https://github.com/litvinovtd/qeli/actions/runs/38816216951)
-  and [PR run](https://github.com/litvinovtd/qeli/actions/runs/38816225427).
-  Merge `a5fb2834` in `dev` has the same file tree. These results precede this documentation
-  review and do not certify a later release build. The earlier audit baseline `fe6a61ae`
-  retains its separate [19-job CI result](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
+- Packaged candidate `1a154fbd` passed **all 20 required CI jobs** in its
+  [candidate run](https://github.com/litvinovtd/qeli/actions/runs/38941015737).
+  The final preparation snapshot `6b20ea2a` also passed **20 required jobs** in its
+  [CI run](https://github.com/litvinovtd/qeli/actions/runs/38944909120); two scheduled
+  fuzz jobs were skipped, not counted as passed. The two snapshots have identical
+  product sources; the later commit records Linux release certification. These CI
+  results identify those snapshots, not future edits to the release notes.
 
 These are separate test populations, not a combined test count. Reports retain source
 and artifact identities, test conditions and original failures.
@@ -139,8 +178,16 @@ may now be rejected. Transfer required legacy notification settings manually to
 sidecar. On Windows, refusal of an untrusted legacy service-profile store requires
 explicit reconfiguration from an elevated GUI after preserving the required user data.
 
-Windows ZIPs must be extracted in full, retaining `Legal/` and driver notices beside
-`QeliWin.exe`. The macOS universal ZIP includes both Apple Silicon and Intel code;
+Windows distributions are single-file `QeliWin-standalone.exe` and
+`QeliWin-net-required.exe` again. Original Cargo/.NET, core/client and driver license
+texts are embedded; **About → Licenses** reads and exports them offline. Linux and
+router executables provide `licenses --list`, `licenses --file PATH` and
+`licenses --export NEW_DIRECTORY` without starting VPN. The separate
+`qeli-native-legal.zip` is no longer a release download; original texts and indexes
+remain available inside the binaries. This does not replace source availability
+or other license obligations.
+
+The macOS universal ZIP includes both Apple Silicon and Intel code;
 extract the complete `Qeli.app` on macOS, preserving executable permissions. It uses
 ad-hoc signatures, without Developer ID notarization or the per-app system extension.
 The Android update retains the existing release certificate; package signatures,
@@ -164,6 +211,38 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
 проверки и повторную проверку исправлений. Все 37 разделов завершены в согласованном
 объёме. Это внутренний инженерный аудит; принятые ограничения и исключённые физические
 стенды сохранены в [реестре техдолга](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/plans/AUDIT-DEBT.md).
+
+### Масштаб и главные результаты аудита
+
+На снимке подготовки релиза [`6b20ea2a`](https://github.com/litvinovtd/qeli/commit/6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+от 16 октября разработка после 0.8.1 включает **1 228 коммитов: 1 203 обычных
+и 25 merge-коммитов**. Это изменения продукта, рефакторинг, тесты, инструменты сборки
+и документация, а не 1 228 отдельных дефектов. Аудит охватил **37 направлений системы**;
+подготовлены **323 отчёта**, каждый на русском и английском языках. Переводы
+не считаются дополнительными независимыми проверками.
+[Изменения после 0.8.1](https://github.com/litvinovtd/qeli/compare/v0.8.1...6b20ea2a0059e48786c9f6cd7120faf6890807fe)
+· [Каталог отчётов аудита](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/README.md).
+
+Главные результаты — более строгие правила поведения системы:
+
+- **Ошибка не должна незаметно снимать защиту.** Проверенные сетевые операции
+  учитывают владельца ресурсов и подтверждают откат; незавершённая очистка сохраняет
+  защитную блокировку и сведения, необходимые для повторного восстановления.
+- **Сначала проверка сервера, затем учётные данные.** Общее ядро отклоняет неверное
+  криптографическое доказательство сервера и вырожденные статические ключи
+  в проверенных путях аутентификации. Ошибки файлов ключей больше не приводят
+  к молчаливой замене существующей identity новой.
+- **Одинаковое понимание конфигурации.** Клиенты используют общий нативный контракт
+  INI/URI; транзакции панели обнаруживают устаревшие правки и проверяют конфигурацию
+  до применения изменений.
+- **Подтверждение не ограничивается успешной сборкой.** Независимые пересборки A/B,
+  проверки ABI/JNI, хеши исходников и артефактов, CI точного коммита связывают
+  результаты с конкретными входами. Исторические проверки и недоступные физические
+  платформы не выдаются за новые успешные прогоны.
+
+Для Qeli это более предсказуемая основа: меньше различий между клиентами,
+явные ошибки вместо ложного успеха и более управляемое восстановление после
+прерванных операций. Это не означает, что устранены все возможные отказы.
 
 ### Основные изменения относительно 0.8.1
 
@@ -249,17 +328,25 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
 - Сохранены результаты **20 обязательных Linux runtime-сценариев**, включая применение
   и восстановление сети и IPv4/IPv6. Сборки платформ дополнены проверками ABI/JNI
   и Android на эмуляторе.
-- **15 ASan fuzz-целей** проверяли границы парсеров и протокола. Полный длительный
-  прогон занял около **13 часов**: 10 000 циклов TCP и 10 000 QUIC, дополнительные
-  UDP-адаптеры и заранее заданные бюджеты ресурсов.
+- Криптографические проверки включали **60 эталонных случаев NIST ML-KEM-768**,
+  векторы RFC для X25519 и ChaCha20-Poly1305, независимые проверки HKDF.
+  Это проверка согласованности реализации, а не внешняя сертификация безопасности.
+  [Проверки криптографии и их границы](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q08-CRYPTO-KEYS.md).
+- В ходе аудита **15 ASan fuzz-целей** проверяли границы парсеров и протокола;
+  исходный закреплённый прогон выполнил **85 930 590 итераций**. Полный восьмиэтапный
+  длительный прогон занял около **13 часов 4 минут**: 10 000 циклов TCP и 10 000 QUIC,
+  дополнительные UDP-адаптеры и заранее заданные бюджеты ресурсов. Это сохранённые
+  исполнения программы аудита, а не утверждение о повторении всей программы
+  для каждого последующего кандидата релиза.
   [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- После обновления зависимостей кандидат `a7694288` прошёл **все 20 обязательных
-  заданий CI** в [push-прогоне](https://github.com/litvinovtd/qeli/actions/runs/38816216951)
-  и [PR-прогоне](https://github.com/litvinovtd/qeli/actions/runs/38816225427).
-  Merge-коммит `a5fb2834` в `dev` содержит то же дерево файлов. Результаты получены до этой
-  сверки документации и не сертифицируют более позднюю сборку релиза. Предыдущий снимок
-  `fe6a61ae` сохраняет отдельный [результат 19 заданий CI](https://github.com/litvinovtd/qeli/actions/runs/38792676524).
+- Упакованный кандидат `1a154fbd` прошёл **все 20 обязательных заданий CI**
+  в [прогоне кандидата](https://github.com/litvinovtd/qeli/actions/runs/38941015737).
+  Итоговый снимок подготовки `6b20ea2a` также прошёл **20 обязательных заданий**
+  в [CI](https://github.com/litvinovtd/qeli/actions/runs/38944909120); два задания fuzz
+  по расписанию пропущены, а не засчитаны как PASS. Исходники продукта у этих снимков
+  одинаковые; поздний коммит фиксирует Linux-квалификацию релиза. Эти результаты CI
+  относятся к указанным снимкам, а не к будущим правкам описания релиза.
 
 Это отдельные наборы проверок, их числа не складываются в один счётчик тестов.
 В отчётах сохранены версии исполненных исходников и артефактов, условия
@@ -291,8 +378,16 @@ legacy-файл. Если Windows отказывает в доверии ста�
 сохраните нужные пользовательские данные и явно настройте службу из GUI
 с правами администратора.
 
-Windows ZIP нужно распаковывать целиком, сохраняя `Legal/` и notices драйверов
-рядом с `QeliWin.exe`. Universal ZIP для macOS содержит код Apple Silicon и Intel;
+Windows снова распространяется отдельными single-file `QeliWin-standalone.exe`
+и `QeliWin-net-required.exe`. Оригинальные тексты лицензий Cargo/.NET, ядра/клиента
+и драйверов встроены; **О программе → Лицензии** позволяет читать и экспортировать
+их без сети. Linux- и роутерные бинарники поддерживают `licenses --list`,
+`licenses --file PATH`, `licenses --export NEW_DIRECTORY` без запуска VPN.
+Отдельный `qeli-native-legal.zip` убран из загрузок релиза; исходные тексты и индексы
+доступны внутри бинарников. Это не заменяет доступность исходников и остальные
+условия лицензий.
+
+Universal ZIP для macOS содержит код Apple Silicon и Intel;
 распакуйте весь `Qeli.app` на macOS с сохранением прав запуска. Подпись — ad-hoc,
 без Developer ID notarization и системного расширения per-app.
 Android-обновление сохраняет прежний релизный сертификат; проверяются подпись пакета,

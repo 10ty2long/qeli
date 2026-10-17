@@ -341,6 +341,17 @@ jobs:
             done
           ' "${{ steps.pkg.outputs.deb }}"
 
+      - name: Verify embedded licenses in the actual Debian CLI
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          extracted="$(mktemp -d)"
+          trap 'rm -rf -- "$extracted"' EXIT
+          dpkg-deb -x "${{ steps.pkg.outputs.deb }}" "$extracted"
+          "$extracted/usr/bin/qeli" licenses --export "$extracted/exported-licenses"
+          python3 scripts/embedded_licenses.py --verify-export "$extracted/exported-licenses"
+          "$extracted/usr/bin/qeli" licenses --file rust/Qeli-AGPL-3.0.txt | cmp - qeli/third-party-notices/rust/Qeli-AGPL-3.0.txt
       - name: Stage tested Linux candidate packages
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
         working-directory: .
@@ -993,6 +1004,24 @@ jobs:
           print('sha256:', hashlib.sha256(data).hexdigest(), 'bytes:', len(data))
           PY
 
+      - name: Verify embedded licenses on the target instruction set
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.arch }}" != "x86_64-musl" ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-user
+          fi
+          runner=()
+          case "${{ matrix.arch }}" in
+            aarch64) runner=(qemu-aarch64) ;;
+            mipsel) runner=(qemu-mipsel) ;;
+            armv7) runner=(qemu-arm) ;;
+          esac
+          binary="target/${{ matrix.target }}/release/qeli-client"
+          exported="$RUNNER_TEMP/qeli-router-license-export"
+          "${runner[@]}" "$binary" licenses --export "$exported"
+          python3 ../scripts/embedded_licenses.py --verify-export "$exported"
+          "${runner[@]}" "$binary" licenses --file rust/Qeli-AGPL-3.0.txt | cmp - third-party-notices/rust/Qeli-AGPL-3.0.txt
       - name: Retain validated router candidate
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

@@ -109,15 +109,49 @@ VCS commit, upstream path/URL, payload path и SHA256; коммит и URL св�
 с архивом. После review заменить общий комплект, сохранив upstream bytes.
 JSON здесь — build metadata, не формат конфигурации VPN.
 
-Android: `assets/licenses/native-rust/`; Windows/macOS: `Legal/NativeRust/`
-рядом с опубликованным executable; iOS: folder resource `rust` в app;
+Android: `assets/licenses/native-rust/`; macOS: `Contents/Resources/Legal/NativeRust/`
+в приложении; Windows: встроенные ресурсы EXE с просмотром и экспортом;
+iOS: folder resource `rust` в app;
 Debian: `/usr/share/doc/qeli/licenses/rust/`; OpenWrt:
-`/usr/share/licenses/qeli/rust/`; Keenetic: `qeli-native-legal.zip` рядом
-с отдельными бинарями. Windows/macOS дополнительно копируют MPL клиента;
-общий комплект содержит AGPL ядра. При распространении сохранять sidecar/resources.
+`/usr/share/licenses/qeli/rust/`. Linux CLI и отдельные роутерные бинарники
+дополнительно содержат оригинальные тексты внутри executable; отдельный
+`qeli-native-legal.zip` больше не требуется в комплекте релиза.
+Windows включает MPL клиента, AGPL ядра, Cargo/.NET и Wintun/WinDivert notices
+внутри каждого EXE; macOS сохраняет свои app resources. Общий комплект содержит AGPL ядра.
 CI проверяет общий комплект, а APK gate сверяет также готовые APK.
 Toolchain resources включены в общий комплект, см. ниже. Source publication и
 подписи остаются отдельными проверками; это не полная юридическая квалификация.
+
+### Просмотр и экспорт из одного бинарника
+
+Команды не читают VPN-конфигурацию и не запускают VPN/сетевое восстановление:
+
+```sh
+qeli licenses --list
+qeli licenses --file rust/Qeli-AGPL-3.0.txt
+qeli licenses --export ./qeli-license-texts
+qeli-client licenses --export ./qeli-router-license-texts
+```
+
+Каталог экспорта должен быть новым; существующие файлы и каталоги не перезаписываются.
+Тексты встроены без новых runtime-зависимостей; сохраняются оригинальные байты,
+имена файлов, индексы, источники и контрольные суммы. Неизменяемые данные читаются
+по запросу; просмотр не добавляет операций в обработку VPN-пакетов.
+
+Windows: **О программе → Лицензии** позволяет читать тексты без сети и сохранить
+полный комплект ZIP по запросу пользователя. Это экспорт из EXE, не отдельный
+обязательный download релиза. CLI: `QeliWin-standalone.exe licenses --list`,
+`licenses --file PATH`, `licenses --export NEW_DIRECTORY`; те же команды есть
+в варианте `net-required`. Manifest приложения по-прежнему запрашивает elevation;
+диагностическая DLL-hosted форма `dotnet QeliWin.dll licenses ...` не требует
+запуска приложения/службы. Исходники и остальные условия лицензий остаются отдельными
+обязательствами, встраивание текстов их не заменяет.
+
+Проверки: `python3 scripts/embedded_licenses.py` сверяет generated Rust-каталог;
+`--verify-export NEW_DIRECTORY` сравнивает каждый экспортированный файл с источником
+(`--windows` включает .NET/MPL/driver notices). Windows CI проверяет тексты
+непосредственно внутри обоих single-file EXE через metadata-only reader,
+без запуска проверяемой сборки.
 
 
 ## Notices стандартных библиотек и runtime toolchain
