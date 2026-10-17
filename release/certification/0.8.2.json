@@ -1,207 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
+  "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-16T17:42:06.677911+00:00",
-      "evidence": "release/certification/evidence/release-082-final-20261016.json"
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "environment": "Debian private lab; independent mount/network/PID namespaces per case",
+      "executed_at": "2026-10-17T11:57:55.094148+00:00",
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -352,29 +352,21 @@
     }
   ],
   "acceptance": {
-    "status": "actual_release_cli_20_linux_cases_qualified_final_CI_preflight_pending",
+    "status": "embedded_license_candidate_20_runtime_cases_qualified_final_CI_pending",
     "automated_cases_passed": 20,
-    "actual_ordinary_executions": 19,
     "runtime_assertions": 409,
     "current_linux_matrix": {
-      "evidence": "release/certification/evidence/release-082-final-20261016.json",
-      "artifact_sha256": "cb6e7f3b656bd615f02fe8a384261616a5cb0e274ac797a17fb709d3405180d4",
-      "source_commit": "1a154fbd20bfeefc40fc862b49a31611fbc3e320",
-      "source_digest": "fdf785348e297dd27ebc6c4744573d7ff92ff5731311c9589d5f802064b4c577",
-      "source_applicability": "Fresh execution of the actual candidate CI/deb binary, not rebinding an older CLI across changed Rust sources."
+      "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
+      "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
+      "source_commit": "e90bf0c20e187e18dfee8ac25a69441c922063f1",
+      "source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3"
     },
-    "lab_integrity": "Three legacy IPv4 rules varied due to pre-existing independently running vpn-nat.service. Original host guard FAIL is retained; all other captured host fields match. No full host-unchanged claim. Each case used distinct mount/network/PID namespaces. Private diagnostic workspace is retained; cleanup is not claimed.",
-    "scope": "Internal audit 37/37 complete within agreed scope. Accepted API34 ENONET remains unfixed; D06 and physical exclusions remain unchanged. Functional release matrix is not a performance benchmark or a new eight-hour endurance run.",
-    "previous_manifest": {
-      "git_commit": "1a154fbd20bfeefc40fc862b49a31611fbc3e320",
-      "git_blob": "3d08f35150598d5a9428c4f5a3b0dee7be765088",
-      "sha256": "78c6f1a450ed5c9391f2c19f24ea895e6c93bc2683a41347ebca3f68e4c49d8f",
-      "scope": "Historical execution and source-applicability records remain in Git and their original evidence files."
-    },
-    "full_release_preflight_qualified": false,
+    "lab_integrity": "Three legacy IPv4 rules varied due to pre-existing independently running vpn-nat.service. Original host guard FAIL is retained; all other captured host fields match. No full host-unchanged claim.",
     "audit_complete_within_agreed_scope": true,
     "physical_qualification_complete": false,
-    "push_deploy_release": false
+    "full_release_preflight_qualified": false,
+    "push_deploy_release": false,
+    "scope": "Original 37/37 agreed audit scope; accepted API34 ENONET and D06 remain; physical exclusions unchanged. No new full endurance or benchmark claim."
   },
   "source_qualification_supplements": [
     {
