@@ -614,22 +614,23 @@ the strict source gate. This is an export/prepare check, not a fresh full SDK/IP
 compiler-bootstrap or physical-router run. Earlier runtime evidence retains its
 original source and scope.
 
-### Current 0.8.2 embedded-license source cut (17 October 2026)
+### Current 0.8.2 integrated source cut (17 October 2026)
 
-The recipe now pins `c20e3c2c4219f239ae10ec2c9e9a428269f9afff`, included in the
-`dev` preparation history, with original legal resources embedded in the CLI and
-the `licenses` read/export command. One fresh
+The recipe now pins `b8a5cbd1417b0d3da9dad645d4942c202ba46977`, included in the
+`dev` preparation history, with the Linux client `tun.tx_queue_len` change merged,
+original legal resources embedded in the CLI and the `licenses` read/export command. One fresh
 stock SDK 24.10.4 `download`/`prepare` produced SHA-256
-`333d40b96782cc9c343fd75a4bdca92edeb03fe0cff90f7f408cb361ffcb6cff`
-(27288347 bytes). All 3465 prepared tracked file contents match that exact commit.
+`74f2afbc968904133404825024d1479184b89d5a9cece09a2aefae85eb147bf1`
+(27358709 bytes). All 3484 prepared tracked file contents match that exact commit.
 The actual SDK archive is retained locally for the strict release source gate.
 This qualifies source export/prepare, not a repeated compiler bootstrap, full SDK/IPK
 build or physical router test. It does not publish a tag or GitHub Release.
 
-Текущий пакет закреплён на `c20e3c2c4219f239ae10ec2c9e9a428269f9afff` из истории подготовки `dev`:
-в CLI встроены оригинальные лицензионные ресурсы и команда `licenses` для чтения/экспорта.
+Текущий пакет закреплён на `b8a5cbd1417b0d3da9dad645d4942c202ba46977` из истории подготовки `dev`:
+включена клиентская настройка Linux `tun.tx_queue_len`, в CLI встроены оригинальные
+лицензионные ресурсы и команда `licenses` для чтения/экспорта.
 Свежие `download`/`prepare` в штатном SDK 24.10.4 дали указанный выше SHA-256;
-содержимое всех 3465 подготовленных
+содержимое всех 3484 подготовленных
 отслеживаемых файлов сверено с этим commit. Сам SDK-архив сохранён локально для строгой
 проверки источника релиза. Это не повторная сборка компилятора, полного SDK/IPK и не
 проверка физического роутера. Тег и GitHub Release этим действием не публикуются.
