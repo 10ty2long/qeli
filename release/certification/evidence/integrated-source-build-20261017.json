@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "status": "NATIVE_AB_AND_SDK_SOURCE_PASS_APPLICATION_BUILDS_PENDING",
-  "scope": "Fresh independent A/B native builds after merging Linux client TUN queue support into dev; no new application/runtime qualification claimed here.",
+  "status": "NATIVE_AB_AND_SDK_SOURCE_PASS",
+  "scope": "Fresh independent A/B native builds after merging Linux client TUN queue support into dev; application and runtime qualifications are separate records.",
   "integration_commit": "2d6fcfd5bbecfe68d91299bb40cb3a5c53ffd4a8",
   "included_feature_commit": "aef516689088a8e4c7f22d7fc9743d299dab4f8b",
   "native_source_digest": "42672aca87de8e95b2e289cad35b576196f88e92874d121e1804e7845152976b",
@@ -28,5 +28,7 @@
   "physical_checks_executed": false,
   "public_performance_measurements": false,
   "published": false,
-  "tag_created": false
+  "tag_created": false,
+  "application_qualification_evidence": "release/certification/evidence/integrated-release-assets-20261017.json",
+  "runtime_qualification_evidence": "release/certification/evidence/integrated-tun-queue-release-20261017.json"
 }
