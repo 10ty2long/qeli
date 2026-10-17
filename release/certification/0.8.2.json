@@ -1,247 +1,247 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+  "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "artifact_sha256": "05b0084f20cbf327e4ed19bf2f86153d310c4266cb9983347a0aeada79bbd007",
       "environment": "Debian private lab; independent mount/network/PID namespaces per case",
       "executed_at": "2026-10-17T11:57:55.094148+00:00",
       "evidence": "release/certification/evidence/embedded-licenses-release-20261017.json",
       "execution_source_digest": "88790eb19085efa5e73901066b47009d82984a5baadfafc9d5d2613c1e6275c3",
-      "source_applicability_evidence": "release/certification/evidence/release-draft-docs-20261017.json"
+      "source_applicability_evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -408,9 +408,9 @@
     "push_deploy_release": false,
     "scope": "Original 37/37 agreed audit scope; accepted API34 ENONET and D06 remain; physical exclusions unchanged. No new full endurance or benchmark claim.",
     "documentation_applicability": {
-      "evidence": "release/certification/evidence/release-draft-docs-20261017.json",
-      "documentation_commit": "7aee7033d2107a196f82da50354517a368c56a8f",
-      "source_digest": "111db6f33080a3a2daf04a737ed1f5dc5dbbaeae8d0a61ef57a08f06c7793bdc",
+      "evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json",
+      "documentation_commit": "1cfb3fa597c7790f39732fa68533c0938a95b7ea",
+      "source_digest": "f474995d6da3a14774ffe484e27c05ec87a4a6498032d277be88a1889b70331b",
       "existing_runtime_and_build_facts_unchanged": true,
       "exact_final_CI_required": true
     }
@@ -767,11 +767,15 @@
     {
       "evidence": "release/certification/evidence/release-draft-docs-20261017.json",
       "scope": "Only 15 Markdown files changed since the exact qualified dev snapshot. All product trees, native artifacts, build policies/recipes/workflows and runtime harnesses are identical. Existing 20 Linux execution timestamps, artifact hashes and original evidence remain unchanged; source_digest denotes applicability to this docs-only tree, not a new execution. Physical rows, accepted API34 limitation, D06 and original host variance remain. All 16 release files retain their previous bytes. GitHub is to remain draft; no tag/main/publication change."
+    },
+    {
+      "evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json",
+      "scope": "Only Markdown, the guide-version consistency checker, its seven portable regression tests and the CI step invoking those tests changed. Explicit guide package targets distinguish prepared downloads from publication; the full version checker passes both before and in a simulated post-tag state without creating a tag. All product trees, native artifacts, compiler policies/recipes and runtime harnesses are identical. Existing 20 Linux execution timestamps, artifact hashes and original evidence remain unchanged; source_digest denotes applicability to this docs-only tree, not a new execution. Physical rows, accepted API34 limitation, D06 and original host variance remain. All 16 release files retain their previous bytes. GitHub is to remain draft; no tag/main/publication change."
     }
   ],
   "release_assets": {
     "scope": "Integrity mapping of retained qualified downloads; not a GitHub build attestation.",
-    "evidence": "release/certification/evidence/release-draft-docs-20261017.json",
+    "evidence": "release/certification/evidence/release-guide-tag-transition-20261017.json",
     "sha256": {
       "install-keenetic.sh": "2c8f695d7509651d49db6986183d5fcb876554a490200f084e12c3068d969429",
       "qeli-android-0.8.2.apk": "c0c306f0f7ab532ee76d7efe483841a647bb1d13604b91c4d16068f7151fda86",
