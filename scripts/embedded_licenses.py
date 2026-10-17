@@ -49,7 +49,10 @@ def rust_catalogue(repository):
              '// Texts remain canonical upstream bytes; identical literals may be pooled by the linker.',
              '#[rustfmt::skip]',
              'pub const FILES: &[(&str, &[u8])] = &[']
-    for file in sorted(p for p in bundle.rglob('*') if p.is_file()):
+    # Explicit component-wise ordinal case-folded order matches the original
+    # catalogue on every host, independent of pathlib's OS-specific ordering.
+    files = (p for p in bundle.rglob('*') if p.is_file())
+    for file in sorted(files, key=lambda p: tuple(s.casefold() for s in p.relative_to(bundle).parts)):
         relative = file.relative_to(bundle).as_posix()
         if not relative.isascii() or any(p in ('', '.', '..') for p in relative.split('/')):
             raise ValueError('Unsafe embedded license name')

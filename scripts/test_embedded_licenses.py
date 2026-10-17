@@ -15,6 +15,19 @@ class EmbeddedLicenseTests(unittest.TestCase):
         actual = (ROOT / 'qeli/src/embedded_license_files.rs').read_text('utf8')
         self.assertEqual(actual, embedded_licenses.rust_catalogue(ROOT))
 
+    def test_catalogue_order_is_explicit_across_host_path_flavours(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(embedded_licenses, 'check_bundle'):
+            root = Path(directory)
+            bundle = root / 'qeli/third-party-notices/rust'
+            for name in ('B.txt', 'a/Z.txt', 'a/b.txt'):
+                file = bundle / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_bytes(b'original')
+            catalogue = embedded_licenses.rust_catalogue(root)
+            names = ['rust/a/b.txt', 'rust/a/Z.txt', 'rust/B.txt']
+            positions = [catalogue.index('"' + name + '"') for name in names]
+            self.assertEqual(positions, sorted(positions))
+
     def test_export_verifier_keeps_exact_bytes_and_rejects_changes(self):
         expected = {'rust/license.txt': b'original\r\n\xff', 'rust/INDEX.tsv': b'index\n'}
         with tempfile.TemporaryDirectory() as directory, patch.object(embedded_licenses, 'expected_files', return_value=expected):
