@@ -73,15 +73,11 @@
     <EmbeddedResource Include="wintun\wintun.dll">
       <LogicalName>wintun.dll</LogicalName>
     </EmbeddedResource>
-    <!-- The prebuilt DLL may be redistributed with software using the permitted API only
-         when its license terms travel with the binary. Keep the notice outside both
-         single-file executables so recipients can read it without extracting resources. -->
-    <Content Include="wintun\LICENSE.txt">
-      <Link>Wintun-LICENSE.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
+    <!-- Original terms travel inside each EXE and remain readable/exportable via licenses. -->
+    <EmbeddedResource Include="wintun\LICENSE.txt">
+      <LogicalName>Qeli.Legal/drivers/Wintun-LICENSE.txt</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
     <!-- WinDivert 2.2 packet capture pair used only by per-app profiles. The DLL expects
          the signed x64 driver beside it; NativeLoader extracts both into one protected
          directory before opening the filter. -->
@@ -91,20 +87,14 @@
     <EmbeddedResource Include="windivert\WinDivert64.sys">
       <LogicalName>WinDivert64.sys</LogicalName>
     </EmbeddedResource>
-    <!-- LGPL redistribution notices remain visible beside both published executables;
-         embedding only the driver/library would not give a recipient the license text. -->
-    <Content Include="windivert\LICENSE.txt">
-      <Link>WinDivert-LICENSE.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
-    <Content Include="windivert\NOTICE.txt">
-      <Link>WinDivert-NOTICE.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
+    <EmbeddedResource Include="windivert\LICENSE.txt">
+      <LogicalName>Qeli.Legal/drivers/WinDivert-LICENSE.txt</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="windivert\NOTICE.txt">
+      <LogicalName>Qeli.Legal/drivers/WinDivert-NOTICE.txt</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
     <!-- Rust whole-client transport core (qeli.dll, configuration + transport ABI 1.16), cross-built for win-x64.
          It owns carrier/handshake/crypto/TCP/UDP/QUIC/Reality/bonding and the Wintun
          session/rings; C# retains only interface lifecycle, routes/DNS/trust and UI. -->
@@ -115,25 +105,19 @@
 
   <ItemGroup>
     <!-- The common Cargo.lock superset travels with every published client. -->
-    <Content Include="..\..\qeli\third-party-notices\rust\**\*">
-      <Link>Legal\NativeRust\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
+    <EmbeddedResource Include="..\..\qeli\third-party-notices\rust\**\*">
+      <LogicalName>Qeli.Legal/rust/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
     <!-- Full reviewed NuGet graphs, runtime pack notices and embedded font licenses. -->
-    <Content Include="..\..\qeli-shared\third-party-notices\dotnet\**\*">
-      <Link>Legal\DotNet\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
-    <Content Include="..\LICENSE">
-      <Link>Legal\MPL-2.0.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
+    <EmbeddedResource Include="..\..\qeli-shared\third-party-notices\dotnet\**\*">
+      <LogicalName>Qeli.Legal/dotnet/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\LICENSE">
+      <LogicalName>Qeli.Legal/Qeli-MPL-2.0.txt</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
   </ItemGroup>
   <Target Name="RequireManagedLegalBundle" BeforeTargets="PrepareForBuild;ComputeFilesToPublish">
     <Error Condition="!Exists('..\..\qeli-shared\third-party-notices\dotnet\INDEX.tsv')" Text="Missing managed legal bundle; run scripts/managed_licenses.py and review its output." />

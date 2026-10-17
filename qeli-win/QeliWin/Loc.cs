@@ -14,6 +14,9 @@ internal static class PlatformStrings
     [ModuleInitializer]
     public static void Register() => Loc.AddOrReplace(new Dictionary<string, (string en, string ru)>
     {
+        ["Licenses"] = ("Licenses", "Лицензии"),
+        ["LicensesExport"] = ("Save all license texts…", "Сохранить все тексты лицензий…"),
+        ["LicensesSummary"] = ("{0} original license, notice and index files embedded in this EXE. Available offline; export preserves original bytes.", "В этот EXE встроено {0} исходных файлов лицензий, уведомлений и индексов. Доступны без сети; экспорт сохраняет исходные байты."),
         ["TrayBalloon"] = ("Minimized to tray. Double-click the icon to open.",
                            "Свёрнуто в трей. Двойной клик по значку — открыть."),
         ["AboutDesc"] = ("VPN client for Windows. qeli protocol: fake-TLS / obfs / REALITY-TLS, X25519 + ChaCha20-Poly1305, TUN via Wintun.",

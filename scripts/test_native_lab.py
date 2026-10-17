@@ -136,6 +136,24 @@ class NativeLabTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsafe remote source root"):
             native_lab.sync_qeli_source(FakeConnection(), FakeSftp(), ".", "/")
 
+    def test_source_sync_embeds_original_notice_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for relative, data in {".cargo/config.toml": "", "Cargo.toml": "", "Cargo.lock": "",
+                    "src/embedded_license_files.rs": "catalogue", "third-party-notices/rust/INDEX.tsv": "index",
+                    "third-party-notices/rust/files/example/LICENSE": "original"}.items():
+                file = root / relative
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text(data)
+            connection, sftp = FakeConnection(), FakeSftp()
+            native_lab.sync_qeli_source(connection, sftp, root, "/var/tmp/private-source")
+            self.assertIn(("LICENSE", "/var/tmp/private-source/third-party-notices/rust/files/example/LICENSE"), sftp.puts)
+            (root / "third-party-notices/rust/INDEX.tsv").unlink()
+            fresh = FakeConnection()
+            with self.assertRaisesRegex(RuntimeError, "canonical source bundle"):
+                native_lab.sync_qeli_source(fresh, FakeSftp(), root, "/var/tmp/private-source")
+            self.assertEqual(fresh.commands, [])
+
     def test_cargo_package_version_comes_from_installed_inventory(self):
         connection = FakeConnection("cargo-zigbuild v0.20.1:")
         self.assertEqual(

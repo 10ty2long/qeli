@@ -19,6 +19,21 @@ use clap::Parser;
 use qeli_core as qeli;
 use std::path::PathBuf;
 
+mod embedded_licenses;
+
+#[derive(clap::Subcommand)]
+enum Command {
+    /// View or export original license resources without loading a VPN configuration.
+    Licenses {
+        #[arg(long, conflicts_with_all = ["export", "list"])]
+        file: Option<String>,
+        #[arg(long, conflicts_with = "list")]
+        export: Option<PathBuf>,
+        #[arg(long)]
+        list: bool,
+    },
+}
+
 #[derive(Parser)]
 #[command(
     name = "qeli-client",
@@ -26,6 +41,8 @@ use std::path::PathBuf;
     version
 )]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
     /// Client config (flat-INI, `[qeli]` section). Default suits Entware layout.
     #[arg(short, long, default_value = "/opt/etc/qeli/client.conf")]
     config: PathBuf,
@@ -43,6 +60,10 @@ struct Cli {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+    if let Some(Command::Licenses { file, export, list }) = cli.command {
+        embedded_licenses::run(file.as_deref(), export.as_deref(), list)?;
+        return Ok(());
+    }
     if cli.print_gateway_owner {
         let expected = cli
             .expect_router_device

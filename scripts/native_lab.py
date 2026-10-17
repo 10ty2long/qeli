@@ -176,6 +176,11 @@ def sync_qeli_source(
     local_cargo_config = local_root / ".cargo" / "config.toml"
     if not local_cargo_config.is_file():
         raise RuntimeError(f"native build input is missing: {local_cargo_config}")
+    trees = ["src"]
+    if (local_root / "src/embedded_license_files.rs").is_file():
+        if not (local_root / "third-party-notices/rust/INDEX.tsv").is_file():
+            raise RuntimeError("embedded CLI license catalogue has no canonical source bundle")
+        trees.append("third-party-notices/rust")
     connection.checked(
         f"rm -rf {shlex.quote(remote_src)} {shlex.quote(remote_cargo)} "
         f"&& mkdir -p {shlex.quote(remote_src)} {shlex.quote(remote_cargo)}",
@@ -183,18 +188,23 @@ def sync_qeli_source(
     )
     sftp.put(os.fspath(local_cargo_config), posixpath.join(remote_cargo, "config.toml"))
     count = 0
-    for root, directories, names in os.walk(local_root / "src"):
-        directories.sort()
-        for name in sorted(names):
-            local = Path(root) / name
-            relative = local.relative_to(local_root).as_posix()
-            remote = posixpath.join(remote_source, relative)
-            connection.checked(
-                f"mkdir -p {shlex.quote(posixpath.dirname(remote))}",
-                "create remote source directory",
-            )
-            sftp.put(os.fspath(local), remote)
-            count += 1
+    created = set()
+    for tree in trees:
+        if tree != "src":
+            destination = posixpath.join(remote_source, tree)
+            connection.checked(f"rm -rf {shlex.quote(destination)}", "replace private source notice tree")
+        for root, directories, names in os.walk(local_root / tree):
+            directories.sort()
+            for name in sorted(names):
+                local = Path(root) / name
+                relative = local.relative_to(local_root).as_posix()
+                remote = posixpath.join(remote_source, relative)
+                parent = posixpath.dirname(remote)
+                if parent not in created:
+                    connection.checked(f"mkdir -p {shlex.quote(parent)}", "create remote source directory")
+                    created.add(parent)
+                sftp.put(os.fspath(local), remote)
+                count += 1
     for manifest in ("Cargo.toml", "Cargo.lock"):
         local = local_root / manifest
         if not local.is_file():

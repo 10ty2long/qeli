@@ -19,6 +19,8 @@ compile_error!("release qeli server builds require --features jemalloc");
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+mod embedded_licenses;
+
 // Server builds (`--features jemalloc`) swap in jemalloc as the global allocator.
 // glibc malloc retains freed arenas → the data-plane worker's RSS plateaus around
 // ~180 MB under handshake churn (up to 8 arenas × ~20 MB, never returned to the OS).
@@ -40,6 +42,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// View or export the original license texts embedded in this executable.
+    Licenses {
+        #[arg(long, conflicts_with_all = ["export", "list"])]
+        file: Option<String>,
+        #[arg(long, conflicts_with = "list")]
+        export: Option<PathBuf>,
+        #[arg(long)]
+        list: bool,
+    },
     /// Run in server mode
     Server {
         #[arg(short, long, default_value = "/etc/qeli/server.conf")]
@@ -334,6 +345,12 @@ fn peek_logging(path: &PathBuf) -> (String, Option<String>, String, String) {
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    // Legal inspection must not read configs, initialize tracing or change network state.
+    if let Commands::Licenses { file, export, list } = &cli.command {
+        embedded_licenses::run(file.as_deref(), export.as_deref(), *list)?;
+        return Ok(());
+    }
+
     // Configure logging from the config's `logging` section (level + optional
     // file) so server/client logs land where the operator expects.
     let (level, log_file, time_format, log_format) = match &cli.command {
@@ -355,6 +372,7 @@ async fn main() -> anyhow::Result<()> {
     qeli::trace::init();
 
     match cli.command {
+        Commands::Licenses { .. } => unreachable!("handled before startup side effects"),
         Commands::Server { config } => {
             log::info!(
                 "Starting server (supervisor) with config: {}",

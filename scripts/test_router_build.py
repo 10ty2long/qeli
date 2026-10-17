@@ -55,19 +55,10 @@ class RouterBuildTests(unittest.TestCase):
             module.main()
         return client, changes
 
-    def test_model_build_publishes_legal_sidecar_only_in_temporary_output(self):
-        destinations = []
-        def check_output(_repo, destination):
-            destination = Path(destination)
-            self.assertFalse(destination.is_relative_to(ROOT), destination)
-            self.assertTrue(destination.parent.name.startswith('qeli-router-model-'))
-            self.assertTrue(destination.parent.is_dir())
-            destinations.append(destination)
-            return {'zip_sha256': 'fixture'}
-        with patch.object(KEEN, 'export_bundle_zip', side_effect=check_output):
+    def test_model_build_no_longer_publishes_separate_legal_archive(self):
+        import native_licenses
+        with patch.object(native_licenses, 'export_bundle_zip', side_effect=AssertionError('No sidecar archive')):
             self.invoke_main(KEEN, ['aarch64'])
-        self.assertEqual(len(destinations), 1)
-        self.assertFalse(destinations[0].parent.exists())
 
     def test_invalid_arch_and_extra_arguments_never_connect(self):
         for module in MODULES:

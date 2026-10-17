@@ -83,7 +83,7 @@ function python {
     def test_both_successful_distributions_reach_all_legal_checks(self):
         code, calls, output = self.exercise(0)
         self.assertEqual(code, 0, output)
-        self.assertEqual(calls, ['publish:1', 'publish:2'] + ['legal'] * 4, output)
+        self.assertEqual(calls, ['publish:1', 'publish:2'] + ['legal'] * 2, output)
 
 
 if __name__ == '__main__':

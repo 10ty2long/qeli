@@ -98,7 +98,10 @@ jobs:
           python3 scripts/toolchain_licenses.py
           python3 -m unittest discover -s scripts -p 'test_toolchain_licenses.py'
       - name: Check common Cargo legal resources
-        run: python3 scripts/native_licenses.py
+        run: |
+          python3 scripts/native_licenses.py
+          python3 scripts/embedded_licenses.py
+          python3 -m unittest discover -s scripts -p 'test_embedded_licenses.py'
       - name: Test native reproducibility contract
         run: python3 -m unittest discover -s scripts -p 'test_native_*.py'
       - name: Test audit suite admission and portable regressions
@@ -650,6 +653,9 @@ jobs:
       - name: Test Windows publication failure propagation
         working-directory: .
         run: python -B -m unittest discover -s scripts -p 'test_windows_ci_publish.py' -v
+      - name: Build metadata-only embedded license inspector
+        working-directory: .
+        run: dotnet build scripts/embedded_license_reader/Reader.csproj -c Release -o "${{ runner.temp }}/qeli-license-reader"
       - name: Publish both Windows distributions with required third-party notices
         working-directory: qeli-win
         shell: pwsh
@@ -661,15 +667,8 @@ jobs:
           dotnet publish QeliWin/QeliWin.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/standalone
           if ($LASTEXITCODE -ne 0) { throw "standalone Windows publication failed" }
           foreach ($dir in @('dist/net-required', 'dist/standalone')) {
-            foreach ($notice in @('Wintun-LICENSE.txt', 'WinDivert-LICENSE.txt', 'WinDivert-NOTICE.txt')) {
-              $path = Join-Path $dir $notice
-              if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "published package is missing $path" }
-            }
-            python ../scripts/native_licenses.py --repo .. --bundle "$dir/Legal/NativeRust"
-            if ($LASTEXITCODE -ne 0) { throw "published Cargo legal bundle check failed: $dir" }
-            python ../scripts/managed_licenses.py --repo .. --bundle "$dir/Legal/DotNet"
-            if ($LASTEXITCODE -ne 0) { throw "published managed legal bundle check failed: $dir" }
-            if (-not (Test-Path -LiteralPath "$dir/Legal/MPL-2.0.txt" -PathType Leaf)) { throw "missing client MPL text: $dir" }
+            python ../scripts/check_windows_embedded_licenses.py --repo .. --exe "$dir/QeliWin.exe" --reader "$env:RUNNER_TEMP/qeli-license-reader/Reader.dll"
+            if ($LASTEXITCODE -ne 0) { throw "embedded original license/native verification failed: $dir" }
           }
       - name: Self-test QeliWin platform adapters
         working-directory: qeli-win
