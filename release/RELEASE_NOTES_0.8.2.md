@@ -141,15 +141,14 @@ requirement; `manual` does not enable external forwarding automatically.
   campaign was rerun for each subsequent release candidate.
   [Q35 summary](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Endurance report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- The embedded-license candidate `e90bf0c2` passed **all 20 required CI jobs** in its
-  [candidate run](https://github.com/litvinovtd/qeli/actions/runs/39030207942).
-  Its qualified preparation snapshot `3acf33f0` also passed **20 required jobs** in
-  [CI](https://github.com/litvinovtd/qeli/actions/runs/39031424452); two scheduled
-  fuzz jobs were skipped, not counted as passed. The later commit records the fresh
-  20-case Linux qualification; it changes no product sources. APK and macOS app
-  bytes were retained only after confirming unchanged app/build inputs and freshly
-  A/B-rebuilt native payloads (macOS packaging signatures have their own scope).
-  These results identify those snapshots, not subsequent documentation edits.
+- The Linux client queue change is integrated into `dev`, rather than left in a
+  separate worktree. The release is rebuilt from that unified source: native cores,
+  Linux/DEB, Android, Windows, macOS and router binaries. Admission requires the
+  existing CI suite and fresh execution of the required Linux runtime cases against
+  the actual new CLI; old candidate results are not rebound across changed code.
+  [Current qualification and artifact identities](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json).
+  Historical `e90bf0c2`/`3acf33f0` qualification remains in Git and its original
+  evidence; it does not prove that the queue feature was present in those binaries.
 
 These are separate test populations, not a combined test count. Reports retain source
 and artifact identities, test conditions and original failures.
@@ -399,15 +398,14 @@ NDP proxy поддерживается в `manual` и `route`. `ndp_proxy = requ
   для каждого последующего кандидата релиза.
   [Итог Q35](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-FINAL.md)
   · [Отчёт длительного прогона](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/audit-0.8.2/AUDIT-Q35-LONG-SOAK.md).
-- Кандидат со встроенными лицензиями `e90bf0c2` прошёл **все 20 обязательных заданий CI**
-  в [прогоне кандидата](https://github.com/litvinovtd/qeli/actions/runs/39030207942).
-  Его проверенный снимок подготовки `3acf33f0` также прошёл **20 обязательных заданий**
-  в [CI](https://github.com/litvinovtd/qeli/actions/runs/39031424452); два задания fuzz
-  по расписанию пропущены, а не засчитаны как PASS. Поздний коммит фиксирует свежую
-  Linux-квалификацию из 20 сценариев и не меняет исходники продукта. Готовые APK и
-  macOS-приложение сохранены только после сверки неизменности входов приложений/сборки
-  и свежих A/B-пересборок native payload; подпись упаковки macOS имеет отдельный объём.
-  Эти результаты относятся к указанным снимкам, а не к последующим правкам документации.
+- Клиентская настройка очереди Linux интегрирована в `dev`, а не оставлена в
+  отдельном рабочем каталоге. Из объединённых исходников пересобирается весь комплект:
+  нативные ядра, Linux/DEB, Android, Windows, macOS и роутерные бинарники. Допуск требует
+  штатного CI и свежего исполнения обязательных Linux runtime-сценариев на новом CLI;
+  результаты старого кандидата не переносятся на изменённый код.
+  [Актуальная квалификация и идентификаторы артефактов](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json).
+  Историческая квалификация `e90bf0c2`/`3acf33f0` сохранена в Git и исходных evidence,
+  но не доказывает присутствие настройки очереди в тех бинарниках.
 
 Это отдельные наборы проверок, их числа не складываются в один счётчик тестов.
 В отчётах сохранены версии исполненных исходников и артефактов, условия
