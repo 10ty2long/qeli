@@ -132,3 +132,5 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - **[../../release/docker/README.md](../../release/docker/README.md)** — running the server in Docker.
 
 - [Linux client TUN queue size](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.
+- [Linux 0.8.2: TCP/UDP on an identified binary](reports/LINUX-LAB-0.8.2-2026-10-17.md) — lab setup, settings and measurement limits, 17 October.
+- [Remaining TUN-drop diagnosis](reports/TUN-READER-0.8.2-2026-10-18.md) — 18 October; the cause is not claimed to be established.

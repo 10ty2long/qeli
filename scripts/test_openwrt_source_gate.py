@@ -3,6 +3,7 @@ import ast
 import contextlib
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -33,8 +34,28 @@ class SourceTests(unittest.TestCase):
         self.commit()
 
     def git(self, *args):
-        return subprocess.check_output(["git", "-c", "core.autocrlf=false", *args],
+        # A detached auto-maintenance child can outlive `git commit` and race
+        # TemporaryDirectory.cleanup. Fixtures own their entire repository and
+        # never need maintenance, including when the caller enables it globally.
+        return subprocess.check_output(["git", "-c", "core.autocrlf=false",
+                                        "-c", "maintenance.auto=false", "-c", "gc.auto=0", *args],
                                        cwd=self.root, text=True).strip()
+
+    def test_fixture_does_not_start_inherited_automatic_maintenance(self):
+        config = self.root / "inherited.gitconfig"
+        config.write_text("[maintenance]\n\tauto = true\n\tstrategy = incremental\n"
+                          "[gc]\n\tauto = 1\n")
+        trace = self.root / "git-trace.json"
+        with patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(config),
+                                     "GIT_CONFIG_NOSYSTEM": "1",
+                                     "GIT_TRACE2_EVENT": str(trace.resolve())}):
+            for index in range(3):
+                self.cargo.write_text(self.cargo.read_text() + f"\n# fixture {index}\n")
+                self.commit()
+        events = [json.loads(line) for line in trace.read_text().splitlines()]
+        children = [event.get("argv", []) for event in events if event.get("event") == "child_start"]
+        self.assertTrue(any(event.get("event") == "exit" for event in events))
+        self.assertFalse([args for args in children if "maintenance" in args or "gc" in args], children)
 
     def commit(self):
         self.git("add", "qeli", "qeli-openwrt")

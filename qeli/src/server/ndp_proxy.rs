@@ -213,7 +213,10 @@ impl BoundNdpProxy {
 
 impl NdpProxy {
     fn register(bound: BoundNdpProxy) -> anyhow::Result<Self> {
-        let fd = AsyncFd::new(bound.fd)
+        // SAFETY: OwnedFd owns the open socket. NdpProxy never replaces or closes
+        // its inner descriptor while registered; I/O only borrows it through
+        // get_ref(), and dropping AsyncFd deregisters before dropping OwnedFd.
+        let fd = unsafe { AsyncFd::register(bound.fd) }
             .map_err(|error| anyhow::anyhow!("cannot register NDP socket: {error}"))?;
         Ok(Self {
             fd,

@@ -132,3 +132,5 @@
 - **[../../release/docker/README.md](../../release/docker/README.md)** — запуск сервера в Docker.
 
 - [Размер клиентской TUN-очереди Linux](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.
+- [Linux 0.8.2: TCP/UDP на идентифицированном бинарнике](reports/LINUX-LAB-0.8.2-2026-10-17.md) — стенд, настройки и границы замеров 17 октября.
+- [Диагностика остаточных TUN drops](reports/TUN-READER-0.8.2-2026-10-18.md) — 18 октября; причина не объявлена установленной.

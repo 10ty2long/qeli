@@ -107,7 +107,7 @@ jni-sys-macros	0.4.1	MIT OR Apache-2.0	38c0b942f458fe50cdac086d2f946512305e5631e
 keccak	0.2.0	Apache-2.0 OR MIT	9e24a010dd405bd7ed803e5253182815b41bf2e6a80cc3bfc066658e03a198aa	https://static.crates.io/crates/keccak/keccak-0.2.0.crate
 kem	0.3.0	Apache-2.0 OR MIT	01737161ba802849cfd486b5bd209d38ba4943494c249a8126005170c7621edd	https://static.crates.io/crates/kem/kem-0.3.0.crate
 lazy_static	1.5.0	MIT OR Apache-2.0	bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe	https://static.crates.io/crates/lazy_static/lazy_static-1.5.0.crate
-libc	0.2.189	MIT OR Apache-2.0	3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2	https://static.crates.io/crates/libc/libc-0.2.189.crate
+libc	0.2.190	MIT OR Apache-2.0	ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78	https://static.crates.io/crates/libc/libc-0.2.190.crate
 log	0.4.34	MIT OR Apache-2.0	f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6	https://static.crates.io/crates/log/log-0.4.34.crate
 matchit	0.8.4	MIT AND BSD-3-Clause	47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3	https://static.crates.io/crates/matchit/matchit-0.8.4.crate
 memchr	2.8.2	Unlicense OR MIT	88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4	https://static.crates.io/crates/memchr/memchr-2.8.2.crate
@@ -161,10 +161,10 @@ serde	1.0.229	MIT OR Apache-2.0	4148590afebada386688f18773da617792bf2ef03ffc1e4c
 serde_core	1.0.229	MIT OR Apache-2.0	67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48	https://static.crates.io/crates/serde_core/serde_core-1.0.229.crate
 serde_derive	1.0.229	MIT OR Apache-2.0	e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348	https://static.crates.io/crates/serde_derive/serde_derive-1.0.229.crate
 serde_ignored	0.1.14	MIT OR Apache-2.0	115dffd5f3853e06e746965a20dcbae6ee747ae30b543d91b0e089668bb07798	https://static.crates.io/crates/serde_ignored/serde_ignored-0.1.14.crate
-serde_json	1.0.151	MIT OR Apache-2.0	c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14	https://static.crates.io/crates/serde_json/serde_json-1.0.151.crate
+serde_json	1.0.154	MIT OR Apache-2.0	e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6	https://static.crates.io/crates/serde_json/serde_json-1.0.154.crate
 serde_path_to_error	0.1.20	MIT OR Apache-2.0	10a9ff822e371bb5403e391ecd83e182e0e77ba7f6fe0160b795797109d1b457	https://static.crates.io/crates/serde_path_to_error/serde_path_to_error-0.1.20.crate
 serde_urlencoded	0.7.1	MIT/Apache-2.0	d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd	https://static.crates.io/crates/serde_urlencoded/serde_urlencoded-0.7.1.crate
-sha2	0.11.0	MIT OR Apache-2.0	446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4	https://static.crates.io/crates/sha2/sha2-0.11.0.crate
+sha2	0.11.1	MIT OR Apache-2.0	47d7069beb7d6ac7b9acd1039986e73443f24234f41074da099d6f994ac9ad19	https://static.crates.io/crates/sha2/sha2-0.11.1.crate
 sha3	0.11.0	MIT OR Apache-2.0	be176f1a57ce4e3d31c1a166222d9768de5954f811601fb7ca06fc8203905ce1	https://static.crates.io/crates/sha3/sha3-0.11.0.crate
 shlex	2.0.1	MIT OR Apache-2.0	f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba	https://static.crates.io/crates/shlex/shlex-2.0.1.crate
 signal-hook-registry	1.4.8	MIT OR Apache-2.0	c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b	https://static.crates.io/crates/signal-hook-registry/signal-hook-registry-1.4.8.crate
@@ -187,7 +187,7 @@ tikv-jemallocator	0.7.0	MIT/Apache-2.0	249f09e49ab1609436f34c776e84231bead18d6a9
 time	0.3.53	MIT OR Apache-2.0	18dfaaeddcb932337b5e7866ee7d0ce9b76d2fd092997146f187ec09b4558a50	https://static.crates.io/crates/time/time-0.3.53.crate
 time-core	0.1.9	MIT OR Apache-2.0	9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109	https://static.crates.io/crates/time-core/time-core-0.1.9.crate
 time-macros	0.2.31	MIT OR Apache-2.0	c431b87111666e491a90baa837f914fb45cd5dc3c268591b0220ff5057f2085f	https://static.crates.io/crates/time-macros/time-macros-0.2.31.crate
-tokio	1.53.1	MIT	202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed	https://static.crates.io/crates/tokio/tokio-1.53.1.crate
+tokio	1.53.3	MIT	ce3335fa71841cda333a58d7615b03901380ecf09d59b3296d21f8bbac0dde4e	https://static.crates.io/crates/tokio/tokio-1.53.3.crate
 tokio-macros	2.7.0	MIT	385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496	https://static.crates.io/crates/tokio-macros/tokio-macros-2.7.0.crate
 tokio-rustls	0.26.6	MIT OR Apache-2.0	c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db	https://static.crates.io/crates/tokio-rustls/tokio-rustls-0.26.6.crate
 tokio-util	0.7.18	MIT	9ae9cec805b01e8fc3fd2fe289f89149a9b66dd16786abd8b19cfa7b48cb0098	https://static.crates.io/crates/tokio-util/tokio-util-0.7.18.crate
@@ -231,6 +231,6 @@ windows_x86_64_msvc	0.52.6	MIT OR Apache-2.0	589f6da84c646204747d1270a2a5661ea66
 x25519-dalek	3.0.0	BSD-3-Clause	e7e8131a03190127fb2263afc72b322ecadae46b6ff8c6f399ff5d02f5559af6	https://static.crates.io/crates/x25519-dalek/x25519-dalek-3.0.0.crate
 x509-parser	0.18.1	MIT OR Apache-2.0	d43b0f71ce057da06bc0851b23ee24f3f86190b07203dd8f567d0b706a185202	https://static.crates.io/crates/x509-parser/x509-parser-0.18.1.crate
 yasna	0.6.0	MIT OR Apache-2.0	b5f6765e852b9b4dc8e2a76843e4d64d1cea8e79bcde0b6901aea8e7c7f08282	https://static.crates.io/crates/yasna/yasna-0.6.0.crate
-zeroize	1.9.0	Apache-2.0 OR MIT	e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e	https://static.crates.io/crates/zeroize/zeroize-1.9.0.crate
+zeroize	1.9.1	Apache-2.0 OR MIT	e13084392c5e4bc371903e2935a5eaeed24905a7511356b883835e18a78f6879	https://static.crates.io/crates/zeroize/zeroize-1.9.1.crate
 zeroize_derive	1.5.0	Apache-2.0 OR MIT	3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328	https://static.crates.io/crates/zeroize_derive/zeroize_derive-1.5.0.crate
 zmij	1.0.21	MIT	b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa	https://static.crates.io/crates/zmij/zmij-1.0.21.crate

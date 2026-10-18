@@ -102,6 +102,11 @@ interrupted operation. It does not mean that every possible failure has been eli
   AndroidX Core 1.19.1 runtime notices are aligned. Publication tooling checks source identity, runtime
   evidence, notices and exact-commit CI. Pending CI is now awaited instead of causing
   premature publication refusal.
+  The final dependency update also includes Tokio 1.53.3, serde_json 1.0.154,
+  libc 0.2.190, sha2 0.11.1 and zeroize 1.9.1. NDP socket registration follows
+  Tokio's explicit ownership contract; CI actions use setup-java 6.1.0 and
+  upload-artifact 7.0.2. Temporary Git test repositories disable automatic
+  maintenance so detached maintenance cannot race their cleanup.
 - **Less duplicate and obsolete code.** Besides client parsers, obsolete loading paths
   and six unused performance implementations were retired. Benchmark checks reject
   incomplete or duplicated measurement phases.
@@ -252,6 +257,9 @@ separate from that historical pilot and from full release qualification.
 
 ### Linux TCP and UDP lab snapshot
 
+These measurements identify the earlier artifact below. They are not performance
+qualification of the subsequent dependency-refresh binaries.
+
 Tested Linux SHA256:
 `1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76`.
 VM300/server and VM301/client: 2 vCPU/2 GiB each, Intel i5-8500 lab host,
@@ -298,6 +306,9 @@ IPv4/download and the other ten profiles are not implied by these numbers.
 
 
 ### Лабораторные TCP и UDP на Linux
+
+Эти измерения относятся к прежнему артефакту с указанным ниже SHA. Они не являются
+проверкой производительности последующих сборок после обновления зависимостей.
 
 Проверенный Linux SHA256:
 `1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76`.
@@ -433,6 +444,11 @@ Qeli 0.8.2 посвящён согласованной конфигурации 
   проверяют исходники, результаты runtime-проверок, лицензии и CI точного коммита.
   Незавершённый CI теперь ожидается вместо преждевременного отказа публикации
   только из-за того, что проверки ещё идут.
+  Финальное обновление зависимостей включает Tokio 1.53.3, serde_json 1.0.154,
+  libc 0.2.190, sha2 0.11.1 и zeroize 1.9.1. Регистрация NDP-сокета следует
+  явному контракту владения Tokio; CI использует setup-java 6.1.0 и
+  upload-artifact 7.0.2. Временные Git-репозитории тестов отключают автоматическое
+  обслуживание, чтобы фоновая задача не конкурировала с их очисткой.
 - **Меньше дублирования и устаревшего кода.** Помимо отдельных парсеров удалены
   устаревшие пути загрузки и выведены из эксплуатации шесть неиспользуемых
   реализаций performance-сценариев. Проверки бенчмарков отклоняют неполные
