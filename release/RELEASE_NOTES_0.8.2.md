@@ -246,9 +246,43 @@ A controller, observer and analyzer now define a fixed Linux test for transport
 compatibility, inner IPv4/IPv6, transfer directions and separate mixed TCP/UDP load.
 The harness checks complete results and lab-state restoration; incomplete or failed
 runs do not become PASS. Its 24 unit tests pass, but the historical pilot does not
-qualify newly built release binaries. Development measurements remain local rather
-than being published as a release benchmark.
+qualify newly built release binaries. The identified Linux lab snapshot below is
+separate from that historical pilot and from full release qualification.
 [Method and limitations](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/manuals/RELEASE-SHORT-TEST.md).
+
+### Linux TCP and UDP lab snapshot
+
+Tested Linux SHA256:
+`1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76`.
+VM300/server and VM301/client: 2 vCPU/2 GiB each, Intel i5-8500 lab host,
+kernel `6.12.111+deb13-amd64`, underlay MTU 1500, client MTU auto/effective 1400.
+Recordizer **required** (`PACKET_MUX_V1 active`), client/server TUN queue **1000**;
+client default verified in Linux. No rebuild, reboot or network tuning during the
+measurements; Proxmox was only the hypervisor, VM302 was not used.
+
+TCP P4, inner IPv4/IPv6, 15 seconds with `-O 3`, median of three untraced repeats,
+Mbit/s. The profile name describes the carrier, not the inner workload.
+
+| Profile | TCP IPv4 upload | TCP IPv4 download | TCP IPv6 upload | TCP IPv6 download |
+|---|---:|---:|---:|---:|
+| udp-faketls | 1077.1 | 1168.4 | 1074.6 | 1163.2 |
+| udp-quic | 1087.0 | 1174.5 | 1074.2 | 1168.7 |
+
+UDP is a separate earlier session on the same SHA/settings: one inner IPv6 upload
+stream, payload 1200, 15 seconds with `-O 3`, n=3. Offered load is not goodput.
+
+| Profile | Offered Mbit/s | Median goodput Mbit/s | Median loss | Maximum loss | Repeats with loss ≤1% |
+|---|---:|---:|---:|---:|---:|
+| udp-faketls | 600 | 599.6 | 0% | 0.0158% | 3/3 |
+| udp-quic | 600 | 599.7 | 0% | 0% | 3/3 |
+| udp-faketls | 900 | 885.8 | 1.5400% | 3.1293% | 1/3 |
+| udp-quic | 950 | 948.9 | 0.0582% | 4.6690% | 2/3 |
+
+UDP600 passes the loss threshold, but stable 900/950 Mbit/s in every repeat is not
+established. TCP upload still has TUN drops. Only two profiles are covered; UDP
+IPv4/download and the other ten profiles are not implied by these numbers.
+[Full TCP/UDP tables, matched archived/current comparison, lab parameters and limitations](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/LINUX-LAB-0.8.2-2026-10-17.md).
+[Separate remaining-TUN-drop diagnosis and its limits](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-READER-0.8.2-2026-10-18.md).
 
 ## Русский
 
@@ -259,9 +293,43 @@ than being published as a release benchmark.
 смешанная TCP/UDP-нагрузка. Обвязка проверяет полноту результатов и восстановление
 состояния стенда, не превращает неполный или неудачный прогон в PASS.
 Её 24 unit-теста проходят; исторический пилот не квалифицирует новые бинарники.
-Исходные замеры разработки сохраняются локально, а не публикуются как бенчмарк релиза.
+Идентифицированный Linux-снимок ниже отделён от исторического пилота и полной квалификации релиза.
 [Методика и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/manuals/RELEASE-SHORT-TEST.md).
 
+
+### Лабораторные TCP и UDP на Linux
+
+Проверенный Linux SHA256:
+`1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76`.
+VM300/server и VM301/client: по 2 vCPU/2 GiB, лабораторный хост Intel i5-8500,
+kernel `6.12.111+deb13-amd64`, underlay MTU 1500, клиентский MTU auto/фактический 1400.
+Recordizer **required** (`PACKET_MUX_V1 active`), очередь TUN клиента/сервера **1000**;
+клиентский default проверен в Linux. В ходе измерений — без пересборки, перезагрузки
+и тюнинга сети; Proxmox только гипервизор, VM302 не использовалась.
+
+TCP P4, внутренние IPv4/IPv6, 15 с с `-O 3`, медиана трёх повторов без трассировки,
+Мбит/с. Название профиля обозначает carrier, а не внутреннюю нагрузку.
+
+| Профиль | TCP IPv4 upload | TCP IPv4 download | TCP IPv6 upload | TCP IPv6 download |
+|---|---:|---:|---:|---:|
+| udp-faketls | 1077.1 | 1168.4 | 1074.6 | 1163.2 |
+| udp-quic | 1087.0 | 1174.5 | 1074.2 | 1168.7 |
+
+UDP — отдельная более ранняя сессия на том же SHA/настройках: один внутренний
+IPv6 upload поток, payload 1200, 15 с с `-O 3`, n=3. Offered не равен goodput.
+
+| Профиль | Offered Мбит/с | Goodput median Мбит/с | Loss median | Loss max | Повторы с loss ≤1% |
+|---|---:|---:|---:|---:|---:|
+| udp-faketls | 600 | 599.6 | 0% | 0.0158% | 3/3 |
+| udp-quic | 600 | 599.7 | 0% | 0% | 3/3 |
+| udp-faketls | 900 | 885.8 | 1.5400% | 3.1293% | 1/3 |
+| udp-quic | 950 | 948.9 | 0.0582% | 4.6690% | 2/3 |
+
+UDP600 проходит порог потерь, но стабильные 900/950 Мбит/с всеми повторами не
+подтверждены. При TCP upload остались TUN drops. Здесь только два профиля;
+UDP IPv4/download и остальные десять профилей этими числами не покрыты.
+[Полные TCP/UDP-таблицы, сопоставление архивной/новой сборок, параметры лабы и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/LINUX-LAB-0.8.2-2026-10-17.md).
+[Отдельная диагностика остаточных TUN drops и её ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-READER-0.8.2-2026-10-18.md).
 
 ### Что мы делали и зачем
 

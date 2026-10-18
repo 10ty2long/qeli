@@ -1996,6 +1996,10 @@ transports you actually use separately. Select the smallest queue that preserves
 the required throughput with acceptable loss/latency, not the largest queue.
 [VM300/301 report for queue sizes 250/500/1000/2000](../reports/TUN-QUEUE-SIZE-2026-10-16.md)
 and [queue-size recommendations](../reports/TUN-QUEUE-SIZE-2026-10-16.md#choosing-a-size).
+For the identified 0.8.2 artifact SHA `1d94d4c4…`, see the separate
+[TCP/UDP tables, queue settings and lab parameters](../reports/LINUX-LAB-0.8.2-2026-10-17.md).
+[Remaining drops at 1000 and reader-localization limits](../reports/TUN-READER-0.8.2-2026-10-18.md)
+do not imply that a deeper queue will remove the bottleneck.
 
 ### Precedence: which source wins
 

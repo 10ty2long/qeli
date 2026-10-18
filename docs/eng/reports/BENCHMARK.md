@@ -3,7 +3,10 @@
 The [short laboratory test](../manuals/RELEASE-SHORT-TEST.md) provides a fixed
 routine transport/performance method; its pilot is not a release qualification.
 
-Development performance measurements for unreleased 0.8.2 have been withdrawn from publication. Complete original data and reports are retained locally for internal audit. They are not a public release benchmark or a basis for comparing version performance.
+[New Linux 0.8.2 snapshot: TCP and UDP, SHA 1d94d4c4, lab and queue settings](LINUX-LAB-0.8.2-2026-10-17.md).
+It covers only two native UDP profiles and does not replace full release qualification.
+Previously withdrawn development measurements remain locally available for internal audit;
+they must not be mixed into the new snapshot or presented as current-artifact results.
 
 The current published comparative report is [qeli 0.8.0 — 1 September 2026](benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md).
 
