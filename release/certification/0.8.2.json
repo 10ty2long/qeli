@@ -1,207 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
+  "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "environment": "Debian lab 10.66.116.11; isolated mount/network/PID namespaces",
-      "executed_at": "2026-10-17T22:54:17.034036+00:00",
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json"
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
+      "executed_at": "2026-10-18T19:31:45.376851+00:00",
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -352,18 +352,53 @@
     }
   ],
   "acceptance": {
-    "status": "readiness_fixes_actual_CLI_runtime_qualified",
+    "status": "debt_closure_actual_refreshed_CLI_qualified",
     "automated_cases_passed": 20,
     "actual_ordinary_executions": 19,
     "runtime_assertions": 409,
     "current_linux_matrix": {
-      "evidence": "release/certification/evidence/readiness-fixes-runtime-20261018.json",
-      "artifact_sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "source_commit": "b1c68ab48915506162071ddf677730623ded61fd",
-      "source_digest": "c4cde5e25e48100d54118c91fe475c62d8e78ad61d2a17a4bb004aaf457bd5b7"
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json",
+      "artifact_sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "source_commit": "633e95eff4e5ce303c899a6c765c3de3ab745beb",
+      "source_digest": "d9e0709911fcbbff7acfedaa907e7c4689b6fbb81721378d400333c881ca892c",
+      "executed_source_commit": "5584f297cb6daa34a79054c8421f5d3656757b2a",
+      "source_applicability": {
+        "status": "PASS",
+        "build_commit": "5584f297cb6daa34a79054c8421f5d3656757b2a",
+        "documentation_commit": "633e95eff4e5ce303c899a6c765c3de3ab745beb",
+        "changed_paths": [
+          "qeli-openwrt/INSTALL.md",
+          "release/keenetic/README.md",
+          "docs/ru/manuals/KEENETIC-DEPLOY.md",
+          "docs/eng/manuals/KEENETIC-DEPLOY.md"
+        ],
+        "actual_ELF_sizes": {
+          "aarch64": {
+            "bytes": 9342312,
+            "MiB": "8.91",
+            "sha256": "15ab1c62d04a9a61647517481cbf1534dd75d789206f322f1c519d7d9ac3259d"
+          },
+          "armv7": {
+            "bytes": 9496852,
+            "MiB": "9.06",
+            "sha256": "f5ee65ebf06eff9e159a3926070b4c51ff2bce84a86f6a0a714e8b183ea0b38e"
+          },
+          "x86_64-musl": {
+            "bytes": 10113688,
+            "MiB": "9.65",
+            "sha256": "9598f62f43878ca828d810256a75d26c0ce297803d608ec0881c9dd810a0f93f"
+          },
+          "mipsel": {
+            "bytes": 11372344,
+            "MiB": "10.85",
+            "sha256": "cf52387fa0b9b5b1a7296af14fbc0bc196291327d4bf15cf9385ed3d89a6e98a"
+          }
+        },
+        "only_size_description_changed": true
+      }
     },
-    "scope": "Accepted API34 ENONET, D06 and physical exclusions unchanged. Retained application/core bytes have explicit source equivalence; macOS and router archives were repackaged.",
-    "final_CI_and_preflight": "Mandatory independent checks against final dev HEAD before draft refresh.",
+    "scope": "N01/N02/N03 corrected and dependency-refreshed distribution qualified. Earlier failures, accepted API34 ENONET/D06 and physical exclusions retained. Independently proven external vpn-nat host variance retains original guard FAIL; no full host-unchanged claim. N04 not claimed fixed.",
+    "final_CI_and_preflight": "Mandatory exact final dev HEAD before draft refresh.",
     "physical_qualification_complete": false,
     "push_deploy_release": false
   },
@@ -739,6 +774,18 @@
     {
       "evidence": "release/certification/evidence/readiness-fixes-assets-20261018.json",
       "scope": "Ten readiness findings corrected; four asset hashes changed, twelve retained. Final exact-commit CI and preflight still required."
+    },
+    {
+      "evidence": "release/certification/evidence/debt-closure-runtime-20261018.json",
+      "scope": "Fresh isolated execution of actual new CLI; all 20 required cases."
+    },
+    {
+      "evidence": "release/certification/evidence/debt-closure-assets-20261018.json",
+      "scope": "N01/N02/N03 closure and 16 newly qualified distribution files; no publication."
+    },
+    {
+      "evidence": "release/certification/evidence/debt-closure-host-variance-20261018.json",
+      "scope": "Original host-guard failure retained separately; unchanged independent qualification attributes exact legacy rule variance to pre-existing host maintenance."
     }
   ],
   "release_assets": {
@@ -747,63 +794,63 @@
       "bytes": 8426
     },
     "qeli-android-0.8.2.apk": {
-      "sha256": "f84334d2b9b7666cd4b9164dd26c30a472e9909ddb25926b852ce3680540158c",
-      "bytes": 12217380
+      "sha256": "a1e2e900dbad6960c7d7aa2eb35bf83a6a0520cf7bffe2f3fbf42f0ff1a5f0e1",
+      "bytes": 12246052
     },
     "qeli-client-keenetic-aarch64": {
-      "sha256": "d5f55dbe1a253afb0c8dbe26afb8850a6cd0cdb3f1013c27e82b43d5cadfd8bd",
-      "bytes": 9331744
+      "sha256": "15ab1c62d04a9a61647517481cbf1534dd75d789206f322f1c519d7d9ac3259d",
+      "bytes": 9342312
     },
     "qeli-client-keenetic-mipsel": {
-      "sha256": "8af622644881dfec5995f47a9186b235df19b31fffb1408d7d62d05f33a0c35b",
-      "bytes": 11378968
+      "sha256": "cf52387fa0b9b5b1a7296af14fbc0bc196291327d4bf15cf9385ed3d89a6e98a",
+      "bytes": 11372344
     },
     "qeli-client-openwrt-aarch64": {
-      "sha256": "d5f55dbe1a253afb0c8dbe26afb8850a6cd0cdb3f1013c27e82b43d5cadfd8bd",
-      "bytes": 9331744
+      "sha256": "15ab1c62d04a9a61647517481cbf1534dd75d789206f322f1c519d7d9ac3259d",
+      "bytes": 9342312
     },
     "qeli-client-openwrt-armv7": {
-      "sha256": "d54070211dbd0d150f3a0c98901b034f7e8fd39d17a94a7d2f937500395c44d8",
-      "bytes": 9487420
+      "sha256": "f5ee65ebf06eff9e159a3926070b4c51ff2bce84a86f6a0a714e8b183ea0b38e",
+      "bytes": 9496852
     },
     "qeli-client-openwrt-mipsel": {
-      "sha256": "8af622644881dfec5995f47a9186b235df19b31fffb1408d7d62d05f33a0c35b",
-      "bytes": 11378968
+      "sha256": "cf52387fa0b9b5b1a7296af14fbc0bc196291327d4bf15cf9385ed3d89a6e98a",
+      "bytes": 11372344
     },
     "qeli-client-openwrt-x86_64": {
-      "sha256": "8d08f59c71ba8a67a7ddaf00c1a68e3baa4f7b1b9d4332a87a9c2ba55a7a2408",
-      "bytes": 10093736
+      "sha256": "9598f62f43878ca828d810256a75d26c0ce297803d608ec0881c9dd810a0f93f",
+      "bytes": 10113688
     },
     "qeli-keenetic-files.tar.gz": {
-      "sha256": "a2a2bde1ac2db61d84a2559424292a5a0ac7f29fc398eeb0b7b6eaedb4a625a2",
+      "sha256": "27fe405955971fed89314d6e2cc67739f1815920ef40477a73fb94d529823fe9",
       "bytes": 43262
     },
     "qeli-linux-amd64": {
-      "sha256": "1d94d4c412f6c1fd231765b760196b0b4f518c20135bf0ccd1b52b192710cf76",
-      "bytes": 18814616
+      "sha256": "15a181d5f9de851826839dfe8413ea4ee9b1ff798cb25d6d403ac2bcddcdda9a",
+      "bytes": 18883576
     },
     "Qeli-macOS-universal.zip": {
-      "sha256": "a17f5338aaa7162f5eb0e26882e033b542618049d58d8a2dcfbd067a26e2d5a0",
-      "bytes": 61454232
+      "sha256": "c52d7434a9ca804d455565462854472c391da6ae440c3a57f9821d00f1308f9d",
+      "bytes": 61461916
     },
     "qeli-openwrt-files.tar.gz": {
-      "sha256": "bb4cff943c185330bd98c295122c1c7ca71a3834a3f05406470f23cb81d77e94",
-      "bytes": 51805
+      "sha256": "087189d9f45595e9b7b109d8f5c52487f174d01c3389da1c2d12920a34ffe704",
+      "bytes": 51810
     },
     "QeliWin-net-required.exe": {
-      "sha256": "eb73c7648eb6cb9a5dac109b13434c60660edbce1d8c5d406e3288dc493cf22b",
-      "bytes": 20367883
+      "sha256": "22df2011e2654b640a9885b02f0ad2d6ed35e1bf8b222fe49e13019bb56a1ec1",
+      "bytes": 20384267
     },
     "QeliWin-standalone.exe": {
-      "sha256": "5ad93ada7300eb17756918d41f526b1a0a04e973adeb419e4e946193c9cac6a6",
-      "bytes": 74407625
+      "sha256": "09f17d252a9e113112fc68c8a884a1b8e98297e907c16d09ad553eb37ac35907",
+      "bytes": 74413036
     },
     "qeli_0.8.2_amd64.deb": {
-      "sha256": "3151dce0f3b42df427efb9da50ebd4bc8373798dbba35382150744b97c1288a7",
-      "bytes": 4832288
+      "sha256": "39be33109f881d03c67162c71196237574c6d6a724770aeb62f0934a23c01614",
+      "bytes": 4841280
     },
     "SHA256SUMS": {
-      "sha256": "55a7ea090fb53ee5a58788f13803e6b7b19dc03e27af5f15fb6197ad53aaee89",
+      "sha256": "bd3cc864b57b93c7432cf8ade21e62c41784296f37b6397411fe4b521cba440e",
       "bytes": 1362
     }
   }
