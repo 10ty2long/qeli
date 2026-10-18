@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import signal
 import subprocess
 import time
@@ -38,15 +39,32 @@ def spawn(root, label, args, env=None):
     require(re.fullmatch(r'[a-zA-Z0-9_-]+', label), 'unsafe process label')
     receipt = root / 'owned' / (label + '.json')
     require(not receipt.exists(), 'existing owned process receipt')
+    command = shutil.which(str(args[0]), path=os.pathsep.join(os.get_exec_path(env)))
+    require(command is not None, 'child executable not found')
+    expected_exe = str(Path(command).resolve(strict=True))
     with (root / (label + '.log')).open('xb') as log:
         p = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                              start_new_session=True, env=env)
     try:
-        exe, start, _ = identity(p.pid)
+        exe, start, state = identity(p.pid)
     except FileNotFoundError:
         raise RuntimeError('child exited before identity receipt')
-    save(receipt, dict(pid=p.pid, exe=exe, start=start))
-    return p.pid
+    # /proc/<pid>/exe can briefly retain the launching interpreter during exec.
+    # Keep the intended executable
+    # and original start time; never adopt a different PID or relax halt's checks.
+    save(receipt, dict(pid=p.pid, exe=expected_exe, start=start, launching=True))
+    deadline = time.monotonic() + 5
+    current_start = start
+    while True:
+        require(current_start == start, 'PID reused during spawn; refuse adoption')
+        require(state != 'Z' and p.poll() is None, 'child exited during startup')
+        if exe == expected_exe:
+            require(os.getpgid(p.pid) == p.pid, 'child process group changed')
+            save(receipt, dict(pid=p.pid, exe=exe, start=start))
+            return p.pid
+        require(time.monotonic() < deadline, 'child executable did not settle; receipt retained')
+        time.sleep(.01)
+        exe, current_start, state = identity(p.pid)
 
 
 def halt(root):

@@ -2001,6 +2001,13 @@ For the identified 0.8.2 artifact SHA `1d94d4c4…`, see the separate
 [Remaining drops at 1000 and reader-localization limits](../reports/TUN-READER-0.8.2-2026-10-18.md)
 do not imply that a deeper queue will remove the bottleneck.
 
+The [19 October N04 follow-up](../reports/TUN-N04-0.8.2-2026-10-19.md)
+confirmed `FULL_RING` and tested raw TUN reads on the Linux UDP client's transport
+runtime. Queues 1000/2000 were checked separately; the default remains 1000.
+Zero TUN drops in three QUIC windows at 2000 do not establish zero UDP loss or
+optimal latency. The corrected test ELF differs from the prepared candidate's
+distribution; its results must not be reassigned to those existing files.
+
 ### Precedence: which source wins
 
 A client has three sources of values — its `[qeli]` file, what the server pushes on connect,

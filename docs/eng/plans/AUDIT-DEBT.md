@@ -2,7 +2,16 @@
 
 > Numerical 0.8.2 laboratory measurements and comparisons have been withdrawn from publication; original reports are retained locally for audit. Engineering-check status is not a release benchmark.
 
-<!-- normative-sync: audit-debt-v141 -->
+<!-- normative-sync: audit-debt-v142 -->
+
+**19 October, N04:** the current candidate confirmed kernel TUN queue overflow;
+the Linux UDP reader fix passed A/B, 17 TUN and 2490 library tests, Clippy and
+FFI/client-bin checks. Residual drops at queue1000 are documented; queue2000 was
+checked separately without changing the default or qualifying loaded RTT.
+[N04 results and limits](../reports/TUN-N04-0.8.2-2026-10-19.md).
+Existing packages and the GitHub draft were not refreshed: affected files still
+need rebuilding, provenance and exact-commit CI before release. The previous
+37/37 scope, accepted unfixed API34 ENONET and excluded platforms are unchanged.
 
 Current reconciliation: 15 October 2026. The full audit is complete within agreed scope: 37/37 (100%). Q29 closed by explicit user decision with the documented generic/null DnsResolver API34 limitation; the original ENONET remains FAIL and no fix is claimed. The original 15 obligation groups remain 14 DONE and D06 ACCEPTED_LIMITATION; previous platform coverage limits are retained. Historical OPEN entries and counts below refer to their stated dates. [Q29 decision and limits](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
 

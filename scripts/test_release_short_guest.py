@@ -12,6 +12,49 @@ import release_short_guest as guest
 
 
 class GuestOwnershipTest(unittest.TestCase):
+    def test_spawn_waits_for_the_intended_executable(self):
+        expected=str(Path(sys.executable).resolve())
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'owned').mkdir()
+            child=SimpleNamespace(pid=12345,poll=lambda:None)
+            with patch.object(guest.shutil,'which',return_value=expected), \
+                    patch.object(guest.subprocess,'Popen',return_value=child), \
+                    patch.object(guest,'identity',side_effect=[('/launching/python','100','R'),(expected,'100','S')]) as identity, \
+                    patch.object(guest.os,'getpgid',return_value=12345,create=True), \
+                    patch.object(guest.time,'sleep'):
+                self.assertEqual(guest.spawn(root,'child',[expected]),12345)
+            self.assertEqual(identity.call_count,2)
+            self.assertEqual(json.loads((root/'owned/child.json').read_text()),dict(pid=12345,exe=expected,start='100'))
+
+    def test_spawn_does_not_adopt_a_reused_pid(self):
+        expected=str(Path(sys.executable).resolve())
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'owned').mkdir()
+            child=SimpleNamespace(pid=12345,poll=lambda:None)
+            with patch.object(guest.shutil,'which',return_value=expected), \
+                    patch.object(guest.subprocess,'Popen',return_value=child), \
+                    patch.object(guest,'identity',side_effect=[('/launching/python','100','R'),(expected,'999','S')]), \
+                    patch.object(guest.time,'sleep'),patch.object(guest.os,'killpg',create=True) as kill:
+                with self.assertRaisesRegex(RuntimeError,'PID reused during spawn'):
+                    guest.spawn(root,'child',[expected])
+                kill.assert_not_called()
+            self.assertTrue(json.loads((root/'owned/child.json').read_text())['launching'])
+
+    def test_spawn_timeout_retains_uncertain_ownership(self):
+        expected=str(Path(sys.executable).resolve())
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'owned').mkdir()
+            child=SimpleNamespace(pid=12345,poll=lambda:None)
+            with patch.object(guest.shutil,'which',return_value=expected), \
+                    patch.object(guest.subprocess,'Popen',return_value=child), \
+                    patch.object(guest,'identity',return_value=('/unexpected/executable','100','S')), \
+                    patch.object(guest.time,'monotonic',side_effect=[0,6]), \
+                    patch.object(guest.os,'killpg',create=True) as kill:
+                with self.assertRaisesRegex(RuntimeError,'did not settle'):
+                    guest.spawn(root,'child',[expected])
+                kill.assert_not_called()
+            self.assertTrue((root/'owned/child.json').exists())
+
     def receipt(self, root):
         (root/'owned').mkdir()
         path=root/'owned'/'child.json'
@@ -32,6 +75,16 @@ class GuestOwnershipTest(unittest.TestCase):
             receipt=self.receipt(root)
             with patch.object(guest,'identity',return_value=('/private/qeli','999','S')), patch.object(guest.os,'killpg',create=True) as kill:
                 with self.assertRaises(RuntimeError):
+                    guest.halt(root)
+                kill.assert_not_called()
+            self.assertTrue(receipt.exists())
+
+    def test_changed_executable_is_not_signalled(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);receipt=self.receipt(root)
+            with patch.object(guest,'identity',return_value=('/foreign/executable','100','S')), \
+                    patch.object(guest.os,'killpg',create=True) as kill:
+                with self.assertRaisesRegex(RuntimeError,'ownership changed'):
                     guest.halt(root)
                 kill.assert_not_called()
             self.assertTrue(receipt.exists())

@@ -18,6 +18,15 @@ use std::sync::{mpsc as std_mpsc, Arc};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+#[cfg(target_os = "linux")]
+mod pollable;
+
+enum ReadBackend {
+    Threaded,
+    #[cfg(target_os = "linux")]
+    Pollable(tokio::runtime::Handle),
+}
+
 const FROM_TUN_CAPACITY: usize = 4096;
 const TO_TUN_CAPACITY: usize = 2048;
 const MAX_REUSABLE_BUFFER_BYTES: usize = 4 * 1024 * 1024;
@@ -125,6 +134,8 @@ pub struct TunPacket {
     buffer: Option<Vec<u8>>,
     range: Range<usize>,
     recycle: std_mpsc::SyncSender<Vec<u8>>,
+    #[cfg(target_os = "linux")]
+    on_recycle: Option<Arc<tokio::sync::Notify>>,
 }
 
 impl TunPacket {
@@ -133,6 +144,8 @@ impl TunPacket {
             buffer: Some(buffer),
             range,
             recycle,
+            #[cfg(target_os = "linux")]
+            on_recycle: None,
         }
     }
 }
@@ -159,7 +172,15 @@ impl Drop for TunPacket {
         if let Some(buffer) = self.buffer.take() {
             // The pool has exactly one slot per allocated buffer, so Full would indicate
             // a bookkeeping bug. On shutdown the receiver is gone; dropping is correct.
-            let _ = self.recycle.try_send(buffer);
+            let recycled = self.recycle.try_send(buffer);
+            #[cfg(target_os = "linux")]
+            if recycled.is_ok() {
+                if let Some(notify) = &self.on_recycle {
+                    notify.notify_one();
+                }
+            }
+            #[cfg(not(target_os = "linux"))]
+            drop(recycled);
         }
     }
 }
@@ -196,6 +217,8 @@ impl TunWriter {
 /// Owns the Unix TUN packet workers and their queues for one connection generation.
 pub struct LinuxTunPump {
     from_tun: mpsc::Receiver<TunPacket>,
+    #[cfg(target_os = "linux")]
+    pollable_from_tun: Option<pollable::Reader>,
     to_tun: Option<std_mpsc::SyncSender<PooledBuffer>>,
     downlink_pool: BufferPool,
     stop: LinuxTunPumpStop,
@@ -203,6 +226,28 @@ pub struct LinuxTunPump {
 }
 
 impl LinuxTunPump {
+    /// Register Linux raw-IP TUN directly with the owning runtime. TAP keeps its
+    /// link-control worker; other Unix platforms keep their existing backend.
+    #[cfg(target_os = "linux")]
+    pub(crate) fn start_pollable(
+        reader_fd: OwnedFd,
+        writer_fd: OwnedFd,
+        config: LinuxTunPumpConfig,
+        runtime: tokio::runtime::Handle,
+    ) -> io::Result<Self> {
+        if !matches!(config.framing, TunFraming::Raw) {
+            return Self::start(reader_fd, writer_fd, config);
+        }
+        let pool_capacity = reusable_buffer_count(config.buffer_size);
+        Self::start_with_backend(
+            reader_fd,
+            writer_fd,
+            config,
+            pool_capacity,
+            ReadBackend::Pollable(runtime),
+        )
+    }
+
     pub fn start(
         reader_fd: OwnedFd,
         writer_fd: OwnedFd,
@@ -215,8 +260,24 @@ impl LinuxTunPump {
     fn start_with_pool_capacity(
         reader_fd: OwnedFd,
         writer_fd: OwnedFd,
+        config: LinuxTunPumpConfig,
+        pool_capacity: usize,
+    ) -> io::Result<Self> {
+        Self::start_with_backend(
+            reader_fd,
+            writer_fd,
+            config,
+            pool_capacity,
+            ReadBackend::Threaded,
+        )
+    }
+
+    fn start_with_backend(
+        reader_fd: OwnedFd,
+        writer_fd: OwnedFd,
         mut config: LinuxTunPumpConfig,
         pool_capacity: usize,
+        backend: ReadBackend,
     ) -> io::Result<Self> {
         if config.buffer_size == 0 {
             return Err(io::Error::new(
@@ -262,19 +323,43 @@ impl LinuxTunPump {
         let writer_framing = config.framing;
         let write_drops = config.write_drops.take();
 
-        let reader_stop = stop.clone();
-        let reader = std::thread::Builder::new()
-            .name("qeli-tun-reader".into())
-            .spawn(move || {
-                reader_loop(
+        let mut threads = Vec::new();
+        #[cfg(target_os = "linux")]
+        let pollable_from_tun;
+        match backend {
+            #[cfg(target_os = "linux")]
+            ReadBackend::Pollable(runtime) if matches!(config.framing, TunFraming::Raw) => {
+                pollable_from_tun = Some(pollable::Reader::new(
                     reader_fd,
-                    from_tun_tx,
                     recycle_tx,
                     recycle_rx,
-                    reader_stop,
-                    config,
-                )
-            })?;
+                    stop.clone(),
+                    runtime,
+                )?);
+                drop(from_tun_tx);
+            }
+            _ => {
+                #[cfg(target_os = "linux")]
+                {
+                    pollable_from_tun = None;
+                }
+                let reader_stop = stop.clone();
+                threads.push(
+                    std::thread::Builder::new()
+                        .name("qeli-tun-reader".into())
+                        .spawn(move || {
+                            reader_loop(
+                                reader_fd,
+                                from_tun_tx,
+                                recycle_tx,
+                                recycle_rx,
+                                reader_stop,
+                                config,
+                            )
+                        })?,
+                );
+            }
+        }
 
         let writer_stop = stop.clone();
         let writer = match std::thread::Builder::new()
@@ -293,17 +378,22 @@ impl LinuxTunPump {
                 stop.request_stop();
                 from_tun.close();
                 drop(to_tun_tx);
-                let _ = reader.join();
+                for reader in threads {
+                    let _ = reader.join();
+                }
                 return Err(error);
             }
         };
 
+        threads.push(writer);
         Ok(Self {
             from_tun,
+            #[cfg(target_os = "linux")]
+            pollable_from_tun,
             to_tun: Some(to_tun_tx),
             downlink_pool,
             stop,
-            workers: TunWorkers::new(vec![reader, writer]),
+            workers: TunWorkers::new(threads),
         })
     }
 
@@ -323,12 +413,20 @@ impl LinuxTunPump {
     }
 
     pub async fn recv_from_tun(&mut self) -> Option<TunPacket> {
+        #[cfg(target_os = "linux")]
+        if let Some(reader) = self.pollable_from_tun.as_mut() {
+            return reader.recv().await;
+        }
         self.from_tun.recv().await
     }
 
     pub(crate) fn try_recv_from_tun(
         &mut self,
     ) -> Result<TunPacket, tokio::sync::mpsc::error::TryRecvError> {
+        #[cfg(target_os = "linux")]
+        if let Some(reader) = self.pollable_from_tun.as_mut() {
+            return reader.try_recv();
+        }
         self.from_tun.try_recv()
     }
 
@@ -341,6 +439,8 @@ impl LinuxTunPump {
     fn request_stop(&mut self) {
         self.stop.request_stop();
         self.from_tun.close();
+        #[cfg(target_os = "linux")]
+        self.pollable_from_tun.take();
         self.to_tun.take();
     }
 }

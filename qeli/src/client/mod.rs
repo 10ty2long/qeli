@@ -6524,7 +6524,7 @@ where
     };
     #[cfg(target_os = "linux")]
     let (tun_guard, mut tun_pump) =
-        start_linux_tun_pump(tunnel.guard, reader_fd, writer_fd, pump_config).await?;
+        start_linux_tun_pump(tunnel.guard, reader_fd, writer_fd, pump_config, None).await?;
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let mut tun_pump = LinuxTunPump::start(reader_fd, writer_fd, pump_config)?;
     #[cfg(target_os = "windows")]
@@ -7786,16 +7786,22 @@ impl TunnelSetup {
 /// Start packet workers with the platform guard on an owning network worker. A
 /// partial pump failure joins its threads before guard rollback. Keep ordinary pump
 /// errors distinct from worker/context/panic failures that make cleanup uncertain.
+/// UDP supplies its runtime for raw input; TCP retains its established reader worker.
 #[cfg(target_os = "linux")]
 async fn start_linux_tun_pump(
     mut guard: TunGuard,
     reader_fd: OwnedFd,
     writer_fd: OwnedFd,
     config: LinuxTunPumpConfig,
+    runtime: Option<tokio::runtime::Handle>,
 ) -> anyhow::Result<(TunGuard, LinuxTunPump)> {
     let failures = guard.failures.clone();
     let started = network_task::run(Arc::new(AtomicBool::new(false)), move || {
-        let pump = match LinuxTunPump::start(reader_fd, writer_fd, config) {
+        let created = match runtime {
+            Some(runtime) => LinuxTunPump::start_pollable(reader_fd, writer_fd, config, runtime),
+            None => LinuxTunPump::start(reader_fd, writer_fd, config),
+        };
+        let pump = match created {
             Ok(pump) => pump,
             Err(error) => {
                 let message = format!("TUN packet pump startup failed: {error}");
@@ -10956,8 +10962,14 @@ pub(crate) async fn run_udp_tunnel(
         },
     };
     #[cfg(target_os = "linux")]
-    let (tun_guard, mut tun_pump) =
-        start_linux_tun_pump(tun_setup.guard, reader_fd, writer_fd, pump_config).await?;
+    let (tun_guard, mut tun_pump) = start_linux_tun_pump(
+        tun_setup.guard,
+        reader_fd,
+        writer_fd,
+        pump_config,
+        Some(tokio::runtime::Handle::current()),
+    )
+    .await?;
     #[cfg(any(target_os = "android", target_os = "macos"))]
     let mut tun_pump = LinuxTunPump::start(reader_fd, writer_fd, pump_config)?;
     #[cfg(target_os = "windows")]
@@ -11704,8 +11716,8 @@ pub(crate) async fn run_udp_tunnel(
                         }
                     };
                     drop(ip_packet);
-                    // The first packet was awaited by select. Drain only packets that the TUN
-                    // worker has already queued, bounded to one socket batch. This adds no
+                    // The first packet was awaited by select. Drain only packets immediately
+                    // available from the TUN backend, bounded to one socket batch. This adds no
                     // coalescing timer and keeps cancellation/roaming latency bounded, while
                     // giving sendmmsg real work instead of one record at a time.
                     let mut drained_packets = 1usize;

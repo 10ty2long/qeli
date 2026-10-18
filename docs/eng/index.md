@@ -134,3 +134,4 @@ guidance. Start with the **[archive map](archive/README.md)**.
 - [Linux client TUN queue size](reports/TUN-QUEUE-SIZE-2026-10-16.md) — 16 October 2026.
 - [Linux 0.8.2: TCP/UDP on an identified binary](reports/LINUX-LAB-0.8.2-2026-10-17.md) — lab setup, settings and measurement limits, 17 October.
 - [Remaining TUN-drop diagnosis](reports/TUN-READER-0.8.2-2026-10-18.md) — 18 October; the cause is not claimed to be established.
+- [N04: TUN-drop cause and Linux UDP reader fix](reports/TUN-N04-0.8.2-2026-10-19.md) — 19 October; A/B, queues 1000/2000 and remaining limits.

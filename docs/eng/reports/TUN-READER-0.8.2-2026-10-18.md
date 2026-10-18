@@ -73,6 +73,11 @@ and [proc fields](https://www.kernel.org/doc/html/latest/filesystems/proc.html).
 
 ## Buffer-pool hypothesis and next step
 
+The subsequent [19 October N04 investigation](TUN-N04-0.8.2-2026-10-19.md)
+used a newer, explicitly identified candidate, confirmed kernel queue overflow
+and tested a Linux UDP reader fix. The original next steps and 18 October limits
+below are preserved; their hashes and findings are not reassigned.
+
 The [artifact's source](https://github.com/litvinovtd/qeli/blob/8b18038849873125219b2a2f6ed8f8d339800ee5/qeli/src/transport_core/linux_tun.rs)
 waits for an available reusable buffer before read(TUN). Dropping TunPacket returns
 it. At the default 65535-byte client read buffer, the 4 MiB budget and upper clamp
