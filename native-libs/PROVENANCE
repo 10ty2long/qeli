@@ -7,8 +7,8 @@ the GUI clients silently carried an older realtls/FFI core than the repository d
 Nothing in review or CI could have caught that. This file records what the current
 binaries were actually built from, so the question has an answer.
 
-source-digest : 42672aca87de8e95b2e289cad35b576196f88e92874d121e1804e7845152976b
-base-commit   : 2d6fcfd5bbecfe68d91299bb40cb3a5c53ffd4a8
+source-digest : 81c85caad6bc25af3b548a3278cd4e6757d4f2285fb73ebf9c4b4a38be819e6e
+base-commit   : f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4
 dirty-sources : 0 file(s) modified vs base-commit at build time
 built-on      : lab .10/.11; independent Windows/macOS and Android A/B jobs; execution timestamps are retained in build journals
 toolchain     : pinned inventories in native-libs/reproducibility/{desktop,android}.json
@@ -25,5 +25,6 @@ Recompute it with
 `python native-libs/provenance.py --check`: a mismatch means the cores are stale relative
 to the source in this tree and must be rebuilt before release.
 
-recorded-at   : 2026-10-17T22:46:50.129933+00:00 (provenance refresh, not compilation time)
-source-epoch  : desktop=1792253423, android=1792253423 (reproducibility input, not build time)
+
+recorded-at   : 2026-10-18T18:47:59.204989+00:00 (provenance refresh, not compilation time)
+source-epoch  : desktop=1792347391, android=1792347391 (reproducibility input, not build time)
