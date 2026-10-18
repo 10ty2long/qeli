@@ -368,7 +368,7 @@ jobs:
           cp "$extracted/usr/bin/qeli" "$out/qeli-linux-amd64"
       - name: Retain tested Linux candidate packages
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qeli-candidate-linux-${{ github.sha }}
           path: ${{ runner.temp }}/qeli-candidate-linux/
@@ -576,7 +576,7 @@ jobs:
 
       - name: Retain unsigned Android candidate
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qeli-candidate-android-unsigned-${{ github.sha }}
           path: qeli-android/app/build/outputs/apk/release/app-release-unsigned.apk
@@ -701,7 +701,7 @@ jobs:
 
       - name: Retain tested Windows candidate distributions
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qeli-candidate-windows-${{ github.sha }}
           path: |
@@ -833,7 +833,7 @@ jobs:
           done
       - name: Retain signed macOS candidate archives
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qeli-candidate-macos-${{ github.sha }}
           path: |
@@ -1027,7 +1027,7 @@ jobs:
           "${runner[@]}" "$binary" licenses --file rust/Qeli-AGPL-3.0.txt | cmp - third-party-notices/rust/Qeli-AGPL-3.0.txt
       - name: Retain validated router candidate
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && contains(github.event.head_commit.message, '[candidate]')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qeli-candidate-router-${{ matrix.arch }}-${{ github.sha }}
           path: qeli/target/${{ matrix.target }}/release/qeli-client
@@ -1156,7 +1156,7 @@ jobs:
         run: sha256sum --check "$RUNNER_TEMP/qeli-fuzz-lock.sha256"
       - name: Upload crash reproducer
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: fuzz-crash-${{ matrix.target }}
           path: qeli/fuzz/artifacts/${{ matrix.target }}
