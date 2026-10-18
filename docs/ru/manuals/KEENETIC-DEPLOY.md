@@ -47,7 +47,7 @@ df -h /opt                                                 # запас для �
 
 После публикации выбери точную версию на [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
 Скачай `qeli-keenetic-files.tar.gz`, подходящий `qeli-client-keenetic-aarch64` или
-`qeli-client-keenetic-mipsel` и `SHA256SUMS` из того же релиза. ELF занимает 8,90 МиБ
+`qeli-client-keenetic-mipsel` и `SHA256SUMS` из того же релиза. ELF занимает 8,91 МиБ
 (aarch64) или 10,85 МиБ (mipsel); нужны дополнительное место для зависимостей,
 старого бинарника и временного файла обновления.
 
