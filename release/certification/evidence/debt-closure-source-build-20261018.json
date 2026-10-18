@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "status": "SOURCE_FIXES_NATIVE_AB_AND_SDK_PASS_APPLICATION_QUALIFICATION_PENDING",
-  "source_commit": "f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4",
-  "native_source_digest": "81c85caad6bc25af3b548a3278cd4e6757d4f2285fb73ebf9c4b4a38be819e6e",
+  "source_commit": "42134ecb25a7c93509a39ef6f35ccb55606c0105",
+  "native_source_digest": "0d8a6b28ecdc87541b6ac7a965bd314403d056eb772896618e7ba4e3adf3ad1e",
   "native_AB": {
     "desktop": {
       "artifacts": {
@@ -27,9 +27,9 @@
       },
       "recipe": "qeli-native-repro-v1",
       "schema": 1,
-      "source_commit": "f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4",
-      "source_date_epoch": 1792347391,
-      "source_digest": "81c85caad6bc25af3b548a3278cd4e6757d4f2285fb73ebf9c4b4a38be819e6e",
+      "source_commit": "42134ecb25a7c93509a39ef6f35ccb55606c0105",
+      "source_date_epoch": 1792349528,
+      "source_digest": "0d8a6b28ecdc87541b6ac7a965bd314403d056eb772896618e7ba4e3adf3ad1e",
       "source_dirty": false,
       "toolchain": {
         "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
@@ -66,9 +66,9 @@
       },
       "recipe": "qeli-native-repro-v1",
       "schema": 1,
-      "source_commit": "f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4",
-      "source_date_epoch": 1792347391,
-      "source_digest": "81c85caad6bc25af3b548a3278cd4e6757d4f2285fb73ebf9c4b4a38be819e6e",
+      "source_commit": "42134ecb25a7c93509a39ef6f35ccb55606c0105",
+      "source_date_epoch": 1792349528,
+      "source_digest": "0d8a6b28ecdc87541b6ac7a965bd314403d056eb772896618e7ba4e3adf3ad1e",
       "source_dirty": false,
       "toolchain": {
         "android_ndk": "26.3.11579264",
@@ -82,8 +82,8 @@
     }
   },
   "sdk_source": {
-    "commit": "f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4",
-    "mirror_sha256": "672a5aaa8514d4bc3a70b5cdadeafc99e80d9cc338a5e06be52f6d33272cc624",
+    "commit": "42134ecb25a7c93509a39ef6f35ccb55606c0105",
+    "mirror_sha256": "3db4e9288bdcef4e60417adb502a4a302d15a1f0d4abd19803f545703f243075",
     "actual_SDK_download_prepare": true
   },
   "N01": {
@@ -96,7 +96,8 @@
       "skips_per_execution": 1,
       "scope": "Actual Linux Git, FIFO/symlink cases and inherited automatic maintenance trace; no VPN/network changes"
     },
-    "Windows_baseline_negative_and_fixed_positive": true
+    "Windows_baseline_negative_and_fixed_positive": true,
+    "scope": "Real Git trace demonstrates and eliminates inherited background maintenance. Original intermittent Directory-not-empty cleanup failure is retained; exact reproduction or exclusive root cause is not claimed."
   },
   "N02": {
     "parallel_docs_commit": "a30af9d333aec8f06a31712168cbc20334697dc2",
@@ -116,15 +117,20 @@
     "already_in_dev": "source-map-js1.2.2; PR195/main unchanged",
     "strict_linux_NDP": {
       "status": "PASS",
-      "root": "/var/tmp/qeli-sdk-082.f0JGVZf6/sdk/build_dir/target-x86_64_musl/qeli-0.8.2",
-      "source_commit": "f77c8bee7790d6f7a8e019d9e4f540efc7f29ba4",
+      "root": "/var/tmp/qeli-sdk-082.A4JN2YMx/sdk/build_dir/target-x86_64_musl/qeli-0.8.2",
+      "source_commit": "42134ecb25a7c93509a39ef6f35ccb55606c0105",
       "ndp_tests": 7,
       "locked_root_and_fuzz": true,
       "strict_warnings": true,
+      "clippy_all_targets": true,
       "new_network_configuration": false
     }
   },
   "application_qualification": "Pending exact green CI, actual new distribution and fresh Linux runtime; no release admission claimed here.",
+  "first_candidate_failure": {
+    "CI": "https://github.com/litvinovtd/qeli/actions/runs/39155837872",
+    "cause": "CLI generated embedded legal paths retained previous dependency versions; fixed catalogue and repeated full-source native A/B and SDK cut. Original failed logs retained."
+  },
   "accepted_API34_ENONET_D06_and_physical_scope_unchanged": true,
   "published": false
 }
