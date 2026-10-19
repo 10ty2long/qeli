@@ -211,6 +211,23 @@ installation and upgrade testing on your physical device.
 
 Full change list: [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/CHANGELOG.md).
 
+### Linux UDP TUN reader follow-up
+
+N04 confirmed kernel TUN queue overflow (`FULL_RING`) under high upload load.
+Linux raw TUN input in UDP sessions now runs on the transport runtime, removing
+the per-packet reader-thread handoff while keeping the existing memory bound.
+Controlled A/B on identified test builds showed about 12–13% less client CPU and
+substantially fewer TUN drops. The final test ELF retained 479 TUN drops across
+three QUIC950 windows at queue1000; queue2000 had zero TUN drops in three checked
+windows, with small end-to-end UDP loss still present. The default remains 1000;
+loaded RTT was not qualified, so 2000 is not established as universally preferred.
+TCP/TAP and other platform backends retain their existing reader paths.
+
+[N04 method, exact test-build identities and limits](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-N04-0.8.2-2026-10-19.md).
+These are identified Linux lab results, not measurements of every packaged target.
+The [release qualification](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json)
+separately records the prepared files and their required checks.
+
 ### Linux client TUN queue size
 
 The client INI now accepts the local `tun.tx_queue_len` setting in `[qeli]`:
@@ -556,6 +573,24 @@ Android-обновление сохраняет прежний релизный 
 и обновления на вашем физическом устройстве.
 
 Полный список изменений — [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/CHANGELOG.md).
+
+### Продолжение N04: чтение TUN в Linux UDP
+
+Под высокой нагрузкой upload подтверждено переполнение очереди TUN (`FULL_RING`).
+В Linux UDP-сеансах raw TUN теперь читает сетевой runtime: передача каждого пакета
+из отдельного reader-потока устранена, прежний лимит памяти сохранён.
+Контролируемый A/B на идентифицированных проверочных сборках показал снижение
+CPU клиента примерно на 12–13% и существенное уменьшение TUN drops. В финальном
+проверочном ELF при очереди 1000 остались 479 TUN drops за три окна QUIC950;
+при 2000 в трёх проверенных окнах TUN drops отсутствовали, но небольшие общие
+UDP-потери сохранились. Default остаётся 1000. Задержка под нагрузкой этой серией не проверялась,
+поэтому 2000 не объявляется универсально предпочтительным значением.
+TCP/TAP и backends других платформ сохраняют прежний путь чтения.
+
+[Методика N04, точные сборки и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-N04-0.8.2-2026-10-19.md).
+Это результаты идентифицированного Linux-стенда, а не замеры всех готовых приложений.
+[Квалификация релиза](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json)
+отдельно фиксирует подготовленные файлы и обязательные проверки.
 
 ### Размер клиентской TUN очереди Linux
 

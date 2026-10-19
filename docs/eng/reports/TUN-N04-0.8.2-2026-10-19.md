@@ -124,6 +124,8 @@ were not signalled.
 The agreed 37/37 audit scope, accepted unfixed API34 ENONET, original failures and
 excluded physical platforms remain in the [debt register](../plans/AUDIT-DEBT.md).
 These Linux windows do not qualify WAN or physical/mobile platform performance.
-Existing distribution files and the GitHub draft were **not refreshed**. Affected
-packages still need rebuilding and normal source/native provenance and exact-commit
-CI checks before publication. No release was published.
+This report records the diagnostic ELF and its measurements. Distribution rebuilds,
+source/native provenance and exact-commit CI are recorded separately in the
+[release qualification](../../../release/certification/0.8.2.json). Measurements of
+the diagnostic ELF are not automatically assigned to newly packaged files.
+No release was published.

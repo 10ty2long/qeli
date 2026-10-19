@@ -2005,8 +2005,8 @@ The [19 October N04 follow-up](../reports/TUN-N04-0.8.2-2026-10-19.md)
 confirmed `FULL_RING` and tested raw TUN reads on the Linux UDP client's transport
 runtime. Queues 1000/2000 were checked separately; the default remains 1000.
 Zero TUN drops in three QUIC windows at 2000 do not establish zero UDP loss or
-optimal latency. The corrected test ELF differs from the prepared candidate's
-distribution; its results must not be reassigned to those existing files.
+optimal latency. The report identifies a separate test ELF; its measurements
+must not be automatically reassigned to packaged distribution files.
 
 ### Precedence: which source wins
 
