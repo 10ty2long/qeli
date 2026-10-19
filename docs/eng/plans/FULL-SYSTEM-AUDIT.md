@@ -1,6 +1,6 @@
 # Full Qeli audit: previous coverage and sequential test plan
 
-> Numerical 0.8.2 laboratory measurements and comparisons have been withdrawn from publication; original reports are retained locally for audit. Engineering-check status is not a release benchmark.
+> Previously withdrawn 0.8.2 development measurements and comparisons remain retained locally for audit; they are not reinstated as a release benchmark. New dated [Linux snapshots](../reports/LINUX-LAB-0.8.2-2026-10-17.md) and [N04 results](../reports/TUN-N04-0.8.2-2026-10-19.md) are included separately: each retains its measured ELF identity, method and applicability limits. They do not describe every platform or a later binary; engineering-check status alone is not a benchmark.
 
 **Current result, 15 October: all 37/37 audit sections complete within agreed scope (100%). Q29 closed after explicit user acceptance of generic/null DnsResolver ENONET on the measured API34 image as a documented limitation; that FAIL is neither fixed nor relabelled PASS. [Q29 decision](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md), [criteria](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-CURRENT-VPN.md). Q31/Q34 retain their previously qualified completion. Secure VPN, the system kill switch, D06 and physical platform limits are retained. Historical checkpoints below are not the current remaining work.**
 
@@ -14,7 +14,7 @@ replace full-suite repetition after every fix. The levels below remain section c
 criteria; each small step needs no standalone report. New noncritical hypotheses wait
 for the full audit; existing obligations remain.
 
-<!-- normative-sync: full-system-audit-v277 -->
+<!-- normative-sync: full-system-audit-v278 -->
 
 **15 October, Android policy:** the user rejected a separate DNS bypass mode; secure VpnService and the Android system kill switch are retained. [Decision and DNS scope](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md). Generic/null ENONET on the tested API34 is not claimed fixed. The cancelled mode is not new implementation debt; the total remains37/37 (100%).
 

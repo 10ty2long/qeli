@@ -1,20 +1,35 @@
 # Technical debt from started audits
 
-> Numerical 0.8.2 laboratory measurements and comparisons have been withdrawn from publication; original reports are retained locally for audit. Engineering-check status is not a release benchmark.
+> Previously withdrawn 0.8.2 development measurements and comparisons remain retained locally for audit; they are not reinstated as a release benchmark. New dated [Linux snapshots](../reports/LINUX-LAB-0.8.2-2026-10-17.md) and [N04 results](../reports/TUN-N04-0.8.2-2026-10-19.md) are included separately: each retains its measured ELF identity, method and applicability limits. They do not describe every platform or a later binary; engineering-check status alone is not a benchmark.
 
-<!-- normative-sync: audit-debt-v143 -->
+<!-- normative-sync: audit-debt-v144 -->
 
-**19 October, N04:** the current candidate confirmed kernel TUN queue overflow;
-the Linux UDP reader fix passed A/B, 17 TUN and 2490 library tests, Clippy and
-FFI/client-bin checks. Residual drops at queue1000 are documented; queue2000 was
-checked separately without changing the default or qualifying loaded RTT.
-[N04 results and limits](../reports/TUN-N04-0.8.2-2026-10-19.md).
-The [release qualification](../../../release/certification/0.8.2.json) separately
-records the refreshed distribution and its admission: affected files must be rebuilt,
-with provenance and exact-commit CI. The previous 37/37 scope, accepted unfixed
-API34 ENONET and excluded platforms are unchanged.
+**19 October, N04 — final distribution qualification:** after the Linux UDP reader
+fix, the next cross-thread boundary was removed: the `qeli client` / `qeli-client`
+transport loop and I/O driver use `current_thread`. Server and `_worker` retain
+`multi_thread`; native FFI runtime policy is unchanged. The queue default is 1000.
 
-Current reconciliation: 15 October 2026. The full audit is complete within agreed scope: 37/37 (100%). Q29 closed by explicit user decision with the documented generic/null DnsResolver API34 limitation; the original ENONET remains FAIL and no fix is claimed. The original 15 obligation groups remain 14 DONE and D06 ACCEPTED_LIMITATION; previous platform coverage limits are retained. Historical OPEN entries and counts below refer to their stated dates. [Q29 decision and limits](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
+The ready Linux ELF `e4cb6e05…`, qualified on `dev` at
+[`9ab788e5`](https://github.com/litvinovtd/qeli/commit/9ab788e5d5e7aaddb3d82220bb6ebdb9da8cacd2),
+passed **20 required runtime cases / 409 assertions** and **7 load windows** of
+FakeTLS/QUIC, including a separate one-minute QUIC950 window. With client/server
+queues 1000/1000, all seven windows recorded **0 TUN drops at both endpoints**.
+The one-minute window delivered 949.76 Mbps with 0.00267535% end-to-end UDP loss;
+zero TUN drops does not mean zero total loss. [Ready-ELF results](../../../release/certification/evidence/n04-cli-packaged-udp-20261019.json)
+remain separate from [diagnostic A/B and its limits](../reports/TUN-N04-0.8.2-2026-10-19.md).
+Earlier residual reader-fix drops and separate queue2000 checks retain their own
+ELF identities; the default was not raised and loaded RTT was not qualified.
+
+Native A/B, provenance, SDK source, 16 distribution files,
+[20/20 CI](https://github.com/litvinovtd/qeli/actions/runs/39232066191) on exact
+`9ab788e5` and release preflight passed. The [release qualification](../../../release/certification/0.8.2.json)
+records their identities and applicability. Documentation-only changes do not mean
+these tests were rerun; the new revision receives separate documentation, CI and
+preflight checks. The previous 37/37 scope, accepted unfixed API34 ENONET / D06,
+original FAILs and excluded platforms are retained. The distribution remains in a
+private draft; no release publication was performed.
+
+Original full-audit reconciliation: 15 October 2026. The full audit is complete within agreed scope: 37/37 (100%). Q29 closed by explicit user decision with the documented generic/null DnsResolver API34 limitation; the original ENONET remains FAIL and no fix is claimed. The original 15 obligation groups remain 14 DONE and D06 ACCEPTED_LIMITATION; previous platform coverage limits are retained. Historical OPEN entries and counts below refer to their stated dates. [Q29 decision and limits](../reports/audit-0.8.2/AUDIT-Q29-ANDROID-RESOLVER-DIAGNOSTIC.md).
 
 `DONE` requires a fix/justification and the required verification. `BLOCKED` denotes an
 unavailable external prerequisite, never success. The user supplied Linux and an Android
