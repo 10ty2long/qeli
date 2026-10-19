@@ -129,3 +129,54 @@ source/native provenance and exact-commit CI are recorded separately in the
 [release qualification](../../../release/certification/0.8.2.json). Measurements of
 the diagnostic ELF are not automatically assigned to newly packaged files.
 No release was published.
+
+## Follow-up: local Linux CLI I/O driver
+
+A further thread boundary remained after removal of the reader-channel handoff:
+`qeli client` awaited its transport directly in a multithreaded runtime's root
+`block_on`, while an I/O worker drove readiness. Frequent wakeups and context
+switches reduced the CPU headroom available to drain TUN. Control-window TUN
+drops exactly matched `FULL_RING` at `tun_net_xmit`. Tokio documents the root
+future's execution model in its [1.53.3 documentation](https://docs.rs/tokio/1.53.3/tokio/attr.main.html#non-worker-async-function).
+
+The `qeli client` command and standalone `qeli-client` now use `current_thread`,
+placing the transport loop and I/O driver on the same thread. Server and `_worker`
+retain `multi_thread`. Async background tasks and separate blocking workers remain.
+Memory limits, encryption, wire format, replay protection, Recordizer and the
+default queue1000 are unchanged. Native Android/iOS/macOS/Windows FFI runtimes
+are outside this change.
+
+The new baseline is dev `4a562cad76cf6d2734523d4f57c7a99ab9b67f9f`, already containing
+the earlier reader fix. Both diagnostic ELFs use the same existing toolchain/cache.
+Each endpoint uses the ELF of its variant; the server runtime policy stays unchanged.
+Queues1000/1000, actual TUN descriptors1/2, required Recordizer, inner IPv6 UDP upload,
+payload1200, QUIC950, 15 s / omit3. Order: baseline/new/new/baseline/baseline/new,
+without a CPU profiler. Measuring sockets requested4 MiB and verified8 MiB on both ends.
+
+| Variant | TUN drops, three windows | Median CPU, 100% = one core | Median context switches | Median goodput, Mbit/s |
+|---|---|---|---|---|
+| Baseline | 2147, 0, 804 | 101.95% | 1005173 | 949.45 |
+| Local I/O driver | 0, 0, 0 | 83.07% | 217357 | 949.32 |
+
+The additional CPU reduction is 18.5%, with 78.4% fewer
+context switches. Percentages from different baselines must not be added.
+A separate **60 s / omit3** QUIC950 window at queue1000 had **0 TUN drops**,
+**949.91 Mbit/s** goodput and **0.00047113%** end-to-end UDP loss.
+Qeli carrier sockets and the measuring receiver's UDP6 buffers recorded no drops
+in these A/B and long windows. Zero TUN drops do not imply zero end-to-end loss.
+
+Another **16 functional windows** covered TCP FakeTLS/Reality-TLS and UDP
+FakeTLS/QUIC, inner IPv4/IPv6 and both directions. These used uncapped inner TCP:
+some TUN drops at saturation remain and are retained in the evidence. They are
+functional checks, not a new speed qualification or universal zero-loss claim.
+TCP reader workers and direct UDP reads were verified. fmt, all-targets Clippy
+with transport-core-ffi/client-bin and `-D warnings`, CLI unit tests and a standalone
+Linux client release build passed. Original files/network state were preserved
+on both hosts after every run; private trace instances were removed.
+
+Original helper-setup, formatting and missing-fixture failures remain locally;
+ownership, restoration, build targets and warning checks were not weakened.
+Rustfmt later removed one blank line without changing Rust tokens. Diagnostic ELF
+and source identities and exact numbers are in the [compact evidence](../../../release/lab-results/n04-quic-locality-20261019.json).
+Previous packaged-ELF `bae6320b…` results, including 221/355 drops, remain unchanged.
+Distribution files and the draft have not been requalified by this step. No publication.

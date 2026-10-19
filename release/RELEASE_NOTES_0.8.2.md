@@ -228,6 +228,17 @@ These are identified Linux lab results, not measurements of every packaged targe
 The [release qualification](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json)
 separately records the prepared files and their required checks.
 
+### Linux CLI runtime locality
+
+The Linux CLI client loop and I/O driver now share a `current_thread` runtime;
+server workers retain their multithreaded runtime. Three controlled QUIC950 pairs
+at the unchanged queue 1000 measured TUN drops 2147/0/804 → 0/0/0 and median client
+CPU 101.95% → 83.07% of one core. A separate 60-second window also had zero TUN
+drops, with small end-to-end UDP loss remaining. IPv4/IPv6, both directions and TCP
+carriers were functionally checked. These are separately identified diagnostic
+ELFs in the [N04 report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-N04-0.8.2-2026-10-19.md);
+they do not replace the recorded qualification of the prepared distribution files.
+
 ### Linux client TUN queue size
 
 The client INI now accepts the local `tun.tx_queue_len` setting in `[qeli]`:
@@ -591,6 +602,17 @@ TCP/TAP и backends других платформ сохраняют прежн�
 Это результаты идентифицированного Linux-стенда, а не замеры всех готовых приложений.
 [Квалификация релиза](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/certification/0.8.2.json)
 отдельно фиксирует подготовленные файлы и обязательные проверки.
+
+### Локальный I/O-драйвер Linux CLI
+
+Цикл Linux CLI-клиента и I/O-драйвер теперь работают в одном `current_thread`
+runtime; серверные workers сохраняют многопоточный runtime. В трёх контрольных
+парах QUIC950 при прежней очереди 1000 TUN drops изменились с 2147/0/804 на 0/0/0,
+медиана CPU клиента — 101.95% → 83.07% одного ядра. Отдельное минутное окно
+также дало 0 TUN drops; небольшая общая UDP-потеря осталась. Функционально проверены
+IPv4/IPv6, оба направления передачи и TCP-режимы. Это отдельные диагностические ELF из
+[отчёта N04](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-N04-0.8.2-2026-10-19.md);
+они не заменяют сохранённую квалификацию подготовленного комплекта.
 
 ### Размер клиентской TUN очереди Linux
 

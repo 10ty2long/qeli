@@ -341,10 +341,17 @@ fn peek_logging(path: &PathBuf) -> (String, Option<String>, String, String) {
     )
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+    let mut builder = if matches!(&cli.command, Commands::Client { .. }) {
+        tokio::runtime::Builder::new_current_thread()
+    } else {
+        tokio::runtime::Builder::new_multi_thread()
+    };
+    builder.enable_all().build()?.block_on(run_cli(cli))
+}
 
+async fn run_cli(cli: Cli) -> anyhow::Result<()> {
     // Legal inspection must not read configs, initialize tracing or change network state.
     if let Commands::Licenses { file, export, list } = &cli.command {
         embedded_licenses::run(file.as_deref(), export.as_deref(), *list)?;

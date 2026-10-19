@@ -57,7 +57,7 @@ struct Cli {
     expect_router_attach: Option<bool>,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     if let Some(Command::Licenses { file, export, list }) = cli.command {
