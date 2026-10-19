@@ -1,207 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+  "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
+      "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
       "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
       "executed_at": "2026-10-19T09:23:15.725436+00:00",
-      "evidence": "release/certification/evidence/docs-finalization-20261019.json"
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -817,6 +817,10 @@
     {
       "evidence": "release/certification/evidence/docs-finalization-20261019.json",
       "scope": "Four editorial plans only; unchanged actual runtime, packaged UDP and 16-file distribution evidence applies by explicit source equivalence."
+    },
+    {
+      "evidence": "release/certification/evidence/n04-final-measurements-20261019.json",
+      "scope": "Only release notes and two independent final-ELF measurement exports added. Prior twenty required runtime executions and all advisory statuses preserved; 23-window repeat and 48-window UDP600 matrix remain separate observations. Sixteen distribution files retain exact bytes."
     }
   ],
   "release_assets": {
@@ -886,10 +890,13 @@
     }
   },
   "documentation_source_applicability": {
-    "evidence": "release/certification/evidence/docs-finalization-20261019.json",
-    "source_commit": "ad3d638261a7d130f11f4599c949a9c9c3596832",
-    "source_digest": "179c45228621457f7af996cbe7b2fb8bb4ccadf7d0dbd5cea6c47e14dfc0b635",
-    "prior_qualified_commit": "9ab788e5d5e7aaddb3d82220bb6ebdb9da8cacd2",
-    "actual_test_results_unchanged": true
+    "evidence": "release/certification/evidence/n04-final-measurements-20261019.json",
+    "source_digest": "1e11aab4ba289058dc88e6e804210638dad1deb2f1e4dbef570f47d3df8ff3f0",
+    "prior_qualified_commit": "a6e7d4499cea98e375c2c09c0f44fa41413301cb",
+    "actual_test_results_unchanged": true,
+    "additional_measurement_exports": [
+      "release/lab-results/n04-final-dist-repeat-20261019.json",
+      "release/lab-results/n04-final-dist-udp-matrix-20261019.json"
+    ]
   }
 }
