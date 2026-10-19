@@ -50,7 +50,7 @@ df -h /opt                                                 # reserve for binary,
 After publication choose an exact version on [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
 Download `qeli-keenetic-files.tar.gz`, the matching `qeli-client-keenetic-aarch64` or
 `qeli-client-keenetic-mipsel`, and `SHA256SUMS` from that same release. The ELF occupies
-8.91 MiB (aarch64) or 10.85 MiB (mipsel); also reserve space for dependencies, the
+8.93 MiB (aarch64) or 10.87 MiB (mipsel); also reserve space for dependencies, the
 previous binary and a staged update.
 
 For example, for aarch64 on a workstation with `sha256sum`:
