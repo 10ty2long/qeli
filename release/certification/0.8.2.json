@@ -1,207 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.2",
-  "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
+  "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
       "status": "passed",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
       "environment": "Debian lab 10.66.116.11; each case in independent mount/network/PID namespaces",
-      "executed_at": "2026-10-19T00:39:28.220458+00:00",
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json"
+      "executed_at": "2026-10-19T09:23:15.725436+00:00",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json"
     },
     {
       "id": "android.wifi-to-cellular",
@@ -352,52 +352,47 @@
     }
   ],
   "acceptance": {
-    "status": "n04_actual_distribution_qualified",
+    "status": "n04_cli_actual_distribution_qualified",
     "automated_cases_passed": 20,
     "actual_ordinary_executions": 19,
     "runtime_assertions": 409,
     "current_linux_matrix": {
-      "evidence": "release/certification/evidence/n04-runtime-20261019.json",
-      "artifact_sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
-      "source_commit": "ec3e559501d7d4ac68b1d41b34c5945c7a758aaf",
-      "source_digest": "2115e32c8c164d5e1a865ffa2c5c1e1807c5a0acc8d6d30629916fb407010367",
-      "executed_source_commit": "52b7a8578897a1f272bc7355b1cf6c7e004e3cc7",
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json",
+      "artifact_sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
+      "source_commit": "ea03c092e6f42f6a4e5d04944988e487f24e94db",
+      "source_digest": "9b15b47c969a876827fe3911e97894baa6ac494c3b30ea177f31f9107f72d3d7",
+      "executed_source_commit": "ea03c092e6f42f6a4e5d04944988e487f24e94db",
       "source_applicability": {
         "status": "PASS",
-        "build_commit": "52b7a8578897a1f272bc7355b1cf6c7e004e3cc7",
-        "documentation_commit": "ec3e559501d7d4ac68b1d41b34c5945c7a758aaf",
-        "changed_paths": [
-          "qeli-openwrt/INSTALL.md",
-          "release/keenetic/README.md",
-          "docs/ru/manuals/KEENETIC-DEPLOY.md",
-          "docs/eng/manuals/KEENETIC-DEPLOY.md"
-        ],
+        "build_commit": "ea03c092e6f42f6a4e5d04944988e487f24e94db",
+        "documentation_commit": "ea03c092e6f42f6a4e5d04944988e487f24e94db",
+        "changed_paths": [],
         "actual_ELF_sizes": {
           "aarch64": {
             "bytes": 9359248,
             "MiB": "8.93",
-            "sha256": "82e4e73314e5aa8af89d57399376d384174c8f68768da7609bc3c4c7d3f4ab00"
+            "sha256": "476ce6548201dbb76f878fca2c0419ff1f8aca2d655b56c20c9ddfc40196d6f5"
           },
           "armv7": {
             "bytes": 9514540,
             "MiB": "9.07",
-            "sha256": "392b6a9313f5f716ac40e41950c987fc6676c491efe191008e5f2678effd4994"
+            "sha256": "3479ed22c69e861b22212a519f311fd140d033b8fc39ebd8729514320e162d6b"
           },
           "x86_64-musl": {
             "bytes": 10130088,
             "MiB": "9.66",
-            "sha256": "d29dd8a8664e844a34d20fe3ee3a225c4ef7330eaa6cbfc86fb162ecaeaa58ea"
+            "sha256": "9e513bcc32aa238ab7f01b71ca96a375f2b31854cf29d5291df8d619acf2680d"
           },
           "mipsel": {
             "bytes": 11398712,
             "MiB": "10.87",
-            "sha256": "7a855c2500d459e4b9669b1226be6b2a03b19c9a44b42f70dcfdc6b149f305fa"
+            "sha256": "172cfe0e7eaa6faae3384033a83a60441815d8c818228a79e9f124bd6158d6d1"
           }
         },
         "only_size_description_changed": true
       }
     },
-    "scope": "N04 Linux UDP reader fix; actual rebuilt distribution checked. Earlier failures, accepted API34 ENONET/D06 and physical exclusions remain. Residual high-load TUN/UDP drops remain documented; no universal zero-loss guarantee.",
+    "scope": "N04 Linux CLI runtime locality fix; actual rebuilt distribution checked. Earlier failures, accepted API34 ENONET/D06 and physical exclusions remain. Residual high-load TUN/UDP drops remain documented; no universal zero-loss guarantee.",
     "final_CI_and_preflight": "Mandatory exact final dev HEAD before draft refresh.",
     "physical_qualification_complete": false,
     "push_deploy_release": false
@@ -802,6 +797,22 @@
     {
       "evidence": "release/certification/evidence/n04-packaged-udp-20261019.json",
       "scope": "Actual new CLI at both endpoints, queue1000/2000, no diagnostic result rebinding."
+    },
+    {
+      "evidence": "release/certification/evidence/n04-cli-runtime-20261019.json",
+      "scope": "Actual new CLI locality ELF, all 20 required Linux cases."
+    },
+    {
+      "evidence": "release/certification/evidence/n04-cli-assets-20261019.json",
+      "scope": "16 refreshed qualified files; final exact CI/preflight still required."
+    },
+    {
+      "evidence": "release/certification/evidence/n04-cli-host-state-20261019.json",
+      "scope": "Fresh host-control outcome and retained original failures."
+    },
+    {
+      "evidence": "release/certification/evidence/n04-cli-packaged-udp-20261019.json",
+      "scope": "Actual new CLI at both endpoints, default queue1000, three pairs of short mode windows and one 60-second QUIC window; no diagnostic result rebinding."
     }
   ],
   "release_assets": {
@@ -814,27 +825,27 @@
       "bytes": 12246052
     },
     "qeli-client-keenetic-aarch64": {
-      "sha256": "82e4e73314e5aa8af89d57399376d384174c8f68768da7609bc3c4c7d3f4ab00",
+      "sha256": "476ce6548201dbb76f878fca2c0419ff1f8aca2d655b56c20c9ddfc40196d6f5",
       "bytes": 9359248
     },
     "qeli-client-keenetic-mipsel": {
-      "sha256": "7a855c2500d459e4b9669b1226be6b2a03b19c9a44b42f70dcfdc6b149f305fa",
+      "sha256": "172cfe0e7eaa6faae3384033a83a60441815d8c818228a79e9f124bd6158d6d1",
       "bytes": 11398712
     },
     "qeli-client-openwrt-aarch64": {
-      "sha256": "82e4e73314e5aa8af89d57399376d384174c8f68768da7609bc3c4c7d3f4ab00",
+      "sha256": "476ce6548201dbb76f878fca2c0419ff1f8aca2d655b56c20c9ddfc40196d6f5",
       "bytes": 9359248
     },
     "qeli-client-openwrt-armv7": {
-      "sha256": "392b6a9313f5f716ac40e41950c987fc6676c491efe191008e5f2678effd4994",
+      "sha256": "3479ed22c69e861b22212a519f311fd140d033b8fc39ebd8729514320e162d6b",
       "bytes": 9514540
     },
     "qeli-client-openwrt-mipsel": {
-      "sha256": "7a855c2500d459e4b9669b1226be6b2a03b19c9a44b42f70dcfdc6b149f305fa",
+      "sha256": "172cfe0e7eaa6faae3384033a83a60441815d8c818228a79e9f124bd6158d6d1",
       "bytes": 11398712
     },
     "qeli-client-openwrt-x86_64": {
-      "sha256": "d29dd8a8664e844a34d20fe3ee3a225c4ef7330eaa6cbfc86fb162ecaeaa58ea",
+      "sha256": "9e513bcc32aa238ab7f01b71ca96a375f2b31854cf29d5291df8d619acf2680d",
       "bytes": 10130088
     },
     "qeli-keenetic-files.tar.gz": {
@@ -842,31 +853,31 @@
       "bytes": 43262
     },
     "qeli-linux-amd64": {
-      "sha256": "bae6320bdbff5c16a2219441ddb9cc82d60ec2c6720caca03faa3ea353d2b843",
-      "bytes": 18900296
+      "sha256": "e4cb6e055854806bcef7c61f394ea696cbf9cde3de90fef7b5f0f02e60326ddb",
+      "bytes": 18904488
     },
     "Qeli-macOS-universal.zip": {
-      "sha256": "a44e1dde56fba9a4a6d4a0a1403adc43efa3d4d41d0a629f07ff64318337e5d1",
-      "bytes": 61462979
+      "sha256": "582cc41fb25fa348f6e704246dc5828673f282750230878a219a969042a58d37",
+      "bytes": 61462973
     },
     "qeli-openwrt-files.tar.gz": {
-      "sha256": "2f3db0a9217df5930cf0292341a5099f782ad3174bfed954987f7a6c2502cbf9",
-      "bytes": 51811
+      "sha256": "5219c750c05290b03c4e52d75533d9d4bda1b7051eb940eac82fe13ede2ca859",
+      "bytes": 51808
     },
     "QeliWin-net-required.exe": {
-      "sha256": "1bbbbdd682b767f21c612365c768c570c09c02ffd11ea6170afd1f68430491a9",
+      "sha256": "78da978d353c52a53f6811766e717adc03cfe193cc04f740a80f40157df69b81",
       "bytes": 20384267
     },
     "QeliWin-standalone.exe": {
-      "sha256": "15cedebb3569bfb55f8375706272739a1f1d1977cbfef5843e42a0d1eba81f27",
-      "bytes": 74413017
+      "sha256": "23cbc8117496c01e30bcf4c9f1582d39b79b95a9649c13fb19ebb9a829de7726",
+      "bytes": 74413023
     },
     "qeli_0.8.2_amd64.deb": {
-      "sha256": "15033252c8bcbac661fef87d36dd98b11a756955b90c4579ef9030404d246f5b",
-      "bytes": 4847468
+      "sha256": "77d873e66183d6d730d0c2182953a1a90bbd3581a6ea52c859213f307a40fdb7",
+      "bytes": 4849444
     },
     "SHA256SUMS": {
-      "sha256": "b9731e08cc64e96239586929fb52aa50d35bad6c7afd11bbfd824ee14f133445",
+      "sha256": "47d74a07e5fa6c05471344ffb8e16f27391beea59d5e66b4c1d2bc13815f6c0e",
       "bytes": 1362
     }
   }

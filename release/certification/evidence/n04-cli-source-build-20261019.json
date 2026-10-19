@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SOURCE_NATIVE_AB_SDK_PASS_DISTRIBUTION_PENDING",
+  "status": "SOURCE_NATIVE_AB_SDK_AND_ACTUAL_DISTRIBUTION_PASS",
   "source_commit": "dc44a6123af269c5797a14d475abdb2a0be47dc1",
   "native_source_digest": "33ade3ef594bb06179a37a93edcfefe3b1f340a64dfab4aa84c1600caeb634f0",
   "native_AB": {
@@ -129,5 +129,12 @@
     }
   ],
   "accepted_API34_ENONET_D06_and_physical_scope_unchanged": true,
-  "published": false
+  "published": false,
+  "original_stage_status": "SOURCE_NATIVE_AB_SDK_PASS_DISTRIBUTION_PENDING",
+  "application_qualification": {
+    "runtime": "release/certification/evidence/n04-cli-runtime-20261019.json",
+    "assets": "release/certification/evidence/n04-cli-assets-20261019.json",
+    "packaged_UDP": "release/certification/evidence/n04-cli-packaged-udp-20261019.json",
+    "final_CI_preflight": "Required independently before updating private draft; no future success claimed."
+  }
 }
