@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SOURCE_NATIVE_AB_SDK_PASS_DISTRIBUTION_PENDING",
+  "status": "SOURCE_NATIVE_AB_SDK_AND_ACTUAL_DISTRIBUTION_PASS",
   "source_commit": "18107c5f9e2ff57e8d06b03580f8c6bbe7b1b311",
   "native_source_digest": "88c6de4fd8003c8f84932192a3b31e639ea6b11a741ccb2eaf149a766a75e699",
   "native_AB": {
@@ -129,5 +129,44 @@
     }
   ],
   "accepted_API34_ENONET_D06_and_physical_scope_unchanged": true,
-  "published": false
+  "published": false,
+  "original_stage_status": "SOURCE_NATIVE_AB_SDK_PASS_DISTRIBUTION_PENDING",
+  "application_qualification": {
+    "runtime": "release/certification/evidence/n04-runtime-20261019.json",
+    "assets": "release/certification/evidence/n04-assets-20261019.json",
+    "packaged_UDP": "release/certification/evidence/n04-packaged-udp-20261019.json",
+    "final_CI_preflight": "Required independently before updating private draft; no future success claimed."
+  },
+  "original_CI_dependency_fetch_failure": {
+    "run_id": 39180777223,
+    "head": "52b7a8578897a1f272bc7355b1cf6c7e004e3cc7",
+    "original_attempt": 1,
+    "job_id": 117832853142,
+    "original_job": "android-build",
+    "original_failed_stage": "Strict dependency resolution before Qeli compilation",
+    "HTTP_status": 403,
+    "original_job_log_sha256": "bcf60ed4764e9c26be558057df84300aa221cc1ac43599d1fddebf1dbced91dc",
+    "original_outcome": "FAIL_RETAINED",
+    "exact_cause_of_403_not_established": true,
+    "readonly_endpoint_probes": [
+      {
+        "url": "https://repo.maven.apache.org/maven2/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.pom",
+        "status": 200,
+        "sha256": "55795e1018b8ae647b937967cf810a99b08582c2374e7873c128734c8c914bf3",
+        "bytes": 4600
+      },
+      {
+        "url": "https://repo1.maven.org/maven2/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.pom",
+        "status": 200,
+        "sha256": "55795e1018b8ae647b937967cf810a99b08582c2374e7873c128734c8c914bf3",
+        "bytes": 4600
+      }
+    ],
+    "official_403_reference": "https://central.sonatype.org/faq/403-error-central/",
+    "retry_reference": "https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs",
+    "retry_scope": "Only failed job, same workflow/head; no dependency, verification, TLS or repository changes",
+    "retry_count": 1,
+    "at": "2026-10-19T00:43:58.805314+00:00"
+  },
+  "qualified_CI_attempt": 2
 }
