@@ -21,9 +21,9 @@
   },
   "recipe": "qeli-native-repro-v1",
   "schema": 1,
-  "source_commit": "18107c5f9e2ff57e8d06b03580f8c6bbe7b1b311",
-  "source_date_epoch": 1792367958,
-  "source_digest": "88c6de4fd8003c8f84932192a3b31e639ea6b11a741ccb2eaf149a766a75e699",
+  "source_commit": "dc44a6123af269c5797a14d475abdb2a0be47dc1",
+  "source_date_epoch": 1792398647,
+  "source_digest": "33ade3ef594bb06179a37a93edcfefe3b1f340a64dfab4aa84c1600caeb634f0",
   "source_dirty": false,
   "toolchain": {
     "android_ndk": "26.3.11579264",

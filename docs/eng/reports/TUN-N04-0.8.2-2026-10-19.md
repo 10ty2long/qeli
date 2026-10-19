@@ -179,4 +179,7 @@ ownership, restoration, build targets and warning checks were not weakened.
 Rustfmt later removed one blank line without changing Rust tokens. Diagnostic ELF
 and source identities and exact numbers are in the [compact evidence](../../../release/lab-results/n04-quic-locality-20261019.json).
 Previous packaged-ELF `bae6320b…` results, including 221/355 drops, remain unchanged.
-Distribution files and the draft have not been requalified by this step. No publication.
+This receipt describes the diagnostic stage. Rebuilt distribution identities and
+the draft qualification are tracked separately in the
+[release manifest](../../../release/certification/0.8.2.json); diagnostic-ELF
+measurements are not reassigned to new files. No publication.

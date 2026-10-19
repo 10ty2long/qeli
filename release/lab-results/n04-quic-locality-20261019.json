@@ -1404,7 +1404,7 @@
     "fmt: one extra blank line; fixed without changing Rust tokens",
     "clippy-2: four tracked compile-time INI fixtures absent from small build projection; exact files restored, no targets excluded"
   ],
-  "distribution_requalified": false,
-  "notes": "A/B and long-window numbers belong to the diagnostic ELF hashes above. The product main.rs differs from measured source only by the recorded rustfmt blank-line change. Current draft still refers to its previous qualified build.",
-  "source_snapshot_uncommitted_at_measurement": true
+  "notes": "This receipt captures the diagnostic stage. A/B and long-window numbers belong to the recorded diagnostic ELF hashes. Product main.rs differs only by the recorded rustfmt blank-line change. Rebuilt distribution qualification is tracked separately in release/certification/0.8.2.json.",
+  "source_snapshot_uncommitted_at_measurement": true,
+  "distribution_requalified_by_diagnostic_receipt": false
 }

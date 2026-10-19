@@ -213,15 +213,31 @@ Full change list: [CHANGELOG.md](https://github.com/litvinovtd/qeli/blob/v0.8.2/
 
 ### Linux UDP TUN reader follow-up
 
-N04 confirmed kernel TUN queue overflow (`FULL_RING`) under high upload load.
+N04 located the loss at the client **kernel → Qeli TUN queue**: the kernel could
+not enqueue packets while userspace was not draining it fast enough. An overload
+window recorded **922,359 TUN TX drops and exactly 922,359 `FULL_RING` events in
+`tun_net_xmit`**, with no lost histogram entries. This identifies the drop site,
+not a new sustainable-throughput result. Controlled changes below support
+per-packet cross-thread work as a contributor to insufficient reader capacity.
+
 Linux raw TUN input in UDP sessions now runs on the transport runtime, removing
-the per-packet reader-thread handoff while keeping the existing memory bound.
-Controlled A/B on identified test builds showed about 12–13% less client CPU and
-substantially fewer TUN drops. The final test ELF retained 479 TUN drops across
-three QUIC950 windows at queue1000; queue2000 had zero TUN drops in three checked
-windows, with small end-to-end UDP loss still present. The default remains 1000;
-loaded RTT was not qualified, so 2000 is not established as universally preferred.
-TCP/TAP and other platform backends retain their existing reader paths.
+the reader-thread packet handoff and cross-thread buffer return. The bounded
+memory pool, cryptography, wire format and Recordizer are unchanged. TCP/TAP and
+other platform backends retain their existing reader paths; there is no new switch.
+
+In three alternating stock/prototype pairs, client CPU fell by about **12–13%**;
+QUIC950 TUN drops fell from 7475/3465/0 to 0/178/148. The subsequent, separately
+identified reader-fix ELF `8e3c4bc0…` was checked at queue 1000:
+
+| Native UDP profile / offered Mbps | TUN drops in three windows | Median receiver goodput, Mbps | iperf UDP loss, % in each window |
+| --- | --- | ---: | --- |
+| FakeTLS / 900 | 0 / 0 / 0 | 899.63 | 0 / 0 / 0 |
+| QUIC / 950 | 402 / 77 / 0 | 949.42 | 0.042074 / 0.013126 / 0.000740 |
+
+Thus **479 QUIC TUN drops remained after the reader fix alone**. Queue 2000 had
+zero TUN drops in three additional checked windows, but small end-to-end UDP loss
+remained. The default stays 1000: loaded RTT was not qualified, so 2000 is not
+established as universally preferred. Enlarging the queue is not the reader fix.
 
 [N04 method, exact test-build identities and limits](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-N04-0.8.2-2026-10-19.md).
 These are identified Linux lab results, not measurements of every packaged target.
@@ -230,14 +246,51 @@ separately records the prepared files and their required checks.
 
 ### Linux CLI runtime locality
 
-The Linux CLI client loop and I/O driver now share a `current_thread` runtime;
-server workers retain their multithreaded runtime. Three controlled QUIC950 pairs
-at the unchanged queue 1000 measured TUN drops 2147/0/804 → 0/0/0 and median client
-CPU 101.95% → 83.07% of one core. A separate 60-second window also had zero TUN
-drops, with small end-to-end UDP loss remaining. IPv4/IPv6, both directions and TCP
-carriers were functionally checked. These are separately identified diagnostic
-ELFs in the [N04 report](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-N04-0.8.2-2026-10-19.md);
-they do not replace the recorded qualification of the prepared distribution files.
+After the reader fix, another cross-thread boundary remained: the CLI transport
+loop ran in the root `block_on` future, outside the multithreaded runtime's workers,
+while the I/O driver handled readiness on a worker. At high packet rates, wakeups
+and context switches consumed CPU needed to drain TUN. The Linux `qeli client`
+loop and I/O driver now share a **`current_thread` runtime**; standalone
+`qeli-client` uses the same policy. Server/supervisor and `_worker` retain
+`multi_thread`; native FFI runtimes on other platforms are unchanged.
+
+This second A/B starts from the **already reader-fixed** base `4a562cad…` and uses
+two diagnostic ELFs, baseline `c5625562…` and local I/O `04412c2a…`. Both endpoints
+use the corresponding ELF, but server runtime policy is unchanged. Three pairs
+ran in baseline/new/new/baseline/baseline/new order, without a CPU profiler:
+
+| QUIC950, queue 1000 | Baseline | Local I/O driver |
+| --- | ---: | ---: |
+| Client TUN drops, three windows | 2147 / 0 / 804 | 0 / 0 / 0 |
+| Median client CPU, 100% = one logical core | 101.95% | 83.07% |
+| Median client context switches per window | 1,005,173 | 217,357 |
+| Median receiver goodput, Mbps | 949.45 | 949.32 |
+
+CPU decreased by **18.5%** and context switches by **78.4%** relative to this new
+base; these percentages must not be added to the reader-fix series. The gain is
+lower processing cost and fewer drops, not throughput above the offered rate.
+A separate **60 s / omit 3** window delivered **949.91 Mbps**, **0 TUN drops** and
+**0.00047113% end-to-end UDP loss**. Zero TUN drops does not mean zero total loss.
+
+Both stages used VM300/server and VM301/client, **2 vCPU / 2 GiB each**, kernel
+`6.12.111+deb13-amd64`; VM302 was build-only, with no compilation during load.
+Native UDP, **Recordizer required / `PACKET_MUX_V1 active`**, inner IPv6 upload,
+1200-byte UDP payload, **15 s / omit 3**, IPv4 underlay MTU1500, TUN MTU1400 and
+client/server queue **1000/1000** were used for the comparisons. An iperf receive
+buffer overflow was found before the matched series: both sides then requested
+4 MiB and confirmed 8 MiB actual Linux buffers. These matched results must not be
+treated as an identical-method comparison with the earlier default-buffer runs.
+TUN counters include warmup; iperf loss uses its own measurement interval.
+
+Another **16 functional windows** covered TCP FakeTLS/Reality-TLS and UDP
+FakeTLS/QUIC, inner IPv4/IPv6 and both directions. Some drops at unrestricted
+load remain in the evidence; these short checks are not a new TCP performance
+qualification or a universal zero-loss guarantee.
+[N04 report and limits](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/eng/reports/TUN-N04-0.8.2-2026-10-19.md)
+and [exact diagnostic SHA256s and A/B data](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-quic-locality-20261019.json)
+identify these measurements. They **do not qualify the final distribution binary**:
+its checks remain separate in the release qualification. No release is published
+by this documentation update.
 
 ### Linux client TUN queue size
 
@@ -587,16 +640,32 @@ Android-обновление сохраняет прежний релизный 
 
 ### Продолжение N04: чтение TUN в Linux UDP
 
-Под высокой нагрузкой upload подтверждено переполнение очереди TUN (`FULL_RING`).
-В Linux UDP-сеансах raw TUN теперь читает сетевой runtime: передача каждого пакета
-из отдельного reader-потока устранена, прежний лимит памяти сохранён.
-Контролируемый A/B на идентифицированных проверочных сборках показал снижение
-CPU клиента примерно на 12–13% и существенное уменьшение TUN drops. В финальном
-проверочном ELF при очереди 1000 остались 479 TUN drops за три окна QUIC950;
-при 2000 в трёх проверенных окнах TUN drops отсутствовали, но небольшие общие
-UDP-потери сохранились. Default остаётся 1000. Задержка под нагрузкой этой серией не проверялась,
-поэтому 2000 не объявляется универсально предпочтительным значением.
-TCP/TAP и backends других платформ сохраняют прежний путь чтения.
+N04 локализовал потери в клиентской **очереди TUN ядро → Qeli**: ядро не могло
+поставить пакеты в очередь, пока userspace недостаточно быстро её вычитывал.
+В перегрузочном окне зафиксированы **922359 TUN TX drops и ровно 922359 событий
+`FULL_RING` в `tun_net_xmit`**, без потерянных записей гистограммы. Это подтверждение
+места потерь, а не новый результат допустимой скорости. Контролируемые изменения
+ниже подтверждают вклад межпоточной обработки каждого пакета в нехватку ресурса reader.
+
+В Linux UDP-сеансах raw TUN теперь читает сетевой runtime: устранены передача
+пакета из reader-потока и межпоточный возврат буферов. Ограниченный пул памяти,
+шифрование, wire format и Recordizer не изменены. TCP/TAP и backends других
+платформ сохраняют прежний путь чтения; нового переключателя нет.
+
+В трёх чередующихся парах stock/прототип CPU клиента снизился примерно на
+**12–13%**, а TUN drops в QUIC950 — с 7475/3465/0 до 0/178/148. Последующий
+отдельный проверочный ELF reader-fix `8e3c4bc0…` проверен при очереди 1000:
+
+| Native UDP профиль / offered Мбит/с | TUN drops в трёх окнах | Медиана goodput приёмника, Мбит/с | UDP loss iperf, % по окнам |
+| --- | --- | ---: | --- |
+| FakeTLS / 900 | 0 / 0 / 0 | 899.63 | 0 / 0 / 0 |
+| QUIC / 950 | 402 / 77 / 0 | 949.42 | 0.042074 / 0.013126 / 0.000740 |
+
+Таким образом, **после одного reader-fix в QUIC остались 479 TUN drops**.
+При очереди 2000 в трёх дополнительных проверенных окнах TUN drops отсутствовали,
+но небольшие сквозные UDP-потери сохранились. Default остаётся 1000: задержка под
+нагрузкой не квалифицировалась, поэтому 2000 не объявляется универсально лучшим
+значением. Увеличение очереди не подменяет исправление reader.
 
 [Методика N04, точные сборки и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-N04-0.8.2-2026-10-19.md).
 Это результаты идентифицированного Linux-стенда, а не замеры всех готовых приложений.
@@ -605,14 +674,53 @@ TCP/TAP и backends других платформ сохраняют прежн�
 
 ### Локальный I/O-драйвер Linux CLI
 
-Цикл Linux CLI-клиента и I/O-драйвер теперь работают в одном `current_thread`
-runtime; серверные workers сохраняют многопоточный runtime. В трёх контрольных
-парах QUIC950 при прежней очереди 1000 TUN drops изменились с 2147/0/804 на 0/0/0,
-медиана CPU клиента — 101.95% → 83.07% одного ядра. Отдельное минутное окно
-также дало 0 TUN drops; небольшая общая UDP-потеря осталась. Функционально проверены
-IPv4/IPv6, оба направления передачи и TCP-режимы. Это отдельные диагностические ELF из
-[отчёта N04](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-N04-0.8.2-2026-10-19.md);
-они не заменяют сохранённую квалификацию подготовленного комплекта.
+После reader-fix оставалась ещё одна межпоточная граница: транспортный цикл CLI
+работал в корневой future `block_on`, вне workers многопоточного runtime,
+а I/O-драйвер обрабатывал готовность на worker-потоке. При высокой частоте пакетов
+пробуждения и переключения контекста отнимали CPU, необходимый для чтения TUN.
+Теперь цикл Linux `qeli client` и I/O-драйвер работают в одном
+**`current_thread` runtime**; standalone `qeli-client` использует ту же политику.
+Сервер/supervisor и `_worker` сохраняют `multi_thread`; native FFI runtimes
+других платформ не изменены.
+
+Вторая A/B-серия начинается с **уже исправленного reader**, база `4a562cad…`:
+два диагностических ELF — baseline `c5625562…` и local I/O `04412c2a…`.
+На обоих концах используется ELF соответствующего варианта, но политика runtime
+сервера не меняется. Три пары выполнены в порядке
+baseline/new/new/baseline/baseline/new, без CPU-профайлера:
+
+| QUIC950, очередь 1000 | Baseline | Локальный I/O-драйвер |
+| --- | ---: | ---: |
+| TUN drops клиента, три окна | 2147 / 0 / 804 | 0 / 0 / 0 |
+| Медиана CPU клиента, 100% = одно логическое ядро | 101.95% | 83.07% |
+| Медиана переключений контекста клиента за окно | 1005173 | 217357 |
+| Медиана goodput приёмника, Мбит/с | 949.45 | 949.32 |
+
+CPU снизился на **18.5%**, переключения контекста — на **78.4%** относительно
+этой новой базы; проценты нельзя складывать с результатами reader-fix.
+Выигрыш — меньшие затраты обработки и потери, а не скорость выше offered.
+Отдельное окно **60 с / omit 3** дало **949.91 Мбит/с**, **0 TUN drops** и
+**0.00047113% сквозных UDP-потерь**. Ноль TUN drops не означает ноль общих потерь.
+
+Оба этапа: VM300/server и VM301/client, по **2 vCPU / 2 GiB**, kernel
+`6.12.111+deb13-amd64`; VM302 — только сборка, компиляция с нагрузкой не совмещалась.
+Сравнения: native UDP, **Recordizer required / `PACKET_MUX_V1 active`**, внутренний
+IPv6 upload, UDP payload1200, **15 с / omit 3**, IPv4 underlay MTU1500, TUN MTU1400,
+очереди клиента/сервера **1000/1000**. До сопоставимой серии обнаружено переполнение
+приёмного буфера iperf: затем на обоих концах запрошены 4 MiB и подтверждены
+фактические 8 MiB Linux. Эти A/B-результаты нельзя считать замерами по неизменной
+методике относительно прежних окон с буфером по умолчанию. TUN-счётчики включают
+прогрев; iperf считает потери за собственный измерительный интервал.
+
+Ещё **16 функциональных окон** охватили TCP FakeTLS/Reality-TLS и UDP FakeTLS/QUIC,
+внутренние IPv4/IPv6 и оба направления. При неограниченной нагрузке отдельные drops
+сохраняются в evidence; короткие проверки не являются новой квалификацией скорости
+TCP или гарантией отсутствия потерь.
+[Отчёт N04 и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.2/docs/ru/reports/TUN-N04-0.8.2-2026-10-19.md)
+и [точные SHA256 диагностических ELF и данные A/B](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-quic-locality-20261019.json)
+идентифицируют эти замеры. Они **не квалифицируют итоговый бинарник дистрибутива**:
+его проверки фиксируются отдельно в квалификации релиза. Обновление документации
+не публикует релиз.
 
 ### Размер клиентской TUN очереди Linux
 
