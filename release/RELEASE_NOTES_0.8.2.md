@@ -239,60 +239,65 @@ drops and `Udp6RcvbufErrors` were zero in all seven UDP windows. This is not zer
 end-to-end loss: nonzero UDP loss and IPv4 `SndbufErrors` remain in the evidence.
 The offered rates are test inputs, not a new ceiling search.
 
-#### UDP600 extension across all four profiles
+#### Combined TCP and UDP results across four profiles
 
-A separate extension on the **same final ELF SHA256** covered **UDP over all four
-carrier profiles, inner IPv4/IPv6 and upload/download**. The common offered load
-was **600 Mbps**, payload1200, **three 15 s / omit 3 windows per combination**:
-**48 new windows**, about 14 minutes of load, with queue1000/1000 and Recordizer
-required unchanged. This is a fixed-load check, not a ceiling search.
+The final matrix combines **two separate sequential series on VM300/301**, not
+simultaneous TCP/UDP traffic: **48 TCP windows and 48 UDP windows**, using the same
+final ELF SHA256 above, Recordizer required, MTU1400 and client/server queues1000/1000.
+Each IP/direction/protocol combination has **three 15 s / omit 3 windows**.
+TCP uses **P1 without a rate cap**; UDP uses **600 Mbps offered load and a 1200-byte
+payload**. Each series contributes about 14 minutes of load, excluding setup and
+restoration. The profile names below identify the carrier; TCP and UDP columns
+identify the inner test traffic.
 
-| Carrier profile | IP | Direction | Median goodput, Mbps | UDP loss median / max, % | TUN drops client / server, total |
-| --- | --- | --- | ---: | ---: | ---: |
-| TCP FakeTLS | IPv4 | upload | 599.80 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv6 | upload | 599.69 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv4 | upload | 599.54 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv4 | download | 599.99 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv6 | upload | 599.54 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv4 | upload | 599.78 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv6 | upload | 599.70 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv4 | upload | 599.81 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv6 | upload | 599.80 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
+Goodput is the **median receiver rate in Mbps**. ↑ means client → server upload;
+↓ means server → client download. Retransmits and UDP loss show **median / maximum
+across three windows**. TUN drops show **client / server sums across three windows**.
 
-Each row summarizes three windows; TUN drops are summed across their complete
-counter intervals, including warmup. All **48 windows recorded zero receiver
-packet loss and zero client/server TUN drops** at UDP600. This finite lab result
-does not remove the small losses measured earlier at 900/950 Mbps or establish
-zero loss under unrestricted TCP load. The original results were not overwritten.
-[Separate UDP matrix raw locations, all windows and restoration checks](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-udp-matrix-20261019.json).
+| Carrier profile | IP / direction | TCP Mbps | UDP600 Mbps | UDP loss med / max, % | TCP retrans med / max | TCP TUN client / server | UDP TUN client / server |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| TCP FakeTLS | IPv4 ↑ | 1975.01 | 599.80 | 0 / 0 | 41 / 75 | 363 / 0 | 0 / 0 |
+| TCP FakeTLS | IPv4 ↓ | 2205.10 | 600.00 | 0 / 0 | 75 / 102 | 0 / 821 | 0 / 0 |
+| TCP FakeTLS | IPv6 ↑ | 2006.70 | 599.69 | 0 / 0 | 134 / 142 | 714 / 0 | 0 / 0 |
+| TCP FakeTLS | IPv6 ↓ | 2170.34 | 600.00 | 0 / 0 | 107 / 113 | 0 / 1312 | 0 / 0 |
+| TCP Reality-TLS | IPv4 ↑ | 1124.95 | 599.54 | 0 / 0 | 52 / 98 | 2070 / 0 | 0 / 0 |
+| TCP Reality-TLS | IPv4 ↓ | 1059.83 | 599.99 | 0 / 0 | 49 / 109 | 0 / 2696 | 0 / 0 |
+| TCP Reality-TLS | IPv6 ↑ | 1142.85 | 599.54 | 0 / 0 | 133 / 136 | 754 / 0 | 0 / 0 |
+| TCP Reality-TLS | IPv6 ↓ | 1067.03 | 600.00 | 0 / 0 | 85 / 107 | 0 / 1004 | 0 / 0 |
+| UDP FakeTLS | IPv4 ↑ | 1135.56 | 599.78 | 0 / 0 | 623 / 809 | 2392 / 0 | 0 / 0 |
+| UDP FakeTLS | IPv4 ↓ | 1329.65 | 600.00 | 0 / 0 | 92 / 256 | 0 / 2632 | 0 / 0 |
+| UDP FakeTLS | IPv6 ↑ | 1163.33 | 599.70 | 0 / 0 | 292 / 319 | 1519 / 0 | 0 / 0 |
+| UDP FakeTLS | IPv6 ↓ | 1323.54 | 600.00 | 0 / 0 | 213 / 352 | 0 / 3066 | 0 / 0 |
+| UDP QUIC | IPv4 ↑ | 1165.95 | 599.81 | 0 / 0 | 219 / 255 | 1632 / 0 | 0 / 0 |
+| UDP QUIC | IPv4 ↓ | 1267.63 | 600.00 | 0 / 0 | 240 / 612 | 0 / 1744 | 0 / 0 |
+| UDP QUIC | IPv6 ↑ | 1192.20 | 599.80 | 0 / 0 | 141 / 737 | 1415 / 0 | 0 / 0 |
+| UDP QUIC | IPv6 ↓ | 1282.99 | 600.00 | 0 / 0 | 176 / 520 | 0 / 2740 | 0 / 0 |
 
-TCP: **16 functional checks**, inner TCP P1, **3 s / omit 1**, one window per
-direction. The values below are receiver goodput in Mbps, **not a repeated TCP
-performance benchmark**. TUN totals cover the four windows per profile, including warmup.
+All **96 matrix windows completed**. UDP600 recorded **zero receiver packet loss
+and zero client/server TUN drops in all 48 windows**. This is a fixed-load result,
+not a throughput ceiling, and does not replace the separate 900/950 Mbps results
+above, which include small nonzero UDP loss.
 
-| Carrier profile | IPv4 up | IPv4 down | IPv6 up | IPv6 down | TUN drops client / server, total |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| TCP FakeTLS | 1908.5 | 2251.9 | 1911.4 | 2096.9 | 117 / 497 |
-| TCP Reality-TLS | 1056.2 | 1111.1 | 970.9 | 979.0 | 818 / 347 |
-| UDP FakeTLS | 1302.5 | 1140.5 | 1255.7 | 1311.2 | 83 / 1542 |
-| UDP QUIC | 1194.7 | 1129.6 | 1232.6 | 1166.7 | 735 / 573 |
+**TUN drops and TCP retransmissions remain under unrestricted TCP load.** TCP
+packet-loss percentage was not measured; retransmits are not UDP loss, and
+retransmits do not apply to the inner UDP test. TUN counters cover the complete
+window including warmup, while TCP retransmits use the iperf reporting interval;
+their counts must not be compared one-for-one. Some native UDP carrier windows
+under inner TCP load also recorded kernel socket-buffer errors; per-window
+counters are retained. These matrix runs did not include `FULL_RING` tracing.
 
-All functional cases completed, but **TUN drops remain under unrestricted TCP load**.
-The zero-TUN results are limited to the stated UDP loads; they do not imply
-zero loss at higher rates.
-Original files and network state passed restoration checks on both VMs; temporary
-processes, TUN interfaces and locks were removed, while old binaries/results and
-the new separate raw directories were retained. SHA256 remained unchanged.
-[Per-window results, counters, raw locations and restoration checks](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-repeat-20261019.json).
-This short Linux check does not replace all-platform release qualification.
-The release remains unpublished by this test and documentation update.
+[All TCP windows, ranges, CPU/RSS, counters, raw locations and restoration checks](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-tcp-matrix-20261019.json).
+[All UDP600 windows, counters, separate raw locations and restoration checks](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-udp-matrix-20261019.json).
+
+The earlier **16 TCP functional windows, 3 s / omit 1**, remain in the
+[initial short-check archive](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-repeat-20261019.json)
+and are **not included in these medians**.
+
+Original files and network state passed restoration checks on both VMs after each
+series; temporary processes, TUN interfaces and locks were removed. Old binaries,
+results and the separate new raw directories were retained; SHA256 remained
+unchanged. This short Linux check does not replace all-platform release
+qualification. The release remains unpublished by this documentation update.
 
 ### Linux UDP TUN reader follow-up
 
@@ -750,60 +755,65 @@ carrier-сокетов и `Udp6RcvbufErrors` равны нулю. Это не н
 ненулевые UDP loss и IPv4 `SndbufErrors` сохранены в evidence.
 Offered — заданная нагрузка, а не результат нового поиска потолка.
 
-#### Дополнение UDP600 по четырём профилям
+#### Единые результаты TCP и UDP по четырём профилям
 
-Отдельный прогон на **том же SHA256 итогового ELF** охватил **UDP через все четыре
-транспортных профиля, внутренние IPv4/IPv6 и upload/download**. Общая заданная
-нагрузка — **600 Мбит/с**, payload1200, **три окна 15 с / omit 3 на комбинацию**:
-**48 новых окон**, около 14 минут нагрузки. Очереди1000/1000 и Recordizer required
-не менялись. Это проверка фиксированной нагрузки, не поиск потолка.
+Итоговая матрица объединяет **две отдельные последовательные серии на VM300/301**,
+а не одновременную нагрузку TCP/UDP: **48 TCP-окон и 48 UDP-окон** на указанном выше
+SHA256 итогового ELF, с Recordizer required, MTU1400 и очередями клиента/сервера1000/1000.
+На каждую комбинацию IP/направление/протокол приходится **три окна 15 с / omit 3**.
+TCP — **P1 без ограничения скорости**; UDP — **заданная нагрузка 600 Мбит/с,
+payload1200**. Каждая серия дала около 14 минут нагрузки без учёта запуска и
+восстановления. Названия профилей обозначают транспорт туннеля, столбцы TCP и UDP —
+внутренний тестовый трафик.
 
-| Транспортный профиль | IP | Направление | Goodput медиана, Мбит/с | UDP loss медиана / max, % | TUN drops клиент / сервер, сумма |
-| --- | --- | --- | ---: | ---: | ---: |
-| TCP FakeTLS | IPv4 | upload | 599.80 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv6 | upload | 599.69 | 0 / 0 | 0 / 0 |
-| TCP FakeTLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv4 | upload | 599.54 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv4 | download | 599.99 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv6 | upload | 599.54 | 0 / 0 | 0 / 0 |
-| TCP Reality-TLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv4 | upload | 599.78 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv6 | upload | 599.70 | 0 / 0 | 0 / 0 |
-| UDP FakeTLS | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv4 | upload | 599.81 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv4 | download | 600.00 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv6 | upload | 599.80 | 0 / 0 | 0 / 0 |
-| UDP QUIC | IPv6 | download | 600.00 | 0 / 0 | 0 / 0 |
+Goodput — **медиана скорости приёмника в Мбит/с**. ↑ — upload клиент → сервер;
+↓ — download сервер → клиент. Retransmits и UDP loss приведены как **медиана /
+максимум трёх окон**. TUN drops — **суммы клиента / сервера по трём окнам**.
 
-Каждая строка обобщает три окна; TUN drops суммированы по полным интервалам
-счётчиков, включая прогрев. Во всех **48 окнах UDP600 потери приёмника и TUN drops
-клиента/сервера равны нулю**. Этот ограниченный результат не отменяет небольших
-потерь в прежних окнах 900/950 Мбит/с и не доказывает отсутствие потерь при
-неограниченной TCP-нагрузке. Прежние результаты не перезаписывались.
-[Отдельные raw UDP-матрицы, все окна и проверки восстановления](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-udp-matrix-20261019.json).
+| Транспортный профиль | IP / направление | TCP Мбит/с | UDP600 Мбит/с | UDP loss мед / max, % | TCP retrans мед / max | TCP TUN клиент / сервер | UDP TUN клиент / сервер |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| TCP FakeTLS | IPv4 ↑ | 1975.01 | 599.80 | 0 / 0 | 41 / 75 | 363 / 0 | 0 / 0 |
+| TCP FakeTLS | IPv4 ↓ | 2205.10 | 600.00 | 0 / 0 | 75 / 102 | 0 / 821 | 0 / 0 |
+| TCP FakeTLS | IPv6 ↑ | 2006.70 | 599.69 | 0 / 0 | 134 / 142 | 714 / 0 | 0 / 0 |
+| TCP FakeTLS | IPv6 ↓ | 2170.34 | 600.00 | 0 / 0 | 107 / 113 | 0 / 1312 | 0 / 0 |
+| TCP Reality-TLS | IPv4 ↑ | 1124.95 | 599.54 | 0 / 0 | 52 / 98 | 2070 / 0 | 0 / 0 |
+| TCP Reality-TLS | IPv4 ↓ | 1059.83 | 599.99 | 0 / 0 | 49 / 109 | 0 / 2696 | 0 / 0 |
+| TCP Reality-TLS | IPv6 ↑ | 1142.85 | 599.54 | 0 / 0 | 133 / 136 | 754 / 0 | 0 / 0 |
+| TCP Reality-TLS | IPv6 ↓ | 1067.03 | 600.00 | 0 / 0 | 85 / 107 | 0 / 1004 | 0 / 0 |
+| UDP FakeTLS | IPv4 ↑ | 1135.56 | 599.78 | 0 / 0 | 623 / 809 | 2392 / 0 | 0 / 0 |
+| UDP FakeTLS | IPv4 ↓ | 1329.65 | 600.00 | 0 / 0 | 92 / 256 | 0 / 2632 | 0 / 0 |
+| UDP FakeTLS | IPv6 ↑ | 1163.33 | 599.70 | 0 / 0 | 292 / 319 | 1519 / 0 | 0 / 0 |
+| UDP FakeTLS | IPv6 ↓ | 1323.54 | 600.00 | 0 / 0 | 213 / 352 | 0 / 3066 | 0 / 0 |
+| UDP QUIC | IPv4 ↑ | 1165.95 | 599.81 | 0 / 0 | 219 / 255 | 1632 / 0 | 0 / 0 |
+| UDP QUIC | IPv4 ↓ | 1267.63 | 600.00 | 0 / 0 | 240 / 612 | 0 / 1744 | 0 / 0 |
+| UDP QUIC | IPv6 ↑ | 1192.20 | 599.80 | 0 / 0 | 141 / 737 | 1415 / 0 | 0 / 0 |
+| UDP QUIC | IPv6 ↓ | 1282.99 | 600.00 | 0 / 0 | 176 / 520 | 0 / 2740 | 0 / 0 |
 
-TCP: **16 функциональных проверок**, внутренний TCP P1, **3 с / omit 1**, по
-одному окну на направление. Ниже goodput приёмника в Мбит/с — **не повторяемый
-TCP-бенчмарк**. TUN drops суммированы по четырём окнам профиля, включая прогрев.
+Все **96 окон итоговой матрицы завершены**. Во всех **48 окнах UDP600 потери
+приёмника и TUN drops клиента/сервера равны нулю**. Это результат при фиксированной
+нагрузке, не потолок пропускной способности; он не заменяет отдельные результаты
+900/950 Мбит/с выше, где есть небольшие ненулевые UDP loss.
 
-| Транспортный профиль | IPv4 up | IPv4 down | IPv6 up | IPv6 down | TUN drops клиент / сервер, сумма |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| TCP FakeTLS | 1908.5 | 2251.9 | 1911.4 | 2096.9 | 117 / 497 |
-| TCP Reality-TLS | 1056.2 | 1111.1 | 970.9 | 979.0 | 818 / 347 |
-| UDP FakeTLS | 1302.5 | 1140.5 | 1255.7 | 1311.2 | 83 / 1542 |
-| UDP QUIC | 1194.7 | 1129.6 | 1232.6 | 1166.7 | 735 / 573 |
+**При неограниченном TCP сохраняются TUN drops и TCP retransmissions.** Процент
+потерь TCP-пакетов не измерялся; retransmits — не UDP loss, а к внутреннему
+UDP-тесту retransmits неприменимы. Счётчики TUN охватывают полное окно с прогревом,
+TCP retransmits — отчётный интервал iperf; их нельзя сопоставлять один к одному.
+В отдельных окнах с внутренней TCP-нагрузкой через native UDP-транспорты также
+зарегистрированы ошибки socket buffers ядра; пооконные счётчики сохранены.
+Трассировка `FULL_RING` в этих матрицах не выполнялась.
 
-Все функциональные сценарии завершились, но **при неограниченном TCP TUN drops
-сохраняются**. Нулевые TUN-счётчики относятся к указанным нагрузкам UDP и не
-гарантируют отсутствие потерь на более высоких скоростях.
-Проверки восстановления исходных файлов и сетевого состояния обеих ВМ пройдены;
-временные процессы, TUN и locks удалены. Старые бинарники/результаты и новые
-отдельные каталоги raw сохранены. SHA256 после тестов не изменился.
-[Все окна, счётчики, пути raw и проверки восстановления](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-repeat-20261019.json).
+[Все TCP-окна, диапазоны, CPU/RSS, счётчики, пути raw и восстановление](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-tcp-matrix-20261019.json).
+[Все UDP600-окна, счётчики, отдельные raw и восстановление](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-udp-matrix-20261019.json).
+
+Прежние **16 функциональных TCP-окон, 3 с / omit 1**, сохранены в
+[архиве первоначальной короткой проверки](https://github.com/litvinovtd/qeli/blob/v0.8.2/release/lab-results/n04-final-dist-repeat-20261019.json)
+и **не включены в новые медианы**.
+
+После каждой серии проверки восстановления исходных файлов и сетевого состояния
+обеих ВМ пройдены; временные процессы, TUN и locks удалены. Старые бинарники,
+результаты и новые отдельные каталоги raw сохранены; SHA256 не изменился.
 Короткая Linux-проверка не заменяет квалификацию релиза на всех платформах.
-Этот тест и обновление документации не публикуют релиз.
+Это обновление документации не публикует релиз.
 
 ### Продолжение N04: чтение TUN в Linux UDP
 
