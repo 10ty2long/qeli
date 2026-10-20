@@ -123,7 +123,7 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     // Read-only one-shot migration of the old security-crypto/Tink preference keysets.
     // New profile writes use AES-GCM + Android Keystore directly (ProfileStore).
-    implementation("com.google.crypto.tink:tink-android:1.23.0")
+    implementation("com.google.crypto.tink:tink-android:1.24.0")
     // Local policy/model and shared configuration conformance tests.
     // Handshake, framing and payload codecs are owned by Rust, not duplicated here.
     testImplementation("junit:junit:4.13.2")
