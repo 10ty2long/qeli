@@ -110,7 +110,15 @@ internal static class ServiceControlSelfTest
         Check("stale Connected is unknown Error", ServiceObservation.Resolve(status, now).Status == VpnStatus.Error);
         status.Status = "Error"; status.Extra = "cleanup incomplete";
         Check("stale terminal cleanup Error remains visible", ServiceObservation.Resolve(status, now).Extra == "cleanup incomplete");
-        Check("missing status is unknown rather than disconnected", ServiceObservation.Resolve(null, now).Status == VpnStatus.Error);
+        var idle = new ServiceStatus { Status = "Disconnected", Time = now.AddSeconds(-60) };
+        Check("stale Disconnected from a running daemon is unknown Error", ServiceObservation.Resolve(idle, now).Status == VpnStatus.Error);
+        idle.Stopped = true;
+        Check("completed Stop stays Disconnected after the daemon exits", ServiceObservation.Resolve(idle, now).Status == VpnStatus.Disconnected);
+        status.Stopped = true; status.Status = "Connected";
+        Check("Stopped marker cannot vouch for a stale Connected", ServiceObservation.Resolve(status, now).Status == VpnStatus.Error);
+        Check("Stopped marker roundtrips through the status codec", DesktopServiceStatus.Decode<ServiceStatus>(
+            JsonSerializer.SerializeToUtf8Bytes(idle)).Stopped);
+        Check("missing status is unknown rather than disconnected",ServiceObservation.Resolve(null, now).Status == VpnStatus.Error);
         foreach (var invalid in new[] { "99", "1", "connected", "future-state" })
         {
             status = new() { Status = invalid, Time = now };

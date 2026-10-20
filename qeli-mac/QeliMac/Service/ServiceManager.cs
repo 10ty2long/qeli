@@ -253,6 +253,10 @@ public static class ServiceManager
         // Do not print "OK stopped" while networksetup still points at qeli. Once bootout has
         // completed no legitimate owner remains, so LiveOwner is also an error here.
         NetworkConfigurator.SweepDns(ServiceState.AppendLog, requireReleased: true);
+        // The daemon is gone, so its status file stops refreshing and the GUI would call it
+        // stale ("tunnel state is unknown") seconds after a clean Disconnect. Record that the
+        // stop completed; the next daemon start overwrites this marker.
+        ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Disconnected, null, stopped: true);
     }
 
     /// <summary>

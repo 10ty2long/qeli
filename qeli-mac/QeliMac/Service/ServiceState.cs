@@ -12,7 +12,12 @@ using Qeli.Shared.Vpn;
 namespace QeliMac.Service;
 
 /// <summary>Status snapshot the daemon writes and the GUI polls.</summary>
-public sealed class ServiceStatus : DesktopServiceStatus { }
+public sealed class ServiceStatus : DesktopServiceStatus
+{
+    /// <summary>Written only by a completed root Stop(): launchd confirmed the daemon gone and
+    /// DNS was released, so this Disconnected stays true after the file stops refreshing.</summary>
+    public bool Stopped { get; set; }
+}
 
 /// <summary>
 /// Shared state between the launchd daemon (writer, runs as root) and the GUI (reader),
@@ -417,7 +422,7 @@ public static class ServiceState
     }
 
     public static void WriteStatus(VpnStatus status, string? extra,
-        long bytesUp = 0, long bytesDown = 0, DateTime? since = null)
+        long bytesUp = 0, long bytesDown = 0, DateTime? since = null, bool stopped = false)
     {
         try
         {
@@ -430,6 +435,7 @@ public static class ServiceState
                 BytesUp = bytesUp,
                 BytesDown = bytesDown,
                 Since = since,
+                Stopped = stopped,
             }), 0x1A4); // 0644
         }
         catch { /* ignore */ }
