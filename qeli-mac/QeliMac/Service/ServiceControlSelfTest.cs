@@ -141,7 +141,9 @@ internal static class ServiceControlSelfTest
         Check("oversized plist rejected", Fails(() => PlistRegistration.Validate(new byte[1024 * 1024 + 1], ServiceManager.ServiceName, exe)));
         string absent = $"Could not find service \"{ServiceManager.ServiceName}\" in domain for system";
         Check("exact service absence is recognized", ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", absent, 113));
-        Check("permission error cannot authorize cleanup", !ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", "permission denied", 5));
+        Check("macOS 27 prefixed service absence is recognized", ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", "Bad request.\n" + absent + "\n", 113));
+        Check("unknown prefix cannot authorize cleanup", !ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", "Operation not permitted\n" + absent, 113));
+        Check("permission error cannot authorize cleanup",!ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", "permission denied", 5));
         Check("query timeout cannot authorize cleanup", !ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", absent, -1));
         Check("foreign service absence cannot authorize cleanup", !ServiceManager.ConfirmsAbsent("system/" + ServiceManager.ServiceName, "", absent.Replace(ServiceManager.ServiceName, "other"), 113));
 
