@@ -634,15 +634,17 @@ session, the inner MTU and the outer datagram size are deliberately independent:
 - **UDP transports** (obfs-UDP / fake-tls-UDP / QUIC) actively probe the real path before
   bringing the tunnel up. The client sends DF-marked probe datagrams from the pushed ceiling
   down (the server echoes them) and records the largest complete **outer UDP payload** that
-  traverses client → server without IP fragmentation. With `UDP_DATA_FRAG_V1`, the inner TUN
-  keeps the explicit/pushed MTU and an encrypted record that exceeds this outer budget is split
+  traverses client → server without IP fragmentation. Probing also runs with an explicit
+  `mtu > 0`: this selects the inner TUN MTU rather than disabling outer-path discovery.
+  With `UDP_DATA_FRAG_V1`, the inner TUN keeps the explicit/pushed MTU and an encrypted record that exceeds this outer budget is split
   into separately authenticated DATA_FRAG envelopes and exactly reassembled by the peer.
-- A legacy peer cannot reassemble DATA_FRAG. In that compatibility mode a successful probe
-  lowers an IPv4 inner MTU to the certified record size. IPv6/dual-stack keeps IPv6's mandatory
+- A legacy peer cannot reassemble DATA_FRAG. With automatic MTU a successful probe
+  lowers an IPv4 inner MTU to the certified record size. An explicit inner MTU is preserved;
+  outer IP fragmentation remains enabled for legacy compatibility. IPv6/dual-stack keeps IPv6's mandatory
   1280-byte interface floor and restores outer fragmentation rather than failing every
   1280-byte IPv6 packet with `EMSGSIZE`.
-- **`mtu_probe = false`** disables active probing. The authenticated pushed value still sizes
-  the inner TUN; a DATA_FRAG session uses the conservative outer UDP-payload floor (548 bytes
+- **`mtu_probe = false`** disables startup and live active probing for any `mtu` setting.
+  The inner TUN retains the explicit value or adopts the authenticated push; a DATA_FRAG session uses the conservative outer UDP-payload floor (548 bytes
   over IPv4 or 1232 over IPv6) until a wider budget has actually been certified. Probing is
   implemented on **Linux/Windows/macOS/Android/iOS**. Linux/Android use `IP_MTU_DISCOVER`,
   Windows uses `IP_DONTFRAGMENT`, and Apple platforms use `IP_DONTFRAG`. If DF control is
@@ -663,7 +665,8 @@ The probe has four limits worth knowing before you treat MTU as a solved problem
   retries the complete encrypted record with a new DATA_FRAG record id. The separate
   authenticated inner-MTU report remains in place for PMTU/ICMP handling. Older peers ignore
   the additive control type.
-- **An auto-MTU DATA_FRAG session re-probes a wider path every 10 minutes.** The state machine
+- **A DATA_FRAG session with `mtu_probe = true` re-probes a wider path every 10 minutes**,
+  including when the inner MTU is explicit. The state machine
   uses the existing socket receive loop (there is no competing reader), tries only rungs above
   the currently certified uplink budget and requires three independently random exact
   challenge/ACK confirmations before widening it. A success atomically updates the record,
@@ -1783,7 +1786,7 @@ failed roam.
 | `dev_attach` | `false` | ✓ | — | — | — | — | attach to a pre-existing interface (don't create one) |
 | `tun.tx_queue_len` | `1000` | ✓ | — | — | — | — | Owned Linux TUN/TAP TX queue, in packets (`1..32767`); local `[qeli]` setting, not server-pushed or exported in `qeli://`. No adaptive mode. Set `500` for the previous size. Leave unset with `dev_attach=true`: the external owner controls the queue; an explicit combination is rejected. Other OSes preserve but do not apply it |
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
-| `mtu_probe` | `true` | ✓\* | ✓\* | ✓\* | ✓\* | ✓\* | active path-MTU probe — **UDP with `mtu=0` only** |
+| `mtu_probe` | `true` | ✓\* | ✓\* | ✓\* | ✓\* | ✓\* | active outer UDP path probe with manual or automatic MTU; preserves an explicit inner MTU |
 | `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel; common CLI/GUI default `true`; `gateway=false` explicitly selects split tunnel |
 | `route_local` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | pull IPv4 RFC1918 into the tunnel; does not alter IPv6 policy |
 | `include` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list forced **into** the tunnel (Android — split-tunnel only) |
@@ -1884,7 +1887,7 @@ the section while their own application preferences control logging.
 
 Qualified names identify schema fields; write the unqualified key under `[logging]`.
 
-**Footnotes.** `mtu_probe` applies only to UDP with `mtu=0`. `gateway` defaults to `true` on all clients; use `false` for split tunnel. On Android: `include` is honored only
+**Footnotes.** `mtu_probe` applies only to UDP, independently of a manual or automatic inner MTU. `gateway` defaults to `true` on all clients; use `false` for split tunnel. On Android: `include` is honored only
 in split tunnel; `exclude` works before API 33 through CIDR subtraction and on API 33+
 through `excludeRoute`. QUIC masking uses `proto=udp`, `mode=fake-tls`, `quic=true`;
 `mode=udp-quic` remains a legacy import spelling. `dev_node`/`metric` are parsed and round-tripped by mac but **not applied**
@@ -1906,8 +1909,8 @@ the system's **VPN On Demand** (rules set in the app or via MDM), not to a confi
 key is still preserved when a profile moves to another platform. iOS does not apply `[qeli]`
 `name`, but 0.7.15 preserves it through a round trip; iOS keeps its own profile label in a
 leading comment line (`# Name`). A `qeli://` link carries the label correctly either way.
-`mtu_probe` is parsed and stored but, as everywhere
-else, only takes effect on UDP with `mtu = 0`.
+`mtu_probe` is parsed and stored and, as everywhere
+else, only takes effect on UDP; an explicit `mtu` does not disable probing.
 
 <a id="client-tun-tx-queue"></a>
 

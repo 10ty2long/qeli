@@ -8323,16 +8323,17 @@ async fn probe_udp_mtu(
 /// Select the inner MTU after a successful UDP path probe.
 ///
 /// With DATA_FRAG_V1 the inner interface and the outer datagram budget are independent. For a
-/// legacy peer they are not: lowering an IPv4 TUN to the certified record size avoids oversized
-/// sends. IPv6 interfaces may not advertise less than 1280, so dual/IPv6 sessions retain that
-/// floor and rely on the fragmentation-enabled outer socket for the remaining compatibility gap.
+/// legacy peer an automatic IPv4 TUN can use the certified record size to avoid oversized
+/// sends. An explicit inner MTU always wins; legacy sockets retain IP fragmentation. IPv6
+/// interfaces may not advertise less than 1280, so automatic dual/IPv6 sessions keep that floor.
 fn udp_inner_mtu_after_probe(
     base_mtu: i32,
     probed_mtu: i32,
     data_frag_enabled: bool,
     family_mode: crate::transport_core::NetworkFamilyMode,
+    explicit_inner_mtu: bool,
 ) -> i32 {
-    if data_frag_enabled {
+    if explicit_inner_mtu || data_frag_enabled {
         return base_mtu;
     }
     match family_mode {
@@ -8586,7 +8587,7 @@ mod mtu_ladder_tests {
     #[test]
     fn negotiated_record_fragmentation_keeps_inner_and_outer_mtu_independent() {
         assert_eq!(
-            udp_inner_mtu_after_probe(1400, 1160, true, NetworkFamilyMode::Dual),
+            udp_inner_mtu_after_probe(1400, 1160, true, NetworkFamilyMode::Dual, false),
             1400
         );
     }
@@ -8594,17 +8595,36 @@ mod mtu_ladder_tests {
     #[test]
     fn legacy_udp_peer_uses_probe_without_breaking_ipv6_minimum_mtu() {
         assert_eq!(
-            udp_inner_mtu_after_probe(1400, 1160, false, NetworkFamilyMode::Ipv4),
+            udp_inner_mtu_after_probe(1400, 1160, false, NetworkFamilyMode::Ipv4, false),
             1160
         );
         assert_eq!(
-            udp_inner_mtu_after_probe(1400, 1160, false, NetworkFamilyMode::Ipv6),
+            udp_inner_mtu_after_probe(1400, 1160, false, NetworkFamilyMode::Ipv6, false),
             1280
         );
         assert_eq!(
-            udp_inner_mtu_after_probe(1400, 1320, false, NetworkFamilyMode::Dual),
+            udp_inner_mtu_after_probe(1400, 1320, false, NetworkFamilyMode::Dual, false),
             1320
         );
+    }
+
+    #[test]
+    fn explicit_inner_mtu_is_preserved_after_a_smaller_probe() {
+        for family in [
+            NetworkFamilyMode::Ipv4,
+            NetworkFamilyMode::Ipv6,
+            NetworkFamilyMode::Dual,
+        ] {
+            for data_frag in [false, true] {
+                for (configured, probed) in [(1400, 1160), (9000, 1400), (1280, 576)] {
+                    assert_eq!(
+                        udp_inner_mtu_after_probe(configured, probed, data_frag, family, true),
+                        configured,
+                        "an explicit inner MTU must not become the probed outer-path size"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
@@ -10722,9 +10742,9 @@ pub(crate) async fn run_udp_tunnel(
     // The complete push journal is attached below after path-MTU probing, so every
     // platform sees both the server ceiling and the final selected MTU.
 
-    // Auto MTU on UDP: when `mtu = 0` and probing is on, actively discover the path
-    // MTU (DF probes from the pushed ceiling down) before bringing the TUN up — so a
-    // narrow LTE/CGNAT path is measured, not guessed. Otherwise adopt the pushed MTU.
+    // Discover the outer UDP path whenever probing is enabled, independently of an
+    // explicit inner TUN MTU. DATA_FRAG keeps the selected inner MTU while records fit
+    // the certified outer budget; legacy sockets retain IP-fragmentation compatibility.
     // The client data plane is not running yet, but the server may already emit cover or a
     // heartbeat after AuthOK. The probe receive loop ignores unrelated datagrams until each
     // fixed deadline. Falls back to the pushed/effective MTU on any miss.
@@ -10735,7 +10755,7 @@ pub(crate) async fn run_udp_tunnel(
     let mut uplink_udp_payload_budget =
         crate::protocol::data_frag::conservative_udp_payload_budget(socket.peer_is_ipv6());
     let mut keep_df_after_live_probe = false;
-    let tun_mtu = if config.tun.mtu == 0 && config.tun.mtu_probe {
+    let tun_mtu = if config.tun.mtu_probe {
         match probe_udp_mtu(
             &socket,
             udp_framing,
@@ -10760,11 +10780,16 @@ pub(crate) async fn run_udp_tunnel(
                     udp_framing.wrapper_len(),
                 );
                 // Inner and outer MTU stay independent when DATA_FRAG_V1 was negotiated.
-                // A legacy server cannot reassemble record fragments, so use the certified
-                // inner size for IPv4. IPv6 keeps its mandatory 1280 floor; the probe restored
-                // outer fragmentation in that compatibility mode.
-                let inner_mtu =
-                    udp_inner_mtu_after_probe(base_mtu, m, data_frag_enabled, family_mode);
+                // Preserve an explicit inner MTU. For legacy peers only auto IPv4 may
+                // shrink; auto IPv6 keeps its 1280 floor. The probe restored outer IP
+                // fragmentation for legacy compatibility in either case.
+                let inner_mtu = udp_inner_mtu_after_probe(
+                    base_mtu,
+                    m,
+                    data_frag_enabled,
+                    family_mode,
+                    config.tun.mtu > 0,
+                );
                 log::info!(
                     "UDP path probe: inner MTU {}, uplink UDP payload budget {} (probe rung {}, DATA_FRAG_V1={})",
                     inner_mtu,
@@ -10784,6 +10809,11 @@ pub(crate) async fn run_udp_tunnel(
             }
         }
     } else {
+        log::info!(
+            "UDP path probe disabled: using inner MTU {} and conservative {}-byte UDP payload budget",
+            base_mtu,
+            uplink_udp_payload_budget
+        );
         base_mtu
     };
     let fallback_dns_servers = core.fallback_dns_servers().to_vec();
@@ -11163,7 +11193,7 @@ pub(crate) async fn run_udp_tunnel(
 
     // Live PMTU widening is available only when DATA_FRAG decouples the TUN MTU from the
     // carrier datagram size. A legacy peer would require rebuilding the interface/routes.
-    let live_mtu_reprobe_enabled = data_frag_enabled && config.tun.mtu == 0 && config.tun.mtu_probe;
+    let live_mtu_reprobe_enabled = data_frag_enabled && config.tun.mtu_probe;
     let mut live_mtu_probe = LiveUdpMtuProbe::default();
     let mut live_mtu_due = tokio::time::interval(UDP_MTU_REPROBE_INTERVAL);
     live_mtu_due.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);

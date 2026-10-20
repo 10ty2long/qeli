@@ -125,13 +125,11 @@ pub struct ClientTunConfig {
     /// `> 0` is an explicit override that wins over the server-pushed value.
     #[serde(default = "default_mtu")]
     pub mtu: i32,
-    /// Active path-MTU probing on **UDP** transports when `mtu = 0` (auto). The
-    /// client sends DF-marked probe datagrams from the server-pushed ceiling
-    /// downward and sets the tunnel MTU to the largest that traverses the path
-    /// unfragmented — so a narrow LTE/CGNAT path is discovered instead of guessed.
-    /// Default `true`. Set `false` to keep auto = "just adopt the pushed MTU" (no
-    /// probing) — a kill switch if a network mishandles the probes. No effect on
-    /// TCP transports (the kernel does PMTUD there) or when `mtu > 0` (explicit).
+    /// Active outer path-MTU probing on **UDP**, independently of `mtu`. An
+    /// explicit inner MTU is preserved; DATA_FRAG records stay within the certified
+    /// outer budget. Automatic MTU can still shrink for a legacy peer. Default
+    /// `true`; `false` disables startup and live probes and retains the safe family
+    /// budget. No effect on TCP transports, where the kernel performs PMTUD.
     #[serde(default = "default_true")]
     pub mtu_probe: bool,
     /// Linux-owned TUN/TAP TX queue length in packets. Omitted = 1000, not an

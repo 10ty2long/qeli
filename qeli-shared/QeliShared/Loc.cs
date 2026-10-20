@@ -197,7 +197,7 @@ public static class Loc
         ["DnsPushHint"] = (
             "Leave the server list empty to use DNS received securely from the VPN server.",
             "Оставьте список серверов пустым, чтобы использовать DNS, безопасно полученный от VPN-сервера."),
-        ["MtuProbe"] = ("Discover path MTU automatically when MTU is 0", "Автоматически определять MTU маршрута при значении 0"),
+        ["MtuProbe"] = ("Discover the outer UDP path MTU automatically", "Автоматически определять MTU внешнего UDP-маршрута"),
         ["KillSwitch"] = ("Block traffic if the tunnel is interrupted (kill switch)", "Блокировать трафик при разрыве туннеля (kill switch)"),
         ["ConnectionBehavior"] = ("Connection behavior", "Поведение подключения"),
         ["FieldTimeout"] = ("Connection timeout, seconds (1–300)", "Таймаут подключения, секунд (1–300)"),
