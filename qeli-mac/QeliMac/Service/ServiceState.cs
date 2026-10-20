@@ -75,6 +75,15 @@ public static class ServiceState
         try
         {
             if (FStat(fd, out var stat) != 0) throw new IOException("Cannot inspect daemon control lock");
+            // Builds before the openat ABI fix left root-owned locks with random modes. The
+            // directory is already validated root-only, so a root-owned single-link regular
+            // file here was made by us; repair it instead of refusing it forever.
+            if (geteuid() == 0 && stat.Uid == 0 && stat.LinkCount == 1
+                && (stat.Mode & S_IFMT) == S_IFREG && (stat.Mode & 0x1FF) != 0x180)
+            {
+                if (fchmod(fd, 0x180) != 0 || FStat(fd, out stat) != 0)
+                    throw new IOException($"Cannot repair daemon control lock: errno {Marshal.GetLastPInvokeError()}");
+            }
             ValidateChild(stat, name, privateRead: true);
             if (flock(fd, 0x2 | 0x4) != 0) // LOCK_EX | LOCK_NB (XNU sys/fcntl.h)
                 throw new IOException($"Daemon control is busy: errno {Marshal.GetLastPInvokeError()}");
@@ -127,8 +136,20 @@ public static class ServiceState
     [DllImport("libc")] private static extern uint geteuid();
     [DllImport("libc", EntryPoint = "open", SetLastError = true)]
     private static extern int open(string path, int flags, uint mode);
+    // openat(int, const char *, int, ...) is variadic: on Darwin ARM64 the mode must be on
+    // the stack, so x3..x7 are padded. A plain 4-argument binding put it in x3, libc read
+    // stack garbage instead, and O_CREAT made lock files with random modes (0551, 0544)
+    // that ValidateChild then refused — the daemon could never take its control lock.
+    // x86_64 passes the first variadic argument in a register. Same pattern as UtunDevice.
     [DllImport("libc", EntryPoint = "openat", SetLastError = true)]
-    private static extern int openat(int directory, string path, int flags, uint mode);
+    private static extern int openat_arm64(int directory, string path, int flags,
+        long d3, long d4, long d5, long d6, long d7, long mode);
+    [DllImport("libc", EntryPoint = "openat", SetLastError = true)]
+    private static extern int openat_x64(int directory, string path, int flags, uint mode);
+    private static int openat(int directory, string path, int flags, uint mode) =>
+        RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? openat_arm64(directory, path, flags, 0, 0, 0, 0, 0, mode)
+            : openat_x64(directory, path, flags, mode);
     [DllImport("libc", EntryPoint = "fstat$INODE64", SetLastError = true)]
     private static extern int fstat_inode64(int fd, out DarwinStat stat);
     [DllImport("libc", EntryPoint = "fstat", SetLastError = true)]
