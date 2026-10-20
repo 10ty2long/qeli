@@ -4,6 +4,11 @@ This guide explains how the masking layers fit together, how to tune the transpo
 recordizer, and which combinations are safe. It complements the complete key reference in
 [CONFIG.md](CONFIG.md) and the measured limitations in [DPI-AUDIT.md](../reports/DPI-AUDIT.md).
 
+Algorithm overview: [Recordizer and record organization](../reference/RECORDIZER.md).
+[Required/off measurements on 12 profiles on 20 October 2026](../reports/benchmarks/recordizer_required_off_2026-10-20.md)
+provide engineering results for one build, CPU, loss and interpretation limits,
+not a public release benchmark. [Other technologies and measurements](../reference/TECHNOLOGIES.md).
+
 ## 1. What the recordizer changes
 
 The legacy data plane usually turned one inner IPv4/IPv6 packet into one encrypted qeli record.

@@ -204,6 +204,9 @@ The full set of CLI subcommands (`qeli <command> --help` for all options).
 **Full documentation map → [index.md](index.md)** — every document grouped by audience
 (users · operators · routers · security · design · internals · archive).
 
+The [Technologies and measurements](reference/TECHNOLOGIES.md) section explains
+Qeli mechanisms and connects them to configuration and dated engineering reports.
+
 Most used:
 
 - **[GETTING-STARTED.md](manuals/GETTING-STARTED.md)** — install and first run, step by step.

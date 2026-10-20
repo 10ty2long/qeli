@@ -4,6 +4,11 @@
 транспорт-независимый recordizer и какие сочетания безопасны. Полный справочник ключей находится
 в [CONFIG.md](CONFIG.md), измеренные ограничения — в [DPI-AUDIT.md](../reports/DPI-AUDIT.md).
 
+Обзор алгоритма — [Recordizer и организация записей](../reference/RECORDIZER.md).
+[Замеры required/off на 12 профилях 20 октября 2026](../reports/benchmarks/recordizer_required_off_2026-10-20.md)
+содержат инженерные результаты одной сборки, CPU, потери и границы интерпретации;
+это не публичный бенчмарк релиза. [Другие технологии и измерения](../reference/TECHNOLOGIES.md).
+
 ## 1. Что меняет recordizer
 
 В legacy data-plane один внутренний IPv4/IPv6-пакет обычно превращался в одну зашифрованную
