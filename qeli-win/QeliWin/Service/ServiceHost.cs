@@ -11,6 +11,8 @@ public static class ServiceHostRunner
 {
     public static void Run()
     {
+        // Headless service never quarantines data or silently loses saved intent.
+        using (StorageMigration.EnterGate()) ServiceState.EnsureDir();
         var builder = Host.CreateApplicationBuilder();
         builder.Services.AddWindowsService(o => o.ServiceName = ServiceManager.ServiceName);
         builder.Services.AddHostedService<QeliWorker>();

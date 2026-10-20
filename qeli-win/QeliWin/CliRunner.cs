@@ -8,6 +8,7 @@ namespace QeliWin;
 /// <summary>
 /// Headless command-line modes for testing without the GUI:
 ///   QeliWin.exe selftest             — WinDivert/Wintun/routes/DNS platform checks
+///   QeliWin.exe selftest-storage     — isolated storage migration/cache regressions
 ///   QeliWin.exe windivert-smoke       — elevated production-filter smoke test
 ///   QeliWin.exe handshake &lt;link|ini|file&gt; — connect + full handshake only
 ///   QeliWin.exe connect   &lt;link|ini|file&gt; [seconds] — full tunnel (needs admin)
@@ -21,6 +22,7 @@ public static class CliRunner
         return verb.ToLowerInvariant() switch
         {
             "selftest" => SelfTest(),
+            "selftest-storage" => StorageSelfTest(),
             "windivert-smoke" => WinDivertSmoke(),
             "handshake" => Handshake(rest),
             "connect" => Connect(rest),
@@ -34,11 +36,22 @@ public static class CliRunner
 
     private static int Usage()
     {
-        Console.WriteLine("Usage: QeliWin.exe [selftest | windivert-smoke | handshake <link|ini|file> | connect <link|ini|file> [seconds]]");
+        Console.WriteLine("Usage: QeliWin.exe [selftest | selftest-storage | windivert-smoke | handshake <link|ini|file> | connect <link|ini|file> [seconds]]");
         return 2;
     }
 
     // ── platform self-test ──────────────────────────────────────────────────────
+    private static int StorageSelfTest()
+    {
+        int failed = 0;
+        QeliWin.Service.StorageMigrationSelfTest.Run((name, ok) =>
+        {
+            Console.WriteLine($"  [{(ok ? "PASS" : "FAIL")}] {name}");
+            if (!ok) failed++;
+        });
+        return failed == 0 ? 0 : 1;
+    }
+
     private static int SelfTest()
     {
         int failed = 0;
@@ -64,6 +77,7 @@ public static class CliRunner
         RunGroup("service profile storage", () => QeliWin.Service.ServiceProfileSelfTest.Run(Check));
         RunGroup("service control and autostart", () => QeliWin.Service.ServiceControlSelfTest.Run(Check));
         RunGroup("service observation and registration", () => QeliWin.Service.ServiceObservationSelfTest.Run(Check));
+        RunGroup("storage migration and native bundle", () => QeliWin.Service.StorageMigrationSelfTest.Run(Check));
         RunGroup("driver resource lifetime", () => DriverResourceSelfTest.Run(Check));
         RunGroup("WinDivert unit", () => WinDivertSelfTest.RunUnit(Check));
         RunGroup("roaming socket", () => WindowsRoamingSocket.RunSelfTest(Check));

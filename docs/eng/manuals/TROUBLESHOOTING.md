@@ -1,6 +1,6 @@
 # Qeli — connection diagnostics and error reference
 
-> **Documentation status:** current development tree **0.8.2**; planned full-IPv6 release **0.8.3**;
+> **Documentation status:** current development tree **0.8.3**; planned full-IPv6 release **0.8.3**;
 > package version covered by this guide **0.8.2**. There will be no public 0.7.17 release.
 > `qeli --version` reports the version of the binary actually installed.
 > **0.8.2 Beta** is published. Downloads and current availability are in [GitHub Releases](https://github.com/litvinovtd/qeli/releases).
@@ -2007,6 +2007,19 @@ adb shell appops set com.qeli ACTIVATE_VPN allow   # if supported
   for diagnosis, recreate protected storage from the elevated GUI and re-save a profile
   from a trusted source. Do not delete active recovery journals or merely tighten
   ACLs over files whose origin has not been verified.
+- `Legacy or untrusted Qeli storage requires migration` in development **0.8.3**:
+  manual elevated GUI startup offers an explicit legacy-storage
+  preparation dialog. Disconnect normally, finish network recovery, stop `QeliWinSvc`
+  and close other clients first. Do not migrate after
+  `previous tunnel task did not stop within 8s`: let the task finish and retry Disconnect;
+  that error does not confirm recovery. The service and autostart never silently move
+  legacy data. The old directory is retained inside a unique private backup; reselect
+  a trusted service profile afterwards. DLLs use
+  `%ProgramData%\QeliWin\native\<bundle-SHA256>`, private service data uses
+  `%ProgramData%\QeliWin\service`; `%APPDATA%\QeliWin` and recovery journals stay put.
+  Checks conservatively block on any Wintun adapter, including another VPN's adapter;
+  do not remove unrelated adapters/firewall rules or bypass the refusal. The user must
+  also confirm completed DNS/route recovery; these checks do not prove it automatically.
 - `Tunnel cleanup remains incomplete` means cleanup has not finished: the service
   keeps Error instead of Disconnected. Retry stopping and inspect the log.
 - `TLS traffic key budget exhausted; reconnect required` is a protective

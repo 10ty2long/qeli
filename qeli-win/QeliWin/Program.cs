@@ -21,7 +21,8 @@ public static class Program
         // Keep self-test free from startup recovery side effects (the DLL-hosted form is no-admin).
         // A stale firewall journal is host state and must not be touched by a CI probe.
         if (args.Length > 0 &&
-            string.Equals(args[0], "selftest", StringComparison.OrdinalIgnoreCase))
+            (string.Equals(args[0], "selftest", StringComparison.OrdinalIgnoreCase)
+             || string.Equals(args[0], "selftest-storage", StringComparison.OrdinalIgnoreCase)))
         {
             App.AttachParentConsoleForCli();
             Console.WriteLine();

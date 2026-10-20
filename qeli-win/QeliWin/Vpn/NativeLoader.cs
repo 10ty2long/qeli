@@ -23,6 +23,7 @@ internal static class NativeLoader
     private static readonly Dictionary<string, (byte[] bytes, byte[] hash)> _images = new(StringComparer.OrdinalIgnoreCase);
     private static readonly NativeModuleCache _modules = new();
     private static readonly object _lock = new();
+    private static string? _bundleId;
 
     [ModuleInitializer]
     internal static void Init()
@@ -79,20 +80,20 @@ internal static class NativeLoader
         {
             // Cache trusted resource bytes, never a previously trusted disk path. Every
             // extraction request repeats directory/file trust and content verification.
-            if (!_images.TryGetValue(dllName, out var image))
-            {
-                var asm = typeof(NativeLoader).Assembly;
-                var resName = asm.GetManifestResourceNames()
-                    .FirstOrDefault(n => n.EndsWith(dllName, StringComparison.OrdinalIgnoreCase));
-                if (resName == null) return null;
-                using var src = asm.GetManifestResourceStream(resName);
-                if (src == null) return null;
-                using var mem = new MemoryStream();
-                src.CopyTo(mem);
-                var bytes = mem.ToArray();
-                image = (bytes, System.Security.Cryptography.SHA256.HashData(bytes));
-                _images.Add(dllName, image);
-            }
+            // One fingerprint covers the whole set, including the DLL/driver pair.
+            // Same release number with different embedded bytes is a different cache.
+            foreach (string name in Embedded)
+                if (!_images.ContainsKey(name))
+                {
+                    using var src = typeof(NativeLoader).Assembly.GetManifestResourceStream(name);
+                    if (src == null) return null;
+                    using var mem = new MemoryStream();
+                    src.CopyTo(mem);
+                    var bytes = mem.ToArray();
+                    _images.Add(name, (bytes, System.Security.Cryptography.SHA256.HashData(bytes)));
+                }
+            _bundleId ??= BundleId(Embedded.Select(name => (name, _images[name].hash)));
+            var image = _images[dllName];
             bool elevated = IsElevated();
             // WHERE we extract decides whether the hash check below means anything.
             //
@@ -111,10 +112,12 @@ internal static class NativeLoader
             string dir;
             if (elevated)
             {
-                QeliWin.Service.ServiceState.EnsureDir();
-                dir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                    "QeliWin", "native");
+                using var migrationGate = QeliWin.Service.StorageMigration.EnterGate();
+                // Native extraction never opens/creates the private service profile store.
+                QeliWin.Service.StorageLayout.EnsureRoot();
+                string nativeRoot = Path.Combine(QeliWin.Service.StorageLayout.Root, "native");
+                if (!CreateProtectedDirectory(nativeRoot)) return null;
+                dir = Path.Combine(nativeRoot, _bundleId);
                 if (!CreateProtectedDirectory(dir)) return null;
                 // Someone may have created it first with permissive rights.
                 if (QeliWin.Service.ServiceManager.NonAdminWriterOn(dir) != null) return null;
@@ -123,7 +126,7 @@ internal static class NativeLoader
             {
                 dir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "QeliWin", "native");
+                    "QeliWin", "native", _bundleId);
                 Directory.CreateDirectory(dir);
             }
             var outPath = Path.Combine(dir, dllName);
@@ -173,6 +176,18 @@ internal static class NativeLoader
 
             return outPath;
         }
+    }
+
+    internal static string BundleId(IEnumerable<(string name, byte[] hash)> images)
+    {
+        using var digest = System.Security.Cryptography.IncrementalHash.CreateHash(
+            System.Security.Cryptography.HashAlgorithmName.SHA256);
+        foreach (var (name, hash) in images.OrderBy(image => image.name, StringComparer.Ordinal))
+        {
+            digest.AppendData(System.Text.Encoding.UTF8.GetBytes(name + "\0"));
+            digest.AppendData(hash);
+        }
+        return Convert.ToHexString(digest.GetHashAndReset()).ToLowerInvariant();
     }
 
     internal static bool MatchesEmbedded(Stream input, long expectedLength, byte[] expectedHash)

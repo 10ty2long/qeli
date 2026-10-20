@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
@@ -16,12 +15,11 @@ public sealed class ServiceStatus : DesktopServiceStatus { }
 
 /// <summary>
 /// Shared state between the Windows Service (writer) and the GUI (reader), stored under
-/// %ProgramData%\QeliWin for LocalSystem and elevated administrators only.
+/// %ProgramData%\QeliWin\service for LocalSystem and elevated administrators only.
 /// </summary>
 public static class ServiceState
 {
-    public static readonly string Dir =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "QeliWin");
+    public static readonly string Dir = StorageLayout.ServiceDirectory;
     public static string ProfileFile => Path.Combine(Dir, "service-profile.json");
     public static string StatusFile => Path.Combine(Dir, "service-status.json");
     public static string LogFile => Path.Combine(Dir, "service.log");
@@ -36,24 +34,8 @@ public static class ServiceState
 
     public static void EnsureDir()
     {
-        // Do not repair/adopt a pre-existing untrusted directory: its files may have
-        // been planted before the DACL was tightened. Fail before reading or writing.
-        for (var parent = Path.GetDirectoryName(Dir); !string.IsNullOrEmpty(parent);
-             parent = Path.GetDirectoryName(parent))
-            RequireTrusted(parent, ancestor: true);
-        if (!Directory.Exists(Dir))
-        {
-            var security = new DirectorySecurity();
-            security.SetAccessRuleProtection(true, false);
-            var admin = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
-            security.SetOwner(admin);
-            var inherit = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
-            foreach (var id in new[] { admin, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null) })
-                security.AddAccessRule(new FileSystemAccessRule(id, FileSystemRights.FullControl,
-                    inherit, PropagationFlags.None, AccessControlType.Allow));
-            new DirectoryInfo(Dir).Create(security); // private from creation, not after writing
-        }
-        RequireTrusted(Dir, privateFile: true);
+        StorageLayout.EnsureRoot();
+        StorageLayout.EnsureDirectory(Dir, privateData: true);
     }
 
     internal static void RequireTrusted(string path, bool ancestor = false, bool privateFile = false)
