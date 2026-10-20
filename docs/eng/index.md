@@ -1,6 +1,6 @@
 # Qeli documentation — map
 
-> Development performance measurements for unreleased 0.8.2 have been withdrawn from publication. Complete original data and reports are retained locally for internal audit. They are not a public release benchmark or a basis for comparing version performance.
+> Preliminary development performance measurements for 0.8.2 have been withdrawn from publication. Complete original data and reports are retained locally for internal audit. They are not a public release benchmark or a basis for comparing version performance.
 
 The documentation is organized by **document type**. The same directory layout is used for
 English and Russian, and every active page is linked from this map.
