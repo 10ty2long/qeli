@@ -17,16 +17,6 @@ English and Russian, and every active page is linked from this map.
 |---|---|
 | [README.md](README.md) | Project overview: purpose, wire modes, crypto stack and repository layout |
 
-## Technologies and measurements
-
-Mechanism design, interactions and dated engineering verification.
-
-| Section | Contents |
-| --- | --- |
-| [Technologies and measurements](reference/TECHNOLOGIES.md) | Mechanism catalog and placement rules |
-| [Recordizer](reference/RECORDIZER.md) | PACKET_MUX_V1, data path, negotiation and limits |
-| [Required versus off on 12 profiles on 20 October 2026](reports/benchmarks/recordizer_required_off_2026-10-20.md) | Engineering n=1 comparison of one 0.8.2 build, not a public release benchmark |
-
 ## Manuals (`manuals/`)
 
 Practical installation, configuration and operations guides.
@@ -92,6 +82,16 @@ General analysis, the security model and published benchmarks. Detailed release-
 | [BENCHMARK.md](reports/BENCHMARK.md) | Load-testing method and per-mode measurements |
 | [Qeli 0.8.0: 34 VPN modes](reports/benchmarks/vpn_protocol_benchmark_repeat_2026-09-01.md) | Full dated cross-protocol run, CPU/RSS, and interpretation limits |
 | [COMPARISON.md](reports/COMPARISON.md) | Comparison with WireGuard, OpenVPN and V2Ray |
+
+## Technologies and measurements
+
+Mechanism design, interactions and dated engineering verification.
+
+| Section | Contents |
+| --- | --- |
+| [Technologies and measurements](reference/TECHNOLOGIES.md) | Mechanism catalog and placement rules |
+| [Recordizer](reference/RECORDIZER.md) | PACKET_MUX_V1, data path, negotiation and limits |
+| [Required versus off on 12 profiles on 20 October 2026](reports/benchmarks/recordizer_required_off_2026-10-20.md) | Engineering n=1 comparison of one 0.8.2 build, not a public release benchmark |
 
 ## Archive (`archive/`)
 
