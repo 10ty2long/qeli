@@ -774,6 +774,10 @@ only / Unix / none). If you plan to compare the app log against the server's, se
 > platform-imposed differences: per-app routing is MDM-only, and VPN On Demand stands in
 > for boot auto-connect — see [`qeli-ios/PARITY.md`](../../../qeli-ios/PARITY.md).
 
+> **macOS 0.8.3:** choose `Qeli-macos-arm64.tar.gz` for Apple Silicon or
+> `Qeli-macos-x86_64.tar.gz` for Intel. Each archive contains a self-contained
+> `Qeli.app`; do not combine their contents. macOS 15 or newer is required.
+>
 > ⚠️ **macOS — first launch.** The app is **ad-hoc** signed (not notarized by Apple), so
 > Gatekeeper blocks it and it **won't open** on a double-click. Clear the quarantine once
 > in Terminal:

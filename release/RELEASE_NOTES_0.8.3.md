@@ -20,6 +20,10 @@ existing memory budgets.
   UDP batch-send time. Sustained overload and all TUN drops are not claimed fixed.
 - A manual client tunnel MTU no longer disables outer UDP path probing.
   `mtu_probe = false` remains authoritative, with conservative fallback when probing fails.
+- macOS ships separate self-contained `Qeli-macos-arm64.tar.gz` (Apple Silicon)
+  and `Qeli-macos-x86_64.tar.gz` (Intel) archives, requiring macOS 15 or newer.
+  The universal packager now refuses incompatible .NET payloads; lipo alone cannot
+  combine architecture-specific managed DLLs. Native Rust core remains universal2.
 - macOS fixes cover Apple Silicon `openat`, recovery of old root-owned lock-file
   permissions, launchctl service detection and disconnect/status error handling.
 - Android Tink moves to 1.24.0; Rust libc moves to 0.2.191. TLS dependencies
@@ -62,6 +66,10 @@ platforms retain their original scope; this update does not reclassify them as f
   и UDP batch-send. Устранение всех TUN drops и постоянной перегрузки не заявляется.
 - Ручной клиентский MTU туннеля больше не отключает проверку внешнего UDP path MTU.
   `mtu_probe = false` сохраняет приоритет; при неудачной пробе действует безопасный fallback.
+- macOS поставляется отдельными self-contained архивами `Qeli-macos-arm64.tar.gz`
+  для Apple Silicon и `Qeli-macos-x86_64.tar.gz` для Intel; нужен macOS 15 или новее.
+  Универсальный упаковщик отклоняет несовместимые .NET-компоненты: `lipo` не объединяет
+  архитектурные managed DLL. Нативное Rust-ядро сохраняет обе архитектуры.
 - macOS: исправлены `openat` на Apple Silicon, восстановление прав старых root-owned
   lock-файлов, распознавание состояния launchctl и обработка ошибок отключения/статуса.
 - Android Tink обновлён до 1.24.0, Rust libc — до 0.2.191. rustls-webpki 0.103.16

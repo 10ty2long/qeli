@@ -6,7 +6,7 @@ DNS/connect, handshake, crypto, TCP/UDP/QUIC/Reality, heartbeat/shaping, bonding
 utun payload; C# управляет lifecycle/reconnect, созданием интерфейса,
 маршрутами/DNS/pf, trust и UI.
 
-Готовый комплект 0.8.2 требует **macOS 15 или новее**, Intel x86_64 либо Apple Silicon.
+Готовый комплект 0.8.3 требует **macOS 15 или новее**, Intel x86_64 либо Apple Silicon.
 Минимум соответствует [поддерживаемым ОС .NET 10](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md).
 Он задаётся в `Info.plist`; упаковщик также проверяет deployment target каждого Mach-O.
 Это требование совместимости, а не заявление о выполненном физическом тесте на каждой ОС.
@@ -57,12 +57,19 @@ qeli-mac/
 └── ../qeli-shared/    production lifecycle/model + отдельный QeliConformance runner
 ```
 
-Universal2-архив из подготовленных osx-arm64/osx-x64 payloads собирает
-python scripts/build_mac_universal.py (из корня checkout). Сборщик проверяет
-arm64+x86_64 в каждом Mach-O: отсутствующий Intel-партнёр, ошибка lipo
-или неполный результат останавливают упаковку. Canonical libqeli.dylib
-должна уже содержать обе архитектуры. Старый build_mac_dist_resign.py удалён;
-для обновления native-ядра пересобери universal-архив из актуальных payloads.
+В комплекте 0.8.3 используются отдельные приложения: `Qeli-macos-arm64.tar.gz`
+для Apple Silicon и `Qeli-macos-x86_64.tar.gz` для Intel. Выберите архив для своего
+процессора; установка .NET не требуется. Само Rust-ядро `libqeli.dylib` остаётся
+universal2, но ReadyToRun DLL и dependency graph .NET зависят от архитектуры.
+Их нельзя объединить с помощью `lipo`.
+
+Экспериментальный `python scripts/build_mac_universal.py` (из корня checkout)
+отклоняет разные или отсутствующие в паре `.dll`, `.deps.json` и
+`.runtimeconfig.json` до замены прежнего bundle. Обычные RID-specific payloads
+0.8.3 такую проверку не проходят: распространяйте два отдельных архива.
+Для совместимых managed payloads сборщик также проверяет arm64+x86_64 в каждом
+Mach-O; отсутствующий Intel-партнёр, ошибка lipo или неполный результат останавливают
+упаковку. Canonical libqeli.dylib должна уже содержать обе архитектуры.
 Каждый запуск получает собственный /var/tmp/qeli-mac-build.XXXXXXXX на лабе.
 Общий mac-build и кэш входных архивов больше не используются. До SSH проверяются
 состав TAR и canonical dylib в обоих payloads, после передачи — SHA всех четырёх
@@ -129,7 +136,7 @@ Developer ID Application, provisioning profiles для host и system extension 
 созданного `xcrun notarytool store-credentials`: скрипт отправит временный ZIP в Apple,
 дождётся результата и выполнит `stapler staple/validate` до упаковки `.tar.gz`.
 Ad-hoc сборка намеренно не содержит helper и отклоняет per-app-профиль fail-closed.
-Для готового комплекта 0.8.2 минимум macOS 15 действует и для per-app, и для
+Для готового комплекта 0.8.3 минимум macOS 15 действует и для per-app, и для
 `apps_mode = all`; per-app дополнительно требует корректно подписанного system extension.
 
 На Mac полученный архив:

@@ -103,6 +103,45 @@ class AssemblyTests(unittest.TestCase):
         with self.assertRaises(Exception): self.invoke()
         self.assertEqual(self.marker.read_bytes(), b'old bundle')
 
+    def test_rid_specific_managed_dll_is_refused_before_output_replacement(self):
+        for folder, machine in ((self.arm, 0xaa64), (self.x64, 0x8664)):
+            payload = bytearray(128)
+            payload[:2] = b'MZ'
+            struct.pack_into('<I', payload, 0x3c, 64)
+            payload[64:68] = b'PE\x00\x00'
+            struct.pack_into('<H', payload, 68, machine)
+            (folder / 'QeliMac.dll').write_bytes(payload)
+        with self.assertRaisesRegex(RuntimeError, 'architecture-specific .NET payload'):
+            self.invoke()
+        self.assertEqual(self.marker.read_bytes(), b'old bundle')
+
+    def test_rid_specific_dependency_graph_is_refused_before_output_replacement(self):
+        (self.arm / 'QeliMac.deps.json').write_text('{"runtimeTarget":"osx-arm64"}')
+        (self.x64 / 'QeliMac.deps.json').write_text('{"runtimeTarget":"osx-x64"}')
+        with self.assertRaisesRegex(RuntimeError, 'architecture-specific .NET payload'):
+            self.invoke()
+        self.assertEqual(self.marker.read_bytes(), b'old bundle')
+
+    def test_missing_managed_partner_is_refused_in_either_inventory(self):
+        for folder in (self.arm, self.x64):
+            with self.subTest(folder=folder.name):
+                path = folder / 'OnlyOne.dll'
+                path.write_bytes(b'managed')
+                try:
+                    with self.assertRaisesRegex(RuntimeError, 'architecture-specific .NET payload'):
+                        self.invoke()
+                    self.assertEqual(self.marker.read_bytes(), b'old bundle')
+                finally:
+                    path.unlink()
+
+    def test_identical_portable_managed_payload_can_be_copied(self):
+        for folder in (self.arm, self.x64):
+            (folder / 'Portable.dll').write_bytes(b'portable IL fixture')
+            (folder / 'QeliMac.deps.json').write_bytes(b'{"portable":true}')
+        self.invoke()
+        self.assertEqual((self.root / 'Qeli.app/Contents/MacOS/Portable.dll').read_bytes(),
+                         b'portable IL fixture')
+
     def test_lipo_failure_is_not_replaced_with_arm64(self):
         self.failure = True
         with self.assertRaises(Exception): self.invoke()

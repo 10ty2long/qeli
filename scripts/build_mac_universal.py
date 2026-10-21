@@ -94,6 +94,17 @@ def assemble(root, lipo="/usr/bin/llvm-lipo-19"):
     if x64_machos - arm_machos:
         raise RuntimeError(f"x64-only Mach-O inputs: {sorted(map(str, x64_machos - arm_machos))}")
 
+    # .NET ReadyToRun DLLs and dependency graphs can be RID-specific even when
+    # every Mach-O can be merged. lipo cannot make those managed payloads universal.
+    # Validate both inventories before touching a previous working output.
+    for rel in sorted(set(arm) | set(x64)):
+        if str(rel).lower().endswith((".dll", ".deps.json", ".runtimeconfig.json")):
+            if rel not in arm or rel not in x64 or arm[rel].read_bytes() != x64[rel].read_bytes():
+                raise RuntimeError(
+                    f"architecture-specific .NET payload: {rel}; "
+                    "use separate osx-arm64 and osx-x64 app archives"
+                )
+
     # Admit the complete input graph before replacing the old bundle.
     merge = set()
     for rel in sorted(arm_machos):
