@@ -772,7 +772,7 @@ impl ClientConfig {
             }
             cfg.tun.mtu = m;
         }
-        // Active UDP path-MTU probing when mtu=0. Default ON — fall back to `true`
+        // Active outer UDP path probing, independently of mtu. Default ON — use `true`
         // explicitly (not cfg.tun.mtu_probe, which is derive-Default `false` here).
         cfg.tun.mtu_probe = q.bool_or("mtu_probe", true);
 

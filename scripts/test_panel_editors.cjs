@@ -31,6 +31,16 @@ function component(file, factory, overrides = {}) {
 }
 async function check(name, fn) { await fn(); passed++; console.log('PASS ' + name); }
 async function main() {
+  await check('TCP zero autotuning and manual buffers remain editable without normalization changes', async () => {
+    const {model,html}=component('config.html','configPage');
+    for (const field of ['send','recv']) {
+      assert(html.includes(`min="0" x-model.number="cfg.profiles[activeTab].performance.tcp.${field}_buffer_size"`));
+    }
+    const cfg={profiles:[{performance:{tcp:{send_buffer_size:0,recv_buffer_size:262144}}}]};
+    model.normalizeProfiles(cfg);
+    assert.equal(cfg.profiles[0].performance.tcp.send_buffer_size,0);
+    assert.equal(cfg.profiles[0].performance.tcp.recv_buffer_size,262144);
+  });
   await check('background polls back off, reset after success, skip hidden tabs and stop after an in-flight read', async () => {
     const timers = new Map(); let id = 0, calls = 0, outcome = false, finish;
     const {context} = component('layout.html', 'app', {

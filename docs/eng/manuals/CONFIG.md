@@ -632,7 +632,7 @@ Priority on the client:
 session, the inner MTU and the outer datagram size are deliberately independent:
 
 - **UDP transports** (obfs-UDP / fake-tls-UDP / QUIC) actively probe the real path before
-  bringing the tunnel up. The client sends DF-marked probe datagrams from the pushed ceiling
+  bringing the tunnel up. The client sends DF-marked probe datagrams from the selected inner MTU
   down (the server echoes them) and records the largest complete **outer UDP payload** that
   traverses client → server without IP fragmentation. Probing also runs with an explicit
   `mtu > 0`: this selects the inner TUN MTU rather than disabling outer-path discovery.
@@ -2020,7 +2020,7 @@ flags**: `qeli client` takes only `--config <file>`, so "CLI vs file" never aris
 | Setting | Winner | Rule |
 |---|---|---|
 | `tun.tx_queue_len` | local client | explicit `[qeli]` value → else `1000` for an owned Linux TUN/TAP; not push or link. With `dev_attach=true` the external owner retains the queue and an explicit key is rejected |
-| `mtu` | client | an explicit `mtu > 0` in `[qeli]` → else the server push (its profile's `tun.mtu`) → else `1400`. With `mtu = 0` over UDP, path-MTU probing refines it further |
+| `mtu` | client | an explicit `mtu > 0` in `[qeli]` → else the server push (its profile's `tun.mtu`) → else `1400`. The outer UDP budget is governed separately by `mtu_probe`; probing lowers the inner MTU only with automatic MTU and a legacy peer |
 | DNS resolver | client | the push applies only if this client manages the resolver at all. With `dns = off` the pushed DNS is **ignored** (a `warn` line says so and names the fix) |
 | routes (`route`) | server | pushed CIDRs are **always** applied; local `route_local` / `include` / `exclude` add to them rather than cancelling them |
 | padding · heartbeat · normalization · shaping | **server** | the push unconditionally overwrites these fields of the client's obfuscation section — otherwise the two ends disagree on the data-plane format |
@@ -3690,7 +3690,7 @@ server-pushed: [Linux client queue](#client-tun-tx-queue).
 | `tun.tx_queue_len` | `1000` | **Server** TUN TX queue length in packets; neither the client queue setting nor `tun.queues` |
 | `perf.tcp.nodelay` | `true` | `TCP_NODELAY` (disable Nagle) |
 | `perf.tcp.keepalive_secs` | `60` | TCP keepalive |
-| `perf.tcp.send_buffer_size` / `recv_buffer_size` | `262144` | socket buffer sizes|
+| `perf.tcp.send_buffer_size` / `recv_buffer_size` | `0` | `SO_SNDBUF`/`SO_RCVBUF`; explicit `0` preserves OS autotuning |
 | `perf.udp.recv_buffer_size` | auto: `4194304` → 8/16 MiB | With the key absent, each UDP worker starts at 4 MiB and bounded auto-grow requests 8/16 MiB only after local overflow or measured rate/stall pressure; it never shrinks. An explicit value disables auto, `0` leaves the OS alone, maximum 64 MiB per socket. Granted bytes and counters are logged/exposed; OS limits remain best-effort |
 | `perf.udp.send_buffer_size` | `0` | `SO_SNDBUF` on the UDP listener. `0` = leave alone; maximum 64 MiB per socket. A full send buffer applies backpressure rather than losing data, so there is no send-buffer auto-grow |
 | `perf.tun.read_buffer_size` | `65535` | TUN read-buffer size, **per queue**. Must be at least `tun.mtu` (plus 14 bytes of Ethernet header for TAP) and at most 1 MiB; out-of-range values are **rejected at load**. `0` is not "auto" — it makes the read return EOF immediately and stops the data plane |
@@ -3701,9 +3701,84 @@ server-pushed: [Linux client queue](#client-tun-tx-queue).
 | `perf.connection.new_session_rate_window_secs` | `60` | window for `new_session_rate_max` (seconds) |
 
 
-On Linux these server TCP keys request `SO_SNDBUF` and `SO_RCVBUF`. An absent key uses **262144 bytes**. Explicit `0` skips the corresponding socket option, preserving kernel autotuning; a nonzero value disables it for that buffer. OS limits can constrain the grant; Linux includes bookkeeping memory, so readback is usually twice the request. Check `ss -tinmp`, `skmem` fields `tb`/`rb`.
+On Linux these server TCP keys request `SO_SNDBUF` and `SO_RCVBUF`. Since 0.8.3 an absent key uses **0** (OS management); 0.8.2 used 262144 bytes. Explicit operator values are preserved. Explicit `0` skips the corresponding socket option, preserving kernel autotuning; a nonzero value disables it for that buffer. OS limits can constrain the grant; Linux includes bookkeeping memory, so readback is usually twice the request. Check `ss -tinmp`, `skmem` fields `tb`/`rb`.
 
 These are server TCP settings. Client `send_buffer_size`/`recv_buffer_size` apply to UDP; client TCP retains OS settings. Smaller buffers can move backpressure and reduce throughput. [Linux6.12 semantics](https://www.kernel.org/doc/html/v6.12/networking/ip-sysctl.html).
+
+### Internal UDP receive queue and wait metrics
+
+Since 0.8.3, the client and each server UDP worker measure depth and wait time of
+the internal receive handoff queue. Its working limit is always **128 UDP datagrams**,
+with automatic, explicit or zero receive-buffer settings alike. It neither shrinks
+after idle nor grows under load. A full queue backpressures the producer; resizing
+never discards packets because the queue does not resize.
+
+This queue does not change `tun.tx_queue_len`, the number of `tun.queues` or `SO_RCVBUF`.
+Existing automatic `SO_RCVBUF` growth and the server aggregate RAM budget remain
+in force. The recycler retains the previous limit of 129 buffers of 65535 bytes per
+receive pump. A fixed queue cannot guarantee loss-free operation under sustained
+CPU/link overload. Existing manual TUN and socket-buffer settings are preserved.
+
+Metrics are available in the Linux CLI status file (`QELI_CLIENT_STATUS`), under
+`stats.udp_receive_queue`; on the server, through the local control command
+`queue-stats` and authenticated `GET /api/transport/health`, in
+`profiles[].udp_receive_queue`. Unsupported workers return `null` through that API,
+not zero counters. The fixed C/JNI statistics ABI is unchanged.
+
+`queued_packets`/`queued_bytes` report current depth, `peak_*` report lifetime peaks,
+and `limit_packets` sums the current limits of all receive pumps in the profile.
+`grow_events`/`shrink_events` are zero for this fixed queue; they do not count kernel
+UDP receive-buffer growth. `delivered_packets` count batches
+handed to the consumer in packets, and `cancelled_packets` count queued packets
+cancelled before that handoff. Cancellation is not a network-loss counter.
+Here a packet means an outer UDP datagram, not an individual inner Recordizer packet.
+Wait time runs from completion of a batch receive until the consumer dequeues it,
+including admission wait. It excludes subsequent batch processing, decryption,
+TUN delivery and network RTT.
+
+`wait_mean_us`, `wait_max_us` and `wait_p50_upper_us`/`wait_p95_upper_us`/`wait_p99_upper_us`
+are cumulative. Percentiles are upper bounds from a packet-weighted histogram.
+For a measurement window, subtract the boundary values of `wait_total_us`,
+`delivered_packets` and `wait_histogram_packets`; `wait_bucket_upper_us` contains
+the histogram bounds. Counters live until their client/profile counter object is
+recreated; ordinary client reconnect does not reset them. Concurrent updates can make
+an individual snapshot momentarily inconsistent.
+
+Since 0.8.3 the recommended TCP default leaves buffers to the OS. To enable
+autotuning for an existing profile with explicit sizes, set both server keys to `0`:
+
+```ini
+perf.tcp.send_buffer_size = 0
+perf.tcp.recv_buffer_size = 0
+```
+
+This leaves buffer management to Linux without modifying sysctl. Explicit old sizes are not rewritten.
+An omitted key now uses `0`; set `262144` explicitly to retain the old behavior. Results depend on
+RTT, available memory and load. Compare receiver goodput, retransmissions and actual
+`skmem` buffer sizes on your own connection.
+
+The TCP default is supported by [1/8 independent-client measurements and memory checks](../../data/benchmarks/queue-tuning-20261021.json)
+on Linux with 40/100 ms added RTT. The record also includes UDP/TUN diagnostics
+at 900 Mbit/s and manual `tun.tx_queue_len = 1000/2000`. Generator bursts, consumer
+backpressure and scheduler delays can fill the finite TUN queue. A larger manual
+queue allows more burst headroom and kernel memory/latency; it does not increase
+processing capacity or change Qeli's internal RAM limits. Automatic TUN queue resizing
+is not enabled; its default remains 1000. These windows do not guarantee zero drops
+on every connection or client count.
+
+The server local control command `tun-stats` returns cumulative profile counters:
+TUN packets/bytes, the fixed pool size, queue peaks and timing histograms for pool
+wait, consumer dispatch and UDP batch send. `between_reads` measures userspace time
+between completion of one read and start of the next, including pool/queue wait and
+scheduling stalls. `kernel_read` includes normal waiting for new packets; a large
+value alone does not prove overload. Histogram bounds are in `bucket_upper_us`;
+use counter differences for an individual window. `dispatch_wait` measures the entire handoff call,
+including its fast path, rather than only parking on a full queue. The TUN reader
+first uses non-blocking `try_send`; a full queue retains the previous blocking
+wait for space. `udp_send` covers the normal Recordizer batch-send path, including
+socket wait; it does not measure legacy sends, the separate MTU-fallback fragmentation
+path, encryption or rate-limit pacing. Zero samples means no measured calls, rather
+than zero latency for all UDP sends. These metrics do not enlarge pools or TUN queues.
 
 ## Routing and other per-profile keys
 

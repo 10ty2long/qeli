@@ -15,6 +15,8 @@ pub mod pool;
 pub mod preflight;
 pub mod reality;
 mod roaming_metrics;
+mod tun_dispatch;
+mod tun_metrics;
 pub mod udp_handler;
 pub mod update;
 pub mod usage;
@@ -860,6 +862,7 @@ pub struct ProfileRuntime {
     pub(crate) admission: Arc<Mutex<()>>,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
     /// Aggregate local UDP diagnostics across this profile's SO_REUSEPORT workers.
+    tun_metrics: Arc<tun_metrics::TunMetrics>,
     pub(crate) udp_buffer_counters: Arc<crate::transport_core::udp_buffer::UdpBufferCounters>,
     /// Worker-lifetime TCP outcomes; UDP outcomes live in the shared registry itself.
     pub(crate) tcp_roaming_metrics: roaming_metrics::TcpRoamingMetrics,
@@ -6280,6 +6283,7 @@ async fn run_profile_generation(
         udp_buffer_counters: Arc::new(
             crate::transport_core::udp_buffer::UdpBufferCounters::default(),
         ),
+        tun_metrics: Arc::new(tun_metrics::TunMetrics::default()),
         tcp_roaming_metrics: roaming_metrics::TcpRoamingMetrics::default(),
         #[cfg(feature = "experimental-roaming")]
         udp_roaming_registry: crate::transport_core::udp_roaming::UdpRoamingRegistry::new(
@@ -6373,6 +6377,8 @@ async fn run_profile_generation(
             let is_tap_reader = is_tap;
             let stop = reader_stop.clone();
             let pool = tun_read_pool.clone();
+            let tun_metrics = profile.tun_metrics.clone();
+            tun_metrics.configure(tun_read_buffer_count, tun_buf_size);
             let mut pool_stop = reader_pool_stop.subscribe();
             let fatal = tun_fatal_tx.clone();
             let runtime = tokio::runtime::Handle::current();
@@ -6394,6 +6400,7 @@ async fn run_profile_generation(
                         }
                     }
                     log::info!("TUN reader q{} for profile '{}' started", qi, name_r);
+                    let mut last_read_done: Option<Instant> = None;
                     loop {
                         // BEFORE parking, not only after an interrupt. A teardown that happens
                         // while this thread is still starting up would otherwise find it about
@@ -6408,12 +6415,15 @@ async fn run_profile_generation(
                         // downstream congestion enters the runtime to wait, and teardown has
                         // an explicit wake arm so a pool-starved reader cannot pin its fd.
                         let Some(mut packet) = pool.try_acquire().or_else(|| {
-                            runtime.block_on(async {
+                            let started = Instant::now();
+                            let acquired = runtime.block_on(async {
                                 tokio::select! {
                                     packet = pool.acquire() => packet,
                                     _ = pool_stop.changed() => None,
                                 }
-                            })
+                            });
+                            tun_metrics.pool_wait.record(started.elapsed());
+                            acquired
                         }) else {
                             break;
                         };
@@ -6460,6 +6470,12 @@ async fn run_profile_generation(
                         read_buffer.clear();
                         let spare = read_buffer.spare_capacity_mut();
                         let read_len = tun_buf_size.min(spare.len());
+                        let read_started = Instant::now();
+                        if let Some(done) = last_read_done {
+                            tun_metrics
+                                .between_reads
+                                .record(read_started.saturating_duration_since(done));
+                        }
                         let n = unsafe {
                             libc::read(
                                 reader_fd.as_raw_fd(),
@@ -6467,13 +6483,20 @@ async fn run_profile_generation(
                                 read_len,
                             )
                         };
+                        let read_error = (n < 0).then(std::io::Error::last_os_error);
+                        let read_done = Instant::now();
+                        tun_metrics
+                            .kernel_read
+                            .record(read_done.duration_since(read_started));
+                        last_read_done = Some(read_done);
                         if n > 0 {
+                            tun_metrics.read_packet(n as usize);
                             // SAFETY: `read` initialised exactly `n` bytes of the spare tail,
                             // and `n <= read_len <= capacity`.
                             unsafe { read_buffer.set_len(n as usize) };
                         }
                         if n < 0 {
-                            let err = std::io::Error::last_os_error();
+                            let err = read_error.expect("negative read retains its errno");
                             // Blocking read: only EINTR is retryable (the fd is no longer
                             // O_NONBLOCK, so WouldBlock can't happen).
                             if err.kind() == std::io::ErrorKind::Interrupted {
@@ -6537,10 +6560,11 @@ async fn run_profile_generation(
                             packet_buffer.copy_within(ip_offset..ip_offset + ip_len, 0);
                             packet_buffer.truncate(ip_len);
                         }
-                        if out_tx
-                            .blocking_send(ServerTunPacket::Pooled(packet))
-                            .is_err()
-                        {
+                        tun_metrics.reader_depth(out_tx.max_capacity() - out_tx.capacity());
+                        let dispatch_started = Instant::now();
+                        let dispatch = tun_dispatch::send(&out_tx, ServerTunPacket::Pooled(packet));
+                        tun_metrics.dispatch_wait.record(dispatch_started.elapsed());
+                        if dispatch.is_err() {
                             if !stop.load(std::sync::atomic::Ordering::Relaxed) {
                                 let _ = fatal
                                     .try_send(format!("TUN reader q{qi} lost its async forwarder"));

@@ -2022,6 +2022,7 @@ impl ClientStatusReporter {
                 "udp_drops_tun_write": udp.tun_write_drops,
                 "udp_buffer_grows": udp.grow_events,
                 "udp_recv_buffer_bytes": udp.granted_recv_bytes,
+                "udp_receive_queue": udp.receive_queue,
                 "tcp_uplink_drops": counters.tcp_uplink.snapshot(),
                 "tcp_downlink_drops": counters.tcp_downlink.snapshot(),
             },
@@ -9891,8 +9892,11 @@ impl std::ops::Deref for ClientUdpReceivedDatagram {
 fn spawn_client_udp_receive_pump(
     socket: Arc<crate::protocol::obfs::ObfsUdp>,
     path_epoch: u64,
-    received_tx: mpsc::Sender<Vec<ClientUdpReceivedDatagram>>,
+    received_tx: mpsc::Sender<
+        crate::transport_core::receive_queue::QueuedBatch<ClientUdpReceivedDatagram>,
+    >,
     tasks: &crate::transport_core::tasks::Spawner,
+    receive_queue: Arc<crate::transport_core::receive_queue::ReceiveQueue>,
 ) -> crate::transport_core::tasks::TaskHandle {
     let receive_slots = crate::transport_core::udp_receive::UDP_RECEIVE_QUEUE_PACKETS + 1;
     let (receive_recycler, mut recycled_receivers) = mpsc::channel(receive_slots);
@@ -9945,6 +9949,7 @@ fn spawn_client_udp_receive_pump(
                 }
             };
 
+            let received_at = std::time::Instant::now();
             // Hand the whole batch over once. Per-datagram channel sends were the second
             // per-packet cost after the syscall, and the consumer drains this exactly like
             // the early-data queue it already keeps.
@@ -9967,8 +9972,12 @@ fn spawn_client_udp_receive_pump(
                     authenticated_plaintext: None,
                 });
             }
-            if !batch.is_empty() && received_tx.send(batch).await.is_err() {
-                return;
+            if !batch.is_empty() {
+                let bytes = batch.iter().map(|packet| packet.len()).sum();
+                let batch = receive_queue.batch(batch, bytes, received_at).await;
+                if received_tx.send(batch).await.is_err() {
+                    return;
+                }
             }
         }
     })
@@ -11214,13 +11223,22 @@ pub(crate) async fn run_udp_tunnel(
     // the actual memory/datagram bound.
     let (received_tx, mut received_rx) =
         mpsc::channel(crate::transport_core::udp_receive::UDP_RECEIVE_QUEUE_PACKETS);
+    let receive_queue = crate::transport_core::receive_queue::ReceiveQueue::new(
+        runtime_counters.udp.receive_queue.clone(),
+        "client UDP",
+    );
     // Drained one datagram at a time by the receive arm below, exactly like the early-data
     // queue beside it: the arm's body is unchanged and still handles a single datagram.
     let mut pending_batch = std::collections::VecDeque::<ClientUdpReceivedDatagram>::new();
     let mut connection_tasks = crate::transport_core::tasks::TaskGroup::default();
     let tasks = connection_tasks.spawner();
-    let mut udp_receive_task =
-        spawn_client_udp_receive_pump(socket.clone(), 0, received_tx.clone(), &tasks);
+    let mut udp_receive_task = spawn_client_udp_receive_pump(
+        socket.clone(),
+        0,
+        received_tx.clone(),
+        &tasks,
+        receive_queue.clone(),
+    );
     #[cfg(all(feature = "experimental-roaming", target_os = "linux"))]
     if udp_handover_enabled {
         if let Some(path_controller) = linux_path_controller {
@@ -11509,6 +11527,7 @@ pub(crate) async fn run_udp_tunnel(
                     epoch,
                     received_tx.clone(),
                     &tasks,
+                    receive_queue.clone(),
                 );
                 live_udp_candidate = Some(UdpClientLiveCandidate::new(
                     prepared.clone(),
@@ -12023,7 +12042,7 @@ pub(crate) async fn run_udp_tunnel(
                 } else {
                     match received_rx.recv().await {
                         Some(batch) => {
-                            pending_batch.extend(batch);
+                            pending_batch.extend(batch.into_inner());
                             pending_batch.pop_front()
                         }
                         None => None,
@@ -14144,11 +14163,21 @@ mod udp_task_shutdown_tests {
         }
     }
 
-    async fn receive_epoch(rx: &mut mpsc::Receiver<Vec<ClientUdpReceivedDatagram>>, epoch: u64) {
+    fn test_receive_queue() -> Arc<crate::transport_core::receive_queue::ReceiveQueue> {
+        crate::transport_core::receive_queue::ReceiveQueue::new(Default::default(), "test client")
+    }
+
+    async fn receive_epoch(
+        rx: &mut mpsc::Receiver<
+            crate::transport_core::receive_queue::QueuedBatch<ClientUdpReceivedDatagram>,
+        >,
+        epoch: u64,
+    ) {
         let packets = tokio::time::timeout(DEADLINE, rx.recv())
             .await
             .unwrap()
             .unwrap();
+        let packets = packets.into_inner();
         assert!(!packets.is_empty());
         assert!(packets.iter().all(|packet| packet.path_epoch == epoch));
     }
@@ -14158,8 +14187,13 @@ mod udp_task_shutdown_tests {
         let mut tasks = crate::transport_core::tasks::TaskGroup::default();
         let (socket, peer) = socket_pair().await;
         let (tx, mut rx) = mpsc::channel(1);
-        let mut active =
-            spawn_client_udp_receive_pump(socket.clone(), 0, tx.clone(), &tasks.spawner());
+        let mut active = spawn_client_udp_receive_pump(
+            socket.clone(),
+            0,
+            tx.clone(),
+            &tasks.spawner(),
+            test_receive_queue(),
+        );
         peer.send(b"first").await.unwrap();
         tokio::time::timeout(DEADLINE, async {
             while tx.capacity() != 0 {
@@ -14193,13 +14227,19 @@ mod udp_task_shutdown_tests {
         let (active_socket, active_peer) = socket_pair().await;
         let (candidate_socket, candidate_peer) = socket_pair().await;
         let (tx, mut rx) = mpsc::channel(4);
-        let active =
-            spawn_client_udp_receive_pump(active_socket.clone(), 0, tx.clone(), &tasks.spawner());
+        let active = spawn_client_udp_receive_pump(
+            active_socket.clone(),
+            0,
+            tx.clone(),
+            &tasks.spawner(),
+            test_receive_queue(),
+        );
         let candidate_task = spawn_client_udp_receive_pump(
             candidate_socket.clone(),
             1,
             tx.clone(),
             &tasks.spawner(),
+            test_receive_queue(),
         );
         let candidate =
             UdpClientLiveCandidate::new(prepared(7), 1, candidate_socket.clone(), candidate_task);
@@ -14222,10 +14262,20 @@ mod udp_task_shutdown_tests {
         let (old_socket, old_peer) = socket_pair().await;
         let (new_socket, new_peer) = socket_pair().await;
         let (tx, mut rx) = mpsc::channel(4);
-        let mut active =
-            spawn_client_udp_receive_pump(old_socket.clone(), 0, tx.clone(), &tasks.spawner());
-        let candidate_task =
-            spawn_client_udp_receive_pump(new_socket.clone(), 1, tx.clone(), &tasks.spawner());
+        let mut active = spawn_client_udp_receive_pump(
+            old_socket.clone(),
+            0,
+            tx.clone(),
+            &tasks.spawner(),
+            test_receive_queue(),
+        );
+        let candidate_task = spawn_client_udp_receive_pump(
+            new_socket.clone(),
+            1,
+            tx.clone(),
+            &tasks.spawner(),
+            test_receive_queue(),
+        );
         let candidate =
             UdpClientLiveCandidate::new(prepared(8), 1, new_socket.clone(), candidate_task);
         let (identity, committed_socket, next_receive) = candidate.into_active();
@@ -14258,7 +14308,13 @@ mod udp_task_shutdown_tests {
         let tasks = crate::transport_core::tasks::TaskGroup::default();
         let (socket, peer) = socket_pair().await;
         let (tx, mut rx) = mpsc::channel(1);
-        let active = spawn_client_udp_receive_pump(socket.clone(), 0, tx, &tasks.spawner());
+        let active = spawn_client_udp_receive_pump(
+            socket.clone(),
+            0,
+            tx,
+            &tasks.spawner(),
+            test_receive_queue(),
+        );
         peer.send(b"started").await.unwrap();
         receive_epoch(&mut rx, 0).await;
         drop(tasks); // Simulate an early return/cancel while a path handle is still alive.

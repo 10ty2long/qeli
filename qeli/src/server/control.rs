@@ -459,7 +459,12 @@ async fn roaming_status(state: &Arc<ServerState>) -> serde_json::Value {
 async fn dispatch(req: Request, state: &Arc<ServerState>) -> Response {
     // Audit-log every administrative (state-changing) control command. list-clients
     // is read-only and may be polled, so it is excluded to avoid log spam.
-    if req.cmd != "list-clients" && req.cmd != "list-blocked" && req.cmd != "roaming-stats" {
+    if req.cmd != "list-clients"
+        && req.cmd != "list-blocked"
+        && req.cmd != "roaming-stats"
+        && req.cmd != "queue-stats"
+        && req.cmd != "tun-stats"
+    {
         log::info!(
             "CONTROL action='{}' user='{}' profile='{}' mbps={} ip='{}'",
             crate::util::log_sanitize(&req.cmd),
@@ -504,6 +509,44 @@ async fn dispatch(req: Request, state: &Arc<ServerState>) -> Response {
                 error: None,
                 clients: Some(clients),
                 message: None,
+            }
+        }
+
+        "tun-stats" => {
+            let profiles = state.profiles.read().await;
+            let counters: std::collections::BTreeMap<_, _> = profiles
+                .iter()
+                .map(|(name, p)| (name.clone(), p.tun_metrics.snapshot()))
+                .collect();
+            Response {
+                ok: true,
+                error: None,
+                clients: None,
+                message: Some(
+                    serde_json::json!({"scope":"server_tun_pipeline","profiles":counters})
+                        .to_string(),
+                ),
+            }
+        }
+        "queue-stats" => {
+            let profiles = state.profiles.read().await;
+            let queues: std::collections::BTreeMap<_, _> = profiles
+                .iter()
+                .map(|(name, profile)| {
+                    (
+                        name.clone(),
+                        profile.udp_buffer_counters.receive_queue.snapshot(),
+                    )
+                })
+                .collect();
+            Response {
+                ok: true,
+                error: None,
+                clients: None,
+                message: Some(
+                    serde_json::json!({"profiles": queues, "scope": "udp_batch_handoff"})
+                        .to_string(),
+                ),
             }
         }
 
@@ -1192,6 +1235,8 @@ mod tests {
             "list-clients",
             "list-blocked",
             "roaming-stats",
+            "queue-stats",
+            "tun-stats",
             "kick",
             "disable-user",
             "set-limit",

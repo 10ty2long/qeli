@@ -1653,6 +1653,11 @@ pub(crate) async fn run_udp_server(
     // MAX_BATCH, bounds the actual number and memory of datagrams owned by this receive pump.
     let (received_tx, mut received_rx) =
         mpsc::channel(crate::transport::udp::UDP_RECEIVE_QUEUE_PACKETS);
+    let receive_queue = crate::transport_core::receive_queue::ReceiveQueue::new(
+        profile.udp_buffer_counters.receive_queue.clone(),
+        "server UDP",
+    );
+    let pump_receive_queue = receive_queue.clone();
     let receive_socket = socket.clone();
     let receive_recycler_task = receive_recycler.clone();
     let receive_profile = profile.name.clone();
@@ -1704,6 +1709,7 @@ pub(crate) async fn run_udp_server(
                 }
             };
 
+            let received_at = std::time::Instant::now();
             let mut batch = Vec::with_capacity(received);
             for (index, slot) in slots.drain(..received).enumerate() {
                 if slot.is_empty() {
@@ -1747,8 +1753,12 @@ pub(crate) async fn run_udp_server(
                     reply_socket,
                 ));
             }
-            if !batch.is_empty() && received_tx.send(batch).await.is_err() {
-                return;
+            if !batch.is_empty() {
+                let bytes = batch.iter().map(|(packet, _, _)| packet.len()).sum();
+                let batch = pump_receive_queue.batch(batch, bytes, received_at).await;
+                if received_tx.send(batch).await.is_err() {
+                    return;
+                }
             }
         }
     }) {
@@ -1837,7 +1847,7 @@ pub(crate) async fn run_udp_server(
                 } else {
                     match received_rx.recv().await {
                         Some(batch) => {
-                            pending_batch.extend(batch);
+                            pending_batch.extend(batch.into_inner());
                             pending_batch.pop_front()
                         }
                         None => None,
@@ -5028,6 +5038,7 @@ async fn handle_udp_auth(
     crate::server::notify::fire_connect(&writer_session.username, &profile.name, addr);
 
     let profile_name = profile.name.clone();
+    let writer_tun_metrics = profile.tun_metrics.clone();
     tasks.spawn(async move {
         let mut quic_record = Vec::with_capacity(
             wire_pool.buffer_capacity() + crate::protocol::roaming::UDP_SHORT_HEADER_LEN,
@@ -5045,6 +5056,7 @@ async fn handle_udp_auth(
             );
         let mut active_mux_payload_budget = writer_mux_payload_budget;
         'writer: loop {
+            writer_tun_metrics.writer_depth(writer_rx.len());
             let (current_egress, current_udp_payload_budget) =
                 writer_egress.snapshot_with_payload_budget(&writer_udp_payload_budget);
             let current_mux_payload_budget =
@@ -5285,11 +5297,10 @@ async fn handle_udp_auth(
                             .iter()
                             .map(Vec::as_slice)
                             .collect();
-                        match egress
-                            .socket
-                            .send_batch_to(&datagrams, egress.peer, &mut udp_send_scratch)
-                            .await
-                        {
+                        let send_started=std::time::Instant::now();
+                        let sent=egress.socket.send_batch_to(&datagrams, egress.peer, &mut udp_send_scratch).await;
+                        writer_tun_metrics.udp_send.record(send_started.elapsed());
+                        match sent {
                             Ok(0) => break,
                             Ok(sent) => {
                                 sent_wire_len += wire_datagrams[batch_sent..batch_sent + sent]

@@ -91,8 +91,8 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
     // 0 = auto: adopt the MTU the server pushes at auth (falls back to 1400 if the
     // server is too old to push one). A value > 0 is an explicit override.
     public int Mtu { get; init; } = ConfigDefaults.Mtu;
-    // Active UDP path-MTU probing when Mtu == 0 (default on; kill switch = false). No
-    // effect on TCP transports (the OS does PMTUD there) or when Mtu > 0 (explicit).
+    // Active outer UDP path-MTU probing, independently of Mtu. Default on; false
+    // disables startup/live probes. No effect on TCP (the OS performs PMTUD).
     public bool MtuProbe { get; init; } = ConfigDefaults.MtuProbe;
     // routing
     public string RoutingMode { get; init; } = "full-tunnel";

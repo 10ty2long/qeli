@@ -107,6 +107,7 @@ pub(crate) mod wintun;
 pub(crate) mod runtime;
 // iOS moves packet batches through NEPacketTunnelFlow rather than the descriptor-backed TUN
 // writer, so the fd-only DropSink variants are intentionally dormant on that target.
+pub(crate) mod receive_queue;
 pub(crate) mod udp_batch;
 #[cfg_attr(target_os = "ios", allow(dead_code))]
 pub(crate) mod udp_buffer;

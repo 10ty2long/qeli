@@ -1636,13 +1636,13 @@
               </div>
               <div>
                 <label class="field-label">Send buffer (bytes)</label>
-                <p class="field-desc">SO_SNDBUF for client sockets</p>
-                <input class="inp" type="number" min="4096" x-model.number="cfg.profiles[activeTab].performance.tcp.send_buffer_size" @input="markDirty()">
+                <p class="field-desc">0 = OS autotuning; non-zero = fixed send buffer</p>
+                <input class="inp" type="number" min="0" x-model.number="cfg.profiles[activeTab].performance.tcp.send_buffer_size" @input="markDirty()">
               </div>
               <div>
                 <label class="field-label">Recv buffer (bytes)</label>
-                <p class="field-desc">SO_RCVBUF for client sockets</p>
-                <input class="inp" type="number" min="4096" x-model.number="cfg.profiles[activeTab].performance.tcp.recv_buffer_size" @input="markDirty()">
+                <p class="field-desc">0 = OS autotuning; non-zero = fixed receive buffer</p>
+                <input class="inp" type="number" min="0" x-model.number="cfg.profiles[activeTab].performance.tcp.recv_buffer_size" @input="markDirty()">
               </div>
             </div>
           </div>

@@ -60,6 +60,7 @@ pub(crate) struct UdpBufferCounters {
     pub tun_write_drops: AtomicU64,
     pub grow_events: AtomicU64,
     pub granted_recv_bytes: AtomicU64,
+    pub receive_queue: Arc<super::receive_queue::QueueCounters>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -73,6 +74,7 @@ pub(crate) struct UdpBufferSnapshot {
     pub tun_write_drops: u64,
     pub grow_events: u64,
     pub granted_recv_bytes: u64,
+    pub receive_queue: super::receive_queue::QueueSnapshot,
 }
 
 impl UdpBufferCounters {
@@ -87,6 +89,7 @@ impl UdpBufferCounters {
             tun_write_drops: self.tun_write_drops.load(Ordering::Relaxed),
             grow_events: self.grow_events.load(Ordering::Relaxed),
             granted_recv_bytes: self.granted_recv_bytes.load(Ordering::Relaxed),
+            receive_queue: self.receive_queue.snapshot(),
         }
     }
 

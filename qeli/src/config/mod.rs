@@ -731,22 +731,92 @@ impl TrafficShapingConfig {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TcpConfig {
     #[serde(default = "default_true")]
     pub nodelay: bool,
     #[serde(default = "default_keepalive")]
     pub keepalive_secs: u64,
-    #[serde(default = "default_buffer_size")]
+    #[serde(default)]
     pub send_buffer_size: u32,
-    #[serde(default = "default_buffer_size")]
+    #[serde(default)]
     pub recv_buffer_size: u32,
+}
+
+impl Default for TcpConfig {
+    fn default() -> Self {
+        Self {
+            nodelay: default_true(),
+            keepalive_secs: default_keepalive(),
+            send_buffer_size: 0,
+            recv_buffer_size: 0,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tcp_autotuning_default_tests {
+    use super::*;
+    use crate::config::format::IniDoc;
+    use crate::config::server::{ProfileConfig, ServerConfig};
+
+    #[test]
+    fn constructors_sparse_ini_and_api_use_the_same_tcp_defaults() {
+        let doc = IniDoc::parse("[profile:edge]\n").unwrap();
+        let ini = ServerConfig::from_ini(&doc).unwrap();
+        let values = [
+            TcpConfig::default(),
+            serde_json::from_str::<TcpConfig>("{}").unwrap(),
+            ProfileConfig::baseline().performance.tcp,
+            ProfileConfig::new_profile().performance.tcp,
+            ini.profiles[0].performance.tcp.clone(),
+        ];
+        for tcp in values {
+            assert_eq!(
+                (
+                    tcp.nodelay,
+                    tcp.keepalive_secs,
+                    tcp.send_buffer_size,
+                    tcp.recv_buffer_size
+                ),
+                (true, 60, 0, 0)
+            );
+        }
+    }
+
+    #[test]
+    fn explicit_manual_and_zero_values_survive_ini_and_api_roundtrips() {
+        for (send, receive) in [(0, 0), (262144, 131072), (1048576, 4194304)] {
+            let text=format!("[profile:edge]\nperf.tcp.send_buffer_size = {send}\nperf.tcp.recv_buffer_size = {receive}\n");
+            let cfg = ServerConfig::from_ini(&IniDoc::parse(&text).unwrap()).unwrap();
+            let encoded = cfg.to_ini_string();
+            let again = ServerConfig::from_ini(&IniDoc::parse(&encoded).unwrap()).unwrap();
+            let api: ServerConfig =
+                serde_json::from_value(serde_json::to_value(&again).unwrap()).unwrap();
+            let tcp = &api.profiles[0].performance.tcp;
+            assert_eq!(
+                (tcp.send_buffer_size, tcp.recv_buffer_size),
+                (send, receive)
+            );
+            assert!(encoded.contains(&format!("perf.tcp.send_buffer_size = {send}")));
+            assert!(encoded.contains(&format!("perf.tcp.recv_buffer_size = {receive}")));
+        }
+    }
+
+    #[test]
+    fn one_manual_override_does_not_pin_the_other_direction() {
+        let doc = IniDoc::parse("[profile:edge]\nperf.tcp.recv_buffer_size = 262144\n").unwrap();
+        let cfg = ServerConfig::from_ini(&doc).unwrap();
+        let tcp = &cfg.profiles[0].performance.tcp;
+        assert_eq!((tcp.send_buffer_size, tcp.recv_buffer_size), (0, 262144));
+    }
 }
 
 /// Socket buffers for a UDP listener. Separate from [`TcpConfig`] because the two need
 /// opposite defaults, not because the knobs differ.
 ///
-/// TCP autotunes between the `tcp_rmem` bounds, so a fixed size is a hint at most. **UDP has
+/// TCP defaults to leaving socket buffers to the OS. A non-zero operator override sets
+/// SO_SNDBUF/SO_RCVBUF and disables the corresponding Linux autotuning. **UDP has
 /// no autotuning at all**: the socket keeps whatever `net.core.rmem_default` was at creation
 /// — 208 KB on a stock kernel, only tens of milliseconds of traffic at tunnel speeds. One
 /// scheduling stall and the kernel drops datagrams, and every dropped datagram is a lost TCP
@@ -1228,9 +1298,6 @@ fn default_stealth_rate() -> u32 {
 }
 fn default_keepalive() -> u64 {
     60
-}
-fn default_buffer_size() -> u32 {
-    262144
 }
 fn default_tun_buf() -> usize {
     65535
