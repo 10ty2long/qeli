@@ -30,9 +30,11 @@ class TuningTests(unittest.TestCase):
         for name in ['etc/sysctl.d','etc/modules-load.d','etc/qeli/client-links','records/kernel']:
             (cls.base/name).mkdir(parents=True,exist_ok=True)
         cls.stub('sysctl',r'''case "$1" in
- -n) [[ "$2" != net.core.rmem_max || "$(< /records/mode)" != unread ]] || exit 1
+ -n) [[ "$2" != net.ipv4.tcp_moderate_rcvbuf || "$(< /records/mode)" != moderate_unread ]] || exit 1
+     [[ "$2" != net.core.rmem_max || "$(< /records/mode)" != unread ]] || exit 1
      [[ -f /records/kernel/$2 ]] || exit 1;cat /records/kernel/"$2" ;;
  -w) k="${2%%=*}";v="${2#*=}";printf '%s\n' "$k" >> /records/writes
+     [[ "$k" != net.ipv4.tcp_moderate_rcvbuf || "$(< /records/mode)" != moderate_denied ]] || exit 1
      [[ "$k" != net.core.rmem_max || "$(< /records/mode)" != denied ]] || exit 1
      [[ "$k" != net.core.rmem_max || "$(< /records/mode)" != mismatch ]] || exit 0
      printf '%s\n' "$v" > /records/kernel/"$k" ;;
@@ -44,7 +46,9 @@ esac''')
         cls.stub('modprobe','exit 1')
         text=fixture.SOURCE.read_text()
         targets=re.findall(r'^(net\.[a-z0-9_.]+)=(.+)$',text,re.M)
-        assert len(targets)==10
+        assert len(targets)==11
+        assert dict(targets)['net.ipv4.tcp_moderate_rcvbuf']=='1'
+        assert 'net.ipv4.tcp_mem' not in dict(targets)
         cls.targets=dict(targets)
         for k in cls.targets:
             (cls.base/'records/kernel'/k).write_text('old_'+k+'\n')
@@ -58,7 +62,7 @@ esac''')
     def test_readback_success_and_exact_runtime_file_recovery(self):
         path=self.root/'etc/sysctl.d/99-qeli-perf.conf';path.write_text('# administrator settings\n');path.chmod(0o644)
         p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
-        self.assertIn('applied and verified (10/10',p.stdout)
+        self.assertIn('applied and verified (11/11',p.stdout)
         receipt=self.receipts()[0]
         self.assertEqual(receipt.stat().st_uid,0);self.assertEqual(receipt.stat().st_mode&0o777,0o700)
         for f in receipt.iterdir():
@@ -73,14 +77,14 @@ esac''')
     def test_write_refusal_continues_but_reports_incomplete(self):
         (self.root/'records/mode').write_text('denied')
         p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
-        self.assertIn('incomplete (9/10',p.stdout);self.assertNotIn('applied and verified',p.stdout)
+        self.assertIn('incomplete (10/11',p.stdout);self.assertNotIn('applied and verified',p.stdout)
         self.assertEqual((self.root/'records/kernel/net.core.rmem_max').read_text(),'old_net.core.rmem_max\n')
-        self.assertTrue((self.receipts()[0]/'runtime.before').read_text().count('=')==10)
+        self.assertTrue((self.receipts()[0]/'runtime.before').read_text().count('=')==11)
 
     def test_successful_command_without_effect_is_detected(self):
         (self.root/'records/mode').write_text('mismatch')
         p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
-        self.assertIn('incomplete (9/10',p.stdout);self.assertIn('0 writes unavailable/failed',p.stdout)
+        self.assertIn('incomplete (10/11',p.stdout);self.assertIn('0 writes unavailable/failed',p.stdout)
 
     def test_unreadable_old_value_is_never_written_at_runtime(self):
         (self.root/'records/mode').write_text('unread')
@@ -89,6 +93,42 @@ esac''')
         self.assertNotIn('net.core.rmem_max',(self.root/'records/writes').read_text())
         self.assertNotIn('net.core.rmem_max=',(self.receipts()[0]/'runtime.before').read_text())
         self.assertIn('net.core.rmem_max=',(self.root/'etc/sysctl.d/99-qeli-perf.conf').read_text())
+
+    def test_tcp_autotuning_enable_and_restore_preserve_manual_config_and_global_budget(self):
+        key=self.root/'records/kernel/net.ipv4.tcp_moderate_rcvbuf';key.write_text('0\n')
+        budget=self.root/'records/kernel/net.ipv4.tcp_mem';budget.write_text('22221 29628 44442\n')
+        config=self.root/'etc/qeli/server.conf'
+        manual=b'[profile:manual]\nperf.tcp.send_buffer_size = 524288\nperf.tcp.recv_buffer_size = 1048576\n'
+        config.write_bytes(manual)
+        p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('applied and verified (11/11',p.stdout)
+        self.assertEqual(key.read_text(),'1\n')
+        self.assertEqual(config.read_bytes(),manual)
+        self.assertEqual(budget.read_text(),'22221 29628 44442\n')
+        receipt=self.receipts()[0]
+        self.assertIn('net.ipv4.tcp_moderate_rcvbuf=0\n',(receipt/'runtime.before').read_text())
+        self.assertNotIn('net.ipv4.tcp_mem=',(receipt/'requested.conf').read_text())
+        self.assertNotIn('net.ipv4.tcp_mem',(self.root/'records/writes').read_text())
+        p=self.run_installer('bash -e /'+str(receipt.relative_to(self.root))+'/restore.txt')
+        self.assertEqual(p.returncode,0,p.stderr)
+        self.assertEqual(key.read_text(),'0\n')
+        self.assertEqual(config.read_bytes(),manual)
+        self.assertEqual(budget.read_text(),'22221 29628 44442\n')
+
+    def test_tcp_autotuning_write_denied_reports_incomplete(self):
+        key=self.root/'records/kernel/net.ipv4.tcp_moderate_rcvbuf';key.write_text('0\n')
+        (self.root/'records/mode').write_text('moderate_denied')
+        p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('incomplete (10/11',p.stdout)
+        self.assertNotIn('applied and verified',p.stdout)
+        self.assertEqual(key.read_text(),'0\n')
+
+    def test_unavailable_tcp_autotuning_is_not_written(self):
+        (self.root/'records/mode').write_text('moderate_unread')
+        p=self.tune();self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('incomplete (10/11',p.stdout)
+        self.assertNotIn('net.ipv4.tcp_moderate_rcvbuf',(self.root/'records/writes').read_text())
+        self.assertNotIn('net.ipv4.tcp_moderate_rcvbuf=',(self.receipts()[0]/'runtime.before').read_text())
 
     def test_unsafe_tuning_paths_refused_before_whole_installer_changes(self):
         self.env['QELI_FORCE_RECONFIG']='1'

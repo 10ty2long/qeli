@@ -162,6 +162,73 @@ case "$(< /records/mode)" in autodetect_bad) printf 'evil|host' ;; autodetect_em
         self.assertFalse((self.root / 'etc/qeli/server.conf').exists())
         self.assertNotIn('restart qeli', (self.root / 'records/systemctl.log').read_text())
 
+    def test_new_tcp_profiles_explicitly_leave_buffers_to_linux(self):
+        for profile in ('fake-tls','reality-tls'):
+            with self.subTest(profile=profile):
+                self.env['QELI_PROFILE']=profile
+                p=self.run_installer();self.assertEqual(p.returncode,0,p.stderr)
+                text=(self.root/'etc/qeli/server.conf').read_text()
+                self.assertIn('[profile:'+profile+']',text)
+                self.assertIn('perf.tcp.send_buffer_size = 0',text)
+                self.assertIn('perf.tcp.recv_buffer_size = 0',text)
+
+    def test_old_packaged_example_gets_missing_tcp_defaults_in_selected_profile_only(self):
+        self.env['QELI_PROFILE']='fake-tls'
+        example=self.root/'checkout/qeli/config/server-multiprofile.conf'
+        example.write_text('\n'.join(line for line in example.read_text().splitlines()
+            if not line.startswith(('perf.tcp.send_buffer_size','perf.tcp.recv_buffer_size')))+'\n')
+        p=self.run_installer();self.assertEqual(p.returncode,0,p.stderr)
+        text=(self.root/'etc/qeli/server.conf').read_text()
+        profile=text.split('[profile:fake-tls]',1)[1].split('\n[',1)[0]
+        self.assertEqual(text.count('perf.tcp.send_buffer_size = 0'),1)
+        self.assertEqual(text.count('perf.tcp.recv_buffer_size = 0'),1)
+        self.assertIn('perf.tcp.send_buffer_size = 0',profile)
+        self.assertIn('perf.tcp.recv_buffer_size = 0',profile)
+
+    def test_explicit_example_tcp_override_is_preserved(self):
+        self.env['QELI_PROFILE']='fake-tls'
+        example=self.root/'checkout/qeli/config/server-multiprofile.conf'
+        example.write_text(example.read_text().replace('perf.tcp.send_buffer_size = 0',
+            'perf.tcp.send_buffer_size = 524288').replace('perf.tcp.recv_buffer_size = 0',
+            'perf.tcp.recv_buffer_size = 1048576'))
+        p=self.run_installer();self.assertEqual(p.returncode,0,p.stderr)
+        text=(self.root/'etc/qeli/server.conf').read_text()
+        self.assertEqual(text.count('perf.tcp.send_buffer_size = 524288'),1)
+        self.assertEqual(text.count('perf.tcp.recv_buffer_size = 1048576'),1)
+        self.assertNotIn('perf.tcp.send_buffer_size = 0',text)
+        self.assertNotIn('perf.tcp.recv_buffer_size = 0',text)
+
+    def test_missing_recv_default_preserves_explicit_send_and_ignores_other_profiles(self):
+        self.env['QELI_PROFILE']='fake-tls'
+        example=self.root/'checkout/qeli/config/server-multiprofile.conf'
+        text=example.read_text()
+        start=text.index('[profile:fake-tls]');end=text.index('[profile:',start+1)
+        selected=text[start:end].replace('perf.tcp.recv_buffer_size = 0\n','').replace(
+            'perf.tcp.send_buffer_size = 0','  perf.tcp.send_buffer_size = 524288')
+        example.write_text(text[:start]+selected+text[end:])
+        p=self.run_installer();self.assertEqual(p.returncode,0,p.stderr)
+        text=(self.root/'etc/qeli/server.conf').read_text()
+        self.assertEqual(text.count('perf.tcp.send_buffer_size = 524288'),1)
+        self.assertEqual(text.count('perf.tcp.recv_buffer_size = 0'),1)
+        self.assertNotIn('perf.tcp.send_buffer_size = 0',text)
+
+    def test_new_udp_profile_does_not_receive_tcp_buffer_keys(self):
+        self.env['QELI_PROFILE']='udp-quic'
+        p=self.run_installer();self.assertEqual(p.returncode,0,p.stderr)
+        text=(self.root/'etc/qeli/server.conf').read_text()
+        self.assertNotIn('perf.tcp.send_buffer_size',text)
+        self.assertNotIn('perf.tcp.recv_buffer_size',text)
+
+    def test_existing_manual_tcp_buffers_are_not_migrated_by_first_installer(self):
+        self.env.pop('QELI_FORCE_RECONFIG')
+        config=self.root/'etc/qeli/server.conf'
+        self.before=b'[profile:manual]\nperf.tcp.send_buffer_size = 524288\nperf.tcp.recv_buffer_size = 1048576\n'
+        config.write_bytes(self.before)
+        p=self.run_installer()
+        self.assertNotEqual(p.returncode,0,p.stderr)
+        self.assertEqual(config.read_bytes(),self.before)
+        self.assertFalse((self.root/'records/qeli-argv').exists())
+
     def test_successful_forced_config_breaks_hardlink_and_preserves_backup(self):
         conf = self.root / 'etc/qeli/server.conf'; out = self.root / 'outside/config'; out.hardlink_to(conf)
         p = self.run_installer(); self.assertEqual(p.returncode, 0, p.stderr)

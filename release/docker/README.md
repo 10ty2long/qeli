@@ -378,28 +378,46 @@ through the tunnel, add `gateway_nat = true` under `[qeli]`. Drop the file in th
 | caps `NET_ADMIN`,`NET_RAW`,`NET_BIND_SERVICE` | create TUN, set routes/iptables, bind :443 | `--cap-add` (no `--privileged` needed) |
 | `net.ipv4.ip_forward=1` | **server NAT** (`routing.nat.enabled`) — internet egress | `--sysctl net.ipv4.ip_forward=1` |
 | `nf_nat` / `iptable_nat` kernel modules | **server NAT** MASQUERADE | host kernel (`modprobe iptable_nat`) — containers share the host kernel |
-| `net.core.rmem_default` ≥ 4 MB | **UDP profiles** — otherwise the socket sits at the 208 KB default and drops packets under load | **on the HOST**, not the container (see below) |
+| `net.core.rmem_max` ≥ requested UDP receive buffer | **UDP profiles** — permits Qeli's explicit buffer requests and bounded growth | Check the host limit and actual socket readback (see below) |
 
 A **client-only** container needs just `/dev/net/tun` + `NET_ADMIN` (no iptables,
 no ip_forward). NAT is opt-in (`routing.nat.enabled` in the server config); a
 server without NAT (e.g. behind a host that NATs) doesn't need iptables at all.
 
-**Running a `udp-*` profile in Docker — tune the host.** `net.core.rmem_default` and
-`net.core.wmem_default` are *not* network-namespaced, so `--sysctl` refuses them and the
-container inherits whatever the host has. UDP gets no buffer autotuning (unlike TCP), so on
-an untuned host the socket keeps the 208 KB default and starts dropping datagrams under
-load — and every dropped datagram is a lost TCP segment *inside* the tunnel, which halves
-the inner connection's window. Set it on the host once:
+**Running a `udp-*` profile in Docker.** In automatic mode Qeli requests a 4 MiB
+receive buffer and may grow it to 16 MiB within its own RAM budget. UDP has no
+kernel receive autotuning; Qeli supplies its own bounded controller. Check host
+`net.core.rmem_max`: raising `rmem_default` alone does not permit larger explicit
+requests. The one-shot Linux installer requests a 16 MiB maximum; for a manually
+configured host, preserve the previous value/file and add this limit to your
+existing tuning file if needed:
 
-```bash
-printf 'net.core.rmem_default=4194304\nnet.core.wmem_default=4194304\nnet.core.netdev_max_backlog=4000\n' \
-  | sudo tee /etc/sysctl.d/99-qeli-udp.conf
-sudo sysctl --system
-docker restart qeli-server        # UDP sockets take the buffer size at creation
+```ini
+net.core.rmem_max=16777216
 ```
 
-Check it landed: `docker exec qeli-server ss -ulnm | grep -A1 ':8449' | grep -o 'rb[0-9]*'`
-should print `rb4194304`, not `rb212992`. TCP-only deployments can skip this.
+Apply that file with `sudo sysctl -p /etc/sysctl.d/99-qeli-perf.conf` (use your actual
+file path), then recreate affected sockets, for example with `docker restart qeli-server`.
+Check Qeli logs and `docker exec qeli-server ss -ulnm`; Linux normally reports twice
+the requested `SO_RCVBUF` in `rb`: about `rb8388608` for a 4 MiB request, up to
+`rb33554432` for 16 MiB, subject to kernel limits. Monitor overflow counters as well;
+larger buffers do not eliminate sustained overload or TUN drops.
+
+**TCP autotuning.** In each server TCP `[profile:...]`, use:
+
+```ini
+perf.tcp.send_buffer_size = 0
+perf.tcp.recv_buffer_size = 0
+```
+
+These keys leave socket buffers to the OS; explicit nonzero values are preserved
+and lock the corresponding buffer. Check the TCP sysctls **in the container's
+network namespace**: `docker exec qeli-server sysctl net.ipv4.tcp_moderate_rcvbuf net.ipv4.tcp_rmem net.ipv4.tcp_wmem`.
+If necessary, set `--sysctl net.ipv4.tcp_moderate_rcvbuf=1` when creating a bridge-network
+container (or the equivalent Compose `sysctls`). With host networking, configure
+these on the host instead. Preserve existing RAM limits; do not copy large
+per-socket budgets blindly to routers. Restart/reconnect for new TCP sockets.
+The image does not modify host sysctl. See the [Linux server tuning guide](../../docs/eng/manuals/CONFIG.md).
 
 ---
 

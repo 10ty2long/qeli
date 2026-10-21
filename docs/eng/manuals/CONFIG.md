@@ -926,23 +926,23 @@ tmp=$(mktemp /etc/iptables/rules.v6.qeli.XXXXXX) && ip6tables-save >"$tmp" && \
 
 ### 2. sysctl: BBR + buffers + MTU probing
 
-cubic (the default) on mobile loss halves the window → speed collapse. **BBR**
-holds the bandwidth via a channel model (Google introduced it precisely for slow
-TCP over lossy links) — the main win for reality-tls on a phone. Plus large buffers
-for the high mobile RTT and MTU probing against residual PMTU black holes.
+BBR uses a bandwidth/RTT model; results depend on the path and kernel version.
+High-RTT TCP also needs sufficient buffer limits and enabled autotuning. This is
+a system-wide Linux server tuning profile, not a throughput or loss-free guarantee.
+Size limits separately for low-memory routers.
 
 ```ini
 # /etc/sysctl.d/99-qeli-perf.conf  (apply: sysctl --system; module: modprobe tcp_bbr)
 net.core.default_qdisc=fq
-# the main fix for mobile TCP
 net.ipv4.tcp_congestion_control=bbr
 net.core.rmem_max=16777216
 net.core.wmem_max=16777216
 net.ipv4.tcp_rmem=4096 131072 16777216
 net.ipv4.tcp_wmem=4096 65536 16777216
+net.ipv4.tcp_moderate_rcvbuf=1
 net.ipv4.tcp_mtu_probing=1
-# UDP profiles — REQUIRED if you run any udp-* profile. UDP has NO OS receive-buffer
-# autotuning. qeli starts at SO_RCVBUF=4 MiB and may grow to 16 MiB, so rmem_max must
+# UDP has no OS receive autotuning. In automatic mode qeli requests 4 MiB
+# and may grow to 16 MiB, so rmem_max must
 # allow the whole auto range; these defaults also protect older builds and other UDP
 # sockets. qeli exposes the effective size and overflow counters in logs/stats.
 net.core.rmem_default=4194304
@@ -954,16 +954,25 @@ modprobe tcp_bbr && echo tcp_bbr > /etc/modules-load.d/qeli-bbr.conf   # load th
 sysctl --system                                                       # apply
 sysctl -n net.ipv4.tcp_congestion_control                             # check: should be bbr
 systemctl restart qeli.service                                        # UDP sockets take the buffer size at creation
-ss -ulnm | grep -A1 ':8449' | grep -o 'rb[0-9]*'                      # check: rb4194304..16777216, not rb212992
+ss -ulnm | grep -A1 ':8449' | grep -o 'rb[0-9]*'                      # Linux usually reports twice the SO_RCVBUF request
 ```
 
-> **Why this matters rather than being a nicety.** The default receive buffer is 208 KB,
-> which at tunnel speeds is only tens of milliseconds of traffic: one scheduling stall and
-> the kernel drops datagrams. Each dropped datagram is a lost TCP segment **inside** the
-> tunnel, so the inner connection halves its window. In production this cost 978 drops in a
-> single speedtest; raising it took that profile's uplink from 30 to 55 Mbit. Diagnose with
-> `netstat -su | grep 'receive buffer errors'` and the `d<N>` field in `ss -ulnm`. The
-> client needs the mirror-image fix — see below.
+A UDP buffer can overflow during scheduling stalls or consumer overload. Datagram
+loss can trigger inner TCP retransmissions; larger buffers cannot fix sustained
+overload. Check `netstat -su`, the `d<N>` field in `ss -ulnm` and Qeli metrics.
+Linux usually reports twice the requested `SO_RCVBUF` in `rb`: a 4 MiB request
+typically gives `rb8388608`, and 16 MiB gives `rb33554432`, unless the kernel clamps
+the request. Compare with Qeli logs rather than `rmem_default`. Current Qeli
+requests its UDP buffer explicitly; `rmem_default=4 MiB` is not a prerequisite
+for its autotuning. `rmem_max`, its RAM budget and manual keys matter instead.
+
+For TCP check `sysctl net.ipv4.tcp_moderate_rcvbuf net.ipv4.tcp_rmem net.ipv4.tcp_wmem net.ipv4.tcp_mem`.
+`tcp_moderate_rcvbuf` must be `1`. `tcp_rmem`/`tcp_wmem` are min/default/max byte
+triples; 16 MiB here limits growth of an individual buffer, not preallocated memory.
+The global `tcp_mem` budget is in pages and is left unchanged by the installer.
+Also set server `perf.tcp.send_buffer_size = 0` and `perf.tcp.recv_buffer_size = 0`
+in the intended `[profile:...]`; a nonzero value disables autotuning for that
+buffer. Inspect actual buffers on active connections with `ss -tinmp`.
 
 ### 3. padding for reality-tls — better turned off
 
@@ -3752,9 +3761,14 @@ perf.tcp.send_buffer_size = 0
 perf.tcp.recv_buffer_size = 0
 ```
 
-This leaves buffer management to Linux without modifying sysctl. Explicit old sizes are not rewritten.
-An omitted key now uses `0`; set `262144` explicitly to retain the old behavior. Results depend on
-RTT, available memory and load. Compare receiver goodput, retransmissions and actual
+This permits Linux buffer management without changing sysctl: also check
+`tcp_moderate_rcvbuf=1` and sufficient `tcp_rmem`/`tcp_wmem` limits (see the sysctl
+section above). Explicit old sizes are not rewritten.
+An omitted key now uses `0`; set `262144` explicitly to retain the old behavior. Before applying, run `qeli check-config --config /etc/qeli/server.conf`, then
+`systemctl restart qeli.service` and reconnect clients: buffer options apply to
+new sockets. This interrupts active sessions. Do not use the installer with
+`QELI_FORCE_RECONFIG=1` just to change these keys: it regenerates configuration
+and can change identity/connection links. Results depend on RTT, available memory and load. Compare receiver goodput, retransmissions and actual
 `skmem` buffer sizes on your own connection.
 
 The TCP default is supported by [1/8 independent-client measurements and memory checks](../../data/benchmarks/queue-tuning-20261021.json)

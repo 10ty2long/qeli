@@ -593,8 +593,27 @@ _prepare_profile_config(){
   # All synchronous writers finish before EXIT; retire only this unique stage lock.
   QELI_TMP_PATHS+=("$CONF" "$CONF.lock")
   awk '/^\[profile:/{exit} {print}' "$EXAMPLE" > "$CONF" || die "could not stage global config sections."
-  awk -v p="[profile:${PROFILE}]" '$0==p{f=1;print;next} /^\[profile:/{f=0} f{print}' "$EXAMPLE" >> "$CONF" \
-    || die "could not stage selected profile."
+  # Add missing TCP defaults even when the packaged example predates OS-managed
+  # buffers. Preserve explicit example overrides; never migrate a live config.
+  awk -v p="[profile:${PROFILE}]" -v mode="$PROFILE" '
+    FNR==NR {
+      if ($0==p) { selected=1; next }
+      if (/^\[/) selected=0
+      if (selected && /^[[:space:]]*perf\.tcp\.send_buffer_size[[:space:]]*=/) send=1
+      if (selected && /^[[:space:]]*perf\.tcp\.recv_buffer_size[[:space:]]*=/) recv=1
+      next
+    }
+    $0==p {
+      f=1; print
+      if (mode!="udp-quic") {
+        if (!send) print "perf.tcp.send_buffer_size = 0"
+        if (!recv) print "perf.tcp.recv_buffer_size = 0"
+      }
+      next
+    }
+    /^\[profile:/ { f=0 }
+    f { print }
+  ' "$EXAMPLE" "$EXAMPLE" >> "$CONF" || die "could not stage selected profile."
 }
 _commit_profile_config(){
   _check_private_file "$FINAL_CONF"
@@ -690,9 +709,12 @@ net.core.rmem_max=16777216
 net.core.wmem_max=16777216
 net.ipv4.tcp_rmem=4096 131072 16777216
 net.ipv4.tcp_wmem=4096 65536 16777216
+# TCP receive autotuning needs this switch AND OS-managed socket buffers.
+net.ipv4.tcp_moderate_rcvbuf=1
+# Keep tcp_mem (the system-wide page budget) under OS/administrator control.
 net.ipv4.tcp_mtu_probing=1
-# UDP has no receive-buffer autotuning; listeners request 4 MiB. qeli logs the
-# effective SO_RCVBUF and warns when the kernel limits it.
+# UDP has no kernel receive autotuning; qeli starts at 4 MiB and may grow
+# within its own RAM budget and rmem_max. Logs show the effective SO_RCVBUF.
 net.core.rmem_default=4194304
 net.core.wmem_default=4194304
 net.core.netdev_max_backlog=4000

@@ -110,9 +110,15 @@ A single `qeli` binary plays both roles: `qeli server` and `qeli client`.
 > **What else it changes on the host** (not incidental details — know them up front):
 > - **System-wide network tuning**: writes requests to `/etc/sysctl.d/99-qeli-perf.conf` and tries to switch
 >   congestion control to **BBR** — this affects **all** TCP on the host, not just qeli.
->   The same file raises the default socket buffers (`net.core.rmem_default`/`wmem_default`
->   to 4 MB) — without it the UDP profiles drop packets, because UDP has no autotuning and
->   would stay at 208 KB. Those are system-wide values too.
+>   Enables TCP receive autotuning (`tcp_moderate_rcvbuf=1`), sets `tcp_rmem`/`tcp_wmem`
+>   growth limits to 16 MiB, and leaves the global `tcp_mem` budget unchanged.
+>   New TCP profile examples explicitly set `perf.tcp.send_buffer_size = 0` and
+>   `perf.tcp.recv_buffer_size = 0` for OS management. Normal upgrades preserve
+>   existing explicit nonzero profile values.
+>   It also raises system-wide `rmem_max`/`wmem_max` to 16 MiB and
+>   `rmem_default`/`wmem_default` to 4 MiB. Current Qeli explicitly requests UDP
+>   buffers and may grow the receive buffer within its RAM budget; growth depends
+>   on `rmem_max`, not the system default buffer size.
 > - **Requests loading `tcp_bbr` at boot** via `/etc/modules-load.d/qeli-bbr.conf`.
 >   Kernel/module restrictions can prevent application. The installer reads each value
 >   back and reports verified success or `kernel tuning incomplete`, with effective
@@ -155,6 +161,17 @@ A single `qeli` binary plays both roles: `qeli server` and `qeli client`.
 >   (`api.ipify.org`, `ifconfig.me`, `icanhazip.com`).
 >
 > All of it is reversible — see §13 "Full removal".
+
+For an existing server, do not force reinstall just to enable autotuning.
+Back up the config, sysctl file and previous runtime values. In the intended
+`[profile:...]`, set both `perf.tcp.*_buffer_size` keys to `0`; add
+`net.ipv4.tcp_moderate_rcvbuf=1` to the existing
+`/etc/sysctl.d/99-qeli-perf.conf`, preserving other settings. Run
+`sysctl -p /etc/sysctl.d/99-qeli-perf.conf` and check readback, then
+`qeli check-config --config /etc/qeli/server.conf` and `systemctl restart qeli.service`.
+Reconnect clients to create new TCP sockets; this interrupts current sessions.
+Normal `update-qeli-server.sh` upgrades do not migrate configs or sysctl.
+For memory limits and socket checks, see [CONFIG — network tuning](CONFIG.md).
 
 ### Option A — .deb package (recommended)
 
