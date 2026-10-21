@@ -59,7 +59,7 @@ androidx.viewpager:viewpager:1.0.0	Apache-2.0	https://api.deps.dev/v3/systems/ma
 com.google.android.material:material:1.14.0	Apache-2.0	https://api.deps.dev/v3/systems/maven/packages/com.google.android.material%3Amaterial/versions/1.14.0
 com.google.code.findbugs:jsr305:3.0.2	Apache-2.0	https://code.google.com/p/jsr-305/
 com.google.code.gson:gson:2.13.2	Apache-2.0	https://github.com/google/gson/
-com.google.crypto.tink:tink-android:1.23.0	Apache-2.0	https://github.com/tink-crypto/tink-java.git
+com.google.crypto.tink:tink-android:1.24.0	Apache-2.0	https://github.com/tink-crypto/tink-java.git
 com.google.errorprone:error_prone_annotations:2.41.0	Apache-2.0	https://github.com/google/error-prone
 com.google.guava:listenablefuture:1.0	Apache-2.0	https://github.com/google/guava
 com.google.zxing:core:3.4.1	Apache-2.0	https://github.com/zxing/zxing
