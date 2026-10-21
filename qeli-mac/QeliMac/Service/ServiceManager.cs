@@ -253,6 +253,10 @@ public static class ServiceManager
         // Do not print "OK stopped" while networksetup still points at qeli. Once bootout has
         // completed no legitimate owner remains, so LiveOwner is also an error here.
         NetworkConfigurator.SweepDns(ServiceState.AppendLog, requireReleased: true);
+        // The daemon is gone, so its status file stops refreshing and the GUI would call it
+        // stale ("tunnel state is unknown") seconds after a clean Disconnect. Record that the
+        // stop completed; the next daemon start overwrites this marker.
+        ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Disconnected, null, stopped: true);
     }
 
     /// <summary>
@@ -390,7 +394,16 @@ public static class ServiceManager
         if (!target.StartsWith("system/", StringComparison.Ordinal) || code is 0 or -1) return false;
         string expected = $"Could not find service \"{target[7..]}\" in domain for system";
         // Unknown errors (including permission/I/O failures) are never proof of absence.
-        return string.IsNullOrWhiteSpace(output) && error.Trim() == expected;
+        // macOS 27 prefixes the same message with a "Bad request." line; nothing else is
+        // tolerated, so absence was never confirmed there and every install timed out here.
+        if (!string.IsNullOrWhiteSpace(output)) return false;
+        var lines = error.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return lines.Length switch
+        {
+            1 => lines[0] == expected,
+            2 => lines[0] == "Bad request." && lines[1] == expected,
+            _ => false,
+        };
     }
 
     /// <summary>
