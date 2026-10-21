@@ -252,11 +252,23 @@ public static class ServiceManager
         BootoutChecked(ServiceTarget, "Stopping the daemon");
         // Do not print "OK stopped" while networksetup still points at qeli. Once bootout has
         // completed no legitimate owner remains, so LiveOwner is also an error here.
-        NetworkConfigurator.SweepDns(ServiceState.AppendLog, requireReleased: true);
-        // The daemon is gone, so its status file stops refreshing and the GUI would call it
-        // stale ("tunnel state is unknown") seconds after a clean Disconnect. Record that the
-        // stop completed; the next daemon start overwrites this marker.
-        ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Disconnected, null, stopped: true);
+        ServiceStatusTransition.CompleteStop(new Action[]
+        {
+            () => NetworkConfigurator.SweepDns(ServiceState.AppendLog, requireReleased: true),
+            () =>
+            {
+                KillSwitch.Sweep(ServiceState.AppendLog);
+                if (ServiceState.ReadProtected("killswitch.state", 4096) is not null)
+                    throw new IOException("Kill-switch recovery remains pending or has a live owner");
+            },
+            () =>
+            {
+                ForwardingJournal.Sweep(ServiceState.AppendLog);
+                if (ServiceState.ReadProtected("forwarding-state.json", ForwardingJournal.MaximumBytes) is not null)
+                    throw new IOException("Forwarding recovery remains pending or has a live owner");
+            },
+        }, ServiceState.ReadStatus,
+            (status, extra, stopped) => ServiceState.WriteStatusRequired(status, extra, stopped: stopped));
     }
 
     /// <summary>

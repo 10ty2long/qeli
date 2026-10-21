@@ -129,6 +129,15 @@ public static class Program
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             LogStartupError(e.ExceptionObject as Exception ?? new Exception("non-CLR fatal error"));
 
+        bool serviceRequested = args.Any(a => string.Equals(a, "--service", StringComparison.OrdinalIgnoreCase));
+        if (serviceRequested)
+        {
+            // launchd can restart us without a GUI Start (including after reboot).
+            // Invalidate a prior successful Stop BEFORE startup recovery can fail or hang.
+            try { Service.ServiceState.WriteStatusRequired(Qeli.Shared.Vpn.VpnStatus.Connecting, null); }
+            catch (Exception e) { LogStartupError(e); return 1; }
+        }
+
         // Restore any kill-switch a crashed prior run left in place. The unprivileged GUI
         // may be unable to do this, but the root daemon must not start a new generation after
         // a failed recovery and silently overwrite the only restoration journal.
@@ -148,14 +157,33 @@ public static class Program
         try { Vpn.ForwardingJournal.Sweep(message => Console.Error.WriteLine($"qeli: {message}")); }
         catch (Exception e) { forwardingRecoveryFailure = e; LogStartupError(e); }
 
-        if (args.Any(a => string.Equals(a, "--service", StringComparison.OrdinalIgnoreCase)))
+        if (serviceRequested)
         {
             // Starting a new tunnel after a failed stale-journal restore could leave the host
             // with qeli DNS but no usable VPN. Let launchd retry the recovery on its next
             // supervised start; never overwrite the saved pre-qeli resolver snapshot.
-            if (killSwitchRecoveryFailure != null || dnsRecoveryFailure != null || forwardingRecoveryFailure != null) return 1;
+            if (killSwitchRecoveryFailure != null || dnsRecoveryFailure != null || forwardingRecoveryFailure != null)
+            {
+                Service.ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Error,
+                    "Startup network recovery failed: " +
+                    string.Join("; ", new[] { killSwitchRecoveryFailure, dnsRecoveryFailure, forwardingRecoveryFailure }
+                        .Where(error => error != null).Select(error => error!.Message)));
+                return 1;
+            }
             try { Service.ServiceHostRunner.Run(); return 0; }
-            catch (Exception e) { LogStartupError(e); return 1; }
+            catch (Exception e)
+            {
+                // ServiceHost's finally may already have persisted the precise cleanup
+                // failure. Do not replace it with Shutdown's generic outer exception.
+                try
+                {
+                    var terminal = Service.ServiceState.ReadStatus();
+                    Service.ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Error,
+                        terminal?.Status == nameof(Qeli.Shared.Vpn.VpnStatus.Error) ? terminal.Extra ?? e.Message : e.Message);
+                }
+                catch { Service.ServiceState.WriteStatus(Qeli.Shared.Vpn.VpnStatus.Error, e.Message); }
+                LogStartupError(e); return 1;
+            }
         }
 
         // Privileged daemon verbs — invoked as root by the GUI via the macOS admin

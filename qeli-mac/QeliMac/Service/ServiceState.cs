@@ -15,7 +15,8 @@ namespace QeliMac.Service;
 public sealed class ServiceStatus : DesktopServiceStatus
 {
     /// <summary>Written only by a completed root Stop(): launchd confirmed the daemon gone and
-    /// DNS was released, so this Disconnected stays true after the file stops refreshing.</summary>
+    /// DNS/firewall/forwarding recovery passed and no terminal daemon Error remains.
+    /// A new explicit or launchd start invalidates it before attempting a connection.</summary>
     public bool Stopped { get; set; }
 }
 
@@ -408,8 +409,14 @@ public static class ServiceState
     /// Disconnect must survive that boot instead of silently reconnecting and reapplying DNS.
     /// Missing/corrupt state is fail-safe: the daemon stays idle until an explicit Start.
     /// </summary>
-    public static void SetDesiredConnected(bool connected) =>
-        AtomicWriteChild("service-connect.enabled", Encoding.ASCII.GetBytes(connected ? "1\n" : "0\n"), 0x180);
+    public static void SetDesiredConnected(bool connected)
+    {
+        void Persist() => AtomicWriteChild("service-connect.enabled",
+            Encoding.ASCII.GetBytes(connected ? "1\n" : "0\n"), 0x180);
+        if (connected)
+            ServiceStatusTransition.BeginStart(() => WriteStatusRequired(VpnStatus.Connecting, null), Persist);
+        else Persist();
+    }
 
     public static bool DesiredConnected()
     {
@@ -424,21 +431,24 @@ public static class ServiceState
     public static void WriteStatus(VpnStatus status, string? extra,
         long bytesUp = 0, long bytesDown = 0, DateTime? since = null, bool stopped = false)
     {
-        try
-        {
-            EnsureDir();
-            AtomicWriteChild("service-status.json", JsonSerializer.SerializeToUtf8Bytes(new ServiceStatus
-            {
-                Status = status.ToString(),
-                Extra = extra is { Length: > 2048 } ? extra[..2048] : extra,
-                Time = DateTime.Now,
-                BytesUp = bytesUp,
-                BytesDown = bytesDown,
-                Since = since,
-                Stopped = stopped,
-            }), 0x1A4); // 0644
-        }
+        try { WriteStatusRequired(status, extra, bytesUp, bytesDown, since, stopped); }
         catch { /* ignore */ }
+    }
+
+    internal static void WriteStatusRequired(VpnStatus status, string? extra,
+        long bytesUp = 0, long bytesDown = 0, DateTime? since = null, bool stopped = false)
+    {
+        EnsureDir();
+        AtomicWriteChild("service-status.json", JsonSerializer.SerializeToUtf8Bytes(new ServiceStatus
+        {
+            Status = status.ToString(),
+            Extra = extra is { Length: > 2048 } ? extra[..2048] : extra,
+            Time = DateTime.Now,
+            BytesUp = bytesUp,
+            BytesDown = bytesDown,
+            Since = since,
+            Stopped = stopped,
+        }), 0x1A4); // 0644
     }
 
     public static ServiceStatus? ReadStatus()

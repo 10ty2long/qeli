@@ -73,6 +73,9 @@ internal static class ServiceControlSelfTest
         var lifecycle = new DaemonLifecycle(() => { loads++; throw new InvalidDataException("profile invalid"); }, _ => { starts++; return true; }, () => stops++, _ => {}, _ => {});
         lifecycle.Step(true); lifecycle.Step(true);
         Check("profile read failure remains Error and does not loop starts", lifecycle.Snapshot.status == VpnStatus.Error && loads == 1 && starts == 0);
+        lifecycle.Shutdown();
+        Check("shutdown after rejected profile confirms idle state without network cleanup",
+            lifecycle.Snapshot.status == VpnStatus.Disconnected && stops == 0);
         lifecycle = new(() => first, _ => false, () => stops++, _ => {}, _ => {}); lifecycle.Step(true);
         Check("Start refusal remains Error", lifecycle.Snapshot.status == VpnStatus.Error && !lifecycle.Started);
         stops = 0; lifecycle.Shutdown();
@@ -231,7 +234,81 @@ internal static class ServiceControlSelfTest
             using (otherLock.Enter()) Check("failed control operation releases ownership", true);
         }
         finally { Directory.Delete(lockDir, true); }
+        RunStatusTransitions(Check);
         RunTools(Check);
+    }
+
+    private static void RunStatusTransitions(Action<string, bool> check)
+    {
+        static bool Fails(Action action) { try { action(); return false; } catch { return true; } }
+        var now = DateTime.UtcNow;
+        ServiceStatus snapshot = new() { Status = "Disconnected", Time = now.AddMinutes(-1), Stopped = true };
+        var events = new List<string>();
+        void Invalidate()
+        {
+            events.Add("invalidate");
+            snapshot = new() { Status = "Connecting", Time = now };
+        }
+        ServiceStatusTransition.BeginStart(Invalidate, () => events.Add("enable"));
+        check("start invalidates completed Stop before enabling connection",
+            events.SequenceEqual(new[] { "invalidate", "enable" }) && !snapshot.Stopped);
+        check("startup with no daemon heartbeat becomes unknown, not permanently Disconnected",
+            ServiceObservation.Resolve(snapshot, now.AddMinutes(1)).Status == VpnStatus.Error);
+        bool enabled = false;
+        check("failed required status invalidation refuses new connection",
+            Fails(() => ServiceStatusTransition.BeginStart(() => throw new IOException("status write failed"), () => enabled = true)) && !enabled);
+        snapshot = new() { Status = "Disconnected", Time = now.AddMinutes(-1), Stopped = true };
+        check("failed intent write cannot retain old completed Stop receipt",
+            Fails(() => ServiceStatusTransition.BeginStart(Invalidate, () => throw new IOException("intent failed"))) && !snapshot.Stopped);
+
+        var writes = new List<(VpnStatus status, string? detail, bool stopped)>();
+        void Publish(VpnStatus status, string? detail, bool stopped) => writes.Add((status, detail, stopped));
+        var terminal = new ServiceStatus { Status = "Disconnected", Time = now };
+        int recovered = 0;
+        ServiceStatusTransition.CompleteStop(new Action[] { () => recovered++, () => recovered++, () => recovered++ }, () => terminal, Publish);
+        check("completed Stop checks all network recoveries before publishing persistent disconnect",
+            recovered == 3 && writes.Count == 1 && writes[0] == (VpnStatus.Disconnected, null, true));
+        foreach (var failedJournal in new[] { "DNS", "firewall", "forwarding" })
+        {
+            writes.Clear(); recovered = 0;
+            var recoveries = new[] { "DNS", "firewall", "forwarding" }.Select<string, Action>(name => () =>
+            {
+                recovered++;
+                if (name == failedJournal) throw new IOException(name + " recovery incomplete");
+            }).ToArray();
+            check(failedJournal + " recovery failure cannot publish completed Stop",
+                Fails(() => ServiceStatusTransition.CompleteStop(recoveries, () => terminal, Publish)) && recovered == 3
+                && writes.Count == 1 && writes[0].status == VpnStatus.Error && !writes[0].stopped
+                && writes[0].detail!.Contains(failedJournal));
+        }
+        writes.Clear();
+        terminal.Status = "Error"; terminal.Extra = "disconnect incomplete: route cleanup failed";
+        check("daemon cleanup Error survives successful journal recovery",
+            Fails(() => ServiceStatusTransition.CompleteStop(Array.Empty<Action>(), () => terminal, Publish))
+            && writes.Count == 1 && writes[0] == (VpnStatus.Error, terminal.Extra, false));
+        foreach (var unknownStatus in new ServiceStatus?[] { null,
+            new() { Status = "Connected", Time = now.AddMinutes(-1) },
+            new() { Status = "Connecting", Time = now.AddMinutes(-1) } })
+        {
+            writes.Clear();
+            check("missing or unsettled daemon status cannot confirm clean shutdown",
+                Fails(() => ServiceStatusTransition.CompleteStop(Array.Empty<Action>(), () => unknownStatus, Publish))
+                && writes.Count == 1 && writes[0].status == VpnStatus.Error && !writes[0].stopped);
+        }
+        writes.Clear();
+        check("unreadable terminal status cannot authorize completed Stop",
+            Fails(() => ServiceStatusTransition.CompleteStop(Array.Empty<Action>(), () => throw new IOException("status read failed"), Publish))
+            && writes.Count == 1 && writes[0].status == VpnStatus.Error && !writes[0].stopped);
+        writes.Clear(); terminal.Status = "Disconnected"; terminal.Extra = null;
+        check("failed required Stop publication is an error, not successful disconnect",
+            Fails(() => ServiceStatusTransition.CompleteStop(Array.Empty<Action>(), () => terminal, (status, detail, stopped) =>
+            {
+                if (stopped) throw new IOException("status write failed");
+                Publish(status, detail, stopped);
+            })) && writes.Count == 1 && writes[0].status == VpnStatus.Error && !writes[0].stopped);
+        check("failed error publication cannot swallow failed recovery",
+            Fails(() => ServiceStatusTransition.CompleteStop(new Action[] { () => throw new IOException("firewall") },
+                () => terminal, (_, _, _) => throw new IOException("storage"))));
     }
 
     private static void RunTools(Action<string, bool> check)

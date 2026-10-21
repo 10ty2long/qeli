@@ -973,6 +973,15 @@ sudo rm -f "/Library/Application Support/Qeli/dns-override.json"
 In 0.7.15 the daemon stores Connect intent separately from installation, verifies the actual
 `launchctl bootout`, and does not confirm Disconnect until the original DNS is restored.
 
+Starting with 0.8.3, a confirmed clean daemon stop remains `Disconnected` without a
+running heartbeat. This receipt is invalidated before another connection or launchd
+startup, so a failed restart cannot reuse it. Stop also checks DNS, Qeli firewall and
+forwarding recovery and requires the daemon to have reported `Disconnected`; a cleanup
+error or missing/unsettled terminal status is not reported as success. Keep recovery
+journals and inspect `service.log` when recovery remains incomplete; do not delete
+state files merely to clear the UI error. On Apple Silicon, 0.8.3 also fixes lock-file
+creation permissions and safely repairs affected root-owned, single-link regular locks.
+
 ---
 
 ### 6.15 Linux: hooks ignored or password_command refused after chmod

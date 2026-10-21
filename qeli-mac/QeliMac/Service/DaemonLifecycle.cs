@@ -85,5 +85,8 @@ internal sealed class DaemonLifecycle(Func<VpnConfig?> load, Func<VpnConfig, boo
     {
         if (_needsCleanup && !StopWithRetry("launchd stop"))
             throw new InvalidOperationException("Daemon stopped before macOS network cleanup completed");
+        // A rejected profile may leave Error without ever acquiring network ownership.
+        // Successful shutdown is still a clean disconnect; failed cleanup above never reaches here.
+        Observe(VpnStatus.Disconnected, null);
     }
 }
