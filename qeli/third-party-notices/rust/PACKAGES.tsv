@@ -107,7 +107,7 @@ jni-sys-macros	0.4.1	MIT OR Apache-2.0	38c0b942f458fe50cdac086d2f946512305e5631e
 keccak	0.2.0	Apache-2.0 OR MIT	9e24a010dd405bd7ed803e5253182815b41bf2e6a80cc3bfc066658e03a198aa	https://static.crates.io/crates/keccak/keccak-0.2.0.crate
 kem	0.3.0	Apache-2.0 OR MIT	01737161ba802849cfd486b5bd209d38ba4943494c249a8126005170c7621edd	https://static.crates.io/crates/kem/kem-0.3.0.crate
 lazy_static	1.5.0	MIT OR Apache-2.0	bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe	https://static.crates.io/crates/lazy_static/lazy_static-1.5.0.crate
-libc	0.2.190	MIT OR Apache-2.0	ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78	https://static.crates.io/crates/libc/libc-0.2.190.crate
+libc	0.2.191	MIT OR Apache-2.0	65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a	https://static.crates.io/crates/libc/libc-0.2.191.crate
 log	0.4.34	MIT OR Apache-2.0	f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6	https://static.crates.io/crates/log/log-0.4.34.crate
 matchit	0.8.4	MIT AND BSD-3-Clause	47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3	https://static.crates.io/crates/matchit/matchit-0.8.4.crate
 memchr	2.8.2	Unlicense OR MIT	88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4	https://static.crates.io/crates/memchr/memchr-2.8.2.crate
