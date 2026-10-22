@@ -697,6 +697,7 @@ pub fn request(bytes: &[u8]) -> Vec<u8> {
 /// The standalone Rust client and the editor materialize the same portable defaults.
 pub(crate) fn apply_client_defaults(cfg: &mut ClientConfig) {
     cfg.routing.add_default_gateway = field("gateway").unwrap().default == "true";
+    cfg.routing.pull_routes = field("pull_routes").unwrap().default == "true";
     cfg.obfuscation.padding.min_bytes = field("padding_min").unwrap().default.parse().unwrap();
     cfg.obfuscation.padding.max_bytes = field("padding_max").unwrap().default.parse().unwrap();
     cfg.obfuscation.heartbeat.jitter_ms =

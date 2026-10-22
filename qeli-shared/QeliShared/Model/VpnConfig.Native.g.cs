@@ -26,6 +26,7 @@ public sealed partial class VpnConfig {
         ["mtu"] = Mtu,
         ["mtu_probe"] = MtuProbe,
         ["gateway"] = AddDefaultGateway,
+        ["pull_routes"] = PullRoutes,
         ["ipv6"] = Ipv6Policy ?? "",
         ["roaming"] = RoamingPolicy ?? "",
         ["route_local"] = RouteLocalNetworks,
@@ -40,6 +41,7 @@ public sealed partial class VpnConfig {
         ["apps"] = Apps,
         ["route_file"] = RouteFile is null ? AdditionalRouteFiles.ToArray() : new[] { RouteFile }.Concat(AdditionalRouteFiles).ToArray(),
         ["persist_tun"] = PersistTun,
+        ["windows_disable_sharing"] = WindowsDisableSharing,
         ["forward"] = Forward,
         ["local"] = LocalAddress ?? "",
         ["lport"] = LocalPort,
@@ -99,6 +101,7 @@ public sealed partial class VpnConfig {
             Mtu = v.GetProperty("mtu").Deserialize<int>()!,
             MtuProbe = v.GetProperty("mtu_probe").Deserialize<bool>()!,
             AddDefaultGateway = v.GetProperty("gateway").Deserialize<bool>()!,
+            PullRoutes = v.GetProperty("pull_routes").Deserialize<bool>()!,
             Ipv6Policy = v.GetProperty("ipv6").Deserialize<string>()!,
             RoamingPolicy = v.GetProperty("roaming").Deserialize<string>()!,
             RouteLocalNetworks = v.GetProperty("route_local").Deserialize<bool>()!,
@@ -114,6 +117,7 @@ public sealed partial class VpnConfig {
             RouteFile=v.GetProperty("route_file").EnumerateArray().Select(x=>x.GetString()).FirstOrDefault(),
             AdditionalRouteFiles=v.GetProperty("route_file").EnumerateArray().Skip(1).Select(x=>x.GetString()!).ToList(),
             PersistTun = v.GetProperty("persist_tun").Deserialize<bool>()!,
+            WindowsDisableSharing = v.GetProperty("windows_disable_sharing").Deserialize<bool>()!,
             Forward = v.GetProperty("forward").Deserialize<bool>()!,
             LocalAddress = (v.GetProperty("local").GetString() is { Length: > 0 } LocalAddressValue ? LocalAddressValue : null),
             LocalPort = v.GetProperty("lport").Deserialize<int>()!,
@@ -171,6 +175,7 @@ internal static class ConfigDefaults {
     public const int Mtu = 0;
     public const bool MtuProbe = true;
     public const bool AddDefaultGateway = true;
+    public const bool PullRoutes = true;
     public const string Ipv6Policy = "auto";
     public const string RoamingPolicy = "auto";
     public const bool RouteLocalNetworks = false;
@@ -180,6 +185,7 @@ internal static class ConfigDefaults {
     public const string DnsMode = "tunnel";
     public const string AppsMode = "all";
     public const bool PersistTun = false;
+    public const bool WindowsDisableSharing = false;
     public const bool Forward = false;
     public const string? LocalAddress = null;
     public const int LocalPort = 0;

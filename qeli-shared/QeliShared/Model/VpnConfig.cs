@@ -103,6 +103,8 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
     public bool AddDefaultGateway { get; init; } = ConfigDefaults.AddDefaultGateway;
     public List<string> IncludeRoutes { get; init; } = new();
     public List<string> ExcludeRoutes { get; init; } = new();
+    public bool PullRoutes { get; init; } = ConfigDefaults.PullRoutes;
+    public bool WindowsDisableSharing { get; init; } = ConfigDefaults.WindowsDisableSharing;
     public bool RouteLocalNetworks { get; init; } = ConfigDefaults.RouteLocalNetworks;
     // Extra split-tunnel routes loaded from CIDR/OpenVPN route files. Repeating route_file
     // is intentional: RouteFile keeps the first path for profile-store compatibility and
@@ -339,7 +341,7 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
         int? reconnectMaxRetries = null, bool? persistTun = null,
         bool? mtuProbe = null, bool? killSwitch = null, string? dnsMode = null,
         string? ipv6Policy = null, string? roamingPolicy = null,
-        bool? allowIpv4Leak = null, bool? allowIpv6Leak = null) => new()
+        bool? allowIpv4Leak = null, bool? allowIpv6Leak = null, bool? pullRoutes = null, bool? windowsDisableSharing = null) => new()
     {
         // ── form-edited fields (from params) ──
         ServerAddress = serverAddress, Port = port, Protocol = protocol, WireMode = wireMode,
@@ -362,6 +364,8 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
         ReconnectEnabled = reconnectEnabled ?? ReconnectEnabled,
         ReconnectMaxRetries = reconnectMaxRetries ?? ReconnectMaxRetries,
         PersistTun = persistTun ?? PersistTun,
+        PullRoutes = pullRoutes ?? PullRoutes,
+        WindowsDisableSharing = windowsDisableSharing ?? WindowsDisableSharing,
         MtuProbe = mtuProbe ?? MtuProbe,
         KillSwitch = killSwitch ?? KillSwitch,
         // ── preserved from `this` (no form control) ──
@@ -421,6 +425,8 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
             .Where(kv => persistTun == null || kv.Key != "persist_tun")
             .Where(kv => mtuProbe == null || kv.Key != "mtu_probe")
             .Where(kv => killSwitch == null || kv.Key != "kill_switch")
+            .Where(kv => pullRoutes == null || kv.Key != "pull_routes")
+            .Where(kv => windowsDisableSharing == null || kv.Key != "windows_disable_sharing")
             .ToDictionary(kv => kv.Key, kv => kv.Value),
             // Carried, MINUS whatever this form just rewrote.
             //
@@ -436,6 +442,8 @@ public sealed partial class VpnConfig : INotifyPropertyChanged
             .Where(k => persistTun == null || k != "persist_tun")
             .Where(k => mtuProbe == null || k != "mtu_probe")
             .Where(k => killSwitch == null || k != "kill_switch")
+            .Where(k => pullRoutes == null || k != "pull_routes")
+            .Where(k => windowsDisableSharing == null || k != "windows_disable_sharing")
             .ToArray(),
             // The native source preserves duplicate declarations until the document is
             // explicitly repaired. Keep the UI diagnostics across unrelated form edits too.

@@ -56,6 +56,7 @@ struct VPNConfig: Codable, Equatable, Sendable {
     var addDefaultGateway: Bool = ConfigDefaults.addDefaultGateway
     var includeRoutes: [String] = []
     var excludeRoutes: [String] = []
+    var pullRoutes: Bool = ConfigDefaults.pullRoutes
     var routeLocalNetworks: Bool = ConfigDefaults.routeLocalNetworks
     var allowIPv6Leak: Bool = ConfigDefaults.allowIPv6Leak
     var allowIPv4Leak: Bool = ConfigDefaults.allowIPv4Leak

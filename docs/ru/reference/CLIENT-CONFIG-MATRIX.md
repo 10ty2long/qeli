@@ -89,19 +89,19 @@ CLI применяет `level`, `file`, `time_format`. Windows/macOS испол�
 локальным C#/JVM прогоном. См. [статус переноса](../plans/CLIENT-CONFIG-CORE.md).
 
 <!-- generated-model-coverage -->
-## Покрытие моделей: все 85 полей
+## Покрытие моделей: все 87 полей
 
 Этот блок генерируется из `editor/schema.rs`; M — типизированное свойство модели,
 S — значение сохраняется в исходном документе ядра и/или `carriedKeys`.
 Это не перечень контролов формы: поле без отдельного UI остаётся доступно через INI.
-Общий парсер распознаёт ключи: `[qeli]` — 82, `[logging]` — 3.
+Общий парсер распознаёт ключи: `[qeli]` — 84, `[logging]` — 3.
 
-Ключей с типизированным представлением: C# 62, Kotlin 58, Swift 57; остальные поля сохраняются как S.
+Ключей с типизированным представлением: C# 64, Kotlin 59, Swift 58; остальные поля сохраняются как S.
 
 | Ключи схемы | C# (Windows/macOS) | Kotlin | Swift |
 |---|:-:|:-:|:-:|
-| `server` `proto` `user` `pass` `key` `bind_static` `allow_unpinned_tofu` `mode` `obfs_key` `front` `sni` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `ipv6` `roaming` `route_local` `allow_ipv4_leak` `allow_ipv6_leak` `include` `exclude` `dns` `dns_servers` `apps_mode` `apps` `route_file` `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` `timeout` `padding` `padding_min` `padding_max` `heartbeat` `heartbeat_interval` `heartbeat_size` `heartbeat_jitter` `shaping` `shaping_gap_mean` `shaping_gap_min` `shaping_gap_max` `shaping_budget` `shaping_min_size` `shaping_max_size` `shaping_stealth` `shaping_stealth_mbps` `logging.level` | M | M | M |
-| `name` `persist_tun` `forward` `local` `lport` `metric` `dev_node` | M | S | S |
+| `server` `proto` `user` `pass` `key` `bind_static` `allow_unpinned_tofu` `mode` `obfs_key` `front` `sni` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `pull_routes` `ipv6` `roaming` `route_local` `allow_ipv4_leak` `allow_ipv6_leak` `include` `exclude` `dns` `dns_servers` `apps_mode` `apps` `route_file` `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` `timeout` `padding` `padding_min` `padding_max` `heartbeat` `heartbeat_interval` `heartbeat_size` `heartbeat_jitter` `shaping` `shaping_gap_mean` `shaping_gap_min` `shaping_gap_max` `shaping_budget` `shaping_min_size` `shaping_max_size` `shaping_stealth` `shaping_stealth_mbps` `logging.level` | M | M | M |
+| `name` `persist_tun` `windows_disable_sharing` `forward` `local` `lport` `metric` `dev_node` | M | S | S |
 | `kill_switch` | M | M | S |
 | `allow_lan` `logging.file` `logging.time_format` | S | M | M |
 | `dev` `device_type` `dev_attach` `tun.tx_queue_len` `autostart` `exit_node` `gateway_nat` `lan_subnet` `lan_subnet_ipv6` `post_up` `post_down` `password_file` `password_command` `keepalive` `tcp_nodelay` `recv_buffer_size` `send_buffer_size` `reality_compact` `reality_split` `reality_split_delay` | S | S | S |

@@ -2,6 +2,10 @@
 fn shared_ip_and_socket_buffer_boundaries() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../conformance/config-boundary.json")).unwrap();
+    let defaults =
+        crate::config::parse_client_config_strict("[qeli]\nserver=fixture.invalid:443\n").unwrap();
+    assert_eq!(defaults.server.protocol, "tcp");
+    assert_eq!(defaults.obfuscation.mode, "fake-tls");
     for case in corpus["cases"].as_array().unwrap() {
         let ini = format!(
             "{}{}",

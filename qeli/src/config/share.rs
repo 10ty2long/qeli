@@ -64,6 +64,8 @@ pub struct ClientLink {
     /// the default and is omitted from compact links; non-default policy must
     /// survive sharing between clients.
     pub roaming: String,
+    /// Local acceptance of pushed routes. True/absent preserves legacy behavior.
+    pub pull_routes: bool,
     /// Human label shown in the client UI (URI fragment).
     pub label: Option<String>,
 }
@@ -245,6 +247,7 @@ impl ClientLink {
             // URI; set a non-zero value only to force a client-side override.
             mtu: 0,
             roaming: "auto".into(),
+            pull_routes: true,
             label,
             // AmneziaWG-style junk masking. Junk is emitted only where the handshake
             // actually sends it: on TCP the obfs wire mode (protocol::obfs), and on UDP
@@ -316,6 +319,9 @@ impl ClientLink {
         }
         if self.mtu > 0 {
             query.push(("mtu".into(), self.mtu.to_string()));
+        }
+        if !self.pull_routes {
+            query.push(("pull_routes".into(), "0".into()));
         }
         if !self.roaming.is_empty() && self.roaming != "auto" {
             query.push(("roaming".into(), self.roaming.clone()));
@@ -426,6 +432,7 @@ impl ClientLink {
             jmax: awg_defaults.jmax,
             mtu: 0,
             roaming: "auto".into(),
+            pull_routes: true,
             label: fragment,
         };
 
@@ -450,6 +457,7 @@ impl ClientLink {
                         | "jmax"
                         | "mtu"
                         | "roaming"
+                        | "pull_routes"
                 ) && !seen.insert(k)
                 {
                     return Err(LinkError("duplicate connection parameter"));
@@ -463,6 +471,7 @@ impl ClientLink {
                     "obfs" => link.obfs_key = Some(v),
                     "front" => link.fronting = Some(v),
                     "quic" => link.quic = parse_link_bool(&v)?,
+                    "pull_routes" => link.pull_routes = parse_link_bool(&v)?,
                     "awg" => link.awg = parse_link_bool(&v)?,
                     "jc" => link.jc = v.parse().map_err(|_| LinkError("invalid jc number"))?,
                     "jmin" => {
@@ -679,6 +688,7 @@ mod tests {
             jmax: awg_defaults.jmax,
             mtu: 0,
             roaming: "auto".into(),
+            pull_routes: true,
             label: Some("My VPN".into()),
         }
     }
@@ -781,6 +791,7 @@ mod tests {
             jmax: 0,
             mtu: 1280,
             roaming: "required".into(),
+            pull_routes: true,
             label: None,
         };
         let back = ClientLink::from_uri(&link.to_uri()).unwrap();

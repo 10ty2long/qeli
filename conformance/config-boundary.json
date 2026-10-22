@@ -1,5 +1,5 @@
 {
-  "base": "[qeli]\nproto = tcp\nmode = fake-tls\nuser = audit\npass = audit\nroaming = off\nallow_unpinned_tofu = true\n",
+  "base": "[qeli]\nuser = audit\npass = audit\nroaming = off\nallow_unpinned_tofu = true\n",
   "cases": [
     {
       "name": "unsigned negative zero",
@@ -75,6 +75,26 @@
       "name": "server IPv6",
       "ini": "server = [::1]:443\n",
       "valid": true
+    },
+    {
+      "name": "decline pushed routes",
+      "ini": "server = 127.0.0.1:443\npull_routes = false\n",
+      "valid": true
+    },
+    {
+      "name": "invalid pull_routes boolean",
+      "ini": "server = 127.0.0.1:443\npull_routes = maybe\n",
+      "valid": false
+    },
+    {
+      "name": "legacy unused UDP obfs SNI",
+      "ini": "server = 127.0.0.1:443\nproto = udp\nmode = obfs\nobfs_key = secret\nsni = !\n",
+      "valid": true
+    },
+    {
+      "name": "reject invalid WebSocket Host",
+      "ini": "server = 127.0.0.1:443\nmode = obfs\nfront = websocket\nobfs_key = secret\nsni = !\n",
+      "valid": false
     }
   ]
 }

@@ -244,7 +244,7 @@ impl std::str::FromStr for ClientRoamingPolicy {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ClientRoutingConfig {
     /// Inner IPv6 acceptance policy (`auto|required|off`).
     #[serde(default)]
@@ -256,6 +256,9 @@ pub struct ClientRoutingConfig {
     /// `gateway = false` to capture only the tunnel subnet and `include` routes.
     #[serde(default = "default_false")]
     pub add_default_gateway: bool,
+    /// Accept server-pushed routes. Does not disable local routing or tunnel DNS.
+    #[serde(default = "default_true")]
+    pub pull_routes: bool,
     #[serde(default)]
     pub include: Vec<String>,
     #[serde(default)]
@@ -338,6 +341,13 @@ pub struct ClientRoutingConfig {
     /// stop reason. Same security rules. A crash/SIGKILL does NOT run it.
     #[serde(default)]
     pub post_down: String,
+}
+
+impl Default for ClientRoutingConfig {
+    fn default() -> Self {
+        // Match serde's per-field defaults even for direct Rust construction.
+        serde_json::from_str("{}").expect("routing defaults")
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Clone)]
@@ -570,7 +580,7 @@ impl ClientConfig {
     /// key    = 0a33..23a           ; pinned server pubkey (REQUIRED unless bind_static=false)
     /// bind_static = true           ; H-1, on by default; false = unpinned/TOFU client
     /// mode   = fake-tls            ; fake-tls | obfs | plain | reality-tls
-    /// sni    = www.cloudflare.com  ; optional, fake-tls only
+    /// sni    = www.cloudflare.com  ; optional TLS SNI or TCP WebSocket Host
     /// obfs_key = shared-secret     ; optional, obfs only
     /// mtu    = 0                   ; optional; 0 = auto (use server-pushed MTU)
     ///
@@ -797,6 +807,7 @@ impl ClientConfig {
         //     при mode != "tunnel". Дефолт "tunnel" и требует активный per-link
         //     systemd-resolved; постоянная подмена resolv.conf больше не допускается.
         cfg.routing.add_default_gateway = q.bool_or("gateway", cfg.routing.add_default_gateway);
+        cfg.routing.pull_routes = q.bool_or("pull_routes", cfg.routing.pull_routes);
         if let Some(d) = q.get("dns").filter(|s| !s.is_empty()) {
             cfg.dns.mode = d.to_string();
         }
@@ -895,6 +906,7 @@ impl ClientConfig {
             jmax: self.obfuscation.awg.jmax,
             mtu: self.tun.mtu,
             roaming: self.roaming.to_string(),
+            pull_routes: self.routing.pull_routes,
             label,
         }
     }
@@ -930,6 +942,7 @@ impl ClientConfig {
             .unwrap_or_else(|| "websocket".into());
         cfg.obfuscation.quic.enabled = link.quic;
         cfg.obfuscation.sni = link.sni.clone();
+        cfg.routing.pull_routes = link.pull_routes;
         cfg.obfuscation.reality_short_id = link.reality_sid.clone();
         // AmneziaWG junk (F2) from the link; clamp defensively.
         cfg.obfuscation.awg.enabled = link.awg;
@@ -1713,8 +1726,18 @@ impl ClientConfig {
         if self.routing.allow_ipv4_leak {
             q.set("allow_ipv4_leak", "true");
         }
-        if self.routing.add_default_gateway {
-            q.set("gateway", "true");
+        // Omission means true in the portable baseline. Preserve explicit split-tunnel
+        // policy rather than silently converting it to a default route on reload.
+        q.set(
+            "gateway",
+            if self.routing.add_default_gateway {
+                "true"
+            } else {
+                "false"
+            },
+        );
+        if !self.routing.pull_routes {
+            q.set("pull_routes", "false");
         }
         if self.routing.gateway_nat {
             q.set("gateway_nat", "true");
@@ -2120,6 +2143,32 @@ sni    = www.cloudflare.com
             "unexpected error: {error}"
         );
     }
+    #[test]
+    fn pull_routes_policy_round_trips_and_rejects_invalid_boolean() {
+        let base = "[qeli]\nserver = vpn.example:443\n";
+        let default = ClientConfig::from_ini(&IniDoc::parse(base).unwrap()).unwrap();
+        assert!(default.routing.pull_routes);
+        assert!(ClientRoutingConfig::default().pull_routes);
+        let c =
+            ClientConfig::from_ini(&IniDoc::parse(&format!("{base}pull_routes=false\n")).unwrap())
+                .unwrap();
+        assert!(!c.routing.pull_routes);
+        let mut c = c;
+        c.routing.add_default_gateway = false;
+        let saved = ClientConfig::from_ini(&IniDoc::parse(&c.to_ini_string()).unwrap()).unwrap();
+        assert!(!saved.routing.pull_routes);
+        assert!(!saved.routing.add_default_gateway);
+        let link = ClientLink::from_uri(&c.to_link(None).to_uri()).unwrap();
+        assert!(!ClientConfig::from_link(&link).routing.pull_routes);
+        assert!(ClientLink::from_uri("qeli://vpn.example:443?pull_routes=maybe").is_err());
+        assert!(
+            ClientLink::from_uri("qeli://vpn.example:443?pull_routes=1&pull_routes=0").is_err()
+        );
+        assert!(
+            super::super::editor::parse_runtime(&format!("{base}pull_routes=maybe\n")).is_err()
+        );
+    }
+
     #[test]
     fn server_name_applicability_survives_ini_and_link_round_trips() {
         let base = "[qeli]\nserver = vpn.example:443\npass = secret\nobfs_key = secret\n";

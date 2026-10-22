@@ -146,6 +146,11 @@ pub(crate) fn build_network_plan(
     }
 
     let mut routes = planned_pushed_routes_for_addresses(network.routes_json, network.addresses)?;
+    // Parse and bound the push even when declined; this policy must not bypass
+    // validation of the authenticated network document.
+    if !config.routing.pull_routes {
+        routes.clear();
+    }
     let pushed_routes = routes.iter().map(|route| route.cidr.clone()).collect();
     for cidr in &config.routing.include {
         if !route_family_is_active(cidr, network.addresses)? {
@@ -641,6 +646,8 @@ pub(crate) fn server_push_log_lines(
             "server push: no routes sent — the server profile/user has no valid route entries"
                 .into(),
         );
+    } else if !config.routing.pull_routes {
+        lines.push(format!("server push: {received_routes} route(s) IGNORED — pull_routes=false; local routes, gateway and tunnel DNS remain active"));
     } else {
         lines.push(format!(
             "server push: {} route(s) received; {} validated before client exclusions",
@@ -1461,6 +1468,123 @@ mod tests {
         assert!(
             error.to_string().contains("active IPv4 tunnel address"),
             "{error}"
+        );
+    }
+
+    #[test]
+    fn declining_pushed_routes_preserves_local_and_protected_dns_routes_in_each_family() {
+        for ipv6 in [false, true] {
+            let addresses = if ipv6 {
+                vec![NetworkAddress {
+                    family: NetworkAddressFamily::Ipv6,
+                    address: "fd71:e1::2".into(),
+                    prefix_len: 128,
+                    on_link_prefix_len: 64,
+                    gateway: Some("fd71:e1::1".into()),
+                }]
+            } else {
+                ipv4_addresses()
+            };
+            let pushed = if ipv6 {
+                "2001:db8:20::/48"
+            } else {
+                "10.20.0.0/16"
+            };
+            let local = if ipv6 {
+                "2001:db8:30::/48"
+            } else {
+                "192.0.2.0/24"
+            };
+            let dns = if ipv6 { "fd71:e1::53" } else { "10.8.0.53" };
+            let json = format!(r#"[{{"cidr":"{pushed}"}}]"#);
+            let mut network = ipv4_network(&addresses);
+            network.family_mode = if ipv6 {
+                NetworkFamilyMode::Ipv6
+            } else {
+                NetworkFamilyMode::Ipv4
+            };
+            network.client_ip = &addresses[0].address;
+            network.prefix = addresses[0].prefix_len;
+            network.tunnel_gateway = addresses[0].gateway.as_deref().unwrap();
+            network.routes_json = &json;
+            network.dns_ip = dns;
+            // IPv6/v2 pushes are typed. The legacy dns_ip field is IPv4-only.
+            let dns_servers = vec![NetworkDns {
+                address: dns.into(),
+                port: 53,
+            }];
+            network.dns_servers = &dns_servers;
+            let mut config = ClientConfig::default();
+            config.routing.add_default_gateway = false;
+            config.dns.mode = "tunnel".into();
+            config.routing.include.push(local.into());
+            let accepted = build_network_plan(&config, 1, &network).unwrap();
+            assert_eq!(accepted.pushed_routes, [pushed]);
+            config.routing.pull_routes = false;
+            let declined = build_network_plan(&config, 2, &network).unwrap();
+            assert!(declined.pushed_routes.is_empty());
+            assert!(!declined.routes.iter().any(|r| r.cidr == pushed));
+            assert!(declined.routes.iter().any(|r| r.cidr == local));
+            assert!(declined
+                .routes
+                .iter()
+                .any(|r| r.cidr == format!("{dns}/{}", if ipv6 { 128 } else { 32 })));
+            assert_eq!(declined.addresses, accepted.addresses);
+            assert_eq!(declined.dns_servers, accepted.dns_servers);
+            config
+                .routing
+                .exclude
+                .push(format!("{dns}/{}", if ipv6 { 128 } else { 32 }));
+            assert!(build_network_plan(&config, 3, &network).is_err());
+        }
+    }
+
+    #[test]
+    fn declining_routes_keeps_dual_stack_dns_and_independent_gateway_policy() {
+        let mut addresses = ipv4_addresses();
+        addresses.push(NetworkAddress {
+            family: NetworkAddressFamily::Ipv6,
+            address: "fd71:e1::2".into(),
+            prefix_len: 128,
+            on_link_prefix_len: 64,
+            gateway: Some("fd71:e1::1".into()),
+        });
+        let dns = vec![
+            NetworkDns {
+                address: "10.8.0.53".into(),
+                port: 53,
+            },
+            NetworkDns {
+                address: "fd71:e1::53".into(),
+                port: 53,
+            },
+        ];
+        let mut network = ipv4_network(&addresses);
+        network.family_mode = NetworkFamilyMode::Dual;
+        network.dns_servers = &dns;
+        network.routes_json = r#"[{"cidr":"10.20.0.0/16"},{"cidr":"2001:db8:20::/48"}]"#;
+        let mut config = ClientConfig::default();
+        config.dns.mode = "tunnel".into();
+        config.routing.pull_routes = false;
+        config.routing.include = vec!["192.0.2.0/24".into(), "2001:db8:30::/48".into()];
+        let plan = build_network_plan(&config, 1, &network).unwrap();
+        assert!(plan.pushed_routes.is_empty());
+        assert_eq!(plan.addresses.len(), 2);
+        assert_eq!(plan.dns_servers, dns);
+        assert!(!plan.full_tunnel);
+        for required in [
+            "192.0.2.0/24",
+            "2001:db8:30::/48",
+            "10.8.0.53/32",
+            "fd71:e1::53/128",
+        ] {
+            assert!(plan.routes.iter().any(|r| r.cidr == required), "{required}");
+        }
+        config.routing.add_default_gateway = true;
+        assert!(
+            build_network_plan(&config, 2, &network)
+                .unwrap()
+                .full_tunnel
         );
     }
 

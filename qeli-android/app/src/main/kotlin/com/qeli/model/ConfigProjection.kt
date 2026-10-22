@@ -26,6 +26,7 @@ internal object ConfigProjection {
             .put("mtu",c.mtu)
             .put("mtu_probe",c.mtuProbe)
             .put("gateway",c.addDefaultGateway)
+            .put("pull_routes",c.pullRoutes)
             .put("ipv6",c.ipv6)
             .put("roaming",c.roaming)
             .put("route_local",c.routeLocalNetworks)
@@ -75,7 +76,7 @@ internal object ConfigProjection {
         val diagnostics = r.getJSONArray("diagnostics")
         fun keys(code: String) = (0 until diagnostics.length()).map(diagnostics::getJSONObject).filter { it.getString("code")==code }.map { it.getString("key") }
         val raw = r.getJSONObject("raw")
-        val carried = setOf("name","persist_tun","forward","local","lport","metric","dev_node","dev","device_type","dev_attach","tun.tx_queue_len","autostart","exit_node","gateway_nat","lan_subnet","lan_subnet_ipv6","post_up","post_down","password_file","password_command","keepalive","tcp_nodelay","recv_buffer_size","send_buffer_size","reality_compact","reality_split","reality_split_delay")
+        val carried = setOf("name","persist_tun","windows_disable_sharing","forward","local","lport","metric","dev_node","dev","device_type","dev_attach","tun.tx_queue_len","autostart","exit_node","gateway_nat","lan_subnet","lan_subnet_ipv6","post_up","post_down","password_file","password_command","keepalive","tcp_nodelay","recv_buffer_size","send_buffer_size","reality_compact","reality_split","reality_split_delay")
         return VpnConfig(serverAddress=v.getString("\$host"),port=v.getInt("\$port"),nativeSource=r.getString("source"),
             protocol=v.getString("proto"),
             username=v.getString("user"),
@@ -96,6 +97,7 @@ internal object ConfigProjection {
             mtu=v.getInt("mtu"),
             mtuProbe=v.getBoolean("mtu_probe"),
             addDefaultGateway=v.getBoolean("gateway"),
+            pullRoutes=v.getBoolean("pull_routes"),
             ipv6=v.getString("ipv6"),
             roaming=v.getString("roaming"),
             routeLocalNetworks=v.getBoolean("route_local"),
@@ -162,6 +164,7 @@ internal object ConfigDefaults {
     const val mtu: Int = 0
     const val mtuProbe: Boolean = true
     const val addDefaultGateway: Boolean = true
+    const val pullRoutes: Boolean = true
     const val ipv6: String = "auto"
     const val roaming: String = "auto"
     const val routeLocalNetworks: Boolean = false

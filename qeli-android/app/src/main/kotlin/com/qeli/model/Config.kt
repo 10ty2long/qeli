@@ -56,6 +56,7 @@ data class VpnConfig(
     val excludeRoutes: List<String> = emptyList(),
     // Add the built-in RFC1918 private ranges to the VPN. Authenticated server-pushed routes
     // are applied independently of this flag; false only suppresses the extra local ranges.
+    val pullRoutes: Boolean = ConfigDefaults.pullRoutes,
     val routeLocalNetworks: Boolean = ConfigDefaults.routeLocalNetworks,
     // Full-tunnel blocks IPv6 only when the negotiated plan is IPv4-only, closing the dual-stack
     // leak; set true to OPT OUT and keep native IPv6 (it bypasses the tunnel). Default off;
