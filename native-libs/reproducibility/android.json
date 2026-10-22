@@ -1,30 +1,30 @@
 {
-  "archive_sha256": "fa9a217e7b6aa9f6c820cd0d911e274fd60eaba5c97e7da3a45b88e66d47dc62",
+  "archive_sha256": "ce83cb24ce560b064b5adb221d54badfc92373427f39504ff6a12b4d279de308",
   "artifacts": {
     "native-libs/android/arm64-v8a/libqeli.so": {
       "consumed": {
-        "qeli-android/app/src/main/jniLibs/arm64-v8a/libqeli.so": "1d2c043428c0c44353eda6e728aeb842f8209141178be3e11f119fad8ce25bbd"
+        "qeli-android/app/src/main/jniLibs/arm64-v8a/libqeli.so": "c25912438221ff5ed7865622727a3ff9661b4658b6ec08db57e5116714aebe48"
       },
-      "final_sha256": "1d2c043428c0c44353eda6e728aeb842f8209141178be3e11f119fad8ce25bbd",
-      "pass_a_sha256": "1d2c043428c0c44353eda6e728aeb842f8209141178be3e11f119fad8ce25bbd",
-      "pass_b_sha256": "1d2c043428c0c44353eda6e728aeb842f8209141178be3e11f119fad8ce25bbd",
+      "final_sha256": "c25912438221ff5ed7865622727a3ff9661b4658b6ec08db57e5116714aebe48",
+      "pass_a_sha256": "c25912438221ff5ed7865622727a3ff9661b4658b6ec08db57e5116714aebe48",
+      "pass_b_sha256": "c25912438221ff5ed7865622727a3ff9661b4658b6ec08db57e5116714aebe48",
       "reproducible": true
     },
     "native-libs/android/x86_64/libqeli.so": {
       "consumed": {
-        "qeli-android/app/src/main/jniLibs/x86_64/libqeli.so": "88110a6e29d76eddf872a8cd9d1754eb4998dcfa4bf9cc4bd5a4271f77085741"
+        "qeli-android/app/src/main/jniLibs/x86_64/libqeli.so": "63b4385364581a2116a0ec9f6b3824fde05fc4fcc3101c59a05273f1f7b6f05d"
       },
-      "final_sha256": "88110a6e29d76eddf872a8cd9d1754eb4998dcfa4bf9cc4bd5a4271f77085741",
-      "pass_a_sha256": "88110a6e29d76eddf872a8cd9d1754eb4998dcfa4bf9cc4bd5a4271f77085741",
-      "pass_b_sha256": "88110a6e29d76eddf872a8cd9d1754eb4998dcfa4bf9cc4bd5a4271f77085741",
+      "final_sha256": "63b4385364581a2116a0ec9f6b3824fde05fc4fcc3101c59a05273f1f7b6f05d",
+      "pass_a_sha256": "63b4385364581a2116a0ec9f6b3824fde05fc4fcc3101c59a05273f1f7b6f05d",
+      "pass_b_sha256": "63b4385364581a2116a0ec9f6b3824fde05fc4fcc3101c59a05273f1f7b6f05d",
       "reproducible": true
     }
   },
   "recipe": "qeli-native-repro-v1",
   "schema": 1,
-  "source_commit": "8fe9f4000061badc6fba2207e121a423f99d2370",
-  "source_date_epoch": 1792630824,
-  "source_digest": "ad9eeb990777174b3984f2f0b1967b7da634a2e01efefb807d1ee7c8c5a18c7e",
+  "source_commit": "73f2331242b1ecab7a0c5ff3e9c7457dbfffedee",
+  "source_date_epoch": 1792633465,
+  "source_digest": "932733d25edea48c5af9b2dc410f357e9f61321fe705370c7002593c7c055dcc",
   "source_dirty": false,
   "toolchain": {
     "android_ndk": "26.3.11579264",
