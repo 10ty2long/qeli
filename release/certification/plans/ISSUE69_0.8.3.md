@@ -15,9 +15,9 @@
 | Windows bindings | Opt-in windows_disable_sharing=false, creator handle + LUID/GUID + CIM association | Foreign/missing/ambiguous owner и readback fault injection; реальные Windows networking проверки учитываются отдельно |
 | Интеграция / Integration | Свежие native cores, окончательные пакеты и только draft 0.8.3 | Source identity, A/B reproducibility, CI, package/hash/signature checks и Linux qualification |
 
-Реализованные параметры и ограничения описаны в [RU CONFIG](../docs/ru/manuals/CONFIG.md),
-[EN CONFIG](../docs/eng/manuals/CONFIG.md), [RU IPv6](../docs/ru/manuals/IPV6.md)
-и [EN IPv6](../docs/eng/manuals/IPV6.md). Итоги тестов включаются в candidate
+Реализованные параметры и ограничения описаны в [RU CONFIG](../../../docs/ru/manuals/CONFIG.md),
+[EN CONFIG](../../../docs/eng/manuals/CONFIG.md), [RU IPv6](../../../docs/ru/manuals/IPV6.md)
+и [EN IPv6](../../../docs/eng/manuals/IPV6.md). Итоги тестов включаются в candidate
 verification черновика только после завершения текущей интеграции.
 
 ## Отдельные опциональные этапы / Separate optional stages

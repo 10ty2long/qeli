@@ -50,7 +50,7 @@ existing memory budgets.
   dimensions and a bounded traffic graph. Optional `windows_disable_sharing=false`
   applies only to the created Qeli Wintun with GUID/LUID/readback checks.
 
-Scope and checks: [Issue #69 implementation plan](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/ISSUE69_PLAN_0.8.3.md).
+Scope and checks: [Issue #69 implementation plan](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/certification/plans/ISSUE69_0.8.3.md).
 Fit-path, periodic NDP and an adapter surviving Disconnect are separate optional
 stages, not claims of this update. Real Windows adapter bindings and provider
 MLD-snooping are not certified by mocked or namespace-only tests.
@@ -133,7 +133,7 @@ TCP A/B проверялся на 1/8 независимых клиентах с
 - Windows: typed IPv4/IPv6/copy в GUI и службе, размеры редакторов и bounded график.
   Выключенная по умолчанию политика sharing-bindings применяется только к своему Wintun.
 
-[План и границы проверки](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/ISSUE69_PLAN_0.8.3.md).
+[План и границы проверки](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/certification/plans/ISSUE69_0.8.3.md).
 Fit-path, периодические NDP-анонсы и постоянный адаптер — отдельные этапы.
 Реальные Windows bindings и MLD-snooping провайдера не объявляются проверенными
 на основании mock/namespace-тестов.
