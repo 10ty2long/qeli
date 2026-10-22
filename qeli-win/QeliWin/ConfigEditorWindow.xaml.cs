@@ -146,6 +146,7 @@ public partial class ConfigEditorWindow : Window
         AppsPickBtn.IsEnabled = enabled;
         AppsPickBtn.Opacity = enabled ? 1.0 : 0.45;
         AppsCountText.Text = enabled ? Loc.F("AppsPicked", _apps.Count) : "";
+        if (DisableSharingBox != null) DisableSharingBox.IsEnabled = !enabled;
     }
 
     private void OnPickApps(object sender, RoutedEventArgs e)

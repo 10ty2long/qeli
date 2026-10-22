@@ -733,7 +733,7 @@ server data-plane change.
 #### NDP responder changes in 0.8.3
 
 The NA source is a usable IPv6 address assigned to the uplink, preferably
-link-local, otherwise unicast GUA/ULA. Target remains the client's address.
+link-local, otherwise another usable assigned unicast address. Target remains the client's address.
 Tentative, optimistic, deprecated and DAD-failed addresses are excluded in the
 worker network namespace. `required` now also requires a usable source;
 `auto` reports startup failure and continues without proxying. Runtime address

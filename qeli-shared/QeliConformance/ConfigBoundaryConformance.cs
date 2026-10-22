@@ -8,6 +8,15 @@ internal static class ConfigBoundaryConformance
 {
     internal static void Run(Action<string, bool> check)
     {
+        foreach (bool pull in new[] { true, false })
+        {
+            var config = VpnConfig.FromIni("[qeli]\nserver=vpn.example:443\nuser=test\npass=test\npull_routes=" + pull.ToString().ToLowerInvariant() + "\n");
+            var restored = JsonSerializer.Deserialize<VpnConfig>(JsonSerializer.Serialize(config))!;
+            check("route policy: desktop archive preserves " + pull, restored.PullRoutes == pull);
+            check("route policy: archived INI preserves " + pull, VpnConfig.FromIni(restored.ToIni()).PullRoutes == pull);
+            check("route policy: shared URI preserves " + pull, VpnConfig.FromQeliUri(restored.ToQeliUri()).PullRoutes == pull);
+        }
+
         string? path = null;
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
         {

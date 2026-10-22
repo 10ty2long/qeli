@@ -740,7 +740,7 @@ plane нужен рестарт профиля/сервиса.
 #### Изменения NDP responder в 0.8.3
 
 Source NA — пригодный назначенный IPv6 uplink-интерфейса, предпочтительно
-link-local, иначе unicast GUA/ULA. Target остаётся адресом клиента. Tentative,
+link-local, иначе другой пригодный назначенный unicast-адрес. Target остаётся адресом клиента. Tentative,
 optimistic, deprecated и DAD-failed адреса исключаются в namespace рабочего
 процесса. `required` теперь требует также пригодный source; `auto` сообщает об
 ошибке старта и продолжает без proxy. Исчезновение адреса приостанавливает

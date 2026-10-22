@@ -66,6 +66,10 @@ internal static class AdapterSharing
                 if ($binding.ComponentID -in @('ms_msclient','ms_server') -and $binding.Enabled) { throw 'Sharing binding remained enabled' }
                 if ($protocols.ContainsKey($binding.ComponentID) -and [bool]$binding.Enabled -ne $protocols[$binding.ComponentID]) { throw 'IP protocol binding changed unexpectedly' }
             }
+            foreach ($component in $protocols.Keys) {
+                $actual=@($after | Where-Object { $_.ComponentID -eq $component })
+                if ($actual.Count -ne 1 -or [bool]$actual[0].Enabled -ne $protocols[$component]) { throw 'IP protocol binding disappeared or changed' }
+            }
             [Console]::Out.Write('Owned adapter sharing bindings verified')
             """;
     }

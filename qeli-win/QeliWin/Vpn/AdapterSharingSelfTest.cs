@@ -5,7 +5,7 @@ internal static class AdapterSharingSelfTest
 {
     internal static void Run(Action<string, bool> check)
     {
-        foreach (string scenario in new[] { "owned", "missing", "duplicate", "foreign", "readback", "protocol" })
+        foreach (string scenario in new[] { "owned", "missing", "duplicate", "foreign", "readback", "protocol", "protocol_missing" })
         {
             string mock = """
                 $ErrorActionPreference='Stop'
@@ -36,6 +36,7 @@ internal static class AdapterSharingSelfTest
                     $script:changed++
                     if($script:scenario -ne 'readback') {$InputObject.Enabled=$false}
                     if($script:scenario -eq 'protocol') {$script:sharing[2].Enabled=$false}
+                    if($script:scenario -eq 'protocol_missing') {$script:sharing=@($script:sharing | Where-Object {$_.ComponentID -ne 'ms_tcpip'})}
                 }
                 foreach($name in @('Get-NetAdapter','Get-CimAssociatedInstance','Disable-NetAdapterBinding')) {
                     if((Get-Command $name).CommandType -ne 'Function') {throw 'Mock boundary is not installed'}

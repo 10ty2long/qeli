@@ -4111,7 +4111,7 @@ Older versions do not implement it; do not rely on them honoring a link's
 `pull_routes=false`. Desktop forms expose “Accept routes from server”; mobile
 clients expose the parameter through the INI editor.
 
-Inner `mtu` and the outer UDP payload budget remain separate. Manual MTU does
+Inner `mtu` and the outer UDP payload budget remain separate. Client path diagnostics describe the uplink budget; server reverse-probe logs describe downlink certification. Manual MTU does
 not disable `mtu_probe=true`. With `mtu_probe=false`, the client emits neither
 its initial nor repeated probes; the safe initial budget is 548 bytes for an
 IPv4 carrier and 1232 for IPv6. Unconfirmed probing and path changes also use
@@ -4151,5 +4151,5 @@ adapter's binding instances without alias wildcards. The operation has a
 rejects setup and invokes normal cleanup. Physical/foreign adapters are not
 selected. Service mode uses the same profile setting; WinDivert/per-app does
 not apply it. Other clients preserve it as inactive platform policy. False does
-not force previously disabled bindings on. `persist_tun` still covers reconnect;
+not force previously disabled bindings on. This local policy is not exported in qeli:// links. `persist_tun` still covers reconnect;
 a permanent adapter surviving Disconnect is not implemented in this stage.

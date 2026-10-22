@@ -170,6 +170,7 @@ public static class Loc
         ["FieldRealityId"] = ("REALITY short_id (hex)", "REALITY short_id (hex)"),
         ["FieldLogin"] = ("Username", "Логин"),
         ["FieldPassword"] = ("Password", "Пароль"),
+        ["DisableSharingHint"] = ("Applies to the tunnel adapter. Application selection uses a different traffic capture method.", "Применяется к адаптеру туннеля. Выбор приложений использует другой способ перехвата трафика."),
         ["DisableSharing"] = ("Disable Microsoft Client / File Sharing on Qeli adapter", "Отключать Microsoft Client / File Sharing на адаптере Qeli"),
         ["CopyIpv4"] = ("Copy IPv4 address", "Копировать IPv4"),
         ["CopyIpv6"] = ("Copy IPv6 address", "Копировать IPv6"),
