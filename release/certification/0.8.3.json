@@ -1,107 +1,207 @@
 {
   "schema_version": 1,
   "release_version": "0.8.3",
-  "source_digest": "",
+  "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
   "cases": [
     {
       "id": "linux.outer4.inner4.tcp.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer4.inner6.tcp.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner4.tcp.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner6.tcp.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer4.inner4.udp-fake-tls.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer4.inner6.udp-fake-tls.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner4.udp-fake-tls.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner6.udp-fake-tls.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer4.inner4.udp-quic.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer4.inner6.udp-quic.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner4.udp-quic.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.outer6.inner6.udp-quic.full",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.dual.tcp.split",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.dual.udp.split",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.dns.ipv4-ipv6",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.mtu.1280-pmtu-ptb",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.leak.ipv4-ipv6",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.tap.ndp-ra",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.legacy-peer",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "linux.roaming-flap-soak",
       "kind": "automated",
-      "status": "pending"
+      "status": "passed",
+      "source_digest": "e85cbd8ab2dcfcb6e308a49b69f1ed0c4b49b5846170ae481f0eca6ca644b35d",
+      "artifact_sha256": "95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7",
+      "executed_at": "2026-10-22T02:30:46.457871+00:00",
+      "environment": "lab1 | Linux-6.12.111+deb13-amd64-x86_64-with-glibc2.41",
+      "evidence": "release/certification/evidence/ipv6-linux-083-20261022-final.json"
     },
     {
       "id": "android.wifi-to-cellular",
