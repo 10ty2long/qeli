@@ -457,6 +457,12 @@ public sealed class VpnTunnel : VpnTunnelBase
         }
         _tun = wintun; // Includes a consumed prewarm, before ResolveInterface/log can fail.
         wintun.RequireReady();
+        if (config.WindowsDisableSharing)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AdapterSharing.Apply(wintun, (start, operation) => RunForwardingCommand(start, operation));
+            Log("Microsoft Client/File Sharing disabled on the owned Qeli adapter (readback verified)");
+        }
         var (tunIndex, alias) = _net.ResolveInterface(wintun.Luid);
         Log($"Wintun adapter '{alias}' (if {tunIndex}, driver {drv >> 16}.{drv & 0xFF})");
         var localCaptureRoutes = config.RouteLocalNetworks

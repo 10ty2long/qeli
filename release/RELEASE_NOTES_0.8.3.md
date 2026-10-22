@@ -1,4 +1,4 @@
-# Qeli 0.8.3 (beta) — TCP autotuning and bounded queue diagnostics
+# Qeli 0.8.3 (beta) — network policy, NDP and client diagnostics
 
 **Draft / Черновик. Not published / Не опубликован.**
 
@@ -31,6 +31,29 @@ existing memory budgets.
   certificate-trust advisories RUSTSEC-2026-0382 and RUSTSEC-2026-0381.
 - Setup, configuration examples and Docker buffer diagnostics are aligned;
   license inventories are bound to the updated dependency locks.
+
+
+- Issue #69 follow-up: SNI validation now follows actual TLS/WebSocket use.
+  Legacy UDP-obfs SNI no longer blocks a valid profile; unused SNI is omitted
+  from generated links. Desktop TCP WebSocket exposes its HTTP Host override.
+- `pull_routes=false` declines server routes in the shared core while preserving
+  local routing, independent full-tunnel policy and protected tunnel DNS routes.
+  All clients preserve it through INI/models/backups and new share links.
+  Explicit `gateway=false` now survives Rust INI serialization.
+- NDP proxy uses an assigned uplink source rather than the advertised target,
+  rechecks ready-session ownership before sending, joins known solicited-node
+  groups through MLD and emits bounded appearance announcements. `manual` keeps
+  administrator-owned routing/firewall. No arbitrary NA flags or periodic flood.
+- UDP diagnostics separate inner MTU, outer payload budget and fallback reason;
+  counters report encrypted-record split attempts and fragments created, not loss.
+- Windows adds structured IPv4/IPv6 copy in GUI/service mode, remembered editor
+  dimensions and a bounded traffic graph. Optional `windows_disable_sharing=false`
+  applies only to the created Qeli Wintun with GUID/LUID/readback checks.
+
+Scope and checks: [Issue #69 implementation plan](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/ISSUE69_PLAN_0.8.3.md).
+Fit-path, periodic NDP and an adapter surviving Disconnect are separate optional
+stages, not claims of this update. Real Windows adapter bindings and provider
+MLD-snooping are not certified by mocked or namespace-only tests.
 
 The recorded TCP A/B experiment used 1 or 8 independent clients, added RTT of
 40/100 ms and identical manual/OS-managed buffer comparisons on a two-VM Linux lab.
@@ -91,3 +114,26 @@ TCP A/B проверялся на 1/8 независимых клиентах с
 
 Ранее принятое ограничение Android API34 ENONET и исключённые физические стенды
 сохраняют прежний статус; это обновление не объявляет их исправленными.
+
+
+### Доработки по issue #69
+
+- Проверка SNI учитывает реальное использование TLS/WebSocket; старое SNI UDP
+  obfs не блокирует рабочий профиль. Лишнее поле не экспортируется в новые ссылки.
+  Desktop-редактор показывает HTTP Host для TCP WebSocket.
+- Общий `pull_routes=false` отключает только серверные маршруты, сохраняя
+  локальную политику и защищённый tunnel DNS. Настройка переносится всеми
+  клиентами через INI/модели/backup/новые ссылки. Исправлено сохранение gateway=false.
+- NDP выбирает назначенный source uplink, повторно проверяет готового владельца,
+  использует MLD для известных адресов и ограниченный анонс появления. В manual
+  маршруты/firewall остаются у администратора. Произвольных NA-флагов и периодической
+  рассылки нет.
+- UDP-диагностика разделяет inner MTU, внешний бюджет и причины fallback;
+  счётчики DATA_FRAG показывают попытки разделения записей и созданные фрагменты.
+- Windows: typed IPv4/IPv6/copy в GUI и службе, размеры редакторов и bounded график.
+  Выключенная по умолчанию политика sharing-bindings применяется только к своему Wintun.
+
+[План и границы проверки](https://github.com/litvinovtd/qeli/blob/v0.8.3/release/ISSUE69_PLAN_0.8.3.md).
+Fit-path, периодические NDP-анонсы и постоянный адаптер — отдельные этапы.
+Реальные Windows bindings и MLD-snooping провайдера не объявляются проверенными
+на основании mock/namespace-тестов.

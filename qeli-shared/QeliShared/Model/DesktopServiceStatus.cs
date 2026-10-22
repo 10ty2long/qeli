@@ -12,6 +12,7 @@ public class DesktopServiceStatus
     public long BytesUp { get; set; }
     public long BytesDown { get; set; }
     public DateTime? Since { get; set; }
+    public DesktopTunnelAddresses Addresses { get; set; } = DesktopTunnelAddresses.Empty;
     public static T Decode<T>(byte[] bytes) where T : DesktopServiceStatus
     {
         var snapshot = JsonSerializer.Deserialize<T>(new UTF8Encoding(false, true).GetString(bytes))
@@ -23,7 +24,8 @@ public class DesktopServiceStatus
     {
         if (!Enum.TryParse<VpnStatus>(snapshot.Status, out var status) || !Enum.IsDefined(status)
             || snapshot.Status != status.ToString() || snapshot.Time == default
-            || snapshot.BytesUp < 0 || snapshot.BytesDown < 0 || snapshot.Extra?.Length > 2048)
+            || snapshot.BytesUp < 0 || snapshot.BytesDown < 0 || snapshot.Extra?.Length > 2048
+            || snapshot.Addresses is null || !snapshot.Addresses.IsValid)
             throw new InvalidDataException("Invalid service status snapshot");
     }
     public static bool Fresh(DesktopServiceStatus snapshot, DateTime now, TimeSpan maximumAge)

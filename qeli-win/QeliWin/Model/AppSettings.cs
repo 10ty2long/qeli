@@ -8,6 +8,9 @@ namespace QeliWin.Model;
 public sealed class AppSettings
 {
     public string Language { get; set; } = "en";       // "en" | "ru" (default English)
+    public WindowDimensions ConfigEditorSize { get; set; } = new(720, 680);
+    public WindowDimensions IniEditorSize { get; set; } = new(560, 440);
+    public WindowDimensions ImportEditorSize { get; set; } = new(560, 440);
     public string Theme { get; set; } = "system";      // "system" | "light" | "dark"
     // Timestamp shape in the log view. Same values as the server's
     // [logging] time_format; anything unknown renders as "datetime".

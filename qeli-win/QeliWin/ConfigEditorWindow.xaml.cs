@@ -27,7 +27,7 @@ public partial class ConfigEditorWindow : Window
         Owner = owner;
         Icon = owner.Icon;
         _base = existing;
-        Loaded += (_, _) => FitToWorkArea();
+        EditorGeometry.Attach(this, "form");
 
         if (existing == null)
         {
@@ -77,6 +77,8 @@ public partial class ConfigEditorWindow : Window
             MtuBox.Text = existing.Mtu.ToString();  // 0 = auto
             DnsBox.Text = string.Join(", ", existing.DnsServers);
             LocalBox.IsChecked = existing.RouteLocalNetworks;
+            PullRoutesBox.IsChecked = existing.PullRoutes;
+            DisableSharingBox.IsChecked = existing.WindowsDisableSharing;
             TimeoutBox.Text = existing.ConnectionTimeoutSecs.ToString();
             ReconnectBox.IsChecked = existing.ReconnectEnabled;
             PersistTunBox.IsChecked = existing.PersistTun;
@@ -271,6 +273,8 @@ public partial class ConfigEditorWindow : Window
             routingMode: routing,
             addDefaultGateway: routing == "full-tunnel",
             routeLocalNetworks: LocalBox.IsChecked == true,
+            pullRoutes: PullRoutesBox.IsChecked == true,
+            windowsDisableSharing: DisableSharingBox.IsChecked == true,
             mtu: mtu,
             dnsServers: dns,
             paddingEnabled: padEnabled,
@@ -298,7 +302,7 @@ public partial class ConfigEditorWindow : Window
     private void OnManualEdit(object sender, RoutedEventArgs e)
     {
         var text = BuildFromForm().ToIni();
-        var edited = InputDialog.Show(this, Loc.T("ManualEdit"), Loc.T("ManualEditPrompt"), text, multiline: true);
+        var edited = InputDialog.Show(this, Loc.T("ManualEdit"), Loc.T("ManualEditPrompt"), text, multiline: true, geometryKey: "ini");
         if (string.IsNullOrWhiteSpace(edited)) return;
 
         VpnConfig parsed;
@@ -341,6 +345,8 @@ public partial class ConfigEditorWindow : Window
         MtuBox.Text = parsed.Mtu.ToString();  // 0 = auto
         DnsBox.Text = string.Join(", ", parsed.DnsServers);
         LocalBox.IsChecked = parsed.RouteLocalNetworks;
+        PullRoutesBox.IsChecked = parsed.PullRoutes;
+        DisableSharingBox.IsChecked = parsed.WindowsDisableSharing;
         TimeoutBox.Text = parsed.ConnectionTimeoutSecs.ToString();
         ReconnectBox.IsChecked = parsed.ReconnectEnabled;
         PersistTunBox.IsChecked = parsed.PersistTun;
@@ -386,16 +392,6 @@ public partial class ConfigEditorWindow : Window
                 Tag = tag,
             });
         SelectByTag(ReconnectRetriesBox, tag);
-    }
-
-    private void FitToWorkArea()
-    {
-        var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-        var screen = System.Windows.Forms.Screen.FromHandle(handle);
-        double scale = System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleY;
-        double available = Math.Max(MinHeight, screen.WorkingArea.Height / scale - 32);
-        MaxHeight = available;
-        Height = Math.Min(Height, available);
     }
 
     /// <summary>Keep only hex digits, lower-cased; null when empty (REALITY short_id).</summary>

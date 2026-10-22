@@ -29,8 +29,13 @@ public abstract class VpnTunnelBase
     // UI notifications are observational. One disposed window or failing subscriber
     // must not abort transport cleanup or prevent the remaining observers from updating.
     protected void Log(string m) => NotifyObservers(LogLine, observer => observer(m));
-    private void Status(VpnStatus s, string? extra = null) =>
+    private DesktopTunnelAddresses _tunnelAddresses = DesktopTunnelAddresses.Empty;
+    public DesktopTunnelAddresses TunnelAddresses => Volatile.Read(ref _tunnelAddresses);
+    private void Status(VpnStatus s, string? extra = null)
+    {
+        if (s != VpnStatus.Connected) Volatile.Write(ref _tunnelAddresses, DesktopTunnelAddresses.Empty);
         NotifyObservers(StatusChanged, observer => observer(s, extra));
+    }
     internal void NotifyConnectionDropped(string reason) =>
         NotifyObservers(ConnectionDropped, observer => observer(reason));
     internal void NotifyRunCompleted() => NotifyObservers(RunCompleted, observer => observer());
@@ -1532,6 +1537,9 @@ public abstract class VpnTunnelBase
                                 }
                                 Interlocked.Exchange(ref _nativePlanGeneration,
                                     unchecked((long)plan.Generation));
+                                Volatile.Write(ref _tunnelAddresses, new DesktopTunnelAddresses(
+                                    plan.Addresses.SingleOrDefault(a => a.Family == "ipv4")?.Address,
+                                    plan.Addresses.SingleOrDefault(a => a.Family == "ipv6")?.Address));
                                 NativeTransportCore.NetworkPlanResult(handle, plan.Generation, true);
                                 if (!NativeTunFdOwnership && !NativeWintunOwnership)
                                 {
@@ -2070,6 +2078,7 @@ public abstract class VpnTunnelBase
         Add(canonical, "allow_ipv4_leak", session.AllowIpv4Leak.ToString());
         Add(canonical, "allow_ipv6_leak", session.AllowIpv6Leak.ToString());
         Add(canonical, "route_local", config.RouteLocalNetworks.ToString());
+        Add(canonical, "windows_disable_sharing", (OperatingSystem.IsWindows() && config.WindowsDisableSharing).ToString());
         Add(canonical, "interface_metric", config.InterfaceMetric
             .ToString(System.Globalization.CultureInfo.InvariantCulture));
         Add(canonical, "forward", config.Forward.ToString());

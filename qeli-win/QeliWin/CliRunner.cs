@@ -79,6 +79,7 @@ public static class CliRunner
         RunGroup("service observation and registration", () => QeliWin.Service.ServiceObservationSelfTest.Run(Check));
         RunGroup("storage migration and native bundle", () => QeliWin.Service.StorageMigrationSelfTest.Run(Check));
         RunGroup("driver resource lifetime", () => DriverResourceSelfTest.Run(Check));
+        RunGroup("owned adapter sharing policy", () => AdapterSharingSelfTest.Run(Check));
         RunGroup("WinDivert unit", () => WinDivertSelfTest.RunUnit(Check));
         RunGroup("roaming socket", () => WindowsRoamingSocket.RunSelfTest(Check));
         RunGroup("DNS lifecycle", () => NetworkConfigurator.RunDnsLifecycleSelfTest(Check));

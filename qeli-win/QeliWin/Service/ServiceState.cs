@@ -226,7 +226,8 @@ public static class ServiceState
     }
 
     public static void WriteStatus(VpnStatus status, string? extra,
-        long bytesUp = 0, long bytesDown = 0, DateTime? since = null)
+        long bytesUp = 0, long bytesDown = 0, DateTime? since = null,
+        DesktopTunnelAddresses? addresses = null)
     {
         try
         {
@@ -240,6 +241,7 @@ public static class ServiceState
                 BytesUp = bytesUp,
                 BytesDown = bytesDown,
                 Since = since,
+                Addresses = status == VpnStatus.Connected ? addresses ?? DesktopTunnelAddresses.Empty : DesktopTunnelAddresses.Empty,
             })));
         }
         catch { /* ignore */ }

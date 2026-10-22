@@ -82,6 +82,9 @@ internal static class ServiceObservationSelfTest
         check("service status: rejects absent timestamp", Fails(() => ServiceState.DecodeStatus(Encode(new ServiceStatus()))));
         check("service status: rejects oversized detail", Fails(() => ServiceState.DecodeStatus(Encode(Snapshot(extra: new string('x', 2049))))));
         check("service status: rejects invalid UTF8", Fails(() => ServiceState.DecodeStatus([0xff])));
+        foreach (var addresses in new[] { new DesktopTunnelAddresses("::1", null), new DesktopTunnelAddresses(null, "1.2.3.4"), new DesktopTunnelAddresses(null, "fe80::1%2"), new DesktopTunnelAddresses(new string('1', 46), null) })
+            check("service status: rejects invalid typed address", Fails(() => ServiceState.DecodeStatus(Encode(new ServiceStatus { Time = now, Addresses = addresses }))));
+        check("service status: preserves full IPv6", ServiceState.DecodeStatus(Encode(new ServiceStatus { Time = now, Addresses = new("10.8.0.2", "2001:db8:1234:5678:abcd:ffff:ffff:ffff") })).Addresses.Ipv6 == "2001:db8:1234:5678:abcd:ffff:ffff:ffff");
 
         var dir = Path.Combine(Path.GetTempPath(), "qeli-observation-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);

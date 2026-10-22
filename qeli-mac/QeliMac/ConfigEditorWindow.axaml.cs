@@ -83,6 +83,7 @@ public partial class ConfigEditorWindow : Window
             MtuBox.Text = existing.Mtu.ToString();  // 0 = auto
             DnsBox.Text = string.Join(", ", existing.DnsServers);
             LocalBox.IsChecked = existing.RouteLocalNetworks;
+            PullRoutesBox.IsChecked = existing.PullRoutes;
             TimeoutBox.Text = existing.ConnectionTimeoutSecs.ToString();
             ReconnectBox.IsChecked = existing.ReconnectEnabled;
             PersistTunBox.IsChecked = existing.PersistTun;
@@ -283,6 +284,7 @@ public partial class ConfigEditorWindow : Window
             routingMode: routing,
             addDefaultGateway: routing == "full-tunnel",
             routeLocalNetworks: LocalBox.IsChecked == true,
+            pullRoutes: PullRoutesBox.IsChecked == true,
             mtu: mtu,
             dnsServers: dns,
             paddingEnabled: padEnabled,
@@ -348,6 +350,7 @@ public partial class ConfigEditorWindow : Window
         MtuBox.Text = parsed.Mtu.ToString();  // 0 = auto
         DnsBox.Text = string.Join(", ", parsed.DnsServers);
         LocalBox.IsChecked = parsed.RouteLocalNetworks;
+        PullRoutesBox.IsChecked = parsed.PullRoutes;
         TimeoutBox.Text = parsed.ConnectionTimeoutSecs.ToString();
         ReconnectBox.IsChecked = parsed.ReconnectEnabled;
         PersistTunBox.IsChecked = parsed.PersistTun;

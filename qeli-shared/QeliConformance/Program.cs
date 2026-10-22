@@ -109,6 +109,7 @@ public static class Program
         ProfileStoreConformance.Run(Check);
         ProfileStoreProcessConformance.Run(Check);
         AppSettingsStoreConformance.Run(Check);
+        TrafficHistoryConformance.Run(Check);
         PrpNonceConformance.Run(Check);
         WireConformance.Run(Check);
         RoamingPathConformance.Run(Check);

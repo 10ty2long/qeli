@@ -41,6 +41,16 @@ public sealed class WintunAdapter : IDisposable, Qeli.Shared.Vpn.IWintunTunDevic
 
     public ulong Luid { get; private set; }
     public string AdapterName { get; private set; } = "";
+    private Guid _createdGuid;
+    internal void WithOwnedIdentity(Action<ulong, Guid> action)
+    {
+        lock (_gate)
+        {
+            RequireReady();
+            if (_adapter == IntPtr.Zero || _createdGuid == Guid.Empty) throw new InvalidOperationException("No created Wintun adapter is owned");
+            action(Luid, _createdGuid);
+        }
+    }
 
     [DllImport(Dll, CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr WintunCreateAdapter(string name, string tunnelType,
@@ -76,6 +86,7 @@ public sealed class WintunAdapter : IDisposable, Qeli.Shared.Vpn.IWintunTunDevic
                 if (_adapter != IntPtr.Zero)
                 {
                     AdapterName = candidateName;
+                    _createdGuid = candidateGuid;
                     break;
                 }
                 error = Marshal.GetLastWin32Error();
@@ -111,6 +122,7 @@ public sealed class WintunAdapter : IDisposable, Qeli.Shared.Vpn.IWintunTunDevic
                 _adapter = IntPtr.Zero;
             }
             Luid = 0;
+            _createdGuid = Guid.Empty;
             AdapterName = "";
             _initialized = false;
             _disposed = true;

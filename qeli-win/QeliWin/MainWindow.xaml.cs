@@ -56,7 +56,7 @@ public partial class MainWindow : Window
 
     // Live stats (sampled once a second while connected): speed tiles + sparkline.
     private DispatcherTimer? _statsTimer;
-    private long _prevUp, _prevDown, _prevStatsTick;
+    private readonly TrafficHistory _trafficHistory = new();
     private ServiceStatus? _svc;                      // last service snapshot (service mode)
     private ICollectionView? _view;                   // profiles view (for search filtering)
 
@@ -754,7 +754,7 @@ public partial class MainWindow : Window
 
     private void OnImport(object sender, RoutedEventArgs e)
     {
-        var text = InputDialog.Show(this, Loc.T("ImportTitle"), Loc.T("ImportPrompt"), "", multiline: true);
+        var text = InputDialog.Show(this, Loc.T("ImportTitle"), Loc.T("ImportPrompt"), "", multiline: true, geometryKey: "import");
         if (string.IsNullOrWhiteSpace(text)) return;
         try
         {
@@ -1122,8 +1122,7 @@ public partial class MainWindow : Window
 
     private void StartStatsTimer()
     {
-        var (up, down, _) = StatsSource();
-        _prevUp = up; _prevDown = down; _prevStatsTick = Environment.TickCount64;
+        _trafficHistory.Clear();
         _statsTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _statsTimer.Tick -= StatsTick;
         _statsTimer.Tick += StatsTick;
@@ -1139,7 +1138,10 @@ public partial class MainWindow : Window
     private void ResetTiles()
     {
         if (DownVal == null) return;
-        DownVal.Text = UpVal.Text = SessionVal.Text = IpVal.Text = "—";
+        DownVal.Text = UpVal.Text = SessionVal.Text = IpVal.Text = Ip6Val.Text = "—";
+        CopyIpv4.IsEnabled = CopyIpv6.IsEnabled = false;
+        _trafficHistory.Clear();
+        TrafficUp.Points.Clear(); TrafficDown.Points.Clear(); TrafficScale.Text = "—";
         TotalDownVal.Text = TotalUpVal.Text = "—";
         SessionSubVal.Text = IpSubVal.Text = "";
     }
@@ -1147,22 +1149,49 @@ public partial class MainWindow : Window
     private void StatsTick(object? sender, EventArgs e)
     {
         var (up, down, since) = StatsSource();
-        long now = Environment.TickCount64;
-        double secs = Math.Max(now - _prevStatsTick, 1) / 1000.0;
-        long upRate = (long)Math.Max((up - _prevUp) / secs, 0);
-        long downRate = (long)Math.Max((down - _prevDown) / secs, 0);
-        _prevUp = up; _prevDown = down; _prevStatsTick = now;
-
-        DownVal.Text = FormatRate(downRate);
-        UpVal.Text = FormatRate(upRate);
+        if (!IsVisible || WindowState == WindowState.Minimized) { _trafficHistory.Clear(); return; }
+        bool fresh = _status == VpnStatus.Connected && (!_serviceMode ||
+            (_svc is not null && DesktopServiceStatus.Fresh(_svc, DateTime.Now, TimeSpan.FromSeconds(10))));
+        var rate = _trafficHistory.Add(Environment.TickCount64, up, down, since, fresh);
+        DownVal.Text = rate is { } current ? FormatRate((long)current.Down) : "—";
+        UpVal.Text = rate is { } currentUp ? FormatRate((long)currentUp.Up) : "—";
+        RenderTraffic();
         SessionVal.Text = since is DateTime t ? FormatDuration(DateTime.Now - t) : "—";
-        IpVal.Text = string.IsNullOrEmpty(_lastExtra) ? "—" : _lastExtra;
+        var addresses = fresh ? (_serviceMode ? _svc?.Addresses : _tunnel.TunnelAddresses) : null;
+        IpVal.Text = addresses?.Ipv4 ?? "—";
+        Ip6Val.Text = addresses?.Ipv6 ?? "—";
+        CopyIpv4.IsEnabled = addresses?.Ipv4 is not null;
+        CopyIpv6.IsEnabled = addresses?.Ipv6 is not null;
 
         // Context sub-lines: session totals (since connect), session start, wire mode.
         TotalDownVal.Text = Loc.F("StatTotal", FormatBytes(down));
         TotalUpVal.Text = Loc.F("StatTotal", FormatBytes(up));
         SessionSubVal.Text = since is DateTime s ? Loc.F("StatSince", s.ToString("HH:mm")) : "";
         IpSubVal.Text = Selected?.WireMode ?? "";
+    }
+
+    private void OnCopyIp(object sender, RoutedEventArgs e)
+    {
+        var value = ReferenceEquals(sender, CopyIpv4) ? IpVal.Text : Ip6Val.Text;
+        if (value == "—") return;
+        try { Clipboard.SetText(value); }
+        catch (System.Runtime.InteropServices.ExternalException error) { OnLog($"Cannot copy IP: {error.Message}"); }
+    }
+
+    private void RenderTraffic()
+    {
+        var samples = _trafficHistory.Samples.ToArray();
+        double maximum = Math.Max(1, samples.Select(s => Math.Max(s.Up, s.Down)).DefaultIfEmpty(0).Max());
+        double width = Math.Max(1, TrafficCanvas.ActualWidth), height = Math.Max(1, TrafficCanvas.ActualHeight);
+        var up = new PointCollection(); var down = new PointCollection();
+        for (int i = 0; i < samples.Length; i++)
+        {
+            double x = width * i / (TrafficHistory.Capacity - 1);
+            up.Add(new Point(x, height * (1 - samples[i].Up / maximum)));
+            down.Add(new Point(x, height * (1 - samples[i].Down / maximum)));
+        }
+        TrafficUp.Points = up; TrafficDown.Points = down;
+        TrafficScale.Text = samples.Length == 0 ? "—" : FormatRate((long)maximum);
     }
 
     private static string FormatRate(long bytesPerSec)

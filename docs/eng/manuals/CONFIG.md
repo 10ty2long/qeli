@@ -1797,6 +1797,8 @@ failed roam.
 | `mtu` | `0`=auto | ✓ | ✓ | ✓ | ✓ | ✓ | tunnel MTU; `0` = adopt the server push |
 | `mtu_probe` | `true` | ✓\* | ✓\* | ✓\* | ✓\* | ✓\* | active outer UDP path probe with manual or automatic MTU; preserves an explicit inner MTU |
 | `gateway` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | full tunnel; common CLI/GUI default `true`; `gateway=false` explicitly selects split tunnel |
+| `pull_routes` | `true` | ✓ | ✓ | ✓ | ✓ | ✓ | Accept server-pushed routes; false preserves local routes, gateway and protected tunnel DNS routes; carried in qeli:// |
+| `windows_disable_sharing` | `false` | — | ✓ | — | — | — | Disable ms_msclient/ms_server only on the owned Wintun, with GUID/LUID and readback checks; not used by WinDivert |
 | `route_local` | `false` | ✓ | ✓ | ✓ | ✓ | ✓ | pull IPv4 RFC1918 into the tunnel; does not alter IPv6 policy |
 | `include` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list forced **into** the tunnel (Android — split-tunnel only) |
 | `exclude` | — | ✓ | ✓ | ✓ | ✓\* | ✓ | CIDR list carved **out** of the tunnel (Android: API 33+ uses `excludeRoute`; earlier versions subtract CIDRs) |
@@ -4090,3 +4092,64 @@ and plain do not use it: legacy values survive INI editing but are omitted
 from newly generated qeli:// links. All modes enforce a 253-byte limit and
 reject controls and surrounding whitespace. fake-tls accepts `!`, `~`, `@`;
 REALITY requires a DNS hostname.
+
+
+### Client additions in 0.8.3: routes, UDP and Windows
+
+In `[qeli]`, `pull_routes = true` accepts server routes by default.
+`pull_routes = false` excludes only those routes from the shared NetworkPlan.
+Local `include`, `exclude`, `route_local`, the default route selected by
+`gateway = true`, tunnel addresses and transport negotiation remain active.
+Required `/32` and `/128` tunnel DNS routes are independent of this switch;
+an exact exclusion of a tunnel DNS address is still rejected. This does **not**
+disable the whole server push. Also set `gateway = false` for split tunneling;
+Rust INI serialization now preserves explicit `false`.
+
+Linux/routers, Android, iOS, Windows and macOS share this policy. It survives
+INI/model/backup round trips and new qeli:// links (`pull_routes=0` when off).
+Older versions do not implement it; do not rely on them honoring a link's
+`pull_routes=false`. Desktop forms expose “Accept routes from server”; mobile
+clients expose the parameter through the INI editor.
+
+Inner `mtu` and the outer UDP payload budget remain separate. Manual MTU does
+not disable `mtu_probe=true`. With `mtu_probe=false`, the client emits neither
+its initial nor repeated probes; the safe initial budget is 548 bytes for an
+IPv4 carrier and 1232 for IPv6. Unconfirmed probing and path changes also use
+fallback. Diagnostics expose `estimate=probe|fallback` and `fallback_reason`
+(`probe_disabled`, `probe_unconfirmed`, `path_changed`, or `null` after success),
+plus `inner_mtu`, `udp_payload_budget`, `data_frag`, `fragmented_records` and
+`fragments_created`. CLI status JSON places this under
+`stats.udp_data_fragmentation`; logs use `UDP path diagnostics`. Startup is
+info-level; changed counters are debug-level, at most once per 10 seconds.
+Server `queue-stats` adds per-profile `data_fragmentation`, preserving its
+existing `profiles` queue object.
+
+Counters mean **encrypted-record split attempts** and DATA_FRAG fragments
+created, including retries and control records. They do not count loss or inner
+IP packets, and do not confirm delivery. Recordizer changes packet-to-record
+mapping. Distinguish inner IP fragmentation, DATA_FRAG, outer IP fragmentation
+and probe/cover datagrams in captures. The fixed C/JNI stats layout is unchanged.
+Client probes and the separate server reverse-probe have their own DF policy;
+this is not a DF setting for all traffic on the shared server socket. IPv6 has
+no IPv4 DF bit; the inner IPv6 MTU remains at least 1280. This stage adds neither
+fit-path mode nor a one-IP-packet/one-datagram guarantee.
+
+Windows displays IPv4/IPv6 separately from the committed NetworkPlan. Copy
+buttons and tooltips preserve complete addresses; disconnected or stale service
+observations clear them. The graph uses existing counters, keeps at most 120
+samples in memory, resets on session/counter changes, and treats missing data as
+a gap. Hidden windows skip graph work; history is not persisted. Form, INI and
+import dialog dimensions are stored separately in app settings and clamped to
+the current monitor/DPI. Window placement is not a VPN configuration parameter.
+
+Windows-only `windows_disable_sharing = false` preserves OS behavior by default.
+When true, “Disable Microsoft Client / File Sharing on Qeli adapter” disables
+only `ms_msclient` and `ms_server` on the Wintun created by Qeli. The creator
+handle and exact LUID/GUID establish ownership; CIM associations select that
+adapter's binding instances without alias wildcards. The operation has a
+5-second deadline and verifies readback and unchanged IP bindings. Failure
+rejects setup and invokes normal cleanup. Physical/foreign adapters are not
+selected. Service mode uses the same profile setting; WinDivert/per-app does
+not apply it. Other clients preserve it as inactive platform policy. False does
+not force previously disabled bindings on. `persist_tun` still covers reconnect;
+a permanent adapter surviving Disconnect is not implemented in this stage.

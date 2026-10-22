@@ -46,7 +46,7 @@ public sealed class QeliWorker : BackgroundService
                 return;
             }
             last = s; lastExtra = extra;
-            ServiceState.WriteStatus(s, extra, tunnel.BytesUp, tunnel.BytesDown, tunnel.ConnectedSince);
+            ServiceState.WriteStatus(s, extra, tunnel.BytesUp, tunnel.BytesDown, tunnel.ConnectedSince, tunnel.TunnelAddresses);
         };
         tunnel.ConnectionDropped += msg => ServiceState.AppendLog($"Connection lost: {msg}");
 
@@ -137,7 +137,7 @@ public sealed class QeliWorker : BackgroundService
                         ServiceState.AppendLog($"Network-state poll failed: {e.Message}");
                     }
                     ServiceState.WriteStatus(last, lastExtra, tunnel.BytesUp, tunnel.BytesDown,
-                        tunnel.ConnectedSince);
+                        tunnel.ConnectedSince, tunnel.TunnelAddresses);
                 }
                 else if ((desired || started) && last == VpnStatus.Error)
                     ServiceState.WriteStatus(last, lastExtra);
