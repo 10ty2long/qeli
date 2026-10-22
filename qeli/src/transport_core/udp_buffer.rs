@@ -71,6 +71,7 @@ pub(crate) struct UdpPathSnapshot {
     pub fragments_created: u64,
 }
 impl UdpPathCounters {
+    #[cfg(any(feature = "client", test))]
     pub(crate) fn set(
         &self,
         inner_mtu: u32,
