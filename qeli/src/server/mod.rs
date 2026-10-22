@@ -538,15 +538,26 @@ impl SessionMap {
     /// to a broader client route owned by somebody else. Delegated prefixes reuse the existing
     /// `client_subnet`/iroute registry, skip `/0` exit routes, and use the same longest-prefix
     /// ownership rule as the data plane.
+    #[cfg(test)]
     pub(crate) fn owns_ipv6_neighbor_target(&self, target: std::net::Ipv6Addr) -> bool {
+        self.ipv6_neighbor_owner(target).is_some()
+    }
+
+    pub(crate) fn ipv6_neighbor_owner(&self, target: std::net::Ipv6Addr) -> Option<u64> {
         use std::sync::atomic::Ordering;
 
         let active = |session: &SessionShared| {
-            !session.revoked.load(Ordering::Acquire) && !session.closing.load(Ordering::Acquire)
+            session.ndp_ready.load(Ordering::Acquire)
+                && !session.revoked.load(Ordering::Acquire)
+                && !session.closing.load(Ordering::Acquire)
+                && self
+                    .by_ip
+                    .get(&session.client_ip)
+                    .is_some_and(|current| current.session_id == session.session_id)
         };
         let address = std::net::IpAddr::V6(target);
         if let Some(session) = self.by_address.get(&address) {
-            return active(session);
+            return active(session).then_some(session.session_id);
         }
         self.client_routes
             .iter()
@@ -556,7 +567,8 @@ impl SessionMap {
                     && route.contains(address)
             })
             .max_by_key(|route| route.prefix)
-            .is_some_and(|route| active(&route.session))
+            .filter(|route| active(&route.session))
+            .map(|route| route.session.session_id)
     }
 
     /// Remove and return the CIDRs of a client's kernel-programmed inbound iroutes (#13)
@@ -596,6 +608,7 @@ mod client_route_tests {
             std::net::IpAddr::V6(address) => (None, Some(address)),
         };
         Arc::new(SessionShared {
+            ndp_ready: std::sync::atomic::AtomicBool::new(true),
             session_id: id,
             username: format!("test-{id}"),
             device_key: format!("device-{id}"),
@@ -821,6 +834,7 @@ mod client_route_tests {
         let delegated = session(2, "2001:db8:10::3".parse().unwrap());
         let mut sessions = empty_map();
         sessions.insert(exact.clone());
+        sessions.insert(delegated.clone());
         sessions.client_routes.push(
             ClientRoute::parse("2001:db8:200::/56", delegated.client_ip, delegated.clone())
                 .unwrap(),
@@ -829,6 +843,11 @@ mod client_route_tests {
             .client_routes
             .push(ClientRoute::parse("::/0", delegated.client_ip, delegated.clone()).unwrap());
 
+        let target = "2001:db8:10::2".parse().unwrap();
+        exact.ndp_ready.store(false, Ordering::Release);
+        assert_eq!(sessions.ipv6_neighbor_owner(target), None);
+        exact.ndp_ready.store(true, Ordering::Release);
+        assert_eq!(sessions.ipv6_neighbor_owner(target), Some(1));
         assert!(sessions.owns_ipv6_neighbor_target("2001:db8:10::2".parse().unwrap()));
         assert!(sessions.owns_ipv6_neighbor_target("2001:db8:200:ab::9".parse().unwrap()));
         assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:ffff::9".parse().unwrap()));
@@ -837,6 +856,12 @@ mod client_route_tests {
         assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:10::2".parse().unwrap()));
         delegated.closing.store(true, Ordering::Release);
         assert!(!sessions.owns_ipv6_neighbor_target("2001:db8:200:ab::9".parse().unwrap()));
+        delegated.closing.store(false, Ordering::Release);
+        sessions.remove(delegated.client_ip);
+        assert_eq!(
+            sessions.ipv6_neighbor_owner("2001:db8:200:ab::9".parse().unwrap()),
+            None
+        );
     }
 }
 

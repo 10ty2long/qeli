@@ -251,7 +251,7 @@ MAC only when the target currently belongs to a live session:
   site-to-site client.
 
 After registry removal on revoke/disconnect, the proxy no longer authorizes new answers.
-An answer already built or queued before removal may still leave the socket. `/0`, link-local,
+An already kernel-queued answer may still leave the socket; 0.8.3 rechecks owner generation after readiness before submitting a new frame. `/0`, link-local,
 multicast, invalid checksum/hop-limit, and unrelated targets are ignored. DAD with source `::`
 requires the target solicited-node multicast destination; a unicast DAD is discarded.
 
@@ -728,3 +728,42 @@ To roll back, set server `tun.ip_mode = ipv4`, clear the IPv6 pool/listener, and
 `routing.ipv6.mode = off`; explicit IPv4 in Quick Start performs that normalization
 automatically. Return clients to `ipv6 = auto` or `off`. Restart the profile/service after a
 server data-plane change.
+
+
+#### NDP responder changes in 0.8.3
+
+The NA source is a usable IPv6 address assigned to the uplink, preferably
+link-local, otherwise unicast GUA/ULA. Target remains the client's address.
+Tentative, optimistic, deprecated and DAD-failed addresses are excluded in the
+worker network namespace. `required` now also requires a usable source;
+`auto` reports startup failure and continues without proxying. Runtime address
+loss pauses advertisements; source changes are refreshed once per second.
+A replaced interface index or MAC stops the responder instead of using stale
+link identity.
+
+Ownership includes completed admission: kernel routes and primary AuthOK must
+commit before an address is eligible. Exact leases precede non-default delegated
+prefixes; revoked, closing, removed or superseded owners cannot authorize new NA.
+After writable readiness, the exact owner generation is checked again immediately
+before nonblocking send. A frame already accepted by the kernel cannot be recalled.
+
+Known concrete leases join their solicited-node IPv6 multicast groups on a
+socket-owned membership, so MLD can inform a snooping network. Groups are refreshed
+once per second, bounded to 1024 concrete targets, and released on close.
+PACKET_MR_ALLMULTI still covers the local NIC receive filter. Neither mechanism
+guarantees delivery through arbitrary upstream multicast policy. A delegated
+prefix is never enumerated: NS for unknown addresses in it still requires the
+upstream network to deliver that multicast to the server (for example, an
+appropriate router/switch multicast policy).
+
+One unsolicited all-nodes NA is attempted for a newly admitted known address or
+changed owner/source binding: at most 16 per second per profile, sharing the
+4096/s response budget. Pending work is bounded by the target limit. There is
+no periodic reannouncement option. Solicited proxy replies use S=1,O=0; DAD and
+appearance announcements use S=0,O=0. R=0 describes the advertised client-host
+role, rather than blindly advertising the proxy host as a router. Arbitrary
+R/S/O overrides are not exposed. Unsolicited NA is an optimization, not a
+reachability guarantee or replacement for normal Neighbor Discovery.
+See [RFC 4861 §4.4](https://www.rfc-editor.org/rfc/rfc4861.html#section-4.4) and
+[§7.2.8](https://www.rfc-editor.org/rfc/rfc4861.html#section-7.2.8).
+The `manual` mode still leaves routing, firewall and forwarding to the administrator.

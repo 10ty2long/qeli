@@ -4787,6 +4787,7 @@ async fn handle_udp_auth(
         &crate::util::log_identity(&username),
     );
     let session = std::sync::Arc::new(crate::server::handler::SessionShared {
+        ndp_ready: std::sync::atomic::AtomicBool::new(false),
         session_id,
         username,
         device_key: dkey,
@@ -5022,6 +5023,10 @@ async fn handle_udp_auth(
     if let Some(client) = sessions.write().await.get_mut(&addr) {
         client.auth_ok_sent = true;
     }
+
+    writer_session
+        .ndp_ready
+        .store(true, std::sync::atomic::Ordering::Release);
 
     // Do not let another transport supersede this session between the authoritative insert
     // and its first client-visible AuthOK. UDP sends are bounded to the already-built

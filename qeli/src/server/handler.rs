@@ -404,6 +404,8 @@ pub fn note_client_info(
 }
 
 pub struct SessionShared {
+    /// Published only after kernel routes and the primary AuthOK have committed.
+    pub(crate) ndp_ready: std::sync::atomic::AtomicBool,
     pub session_id: u64,
     pub username: String,
     /// Per-device key (`username:hex(device_id)` or just `username`). Sessions are
@@ -1325,6 +1327,7 @@ where
             };
 
             let session = Arc::new(SessionShared {
+                ndp_ready: std::sync::atomic::AtomicBool::new(false),
                 session_id,
                 username: username.clone(),
                 device_key: dkey.clone(),
@@ -1523,6 +1526,10 @@ where
                 );
                 return Err(e);
             }
+
+            session
+                .ndp_ready
+                .store(true, std::sync::atomic::Ordering::Release);
 
             // Client-visible admission commits at AUTH OK. Keeping the profile admission
             // guard through this small write prevents a concurrent TCP/UDP reconnect from
