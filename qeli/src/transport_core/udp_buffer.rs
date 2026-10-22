@@ -47,8 +47,70 @@ pub(crate) enum InternalDrop {
     TunWrite,
 }
 
+/// Diagnostic metadata changes only on path commits; packet accounting uses atomics.
+#[derive(Debug, Default)]
+pub(crate) struct UdpPathCounters {
+    state: std::sync::Mutex<UdpPathState>,
+    records: AtomicU64,
+    fragments: AtomicU64,
+}
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
+pub(crate) struct UdpPathState {
+    pub inner_mtu: u32,
+    pub udp_payload_budget: usize,
+    pub data_frag: bool,
+    pub estimate: &'static str,
+    pub fallback_reason: Option<&'static str>,
+}
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
+pub(crate) struct UdpPathSnapshot {
+    pub path: UdpPathState,
+    /// Encrypted-record split attempts, including retries/control records; not IP packets.
+    pub fragmented_records: u64,
+    /// Created DATA_FRAG fragments, not an assertion of carrier delivery.
+    pub fragments_created: u64,
+}
+impl UdpPathCounters {
+    pub(crate) fn set(
+        &self,
+        inner_mtu: u32,
+        udp_payload_budget: usize,
+        data_frag: bool,
+        estimate: &'static str,
+        fallback_reason: Option<&'static str>,
+    ) {
+        *self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = UdpPathState {
+            inner_mtu,
+            udp_payload_budget,
+            data_frag,
+            estimate,
+            fallback_reason,
+        };
+    }
+    pub(crate) fn note_fragmentation(&self, count: usize) {
+        if count > 1 {
+            self.records.fetch_add(1, Ordering::Relaxed);
+            self.fragments.fetch_add(count as u64, Ordering::Relaxed);
+        }
+    }
+    pub(crate) fn snapshot(&self) -> UdpPathSnapshot {
+        UdpPathSnapshot {
+            path: *self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+            fragmented_records: self.records.load(Ordering::Relaxed),
+            fragments_created: self.fragments.load(Ordering::Relaxed),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct UdpBufferCounters {
+    pub path: UdpPathCounters,
     pub kernel_drops: AtomicU64,
     /// Sum of the five reason counters below; kept as-is so existing consumers (FFI, JNI,
     /// the mobile UIs) keep reporting the same total.
@@ -65,6 +127,7 @@ pub(crate) struct UdpBufferCounters {
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub(crate) struct UdpBufferSnapshot {
+    pub path: UdpPathSnapshot,
     pub kernel_drops: u64,
     pub internal_drops: u64,
     pub pool_exhausted_drops: u64,
@@ -80,6 +143,7 @@ pub(crate) struct UdpBufferSnapshot {
 impl UdpBufferCounters {
     pub(crate) fn snapshot(&self) -> UdpBufferSnapshot {
         UdpBufferSnapshot {
+            path: self.path.snapshot(),
             kernel_drops: self.kernel_drops.load(Ordering::Relaxed),
             internal_drops: self.internal_drops.load(Ordering::Relaxed),
             pool_exhausted_drops: self.pool_exhausted_drops.load(Ordering::Relaxed),
@@ -508,6 +572,26 @@ fn parse_proc_udp_drops(table: &str, wanted_inode: u64) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn udp_path_diagnostics_keep_metadata_and_fragment_creation_distinct_from_loss() {
+        let counters = UdpBufferCounters::default();
+        counters
+            .path
+            .set(1400, 548, true, "fallback", Some("probe_disabled"));
+        counters.path.note_fragmentation(1);
+        counters.path.note_fragmentation(3);
+        let before = counters.snapshot();
+        assert_eq!(before.path.fragmented_records, 1);
+        assert_eq!(before.path.fragments_created, 3);
+        assert_eq!(before.internal_drops, 0);
+        assert_eq!(before.path.path.inner_mtu, 1400);
+        assert_eq!(before.path.path.fallback_reason, Some("probe_disabled"));
+        counters.path.set(1400, 1472, true, "probe", None);
+        assert_eq!(counters.path.snapshot().fragmented_records, 1);
+        assert_eq!(counters.path.snapshot().path.udp_payload_budget, 1472);
+        assert_eq!(counters.path.snapshot().path.fallback_reason, None);
+    }
 
     #[test]
     fn proc_udp_parser_selects_the_socket_inode_and_drop_column() {

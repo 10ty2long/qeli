@@ -5044,6 +5044,7 @@ async fn handle_udp_auth(
 
     let profile_name = profile.name.clone();
     let writer_tun_metrics = profile.tun_metrics.clone();
+    let writer_fragment_counters = profile.udp_buffer_counters.clone();
     tasks.spawn(async move {
         let mut quic_record = Vec::with_capacity(
             wire_pool.buffer_capacity() + crate::protocol::roaming::UDP_SHORT_HEADER_LEN,
@@ -5370,6 +5371,7 @@ async fn handle_udp_auth(
                                     break 'budget_attempt;
                                 }
                             };
+                            writer_fragment_counters.path.note_fragmentation(fragments.len());
                             let wrappers = egress.wire_wrapper_len();
                             let attempted_wire_len: u64 = fragments
                                 .iter()

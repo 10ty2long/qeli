@@ -2023,6 +2023,7 @@ impl ClientStatusReporter {
                 "udp_buffer_grows": udp.grow_events,
                 "udp_recv_buffer_bytes": udp.granted_recv_bytes,
                 "udp_receive_queue": udp.receive_queue,
+                "udp_data_fragmentation": udp.path,
                 "tcp_uplink_drops": counters.tcp_uplink.snapshot(),
                 "tcp_downlink_drops": counters.tcp_downlink.snapshot(),
             },
@@ -9336,6 +9337,7 @@ async fn send_client_udp_payloads(
     quic_record: &mut Vec<u8>,
     padding: &mut Vec<u8>,
     send_scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    path_counters: &crate::transport_core::udp_buffer::UdpPathCounters,
 ) -> ClientUdpPayloadSendOutcome {
     let mut datagrams = Vec::with_capacity(crate::transport_core::udp_batch::MAX_BATCH);
     for payload in payloads {
@@ -9406,6 +9408,7 @@ async fn send_client_udp_payloads(
                     return ClientUdpPayloadSendOutcome::EncodeFailed;
                 }
             };
+            path_counters.note_fragmentation(fragments.len());
             for fragment in fragments {
                 let send_data = crate::transport_core::udp_client_framing::wrap_next_udp_record(
                     framing,
@@ -9513,6 +9516,7 @@ async fn send_client_udp_control_frame(
     quic_record: &mut Vec<u8>,
     padding: &mut Vec<u8>,
     send_scratch: &mut crate::transport_core::udp_batch::BatchScratch,
+    path_counters: &crate::transport_core::udp_buffer::UdpPathCounters,
 ) -> Result<bool, crate::protocol::recordizer::RecordizerError> {
     let payloads = prepare_client_udp_control_payloads(frame, recordizer)?;
     Ok(send_client_udp_payloads(
@@ -9531,6 +9535,7 @@ async fn send_client_udp_control_frame(
         quic_record,
         padding,
         send_scratch,
+        path_counters,
     )
     .await
         == ClientUdpPayloadSendOutcome::Sent)
@@ -10764,6 +10769,7 @@ pub(crate) async fn run_udp_tunnel(
     let mut uplink_udp_payload_budget =
         crate::protocol::data_frag::conservative_udp_payload_budget(socket.peer_is_ipv6());
     let mut keep_df_after_live_probe = false;
+    let mut initial_probe_confirmed = false;
     let tun_mtu = if config.tun.mtu_probe {
         match probe_udp_mtu(
             &socket,
@@ -10781,6 +10787,7 @@ pub(crate) async fn run_udp_tunnel(
         {
             Some(m) => {
                 keep_df_after_live_probe = data_frag_enabled;
+                initial_probe_confirmed = true;
                 // The probe sent `m + record-overhead`, then QUIC/obfs wrapped it. Record
                 // the UDP payload size it actually certified separately from inner MTU.
                 uplink_udp_payload_budget = udp_payload_budget_for_probe(
@@ -10825,6 +10832,30 @@ pub(crate) async fn run_udp_tunnel(
         );
         base_mtu
     };
+    runtime_counters.udp.path.set(
+        tun_mtu as u32,
+        uplink_udp_payload_budget,
+        data_frag_enabled,
+        if initial_probe_confirmed {
+            "probe"
+        } else {
+            "fallback"
+        },
+        if initial_probe_confirmed {
+            None
+        } else {
+            Some(if config.tun.mtu_probe {
+                "probe_unconfirmed"
+            } else {
+                "probe_disabled"
+            })
+        },
+    );
+    log::info!(
+        "UDP path diagnostics: {}",
+        serde_json::to_string(&runtime_counters.udp.path.snapshot())
+            .expect("path diagnostics serialize")
+    );
     let fallback_dns_servers = core.fallback_dns_servers().to_vec();
     let network = HandshakeNetwork {
         family_mode,
@@ -11155,6 +11186,7 @@ pub(crate) async fn run_udp_tunnel(
                 &mut quic_record,
                 &mut padding,
                 &mut udp_send_scratch,
+                &runtime_counters.udp.path,
             )
             .await
         };
@@ -11202,6 +11234,8 @@ pub(crate) async fn run_udp_tunnel(
 
     // Live PMTU widening is available only when DATA_FRAG decouples the TUN MTU from the
     // carrier datagram size. A legacy peer would require rebuilding the interface/routes.
+    let mut last_path_diagnostic = std::time::Instant::now();
+    let mut previous_path_diagnostic = runtime_counters.udp.path.snapshot();
     let live_mtu_reprobe_enabled = data_frag_enabled && config.tun.mtu_probe;
     let mut live_mtu_probe = LiveUdpMtuProbe::default();
     let mut live_mtu_due = tokio::time::interval(UDP_MTU_REPROBE_INTERVAL);
@@ -11300,6 +11334,14 @@ pub(crate) async fn run_udp_tunnel(
             }
 
             _ = udp_buffer_tick.tick() => {
+                if last_path_diagnostic.elapsed() >= Duration::from_secs(10) {
+                    let current = runtime_counters.udp.path.snapshot();
+                    if current != previous_path_diagnostic {
+                        log::debug!("UDP path diagnostics: {}", serde_json::to_string(&current).expect("path diagnostics serialize"));
+                        previous_path_diagnostic = current;
+                    }
+                    last_path_diagnostic = std::time::Instant::now();
+                }
                 udp_buffer.tick(socket.raw_socket());
             }
 
@@ -11592,6 +11634,7 @@ pub(crate) async fn run_udp_tunnel(
                         &mut quic_record,
                         &mut padding,
                         &mut udp_send_scratch,
+                        &runtime_counters.udp.path,
                     )
                     .await;
                     match send_outcome {
@@ -11841,6 +11884,7 @@ pub(crate) async fn run_udp_tunnel(
                         &mut quic_record,
                         &mut padding,
                         &mut udp_send_scratch,
+                        &runtime_counters.udp.path,
                     )
                     .await;
                     match send_outcome {
@@ -11936,6 +11980,7 @@ pub(crate) async fn run_udp_tunnel(
                                 break;
                             }
                         };
+                        runtime_counters.udp.path.note_fragmentation(fragments.len());
                         // Fragments of one record are the only uplink datagrams already
                         // available as a group — the pacing/shaping loop emits every other
                         // packet as it arrives. Send them in one `sendmmsg`; a short write is
@@ -12367,6 +12412,7 @@ pub(crate) async fn run_udp_tunnel(
                                 "client UDP migrated",
                             );
                             uplink_udp_payload_budget = next_payload_budget;
+                            runtime_counters.udp.path.set(tun_mtu as u32, next_payload_budget, data_frag_enabled, "fallback", Some("path_changed"));
                             data_record_budget = next_record_budget;
                             max_empty_record_padding = next_padding_budget;
                             udp_payload_budget_report_value = None;
@@ -12518,6 +12564,7 @@ pub(crate) async fn run_udp_tunnel(
                                         mux_payload_budget = new_mux_budget;
                                     }
                                     uplink_udp_payload_budget = new_payload_budget;
+                                    runtime_counters.udp.path.set(tun_mtu as u32, new_payload_budget, data_frag_enabled, "probe", None);
                                     data_record_budget = record_budget;
                                     max_empty_record_padding = padding_budget;
                                     udp_payload_budget_report_value =

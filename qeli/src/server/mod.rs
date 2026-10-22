@@ -4221,6 +4221,11 @@ async fn udp_drop_report(
         for (name, profile) in profiles.iter() {
             let now = profile.udp_buffer_counters.snapshot();
             let was = previous.insert(name.clone(), now).unwrap_or_default();
+            if now.path.fragmented_records != was.path.fragmented_records {
+                log::debug!("UDP DATA_FRAG on profile '{}': split record attempts +{}, fragments created +{} (not IP fragments or delivery receipts)",
+                    name, now.path.fragmented_records.saturating_sub(was.path.fragmented_records),
+                    now.path.fragments_created.saturating_sub(was.path.fragments_created));
+            }
             let internal = now.internal_drops.saturating_sub(was.internal_drops);
             let kernel = now.kernel_drops.saturating_sub(was.kernel_drops);
             if internal == 0 && kernel == 0 {
