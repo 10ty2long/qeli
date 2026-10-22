@@ -11,7 +11,7 @@ fn ok(request: Value) -> Value {
 }
 const BASE: &str = "[qeli]\nserver = vpn.example.com:443\nuser = alice\npass = secret\n";
 #[test]
-fn native_schema_has_all_82_profile_fields() {
+fn native_schema_has_all_84_profile_fields() {
     let r = ok(json!({"op":"schema"}));
     assert_eq!(
         r["fields"]
@@ -20,7 +20,7 @@ fn native_schema_has_all_82_profile_fields() {
             .iter()
             .filter(|v| !v["key"].as_str().unwrap().starts_with("logging."))
             .count(),
-        82
+        84
     );
 }
 #[test]
@@ -784,7 +784,7 @@ fn share_requires_a_portable_inline_password() {
 fn every_schema_field_survives_runtime_projection() {
     let schema = ok(json!({"op":"schema"}));
     let fields = schema["fields"].as_array().unwrap();
-    assert_eq!(fields.len(), 85);
+    assert_eq!(fields.len(), 87);
     for field in fields {
         let key = field["key"].as_str().unwrap();
         let kind = field["kind"].as_str().unwrap();
