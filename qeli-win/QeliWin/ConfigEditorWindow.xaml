@@ -209,7 +209,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{l:Loc FieldMtu}" Style="{StaticResource Label}"/>
-                                <ComboBox x:Name="MtuBox" IsEditable="True" TextSearch.TextPath="Content">
+                                <ComboBox x:Name="MtuBox" IsEditable="True" TextSearch.TextPath="Content" ToolTip="{l:Loc MtuPolicyHint}">
                                     <ComboBoxItem Content="0"/>
                                     <ComboBoxItem Content="1500"/>
                                     <ComboBoxItem Content="1400"/>
