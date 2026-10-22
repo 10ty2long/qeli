@@ -1,6 +1,6 @@
 # Client config: current contract and the 0.7.14 → 0.7.15 migration
 
-This table records the **current 82-key `[qeli]` contract** for all five clients while
+This table records the **current 84-key `[qeli]` contract** for all five clients while
 retaining the refactor history. “Before” is released 0.7.14 behaviour; “after” began as
 the 0.7.15 shared-core contract and is extended here with current code, including
 NetworkPlan v2 and complete IPv6.
@@ -26,6 +26,8 @@ can apply it; separately exposed controls are identified in the notes.
 | Keys | CLI | Windows | macOS | Android | iOS | Current contract / change |
 |---|:-:|:-:|:-:|:-:|:-:|---|
 | `server` `proto` `user` `pass` `key` `bind_static` `mode` `sni` `obfs_key` `front` `reality_sid` `quic` `awg` `jc` `jmin` `jmax` `mtu` `mtu_probe` `gateway` `route_local` `include` `exclude` `dns` `ipv6` `allow_ipv6_leak` `allow_ipv4_leak` | A→A | A→A | A→A | A→A | A→A | IPv6 is negotiated inside authenticated capabilities/NetworkPlan v2. The `auto`, `required`, and `off` modes and symmetric leak controls are shared across all adapters. The shared `gateway` default is `true`; explicit `false` enables split tunnel. |
+| `pull_routes` | N→A | N→A | N→A | N→A | N→A | 0.8.3: default `true`; `false` ignores only server routes, preserving local routes, independent full tunnel and protected DNS. INI/URI/model parity. |
+| `windows_disable_sharing` | N→R | N→A | N→C | N→C | N→C | 0.8.3: default `false`; opt-in only for the created Windows Wintun. GUID/LUID/CIM ownership and binding readback; no effect on WinDivert or other platforms. |
 | `roaming` | N→A | N→A | N→A | N→A | N→A | New shared 0.8 key: `off` forbids roam, `auto` uses safely negotiated TCP/UDP roam with reconnect fallback, and `required` refuses an incomplete contract. Explicit `local`/non-zero `lport` are incompatible with `required`. Linux `dev_attach=true` does not supply `ROAMING_PATH`: `auto` → reconnect; `required` is unavailable. |
 | `reality_compact` `reality_split` `reality_split_delay` | R→A | C→A | C→A | C→A | C→A | The shared Rust core now owns REALITY ClientHello sizing and split-write evasion for every app. Editors that do not expose controls preserve the exact values. |
 | `reconnect` `reconnect_retries` `reconnect_base_delay` `reconnect_max_delay` | R→A | A→A | A→A | A→A | A→A | The CLI now reads these keys and passes them to its built-in loop too. The core owns the failure counter, retry-limit decision, backoff/jitter and 1.5 s start-to-start floor. Adapters supply monotonic connected time and OS events; offline waiting does not reset the budget. `reconnect_retries=-1` means unlimited retries. |

@@ -58,6 +58,7 @@ pub fn decode_server_form(value: serde_json::Value) -> Result<server::ServerConf
 /// them. Reporting them as unknown would train operators to ignore a real misspelling report.
 pub const GUI_ONLY_CLIENT_KEYS: &[&str] = &[
     "dev_node",
+    "windows_disable_sharing",
     "metric",
     "persist_tun",
     "route_file",
@@ -904,6 +905,7 @@ mod tests {
             "name",
             // platform-specific interface handling
             "dev_node",
+            "windows_disable_sharing",
             "metric",
             "persist_tun",
             "route_file",
