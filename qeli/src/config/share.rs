@@ -154,6 +154,14 @@ pub fn supported_public_endpoint(input: &str, default_port: u16) -> Result<(Stri
     Ok((host, port))
 }
 
+/// SNI is also the HTTP Host override for TCP WebSocket obfs. Other obfs
+/// carriers and plain TCP do not consume it. Keep this rule shared by both
+/// client and server link generators and semantic validation.
+pub(crate) fn uses_server_name(proto: &str, mode: &str, front: &str) -> bool {
+    matches!(mode, "fake-tls" | "reality-tls")
+        || (proto == "tcp" && mode == "obfs" && front == "websocket")
+}
+
 impl ClientLink {
     /// Derive every profile-dependent field of a share link from the profile itself,
     /// leaving the caller only what the profile cannot know: where the server is reachable
@@ -224,9 +232,11 @@ impl ClientLink {
             user,
             pass,
             proto: profile.bind.transport.clone(),
-            mode,
+            mode: mode.clone(),
             server_key,
-            sni: Some(link_sni.clone()).filter(|s| !s.is_empty()),
+            sni: Some(link_sni.clone()).filter(|s| {
+                !s.is_empty() && uses_server_name(&profile.bind.transport, &mode, &obf.fronting)
+            }),
             reality_sid,
             obfs_key: Some(obf.obfs_key.clone()).filter(|s| !s.is_empty()),
             fronting: Some(obf.fronting.clone()).filter(|s| !s.is_empty() && s != "websocket"),
@@ -704,6 +714,33 @@ mod tests {
         }
         profile.obfuscation.tls.reality_proxy.enabled = false;
         assert_eq!(link(&profile).sni.as_deref(), Some("wrong.example"));
+    }
+
+    #[test]
+    fn profile_links_omit_only_unused_server_names() {
+        let mut profile = crate::config::server::ProfileConfig::baseline();
+        for (proto, mode, front, included) in [
+            ("tcp", "fake-tls", "websocket", true),
+            ("udp", "fake-tls", "websocket", true),
+            ("tcp", "obfs", "websocket", true),
+            ("tcp", "obfs", "none", false),
+            ("udp", "obfs", "websocket", false),
+            ("tcp", "plain", "websocket", false),
+        ] {
+            profile.bind.transport = proto.into();
+            profile.obfuscation.mode = mode.into();
+            profile.obfuscation.fronting = front.into();
+            let link = ClientLink::for_profile(
+                &profile,
+                "vpn.example".into(),
+                443,
+                "user".into(),
+                "pass".into(),
+                "11".repeat(32),
+                None,
+            );
+            assert_eq!(link.sni.is_some(), included, "{proto} {mode} {front}");
+        }
     }
 
     #[test]

@@ -170,6 +170,7 @@ public static class Loc
         ["FieldRealityId"] = ("REALITY short_id (hex)", "REALITY short_id (hex)"),
         ["FieldLogin"] = ("Username", "Логин"),
         ["FieldPassword"] = ("Password", "Пароль"),
+        ["FieldHttpHost"] = ("HTTP Host (WebSocket)", "HTTP Host (WebSocket)"),
         ["FieldSni"] = ("SNI (domain masking)", "SNI (маскировка домена)"),
         ["FieldPadding"] = ("Padding (size masking)", "Паддинг (маскировка размера)"),
         ["FieldHeartbeat"] = ("Heartbeat (keep-alive)", "Heartbeat (keep-alive)"),

@@ -137,7 +137,7 @@
                         </StackPanel>
                         <TextBlock Text="{l:Loc SectionTransport}" Style="{StaticResource SectionHeader}" Margin="0,28,0,14"/>
                         <StackPanel x:Name="SniPanel" Style="{StaticResource Field}">
-                            <TextBlock Text="{l:Loc FieldSni}" Style="{StaticResource Label}"/>
+                            <TextBlock x:Name="SniLabel" Text="{l:Loc FieldSni}" Style="{StaticResource Label}"/>
                             <ComboBox x:Name="SniBox" IsEditable="True" TextSearch.TextPath="Content">
                                 <ComboBoxItem Content="www.microsoft.com"/>
                                 <ComboBoxItem Content="www.cloudflare.com"/>

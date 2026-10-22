@@ -162,12 +162,12 @@ public partial class ConfigEditorWindow : Window
     private void UpdateConditionalFields()
     {
         if (ObfsKeyPanel == null) return; // during InitializeComponent
-        var (_, mode, _, _) = PresetParams(TagOf(ModeBox));
-        SetPanel(ObfsKeyPanel, mode == "obfs");       // obfs PSK
-        SetPanel(RealityIdPanel, mode == "reality-tls"); // REALITY short_id (hex)
-        // SNI only matters where a ClientHello reaches the wire: fake-tls (visible
-        // mimicry) and reality-tls (cover domain). obfs masks it; plain has none.
-        SetPanel(SniPanel, mode is "fake-tls" or "reality-tls");
+        var (proto, mode, front, _) = PresetParams(TagOf(ModeBox));
+        SetPanel(ObfsKeyPanel, mode == "obfs");
+        SetPanel(RealityIdPanel, mode == "reality-tls");
+        bool webSocketHost = proto == "tcp" && mode == "obfs" && front == "websocket";
+        SetPanel(SniPanel, mode is "fake-tls" or "reality-tls" || webSocketHost);
+        SniLabel.Text = Loc.T(webSocketHost ? "FieldHttpHost" : "FieldSni");
     }
 
     private static void SetPanel(UIElement panel, bool on)

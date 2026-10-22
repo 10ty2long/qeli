@@ -4055,3 +4055,10 @@ INI, ссылки, проверки и defaults теперь обрабатыв�
 `systemctl reload qeli` отправляет SIGHUP supervisor: он проверяет и перечитывает пользователей/аутентификацию, затем просит worker перечитать их без замены процессов. Неверные INI/users отвергаются до публикации нового auth state. Profile/listener/TUN и startup settings панели требуют полного restart службы. SIGHUP сохраняет блокировки входа в панель. [Аудит systemd](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
 
 Режим root читает приватные файлы qeli, но публикация конфига через панель по-прежнему требует доверенного файла: владелец root или пользователь процесса, без group/other write и без symlink. Поэтому root отвергнет сохранение qeli-owned INI через панель. Проверьте конфиг от администратора, затем выполните `sudo chown root:root /etc/qeli/server.conf` и `sudo chmod 600 /etc/qeli/server.conf`, если служба должна работать от root. Не передавайте password receipts пользователю qeli. Старый root drop-in обновляется повторным `sudo qeli set-service-user root` текущим бинарником и restart службы. Добавляются три filesystem capabilities, а не неограниченный набор. [Systemd audit](../reports/audit-0.8.2/AUDIT-Q33-SYSTEMD.md).
+
+В 0.8.3 `sni` используется как TLS SNI в fake-tls/reality-tls и как
+HTTP Host в TCP obfs с `front=websocket`. Для UDP obfs, TCP obfs с
+`front=none` и plain поле не используется: старые значения принимаются,
+сохраняются в INI, но не включаются в новые qeli:// ссылки. Во всех режимах
+действуют ограничения 253 байта, без управляющих символов и краевых пробелов.
+Специальные `!`, `~`, `@` разрешены для fake-tls; REALITY требует DNS-имя.

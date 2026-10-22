@@ -98,7 +98,7 @@
                             </StackPanel>
                             <TextBlock Text="{l:Loc SectionTransport}" Classes="sectionHeader" Margin="0,28,0,14"/>
                             <StackPanel x:Name="SniPanel" Margin="0,0,0,14">
-                                <TextBlock Text="{l:Loc FieldSni}" Classes="label"/>
+                                <TextBlock x:Name="SniLabel" Text="{l:Loc FieldSni}" Classes="label"/>
                                 <AutoCompleteBox x:Name="SniBox" MinimumPrefixLength="0" FilterMode="Contains"
                                                  HorizontalAlignment="Stretch"/>
                             </StackPanel>

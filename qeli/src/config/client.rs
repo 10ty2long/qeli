@@ -876,7 +876,13 @@ impl ClientConfig {
             proto: self.server.protocol.clone(),
             mode: self.obfuscation.mode.clone(),
             server_key: self.auth.server_public_key.clone().unwrap_or_default(),
-            sni: self.obfuscation.sni.clone(),
+            sni: self.obfuscation.sni.clone().filter(|_| {
+                super::share::uses_server_name(
+                    &self.server.protocol,
+                    &self.obfuscation.mode,
+                    &self.obfuscation.fronting,
+                )
+            }),
             reality_sid: self.obfuscation.reality_short_id.clone(),
             obfs_key: Some(self.obfuscation.obfs_key.clone()).filter(|s| !s.is_empty()),
             // Only emit `front` when it diverges from the default, keeping links compact.
@@ -1150,15 +1156,20 @@ impl ClientConfig {
         }
         if let Some(raw) = self.obfuscation.sni.as_deref() {
             let value = raw.trim();
-            if value != raw || value.chars().any(char::is_control) {
-                anyhow::bail!("'sni' contains surrounding whitespace or control characters");
+            if raw.len() > 253 || value != raw || value.chars().any(char::is_control) {
+                anyhow::bail!("'sni' exceeds 253 bytes or contains surrounding whitespace or control characters");
             }
             match self.obfuscation.mode.as_str() {
                 "fake-tls" if !matches!(value, "!" | "~" | "@") && !valid_dns_hostname(value) => {
                     anyhow::bail!("'sni' must be a DNS hostname or one of !, ~, @ for fake-tls");
                 }
                 "obfs"
-                    if !valid_dns_hostname(value) && value.parse::<std::net::IpAddr>().is_err() =>
+                    if super::share::uses_server_name(
+                        &self.server.protocol,
+                        &self.obfuscation.mode,
+                        &self.obfuscation.fronting,
+                    ) && !valid_dns_hostname(value)
+                        && value.parse::<std::net::IpAddr>().is_err() =>
                 {
                     anyhow::bail!("'sni' must be a DNS hostname or IP address for WebSocket obfs");
                 }
@@ -2109,6 +2120,49 @@ sni    = www.cloudflare.com
             "unexpected error: {error}"
         );
     }
+    #[test]
+    fn server_name_applicability_survives_ini_and_link_round_trips() {
+        let base = "[qeli]\nserver = vpn.example:443\npass = secret\nobfs_key = secret\n";
+        for (proto, mode, front, sni, accepted, exported) in [
+            ("udp", "obfs", "websocket", "!", true, false),
+            ("udp", "obfs", "websocket", "old.example", true, false),
+            ("tcp", "obfs", "none", "!", true, false),
+            ("tcp", "plain", "websocket", "unused.example", true, false),
+            ("tcp", "obfs", "websocket", "host.example", true, true),
+            ("tcp", "obfs", "websocket", "2001:db8::1", true, true),
+            ("tcp", "obfs", "websocket", "!", false, true),
+            ("tcp", "fake-tls", "websocket", "!", true, true),
+            ("udp", "fake-tls", "websocket", "~", true, true),
+            ("udp", "fake-tls", "websocket", "@", true, true),
+            ("tcp", "reality-tls", "websocket", "!", false, true),
+        ] {
+            let ini =
+                format!("{base}proto = {proto}\nmode = {mode}\nfront = {front}\nsni = {sni}\n");
+            let c = ClientConfig::from_ini(&IniDoc::parse(&ini).unwrap()).unwrap();
+            assert_eq!(c.validate().is_ok(), accepted, "{ini}");
+            let saved =
+                ClientConfig::from_ini(&IniDoc::parse(&c.to_ini_string()).unwrap()).unwrap();
+            assert_eq!(saved.obfuscation.sni.as_deref(), Some(sni));
+            let link = ClientLink::from_uri(&c.to_link(None).to_uri()).unwrap();
+            assert_eq!(link.sni.is_some(), exported, "{ini}");
+            if accepted {
+                ClientConfig::from_link(&link).validate().unwrap();
+            }
+        }
+        let mut c = ClientConfig::from_ini(
+            &IniDoc::parse(&(base.to_owned() + "proto=udp\nmode=obfs\n")).unwrap(),
+        )
+        .unwrap();
+        for bad in [
+            "x\r\nHeader: value".to_string(),
+            "x".repeat(254),
+            " !".to_string(),
+        ] {
+            c.obfuscation.sni = Some(bad);
+            assert!(c.validate().is_err());
+        }
+    }
+
     #[test]
     fn camouflage_names_are_stable_and_fail_closed() {
         let bare_ip = ClientConfig::from_ini(
