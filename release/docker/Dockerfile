@@ -27,6 +27,9 @@ WORKDIR /src/qeli
 # deliberately avoided).
 COPY qeli/Cargo.toml qeli/Cargo.lock ./
 COPY qeli/src ./src
+# include_bytes! embeds the reviewed legal resources while compiling the CLI.
+# Runtime-stage COPY alone is too late: these are required build inputs too.
+COPY qeli/third-party-notices/rust ./third-party-notices/rust
 # The `qeli` binary carries BOTH roles (default features = server + client). The
 # `qeli-client` MIPS/router-only binary is intentionally not built here.
 # `--features jemalloc`: this is a server image, so it uses the same allocator as

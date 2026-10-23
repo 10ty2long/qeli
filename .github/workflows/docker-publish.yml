@@ -1,109 +1,151 @@
 name: docker-publish
 
-# Build the multi-arch qeli image (both roles, all deps) and publish it to GHCR
-# on release tags. Only the highest stable Git version may update `latest`.
-# Manual runs (workflow_dispatch) build from the selected branch/tag.
-#
-# Result: users never rebuild — `docker pull ghcr.io/litvinovtd/qeli:latest`.
-# The Dockerfile itself is version-agnostic (it builds whatever source is checked
-# out), so the tag drives the version.
-
+# Issue #200: one-time packaging recovery, not a new application release.
+# This maintenance branch supplies ONLY the corrected Dockerfile. Application,
+# dependency, legal and runtime inputs are checked out from the immutable 0.8.2 SHA.
 on:
-  push:
-    tags: ['v*']            # v0.7.3, v0.8.0, …
-  workflow_dispatch:        # manual run to (re)publish the current ref
+  workflow_dispatch:
+    inputs:
+      promote_latest:
+        description: Explicitly promote verified 0.8.2 beta to latest (issue 200)
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
-  actions: read            # exact-commit CI admission before release publication
-  packages: write           # push to GHCR with the automatic GITHUB_TOKEN
-  id-token: write           # OIDC token for the signed build attestation (R-02)
-  attestations: write       # record the attestation against this repo (R-02)
+  actions: read
+  packages: write
+  id-token: write
+  attestations: write
 
-# Serialize publication across refs; per-ref groups would still race on latest.
-# GitHub may replace a pending run; an executing publication is never cancelled.
 concurrency:
   group: docker-publish
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/litvinovtd/qeli
+  RELEASE_TAG: v0.8.2
+  SOURCE_COMMIT: de477ecc2a4376d1f471d056d748f14f937d7956
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ env.SOURCE_COMMIT }}
           fetch-depth: 0
 
-      - name: Validate publication ref
-        id: ref
+      - name: Verify exact release source and packaging-only overlay
         env:
+          PACKAGING_COMMIT: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 -B scripts/docker_publish_ref.py --require-published-stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+          test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$SOURCE_COMMIT"
+          git diff --exit-code "$SOURCE_COMMIT" "$PACKAGING_COMMIT" -- qeli
+          test "$(git diff --name-only "$SOURCE_COMMIT" "$PACKAGING_COMMIT" | sort)" = "$(printf '%s\n' '.github/workflows/docker-publish.yml' 'release/docker/Dockerfile' | sort)"
+          test -z "$(git status --porcelain)"
+          python3 scripts/release_tag.py --tag "$RELEASE_TAG" --require-ci --wait-ci 1800 --require-certification
+          python3 scripts/native_licenses.py
+          python3 scripts/embedded_licenses.py
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,tagName | python3 -c 'import json,sys; r=json.load(sys.stdin); assert r["tagName"]=="v0.8.2" and r["isDraft"] is False'
+          git show "$PACKAGING_COMMIT:release/docker/Dockerfile" > "$RUNNER_TEMP/Dockerfile.082"
+          cp release/docker/Dockerfile.dockerignore "$RUNNER_TEMP/Dockerfile.082.dockerignore"
+          # Preserve a clean release checkout; the single packaging overlay lives outside it.
+          python3 - <<'PY'
+          import os, pathlib, subprocess
+          original = subprocess.check_output(['git','show','HEAD:release/docker/Dockerfile'])
+          fixed = pathlib.Path(os.environ['RUNNER_TEMP'], 'Dockerfile.082').read_bytes()
+          anchor = b'COPY qeli/src ./src\n'
+          added = (b'# include_bytes! embeds the reviewed legal resources while compiling the CLI.\n'
+                   b'# Runtime-stage COPY alone is too late: these are required build inputs too.\n'
+                   b'COPY qeli/third-party-notices/rust ./third-party-notices/rust\n')
+          assert original.count(anchor) == 1
+          assert fixed == original.replace(anchor, anchor + added)
+          PY
+          test -z "$(git status --porcelain)"
+          {
+            echo '### Docker 0.8.2 packaging recovery'
+            echo "Application source: $SOURCE_COMMIT ($RELEASE_TAG)"
+            echo "Packaging workflow/Dockerfile: $PACKAGING_COMMIT"
+            echo 'Only build-stage license COPY differs; no 0.8.3 application inputs.'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Admit release tag, runtime certification and exact-commit CI
-        if: steps.ref.outputs.release_tag == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        # A tag starts CI and publication together. Wait for that exact CI;
-        # failed/missing/mismatched CI still refuses before login or image push.
-        run: python3 scripts/release_tag.py --tag "$GITHUB_REF_NAME" --require-ci --wait-ci 1800 --require-certification
-
-      - name: Validate native legal resources before Docker publication
-        run: python3 scripts/native_licenses.py
-
-      # QEMU lets the single amd64 runner build the arm images (emulated). A Rust
-      # compile under emulation is slow — a release build of all three arches can
-      # take a while; trim `platforms` below if you only need some.
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
-
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Keep version/SHA tags; latest requires the highest stable Git version.
-      - id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
-        with:
-          images: ghcr.io/${{ github.repository }}
-          flavor: latest=false
-          tags: |
-            type=semver,pattern={{version}},enable=${{ steps.ref.outputs.release_tag }}
-            type=sha,format=long
-            # Old stable versions, branches and RCs cannot overwrite latest.
-            # Numeric comparison is independent of workflow queue ordering.
-            type=raw,value=latest,enable=${{ steps.ref.outputs.latest_release }}
-
       - id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
-          context: .                              # repo root (the build context)
-          file: release/docker/Dockerfile
+          context: .
+          file: ${{ runner.temp }}/Dockerfile.082
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: true                        # BuildKit inline SLSA provenance
-          sbom: true                              # SPDX SBOM attached to the image (R-02)
-          # Cache layers across publishes so a re-run doesn't recompile Rust from
-          # scratch under QEMU for every arch.
+          tags: |
+            ghcr.io/litvinovtd/qeli:0.8.2
+            ghcr.io/litvinovtd/qeli:sha-de477ecc2a4376d1f471d056d748f14f937d7956
+          labels: |
+            org.opencontainers.image.title=qeli
+            org.opencontainers.image.version=0.8.2
+            org.opencontainers.image.revision=de477ecc2a4376d1f471d056d748f14f937d7956
+            org.opencontainers.image.source=https://github.com/litvinovtd/qeli
+            org.opencontainers.image.licenses=AGPL-3.0-only
+            io.qeli.packaging.revision=${{ github.sha }}
+          provenance: true
+          sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # A SIGNED, INDEPENDENTLY VERIFIABLE attestation on top of BuildKit's inline
-      # provenance. The inline one travels inside the image and is only as trustworthy as
-      # whoever can push that image; this one is signed via OIDC and checked against the
-      # repository, so a consumer can prove the image came from THIS repo and commit:
-      #
-      #   gh attestation verify oci://ghcr.io/litvinovtd/qeli:latest -R litvinovtd/qeli
-      #
-      # Answers the question a checksum cannot: not "is this the file the release lists"
-      # but "who built it, from what source". (R-02)
+      - name: Run exact published image on all three architectures
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in linux/amd64 linux/arm64 linux/arm/v7; do
+            echo "Checking $platform at $DIGEST"
+            version=$(docker run --rm --platform "$platform" --entrypoint /usr/local/bin/qeli "$IMAGE@$DIGEST" --version)
+            test "$version" = 'qeli 0.8.2'
+            docker run --rm --platform "$platform" --entrypoint /usr/local/bin/qeli "$IMAGE@$DIGEST" licenses --file rust/Qeli-AGPL-3.0.txt > "$RUNNER_TEMP/container-license.txt"
+            cmp qeli/third-party-notices/rust/Qeli-AGPL-3.0.txt "$RUNNER_TEMP/container-license.txt"
+            docker run --rm --platform "$platform" --entrypoint /bin/sh "$IMAGE@$DIGEST" -ec 'test -x /usr/local/bin/entrypoint.sh; command -v ip; command -v iptables; test -s /usr/share/qeli/server.conf.example; test -s /usr/share/qeli/client.conf.example'
+          done
+
       - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
-          subject-name: ghcr.io/${{ github.repository }}
+          subject-name: ghcr.io/litvinovtd/qeli
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+
+      - name: Explicitly promote verified 0.8.2 to latest
+        if: inputs.promote_latest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Do not accidentally replace a newer published release if the run was delayed.
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.draft == false) | .tag_name' > "$RUNNER_TEMP/published-tags"
+          python3 - <<'PY'
+          import os,pathlib,re
+          for tag in pathlib.Path(os.environ['RUNNER_TEMP'], 'published-tags').read_text().splitlines():
+              m=re.fullmatch(r'v(\d+)\.(\d+)\.(\d+)',tag)
+              assert not m or tuple(map(int,m.groups())) <= (0,8,2), 'Newer published release exists: '+tag
+          PY
+          docker buildx imagetools create --tag "$IMAGE:latest" "$IMAGE@$DIGEST"
+          for tag in 0.8.2 latest; do
+            actual=$(docker buildx imagetools inspect "$IMAGE:$tag" --format '{{json .Manifest.Digest}}' | tr -d '"')
+            test "$actual" = "$DIGEST"
+          done
+          echo "Verified 0.8.2 and latest: $DIGEST" >> "$GITHUB_STEP_SUMMARY"
