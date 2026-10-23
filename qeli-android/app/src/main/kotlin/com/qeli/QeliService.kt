@@ -88,14 +88,10 @@ class VpnServiceImpl : VpnService() {
     @Volatile private var screenOffAt = 0L
     @Volatile
     private var currentNetwork: Network? = null
-    // Every non-VPN network we currently see, used ONLY on the pre-31 fallback path of
-    // [registerNetworkCallback] to tell "the link we are on died" from "some other link
-    // appeared". Empty on API 31+, which gets the best-matching callback instead.
-    private val underlyingNets = java.util.Collections.synchronizedSet(mutableSetOf<Network>())
-    private val networkSignatures = java.util.concurrent.ConcurrentHashMap<Network, String>()
-    // Offline time is not a failed connection attempt. The callback only wakes this conflated
-    // gate; the retry loop re-validates the selected carrier before starting a generation.
-    private val carrierAvailable = Channel<Unit>(Channel.CONFLATED)
+    private val networkSignatures = AndroidNetworkSignatureCache<Network>()
+    // Offline time is not a failed connection attempt. Callbacks accelerate this cancellable
+    // gate, which also rechecks readiness if Android omits or races a notification.
+    private val carrierGate = AndroidCarrierGate()
 
     // Network.getAllByName is a blocking platform call and ignores thread interruption on
     // several Android resolver implementations. Keep a bounded service-owned pool: one old
@@ -2162,7 +2158,8 @@ class VpnServiceImpl : VpnService() {
      *  implemented, so the one switch that really matters was noticed only by rxDead, ≥30 s
      *  later. API 31+ therefore uses registerBestMatchingNetworkCallback, whose onAvailable
      *  means "the best match CHANGED"; older releases (minSdk is 28) fall back to tracking
-     *  the set of candidates and reacting only when the link we are actually on disappears.
+     *  the set of candidates, recovering on loss and preferring a validated Wi-Fi/Ethernet
+     *  carrier over cellular without reacting to equivalent secondary-radio registrations.
      *  registerDefaultNetworkCallback is deliberately NOT the fallback: a VPN app is subject
      *  to its own VPN, so once we establish, our default network IS the tun. */
     @Synchronized
@@ -2188,13 +2185,17 @@ class VpnServiceImpl : VpnService() {
             .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
             .build()
         val bestMatching = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-        fun handleAvailable(network: Network) {
+        val snapshots = AndroidCarrierSnapshots<Network, NetworkCapabilities, LinkProperties>()
+        fun preferObservedCarrier(network: Network): Boolean = preferCarrierNetwork(
+            cm, network, currentNetwork, snapshots[network], currentNetwork?.let { snapshots[it] },
+        )
+        fun handleAvailable(network: Network, snapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = snapshots[network]) {
+            carrierGate.signalChange()
             // Belt-and-suspenders: never react to our own VPN tun (the NOT_VPN
             // request should already exclude it).
-            val caps = cm.getNetworkCapabilities(network)
+            val caps = snapshot?.capabilities ?: cm.getNetworkCapabilities(network)
             if (caps == null || caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return
-            if (!usableCarrierNetwork(cm, network)) return
-            carrierAvailable.trySend(Unit)
+            if (!usableCarrierNetwork(cm, network, snapshot)) return
             val replacementAfterLoss = waitingForCarrierReplacement.getAndSet(false)
             if (replacementAfterLoss) {
                 carrierReplacementSequence.incrementAndGet()
@@ -2202,12 +2203,14 @@ class VpnServiceImpl : VpnService() {
                 carrierReplacementJob = null
             }
             val enteringTrustedWifi = shouldPauseForTrustedNetwork(caps)
-            networkSignatures[network] = physicalNetworkSignature(cm, network)
             val prev = currentNetwork
             if (bestMatching) {
                 // Best-matching callback: every onAvailable IS a change of the best
                 // (non-VPN, internet-capable) network — i.e. of the link we ride on.
                 currentNetwork = network
+                networkSignatures[network] = physicalNetworkSignature(cm, network, snapshot)
+                networkSignatures.retainOnly(network)
+                snapshots.retainOnly(network)
                 if (AndroidRoamingPolicy.availableNetworkAction(
                         hadCurrentNetwork = prev != null,
                         waitingForReplacement = replacementAfterLoss,
@@ -2223,12 +2226,11 @@ class VpnServiceImpl : VpnService() {
                 reevaluateTrustedWifi(caps)
                 return
             }
-            // Pre-31: we hear about EVERY candidate, so adopt one only while we have
-            // none (or the one we had is gone). A second network merely showing up is
-            // not a switch — that misreading is the bug this branch exists to avoid.
-            underlyingNets.add(network)
-            if (prev == null || !underlyingNets.contains(prev)) {
+            // Pre-31 observes every candidate. A newly validated Wi-Fi can supersede LTE
+            // without waiting for LTE to disappear; an equivalent secondary carrier cannot.
+            if (prev == network || preferObservedCarrier(network)) {
                 currentNetwork = network
+                networkSignatures[network] = physicalNetworkSignature(cm, network, snapshot)
                 if (AndroidRoamingPolicy.availableNetworkAction(
                         hadCurrentNetwork = prev != null,
                         waitingForReplacement = replacementAfterLoss,
@@ -2247,33 +2249,43 @@ class VpnServiceImpl : VpnService() {
 
         fun handleCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
             if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return
+            val snapshot = snapshots.capabilities(network, NetworkCapabilities(caps), currentNetwork)
+            // Same-Network suspended -> resumed is a readiness event even while CONNECTING.
+            carrierGate.signalChange()
             if ((waitingForCarrierReplacement.get() ||
-                    (bestMatching && network != currentNetwork)) &&
-                usableCarrierNetwork(cm, network)
+                    (network != currentNetwork &&
+                        (bestMatching || preferObservedCarrier(network)))) &&
+                usableCarrierNetwork(cm, network, snapshot)
             ) {
-                handleAvailable(network)
+                handleAvailable(network, snapshot)
                 return
             }
             if (!TrustedWifiPolicy.shouldEvaluateCallback(network == currentNetwork)) return
             reevaluateTrustedWifi(caps)
             if (shouldPauseForTrustedNetwork(caps)) return
-            underlyingNetworkStateChanged(cm, network, "Network capabilities changed")
+            underlyingNetworkStateChanged(cm, network, "Network capabilities changed", snapshot)
         }
 
-        fun handleLinkPropertiesChanged(network: Network) {
+        fun handleLinkPropertiesChanged(network: Network, links: LinkProperties) {
+            // Treat the callback's LinkProperties as read-only; its copy constructor is not
+            // part of the public SDK. The service never mutates this object or its lists.
+            val snapshot = snapshots.links(network, links, currentNetwork)
+            carrierGate.signalChange()
             if ((waitingForCarrierReplacement.get() ||
-                    (bestMatching && network != currentNetwork)) &&
-                usableCarrierNetwork(cm, network)
+                    (network != currentNetwork &&
+                        (bestMatching || preferObservedCarrier(network)))) &&
+                usableCarrierNetwork(cm, network, snapshot)
             ) {
-                handleAvailable(network)
+                handleAvailable(network, snapshot)
                 return
             }
-            underlyingNetworkStateChanged(cm, network, "Network link properties changed")
+            underlyingNetworkStateChanged(cm, network, "Network link properties changed", snapshot)
         }
 
         fun handleLost(network: Network) {
+            carrierGate.signalChange()
             networkSignatures.remove(network)
-            if (!bestMatching) underlyingNets.remove(network)
+            snapshots.remove(network)
             // Only the link we are actually on matters; any other one going away is
             // none of our business.
             if (network != currentNetwork) return
@@ -2283,8 +2295,7 @@ class VpnServiceImpl : VpnService() {
             // its best-matching onAvailable callback is delivered. Adopt it synchronously so
             // the roaming core can make a candidate instead of forcing a full reconnect in
             // that callback gap.
-            val replacement = if (bestMatching) firstUsableCarrierNetwork(cm, excluding = network)
-                else synchronized(underlyingNets) { underlyingNets.firstOrNull() }
+            val replacement = firstUsableCarrierNetwork(cm, excluding = network)
             currentNetwork = replacement
             if (replacement != null) {
                 val replacementCaps = cm.getNetworkCapabilities(replacement)
@@ -2325,7 +2336,6 @@ class VpnServiceImpl : VpnService() {
                                 currentNetwork = lateReplacement
                                 networkSignatures[lateReplacement] =
                                     physicalNetworkSignature(cm, lateReplacement)
-                                if (!bestMatching) underlyingNets.add(lateReplacement)
                                 val caps = cm.getNetworkCapabilities(lateReplacement)
                                 val enteringTrustedWifi = shouldPauseForTrustedNetwork(caps)
                                 if (!enteringTrustedWifi) {
@@ -2377,7 +2387,7 @@ class VpnServiceImpl : VpnService() {
                 override fun onLinkPropertiesChanged(
                     network: Network,
                     linkProperties: android.net.LinkProperties,
-                ) = dispatchNetworkCallback(this) { handleLinkPropertiesChanged(network) }
+                ) = dispatchNetworkCallback(this) { handleLinkPropertiesChanged(network, linkProperties) }
                 override fun onLost(network: Network) =
                     dispatchNetworkCallback(this) { handleLost(network) }
             }
@@ -2390,13 +2400,12 @@ class VpnServiceImpl : VpnService() {
                 override fun onLinkPropertiesChanged(
                     network: Network,
                     linkProperties: android.net.LinkProperties,
-                ) = dispatchNetworkCallback(this) { handleLinkPropertiesChanged(network) }
+                ) = dispatchNetworkCallback(this) { handleLinkPropertiesChanged(network, linkProperties) }
                 override fun onLost(network: Network) =
                     dispatchNetworkCallback(this) { handleLost(network) }
             }
         }
         currentNetwork = null
-        underlyingNets.clear()
         // Pre-31 seed: we are called from startVpn BEFORE establish(), so at THIS moment the
         // app's active network really is the underlying default (afterwards it is our own
         // tun, which is why we can't just keep asking). Without the seed the fallback path
@@ -2408,8 +2417,7 @@ class VpnServiceImpl : VpnService() {
             val activeCaps = active?.let { cm.getNetworkCapabilities(it) }
             if (activeCaps != null && !activeCaps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
                 currentNetwork = active
-                if (usableCarrierNetwork(cm, active)) carrierAvailable.trySend(Unit)
-                underlyingNets.add(active)
+                if (usableCarrierNetwork(cm, active)) carrierGate.signalChange()
             }
         }
         netCallback = cb
@@ -2436,9 +2444,10 @@ class VpnServiceImpl : VpnService() {
         cm: ConnectivityManager,
         network: Network,
         why: String,
+        snapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
     ) {
         if (network != currentNetwork) return
-        val next = physicalNetworkSignature(cm, network)
+        val next = physicalNetworkSignature(cm, network, snapshot)
         val previous = networkSignatures[network] ?: return
         if (previous == next) return
         // Going into Android's suspended state is not a usable reconnect target: wait for
@@ -2451,16 +2460,24 @@ class VpnServiceImpl : VpnService() {
         // screen-on path — which is how a phone that changed networks while asleep came back
         // to "same network, keeping the tunnel" and sat on a dead link. The baseline must stay
         // at the last state we actually reconnected onto.
-        val caps = cm.getNetworkCapabilities(network)
+        val caps = snapshot?.capabilities ?: cm.getNetworkCapabilities(network)
         if (caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED) != true) return
         networkSignatures[network] = next
+        if (next.isMtuOnlyChange(previous)) {
+            reportCarrierMtuChange(previous, next)
+            return
+        }
         switchedNetwork(why)
     }
 
     /** A link we could actually reach the server over: not our own tun, and internet-capable. */
-    private fun usableCarrierNetwork(cm: ConnectivityManager, network: Network): Boolean {
-        val caps = try { cm.getNetworkCapabilities(network) } catch (_: Exception) { null }
-        val links = try { cm.getLinkProperties(network) } catch (_: Exception) { null }
+    private fun usableCarrierNetwork(
+        cm: ConnectivityManager,
+        network: Network,
+        snapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
+    ): Boolean {
+        val caps = snapshot?.capabilities ?: try { cm.getNetworkCapabilities(network) } catch (_: Exception) { null }
+        val links = snapshot?.links ?: try { cm.getLinkProperties(network) } catch (_: Exception) { null }
         val hasUsableAddress = links?.linkAddresses?.any { link ->
             link.address is Inet4Address ||
                 (link.address is Inet6Address && !link.address.isLinkLocalAddress)
@@ -2471,6 +2488,36 @@ class VpnServiceImpl : VpnService() {
             && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
             && hasUsableAddress
     }
+
+    private fun carrierPreference(
+        cm: ConnectivityManager,
+        network: Network,
+        snapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
+    ): AndroidCarrierPreference {
+        val caps = snapshot?.capabilities ?: runCatching { cm.getNetworkCapabilities(network) }.getOrNull()
+        return AndroidCarrierPreference(
+            usable = usableCarrierNetwork(cm, network, snapshot),
+            validated = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true,
+            kind = when {
+                caps?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true -> AndroidCarrierKind.ETHERNET
+                caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> AndroidCarrierKind.WIFI
+                caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> AndroidCarrierKind.CELLULAR
+                else -> AndroidCarrierKind.OTHER
+            },
+        )
+    }
+
+    private fun preferCarrierNetwork(
+        cm: ConnectivityManager,
+        candidate: Network,
+        current: Network?,
+        candidateSnapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
+        currentSnapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
+    ): Boolean =
+        AndroidCarrierPreferencePolicy.shouldReplace(
+            current = current?.let { carrierPreference(cm, it, currentSnapshot) },
+            candidate = carrierPreference(cm, candidate, candidateSnapshot),
+        )
 
     /** Last-resort lookup when the tracked network is gone: prefer a validated link, but take
      *  an unvalidated one over failing the attempt outright — captive portals and networks
@@ -2485,10 +2532,7 @@ class VpnServiceImpl : VpnService() {
         } catch (_: Exception) {
             return null
         }
-        return candidates.firstOrNull { network ->
-            cm.getNetworkCapabilities(network)
-                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
-        } ?: candidates.firstOrNull()
+        return AndroidCarrierPreferencePolicy.bestOf(candidates) { carrierPreference(cm, it) }
     }
 
     /**
@@ -2497,16 +2541,23 @@ class VpnServiceImpl : VpnService() {
      * carrier from the TUN; it does not pin a Wi-Fi/LTE path on a multi-homed device.
      */
     private fun selectPhysicalCarrierNetwork(cm: ConnectivityManager): Network? {
-        currentNetwork?.takeIf { usableCarrierNetwork(cm, it) }?.let { return it }
-        val candidate = runCatching { cm.activeNetwork }.getOrNull()
+        val tracked = currentNetwork?.takeIf { usableCarrierNetwork(cm, it) }
+        // A missed pre-31 capability callback must not pin every future attempt to LTE.
+        val preferred = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) firstUsableCarrierNetwork(cm) else null
+        if (tracked != null && (preferred == null || !preferCarrierNetwork(cm, preferred, tracked))) return tracked
+        val active = runCatching { cm.activeNetwork }.getOrNull()
             ?.takeIf { usableCarrierNetwork(cm, it) }
+        val candidate = AndroidCarrierPreferencePolicy.bestOf(listOfNotNull(active, preferred)) {
+            carrierPreference(cm, it)
+        }
             ?: firstUsableCarrierNetwork(cm)
             ?: return null
         synchronized(this) {
-            currentNetwork?.takeIf { usableCarrierNetwork(cm, it) }?.let { return it }
+            currentNetwork?.takeIf { usableCarrierNetwork(cm, it) }?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S || !preferCarrierNetwork(cm, candidate, it)) return it
+            }
             currentNetwork = candidate
             networkSignatures.putIfAbsent(candidate, physicalNetworkSignature(cm, candidate))
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) underlyingNets.add(candidate)
             return candidate
         }
     }
@@ -2519,28 +2570,25 @@ class VpnServiceImpl : VpnService() {
      * @return true when this call actually waited; the caller then skips its old backoff.
      */
     private suspend fun awaitUsableCarrier(): Boolean {
-        var waited = false
-        while (currentCoroutineContext().isActive) {
-            val cm = getSystemService(ConnectivityManager::class.java)
-                ?: throw IllegalStateException("ConnectivityManager is unavailable")
-            if (selectPhysicalCarrierNetwork(cm) != null) {
-                if (waited) {
-                    broadcastLog("Physical network available; reconnecting immediately")
-                }
-                return waited
-            }
-            if (!waited) {
-                waited = true
+        val waited = carrierGate.awaitUsable(
+            isUsable = {
+                val cm = getSystemService(ConnectivityManager::class.java)
+                    ?: throw IllegalStateException("ConnectivityManager is unavailable")
+                selectPhysicalCarrierNetwork(cm) != null
+            },
+            onWaiting = {
                 declareNoUnderlyingNetwork()
                 broadcastStatus(STATUS_CONNECTING)
                 showNotification("Waiting for Wi-Fi or mobile network")
                 broadcastLog(
                     "No usable physical network; reconnect parked until a carrier appears"
                 )
-            }
-            carrierAvailable.receive()
+            },
+        )
+        if (waited) {
+            broadcastLog("Physical network available; reconnecting immediately")
         }
-        throw kotlinx.coroutines.CancellationException("VPN service stopped")
+        return waited
     }
 
     /**
@@ -2600,9 +2648,13 @@ class VpnServiceImpl : VpnService() {
             .onFailure { Log.w("VpnSvc", "Could not clear underlying networks: ${it.message}") }
     }
 
-    private fun physicalNetworkSignature(cm: ConnectivityManager, network: Network): String {
-        val caps = cm.getNetworkCapabilities(network)
-        val links = cm.getLinkProperties(network)
+    private fun physicalNetworkSignature(
+        cm: ConnectivityManager,
+        network: Network,
+        snapshot: AndroidCarrierSnapshot<NetworkCapabilities, LinkProperties>? = null,
+    ): AndroidPhysicalNetworkSignature {
+        val caps = snapshot?.capabilities ?: cm.getNetworkCapabilities(network)
+        val links = snapshot?.links ?: cm.getLinkProperties(network)
         val transports = listOf(
             NetworkCapabilities.TRANSPORT_WIFI,
             NetworkCapabilities.TRANSPORT_CELLULAR,
@@ -2611,7 +2663,7 @@ class VpnServiceImpl : VpnService() {
         val addresses = links?.linkAddresses?.map { it.toString() }?.sorted().orEmpty()
         val routes = links?.routes?.map { it.toString() }?.sorted().orEmpty()
         val dns = links?.dnsServers?.mapNotNull { it.hostAddress }?.sorted().orEmpty()
-        return buildString {
+        val path = buildString {
             append(links?.interfaceName.orEmpty())
             append("|t=").append(transports)
             append("|validated=").append(caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true)
@@ -2620,6 +2672,14 @@ class VpnServiceImpl : VpnService() {
             append("|r=").append(routes.joinToString(","))
             append("|d=").append(dns.joinToString(","))
         }
+        return AndroidPhysicalNetworkSignature(path, links?.mtu ?: 0)
+    }
+
+    private fun reportCarrierMtuChange(previous: AndroidPhysicalNetworkSignature, next: AndroidPhysicalNetworkSignature) {
+        // The ABI has no narrow MTU-reprobe input. A new roaming candidate would unnecessarily
+        // replace a working socket/epoch. Runtime PMTU confirmation owns the UDP packet budget;
+        // TCP owns its path MTU in the kernel. Do not infer either budget from this link hint.
+        broadcastLog("Carrier link MTU changed ${previous.mtu} -> ${next.mtu}; keeping the current tunnel")
     }
 
     private fun registerScreenReceiver() {
@@ -2664,6 +2724,8 @@ class VpnServiceImpl : VpnService() {
      * generation while retaining the fail-closed TUN. The PARTIAL_WAKE_LOCK keeps the CPU
      * running, so Rust's suspend-clock detector alone cannot observe every Wi-Fi/NAT sleep. */
     private fun scheduleWakeReconnect(screenOffMs: Long) {
+        // Wake also helps a reconnect already waiting for the same physical Network.
+        carrierGate.signalChange()
         if (screenOffMs < 1_000L || liveStatus != STATUS_CONNECTED) return
         wakeReconnectJob?.cancel()
         wakeReconnectJob = coroutineScope?.launch {
@@ -2702,6 +2764,11 @@ class VpnServiceImpl : VpnService() {
                         "Device woke after ${screenOffMs / 1000}s screen-off — same network, " +
                             "keeping the tunnel"
                     )
+                    return@launch
+                }
+                if (net != null && signature != null && before != null && signature.isMtuOnlyChange(before)) {
+                    networkSignatures[net] = signature
+                    reportCarrierMtuChange(before, signature)
                     return@launch
                 }
                 // Adopt the signature we are about to reconnect onto, so the capability events
@@ -2854,7 +2921,6 @@ class VpnServiceImpl : VpnService() {
         cancelCarrierReplacementWait()
         val cb = netCallback
         netCallback = null
-        underlyingNets.clear()
         networkSignatures.clear()
         if (cb != null) {
             try { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(cb) } catch (_: Exception) {}
