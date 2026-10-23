@@ -71,6 +71,65 @@ validate the configuration and restart/reconnect to create new sockets. The glob
 The earlier accepted Android API34 ENONET limitation and excluded physical test
 platforms retain their original scope; this update does not reclassify them as fixed.
 
+### Linux candidate short test — 2026-10-22
+
+The exact packaged **0.8.3** ELF was tested on VM300/server and VM301/client:
+SHA-256 `95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7`,
+source `be4429ae8c870c88b2682619ba8246fae3f8a4b4`. Later transport and Android
+carrier-recovery changes are outside this test; it does not qualify the current
+development tree. These are not measurements
+of an earlier diagnostic candidate. Each VM had **2 vCPU / 2 GiB RAM**, Intel
+Core i5-8500, Linux `6.12.111+deb13-amd64`, iperf3 3.18 and a dedicated local
+test link. TUN MTU **1400**, `tun.tx_queue_len=1000` on both peers, two server
+TUN queues; **Recordizer required**, active PACKET_MUX_V1 verified in every session.
+Reality-TLS: genuine H2, handrolled and shaping, no padding/stealth/heartbeat.
+No manual tuning, reboot, package installation or rebuild was performed.
+
+Required-only subset: 12-profile functional check, external-IPv6 smoke checks
+of the four main profiles, **three speed repeats** of each main profile, extended
+TCP windows and before/after baselines: **32 sessions / 288 windows**. Speed
+windows were **10 s + 2 s warm-up**, TCP P1/P4 and UDP 300/600 Mbit/s, inner
+IPv4/IPv6 in both directions; UDP payload 1200. Off/prefer, mixed-version/mixed-load
+and long-soak gates are outside this run. UDP600 is a fixed offered load, not a ceiling.
+P4 means four iperf streams inside one tunnel; `gateway=false`, `dns=off`.
+
+TCP P4 receiver Mbit/s, median of three repeats:
+
+| Profile | IPv4 ↑ | IPv4 ↓ | IPv6 ↑ | IPv6 ↓ | Retr Σ | TUN TX Σ C/S |
+|---|---|---|---|---|---|---|
+| `tcp-faketls` | 1976.8 | 2054.3 | 1921.4 | 2045.0 | 14411 | 9222 / 11837 |
+| `tcp-reality-tls` | 1210.3 | 1208.0 | 1215.0 | 1291.2 | 8963 | 9370 / 9149 |
+| `udp-faketls` | 1165.9 | 1220.7 | 1137.0 | 1208.8 | 15349 | 14904 / 11642 |
+| `udp-quic` | 1096.3 | 1206.6 | 1104.9 | 1175.9 | 14874 | 10043 / 13197 |
+
+UDP600 receiver Mbit/s / **worst loss %** across the three repeats:
+
+| Profile | IPv4 ↑ | IPv4 ↓ | IPv6 ↑ | IPv6 ↓ | TUN TX Σ C/S |
+|---|---|---|---|---|---|
+| `tcp-faketls` | 599.6 / 0.0000 | 600.0 / 0.0088 | 599.8 / 0.0000 | 600.0 / 0.0000 | 0 / 0 |
+| `tcp-reality-tls` | 599.6 / 0.0034 | 600.0 / 0.0000 | 599.1 / 0.0010 | 600.0 / 0.0000 | 0 / 0 |
+| `udp-faketls` | 599.4 / 0.0000 | 600.0 / 0.0000 | 599.6 / 0.0059 | 600.0 / 0.0030 | 0 / 0 |
+| `udp-quic` | 599.6 / 0.0082 | 600.0 / 0.0000 | 599.6 / 0.0000 | 600.0 / 0.0000 | 0 / 0 |
+
+`Retr Σ` sums the 12 TCP P4 sender retransmit counts per profile. `TUN TX Σ C/S`
+sums client/server TX drops across the corresponding 12 windows (TCP P4 or UDP600).
+TUN observation includes warm-up and a short tail; iperf retransmits exclude warm-up.
+These are not identical counter intervals; FULL_RING was not traced in this test.
+
+Result: **`REVIEW_REQUIRED`**. 0/96 speed UDP windows exceeded 1% loss (worst 0.0088%); 3/64 speed cells had CV >5% (maximum 7.64%). Maximum baseline drift 2.07%, CV 1.46%. No all-drops-fixed or regression-free claim is made.
+Both guests passed **17/17 restoration checks**; boot IDs, resources, network,
+firewall, checked sysctls and prior `/opt/qeli-*` file hashes were unchanged.
+The tested ELF SHA was checked again on both guests and locally. Old binaries
+and raw were preserved; new raw remains separately on both guests at
+`/opt/qeli-release-short-083-required-20261022-r02`.
+
+[Full repeat-level data, TCP P1/UDP300, CPU/RSS, counters and baselines](https://github.com/litvinovtd/qeli/blob/v0.8.3/docs/data/benchmarks/release_short_083_required_2026-10-22.json);
+[short-test method and limitations](https://github.com/litvinovtd/qeli/blob/v0.8.3/docs/eng/manuals/RELEASE-SHORT-TEST.md).
+This local Linux test is not an Internet throughput guarantee, a matched regression
+A/B or a substitute for the remaining release/platform gates. Release remains a draft.
+The evidence identifies the tested snapshot; its release-tag link is not claimed live
+before that tag is published.
+
 ## Русский
 
 Обновление снимает ограничение TCP-буферов на каналах с большим RTT и добавляет
@@ -137,3 +196,62 @@ TCP A/B проверялся на 1/8 независимых клиентах с
 Fit-path, периодические NDP-анонсы и постоянный адаптер — отдельные этапы.
 Реальные Windows bindings и MLD-snooping провайдера не объявляются проверенными
 на основании mock/namespace-тестов.
+
+### Короткий тест Linux-кандидата — 2026-10-22
+
+На VM300/server и VM301/client проверен точный пакетный ELF **0.8.3**:
+SHA-256 `95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7`,
+исходники `be4429ae8c870c88b2682619ba8246fae3f8a4b4`. Последующие изменения
+транспорта и восстановления сети Android этим тестом не охвачены; он не является
+допуском текущего дерева разработки. Это не перенос замеров
+прежнего диагностического кандидата. Каждая ВМ: **2 vCPU / 2 GiB RAM**, Intel
+Core i5-8500, Linux `6.12.111+deb13-amd64`, iperf3 3.18, выделенный локальный
+тестовый линк. TUN MTU **1400**, `tun.tx_queue_len=1000` на обеих сторонах,
+две серверные TUN-очереди; **Recordizer required**, активный PACKET_MUX_V1
+подтверждён в каждой сессии. Reality-TLS: genuine H2, handrolled и shaping,
+без padding/stealth/heartbeat. Ручного тюнинга, reboot, установок и пересборки нет.
+
+Required-only подмножество: функциональная проверка 12 профилей, внешний IPv6
+четырёх основных, **три скоростных повтора** каждого основного профиля, удлинённые
+TCP-окна и baseline до/после — **32 сессии / 288 окон**. Скоростные окна:
+**10 с + 2 с прогрева**, TCP P1/P4 и UDP 300/600 Мбит/с, внутренние IPv4/IPv6
+в обе стороны; UDP payload 1200. Off/prefer, смешанные версии/нагрузки и длительный
+soak сюда не входят. UDP600 — фиксированная предложенная нагрузка, не потолок.
+P4 — четыре потока iperf внутри одного туннеля; `gateway=false`, `dns=off`.
+
+TCP P4: receiver Мбит/с, медиана трёх повторов:
+
+| Профиль | IPv4 ↑ | IPv4 ↓ | IPv6 ↑ | IPv6 ↓ | Retr Σ | TUN TX Σ К/С |
+|---|---|---|---|---|---|---|
+| `tcp-faketls` | 1976.8 | 2054.3 | 1921.4 | 2045.0 | 14411 | 9222 / 11837 |
+| `tcp-reality-tls` | 1210.3 | 1208.0 | 1215.0 | 1291.2 | 8963 | 9370 / 9149 |
+| `udp-faketls` | 1165.9 | 1220.7 | 1137.0 | 1208.8 | 15349 | 14904 / 11642 |
+| `udp-quic` | 1096.3 | 1206.6 | 1104.9 | 1175.9 | 14874 | 10043 / 13197 |
+
+UDP600: receiver Мбит/с / **худшая потеря %** из трёх повторов:
+
+| Профиль | IPv4 ↑ | IPv4 ↓ | IPv6 ↑ | IPv6 ↓ | TUN TX Σ К/С |
+|---|---|---|---|---|---|
+| `tcp-faketls` | 599.6 / 0.0000 | 600.0 / 0.0088 | 599.8 / 0.0000 | 600.0 / 0.0000 | 0 / 0 |
+| `tcp-reality-tls` | 599.6 / 0.0034 | 600.0 / 0.0000 | 599.1 / 0.0010 | 600.0 / 0.0000 | 0 / 0 |
+| `udp-faketls` | 599.4 / 0.0000 | 600.0 / 0.0000 | 599.6 / 0.0059 | 600.0 / 0.0030 | 0 / 0 |
+| `udp-quic` | 599.6 / 0.0082 | 600.0 / 0.0000 | 599.6 / 0.0000 | 600.0 / 0.0000 | 0 / 0 |
+
+`Retr Σ` — сумма sender retransmits по 12 TCP P4 окнам профиля. `TUN TX Σ К/С` —
+сумма TX drops клиента/сервера по соответствующим 12 окнам (TCP P4 или UDP600).
+Наблюдение TUN включает прогрев и небольшой хвост, retransmits iperf исключают
+прогрев; интервалы не тождественны. FULL_RING в этом тесте не трассировался.
+
+Результат: **`REVIEW_REQUIRED`**. Порог потерь 1% превышен в 0/96 скоростных UDP-окнах (максимум 0.0088%); CV >5% у 3/64 скоростных ячеек (максимум 7.64%). Максимальные baseline drift 2.07%, CV 1.46%. Устранение всех drops и отсутствие регрессий не заявляются.
+Обе ВМ прошли **17/17 проверок восстановления**: boot IDs, ресурсы, сеть, firewall,
+проверяемые sysctl и хеши прежних файлов `/opt/qeli-*` совпали. SHA проверенного
+ELF повторно сверен на обоих гостях и локально. Старые бинарники и raw сохранены;
+новые raw отдельно на обеих ВМ:
+`/opt/qeli-release-short-083-required-20261022-r02`.
+
+[Все повторы, TCP P1/UDP300, CPU/RSS, счётчики и baseline](https://github.com/litvinovtd/qeli/blob/v0.8.3/docs/data/benchmarks/release_short_083_required_2026-10-22.json);
+[методика короткого теста и ограничения](https://github.com/litvinovtd/qeli/blob/v0.8.3/docs/ru/manuals/RELEASE-SHORT-TEST.md).
+Это локальная Linux-проверка, не гарантия скорости в Интернете, не сопоставимый
+регрессионный A/B и не замена остальных release/platform gates. Релиз остаётся черновиком.
+Данные относятся к указанному снимку; ссылка на release tag не объявляется рабочей
+до публикации соответствующего тега.
