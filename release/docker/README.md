@@ -39,8 +39,13 @@ CI (`.github/workflows/docker-publish.yml`) builds a versioned multi-arch image
 after release-tag admission. `:latest` is promoted only for the highest stable Git
 version with a published, non-prerelease GitHub Release; it does not follow beta releases.
 
+An explicit maintainer recovery can separately promote a verified beta image to
+`:latest`, as requested for 0.8.2 in [issue #200](https://github.com/litvinovtd/qeli/issues/200).
+This does not change the GitHub Release's beta status or the automatic workflow's
+stable-only policy. Pin `:0.8.2` when an exact version is required.
+
 ```sh
-docker pull ghcr.io/litvinovtd/qeli:latest     # stable channel; may be older than a beta
+docker pull ghcr.io/litvinovtd/qeli:latest     # automatic stable channel; explicit recovery promotions may include a beta
 docker pull ghcr.io/litvinovtd/qeli:0.8.2      # beta, only after its Docker workflow succeeds
 ```
 
