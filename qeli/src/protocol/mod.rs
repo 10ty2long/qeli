@@ -8,6 +8,7 @@ pub mod ip;
 pub mod obfs;
 pub mod obfuscate;
 pub mod packet;
+pub(crate) mod pmtu;
 pub mod quic;
 pub mod realtls;
 pub mod recordizer;

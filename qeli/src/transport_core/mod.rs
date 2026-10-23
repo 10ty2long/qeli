@@ -32,6 +32,10 @@ use zeroize::Zeroize;
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) mod buffer_pool;
 
+#[cfg(feature = "server")]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub(crate) mod pooled_record;
+
 #[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub(crate) mod carrier;
 

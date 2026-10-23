@@ -22,6 +22,7 @@ use super::record::RecordCrypto;
 use super::stream::RealTlsStream;
 use crate::crypto::{mlkem, Keypair, PublicKey};
 use crate::protocol::obfs::SplitStream;
+use crate::protocol::stream_io::{StallGuard, WriteProgress};
 use crate::protocol::FakeTlsHandshake;
 use rustls::ServerConfig;
 use std::io;
@@ -38,6 +39,7 @@ pub struct PrefixedStream<S> {
     prefix: Vec<u8>,
     pos: usize,
     inner: S,
+    write_progress: Option<WriteProgress>,
 }
 
 impl<S> PrefixedStream<S> {
@@ -46,6 +48,20 @@ impl<S> PrefixedStream<S> {
             prefix,
             pos: 0,
             inner,
+            write_progress: None,
+        }
+    }
+
+    pub(crate) fn with_write_progress(
+        prefix: Vec<u8>,
+        inner: S,
+        progress: Option<WriteProgress>,
+    ) -> Self {
+        Self {
+            prefix,
+            pos: 0,
+            inner,
+            write_progress: progress,
         }
     }
 }
@@ -85,10 +101,16 @@ where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
     type R = ReadHalf<Self>;
-    type W = WriteHalf<Self>;
+    type W = StallGuard<WriteHalf<Self>>;
+
+    fn write_progress(&self) -> Option<WriteProgress> {
+        self.write_progress.clone()
+    }
 
     fn split_io(self) -> (Self::R, Self::W) {
-        tokio::io::split(self)
+        let progress = self.write_progress.clone();
+        let (read, write) = tokio::io::split(self);
+        (read, StallGuard::observing(write, progress))
     }
 }
 
@@ -136,13 +158,16 @@ pub async fn terminate<S>(
     client_hello: Vec<u8>,
     stream: S,
     config: Arc<ServerConfig>,
-) -> io::Result<TlsStream<PrefixedStream<S>>>
+) -> io::Result<StallGuard<TlsStream<PrefixedStream<StallGuard<S>>>>>
 where
     S: AsyncRead + AsyncWrite + Unpin,
 {
-    TlsAcceptor::from(config)
+    let stream = StallGuard::new(stream);
+    let progress = stream.progress();
+    let tls = TlsAcceptor::from(config)
         .accept(PrefixedStream::new(client_hello, stream))
-        .await
+        .await?;
+    Ok(StallGuard::observing(tls, Some(progress)))
 }
 
 /// Owned read/write halves so `handler::handle_client` can run the tunnel inside

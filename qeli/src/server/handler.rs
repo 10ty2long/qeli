@@ -9,8 +9,7 @@ use crate::crypto::{
 use crate::protocol::obfs::SplitStream;
 use crate::protocol::stream_io::WriteAllFlush;
 use crate::protocol::{
-    read_record, read_record_into, read_tls_record, FakeTlsHandshake, Framing, Obfuscator,
-    PacketCodec,
+    read_record, read_tls_record, FakeTlsHandshake, Framing, Obfuscator, PacketCodec,
 };
 use crate::server::{
     lock_or_recover, ExitAccess, ProfileRuntime, ServerState, ServerTunPacket, TunIngress,
@@ -2311,7 +2310,7 @@ async fn run_stream<R, W>(
     addr: SocketAddr,
     tun_tx: TunIngress,
     mut read_half: R,
-    mut write_half: W,
+    write_half: W,
     server_tx: Arc<std::sync::Mutex<PacketCodec>>,
     server_rx: PacketCodec,
     framing: Framing,
@@ -2321,6 +2320,8 @@ async fn run_stream<R, W>(
     R: AsyncRead + Unpin + Send + 'static,
     W: crate::protocol::obfs::CarrierWriteControl + Unpin + Send,
 {
+    let progress = write_half.write_progress();
+    let mut write_half = crate::protocol::stream_io::StallGuard::observing(write_half, progress);
     let pcfg = &profile.config;
     let hb_config = &pcfg.obfuscation.heartbeat;
     let heartbeat_enabled = hb_config.enabled
@@ -2521,7 +2522,7 @@ async fn run_stream<R, W>(
     let last_rx = Arc::new(AtomicU64::new(0));
     let (dead_tx, mut dead_rx) = mpsc::channel::<()>(1);
 
-    {
+    let reader_abort = {
         let tun_tx = tun_tx.clone();
         let profile_r = profile.clone();
         let bytes_recv = session.bytes_recv.clone();
@@ -2530,7 +2531,7 @@ async fn run_stream<R, W>(
         let last_rx = last_rx.clone();
         let addr_r = addr;
         let mut shutdown_rx = shutdown_rx;
-        profile.tasks.spawn(async move {
+        profile.tasks.spawner().spawn_abortable(async move {
             let recordizer_runtime = session_r.recordizer.as_ref().map(|config| {
                 crate::protocol::recordizer::RuntimeConfig::from_config(
                     config,
@@ -2542,34 +2543,21 @@ async fn run_stream<R, W>(
             let mut mux_rx =
                 recordizer_runtime.map(crate::protocol::recordizer::Reassembler::new);
             'reader: loop {
-                // Acquire before reading so queue depth and allocation count are one fixed
-                // budget. Race both the pool wait and the socket read against shutdown: a
-                // kicked client must not remain parked on either resource.
-                let mut plaintext = tokio::select! {
-                    biased;
-                    _ = shutdown_rx.changed() => break,
-                    packet = tun_tx.pool.acquire() => match packet {
-                        Some(packet) => packet,
-                        None => break,
-                    },
-                };
-                // Cancellation-safety invariant: cancelling read_record_into may leave the
-                // framing reader between a header and its payload. That is safe here only
-                // because shutdown_rx is terminal for this stream: after this branch we break,
-                // drop read_half and never attempt another record read on it. Do not add a
-                // "soft" pause/reload branch to this select without moving the reader into an
-                // owning task or retaining its partial-record state across cancellation.
+                // Idle streams must not reserve the shared TUN pool. Read one prefix byte
+                // before acquiring a slot; the rest of the record retains the same bounded
+                // pool/backpressure policy. Cancellation remains terminal: never reuse a
+                // stream after consuming a prefix or a partial record.
                 let record = tokio::select! {
                     biased;
                     _ = shutdown_rx.changed() => break,
-                    result = read_record_into(
+                    result = crate::transport_core::pooled_record::read_pooled_record(
                         &mut read_half,
                         framing,
-                        plaintext.as_vec_mut(),
+                        &tun_tx.pool,
                     ) => result,
                 };
                 match record {
-                    Ok(()) => {
+                    Ok(mut plaintext) => {
                         let now = base.elapsed().as_millis() as u64;
                         match server_rx.decrypt_packet_in_place(plaintext.as_vec_mut()) {
                             Ok(()) => {
@@ -2707,8 +2695,8 @@ async fn run_stream<R, W>(
                 }
             }
             let _ = dead_tx.try_send(());
-        });
-    }
+        })
+    };
 
     let mut idle_check = tokio::time::interval(Duration::from_secs(5));
     idle_check.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -2758,311 +2746,338 @@ async fn run_stream<R, W>(
     });
     let mut recordizer = recordizer_runtime.map(crate::protocol::recordizer::Recordizer::new);
 
-    'writer: loop {
-        let mux_deadline = recordizer
-            .as_ref()
-            .and_then(|mux| mux.deadline())
-            .map(tokio::time::Instant::from_std)
-            .unwrap_or_else(|| tokio::time::Instant::now() + Duration::from_secs(86_400));
-        #[cfg(feature = "experimental-roaming")]
-        let terminal_management = terminal_management_rx.recv();
-        #[cfg(not(feature = "experimental-roaming"))]
-        let terminal_management = std::future::pending::<()>();
-        tokio::pin!(terminal_management);
-        tokio::select! {
-            biased;
-
-            control = std::future::poll_fn(|cx| crate::protocol::obfs::CarrierWriteControl::poll_control(&mut write_half,cx)) => {
-                if control.is_err() {break;}
+    // Reapers and cancellation supervise the whole pump, not individual select
+    // branches. A pending record/flush or long pacing wait cannot hide expiry.
+    let health = async {
+        loop {
+            idle_check.tick().await;
+            let now = base.elapsed().as_millis() as u64;
+            if idle_ms > 0 && now.saturating_sub(last_act.load(Ordering::Relaxed)) > idle_ms {
+                break;
             }
-
-            _terminal_event = &mut terminal_management => {
-                #[cfg(feature = "experimental-roaming")]
-                {
-                let Some(terminal) = _terminal_event else { break };
-                let mut delivered = true;
-                'terminal: for _ in 0..terminal.repetitions {
-                    for frame in &terminal.frames {
-                        if !encrypt_server_stream_payload(
-                            &server_tx,
-                            frame,
-                            crate::protocol::packet::MAX_TUNNEL_MTU,
-                            pcfg,
-                            &mut wire_record,
-                            &mut padding,
-                        ) || write_half.write_all_flush(&wire_record).await.is_err()
-                        {
-                            delivered = false;
-                            break 'terminal;
-                        }
-                        session
-                            .bytes_sent
-                            .fetch_add(frame.len() as u64, Ordering::Relaxed);
-                        last_tx_ms = base.elapsed().as_millis() as u64;
-                        heartbeat_deadline = tokio::time::Instant::now()
-                            + crate::protocol::randomized_heartbeat_delay(
-                                heartbeat_interval,
-                                Duration::from_millis(hb_config.jitter_ms),
-                            );
-                    }
-                }
-                let _ = terminal.sent.send(delivered);
-                if !delivered {
-                    break 'writer;
-                }
-                }
-                #[cfg(not(feature = "experimental-roaming"))]
-                unreachable!("disabled terminal-management future is pending");
-            }
-
-            _ = kick_rx.recv() => { break; }
-            _ = dead_rx.recv() => { break; }
-
-            Some(packet) = rx.recv() => {
-                last_act.store(base.elapsed().as_millis() as u64, Ordering::Relaxed);
-                crate::trace::record(
-                    crate::trace::Dir::Tx, "server.stream", packet.len(), stream_id,
-                );
-                // Aggregate per-session download throttle: all bonded writers share this
-                // bucket, so multipath cannot multiply the cap by N. Upload has an
-                // independent bucket, allowing the configured rate in both directions.
-                // Stealth mode caps the data plane to the (lower) stealth rate so the
-                // flow stops looking like a line-rate bulk download.
-                let priority_control =
-                    crate::protocol::control_v2::is_control_v2(packet.as_ref());
-                let bw = session.bandwidth_limit_mbps.load(Ordering::Relaxed);
-                let limit = if shaping_on && shaper.stealth() {
-                    let sr = shaper.stealth_rate_mbps();
-                    if bw == 0 { sr } else { bw.min(sr) }
-                } else {
-                    bw
-                };
-                let delay = if priority_control {
-                    Duration::ZERO
-                } else {
-                    session
-                        .rates
-                        .download
-                        .consume(packet.len() as u64 * 8, limit)
-                };
-                if shaping_on && shaper.stealth() && !delay.is_zero() {
-                    // STEALTH: instead of one smooth sleep (which evens the spacing
-                    // into a metronome — a WORSE tell), fill the rate-cap gap with
-                    // jittered small cover packets. This (a) breaks the 100% full-MTU
-                    // size histogram and (b) makes the timing irregular (not a flat
-                    // rate). Cover is budget-capped separately from the data rate.
-                    let pacing = crate::protocol::shaper::StealthPacing::new(delay);
-                    while let Some(step) = pacing.next_step() {
-                        let csize = shaper.next_size(&mut rand::rng());
-                        let cover_ready = if step.cover && shaper.try_spend(csize, std::time::Instant::now()) {
-                            let mut obf = Obfuscator::new();
-                            obf.generate_padding_into(
-                                csize as u16,
-                                csize as u16,
-                                &mut padding,
-                            );
-                            let mut codec = lock_or_recover(&server_tx, "handler::stealth_cover");
-                            codec
-                                .encrypt_packet_into(&[], &padding, &mut cover_record)
-                                .is_ok()
-                        } else {
-                            false
-                        };
-                        if cover_ready && write_half.write_all_flush(&cover_record).await.is_err() {
-                            break 'writer;
-                        }
-                        tokio::time::sleep_until(step.resume_at).await;
-                    }
-                } else if !delay.is_zero() {
-                    tokio::time::sleep(delay).await;
-                }
-                let packet_len = packet.len();
-                session.bytes_sent.fetch_add(packet_len as u64, Ordering::Relaxed);
-                if let Some(mux) = recordizer.as_mut() {
-                    let ready = mux.push(packet.as_ref(), std::time::Instant::now());
-                    drop(packet);
-                    let mut payloads = match ready {
-                        Ok(payloads) => payloads,
-                        Err(error) => {
-                            log::debug!("server TCP recordizer dropped a packet: {error}");
-                            continue;
-                        }
-                    };
-                    if priority_control {
-                        if let Some(payload) = mux.flush() {
-                            payloads.push(payload);
-                        }
-                    }
-                    for payload in payloads {
-                        if !encrypt_server_stream_payload(
-                            &server_tx,
-                            &payload,
-                            crate::protocol::packet::MAX_TUNNEL_MTU,
-                            pcfg,
-                            &mut wire_record,
-                            &mut padding,
-                        ) {
-                            continue;
-                        }
-                        if write_half.write_all_flush(&wire_record).await.is_err() {
-                            break 'writer;
-                        }
-                        last_tx_ms = base.elapsed().as_millis() as u64;
-                        heartbeat_deadline = tokio::time::Instant::now()
-                            + crate::protocol::randomized_heartbeat_delay(
-                                heartbeat_interval,
-                                Duration::from_millis(hb_config.jitter_ms),
-                            );
-                    }
-                } else {
-                    let packet_budget = crate::protocol::ip::parse_ip_packet(packet.as_ref())
-                        .ok()
-                        .and_then(|meta| session.downlink_mtu(pcfg.tun.mtu, meta.version))
-                        .map(usize::from)
-                        .unwrap_or_else(|| pcfg.tun.mtu.max(0) as usize)
-                        .max(packet_len)
-                        .min(crate::protocol::packet::MAX_TUNNEL_MTU);
-                    let encrypted = encrypt_server_stream_payload(
-                        &server_tx,
-                        packet.as_ref(),
-                        packet_budget,
-                        pcfg,
-                        &mut wire_record,
-                        &mut padding,
+            if let Some(rx_dead) = rx_dead_ms {
+                if now.saturating_sub(last_rx.load(Ordering::Relaxed)) > rx_dead {
+                    log::info!(
+                        "Stream {} ({}) reaped: no inbound for >{}s on profile '{}'",
+                        addr,
+                        crate::util::log_identity(&session.username),
+                        rx_dead / 1000,
+                        profile.name
                     );
-                    drop(packet);
-                    if encrypted {
-                        if write_half.write_all_flush(&wire_record).await.is_err() {
-                            break;
-                        }
-                        last_tx_ms = base.elapsed().as_millis() as u64;
-                        heartbeat_deadline = tokio::time::Instant::now()
-                            + crate::protocol::randomized_heartbeat_delay(
-                                heartbeat_interval,
-                                Duration::from_millis(hb_config.jitter_ms),
-                            );
-                    }
-                }
-            }
-
-            _ = tokio::time::sleep_until(mux_deadline),
-                if recordizer.as_ref().is_some_and(|mux| mux.is_pending()) =>
-            {
-                if let Some(payload) = recordizer
-                    .as_mut()
-                    .and_then(|mux| mux.flush_due(std::time::Instant::now()))
-                {
-                    let encrypted = encrypt_server_stream_payload(
-                        &server_tx,
-                        &payload,
-                        crate::protocol::packet::MAX_TUNNEL_MTU,
-                        pcfg,
-                        &mut wire_record,
-                        &mut padding,
-                    );
-                    if encrypted && write_half.write_all_flush(&wire_record).await.is_err() {
-                        break;
-                    }
-                    last_tx_ms = base.elapsed().as_millis() as u64;
-                    heartbeat_deadline = tokio::time::Instant::now()
-                        + crate::protocol::randomized_heartbeat_delay(
-                            heartbeat_interval,
-                            Duration::from_millis(hb_config.jitter_ms),
-                        );
-                }
-            }
-
-            _ = tokio::time::sleep_until(heartbeat_deadline), if heartbeat_enabled => {
-                let heartbeat_ready = {
-                    let mut obf = Obfuscator::new();
-                    obf.generate_padding_into(
-                        hb_config.data_size_bytes,
-                        hb_config.data_size_bytes.saturating_add(32),
-                        &mut padding,
-                    );
-                    let mut codec = lock_or_recover(&server_tx, "handler::heartbeat");
-                    codec
-                        .encrypt_packet_into(&[], &padding, &mut cover_record)
-                        .is_ok()
-                };
-                if heartbeat_ready && write_half.write_all_flush(&cover_record).await.is_err() {
                     break;
-                }
-                let now_ms = base.elapsed().as_millis() as u64;
-                last_act.store(now_ms, Ordering::Relaxed);
-                last_tx_ms = now_ms;
-                heartbeat_deadline = tokio::time::Instant::now()
-                    + crate::protocol::randomized_heartbeat_delay(
-                        heartbeat_interval,
-                        Duration::from_millis(hb_config.jitter_ms),
-                    );
-            }
-            _ = tokio::time::sleep_until(cover_deadline), if shaping_on => {
-                let now_ms = base.elapsed().as_millis() as u64;
-                // Normally fill only GENUINE idle (save budget when traffic flows).
-                // In STEALTH, run cover UNDER LOAD too: the small cover packets mix
-                // into the rate-capped full-MTU stream, breaking the size+timing tell.
-                if shaper.stealth() || now_ms.saturating_sub(last_tx_ms) >= 50 {
-                    let size = shaper.next_size(&mut rand::rng());
-                    if shaper.try_spend(size, std::time::Instant::now()) {
-                        let cover_ready = {
-                            let mut obf = Obfuscator::new();
-                            obf.generate_padding_into(
-                                size as u16,
-                                size as u16,
-                                &mut padding,
-                            );
-                            let mut codec = lock_or_recover(&server_tx, "handler::cover");
-                            codec
-                                .encrypt_packet_into(&[], &padding, &mut cover_record)
-                                .is_ok()
-                        };
-                        if cover_ready {
-                            if write_half.write_all_flush(&cover_record).await.is_err() {
-                                break;
-                            }
-                            let n = base.elapsed().as_millis() as u64;
-                            last_act.store(n, Ordering::Relaxed);
-                            last_tx_ms = n;
-                        }
-                    }
-                }
-                cover_deadline =
-                    tokio::time::Instant::now() + shaper.next_gap(&mut rand::rng());
-            }
-
-            _ = idle_check.tick() => {
-                // saturating_sub, not `-`: `now` is sampled before the atomic load, and the
-                // READER task (a different task) writes `last_act`/`last_rx` in between. A
-                // timestamp newer than `now` therefore happens under load, and release
-                // builds have `overflow-checks` off — plain subtraction wrapped to ~2^64,
-                // sailed past the threshold and reaped a perfectly healthy session. The
-                // cover-traffic arm above already uses saturating_sub for the same value.
-                // (Audit 2026-07-27, F2.)
-                let now = base.elapsed().as_millis() as u64;
-                if idle_timeout.as_secs() > 0
-                    && now.saturating_sub(last_act.load(Ordering::Relaxed)) > idle_ms {
-                    break;
-                }
-                // An RX deadline is meaningful only while the client promises
-                // heartbeat/shaping traffic. With both disabled a healthy TCP tunnel
-                // may legitimately be silent for hours; the old 120 s fallback reaped it.
-                if let Some(rx_dead) = rx_dead_ms {
-                    if now.saturating_sub(last_rx.load(Ordering::Relaxed)) > rx_dead {
-                        log::info!("Stream {} ({}) reaped: no inbound for >{}s on profile '{}'",
-                            addr, crate::util::log_identity(&session.username), rx_dead / 1000, profile.name);
-                        break;
-                    }
                 }
             }
         }
+    };
+    {
+        let pump = async {
+            'writer: loop {
+                let mux_deadline = recordizer
+                    .as_ref()
+                    .and_then(|mux| mux.deadline())
+                    .map(tokio::time::Instant::from_std)
+                    .unwrap_or_else(|| tokio::time::Instant::now() + Duration::from_secs(86_400));
+                #[cfg(feature = "experimental-roaming")]
+                let terminal_management = terminal_management_rx.recv();
+                #[cfg(not(feature = "experimental-roaming"))]
+                let terminal_management = std::future::pending::<()>();
+                tokio::pin!(terminal_management);
+                tokio::select! {
+                    biased;
+
+                    control = std::future::poll_fn(|cx| crate::protocol::obfs::CarrierWriteControl::poll_control(&mut write_half,cx)) => {
+                        if control.is_err() {break;}
+                    }
+
+                    _terminal_event = &mut terminal_management => {
+                        #[cfg(feature = "experimental-roaming")]
+                        {
+                        let Some(terminal) = _terminal_event else { break };
+                        let mut delivered = true;
+                        'terminal: for _ in 0..terminal.repetitions {
+                            for frame in &terminal.frames {
+                                if !encrypt_server_stream_payload(
+                                    &server_tx,
+                                    frame,
+                                    crate::protocol::packet::MAX_TUNNEL_MTU,
+                                    pcfg,
+                                    &mut wire_record,
+                                    &mut padding,
+                                ) || write_half.write_all_flush(&wire_record).await.is_err()
+                                {
+                                    delivered = false;
+                                    break 'terminal;
+                                }
+                                session
+                                    .bytes_sent
+                                    .fetch_add(frame.len() as u64, Ordering::Relaxed);
+                                last_tx_ms = base.elapsed().as_millis() as u64;
+                                heartbeat_deadline = tokio::time::Instant::now()
+                                    + crate::protocol::randomized_heartbeat_delay(
+                                        heartbeat_interval,
+                                        Duration::from_millis(hb_config.jitter_ms),
+                                    );
+                            }
+                        }
+                        let _ = terminal.sent.send(delivered);
+                        if !delivered {
+                            break 'writer;
+                        }
+                        }
+                        #[cfg(not(feature = "experimental-roaming"))]
+                        unreachable!("disabled terminal-management future is pending");
+                    }
+
+                    Some(packet) = rx.recv() => {
+                        last_act.store(base.elapsed().as_millis() as u64, Ordering::Relaxed);
+                        crate::trace::record(
+                            crate::trace::Dir::Tx, "server.stream", packet.len(), stream_id,
+                        );
+                        // Aggregate per-session download throttle: all bonded writers share this
+                        // bucket, so multipath cannot multiply the cap by N. Upload has an
+                        // independent bucket, allowing the configured rate in both directions.
+                        // Stealth mode caps the data plane to the (lower) stealth rate so the
+                        // flow stops looking like a line-rate bulk download.
+                        let priority_control =
+                            crate::protocol::control_v2::is_control_v2(packet.as_ref());
+                        let bw = session.bandwidth_limit_mbps.load(Ordering::Relaxed);
+                        let limit = if shaping_on && shaper.stealth() {
+                            let sr = shaper.stealth_rate_mbps();
+                            if bw == 0 { sr } else { bw.min(sr) }
+                        } else {
+                            bw
+                        };
+                        let delay = if priority_control {
+                            Duration::ZERO
+                        } else {
+                            session
+                                .rates
+                                .download
+                                .consume(packet.len() as u64 * 8, limit)
+                        };
+                        if shaping_on && shaper.stealth() && !delay.is_zero() {
+                            // STEALTH: instead of one smooth sleep (which evens the spacing
+                            // into a metronome — a WORSE tell), fill the rate-cap gap with
+                            // jittered small cover packets. This (a) breaks the 100% full-MTU
+                            // size histogram and (b) makes the timing irregular (not a flat
+                            // rate). Cover is budget-capped separately from the data rate.
+                            let pacing = crate::protocol::shaper::StealthPacing::new(delay);
+                            while let Some(step) = pacing.next_step() {
+                                let csize = shaper.next_size(&mut rand::rng());
+                                let cover_ready = if step.cover && shaper.try_spend(csize, std::time::Instant::now()) {
+                                    let mut obf = Obfuscator::new();
+                                    obf.generate_padding_into(
+                                        csize as u16,
+                                        csize as u16,
+                                        &mut padding,
+                                    );
+                                    let mut codec = lock_or_recover(&server_tx, "handler::stealth_cover");
+                                    codec
+                                        .encrypt_packet_into(&[], &padding, &mut cover_record)
+                                        .is_ok()
+                                } else {
+                                    false
+                                };
+                                if cover_ready && write_half.write_all_flush(&cover_record).await.is_err() {
+                                    break 'writer;
+                                }
+                                tokio::time::sleep_until(step.resume_at).await;
+                            }
+                        } else if !delay.is_zero() {
+                            tokio::time::sleep(delay).await;
+                        }
+                        let packet_len = packet.len();
+                        session.bytes_sent.fetch_add(packet_len as u64, Ordering::Relaxed);
+                        if let Some(mux) = recordizer.as_mut() {
+                            let ready = mux.push(packet.as_ref(), std::time::Instant::now());
+                            drop(packet);
+                            let mut payloads = match ready {
+                                Ok(payloads) => payloads,
+                                Err(error) => {
+                                    log::debug!("server TCP recordizer dropped a packet: {error}");
+                                    continue;
+                                }
+                            };
+                            if priority_control {
+                                if let Some(payload) = mux.flush() {
+                                    payloads.push(payload);
+                                }
+                            }
+                            for payload in payloads {
+                                if !encrypt_server_stream_payload(
+                                    &server_tx,
+                                    &payload,
+                                    crate::protocol::packet::MAX_TUNNEL_MTU,
+                                    pcfg,
+                                    &mut wire_record,
+                                    &mut padding,
+                                ) {
+                                    continue;
+                                }
+                                if write_half.write_all_flush(&wire_record).await.is_err() {
+                                    break 'writer;
+                                }
+                                last_tx_ms = base.elapsed().as_millis() as u64;
+                                heartbeat_deadline = tokio::time::Instant::now()
+                                    + crate::protocol::randomized_heartbeat_delay(
+                                        heartbeat_interval,
+                                        Duration::from_millis(hb_config.jitter_ms),
+                                    );
+                            }
+                        } else {
+                            let packet_budget = crate::protocol::ip::parse_ip_packet(packet.as_ref())
+                                .ok()
+                                .and_then(|meta| session.downlink_mtu(pcfg.tun.mtu, meta.version))
+                                .map(usize::from)
+                                .unwrap_or_else(|| pcfg.tun.mtu.max(0) as usize)
+                                .max(packet_len)
+                                .min(crate::protocol::packet::MAX_TUNNEL_MTU);
+                            let encrypted = encrypt_server_stream_payload(
+                                &server_tx,
+                                packet.as_ref(),
+                                packet_budget,
+                                pcfg,
+                                &mut wire_record,
+                                &mut padding,
+                            );
+                            drop(packet);
+                            if encrypted {
+                                if write_half.write_all_flush(&wire_record).await.is_err() {
+                                    break;
+                                }
+                                last_tx_ms = base.elapsed().as_millis() as u64;
+                                heartbeat_deadline = tokio::time::Instant::now()
+                                    + crate::protocol::randomized_heartbeat_delay(
+                                        heartbeat_interval,
+                                        Duration::from_millis(hb_config.jitter_ms),
+                                    );
+                            }
+                        }
+                    }
+
+                    _ = tokio::time::sleep_until(mux_deadline),
+                        if recordizer.as_ref().is_some_and(|mux| mux.is_pending()) =>
+                    {
+                        if let Some(payload) = recordizer
+                            .as_mut()
+                            .and_then(|mux| mux.flush_due(std::time::Instant::now()))
+                        {
+                            let encrypted = encrypt_server_stream_payload(
+                                &server_tx,
+                                &payload,
+                                crate::protocol::packet::MAX_TUNNEL_MTU,
+                                pcfg,
+                                &mut wire_record,
+                                &mut padding,
+                            );
+                            if encrypted && write_half.write_all_flush(&wire_record).await.is_err() {
+                                break;
+                            }
+                            last_tx_ms = base.elapsed().as_millis() as u64;
+                            heartbeat_deadline = tokio::time::Instant::now()
+                                + crate::protocol::randomized_heartbeat_delay(
+                                    heartbeat_interval,
+                                    Duration::from_millis(hb_config.jitter_ms),
+                                );
+                        }
+                    }
+
+                    _ = tokio::time::sleep_until(heartbeat_deadline), if heartbeat_enabled => {
+                        let heartbeat_ready = {
+                            let mut obf = Obfuscator::new();
+                            obf.generate_padding_into(
+                                hb_config.data_size_bytes,
+                                hb_config.data_size_bytes.saturating_add(32),
+                                &mut padding,
+                            );
+                            let mut codec = lock_or_recover(&server_tx, "handler::heartbeat");
+                            codec
+                                .encrypt_packet_into(&[], &padding, &mut cover_record)
+                                .is_ok()
+                        };
+                        if heartbeat_ready && write_half.write_all_flush(&cover_record).await.is_err() {
+                            break;
+                        }
+                        let now_ms = base.elapsed().as_millis() as u64;
+                        last_act.store(now_ms, Ordering::Relaxed);
+                        last_tx_ms = now_ms;
+                        heartbeat_deadline = tokio::time::Instant::now()
+                            + crate::protocol::randomized_heartbeat_delay(
+                                heartbeat_interval,
+                                Duration::from_millis(hb_config.jitter_ms),
+                            );
+                    }
+                    _ = tokio::time::sleep_until(cover_deadline), if shaping_on => {
+                        let now_ms = base.elapsed().as_millis() as u64;
+                        // Normally fill only GENUINE idle (save budget when traffic flows).
+                        // In STEALTH, run cover UNDER LOAD too: the small cover packets mix
+                        // into the rate-capped full-MTU stream, breaking the size+timing tell.
+                        if shaper.stealth() || now_ms.saturating_sub(last_tx_ms) >= 50 {
+                            let size = shaper.next_size(&mut rand::rng());
+                            if shaper.try_spend(size, std::time::Instant::now()) {
+                                let cover_ready = {
+                                    let mut obf = Obfuscator::new();
+                                    obf.generate_padding_into(
+                                        size as u16,
+                                        size as u16,
+                                        &mut padding,
+                                    );
+                                    let mut codec = lock_or_recover(&server_tx, "handler::cover");
+                                    codec
+                                        .encrypt_packet_into(&[], &padding, &mut cover_record)
+                                        .is_ok()
+                                };
+                                if cover_ready {
+                                    if write_half.write_all_flush(&cover_record).await.is_err() {
+                                        break;
+                                    }
+                                    let n = base.elapsed().as_millis() as u64;
+                                    last_act.store(n, Ordering::Relaxed);
+                                    last_tx_ms = n;
+                                }
+                            }
+                        }
+                        cover_deadline =
+                            tokio::time::Instant::now() + shaper.next_gap(&mut rand::rng());
+                    }
+
+                }
+            }
+        };
+        tokio::select! {
+            biased;
+            _ = kick_rx.recv() => {},
+            _ = dead_rx.recv() => {},
+            _ = health => {},
+            _ = pump => {},
+        }
     }
 
-    // The writer loop has ended — for ANY reason: kick, idle reap, rx-dead reap,
-    // peer close. Take the reader with it. The two reapers above live in this loop,
-    // so once it exits nothing else bounds the reader in time; without this a stream
-    // that died on a timeout could leave a reader forwarding uploads indefinitely.
+    // Cancellation may interrupt a partially written encrypted record. Close both
+    // halves terminally; never reuse this writer or retry the record on a sibling.
+    drop(write_half);
     let _ = shutdown_tx.send(true);
+    if let Some(reader) = reader_abort {
+        reader.abort();
+        // Abort requests cancellation; it does not prove resource destruction.
+        // Bound the normal cleanup wait without pretending a timed-out task died.
+        let stopped = tokio::time::timeout(Duration::from_secs(2), async {
+            while !reader.is_finished() {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .is_ok();
+        if !stopped {
+            session.kick_all();
+            log::error!("TCP reader cleanup exceeded 2s; session fenced, retaining stream lease until task destruction");
+        }
+        // The profile owns both this deferred cleanup and the reader join. Keep
+        // its stream counted/lease reserved until destruction is established.
+        while !reader.is_finished() {
+            tokio::time::sleep(Duration::from_millis(250)).await;
+        }
+    }
 
     detach_stream(&profile, &session, stream_id, addr).await;
 }

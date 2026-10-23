@@ -125,10 +125,49 @@ fn h2_error(context: &str, error: impl std::fmt::Display) -> io::Error {
     io::Error::other(format!("{context}: {error}"))
 }
 
+async fn ping_once(ping: &mut h2::PingPong, deadline: Duration) -> io::Result<()> {
+    tokio::time::timeout(deadline, ping.ping(h2::Ping::opaque()))
+        .await
+        .map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::TimedOut,
+                "HTTP/2 PING acknowledgement timed out",
+            )
+        })?
+        .map_err(|error| h2_error("HTTP/2 PING failed", error))?;
+    Ok(())
+}
+
+/// Standard h2 connection health, independent of the application writer and of
+/// qeli cover/heartbeat policy. An ACK proves only the outer connection is alive;
+/// it never renews a DATA flow-control deadline. One outstanding probe at a time.
+async fn connection_health(mut ping: h2::PingPong) -> io::Result<()> {
+    loop {
+        let delay = Duration::from_secs(rand::rng().random_range(20..=30));
+        tokio::time::sleep(delay).await;
+        ping_once(&mut ping, crate::protocol::stream_io::WRITE_STALL_TIMEOUT).await?;
+    }
+}
+
 async fn send_with_flow_control(
+    stream: &mut SendStream<Bytes>,
+    data: Bytes,
+    end_of_stream: bool,
+) -> io::Result<()> {
+    send_with_flow_control_budget(
+        stream,
+        data,
+        end_of_stream,
+        crate::protocol::stream_io::WRITE_STALL_TIMEOUT,
+    )
+    .await
+}
+
+async fn send_with_flow_control_budget(
     stream: &mut SendStream<Bytes>,
     mut data: Bytes,
     end_of_stream: bool,
+    budget: Duration,
 ) -> io::Result<()> {
     if data.is_empty() {
         stream
@@ -137,10 +176,28 @@ async fn send_with_flow_control(
         return Ok(());
     }
 
+    // Capacity belongs to this stream, not to a healthy sibling or to the local
+    // DuplexStream. Zero/spurious notifications must not renew this deadline.
+    let mut deadline = tokio::time::Instant::now() + budget;
     while !data.is_empty() {
         stream.reserve_capacity(data.len());
         while stream.capacity() == 0 {
-            match poll_fn(|cx| stream.poll_capacity(cx)).await {
+            if tokio::time::Instant::now() >= deadline {
+                return Err(io::Error::new(
+                    io::ErrorKind::TimedOut,
+                    "HTTP/2 stream made no DATA progress while waiting for capacity",
+                ));
+            }
+            let capacity =
+                tokio::time::timeout_at(deadline, poll_fn(|cx| stream.poll_capacity(cx)))
+                    .await
+                    .map_err(|_| {
+                        io::Error::new(
+                            io::ErrorKind::TimedOut,
+                            "HTTP/2 stream made no DATA progress while waiting for capacity",
+                        )
+                    })?;
+            match capacity {
                 Some(Ok(_)) => {}
                 Some(Err(error)) => {
                     return Err(h2_error("HTTP/2 flow-control wait failed", error));
@@ -158,6 +215,9 @@ async fn send_with_flow_control(
         stream
             .send_data(part, end_of_stream && data.is_empty())
             .map_err(|error| h2_error("HTTP/2 DATA send failed", error))?;
+        // Enqueued to h2, not proof of peer delivery. The underlying TLS socket
+        // has its own write-progress guard for a blocked connection driver.
+        deadline = tokio::time::Instant::now() + budget;
     }
     Ok(())
 }
@@ -239,7 +299,7 @@ fn bridge(
         // A failure in either direction drops the other future and the driver.
         // A clean half-close may still receive a reply until the owner is dropped.
         match tokio::try_join!(outbound(source, send), inbound(recv, sink)) {
-            Err(error) => log::debug!("HTTP/2 carrier ended: {error}"),
+            Err(error) => log::warn!("HTTP/2 carrier ended: {error}"),
             // Both halves ended cleanly. Leave the owner in charge so the driver can
             // flush the queued END_STREAM before the application drops the carrier.
             Ok(_) => driver.0.clear(),
@@ -347,13 +407,22 @@ async fn connect_with_tasks<S>(io: S, authority: &str, spawner: TaskSpawner) -> 
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
-    let (send_request, connection) = configure_client()
+    let (send_request, mut connection) = configure_client()
         .handshake::<_, Bytes>(io)
         .await
         .map_err(|error| h2_error("HTTP/2 client handshake failed", error))?;
+    let ping = connection
+        .ping_pong()
+        .ok_or_else(|| io::Error::other("HTTP/2 PING owner unavailable"))?;
     let driver = spawner.spawn(async move {
-        if let Err(error) = connection.await {
-            log::debug!("HTTP/2 client connection ended: {error}");
+        tokio::select! {
+            biased;
+            result = connection_health(ping) => {
+                if let Err(error) = result { log::warn!("HTTP/2 client health failed: {error}"); }
+            }
+            result = connection => {
+                if let Err(error) = result { log::debug!("HTTP/2 client connection ended: {error}"); }
+            }
         }
     })?;
     let tasks = Tasks(vec![driver]);
@@ -490,24 +559,37 @@ where
         .map_err(|error| h2_error("HTTP/2 response send failed", error))?;
     let recv = request.into_body();
 
+    let ping = connection
+        .ping_pong()
+        .ok_or_else(|| io::Error::other("HTTP/2 PING owner unavailable"))?;
     let driver = spawner.spawn(async move {
-        while let Some(next) = connection.accept().await {
-            match next {
-                Ok((_request, mut respond)) => {
-                    if let Ok(response) = Response::builder()
-                        .status(StatusCode::NOT_FOUND)
-                        .header("content-length", "0")
-                        .body(())
-                    {
-                        let _ = respond.send_response(response, true);
+        let requests = async {
+            while let Some(next) = connection.accept().await {
+                match next {
+                    Ok((_request, mut respond)) => {
+                        if let Ok(response) = Response::builder()
+                            .status(StatusCode::NOT_FOUND)
+                            .header("content-length", "0")
+                            .body(())
+                        {
+                            let _ = respond.send_response(response, true);
+                        }
+                    }
+                    Err(error) => {
+                        log::debug!("HTTP/2 server connection ended: {error}");
+                        break;
                     }
                 }
-                Err(error) => {
-                    log::debug!("HTTP/2 server connection ended: {error}");
-                    break;
-                }
             }
+        };
+        tokio::select! {
+            biased;
+            result = connection_health(ping) => {
+                if let Err(error) = result { log::warn!("HTTP/2 server health failed: {error}"); }
+            }
+            _ = requests => {},
         }
+        // Dropping the connection fails both body handles and wakes the bridge.
     })?;
     bridge(send, recv, Tasks(vec![driver]), &spawner).map(|carrier| (carrier, admission))
 }
@@ -515,6 +597,102 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn healthy_connection_pings_do_not_renew_a_stalled_stream_window() {
+        let (client_io, server_io) = tokio::io::duplex(64 * 1024);
+        let server = tokio::spawn(async move {
+            let mut builder = h2::server::Builder::new();
+            builder.initial_window_size(0);
+            let mut connection = builder.handshake::<_, Bytes>(server_io).await.unwrap();
+            let (request, mut respond) = connection.accept().await.unwrap().unwrap();
+            let _send = respond.send_response(Response::new(()), false).unwrap();
+            let _body = request.into_body();
+            // Poll connection control traffic while intentionally retaining the
+            // zero receive window for this in-memory application stream.
+            while connection.accept().await.is_some() {}
+        });
+        let (send, mut connection) = configure_client()
+            .handshake::<_, Bytes>(client_io)
+            .await
+            .unwrap();
+        let mut ping = connection.ping_pong().unwrap();
+        let driver = tokio::spawn(connection);
+        let mut send = send.ready().await.unwrap();
+        let (response, mut body) = send
+            .send_request(
+                Request::builder()
+                    .uri("https://example.com/")
+                    .body(())
+                    .unwrap(),
+                false,
+            )
+            .unwrap();
+        let _response = response.await.unwrap();
+        // Quiet but healthy connection still responds. These outer ACKs are not
+        // credited to DATA and must not suppress the stream-capacity deadline.
+        let pings = async {
+            for _ in 0..3 {
+                ping_once(&mut ping, Duration::from_secs(1)).await.unwrap();
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            }
+        };
+        let sending = send_with_flow_control_budget(
+            &mut body,
+            Bytes::from_static(b"data"),
+            false,
+            Duration::from_millis(100),
+        );
+        let (_, result) = tokio::join!(pings, sending);
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::TimedOut);
+        server.abort();
+        driver.abort();
+        let _ = server.await;
+        let _ = driver.await;
+    }
+
+    #[tokio::test]
+    async fn missing_ping_ack_has_a_bounded_deadline() {
+        let (client_io, server_io) = tokio::io::duplex(64 * 1024);
+        let server = tokio::spawn(async move {
+            let mut connection = configure_server()
+                .handshake::<_, Bytes>(server_io)
+                .await
+                .unwrap();
+            let (request, respond) = connection.accept().await.unwrap().unwrap();
+            // Return ownership without driving it: the socket remains open but
+            // cannot ACK a subsequent probe. No external network is involved.
+            (connection, request, respond)
+        });
+        let (send, mut connection) = configure_client()
+            .handshake::<_, Bytes>(client_io)
+            .await
+            .unwrap();
+        let mut ping = connection.ping_pong().unwrap();
+        let driver = tokio::spawn(connection);
+        let mut send = send.ready().await.unwrap();
+        let (_response, _body) = send
+            .send_request(
+                Request::builder()
+                    .uri("https://example.com/")
+                    .body(())
+                    .unwrap(),
+                false,
+            )
+            .unwrap();
+        let held_server = server.await.unwrap();
+        let error = tokio::time::timeout(
+            Duration::from_secs(2),
+            ping_once(&mut ping, Duration::from_millis(30)),
+        )
+        .await
+        .unwrap()
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::TimedOut);
+        drop(held_server);
+        driver.abort();
+        let _ = driver.await;
+    }
 
     #[tokio::test]
     async fn bidirectional_stream_round_trip() {

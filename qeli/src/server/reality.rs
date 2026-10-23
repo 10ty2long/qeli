@@ -75,7 +75,12 @@ async fn handle_authenticated_tls<S>(
     handshake_timeout: Duration,
 ) -> anyhow::Result<()>
 where
-    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
+    S: tokio::io::AsyncRead
+        + tokio::io::AsyncWrite
+        + Unpin
+        + Send
+        + 'static
+        + crate::protocol::obfs::SplitStream,
 {
     use tokio::io::AsyncReadExt;
 
@@ -87,7 +92,12 @@ where
         .await
         .map_err(|_| anyhow::anyhow!("REALITY carrier selection timed out for {addr}"))?
         .map_err(|error| anyhow::anyhow!("REALITY carrier selection failed for {addr}: {error}"))?;
-    let stream = crate::protocol::realtls::server::PrefixedStream::new(prefix.to_vec(), stream);
+    let progress = stream.write_progress();
+    let stream = crate::protocol::realtls::server::PrefixedStream::with_write_progress(
+        prefix.to_vec(),
+        stream,
+        progress,
+    );
 
     if prefix.as_slice() == crate::protocol::h2_carrier::CLIENT_PREFACE {
         let carrier_tasks = profile.tasks.spawner();

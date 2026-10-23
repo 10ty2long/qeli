@@ -1863,7 +1863,7 @@ impl ObfsStream<TcpStream> {
                 ws: ws_read,
             },
             ObfsWriteHalf {
-                inner: w,
+                inner: crate::protocol::stream_io::StallGuard::new(w),
                 cipher: self.write_cipher,
                 ws: ws_write,
             },
@@ -1874,6 +1874,10 @@ impl ObfsStream<TcpStream> {
 /// Idle writer hook for carrier control traffic; application bytes stay in the
 /// existing writer. Pending is cancellation-safe: only owned wire bytes drain.
 pub trait CarrierWriteControl: AsyncWrite + Unpin {
+    /// Optional lower-I/O progress for buffered adapters; never a delivery ACK.
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        None
+    }
     fn poll_control(&mut self, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         Poll::Pending
     }
@@ -1881,12 +1885,41 @@ pub trait CarrierWriteControl: AsyncWrite + Unpin {
 impl CarrierWriteControl for OwnedWriteHalf {}
 impl<T: AsyncRead + AsyncWrite + Unpin> CarrierWriteControl for tokio::io::WriteHalf<T> {}
 impl CarrierWriteControl for tokio::io::DuplexStream {}
+impl<W: CarrierWriteControl> CarrierWriteControl for crate::protocol::stream_io::StallGuard<W> {
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        Some(self.progress())
+    }
+    fn poll_control(&mut self, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        self.inner_mut().poll_control(cx)
+    }
+}
 
 /// A duplex carrier with owned halves used by the common TCP data plane.
 pub trait SplitStream {
     type R: AsyncRead + Unpin + Send + 'static;
     type W: CarrierWriteControl + Unpin + Send + 'static;
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        None
+    }
     fn split_io(self) -> (Self::R, Self::W);
+}
+
+impl<S: AsyncRead + AsyncWrite + Unpin + Send + 'static> SplitStream
+    for crate::protocol::stream_io::StallGuard<S>
+{
+    type R = tokio::io::ReadHalf<Self>;
+    type W = crate::protocol::stream_io::StallGuard<tokio::io::WriteHalf<Self>>;
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        Some(self.progress())
+    }
+    fn split_io(self) -> (Self::R, Self::W) {
+        let progress = self.progress();
+        let (read, write) = tokio::io::split(self);
+        (
+            read,
+            crate::protocol::stream_io::StallGuard::observing(write, Some(progress)),
+        )
+    }
 }
 
 impl SplitStream for TcpStream {
@@ -2321,12 +2354,15 @@ impl AsyncRead for ObfsReadHalf {
 
 /// Write half of a split [`ObfsStream`].
 pub struct ObfsWriteHalf {
-    inner: OwnedWriteHalf,
+    inner: crate::protocol::stream_io::StallGuard<OwnedWriteHalf>,
     cipher: ChaCha20,
     ws: Option<WsWriteState>,
 }
 
 impl CarrierWriteControl for ObfsWriteHalf {
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        Some(self.inner.progress())
+    }
     fn poll_control(&mut self, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         let Some(ws) = &mut self.ws else {
             return Poll::Pending;

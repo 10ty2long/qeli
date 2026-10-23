@@ -14,6 +14,7 @@ use super::application::ApplicationRecords;
 use super::client::{EstablishedTls, MAX_RECORD};
 use super::record::RecordCrypto;
 use crate::protocol::obfs::SplitStream;
+use crate::protocol::stream_io::StallGuard;
 use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -30,7 +31,7 @@ const READ_CHUNK: usize = 64 * 1024;
 
 /// An `AsyncRead + AsyncWrite` duplex over an established TLS 1.3 session.
 pub struct RealTlsStream<S> {
-    inner: S,
+    inner: StallGuard<S>,
     send: RecordCrypto,
     recv: RecordCrypto,
     /// Raw inbound bytes not yet framed into a complete record.
@@ -58,7 +59,7 @@ impl<S> RealTlsStream<S> {
     /// stream without depending on the client's `EstablishedTls` type.
     pub fn from_crypto(inner: S, send: RecordCrypto, recv: RecordCrypto) -> Self {
         RealTlsStream {
-            inner,
+            inner: StallGuard::new(inner),
             send,
             recv,
             in_buf: Vec::new(),
@@ -296,9 +297,14 @@ impl<S: AsyncWrite + Unpin> AsyncWrite for RealTlsStream<S> {
 /// modes (mirrors the `TcpStream`/`ObfsStream` impls).
 impl<S: AsyncRead + AsyncWrite + Unpin + Send + 'static> SplitStream for RealTlsStream<S> {
     type R = ReadHalf<RealTlsStream<S>>;
-    type W = WriteHalf<RealTlsStream<S>>;
+    type W = StallGuard<WriteHalf<RealTlsStream<S>>>;
+    fn write_progress(&self) -> Option<crate::protocol::stream_io::WriteProgress> {
+        Some(self.inner.progress())
+    }
     fn split_io(self) -> (Self::R, Self::W) {
-        tokio::io::split(self)
+        let progress = self.inner.progress();
+        let (read, write) = tokio::io::split(self);
+        (read, StallGuard::observing(write, Some(progress)))
     }
 }
 

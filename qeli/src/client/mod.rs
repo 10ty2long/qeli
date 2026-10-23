@@ -99,14 +99,13 @@ const UDP_CONTROL_REPORT_RESENDS: u8 = 3;
 /// used only to translate the existing inner-MTU-shaped probe into the independently tracked
 /// UDP payload budget that the probe actually certified.
 const UDP_RECORD_PROBE_OVERHEAD: usize = crate::protocol::udp_frag::UDP_RECORD_PROBE_OVERHEAD;
-/// A widened mobile/Wi-Fi path should not remain pinned to the conservative startup budget
-/// for the lifetime of a long session. Re-probing is sparse and uses the one existing socket
-/// receive loop, so it neither creates a competing reader nor loses ordinary data records.
-const UDP_MTU_REPROBE_INTERVAL: Duration = Duration::from_secs(10 * 60);
-const UDP_MTU_REPROBE_TICK: Duration = Duration::from_millis(250);
-const UDP_MTU_REPROBE_REPLY_TIMEOUT: Duration = Duration::from_millis(500);
+/// Confirmation catches same-endpoint PMTU shrink; discovery remains sparse.
+const UDP_MTU_REPROBE_INTERVAL: Duration = crate::protocol::pmtu::CONFIRM_INTERVAL;
+const UDP_MTU_REPROBE_TICK: Duration = crate::protocol::pmtu::TICK;
+#[cfg(test)]
+const UDP_MTU_REPROBE_REPLY_TIMEOUT: Duration = crate::protocol::pmtu::INITIAL_TIMEOUT;
+#[cfg(test)]
 const UDP_MTU_REPROBE_SENDS: u8 = 2;
-const UDP_MTU_REPROBE_CONFIRMATIONS: u8 = 3;
 /// Kept equal to the server's experimental grace. The attempt itself is bounded by the
 /// remaining budget; expiry falls back to the ordinary full reconnect and NetworkPlan cycle.
 const TCP_RESUME_GRACE: Duration = Duration::from_secs(30);
@@ -124,91 +123,50 @@ const TCP_HANDOVER_POLL: Duration = Duration::from_millis(100);
 #[cfg(feature = "experimental-roaming")]
 const PATH_ACK_TIMEOUT: Duration = Duration::from_secs(45);
 
-#[derive(Debug, Clone, Copy)]
-struct UdpMtuChallenge {
-    candidate: i32,
-    token: u128,
-    probe_payload_size: u16,
-    sends: u8,
-    deadline: tokio::time::Instant,
-}
-
 #[derive(Debug, Default)]
 struct LiveUdpMtuProbe {
-    candidates: std::collections::VecDeque<i32>,
-    challenge: Option<UdpMtuChallenge>,
-    confirmations: u8,
+    search: crate::protocol::pmtu::ProbeSearch,
+    path_epoch: u64,
+    budget_revision: u64,
+    confirmation: bool,
 }
 
 impl LiveUdpMtuProbe {
     fn start(&mut self, candidates: impl IntoIterator<Item = i32>) {
-        self.candidates = candidates.into_iter().collect();
-        self.challenge = None;
-        self.confirmations = 0;
+        self.search.start(
+            candidates
+                .into_iter()
+                .filter_map(|value| usize::try_from(value).ok()),
+        );
     }
 
     fn is_active(&self) -> bool {
-        self.challenge.is_some() || !self.candidates.is_empty()
+        self.search.is_active()
     }
 
     fn clear(&mut self) {
-        self.candidates.clear();
-        self.challenge = None;
-        self.confirmations = 0;
+        self.search.clear();
     }
 
-    /// Return the next challenge that must be sent. A candidate gets two sends with one
-    /// correlation token; a certified candidate then needs three independently random tokens.
     fn next_send(&mut self, now: tokio::time::Instant) -> Option<(u128, i32)> {
-        loop {
-            if self.challenge.is_none() {
-                let candidate = self.candidates.pop_front()?;
-                self.challenge = Some(UdpMtuChallenge {
-                    candidate,
-                    token: rand::random(),
-                    probe_payload_size: u16::try_from(
-                        candidate.max(0) as usize + UDP_RECORD_PROBE_OVERHEAD,
-                    )
-                    .ok()?,
-                    sends: 0,
-                    deadline: now,
-                });
-            }
-            let challenge = self.challenge.as_mut()?;
-            if challenge.sends != 0 && now < challenge.deadline {
-                return None;
-            }
-            if challenge.sends >= UDP_MTU_REPROBE_SENDS {
-                // This rung did not answer. Continue down the already descending ladder.
-                self.challenge = None;
-                self.confirmations = 0;
-                continue;
-            }
-            challenge.sends += 1;
-            challenge.deadline = now + UDP_MTU_REPROBE_REPLY_TIMEOUT;
-            return Some((challenge.token, challenge.candidate));
-        }
+        let challenge = self.search.next_send(now)?;
+        Some((challenge.token, i32::try_from(challenge.budget).ok()?))
     }
 
-    /// Accept only an exact token+size echo. `Some(candidate)` means the third independent
-    /// confirmation completed and the live data-plane budget may be widened.
+    fn matches(&self, token: u128, size: u16, epoch: u64, revision: u64) -> bool {
+        self.path_epoch == epoch
+            && self.budget_revision == revision
+            && self.search.challenge.is_some_and(|challenge| {
+                challenge.token == token
+                    && challenge.budget + UDP_RECORD_PROBE_OVERHEAD == usize::from(size)
+            })
+    }
+
     fn acknowledge(&mut self, token: u128, probe_payload_size: u16) -> Option<i32> {
-        let challenge = self.challenge?;
-        if challenge.token != token || challenge.probe_payload_size != probe_payload_size {
-            return None;
-        }
-        self.confirmations = self.confirmations.saturating_add(1);
-        if self.confirmations >= UDP_MTU_REPROBE_CONFIRMATIONS {
-            self.clear();
-            return Some(challenge.candidate);
-        }
-        self.challenge = Some(UdpMtuChallenge {
-            token: rand::random(),
-            sends: 0,
-            deadline: tokio::time::Instant::now(),
-            ..challenge
-        });
-        None
+        let candidate = usize::from(probe_payload_size).checked_sub(UDP_RECORD_PROBE_OVERHEAD)?;
+        self.search
+            .acknowledge(token, candidate, tokio::time::Instant::now())
+            .and_then(|value| i32::try_from(value).ok())
     }
 }
 
@@ -5602,7 +5560,7 @@ fn mark_tcp_stream_stopped(
 #[allow(clippy::too_many_arguments)]
 fn spawn_stream<R, W>(
     mut read_half: R,
-    mut write_half: W,
+    write_half: W,
     rx_codec: PacketCodec,
     tx_codec: PacketCodec,
     tun_write_tx: TunWriter,
@@ -5622,6 +5580,9 @@ where
     R: AsyncRead + Unpin + Send + 'static,
     W: crate::protocol::obfs::CarrierWriteControl + Unpin + Send + 'static,
 {
+    let progress = write_half.write_progress();
+    let mut write_half = crate::protocol::stream_io::StallGuard::observing(write_half, progress);
+    let write_progress = write_half.progress();
     let (out_tx, mut out_rx) = mpsc::channel::<ClientUplink>(cfg.uplink_queue_capacity);
     let (terminal_tx, mut terminal_rx) = mpsc::channel::<ClientTerminalControl>(4);
     let stream_sender = ClientStreamSender {
@@ -5644,6 +5605,7 @@ where
     }
     let stream_dead = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let (stream_stop_tx, _) = tokio::sync::watch::channel(false);
+    let (writer_stopped_tx, writer_stopped_rx) = tokio::sync::oneshot::channel();
 
     // Reader: socket → decrypt → TUN writer.
     //
@@ -5843,6 +5805,13 @@ where
                 let _ = drained.await;
             }
             let _ = stream_stop_tx.send(true);
+            // A replacement must not reuse this logical slot while its old
+            // writer still owns a socket or a partially serialized record.
+            if writer_stopped_rx.await.is_err() {
+                log::warn!("TCP writer ended without completion; stopping connection generation");
+                let _ = dead_tx.try_send(());
+                return;
+            }
             mark_tcp_stream_stopped(
                 logical_slot_id,
                 &stream_dead,
@@ -5860,10 +5829,6 @@ where
         let stream_stop_tx = stream_stop_tx.clone();
         let mut stream_stop_rx = stream_stop_tx.subscribe();
         tasks.spawn(async move {
-            let mut idle_tick = tokio::time::interval(Duration::from_secs(5));
-            idle_tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-            let mut last_tick_wall = std::time::SystemTime::now();
-            let mut last_tick_inst = tokio::time::Instant::now();
             let idle_ms = cfg.idle_timeout.as_millis() as u64;
             let mut last_tx_ms: u64 = 0;
             // Flow-shaping: when enabled, idle cover at exponential (non-periodic)
@@ -5887,6 +5852,45 @@ where
                 Duration::from_millis(cfg.shaping.idle_gap_max_ms),
             )
             .map(|deadline| u64::try_from(deadline.as_millis()).unwrap_or(u64::MAX));
+            // Supervise the entire pump, including blocked writes and pacing.
+            let health = async move {
+                let mut tick = tokio::time::interval(Duration::from_secs(5));
+                tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                let mut wall = std::time::SystemTime::now();
+                let mut instant = tokio::time::Instant::now();
+                let mut previous_progress = write_progress.snapshot();
+                let mut last_write_ms = 0;
+                loop {
+                    tick.tick().await;
+                    if stream_dead.load(Ordering::Relaxed) { break; }
+                    let wall_gap = wall.elapsed().unwrap_or_default();
+                    let tick_gap = instant.elapsed();
+                    wall = std::time::SystemTime::now();
+                    instant = tokio::time::Instant::now();
+                    if wall_gap.saturating_sub(tick_gap) > Duration::from_secs(10) {
+                        log::warn!("TCP: resumed from suspend (~{}s) — reconnecting", wall_gap.as_secs());
+                        DELIBERATE_CYCLE.store(true, std::sync::atomic::Ordering::Release);
+                        break;
+                    }
+                    let now = base.elapsed().as_millis() as u64;
+                    let current_progress = write_progress.snapshot();
+                    if current_progress != previous_progress {
+                        last_write_ms = now;
+                        previous_progress = current_progress;
+                    }
+                    let received = last_rx.load(Ordering::Relaxed);
+                    // Silence is valid unless the peer promises liveness traffic.
+                    if rx_dead_ms.is_some_and(|deadline| now.saturating_sub(received) > deadline) {
+                        log::info!("TCP carrier closed: inbound liveness deadline expired");
+                        break;
+                    }
+                    if idle_ms > 0 && now.saturating_sub(last_write_ms.max(received)) > idle_ms {
+                        break;
+                    }
+                }
+            };
+            {
+            let pump = async move {
             let mut cover_deadline =
                 tokio::time::Instant::now() + shaper.next_gap(&mut rand::rng());
             // One real record may have to stay intact while stealth pacing emits cover
@@ -5946,8 +5950,6 @@ where
                         }
                         break 'writer;
                     }
-
-                    _ = stream_stop_rx.changed() => break,
 
                     pt = out_rx.recv() => {
                         let Some(pt) = pt else { break };
@@ -6105,47 +6107,21 @@ where
                             + shaper.next_gap(&mut rand::rng());
                     }
 
-                    _ = idle_tick.tick() => {
-                        // Propagate a read-side death (e.g. decrypt desync while the
-                        // socket write side still looks alive) so this writer exits too.
-                        if stream_dead.load(Ordering::Relaxed) { break; }
-                        // `tokio::Instant` may freeze while a laptop sleeps whereas wall
-                        // time keeps advancing. Cycle a half-open TCP carrier promptly on
-                        // resume instead of waiting for the OS retransmit timeout.
-                        let wall_gap = last_tick_wall.elapsed().unwrap_or_default();
-                        last_tick_wall = std::time::SystemTime::now();
-                        let tick_gap = last_tick_inst.elapsed();
-                        last_tick_inst = tokio::time::Instant::now();
-                        if wall_gap.saturating_sub(tick_gap) > Duration::from_secs(10) {
-                            log::warn!(
-                                "TCP: resumed from suspend (~{}s) — reconnecting",
-                                wall_gap.as_secs()
-                            );
-                            // Our decision, not a fault: don't let it escalate the backoff.
-                            DELIBERATE_CYCLE.store(true, std::sync::atomic::Ordering::Release);
-                            break;
-                        }
-                        let now = base.elapsed().as_millis() as u64;
-                        // An RX deadline is meaningful only when the peer promises
-                        // inbound liveness traffic. With heartbeat and shaping disabled a
-                        // healthy TCP tunnel may legitimately be silent for hours.
-                        if let Some(rx_dead) = rx_dead_ms {
-                            if now.saturating_sub(last_rx.load(Ordering::Relaxed)) > rx_dead {
-                                break;
-                            }
-                        }
-                        let last_activity = last_tx_ms.max(last_rx.load(Ordering::Relaxed));
-                        if idle_ms > 0 && now.saturating_sub(last_activity) > idle_ms {
-                            break;
-                        }
-                    }
-
                     else => break,
                 }
             }
+            };
+            tokio::select! {
+                biased;
+                _ = stream_stop_rx.wait_for(|stopped| *stopped) => {},
+                _ = health => {},
+                _ = pump => {},
+            }
+            } // Drop the writer and any partial record before stopping its reader.
             // The reader reports loss after processing all already-received records.
             // Wake it even when it is waiting for a recycled TUN buffer.
             let _ = stream_stop_tx.send(true);
+            let _ = writer_stopped_tx.send(());
         });
     }
 
@@ -8686,6 +8662,25 @@ mod mtu_ladder_tests {
             1461 + crate::protocol::quic::QUIC_SHORT_HEADER_MIN
         );
     }
+
+    #[test]
+    fn live_probe_echo_is_bound_to_path_and_budget_revision() {
+        let mut probe = super::LiveUdpMtuProbe {
+            path_epoch: 7,
+            budget_revision: 4,
+            ..Default::default()
+        };
+        probe.start([1400]);
+        let (token, _) = probe.next_send(tokio::time::Instant::now()).unwrap();
+        let size = (1400 + super::UDP_RECORD_PROBE_OVERHEAD) as u16;
+        assert!(probe.matches(token, size, 7, 4));
+        assert!(!probe.matches(token, size, 8, 4));
+        assert!(!probe.matches(token, size, 7, 5));
+        probe.clear();
+        probe.start([500]);
+        probe.next_send(tokio::time::Instant::now()).unwrap();
+        assert!(!probe.matches(token, size, 7, 4));
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -11156,13 +11151,11 @@ pub(crate) async fn run_udp_tunnel(
     // certified uplink UDP payload budget as a distinct authenticated frame. A current server
     // treats it only as the ceiling for its own reverse DF probe and widens downlink after that
     // direction answers; an older server skips the unknown type.
-    let mut udp_payload_budget_report_value = data_frag_enabled
+    // An authenticated report also opts into server reverse confirmation. Keep it
+    // absent when probing is explicitly disabled, including at the family base.
+    let mut udp_payload_budget_report_value = (data_frag_enabled && config.tun.mtu_probe)
         .then(|| u16::try_from(uplink_udp_payload_budget).ok())
-        .flatten()
-        .filter(|budget| {
-            usize::from(*budget)
-                > crate::protocol::data_frag::conservative_udp_payload_budget(socket.peer_is_ipv6())
-        });
+        .flatten();
     let client_info_frame = crate::protocol::ctrl::this_build();
     let mut udp_send_scratch = crate::transport_core::udp_batch::BatchScratch::new(
         crate::transport_core::udp_batch::MAX_BATCH,
@@ -11232,16 +11225,22 @@ pub(crate) async fn run_udp_tunnel(
         }
     }
 
-    // Live PMTU widening is available only when DATA_FRAG decouples the TUN MTU from the
+    // Live PMTU adjustment is available only when DATA_FRAG decouples the TUN MTU from the
     // carrier datagram size. A legacy peer would require rebuilding the interface/routes.
     let mut last_path_diagnostic = std::time::Instant::now();
     let mut previous_path_diagnostic = runtime_counters.udp.path.snapshot();
     let live_mtu_reprobe_enabled = data_frag_enabled && config.tun.mtu_probe;
     let mut live_mtu_probe = LiveUdpMtuProbe::default();
+    let mut udp_budget_revision = 0u64;
+    let mut next_mtu_growth = tokio::time::Instant::now() + crate::protocol::pmtu::GROW_INTERVAL;
+    let mut last_pmtu_data_activity = tokio::time::Instant::now();
     let mut live_mtu_due = tokio::time::interval(UDP_MTU_REPROBE_INTERVAL);
     live_mtu_due.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     // Consume interval's immediate first tick: startup probing just ran above.
     live_mtu_due.tick().await;
+    live_mtu_due.reset_after(
+        UDP_MTU_REPROBE_INTERVAL + Duration::from_millis(u64::from(rand::random::<u16>() % 1000)),
+    );
     let mut live_mtu_tick = tokio::time::interval(UDP_MTU_REPROBE_TICK);
     live_mtu_tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     live_mtu_tick.tick().await;
@@ -11674,37 +11673,60 @@ pub(crate) async fn run_udp_tunnel(
                 }
             }
 
-            _ = live_mtu_due.tick(), if live_mtu_reprobe_enabled && !live_mtu_probe.is_active() => {
-                let outer_overhead = UDP_RECORD_PROBE_OVERHEAD
-                    + socket.seal_overhead()
-                    + udp_framing.wrapper_len()
-                    + 8
-                    + if socket.peer_is_ipv6() { 40 } else { 20 };
-                let candidates: Vec<i32> = mtu_probe_ladder(
-                    base_mtu,
-                    outer_overhead,
-                    socket.peer_is_ipv6(),
-                )
-                .into_iter()
-                .filter(|candidate| {
-                    udp_payload_budget_for_probe(
-                        *candidate,
-                        socket.seal_overhead(),
-                        udp_framing.wrapper_len(),
-                    ) > uplink_udp_payload_budget
-                })
-                .collect();
-                if !candidates.is_empty() {
-                    if begin_mtu_probe(&socket) {
-                        log::debug!(
-                            "UDP live PMTU re-probe started ({} candidate rungs above {}-byte budget)",
-                            candidates.len(),
-                            uplink_udp_payload_budget,
-                        );
-                        live_mtu_probe.start(candidates);
-                    } else {
-                        log::debug!("UDP live PMTU re-probe skipped: DF control is unavailable");
-                    }
+            _ = live_mtu_due.tick(), if live_mtu_reprobe_enabled => {
+                // A long growth ladder must not postpone confirmation of the working size.
+                if live_mtu_probe.is_active() && live_mtu_probe.confirmation {
+                    continue;
+                }
+                if live_mtu_probe.is_active() {
+                    live_mtu_probe.clear();
+                    finish_mtu_probe(&socket, keep_df_after_live_probe);
+                }
+                // Do not keep idle phones awake solely for PMTU. The first user packet after
+                // idle resets this timer below, so stale confirmation is checked promptly.
+                if last_pmtu_data_activity.elapsed() > Duration::from_secs(30) {
+                    continue;
+                }
+                let wrapper = socket.seal_overhead() + udp_framing.wrapper_len();
+                let now = tokio::time::Instant::now();
+                let mut grow = now >= next_mtu_growth;
+                let mut candidates: Vec<i32> = if grow {
+                    next_mtu_growth = now + crate::protocol::pmtu::GROW_INTERVAL;
+                    let outer_overhead = UDP_RECORD_PROBE_OVERHEAD + wrapper + 8
+                        + if socket.peer_is_ipv6() { 40 } else { 20 };
+                    mtu_probe_ladder(base_mtu, outer_overhead, socket.peer_is_ipv6())
+                        .into_iter()
+                        .filter(|candidate| udp_payload_budget_for_probe(*candidate, socket.seal_overhead(), udp_framing.wrapper_len()) > uplink_udp_payload_budget)
+                        .collect()
+                } else {
+                    crate::protocol::pmtu::confirmation_budgets(
+                        uplink_udp_payload_budget,
+                        crate::protocol::data_frag::conservative_udp_payload_budget(socket.peer_is_ipv6()),
+                    ).into_iter().filter_map(|budget| {
+                        budget.checked_sub(wrapper + UDP_RECORD_PROBE_OVERHEAD)
+                            .and_then(|value| i32::try_from(value).ok())
+                    }).collect()
+                };
+                if candidates.is_empty() {
+                    // Reaching the ceiling must not skip this confirmation window.
+                    grow = false;
+                    candidates = crate::protocol::pmtu::confirmation_budgets(
+                        uplink_udp_payload_budget,
+                        crate::protocol::data_frag::conservative_udp_payload_budget(socket.peer_is_ipv6()),
+                    ).into_iter().filter_map(|budget| {
+                        budget.checked_sub(wrapper + UDP_RECORD_PROBE_OVERHEAD)
+                            .and_then(|value| i32::try_from(value).ok())
+                    }).collect();
+                }
+                if !candidates.is_empty() && begin_mtu_probe(&socket) {
+                    #[cfg(feature = "experimental-roaming")]
+                    let active_path_epoch = udp_roaming.as_ref().map(|state| state.active_epoch()).unwrap_or(0);
+                    #[cfg(not(feature = "experimental-roaming"))]
+                    let active_path_epoch = 0;
+                    live_mtu_probe.path_epoch = active_path_epoch;
+                    live_mtu_probe.budget_revision = udp_budget_revision;
+                    live_mtu_probe.confirmation = !grow;
+                    live_mtu_probe.start(candidates);
                 }
             }
 
@@ -11729,17 +11751,21 @@ pub(crate) async fn run_udp_tunnel(
                     }
                 }
                 if !live_mtu_probe.is_active() {
-                    // All larger rungs failed. Preserve the already-certified budget and
-                    // restore the DF state that was active before this re-probe.
+                    // No size was confirmed. This is not evidence of an MTU-only failure;
+                    // preserve the budget and let ordinary path liveness recover an outage.
                     finish_mtu_probe(&socket, keep_df_after_live_probe);
                     log::debug!(
-                        "UDP live PMTU re-probe found no wider path; keeping {}-byte budget",
+                        "UDP live PMTU search unconfirmed; keeping {}-byte budget",
                         uplink_udp_payload_budget,
                     );
                 }
             }
 
             packet = tun_pump.recv_from_tun() => {
+                if last_pmtu_data_activity.elapsed() > Duration::from_secs(30) {
+                    live_mtu_due.reset_immediately();
+                }
+                last_pmtu_data_activity = tokio::time::Instant::now();
                 let Some(ip_packet) = packet else {
                     log::warn!("UDP: TUN reader stopped — reconnecting");
                     break;
@@ -12411,6 +12437,8 @@ pub(crate) async fn run_udp_tunnel(
                                 runtime_counters.udp.clone(),
                                 "client UDP migrated",
                             );
+                            udp_budget_revision = udp_budget_revision.wrapping_add(1);
+                            next_mtu_growth = tokio::time::Instant::now();
                             uplink_udp_payload_budget = next_payload_budget;
                             runtime_counters.udp.path.set(tun_mtu as u32, next_payload_budget, data_frag_enabled, "fallback", Some("path_changed"));
                             data_record_budget = next_record_budget;
@@ -12500,14 +12528,9 @@ pub(crate) async fn run_udp_tunnel(
                 if let Some((probe_token, probe_size)) =
                     crate::protocol::udp_frag::parse_mtu_probe_v2_ack(payload)
                 {
-                    let matches_live_challenge = live_mtu_probe
-                        .challenge
-                        .filter(|_| !receive_is_draining)
-                        .map(|challenge| {
-                            challenge.token == probe_token
-                                && challenge.probe_payload_size == probe_size
-                        })
-                        .unwrap_or(false);
+                    let matches_live_challenge = !receive_is_draining && live_mtu_probe.matches(
+                        probe_token, probe_size, active_path_epoch, udp_budget_revision,
+                    );
                     if matches_live_challenge {
                         if let Some(candidate) =
                             live_mtu_probe.acknowledge(probe_token, probe_size)
@@ -12563,20 +12586,31 @@ pub(crate) async fn run_udp_tunnel(
                                         }
                                         mux_payload_budget = new_mux_budget;
                                     }
+                                    let decreased = new_payload_budget < uplink_udp_payload_budget;
+                                    let changed = new_payload_budget != uplink_udp_payload_budget;
+                                    if changed {
+                                        udp_budget_revision = udp_budget_revision.wrapping_add(1);
+                                    }
+                                    if decreased {
+                                        next_mtu_growth = tokio::time::Instant::now() + crate::protocol::pmtu::GROW_INTERVAL;
+                                    }
                                     uplink_udp_payload_budget = new_payload_budget;
-                                    runtime_counters.udp.path.set(tun_mtu as u32, new_payload_budget, data_frag_enabled, "probe", None);
+                                    runtime_counters.udp.path.set(tun_mtu as u32, new_payload_budget, data_frag_enabled, "probe", decreased.then_some("current_size_unconfirmed"));
                                     data_record_budget = record_budget;
                                     max_empty_record_padding = padding_budget;
-                                    udp_payload_budget_report_value =
-                                        u16::try_from(new_payload_budget).ok();
-                                    control_report_resends = UDP_CONTROL_REPORT_RESENDS;
+                                    let report = u16::try_from(new_payload_budget).ok();
+                                    if udp_payload_budget_report_value != report {
+                                        control_report_resends = UDP_CONTROL_REPORT_RESENDS;
+                                    }
+                                    udp_payload_budget_report_value = report;
                                     keep_df_after_live_probe = true;
                                     finish_mtu_probe(&socket, true);
-                                    log::info!(
-                                        "UDP live PMTU widened uplink payload budget to {} bytes (probe rung {})",
-                                        new_payload_budget,
-                                        candidate,
-                                    );
+                                    if changed {
+                                        log::info!(
+                                            "UDP live PMTU changed uplink payload budget to {} bytes (probe rung {}, revision {})",
+                                            new_payload_budget, candidate, udp_budget_revision,
+                                        );
+                                    }
                                 }
                                 (Err(error), _, _) => {
                                     finish_mtu_probe(&socket, keep_df_after_live_probe);
@@ -14015,7 +14049,7 @@ mod tcp_task_shutdown_tests {
     use super::*;
     use std::pin::Pin;
     use std::task::{Context, Poll};
-    use tokio::io::{AsyncReadExt, ReadBuf};
+    use tokio::io::{AsyncReadExt, AsyncWriteExt, ReadBuf};
 
     struct ObservedRead<R> {
         inner: R,
@@ -14034,10 +14068,48 @@ mod tcp_task_shutdown_tests {
         }
     }
 
-    async fn stopped_stream(pipeline_rx: bool, final_kick: bool) {
+    struct ObservedWrite<W> {
+        inner: W,
+        blocked: bool,
+        started: Option<tokio::sync::oneshot::Sender<()>>,
+    }
+    impl<W: AsyncWrite + Unpin> AsyncWrite for ObservedWrite<W> {
+        fn poll_write(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+            bytes: &[u8],
+        ) -> Poll<std::io::Result<usize>> {
+            if let Some(started) = self.started.take() {
+                let _ = started.send(());
+            }
+            if self.blocked {
+                Poll::Pending
+            } else {
+                Pin::new(&mut self.inner).poll_write(cx, bytes)
+            }
+        }
+        fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
+            Pin::new(&mut self.inner).poll_flush(cx)
+        }
+        fn poll_shutdown(
+            mut self: Pin<&mut Self>,
+            cx: &mut Context<'_>,
+        ) -> Poll<std::io::Result<()>> {
+            Pin::new(&mut self.inner).poll_shutdown(cx)
+        }
+    }
+    impl<W: AsyncWrite + Unpin> crate::protocol::obfs::CarrierWriteControl for ObservedWrite<W> {}
+
+    async fn stopped_stream(pipeline_rx: bool, final_kick: bool, blocked_writer: bool) {
         let mut tasks = crate::transport_core::tasks::TaskGroup::default();
         let (socket, mut peer) = tokio::io::duplex(1024 * 1024);
         let (read, write) = tokio::io::split(socket);
+        let (write_started, write_ready) = tokio::sync::oneshot::channel();
+        let write = ObservedWrite {
+            inner: write,
+            blocked: blocked_writer,
+            started: Some(write_started),
+        };
         let (started, ready) = tokio::sync::oneshot::channel();
         let read = ObservedRead {
             inner: read,
@@ -14098,6 +14170,26 @@ mod tcp_task_shutdown_tests {
             .await
             .unwrap()
             .unwrap();
+        if blocked_writer {
+            sender
+                .sender
+                .send(ClientUplink::Owned(vec![0x41; 80]))
+                .await
+                .unwrap();
+            tokio::time::timeout(Duration::from_secs(5), write_ready)
+                .await
+                .unwrap()
+                .unwrap();
+            peer.shutdown().await.unwrap();
+            tokio::time::timeout(Duration::from_secs(5), dead_rx.recv())
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(
+                sender.sender.is_closed(),
+                "stream loss was published before writer destruction"
+            );
+        }
         if final_kick {
             use crate::protocol::control_v2::{Kick, KickReason, ManagementEvent};
             use tokio::io::AsyncWriteExt;
@@ -14157,22 +14249,32 @@ mod tcp_task_shutdown_tests {
 
     #[tokio::test]
     async fn inline_kick_is_published_before_eof() {
-        stopped_stream(false, true).await;
+        stopped_stream(false, true, false).await;
     }
 
     #[tokio::test]
     async fn pipelined_kick_is_published_before_eof() {
-        stopped_stream(true, true).await;
+        stopped_stream(true, true, false).await;
     }
 
     #[tokio::test]
     async fn shutdown_releases_inline_stream_socket_queues_and_tun() {
-        stopped_stream(false, false).await;
+        stopped_stream(false, false, false).await;
     }
 
     #[tokio::test]
     async fn shutdown_releases_pipeline_stream_socket_queues_and_tun() {
-        stopped_stream(true, false).await;
+        stopped_stream(true, false, false).await;
+    }
+
+    #[tokio::test]
+    async fn reader_death_cancels_blocked_write_before_publishing_stream_loss() {
+        stopped_stream(false, false, true).await;
+    }
+
+    #[tokio::test]
+    async fn pipelined_reader_death_cancels_blocked_write_before_stream_loss() {
+        stopped_stream(true, false, true).await;
     }
 }
 
