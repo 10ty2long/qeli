@@ -1150,9 +1150,15 @@ public partial class MainWindow : Window
     {
         var (up, down, since) = StatsSource();
         if (!IsVisible || WindowState == WindowState.Minimized) { _trafficHistory.Clear(); return; }
+        long? nowMonotonicMs = _serviceMode && _svc?.MonotonicTimeMs is not null
+            ? ServiceMonotonicClock.NowMilliseconds : null;
         bool fresh = _status == VpnStatus.Connected && (!_serviceMode ||
-            (_svc is not null && DesktopServiceStatus.Fresh(_svc, DateTime.Now, TimeSpan.FromSeconds(10))));
-        var rate = _trafficHistory.Add(Environment.TickCount64, up, down, since, fresh);
+            (_svc is not null && DesktopServiceStatus.Fresh(_svc, DateTime.Now, TimeSpan.FromSeconds(10), nowMonotonicMs)));
+        // New services supply uptime; AddService falls back to Time for old services
+        // and resets the history when the source clock changes.
+        var rate = _serviceMode && _svc is { } snapshot
+            ? _trafficHistory.AddService(snapshot, fresh)
+            : _trafficHistory.Add(Environment.TickCount64, up, down, since, fresh);
         DownVal.Text = rate is { } current ? FormatRate((long)current.Down) : "—";
         UpVal.Text = rate is { } currentUp ? FormatRate((long)currentUp.Up) : "—";
         RenderTraffic();

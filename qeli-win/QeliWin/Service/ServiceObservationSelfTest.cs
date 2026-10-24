@@ -73,8 +73,35 @@ internal static class ServiceObservationSelfTest
             && ServiceObservation.Resolve(ServiceControllerStatus.Paused, connected, now).Status == VpnStatus.Error);
         check("service observation: same enum carries changed error detail",
             ServiceObservation.Resolve(ServiceControllerStatus.Running, Snapshot("Error", extra: "second"), now).Extra == "second");
+
+        var monotonic = Snapshot();
+        monotonic.MonotonicTimeMs = 20_000;
+        monotonic.Time = now.AddHours(-12);
+        check("service observation: clock jump forward does not hide a live monotonic snapshot",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, monotonic, now, 20_500)
+                is { Status: VpnStatus.Connected, Snapshot: not null });
+        monotonic.Time = now.AddHours(12);
+        check("service observation: clock jump backward does not hide a live monotonic snapshot",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, monotonic, now, 20_500)
+                is { Status: VpnStatus.Connected, Snapshot: not null });
+        monotonic.Time = now;
+        check("service observation: fresh wall clock cannot rescue a stale monotonic snapshot",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, monotonic, now, 30_001)
+                is { Status: VpnStatus.Error, Snapshot: null });
+        check("service observation: future uptime cannot fall back to the wall clock",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, monotonic, now, 19_999)
+                is { Status: VpnStatus.Error, Snapshot: null });
+        monotonic.MonotonicTimeMs = 0;
+        check("service observation: zero uptime is present rather than legacy or unspecified now",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, monotonic, now, 0)
+                is { Status: VpnStatus.Connected, Snapshot: not null });
+        check("service observation: legacy status ignores the optional current uptime",
+            ServiceObservation.Resolve(ServiceControllerStatus.Running, connected, now, 0)
+                is { Status: VpnStatus.Connected, Snapshot: not null });
         byte[] Encode(ServiceStatus value) => JsonSerializer.SerializeToUtf8Bytes(value);
         check("service status: valid strict decode", ServiceState.DecodeStatus(Encode(connected)).BytesUp == 12);
+        check("service status: Windows codec retains the optional uptime",
+            ServiceState.DecodeStatus(Encode(monotonic)).MonotonicTimeMs == 0);
         foreach (string value in new[] { "999", "2", "connected", "Unknown", "" })
             check("service status: rejects invalid enum " + value, Fails(() => ServiceState.DecodeStatus(Encode(Snapshot(value)))));
         check("service status: rejects null snapshot", Fails(() => ServiceState.DecodeStatus(Encoding.UTF8.GetBytes("null"))));

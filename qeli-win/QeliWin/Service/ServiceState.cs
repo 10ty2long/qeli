@@ -231,13 +231,17 @@ public static class ServiceState
     {
         try
         {
+            // Timestamp the supplied counters before filesystem work can delay publication.
+            long monotonicTimeMs = ServiceMonotonicClock.NowMilliseconds;
+            DateTime sampledAt = DateTime.Now;
             EnsureDir();
             AtomicWrite(StatusFile, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new ServiceStatus
             {
                 Status = status.ToString(),
                 // Bound status even when an upstream error includes a large file/response.
                 Extra = extra is { Length: > 2048 } ? extra[..2048] : extra,
-                Time = DateTime.Now,
+                Time = sampledAt,
+                MonotonicTimeMs = monotonicTimeMs,
                 BytesUp = bytesUp,
                 BytesDown = bytesDown,
                 Since = since,
