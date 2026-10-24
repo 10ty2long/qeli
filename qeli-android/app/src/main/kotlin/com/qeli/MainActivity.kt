@@ -2,8 +2,6 @@ package com.qeli
 
 import android.Manifest
 import android.content.BroadcastReceiver
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -96,6 +94,17 @@ class MainActivity : AppCompatActivity() {
     private var clientIp = ""
     private var clientGateway = ""
     private var logLineCount = 0
+    private val diagnosticJournal by lazy { AndroidDiagnosticJournal.get(noBackupFilesDir) }
+    private var logRestoreJob: Job? = null
+    private var restoringLog = false
+    private var displayedLogEpoch = 0L
+    private var restoredThroughSequence = 0L
+    private val restoreLiveRecords = ArrayDeque<JournalRecord>()
+    private var reportJob: Job? = null
+    private var pendingReport: ByteArray? = null
+    private var pendingReportEpoch = -1L
+    private var pendingReportPrivacyRevision = -1L
+    private var reportExpiryJob: Job? = null
     // Mirror of PREF_LOG_TIME_FORMAT, cached because appendLog reads it per line.
     // Refreshed in onCreate and whenever Settings is saved.
     private var logTimeFormat = DEFAULT_LOG_TIME_FORMAT
@@ -182,6 +191,7 @@ class MainActivity : AppCompatActivity() {
         const val PREF_LOG_LEVEL = "log_level"
         const val DEFAULT_LOG_LEVEL = "info"
         const val PREF_CLEAR_LOG_ON_DISCONNECT = "clear_log_on_disconnect"
+        const val PREF_RETAIN_ERROR_REPORT = "retain_error_report"
         const val DEFAULT_CLEAR_LOG_ON_DISCONNECT = true
         const val PREF_AUTO_PROBE = "auto_probe_profiles"
         const val PREF_PROBE_INTERVAL_SECS = "probe_interval_secs"
@@ -268,6 +278,50 @@ ipv6 = auto
         ActivityResultContracts.OpenDocument()
     ) { uri -> if (uri != null) readRestore(uri) }
 
+    private val diagnosticExportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        val bytes = pendingReport
+        val exportEpoch = pendingReportEpoch
+        val privacyRevision = pendingReportPrivacyRevision
+        pendingReport = null
+        reportExpiryJob?.cancel()
+        if (uri == null) { bytes?.fill(0) }
+        else if (bytes == null || exportEpoch != diagnosticJournal.epoch ||
+            privacyRevision != diagnosticJournal.privacyRevision) {
+            bytes?.fill(0)
+            Toast.makeText(this, R.string.report_expired, Toast.LENGTH_LONG).show()
+        } else {
+            reportJob = lifecycleScope.launch {
+                if (!diagnosticJournal.tryStartExternalExport()) {
+                    bytes.fill(0)
+                    Toast.makeText(this@MainActivity, R.string.report_failed, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                val saved = try {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            check(exportEpoch == diagnosticJournal.epoch &&
+                                privacyRevision == diagnosticJournal.privacyRevision)
+                            contentResolver.openOutputStream(uri, "wt")?.use {
+                                check(exportEpoch == diagnosticJournal.epoch &&
+                                    privacyRevision == diagnosticJournal.privacyRevision)
+                                it.write(bytes)
+                            } ?: error("No output stream")
+                            true
+                        } catch (_: Exception) { false }
+                        finally { bytes.fill(0) }
+                    }
+                } finally {
+                    bytes.fill(0)
+                    diagnosticJournal.finishExternalExport()
+                }
+                Toast.makeText(this@MainActivity, if (saved) R.string.report_saved else R.string.report_failed,
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     private val statusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val status = intent.getStringExtra(VpnServiceImpl.EXTRA_STATUS)
@@ -279,18 +333,15 @@ ipv6 = auto
             )
             val logSessionId = intent.getStringExtra(VpnServiceImpl.EXTRA_LOG_SESSION_ID).orEmpty()
             val logLevel = intent.getStringExtra(VpnServiceImpl.EXTRA_LOG_LEVEL) ?: "info"
+            val logEpoch = intent.getLongExtra(VpnServiceImpl.EXTRA_LOG_EPOCH, -1)
+            val logSequence = intent.getLongExtra(VpnServiceImpl.EXTRA_LOG_SEQUENCE, -1)
             runOnUiThread {
-                if (intent.getBooleanExtra(VpnServiceImpl.EXTRA_LOG_CLEARED, false)) {
-                    clearDisplayedLog()
+                if (logEpoch == diagnosticJournal.epoch && displayedLogEpoch != logEpoch) {
+                    resetLogEpoch(logEpoch)
                 }
                 log?.let {
-                    appendLog(
-                        msg = it,
-                        timestampMs = logTimeMs,
-                        persist = false,
-                        sessionId = logSessionId,
-                        level = logLevel,
-                    )
+                    acceptLog(JournalRecord(DiagnosticLogStore.entry(it, logSessionId, logLevel, logTimeMs),
+                        logEpoch, logSequence))
                 }
                 if (status == VpnServiceImpl.STATUS_STATS) {
                     updateSpeed(
@@ -323,6 +374,8 @@ ipv6 = auto
         setContentView(binding.root)
         setDisconnectedState()
         val statePrefs = getSharedPreferences(PREFS_STATE, Context.MODE_PRIVATE)
+        diagnosticJournal.setRetainLastError(statePrefs.getBoolean(PREF_RETAIN_ERROR_REPORT, false))
+        diagnosticJournal.beginSession(currentDiagnosticSessionId())
         logTimeFormat = statePrefs
             .getString(PREF_LOG_TIME_FORMAT, DEFAULT_LOG_TIME_FORMAT)
             ?.trim()?.lowercase() ?: DEFAULT_LOG_TIME_FORMAT
@@ -363,15 +416,20 @@ ipv6 = auto
 
         // Log tab toolbar
         binding.btnLogClear.setOnClickListener {
-            runCatching { DiagnosticLogStore.clear(noBackupFilesDir) }
-                .onFailure { error -> Log.w("VpnMain", "Unable to clear diagnostic log", error) }
-            clearDisplayedLog()
+            invalidatePendingReport()
+            val completion = diagnosticJournal.clearAll()
+            resetLogEpoch(diagnosticJournal.epoch)
+            lifecycleScope.launch {
+                try { completion.await() }
+                catch (_: Exception) { Toast.makeText(this@MainActivity, R.string.report_clear_failed, Toast.LENGTH_LONG).show() }
+            }
         }
         binding.btnLogCopy.setOnClickListener {
-            val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-            cm.setPrimaryClip(ClipData.newPlainText("qeli log", binding.tvLog.text))
+            (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                .setPrimaryClip(android.content.ClipData.newPlainText("qeli log", binding.tvLog.text))
             Toast.makeText(this, getString(R.string.log_copied), Toast.LENGTH_SHORT).show()
         }
+        binding.btnLogReport.setOnClickListener { showDiagnosticExport() }
         binding.btnLogAutoscroll.setOnClickListener { setAutoScroll(!logAutoScroll) }
         setAutoScroll(true)
 
@@ -419,6 +477,7 @@ ipv6 = auto
     }
 
     override fun onDestroy() {
+        invalidatePendingReport()
         try { unregisterReceiver(statusReceiver) } catch (_: Exception) {}
         // Cancel the ring-spin animator: an INFINITE ObjectAnimator left running holds
         // a reference to binding.ringGradient (a view of this now-destroyed Activity),
@@ -756,6 +815,15 @@ ipv6 = auto
             textSize = 12f
             setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
         }
+        val cbRetainReport = CheckBox(this).apply {
+            text = getString(R.string.retain_error_report)
+            isChecked = prefs.getBoolean(PREF_RETAIN_ERROR_REPORT, false)
+        }
+        val tvRetainReport = TextView(this).apply {
+            text = getString(R.string.retain_error_report_desc)
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+        }
         val btnBackup = outlined().apply {
             text = getString(R.string.backup_profiles)
             setOnClickListener { backupLauncher.launch("qeli-profiles.json") }
@@ -788,6 +856,10 @@ ipv6 = auto
             addView(tvClearLog, android.widget.LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { marginStart = dp(26); bottomMargin = dp(8) })
+            addView(cbRetainReport)
+            addView(tvRetainReport, android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { marginStart = dp(26); bottomMargin = dp(8) })
             addView(android.widget.Space(context), android.widget.LinearLayout.LayoutParams(0, dp(12)))
             addView(btnBackup); addView(btnRestore)
@@ -825,7 +897,14 @@ ipv6 = auto
                     .putString(PREF_LOG_TIME_FORMAT, pickedLogFmt)
                     .putString(PREF_LOG_LEVEL, pickedLogLevel)
                     .putBoolean(PREF_CLEAR_LOG_ON_DISCONNECT, cbClearLog.isChecked)
+                    .putBoolean(PREF_RETAIN_ERROR_REPORT, cbRetainReport.isChecked)
                     .apply()
+                if (!cbRetainReport.isChecked) invalidatePendingReport()
+                val reportPreference = diagnosticJournal.setRetainLastError(cbRetainReport.isChecked)
+                lifecycleScope.launch {
+                    try { reportPreference.await() }
+                    catch (_: Exception) { Toast.makeText(this@MainActivity, R.string.report_clear_failed, Toast.LENGTH_LONG).show() }
+                }
                 if (cbTrustedWifi.isChecked && trustedSsids.isNotEmpty()) {
                     requestTrustedWifiPermissions()
                 } else {
@@ -2495,45 +2574,119 @@ ipv6 = auto
 
     private fun restoreDiagnosticLog() {
         clearDisplayedLog()
-        runCatching { DiagnosticLogStore.read(noBackupFilesDir) }
-            .onFailure { error -> Log.w("VpnMain", "Unable to restore diagnostic log", error) }
-            .getOrDefault(emptyList())
-            .forEach { entry ->
-                appendLog(
-                    msg = entry.message,
-                    timestampMs = entry.timestampMs,
-                    persist = false,
-                    sessionId = entry.sessionId,
-                    level = entry.level,
-                    updateConnectionStep = false,
-                )
+        displayedLogEpoch = diagnosticJournal.epoch
+        restoringLog = true
+        val completion = diagnosticJournal.read()
+        logRestoreJob = lifecycleScope.launch {
+            try {
+                val snapshot = completion.await()
+                if (snapshot.epoch == diagnosticJournal.epoch) {
+                    clearDisplayedLog()
+                    snapshot.entries.forEach { renderLog(it, updateConnectionStep = false) }
+                    restoredThroughSequence = snapshot.throughSequence
+                    restoreLiveRecords.filter { it.epoch == snapshot.epoch && it.sequence > snapshot.throughSequence }
+                        .sortedBy { it.sequence }.forEach { renderLog(it.entry, updateConnectionStep = false) }
+                }
+            } catch (_: Exception) {
+                // Live broadcasts have already been displayed; a cancelled/failed restore must
+                // not replace them with an empty snapshot.
+            } finally {
+                restoringLog = false
+                restoreLiveRecords.clear()
             }
+        }
+    }
+
+    private fun resetLogEpoch(epoch: Long) {
+        logRestoreJob?.cancel()
+        restoringLog = false
+        restoreLiveRecords.clear()
+        restoredThroughSequence = 0
+        displayedLogEpoch = epoch
+        clearDisplayedLog()
+    }
+
+    private fun acceptLog(record: JournalRecord, updateConnectionStep: Boolean = true) {
+        if (record.epoch != diagnosticJournal.epoch) return
+        if (displayedLogEpoch != record.epoch) resetLogEpoch(record.epoch)
+        if (record.sequence <= restoredThroughSequence) return
+        if (restoringLog) {
+            if (restoreLiveRecords.size >= MAX_LOG_LINES) restoreLiveRecords.removeFirst()
+            restoreLiveRecords.addLast(record)
+        }
+        renderLog(record.entry, updateConnectionStep)
+    }
+
+    private fun invalidatePendingReport() {
+        reportJob?.cancel()
+        reportExpiryJob?.cancel()
+        pendingReport?.fill(0)
+        pendingReport = null
+        pendingReportEpoch = -1
+        pendingReportPrivacyRevision = -1
+    }
+
+    private fun showDiagnosticExport() {
+        if (reportJob?.isActive == true || pendingReport != null) return
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.diagnostic_report)
+            .setMessage(R.string.diagnostic_report_desc)
+            .setPositiveButton(R.string.report_current) { _, _ -> prepareDiagnosticExport(lastError = false) }
+            .setNeutralButton(R.string.report_last_error) { _, _ -> prepareDiagnosticExport(lastError = true) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun prepareDiagnosticExport(lastError: Boolean) {
+        if (reportJob?.isActive == true || pendingReport != null) return
+        val exportEpoch = diagnosticJournal.epoch
+        val privacyRevision = diagnosticJournal.privacyRevision
+        reportJob = lifecycleScope.launch {
+            try {
+                val report = if (lastError) diagnosticJournal.exportLastError().await()
+                    else diagnosticJournal.exportCurrent().await()
+                if (report == null) {
+                    Toast.makeText(this@MainActivity, R.string.report_not_available, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                if (exportEpoch != diagnosticJournal.epoch || privacyRevision != diagnosticJournal.privacyRevision) return@launch
+                val version = appVersion()
+                val bytes = withContext(Dispatchers.IO) {
+                    JSONObject(report).put("exporter_app_version", version).toString(2).toByteArray(Charsets.UTF_8)
+                        .also { check(it.size <= AndroidDiagnosticJournal.REPORT_LIMIT) }
+                }
+                if (exportEpoch != diagnosticJournal.epoch || privacyRevision != diagnosticJournal.privacyRevision) {
+                    bytes.fill(0)
+                    return@launch
+                }
+                pendingReport = bytes
+                pendingReportEpoch = exportEpoch
+                pendingReportPrivacyRevision = privacyRevision
+                // A document picker can remain open indefinitely. Retain at most one bounded
+                // export for five minutes; never persist an unrequested intermediate file.
+                reportExpiryJob = lifecycleScope.launch {
+                    delay(5 * 60 * 1000L)
+                    pendingReport?.fill(0)
+                    pendingReport = null
+                }
+                diagnosticExportLauncher.launch(if (lastError) "qeli-last-error.json" else "qeli-diagnostics.json")
+            } catch (_: Exception) {
+                if (isActive) Toast.makeText(this@MainActivity, R.string.report_failed, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun appendLog(
         msg: String,
         timestampMs: Long = System.currentTimeMillis(),
-        persist: Boolean = true,
         sessionId: String = currentDiagnosticSessionId(),
         level: String = "info",
         updateConnectionStep: Boolean = true,
     ) {
-        val entry = if (persist) {
-            runCatching {
-                DiagnosticLogStore.append(
-                    directory = noBackupFilesDir,
-                    message = msg,
-                    sessionId = sessionId,
-                    level = level,
-                    timestampMs = timestampMs,
-                )
-            }.getOrElse { error ->
-                Log.w("VpnMain", "Unable to persist diagnostic log", error)
-                DiagnosticLogEntry(timestampMs, sessionId, level, msg)
-            }
-        } else {
-            DiagnosticLogEntry(timestampMs, sessionId, level, msg)
-        }
+        acceptLog(diagnosticJournal.append(msg, sessionId, level, timestampMs), updateConnectionStep)
+    }
+
+    private fun renderLog(entry: DiagnosticLogEntry, updateConnectionStep: Boolean) {
         val ts = logStamp(entry.timestampMs)
         val tv = binding.tvLog
         // append() upgrades the buffer to EDITABLE, so we can trim the oldest lines

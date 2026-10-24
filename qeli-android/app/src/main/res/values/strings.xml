@@ -259,4 +259,15 @@
     <!-- Only a sample of the pushed routes is ever rendered; %2$d is what is left over. -->
     <string name="detail_routes_more">%1$s and %2$d more</string>
     <string name="detail_routes_partial">%1$s — only %2$d of %3$d installed</string>
+    <string name="diagnostic_report">Report</string>
+    <string name="diagnostic_report_desc">Export network event times, session IDs, event types and available numeric carrier metrics. Free-text messages, profiles, keys and network addresses are omitted. Metrics describe local writes, not confirmed delivery. Choose the destination file yourself. Clear removes both the current journal and the saved last error report.</string>
+    <string name="retain_error_report">Keep the last error report</string>
+    <string name="retain_error_report_desc">Optional. Keep one limited diagnostic report after a terminal connection error, even when the current journal is cleared on disconnect. It remains after app restart until replaced or deleted. Turning this off or using Clear deletes it. Reports contain event metadata and numeric metrics, without free-text messages or profiles.</string>
+    <string name="report_current">Current</string>
+    <string name="report_last_error">Last error</string>
+    <string name="report_not_available">No saved error report. Enable retention in Settings before the next error.</string>
+    <string name="report_saved">Diagnostic report saved</string>
+    <string name="report_failed">Could not save the report. Please try again.</string>
+    <string name="report_expired">The report expired or was cleared. Export it again.</string>
+    <string name="report_clear_failed">Could not delete diagnostic data. Please try Clear again.</string>
 </resources>

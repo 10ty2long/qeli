@@ -11,6 +11,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DiagnosticLogStoreTest {
+    @Test
+    fun `normal rotation leaves headroom instead of compacting every following append`() = withTempDirectory { directory ->
+        DiagnosticLogStore.appendBatch(directory, (0..1000).map {
+            DiagnosticLogStore.entry("event-$it", timestampMs = it.toLong())
+        })
+        val rotated = DiagnosticLogStore.read(directory)
+        assertEquals(750, rotated.size)
+        assertEquals("event-1000", rotated.last().message)
+        DiagnosticLogStore.append(directory, "next")
+        assertEquals(751, DiagnosticLogStore.read(directory).size)
+    }
+
     private fun withTempDirectory(block: (File) -> Unit) {
         val directory = Files.createTempDirectory("qeli-diagnostic-log-").toFile()
         try {

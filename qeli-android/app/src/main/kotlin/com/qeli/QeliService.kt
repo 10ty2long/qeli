@@ -127,6 +127,7 @@ class VpnServiceImpl : VpnService() {
     // onDestroy diagnostic cannot recreate the journal after shutdown.
     private val diagnosticLogLock = Any()
     private var diagnosticLogClosed = false
+    private val diagnosticJournal by lazy { AndroidDiagnosticJournal.get(noBackupFilesDir) }
 
     @Volatile
     private var stopping = false
@@ -188,6 +189,8 @@ class VpnServiceImpl : VpnService() {
         const val EXTRA_LOG_TIME_MS = "log_time_ms"
         const val EXTRA_LOG_SESSION_ID = "log_session_id"
         const val EXTRA_LOG_LEVEL = "log_level"
+        const val EXTRA_LOG_EPOCH = "log_epoch"
+        const val EXTRA_LOG_SEQUENCE = "log_sequence"
         const val EXTRA_LOG_CLEARED = "log_cleared"
         const val EXTRA_IP = "ip"
         const val EXTRA_GATEWAY = "gateway"
@@ -681,12 +684,19 @@ class VpnServiceImpl : VpnService() {
             broadcastLog("Connect request rejected: $message", level = "warn")
             return
         }
+        broadcastLog("Connect request rejected: $message", level = "error")
         broadcastStatus(STATUS_ERROR, message)
         showNotification(message)
         disarmRecoveryRecord()
-        stopForeground(STOP_FOREGROUND_REMOVE)
         stopping = true
-        stopSelf()
+        teardownJob = teardownScope.launch {
+            val logsCleared = finishDiagnosticSession(terminalError = true)
+            withContext(Dispatchers.Main) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                broadcastStatus(STATUS_ERROR, message, logsCleared)
+                stopSelf()
+            }
+        }
     }
 
     private data class TrustedWifiSettings(val enabled: Boolean, val ssids: List<String>)
@@ -763,15 +773,18 @@ class VpnServiceImpl : VpnService() {
         synchronized(diagnosticLogLock) { diagnosticLogClosed = false }
         val prefs = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
         val existing = diagnosticSessionId()
+        diagnosticJournal.setRetainLastError(prefs.getBoolean(MainActivity.PREF_RETAIN_ERROR_REPORT, false))
         val hasLiveController = transportCore != null || vpnInterface != null ||
             transportJob?.isActive == true || pausedByTrustedWifi || trustedPauseInFlight
         val createNew = existing.isBlank() || (!redelivered && !hasLiveController)
-        if (!createNew) return
+        if (!createNew) {
+            diagnosticJournal.beginSession(existing)
+            return
+        }
         val sessionId = UUID.randomUUID().toString().substring(0, 8)
         diagnosticSessionIdCache = sessionId
-        if (!prefs.edit().putString(MainActivity.PREF_DIAGNOSTIC_SESSION_ID, sessionId).commit()) {
-            Log.e("VpnSvc", "Failed to persist diagnostic session id")
-        }
+        diagnosticJournal.beginSession(sessionId)
+        prefs.edit().putString(MainActivity.PREF_DIAGNOSTIC_SESSION_ID, sessionId).apply()
         diagnosticSessionEndingLogged = false
         broadcastLog("=== VPN session $sessionId started ($origin) ===")
     }
@@ -1079,10 +1092,7 @@ class VpnServiceImpl : VpnService() {
             // recomputes the prepared-provider + secure-lockdown proof from live state.
             showNotification(killSwitchError)
             if (transportCore == null && vpnInterface == null) {
-                disarmRecoveryRecord()
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopping = true // onDestroy must not replace the visible ERROR with DISCONNECTED
-                stopSelf()
+                rejectForegroundConnect(killSwitchError)
             }
             return
         }
@@ -1798,6 +1808,15 @@ class VpnServiceImpl : VpnService() {
         val carrierAddresses = resolvePhysicalCarrierAddresses(config, carrierGeneration)
         debugLog("Physical carrier candidates: ${carrierAddresses.joinToString(", ")}")
         nativeFatalError = null
+        val carrierDiagnosticsSampler = CarrierDiagnosticsSampler()
+        fun captureCarrierDiagnostics(finalSample: Boolean = false) {
+            synchronized(diagnosticLogLock) {
+                if (diagnosticLogClosed || transportCore !== core) return
+                val sample = carrierDiagnosticsSampler.sample(runCatching { core.carrierDiagnostics() }.getOrNull())
+                diagnosticJournal.updateCarrierDiagnostics(sample.snapshot, preserveLastOnUnavailable = finalSample)
+                sample.lines.forEach { broadcastLog(it) }
+            }
+        }
         kotlinx.coroutines.coroutineScope {
             val statsJob = launch {
                 var previous = core.stats()
@@ -1805,11 +1824,16 @@ class VpnServiceImpl : VpnService() {
                 var reportedKernelDrops = previous.udpKernelDrops
                 var reportedInternalDrops = previous.udpInternalDrops
                 var lastTelemetryAt = previousAt
+                var lastCarrierDiagnosticsAt = previousAt
                 var udpReadyLogged = false
                 while (currentCoroutineContext().isActive && transportCore === core) {
                     delay(1000)
                     val current = runCatching { core.stats() }.getOrElse { break }
                     val now = SystemClock.elapsedRealtime()
+                    if (now - lastCarrierDiagnosticsAt >= 20_000) {
+                        captureCarrierDiagnostics()
+                        lastCarrierDiagnosticsAt = now
+                    }
                     val elapsed = (now - previousAt).coerceAtLeast(1)
                     liveBytesUp = current.txBytes
                     liveBytesDown = current.rxBytes
@@ -1869,6 +1893,9 @@ class VpnServiceImpl : VpnService() {
             } finally {
                 if (transportCore === core) attemptEndedAt = SystemClock.elapsedRealtime()
                 statsJob.cancel()
+                // Native has frozen its last generation snapshot before returning. Capture it
+                // on this IO runner before a retry calls start() or teardown closes the core.
+                captureCarrierDiagnostics(finalSample = true)
                 if (transportCore === core) {
                     roamingUpdateJob?.cancel()
                     roamingUpdateJob = null
@@ -3022,7 +3049,7 @@ class VpnServiceImpl : VpnService() {
                 }
                 disarmRecoveryRecord()
                 stopForeground(STOP_FOREGROUND_REMOVE)
-                val logsCleared = clearDiagnosticLogAfterDisconnect()
+                val logsCleared = finishDiagnosticSession(terminalError = finalError != null)
                 if (finalError == null) {
                     broadcastStatus(STATUS_DISCONNECTED, logsCleared = logsCleared)
                 } else {
@@ -3033,18 +3060,24 @@ class VpnServiceImpl : VpnService() {
         }
     }
 
-    private fun clearDiagnosticLogAfterDisconnect(): Boolean = synchronized(diagnosticLogLock) {
+    private suspend fun finishDiagnosticSession(terminalError: Boolean): Boolean {
         val prefs = getSharedPreferences(MainActivity.PREFS_STATE, Context.MODE_PRIVATE)
-        if (!prefs.getBoolean(
-                MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT,
-                MainActivity.DEFAULT_CLEAR_LOG_ON_DISCONNECT,
-            )) return@synchronized false
-        try {
-            DiagnosticLogStore.clear(noBackupFilesDir)
+        diagnosticJournal.setRetainLastError(prefs.getBoolean(MainActivity.PREF_RETAIN_ERROR_REPORT, false))
+        val clearCurrent = prefs.getBoolean(MainActivity.PREF_CLEAR_LOG_ON_DISCONNECT,
+            MainActivity.DEFAULT_CLEAR_LOG_ON_DISCONNECT)
+        val completion = synchronized(diagnosticLogLock) {
             diagnosticLogClosed = true
-            true
+            diagnosticJournal.finishSession(diagnosticSessionId(), terminalError, clearCurrent)
+        }
+        return try {
+            if (withTimeoutOrNull(2_000) { completion.await(); true } == true) clearCurrent else {
+                // Slow storage must not keep a fully stopped VPN stuck in DISCONNECTING.
+                // The process-owned writer still completes its ordered cleanup in the background.
+                Log.w("VpnSvc", "Diagnostic cleanup remains queued after VPN shutdown")
+                false
+            }
         } catch (error: Exception) {
-            Log.w("VpnSvc", "Unable to clear diagnostic log after disconnect", error)
+            Log.w("VpnSvc", "Unable to finalize diagnostic journal", error)
             false
         }
     }
@@ -3060,24 +3093,18 @@ class VpnServiceImpl : VpnService() {
         sendBroadcast(Intent(BROADCAST_STATUS).apply {
             setPackage(packageName)
             putExtra(EXTRA_STATUS, status)
-            if (logsCleared) putExtra(EXTRA_LOG_CLEARED, true)
+            putExtra(EXTRA_LOG_EPOCH, diagnosticJournal.epoch)
+            if (logsCleared) {
+                putExtra(EXTRA_LOG_CLEARED, true)
+            }
             error?.let { putExtra(EXTRA_ERROR, it) }
         })
     }
 
     private fun broadcastLog(msg: String, level: String = "info") = synchronized(diagnosticLogLock) {
         if (diagnosticLogClosed) return@synchronized
-        val entry = runCatching {
-            DiagnosticLogStore.append(
-                directory = noBackupFilesDir,
-                message = msg,
-                sessionId = diagnosticSessionId(),
-                level = level,
-            )
-        }.getOrElse { error ->
-            Log.w("VpnSvc", "Unable to persist diagnostic log: ${error.message}")
-            DiagnosticLogEntry(System.currentTimeMillis(), diagnosticSessionId(), level, msg)
-        }
+        val record = diagnosticJournal.append(msg, diagnosticSessionId(), level)
+        val entry = record.entry
         when (entry.level) {
             "error" -> Log.e("VpnSvc", entry.message)
             "warn" -> Log.w("VpnSvc", entry.message)
@@ -3089,6 +3116,8 @@ class VpnServiceImpl : VpnService() {
             putExtra(EXTRA_LOG_TIME_MS, entry.timestampMs)
             putExtra(EXTRA_LOG_SESSION_ID, entry.sessionId)
             putExtra(EXTRA_LOG_LEVEL, entry.level)
+            putExtra(EXTRA_LOG_EPOCH, record.epoch)
+            putExtra(EXTRA_LOG_SEQUENCE, record.sequence)
         })
     }
 

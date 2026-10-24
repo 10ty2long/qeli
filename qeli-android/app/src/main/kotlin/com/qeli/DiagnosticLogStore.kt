@@ -47,14 +47,22 @@ internal object DiagnosticLogStore {
         maxEntries: Int = MAX_ENTRIES,
         maxBytes: Long = MAX_BYTES,
     ): DiagnosticLogEntry {
+        val entry = entry(message, sessionId, level, timestampMs)
+        appendBatch(directory, listOf(entry), maxEntries, maxBytes)
+        return entry
+    }
+
+    internal fun entry(message: String, sessionId: String = "", level: String = "info",
+                       timestampMs: Long = System.currentTimeMillis()): DiagnosticLogEntry =
+        DiagnosticLogEntry(timestampMs.coerceAtLeast(0L), normalizeSessionId(sessionId),
+            normalizeLevel(level), normalizeMessage(message))
+
+    /** Production callers batch on their single IO worker; never call this on Android main. */
+    internal fun appendBatch(directory: File, entries: List<DiagnosticLogEntry>,
+                             maxEntries: Int = MAX_ENTRIES, maxBytes: Long = MAX_BYTES) {
         require(maxEntries > 0) { "maxEntries must be positive" }
         require(maxBytes > 0) { "maxBytes must be positive" }
-        val entry = DiagnosticLogEntry(
-            timestampMs = timestampMs.coerceAtLeast(0L),
-            sessionId = normalizeSessionId(sessionId),
-            level = normalizeLevel(level),
-            message = normalizeMessage(message),
-        )
+        if (entries.isEmpty()) return
         synchronized(lock) {
             check(directory.exists() || directory.mkdirs()) {
                 "cannot create diagnostic log directory '${directory.absolutePath}'"
@@ -73,17 +81,25 @@ internal object DiagnosticLogStore {
                 count = retained.size
             }
 
-            val bytes = encode(entry).toByteArray(StandardCharsets.UTF_8)
-            FileOutputStream(file, true).use { output -> output.write(bytes) }
-            count++
+            FileOutputStream(file, true).use { output ->
+                entries.forEach { raw ->
+                    output.write(encode(entry(raw.message, raw.sessionId, raw.level, raw.timestampMs))
+                        .toByteArray(StandardCharsets.UTF_8))
+                }
+            }
+            count += entries.size
             if (count > maxEntries || file.length() > maxBytes) {
-                val retained = retainNewest(loadUnlocked(file, maxBytes).entries, maxEntries, maxBytes)
+                // Leave headroom after rotation: a long session must not rewrite 1000 records
+                // for every subsequent event. Tiny test/custom limits retain exact semantics.
+                val loaded = loadUnlocked(file, maxBytes).entries
+                val retained = retainNewest(loaded,
+                    if (maxEntries >= 32) maxEntries * 3 / 4 else maxEntries,
+                    if (maxBytes >= MAX_RECORD_BYTES * 2) maxBytes * 3 / 4 else maxBytes)
                 rewriteUnlocked(file, retained)
                 count = retained.size
             }
             knownCounts[key] = count
         }
-        return entry
     }
 
     internal fun read(
