@@ -857,6 +857,7 @@ fn finish_generation(
     core.udp_internal_drops = core.udp_internal_drops.saturating_add(udp.internal_drops);
     core.udp_buffer_grows = core.udp_buffer_grows.saturating_add(udp.grow_events);
     core.udp_recv_buffer_bytes = udp.granted_recv_bytes;
+    core.last_carrier_diagnostics = Some(counters.tcp_carriers.finished_json());
     core.runtime_counters = None;
     core.runtime_active = false;
 

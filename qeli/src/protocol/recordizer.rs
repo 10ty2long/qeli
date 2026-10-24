@@ -13,6 +13,42 @@ pub const MAGIC: &[u8; 4] = b"QRM1";
 const FRAME_HEADER_LEN: usize = 10;
 const MIN_RECORD_PAYLOAD: usize = MAGIC.len() + FRAME_HEADER_LEN + 1;
 
+/// Upper bound for input-packet tickets retained by an ordered TCP writer:
+/// one current envelope plus the input currently being pushed into it.
+#[cfg(any(feature = "client", test))]
+pub(crate) fn pending_packet_capacity(config: &RuntimeConfig) -> usize {
+    config
+        .max_packets
+        .min(config.max_payload_bytes.saturating_sub(MAGIC.len()) / (FRAME_HEADER_LEN + 1))
+        .saturating_add(1)
+}
+
+/// Original payload bytes represented by a locally encoded envelope. Used only
+/// for diagnostic completion accounting, never to accept or transform peer data.
+#[cfg(any(feature = "client", test))]
+pub(crate) fn encoded_payload_len(record: &[u8]) -> Option<usize> {
+    if !record.starts_with(MAGIC) {
+        return None;
+    }
+    let mut cursor = MAGIC.len();
+    let mut bytes = 0usize;
+    while cursor < record.len() {
+        let header = record.get(cursor..cursor.checked_add(FRAME_HEADER_LEN)?)?;
+        let total = usize::from(u16::from_be_bytes([header[4], header[5]]));
+        let offset = usize::from(u16::from_be_bytes([header[6], header[7]]));
+        let len = usize::from(u16::from_be_bytes([header[8], header[9]]));
+        if len == 0 || offset.checked_add(len)? > total {
+            return None;
+        }
+        cursor = cursor.checked_add(FRAME_HEADER_LEN)?.checked_add(len)?;
+        if cursor > record.len() {
+            return None;
+        }
+        bytes = bytes.checked_add(len)?;
+    }
+    Some(bytes)
+}
+
 #[derive(Debug, Clone)]
 pub struct RuntimeConfig {
     pub delay_min: Duration,

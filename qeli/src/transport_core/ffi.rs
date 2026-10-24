@@ -849,6 +849,13 @@ fn with_core(
     }
 }
 
+/// Optional Android diagnostic snapshot. Uses the same generation-safe registry as the
+/// fixed C ABI, without adding telemetry to the control-event queue or changing stats layout.
+#[cfg(all(target_os = "android", feature = "transport-core-ffi"))]
+pub(super) fn carrier_diagnostics(handle: u64) -> Result<Vec<u8>, i32> {
+    with_client(handle, |core| core.carrier_diagnostics_json()).map_err(registry_error_code)
+}
+
 fn registry_error_code(error: RegistryAccessError) -> i32 {
     match error {
         RegistryAccessError::InvalidHandle => ErrorCode::InvalidHandle as i32,

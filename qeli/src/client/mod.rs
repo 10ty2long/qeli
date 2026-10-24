@@ -493,6 +493,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 // `portable_atomic::AtomicU64` so the data-plane byte counters compile on 32-bit
 // mipsel routers (no native 64-bit atomics); native instruction on aarch64/x86_64.
 use crate::protocol::stream_io::WriteAllFlush;
+use crate::transport_core::tcp_carrier_metrics::{CarrierMetrics, CloseGuard, InFlight, Ticket};
 use portable_atomic::AtomicU64;
 use std::sync::Arc;
 use std::time::Duration;
@@ -1984,6 +1985,8 @@ impl ClientStatusReporter {
                 "udp_data_fragmentation": udp.path,
                 "tcp_uplink_drops": counters.tcp_uplink.snapshot(),
                 "tcp_downlink_drops": counters.tcp_downlink.snapshot(),
+                "tcp_carriers": serde_json::from_slice::<serde_json::Value>(
+                    &counters.tcp_carriers.diagnostics_json()).ok(),
             },
         });
         // Keep the state lock until enqueue: an older sampled state must never be
@@ -4424,6 +4427,17 @@ enum ClientUplink {
     Owned(Vec<u8>),
 }
 
+struct QueuedUplink {
+    packet: ClientUplink,
+    ticket: Option<Ticket>,
+}
+
+impl AsRef<[u8]> for QueuedUplink {
+    fn as_ref(&self) -> &[u8] {
+        self.packet.as_ref()
+    }
+}
+
 struct ClientTerminalControl {
     packet: Vec<u8>,
     written: tokio::sync::oneshot::Sender<()>,
@@ -4432,8 +4446,9 @@ struct ClientTerminalControl {
 #[derive(Clone)]
 struct ClientStreamSender {
     logical_slot_id: u32,
-    sender: mpsc::Sender<ClientUplink>,
+    sender: mpsc::Sender<QueuedUplink>,
     terminal_sender: mpsc::Sender<ClientTerminalControl>,
+    metrics: Option<Arc<CarrierMetrics>>,
 }
 
 impl ClientStreamSender {
@@ -4441,7 +4456,27 @@ impl ClientStreamSender {
         &self,
         packet: ClientUplink,
     ) -> Result<(), mpsc::error::TrySendError<ClientUplink>> {
-        self.sender.try_send(packet)
+        // Reserve before admission: a failed try_send is not an accepted packet,
+        // and a fast writer cannot finish a ticket before its counters exist.
+        match self.sender.try_reserve() {
+            Ok(permit) => {
+                let ticket = self
+                    .metrics
+                    .as_ref()
+                    .map(|row| row.admit(packet.as_ref().len()));
+                permit.send(QueuedUplink { packet, ticket });
+                Ok(())
+            }
+            Err(mpsc::error::TrySendError::Full(())) => {
+                if let Some(row) = &self.metrics {
+                    row.queue_full(packet.as_ref().len());
+                }
+                Err(mpsc::error::TrySendError::Full(packet))
+            }
+            Err(mpsc::error::TrySendError::Closed(())) => {
+                Err(mpsc::error::TrySendError::Closed(packet))
+            }
+        }
     }
 
     fn is_closed(&self) -> bool {
@@ -4534,7 +4569,7 @@ fn queue_tcp_uplink(
 mod tcp_uplink_tests {
     use super::*;
 
-    fn stream(slot: u32) -> (ClientStreamSender, mpsc::Receiver<ClientUplink>) {
+    fn stream(slot: u32) -> (ClientStreamSender, mpsc::Receiver<QueuedUplink>) {
         let (sender, receiver) = mpsc::channel(1);
         let (terminal_sender, _terminal_receiver) = mpsc::channel(1);
         (
@@ -4542,6 +4577,7 @@ mod tcp_uplink_tests {
                 logical_slot_id: slot,
                 sender,
                 terminal_sender,
+                metrics: None,
             },
             receiver,
         )
@@ -4585,6 +4621,7 @@ mod tcp_uplink_tests {
             logical_slot_id: 0,
             sender,
             terminal_sender,
+            metrics: None,
         }];
         let counters = UplinkCounters::default();
         // Two 64-packet reader bursts collide on one pinned carrier before it drains.
@@ -4686,7 +4723,7 @@ mod tcp_uplink_tests {
                 stable_width,
                 &counters,
             );
-            let ClientUplink::Owned(packet) = live_rx.try_recv().unwrap() else {
+            let ClientUplink::Owned(packet) = live_rx.try_recv().unwrap().packet else {
                 panic!("wrong packet");
             };
             assert_eq!(packet, b"delivered");
@@ -4886,16 +4923,19 @@ mod tcp_resume_client_tests {
                 logical_slot_id: 0,
                 sender: old_zero,
                 terminal_sender: terminal_sender.clone(),
+                metrics: None,
             },
             ClientStreamSender {
                 logical_slot_id: 1,
                 sender: old_one,
                 terminal_sender: terminal_sender.clone(),
+                metrics: None,
             },
             ClientStreamSender {
                 logical_slot_id: 2,
                 sender: old_two,
                 terminal_sender: terminal_sender.clone(),
+                metrics: None,
             },
         ];
         let retired = publish_tcp_path_handover(
@@ -4904,6 +4944,7 @@ mod tcp_resume_client_tests {
                 logical_slot_id: 0,
                 sender: new_zero,
                 terminal_sender,
+                metrics: None,
             },
         );
         assert_eq!(retired, 3);
@@ -4921,6 +4962,7 @@ mod tcp_resume_client_tests {
                 logical_slot_id,
                 sender,
                 terminal_sender: terminal_sender.clone(),
+                metrics: None,
             }
         };
         let mut outputs = vec![sender(0), sender(1), sender(2), sender(3)];
@@ -5583,12 +5625,16 @@ where
     let progress = write_half.write_progress();
     let mut write_half = crate::protocol::stream_io::StallGuard::observing(write_half, progress);
     let write_progress = write_half.progress();
-    let (out_tx, mut out_rx) = mpsc::channel::<ClientUplink>(cfg.uplink_queue_capacity);
+    let carrier_metrics = runtime
+        .tcp_carriers
+        .register(logical_slot_id, write_progress.clone());
+    let (out_tx, mut out_rx) = mpsc::channel::<QueuedUplink>(cfg.uplink_queue_capacity);
     let (terminal_tx, mut terminal_rx) = mpsc::channel::<ClientTerminalControl>(4);
     let stream_sender = ClientStreamSender {
         logical_slot_id,
         sender: out_tx,
         terminal_sender: terminal_tx.clone(),
+        metrics: Some(carrier_metrics.clone()),
     };
     let base = tokio::time::Instant::now();
     let last_rx = Arc::new(AtomicU64::new(0));
@@ -5828,7 +5874,9 @@ where
         let mut tx = tx_codec;
         let stream_stop_tx = stream_stop_tx.clone();
         let mut stream_stop_rx = stream_stop_tx.subscribe();
+        let diagnostics_close = CloseGuard(carrier_metrics.clone());
         tasks.spawn(async move {
+            let _diagnostics_close = diagnostics_close;
             let idle_ms = cfg.idle_timeout.as_millis() as u64;
             let mut last_tx_ms: u64 = 0;
             // Flow-shaping: when enabled, idle cover at exponential (non-periodic)
@@ -5905,6 +5953,9 @@ where
                 .recordizer
                 .clone()
                 .map(crate::protocol::recordizer::Recordizer::new);
+            let ledger_capacity = cfg.recordizer.as_ref()
+                .map_or(1, crate::protocol::recordizer::pending_packet_capacity);
+            let mut in_flight = InFlight::new(carrier_metrics, ledger_capacity);
             'writer: loop {
                 let mux_deadline = recordizer
                     .as_ref()
@@ -5953,6 +6004,8 @@ where
 
                     pt = out_rx.recv() => {
                         let Some(pt) = pt else { break };
+                        let QueuedUplink { packet: pt, ticket } = pt;
+                        if let Some(ticket) = ticket { in_flight.push(ticket); }
                         let data_len = pt.as_ref().len();
                         if let Some(mux) = recordizer.as_mut() {
                             let ready = mux.push(pt.as_ref(), std::time::Instant::now());
@@ -5963,11 +6016,16 @@ where
                                     payloads
                                 }
                                 Err(error) => {
+                                    // A rejected push can have mutated pending mux
+                                    // state; stop claiming exact completion thereafter.
+                                    in_flight.invalidate();
                                     log::debug!("TCP recordizer dropped a packet: {error}");
                                     continue;
                                 }
                             };
                             for payload in payloads {
+                                let payload_bytes = crate::protocol::recordizer::encoded_payload_len(&payload);
+                                if payload_bytes.is_none() { in_flight.invalidate(); }
                                 if !encrypt_client_payload(
                                     &mut tx,
                                     &payload,
@@ -5976,6 +6034,7 @@ where
                                     &mut wire_record,
                                     &mut padding,
                                 ) {
+                                    if let Some(bytes) = payload_bytes { in_flight.finish_bytes(bytes, false); }
                                     continue;
                                 }
                                 if !write_client_wire_record(
@@ -5988,6 +6047,7 @@ where
                                 ).await {
                                     break 'writer;
                                 }
+                                if let Some(bytes) = payload_bytes { in_flight.finish_bytes(bytes, true); }
                                 last_tx_ms = base.elapsed().as_millis() as u64;
                                 heartbeat_deadline = tokio::time::Instant::now()
                                     + crate::protocol::randomized_heartbeat_delay(
@@ -6017,12 +6077,15 @@ where
                                 ).await {
                                     break;
                                 }
+                                in_flight.finish_bytes(data_len, true);
                                 last_tx_ms = base.elapsed().as_millis() as u64;
                                 heartbeat_deadline = tokio::time::Instant::now()
                                     + crate::protocol::randomized_heartbeat_delay(
                                         cfg.heartbeat_interval,
                                         Duration::from_millis(cfg.hb_jitter),
                                     );
+                            } else {
+                                in_flight.finish_bytes(data_len, false);
                             }
                         }
                     }
@@ -6034,6 +6097,8 @@ where
                             .as_mut()
                             .and_then(|mux| mux.flush_due(std::time::Instant::now()))
                         {
+                            let payload_bytes = crate::protocol::recordizer::encoded_payload_len(&payload);
+                            if payload_bytes.is_none() { in_flight.invalidate(); }
                             let encrypted = encrypt_client_payload(
                                 &mut tx,
                                 &payload,
@@ -6052,6 +6117,7 @@ where
                             ).await {
                                 break;
                             }
+                            if let Some(bytes) = payload_bytes { in_flight.finish_bytes(bytes, encrypted); }
                             last_tx_ms = base.elapsed().as_millis() as u64;
                             heartbeat_deadline = tokio::time::Instant::now()
                                 + crate::protocol::randomized_heartbeat_delay(
@@ -14172,9 +14238,8 @@ mod tcp_task_shutdown_tests {
             .unwrap();
         if blocked_writer {
             sender
-                .sender
-                .send(ClientUplink::Owned(vec![0x41; 80]))
-                .await
+                .try_send(ClientUplink::Owned(vec![0x41; 80]))
+                .ok()
                 .unwrap();
             tokio::time::timeout(Duration::from_secs(5), write_ready)
                 .await

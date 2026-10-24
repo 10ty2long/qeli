@@ -45,6 +45,11 @@ pub(crate) mod carrier;
 )]
 pub(crate) mod client_uplink;
 
+// Compatibility-only builds expose an explicit unavailable snapshot, but do not
+// instantiate a client writer or its diagnostic accounting helpers.
+#[cfg_attr(not(any(feature = "client", test)), allow(dead_code))]
+pub(crate) mod tcp_carrier_metrics;
+
 #[cfg_attr(
     not(any(feature = "client", feature = "transport-core-ffi")),
     allow(dead_code)
@@ -936,6 +941,8 @@ pub struct CoreStats {
 /// receives a fresh owner, so a cancelled predecessor cannot write into its successor's totals.
 #[derive(Default)]
 pub(crate) struct RuntimeCounters {
+    #[cfg(any(feature = "client", test))]
+    pub tcp_carriers: tcp_carrier_metrics::Registry,
     pub tx_packets: portable_atomic::AtomicU64,
     pub tx_bytes: portable_atomic::AtomicU64,
     pub rx_packets: portable_atomic::AtomicU64,
@@ -1006,6 +1013,9 @@ pub struct ClientCore {
     runtime_cancel: Arc<AtomicBool>,
     runtime_active: bool,
     runtime_counters: Option<Arc<RuntimeCounters>>,
+    /// One frozen bounded postmortem; no packet pools or task owners retained.
+    #[cfg(any(feature = "client", test))]
+    last_carrier_diagnostics: Option<Vec<u8>>,
     tx_packets: u64,
     tx_bytes: u64,
     rx_packets: u64,
@@ -1084,6 +1094,8 @@ impl ClientCore {
             runtime_cancel: Arc::new(AtomicBool::new(false)),
             runtime_active: false,
             runtime_counters: None,
+            #[cfg(any(feature = "client", test))]
+            last_carrier_diagnostics: None,
             tx_packets: 0,
             tx_bytes: 0,
             rx_packets: 0,
@@ -1178,6 +1190,10 @@ impl ClientCore {
         self.runtime_cancel = Arc::new(AtomicBool::new(false));
         self.runtime_active = false;
         self.runtime_counters = None;
+        #[cfg(any(feature = "client", test))]
+        {
+            self.last_carrier_diagnostics = None;
+        }
         self.state = ClientState::Connecting;
         self.push_event(EventKind::StateChanged, None, None, None, None);
 
@@ -2518,6 +2534,23 @@ impl ClientCore {
             }),
         );
         self.push_event(EventKind::StateChanged, None, None, None, None);
+    }
+
+    pub fn carrier_diagnostics_json(&self) -> Vec<u8> {
+        #[cfg(any(feature = "client", test))]
+        {
+            if let Some(runtime) = &self.runtime_counters {
+                return runtime.tcp_carriers.diagnostics_json();
+            }
+            if let Some(finished) = &self.last_carrier_diagnostics {
+                return finished.clone();
+            }
+            tcp_carrier_metrics::unavailable_json(true)
+        }
+        #[cfg(not(any(feature = "client", test)))]
+        {
+            tcp_carrier_metrics::unavailable_json(false)
+        }
     }
 
     pub fn stats(&self) -> CoreStats {
