@@ -77,6 +77,22 @@ jobs:
             # Numeric comparison is independent of workflow queue ordering.
             type=raw,value=latest,enable=${{ steps.ref.outputs.latest_release }}
 
+      # Publish immutable/version tags first; latest stays unchanged until checks pass.
+      - name: Exclude latest from the initial image push
+        id: version_tags
+        env:
+          METADATA_TAGS: ${{ steps.meta.outputs.tags }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tags=$(printf '%s\n' "$METADATA_TAGS" | grep -v ':latest$')
+          test -n "$tags"
+          {
+            echo 'tags<<QELI_IMAGE_TAGS'
+            printf '%s\n' "$tags"
+            echo 'QELI_IMAGE_TAGS'
+          } >> "$GITHUB_OUTPUT"
+
       - id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
@@ -84,7 +100,7 @@ jobs:
           file: release/docker/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.version_tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: true                        # BuildKit inline SLSA provenance
           sbom: true                              # SPDX SBOM attached to the image (R-02)
@@ -92,6 +108,39 @@ jobs:
           # scratch under QEMU for every arch.
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Run exact published image on all three architectures
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          METADATA_VERSION: ${{ steps.meta.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_version=$(python3 -c 'import pathlib,tomllib; print(tomllib.loads(pathlib.Path("qeli/Cargo.toml").read_text())["package"]["version"])')
+          expected_source=$(git rev-parse HEAD)
+          docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw > "$RUNNER_TEMP/image-index.json"
+          for platform in linux/amd64 linux/arm64 linux/arm/v7; do
+            # Classic Docker stores cannot pull multiple platforms under one index digest.
+            child=$(PLATFORM="$platform" python3 - <<'PY'
+          import json,os,pathlib
+          expected=dict(zip(('os','architecture','variant'),os.environ['PLATFORM'].split('/')))
+          index=json.loads(pathlib.Path(os.environ['RUNNER_TEMP'],'image-index.json').read_text())
+          matches=[m['digest'] for m in index['manifests'] if all(m.get('platform',{}).get(k)==v for k,v in expected.items())]
+          assert len(matches)==1, (expected,matches)
+          print(matches[0])
+          PY
+            )
+            platform_image="$IMAGE@$child"
+            echo "Checking $platform at $child"
+            version=$(docker run --rm --platform "$platform" --entrypoint /usr/local/bin/qeli "$platform_image" --version)
+            test "$version" = "qeli $expected_version"
+            test "$(docker image inspect "$platform_image" --format '{{index .Config.Labels "org.opencontainers.image.version"}}')" = "$METADATA_VERSION"
+            test "$(docker image inspect "$platform_image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$expected_source"
+            docker run --rm --platform "$platform" --entrypoint /usr/local/bin/qeli "$platform_image" licenses --file rust/Qeli-AGPL-3.0.txt > "$RUNNER_TEMP/container-license.txt"
+            cmp qeli/third-party-notices/rust/Qeli-AGPL-3.0.txt "$RUNNER_TEMP/container-license.txt"
+            docker run --rm --platform "$platform" --entrypoint /bin/sh "$platform_image" -ec 'test -x /usr/local/bin/entrypoint.sh; command -v ip; command -v iptables; test -s /usr/share/qeli/server.conf.example; test -s /usr/share/qeli/client.conf.example'
+          done
 
       # A SIGNED, INDEPENDENTLY VERIFIABLE attestation on top of BuildKit's inline
       # provenance. The inline one travels inside the image and is only as trustworthy as
@@ -107,3 +156,15 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+
+      - name: Promote verified latest
+        if: steps.ref.outputs.latest_release == 'true'
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --tag "$IMAGE:latest" "$IMAGE@$DIGEST"
+          actual=$(docker buildx imagetools inspect "$IMAGE:latest" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          test "$actual" = "$DIGEST"
