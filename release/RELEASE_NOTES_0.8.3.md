@@ -38,6 +38,9 @@ existing memory budgets.
 - Android Tink moves to 1.24.0; Rust libc moves to 0.2.191. TLS dependencies
   rustls-webpki 0.103.16 and webpki-roots 1.0.10 address the newly reported
   certificate-trust advisories RUSTSEC-2026-0382 and RUSTSEC-2026-0381.
+- ML-KEM 0.3.3 removes a secret-dependent CBD lookup; ctutils 0.4.4 addresses
+  RUSTSEC-2026-0385. Tokio moves to 1.54.1 and Gradle Wrapper to 9.8.2.
+  The Cargo/fuzz locks and embedded original license texts are synchronized.
 - Setup, configuration examples and Docker buffer diagnostics are aligned;
   license inventories are bound to the updated dependency locks.
 
@@ -263,7 +266,7 @@ the packaged assets. The release remains unpublished.
 
 ### Linux candidate short test — 2026-10-22
 
-The exact packaged **0.8.3** ELF was tested on VM300/server and VM301/client:
+An earlier packaged **0.8.3 candidate** was tested on two isolated Linux guests:
 SHA-256 `95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7`,
 source `be4429ae8c870c88b2682619ba8246fae3f8a4b4`. Later transport and Android
 carrier-recovery changes are outside this test; it does not qualify the current
@@ -356,6 +359,9 @@ before that tag is published.
 - Android Tink обновлён до 1.24.0, Rust libc — до 0.2.191. rustls-webpki 0.103.16
   и webpki-roots 1.0.10 закрывают новые предупреждения о доверии сертификатам
   RUSTSEC-2026-0382 и RUSTSEC-2026-0381. Лицензии согласованы с новыми lock-файлами.
+- ML-KEM 0.3.3 устраняет secret-dependent lookup при CBD sampling; ctutils 0.4.4
+  закрывает RUSTSEC-2026-0385. Tokio обновлён до 1.54.1, Gradle Wrapper — до 9.8.2.
+  Основной/fuzz Cargo.lock и встроенные оригинальные тексты лицензий согласованы.
 - Обновлены инструкции установки, примеры конфигов и диагностика буферов Docker.
 
 TCP A/B проверялся на 1/8 независимых клиентах с добавленным RTT 40/100 мс в лабе
@@ -580,7 +586,7 @@ VM300/301 восстановлены 17/17, SHA до/после совпали, 
 
 ### Короткий тест Linux-кандидата — 2026-10-22
 
-На VM300/server и VM301/client проверен точный пакетный ELF **0.8.3**:
+На двух изолированных Linux-гостях проверен прежний пакетный **кандидат 0.8.3**:
 SHA-256 `95cf32f8a9bd76de855e1e599c88fc9feb94a677ccef99c61b35762f27d467f7`,
 исходники `be4429ae8c870c88b2682619ba8246fae3f8a4b4`. Последующие изменения
 транспорта и восстановления сети Android этим тестом не охвачены; он не является

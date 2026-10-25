@@ -19,16 +19,16 @@ PKG_RELEASE:=1
 # cutting a version.
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/litvinovtd/qeli.git
-PKG_SOURCE_VERSION:=2204a15c2b991026526ccf32916d2a8c9f8032d7
+PKG_SOURCE_VERSION:=421fc5cde5dd56a139e658391e3fbabd1e3c743b
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 # Hash the SDK-generated source archive. Git fallback may only warn on a
 # mismatch, so prepare AND compile verify it below before unpack/Cargo.
 # At release-cut pin the immutable source commit, run SDK download, then
 # make package/qeli/check FIXUP=1 and verify the actual Source archive filename.
-# Source archive generated and hash-verified with SDK24.10.4 (2026-10-22).
+# Source archive generated twice and hash-verified with SDK24.10.4 (2026-10-25).
 # Publish the pinned commit to PKG_SOURCE_URL before using the public feed.
 # Re-qualify the cut if qeli/ changes; see the OpenWrt README audit section.
-PKG_MIRROR_HASH:=088474c4e2d5798256cb7f79b7d4b168c98df4f838a3cc0bc47b617031963dbf
+PKG_MIRROR_HASH:=0dabf6838fa905d402af1dbf3e49d6c34aced49383d03040a50bf50bb7b2de9b
 PKG_MAINTAINER:=Alexandr
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE

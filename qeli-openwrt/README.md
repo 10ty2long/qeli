@@ -634,3 +634,19 @@ build or physical router test. It does not publish a tag or GitHub Release.
 отслеживаемых файлов сверено с этим commit. Сам SDK-архив сохранён локально для строгой
 проверки источника релиза. Это не повторная сборка компилятора, полного SDK/IPK и не
 проверка физического роутера. Тег и GitHub Release этим действием не публикуются.
+
+### 0.8.3 source cut — 25 October 2026
+
+The current recipe pins `421fc5cde5dd56a139e658391e3fbabd1e3c743b`.
+Two stock SDK 24.10.4 downloads with empty, independent caches and distinct private
+Git URLs produced identical `qeli-0.8.3.tar.zst` archives: SHA-256
+`0dabf6838fa905d402af1dbf3e49d6c34aced49383d03040a50bf50bb7b2de9b`
+(27,886,248 bytes). SDK prepare verified all 3,572 tracked file contents against
+that commit. This qualifies source export/prepare, not a full SDK/IPK build or a
+physical router test. The public Git URL remains unchanged; no release is published.
+
+Текущий рецепт 0.8.3 закреплён на указанном выше commit. Два независимых экспорта
+штатным SDK 24.10.4 дали одинаковый архив и SHA-256; после prepare проверено
+содержимое всех 3 572 отслеживаемых файлов. Это проверка экспорта/подготовки
+исходников, не полная SDK/IPK-сборка и не тест физического роутера. Публичный Git URL
+не изменён; релиз не публикуется.
