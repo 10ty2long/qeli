@@ -1,10 +1,8 @@
+use portable_atomic::AtomicU64;
 use std::future::Future;
 use std::io;
 use std::pin::Pin;
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Arc,
-};
+use std::sync::{atomic::Ordering, Arc};
 use std::task::{Context, Poll};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt, ReadBuf};

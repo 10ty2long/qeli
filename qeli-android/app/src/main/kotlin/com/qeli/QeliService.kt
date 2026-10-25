@@ -2699,7 +2699,10 @@ class VpnServiceImpl : VpnService() {
             append("|r=").append(routes.joinToString(","))
             append("|d=").append(dns.joinToString(","))
         }
-        return AndroidPhysicalNetworkSignature(path, links?.mtu ?: 0)
+        // LinkProperties.getMtu() is public only from API 29; API 28 still supports
+        // carrier observation, with an explicit unknown MTU instead of a hidden API call.
+        val observedMtu = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) links?.mtu ?: 0 else 0
+        return AndroidPhysicalNetworkSignature(path, observedMtu)
     }
 
     private fun reportCarrierMtuChange(previous: AndroidPhysicalNetworkSignature, next: AndroidPhysicalNetworkSignature) {
