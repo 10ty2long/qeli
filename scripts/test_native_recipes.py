@@ -627,7 +627,9 @@ class NativeRecipeTests(unittest.TestCase):
         )
         self.assertEqual(desktop.EXPECTED_CLIENT_EXPORTS, "22")
         self.assertIn('EXPECTED_CLIENT_EXPORTS = "22"', source)
-        self.assertIn('EXPECTED_JNI_EXPORTS = "21"', source)
+        self.assertIn('EXPECTED_JNI_EXPORTS = "22"', source)
+        jni_source = (Path(__file__).resolve().parents[1] / "qeli/src/transport_core/jni.rs").read_text(encoding="utf-8")
+        self.assertEqual(jni_source.count('pub extern "system" fn Java_com_qeli_TransportCore_'), 22)
         self.assertIn("core.strip() != EXPECTED_CLIENT_EXPORTS", source)
         self.assertIn("jni.strip() != EXPECTED_JNI_EXPORTS", source)
 

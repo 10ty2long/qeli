@@ -48,7 +48,7 @@ HOST = ("10.66.116.11", os.environ.get("QELI_LAB_USER", "root"))
 ABIS = ("arm64-v8a", "x86_64")
 EXPECTED_REALITY_EXPORTS = "6"
 EXPECTED_CLIENT_EXPORTS = "22"
-EXPECTED_JNI_EXPORTS = "21"
+EXPECTED_JNI_EXPORTS = "22"
 
 ARTIFACTS = {
     f"native-libs/android/{abi}/libqeli.so": {

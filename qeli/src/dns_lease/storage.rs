@@ -1,7 +1,8 @@
 //! Hold the trusted directory while every marker/sidecar operation addresses it by fd.
+#[cfg(unix)]
+use std::io;
 use std::{
     fs::{File, OpenOptions, TryLockError},
-    io,
     path::{Path, PathBuf},
 };
 
