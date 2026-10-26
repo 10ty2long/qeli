@@ -152,7 +152,8 @@ public static class ServiceState
         long d3, long d4, long d5, long d6, long d7, long mode);
     [DllImport("libc", EntryPoint = "openat", SetLastError = true)]
     private static extern int openat_x64(int directory, string path, int flags, uint mode);
-    private static int openat(int directory, string path, int flags, uint mode) =>
+    // internal so ServiceControlSelfTest can assert the mode really reaches libc.
+    internal static int openat(int directory, string path, int flags, uint mode) =>
         RuntimeInformation.ProcessArchitecture == Architecture.Arm64
             ? openat_arm64(directory, path, flags, 0, 0, 0, 0, 0, mode)
             : openat_x64(directory, path, flags, mode);

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Win32.SafeHandles;
 using Qeli.Shared.Model;
 using Qeli.Shared.Vpn;
 using QeliMac.Model;
@@ -234,8 +235,39 @@ internal static class ServiceControlSelfTest
             using (otherLock.Enter()) Check("failed control operation releases ownership", true);
         }
         finally { Directory.Delete(lockDir, true); }
+        RunOpenatMode(Check);
         RunStatusTransitions(Check);
         RunTools(Check);
+    }
+
+    /// <summary>openat is variadic and, on Darwin ARM64, its mode travels in the stack slot
+    /// rather than a register. A plain four-argument binding silently dropped the mode, and
+    /// O_CREAT produced control locks with random bits that ValidateChild then refused — the
+    /// daemon could never take its lock and the tunnel never came up. Assert the mode really
+    /// reaches libc through the production binding, on both slices.</summary>
+    private static void RunOpenatMode(Action<string, bool> check)
+    {
+        if (!OperatingSystem.IsMacOS()) return;
+        string dir = Path.Combine(Path.GetTempPath(), "qeli-openat-mode-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        string previous = Environment.CurrentDirectory;
+        try
+        {
+            // AT_FDCWD keeps the check independent of any directory handle.
+            Environment.CurrentDirectory = dir;
+            const string name = "mode.lock";
+            int fd = ServiceState.openat(-2, name,
+                0x2 | 0x200 | 0x4 | 0x100 | 0x1000000, // O_RDWR | O_CREAT | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC
+                0x180); // 0600
+            using var handle = fd >= 0 ? new SafeFileHandle((IntPtr)fd, ownsHandle: true) : null;
+            check("openat delivers the requested 0600 mode", fd >= 0
+                && File.GetUnixFileMode(Path.Combine(dir, name)) == (UnixFileMode.UserRead | UnixFileMode.UserWrite));
+        }
+        finally
+        {
+            Environment.CurrentDirectory = previous;
+            Directory.Delete(dir, true);
+        }
     }
 
     private static void RunStatusTransitions(Action<string, bool> check)
